@@ -31,10 +31,46 @@
         // Ethernet/IP stack processing.
         "dhcp-socket-type": "udp",
 
+        // Typically the DHCP server will send its response back on the same
+        // interface the query came in. This is the default ("same-as-inbound").
+        // However, sometimes it is useful to have the ability to send the
+        // packet as plain UDP packet and let the kernel and the routing tables
+        // determine the right interface ("use-routing"). This option  only works
+        // for "dhcp-socket-type" set to "udp" and is ignored otherwise.
+        "outbound-interface": "use-routing",
+
         // This makes interfaces to be re-detected at each (re-)configuration.
         // By default it is true.
         "re-detect": true
     },
+
+    "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        "lease-checks": "fix-del"
+    },
+
+    // Option 43 last resort definition can make well-formed messages
+    // to be rejected because they use not compatible "raw" value,
+    // and different vendors may define different sub-options.
+    // The option definition should be applied to avoid these problems,
+    // for instance by defining at the global scope the option as binary.
+    // In client-classes the option may be redefined as carrying vendor
+    // dependent sub-options.
+    "option-def": [ {
+        "name": "vendor-encapsulated-options",
+        "code": 43,
+        "type": "binary"
+    } ],
 
     // We need to specify the the database used to store leases. As of
     // September 2016, four database backends are supported: MySQL,
@@ -80,11 +116,27 @@
     "match-client-id": true,
 
     // The following list defines subnets. Each subnet consists of at
-    // least subnet and pool entries.
+    // least subnet and pool entries. One extra feature that requires
+    // some explanation is user-context. This is a structure that you can
+    // define in subnets, pools and others. It is parsed by Kea, but not
+    // used directly.  It is intended to keep anything you may want to
+    // put there - comments, extra designations, floor or department
+    // names etc. These structures will be made available to Kea hooks.
+    // A comment entry is translated into a user-context with a
+    // "comment" property so you can include comments inside the
+    // configuration itself.
     "subnet4": [
         {
-            "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
-            "subnet": "192.0.2.0/24"
+            "pools": [ {
+                "pool":  "192.0.2.1 - 192.0.2.200",
+                "user-context": { "info": "what a large pool" }
+            } ],
+            "subnet": "192.0.2.0/24",
+            "user-context": {
+                "comment": "Our first subnet!"
+            }
+            // Equivalent using smart parser
+            // "comment": "Our first subnet!"
         },
         {
             // This particular subnet has match-client-id value changed.

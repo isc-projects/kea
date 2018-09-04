@@ -6,6 +6,8 @@
 
 // This is the common code for TXT and SPF tests.
 
+#include <config.h>
+
 #include <util/buffer.h>
 #include <dns/exceptions.h>
 #include <dns/rdataclass.h>

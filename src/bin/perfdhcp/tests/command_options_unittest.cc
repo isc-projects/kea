@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -342,15 +342,6 @@ TEST_F(CommandOptionsTest, Rate) {
     // Rate must not be 0
     EXPECT_THROW(process("perfdhcp -4 -r 0 -l ethx all"),
                  isc::InvalidParameter);
-    // -r must be specified to use -n, -p and -D
-    EXPECT_THROW(process("perfdhcp -6 -t 5 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -4 -n 150 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -6 -p 120 -l ethx all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -4 -D 1400 -l ethx all"),
-                 isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, RenewRate) {
@@ -447,16 +438,16 @@ TEST_F(CommandOptionsTest, ReleaseRenew) {
 
 TEST_F(CommandOptionsTest, ReportDelay) {
     CommandOptions& opt = CommandOptions::instance();
-    EXPECT_NO_THROW(process("perfdhcp -r 100 -t 17 -l ethx all"));
+    EXPECT_NO_THROW(process("perfdhcp -t 17 -l ethx all"));
     EXPECT_EQ(17, opt.getReportDelay());
 
     // Negative test cases
     // -t must be positive integer
-    EXPECT_THROW(process("perfdhcp -r 10 -t -8 -l ethx all"),
+    EXPECT_THROW(process("perfdhcp -t -8 -l ethx all"),
                  isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -r 10 -t 0 -l ethx all"),
+    EXPECT_THROW(process("perfdhcp -t 0 -l ethx all"),
                  isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -r 10 -t s -l ethx all"),
+    EXPECT_THROW(process("perfdhcp -t s -l ethx all"),
                  isc::InvalidParameter);
 }
 
@@ -724,64 +715,64 @@ TEST_F(CommandOptionsTest, Aggressivity) {
 
 TEST_F(CommandOptionsTest, MaxDrop) {
     CommandOptions& opt = CommandOptions::instance();
-    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx -r 10 all"));
+    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx all"));
     EXPECT_EQ(25, opt.getMaxDrop()[0]);
-    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx -D 15 -r 10 all"));
+    EXPECT_NO_THROW(process("perfdhcp -D 25 -l ethx -D 15 all"));
     EXPECT_EQ(25, opt.getMaxDrop()[0]);
     EXPECT_EQ(15, opt.getMaxDrop()[1]);
 
-    EXPECT_NO_THROW(process("perfdhcp -D 15% -l ethx -r 10 all"));
+    EXPECT_NO_THROW(process("perfdhcp -D 15% -l ethx all"));
     EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
-    EXPECT_NO_THROW(process("perfdhcp -D 15% -D25% -l ethx -r 10 all"));
+    EXPECT_NO_THROW(process("perfdhcp -D 15% -D25% -l ethx all"));
     EXPECT_EQ(15, opt.getMaxDropPercentage()[0]);
     EXPECT_EQ(25, opt.getMaxDropPercentage()[1]);
-    EXPECT_NO_THROW(process("perfdhcp -D 1% -D 99% -l ethx -r 10 all"));
+    EXPECT_NO_THROW(process("perfdhcp -D 1% -D 99% -l ethx all"));
     EXPECT_EQ(1, opt.getMaxDropPercentage()[0]);
     EXPECT_EQ(99, opt.getMaxDropPercentage()[1]);
 
     // Negative test cases
     // Too many -D<value> options
-    EXPECT_THROW(process("perfdhcp -D 0% -D 1 -l ethx -r20 -D 3 all"),
+    EXPECT_THROW(process("perfdhcp -D 0% -D 1 -l ethx -D 3 all"),
                  isc::InvalidParameter);
     // Too many -D<value%> options
-    EXPECT_THROW(process("perfdhcp -D 99% -D 13% -l ethx -r20 -D 10% all"),
+    EXPECT_THROW(process("perfdhcp -D 99% -D 13% -l ethx -D 10% all"),
                  isc::InvalidParameter);
     // Percentage is out of bounds
-    EXPECT_THROW(process("perfdhcp -D101% -D 13% -l ethx -r20 all"),
+    EXPECT_THROW(process("perfdhcp -D101% -D 13% -l ethx all"),
                  isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -D0% -D 13% -l ethx -r20 all"),
+    EXPECT_THROW(process("perfdhcp -D0% -D 13% -l ethx all"),
                  isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, NumRequest) {
     CommandOptions& opt = CommandOptions::instance();
-    EXPECT_NO_THROW(process("perfdhcp -n 1000 -r 10 -l ethx all"));
+    EXPECT_NO_THROW(process("perfdhcp -n 1000 -l ethx all"));
     EXPECT_EQ(1000, opt.getNumRequests()[0]);
-    EXPECT_NO_THROW(process("perfdhcp -n 5 -r 10 -n 500 -l ethx all"));
+    EXPECT_NO_THROW(process("perfdhcp -n 5 -n 500 -l ethx all"));
     EXPECT_EQ(5, opt.getNumRequests()[0]);
     EXPECT_EQ(500, opt.getNumRequests()[1]);
 
     // Negative test cases
     // Too many -n<value> parameters, expected maximum 2
-    EXPECT_THROW(process("perfdhcp -n 1 -n 2 -l ethx -n3 -r 20 all"),
+    EXPECT_THROW(process("perfdhcp -n 1 -n 2 -l ethx -n3 all"),
                  isc::InvalidParameter);
     // Num request must be positive integer
-    EXPECT_THROW(process("perfdhcp -n 1 -n -22 -l ethx -r 10 all"),
+    EXPECT_THROW(process("perfdhcp -n 1 -n -22 -l ethx all"),
                  isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -n 0 -l ethx -r 10 all"),
+    EXPECT_THROW(process("perfdhcp -n 0 -l ethx all"),
                  isc::InvalidParameter);
 }
 
 TEST_F(CommandOptionsTest, Period) {
     CommandOptions& opt = CommandOptions::instance();
-    EXPECT_NO_THROW(process("perfdhcp -p 120 -l ethx -r 100 all"));
+    EXPECT_NO_THROW(process("perfdhcp -p 120 -l ethx all"));
     EXPECT_EQ(120, opt.getPeriod());
 
     // Negative test cases
     // Test period must be positive integer
-    EXPECT_THROW(process("perfdhcp -p 0 -l ethx -r 50 all"),
+    EXPECT_THROW(process("perfdhcp -p 0 -l ethx all"),
                  isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -p -3 -l ethx -r 50 all"),
+    EXPECT_THROW(process("perfdhcp -p -3 -l ethx all"),
                  isc::InvalidParameter);
 }
 

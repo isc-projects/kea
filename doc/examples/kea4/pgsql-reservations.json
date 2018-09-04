@@ -54,13 +54,17 @@
 // reservations list, within the subnet (configuration file). If there are
 // no reservations there, the server will try to retrieve reservations
 // from this database.
-  "hosts-database": {
-    "type": "postgresql",
-    "name": "kea",
-    "user": "kea",
-    "password": "kea",
-    "host": "localhost"
-  },
+// The database specification can go into one hosts-database entry for
+// backward compatibility or be listed in hosts-databases list.
+  "hosts-databases": [
+    {
+       "type": "postgresql",
+       "name": "kea",
+       "user": "kea",
+       "password": "kea",
+       "host": "localhost"
+    }
+  ],
 
 // Define a subnet with a single pool of dynamic addresses. Addresses from
 // this pool will be assigned to clients which don't have reservations in the

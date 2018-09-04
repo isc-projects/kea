@@ -38,7 +38,7 @@ namespace {
 /// it around for the future.
 class OptionDefinitionTest : public ::testing::Test {
 public:
-    // @brief Constructor.
+    /// @brief Constructor
     OptionDefinitionTest() { }
 
 };
@@ -325,11 +325,19 @@ TEST_F(OptionDefinitionTest, validate) {
                                "record");
     opt_def16.addRecordField("uint8");
     opt_def16.addRecordField("string");
+    EXPECT_NO_THROW(opt_def16.validate());
+
+    // ... at least if it is not an array.
+    OptionDefinition opt_def17("OPTION_STATUS_CODE", D6O_STATUS_CODE,
+                               "record", true);
+    opt_def17.addRecordField("uint8");
+    opt_def17.addRecordField("string");
+    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
 
     // Check invalid encapsulated option space name.
-    OptionDefinition opt_def17("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
+    OptionDefinition opt_def18("OPTION_VENDOR_OPTS", D6O_VENDOR_OPTS,
                                "uint32", "invalid%space%name");
-    EXPECT_THROW(opt_def17.validate(), MalformedOptionDefinition);
+    EXPECT_THROW(opt_def18.validate(), MalformedOptionDefinition);
 }
 
 
@@ -1603,7 +1611,7 @@ TEST_F(OptionDefinitionTest, tuple4Tokenized) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_1_BYTE);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
-}    
+}
 
 // This test verifies that a definition of an option with a single DHCPv6
 // tuple can be created and that the instance of this option can be
@@ -1632,7 +1640,7 @@ TEST_F(OptionDefinitionTest, tuple6Tokenized) {
     OpaqueDataTuple tuple(OpaqueDataTuple::LENGTH_2_BYTES);
     ASSERT_NO_THROW(option_cast->readTuple(tuple));
     EXPECT_EQ("foobar", tuple.getText());
-}    
+}
 
 // This test verifies that a definition of an option with an array
 // of DHCPv4 tuples can be created and that the instance of this option

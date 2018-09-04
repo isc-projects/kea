@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,8 @@
 #ifndef LEASE_MGR_FACTORY_H
 #define LEASE_MGR_FACTORY_H
 
+#include <database/database_connection.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/scoped_ptr.hpp>

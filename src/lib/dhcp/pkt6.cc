@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -538,6 +538,9 @@ Pkt6::getMACFromDUID() {
     }
 
     uint8_t hlen = opt_duid->getData().size();
+    if (!hlen) {
+        return (mac);
+    }
     vector<uint8_t> hw_addr(hlen, 0);
     std::vector<unsigned char> duid_data = opt_duid->getData();
 
@@ -790,6 +793,12 @@ void Pkt6::copyRelayInfo(const Pkt6Ptr& question) {
         // If there is, we need to echo it back
         OptionPtr opt = question->getNonCopiedRelayOption(D6O_INTERFACE_ID, i);
         // taken from question->RelayInfo_[i].options_
+        if (opt) {
+            info.options_.insert(make_pair(opt->getType(), opt));
+        }
+
+        // Same for relay-source-port option
+        opt = question->getNonCopiedRelayOption(D6O_RELAY_SOURCE_PORT, i);
         if (opt) {
             info.options_.insert(make_pair(opt->getType(), opt));
         }

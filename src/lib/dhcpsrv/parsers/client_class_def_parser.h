@@ -1,4 +1,4 @@
-// Copyright (C) 2015, 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,7 +9,10 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <eval/eval_context.h>
 #include <dhcpsrv/client_class_def.h>
+#include <functional>
+#include <list>
 
 /// @file client_class_def_parser.h
 ///
@@ -17,8 +20,8 @@
 ///
 /// These parsers are used to parse lists of client class definitions
 /// into a ClientClassDictionary of ClientClassDef instances.  Each
-/// ClientClassDef consists of (at least) a name, an expression, and
-/// option-data.  The latter two are currently optional.
+/// ClientClassDef consists of (at least) a name, an expression, option-def
+/// and option-data.  Currently only a not empty name is required.
 ///
 /// There parsers defined are:
 ///
@@ -35,6 +38,11 @@
 ///
 /// -# "test" - a string containing the logical expression used to determine
 /// membership in the class. This is passed into the eval parser.
+///
+/// -# "option-def" - a list which defines the options which processing
+/// is deferred. This element is optional and parsed using the @ref
+/// isc::dhcp::OptionDefParser. A check is done to verify definitions
+/// are only for deferred processing option (DHCPv4 43 and 224-254).
 ///
 /// -# "option-data" - a list which defines the options that should be
 /// assigned to remembers of the class.  This element is optional and parsed
@@ -59,10 +67,14 @@ public:
     /// @param expression variable in which to store the new expression
     /// @param expression_cfg the configuration entry to be parsed.
     /// @param family the address family of the expression.
+    /// @param check_defined a closure to check if a client class is defined.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ExpressionPtr& expression,
-               isc::data::ConstElementPtr expression_cfg, uint16_t family);
+               isc::data::ConstElementPtr expression_cfg,
+               uint16_t family,
+               isc::eval::EvalContext::CheckDefined check_defined =
+                   isc::eval::EvalContext::acceptAll);
 };
 
 /// @brief Parser for a single client class definition.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -342,7 +342,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   true, true, true, D2ClientConfig::RCM_ALWAYS,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "[^A-z]", "*")));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg));

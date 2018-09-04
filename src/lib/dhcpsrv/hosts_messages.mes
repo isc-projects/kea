@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,10 +6,26 @@
 
 $NAMESPACE isc::dhcp
 
+% HOSTS_BACKENDS_REGISTERED the following host backend types are available: %1
+This informational message lists all possible host backends that could
+be used in hosts-database[s].
+
+% HOSTS_BACKEND_DEREGISTER deregistered host backend type: %1
+This debug message is issued when a backend factory was deregistered.
+It is no longer possible to use host backend of this type.
+
+% HOSTS_BACKEND_REGISTER registered host backend type: %1
+This debug message is issued when a backend factory was successfully
+registered. It is now possible to use host backend of this type.
+
 % HOSTS_CFG_ADD_HOST add the host for reservations: %1
 This debug message is issued when new host (with reservations) is added to
 the server's configuration. The argument describes the host and its
 reservations in detail.
+
+% HOSTS_CFG_CACHE_HOST_DATA_SOURCE get host cache data source: %1
+This informational message is issued when a host cache data source is
+detected by the host manager.
 
 % HOSTS_CFG_CLOSE_HOST_DATA_SOURCE Closing host data source: %1
 This is a normal message being printed when the server closes host data
@@ -44,11 +60,6 @@ of hosts found respectively.
 This debug message is issued when found host with the reservation
 for the specified IPv6 address. The arguments specify the IPv6 address
 and the detailed description of the host found.
-
-% HOSTS_CFG_GET_ALL_HWADDR_DUID get all hosts with reservations for HWADDR %1 and DUID %2
-This debug message is issued when starting to retrieve reservations for all hosts
-using specific HW address or DUID. The arguments specify the HW address and
-DUID respectively. The argument specify the HW address and DUID respectively.
 
 % HOSTS_CFG_GET_ALL_IDENTIFIER get all hosts with reservations using identifier: %1
 This debug message is issued when starting to retrieve reservations for all hosts
@@ -134,24 +145,18 @@ subnet id and specific host identifier.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
-% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 trying alternate source for host using subnet id %1 and address %2
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_ADDRESS4 trying alternate sources for host using subnet id %1 and address %2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specific IPv4 address, and it is starting to search for this host
-in the alternate host data source.
-
-% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_HWADDR_DUID trying alternate source for host using subnet id %1, HWADDR %2, DUID%3
-This debug message is issued when the Host Manager doesn't find the
-host connected to the specific subnet and identified by the HW address
-or DUID, and it is starting to search for this host in the alternate
-host data source.
+in alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER get one host with IPv4 reservation for subnet id %1, identified by %2
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
 
-% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+% HOSTS_MGR_ALTERNATE_GET4_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found in %3 host: %4
 This debug message includes the details of a host returned by an
 alternate hosts data source using a subnet id and specific host
 identifier.
@@ -160,32 +165,26 @@ identifier.
 This debug message is issued when no host was found using the specified
 subnet id and host identifier.
 
-% HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate source for host using prefix %1/%2
+% HOSTS_MGR_ALTERNATE_GET6_PREFIX trying alternate sources for host using prefix %1/%2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specified prefix, and it is starting to search for this host in
-the alternate host data source.
+alternate host data sources.
 
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 trying alternate source for host using subnet id %1 and IPv6 address %2
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_ADDRESS6 trying alternate sources for host using subnet id %1 and IPv6 address %2
 This debug message is issued when the Host Manager doesn't find the
 host connected to the specific subnet and having the reservation for
 the specified IPv6 address, and it is starting to search for this
-host in the alternate host data source.
-
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_DUID_HWADDR trying alternate source for host using subnet id %1, DUID %2, HWADDR %3
-This debug message is issued when the Host Manager doesn't find the
-host connected to the specific subnet and identified by the specified
-DUID or HW Address, and it is starting to search for this host in the
-alternate host data source.
+host in alternate host data sources.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER get one host with IPv6 reservation for subnet id %1, identified by %2
 This debug message is issued when starting to retrieve a host holding
 IPv4 reservation, which is connected to a specific subnet and
 is identified by a specific unique identifier.
 
-% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found host: %3
+% HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_HOST using subnet id %1 and identifier %2, found in %3 host: %4
 This debug message includes the details of a host returned by an
-alternate hosts data source using a subnet id and specific host
+alternate host data source using a subnet id and specific host
 identifier.
 
 % HOSTS_MGR_ALTERNATE_GET6_SUBNET_ID_IDENTIFIER_NULL host not found using subnet id %1 and identifier %2

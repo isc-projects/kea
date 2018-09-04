@@ -1,30 +1,25 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
+<!-- Converted by db4-upgrade version 1.1 -->
 <refentry>
-  <refentryinfo>
+  <info>
     <productname>ISC Kea</productname>
-    <date>Sep. 28, 2016</date>
-    <edition>1.1.0</edition>
-    <author>
-      <contrib>The Kea software has been written by a number of
+    <date>June 15, 2018</date>
+    <edition>1.4.0</edition>
+    <author><personname/><contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
         Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-      <orgname>Internet Systems Consortium, Inc.</orgname>
-    </author>
-  </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
 
   <refmeta>
     <refentrytitle>kea-admin</refentrytitle>
@@ -39,22 +34,23 @@
 
   <docinfo>
     <copyright>
-      <year>2014-2016</year>
+      <year>2014-2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>kea-admin</command>
-      <arg>command</arg>
-      <arg>backend</arg>
-      <arg><option>-u <replaceable class="parameter">database username</replaceable></option></arg>
-      <arg><option>-p <replaceable class="parameter">database password</replaceable></option></arg>
-      <arg><option>-n <replaceable class="parameter">database name</replaceable></option></arg>
-      <arg><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
-      <arg><option>-4 | -6</option></arg>
-      <arg><option>-o <replaceable class="parameter">output file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">command</arg>
+      <arg choice="opt" rep="norepeat">backend</arg>
+      <arg choice="opt" rep="norepeat"><option>-u <replaceable class="parameter">database username</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">database password</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">database name</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">scripts directory</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-4 | -6</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">output file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -103,7 +99,6 @@
                 migrating between old and new Kea versions.</para>
               </listitem>
             </varlistentry>
-          </variablelist>
 
             <varlistentry>
               <term>lease-dump</term>
@@ -114,6 +109,7 @@
                 The first line of file is a header line containing the column names.</para>
               </listitem>
             </varlistentry>
+          </variablelist>
 
         </listitem>
       </varlistentry>
@@ -179,6 +175,15 @@
       </varlistentry>
 
       <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints kea-admin version and quits.
+          </para>
+        </listitem>
+      </varlistentry>
+
+      <varlistentry>
         <term><option>-4</option></term>
         <listitem>
           <para>
@@ -225,6 +230,11 @@
 
       <citerefentry>
         <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

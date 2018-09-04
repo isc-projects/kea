@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,12 +18,26 @@
 mysql_execute() {
     QUERY=$1
     shift
-    if [ $# -ge 1 ]; then
-        mysql -N -B  $* -e "${QUERY}"
+    if [ $# -gt 1 ]; then
+        mysql -N -B "$@" -e "${QUERY}"
         retcode=$?
     else
-        mysql -N -B --host=$db_host --user=$db_user --password=$db_password -e "${QUERY}" $db_name
-        retcode="$?"
+        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
+        retcode=$?
+    fi
+
+    return $retcode
+}
+
+mysql_execute_script() {
+    file=$1
+    shift
+    if [ $# -ge 1 ]; then
+        mysql -N -B "$@" < "${file}"
+        retcode=$?
+    else
+        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
+        retcode=$?
     fi
 
     return $retcode
@@ -47,12 +61,12 @@ mysql_version() {
 pgsql_execute() {
     QUERY=$1
     shift
-    if [ $# -ge 1 ]; then
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q $*
+    if [ $# -gt 0 ]; then
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "$@"
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo $QUERY | psql --set ON_ERROR_STOP=1 -A -t -h $db_host -q -U $db_user -d $db_name
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}"
         retcode=$?
     fi
     return $retcode
@@ -71,12 +85,12 @@ pgsql_execute() {
 pgsql_execute_script() {
     file=$1
     shift
-    if [ $# -ge 1 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f $file $*
+    if [ $# -gt 0 ]; then
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f "${file}" "$@"
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h $db_host -q -U $db_user -d $db_name -f $file
+        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}" -f "${file}"
         retcode=$?
     fi
     return $retcode
@@ -90,16 +104,16 @@ pgsql_version() {
 cql_execute() {
     query=$1
     shift
-    if [ $# -ge 1 ]; then
+    if [ $# -gt 1 ]; then
         cqlsh "$@" -e "$query"
         retcode=$?
     else
-        cqlsh -u $db_user -p $db_password -k $db_name -e "$query"
+        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -e "${query}"
         retcode=$?
     fi
 
     if [ $retcode -ne 0 ]; then
-        printf "cqlsh returned with exit status $retcode\n"
+        printf "cqlsh returned with exit status %s\n" "${retcode}"
         exit $retcode
     fi
 
@@ -109,16 +123,16 @@ cql_execute() {
 cql_execute_script() {
     file=$1
     shift
-    if [ $# -ge 1 ]; then
-        cqlsh "$@" -f "$file"
+    if [ $# -gt 1 ]; then
+        cqlsh "$@" -e "$file"
         retcode=$?
     else
-        cqlsh -u $db_user -p $db_password -k $db_name -f "$file"
+        cqlsh -u "${db_user}" -p "${db_password}" -k "${db_name}" -f "${file}"
         retcode=$?
     fi
 
     if [ $retcode -ne 0 ]; then
-        printf "cqlsh returned with exit status $retcode\n"
+        printf "cqlsh returned with exit status %s\n" "${retcode}"
         exit $retcode
     fi
 
@@ -126,9 +140,9 @@ cql_execute_script() {
 }
 
 cql_version() {
-  version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
-  error=$?
-  version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 --output-delimiter=".")
-  echo "$version"
-  return $error
+    version=$(cql_execute "SELECT version, minor FROM schema_version" "$@")
+    error=$?
+    version=$(echo "$version" | grep -A 1 "+" | grep -v "+" | tr -d ' ' | cut -d "|" -f 1-2 | tr "|" ".")
+    echo "$version"
+    return $error
 }

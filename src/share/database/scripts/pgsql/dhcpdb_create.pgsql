@@ -1,4 +1,4 @@
--- Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,7 +35,6 @@ CREATE TABLE lease4 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
-
 -- Create search indexes for lease4 table
 -- index by hwaddr and subnet_id
 CREATE INDEX lease4_by_hwaddr_subnet_id ON lease4 (hwaddr, subnet_id);
@@ -62,7 +61,7 @@ CREATE TABLE lease6 (
     hostname VARCHAR(255)                       -- The FQDN of the client
     );
 
--- Create search indexes for lease4 table
+-- Create search indexes for lease6 table
 -- index by iaid, subnet_id, and duid
 CREATE INDEX lease6_by_iaid_subnet_id_duid ON lease6 (iaid, subnet_id, duid);
 
@@ -352,6 +351,10 @@ CREATE TABLE lease_hwaddr_source (
   name VARCHAR(40) DEFAULT NULL
 );
 
+-- In the event hardware address cannot be determined, we need to satisfy
+-- foreign key constraint between lease6 and lease_hardware_source.
+INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
+
 -- Hardware address obtained from raw sockets.
 INSERT INTO lease_hwaddr_source VALUES (1, 'HWADDR_SOURCE_RAW');
 
@@ -374,10 +377,6 @@ INSERT INTO lease_hwaddr_source VALUES (32, 'HWADDR_SOURCE_SUBSCRIBER_ID');
 INSERT INTO lease_hwaddr_source VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
 INSERT INTO lease_hwaddr_source VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
-
--- In the event hardware address cannot be determined, we need to satisfy
--- foreign key constraint between lease6 and lease_hardware_source.
-INSERT INTO lease_hwaddr_source VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 -- Adding ORDER BY clause to sort by lease address.
 --
@@ -483,6 +482,8 @@ UPDATE schema_version
 
 -- Schema 3.0 specification ends here.
 
+-- Upgrade to schema 3.1 begins here:
+
 -- This is a placeholder for the changes between 3.0 and 3.1. We have added a
 -- missing 'client-id' host reservation type entry that had been accidentally
 -- omitted when the 2.0 -> 3.0 upgrade script was created.
@@ -493,6 +494,387 @@ INSERT INTO host_identifier_type VALUES (4, 'flex-id');
 UPDATE schema_version
     SET version = '3', minor = '1';
 
+-- Schema 3.1 specification ends here.
+
+-- Upgrade to schema 3.2 begins here:
+
+-- Remove constraints which perform too restrictive checks on the inserted
+-- host reservations. We want to be able to insert host reservations which
+-- include no specific IPv4 address or those that have repeating subnet
+-- identifiers, e.g. IPv4 reservations would typically include 0 (or null)
+-- IPv6 subnet identifiers.
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_ipv4_address_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp4_identifier_subnet_id;
+ALTER TABLE hosts DROP CONSTRAINT key_dhcp6_identifier_subnet_id;
+
+-- Create partial indexes instead of the constraints that we have removed.
+
+-- IPv4 address/IPv4 subnet identifier pair is unique if subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_ipv4_address_subnet_id ON hosts
+       (ipv4_address ASC, dhcp4_subnet_id ASC)
+    WHERE ipv4_address IS NOT NULL AND ipv4_address <> 0;
+
+-- Client identifier is unique within an IPv4 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp4_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp4_subnet_id ASC)
+    WHERE (dhcp4_subnet_id IS NOT NULL AND dhcp4_subnet_id <> 0);
+
+-- Client identifier is unique within an IPv6 subnet when subnet identifier is
+-- not null and not 0.
+CREATE UNIQUE INDEX key_dhcp6_identifier_subnet_id ON hosts
+        (dhcp_identifier ASC, dhcp_identifier_type ASC, dhcp6_subnet_id ASC)
+    WHERE (dhcp6_subnet_id IS NOT NULL AND dhcp6_subnet_id <> 0);
+
+-- Set 3.2 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '2';
+
+-- Schema 3.2 specification ends here.
+
+-- Upgrade to schema 3.3 begins here:
+
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+-- Set 3.3 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '3';
+
+-- Schema 3.3 specification ends here.
+
+-- Upgrade to schema 4.0 begins here:
+
+-- Add a column holding hosts for user context.
+ALTER TABLE hosts ADD COLUMN user_context TEXT;
+
+-- Add a column holding DHCP options for user context.
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
+
+-- Create index for searching leases by subnet identifier.
+CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
+
+-- Create for searching leases by subnet identifier and lease type.
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+-- The index by iaid_subnet_id_duid is not the best choice because there are
+-- cases when we don't specify subnet identifier while searching leases. The
+-- index will be universal if the subnet_id is the right most column in the
+-- index.
+DROP INDEX lease6_by_iaid_subnet_id_duid;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
+
+-- Create v4 lease statistics table
+CREATE TABLE lease4_stat (
+    subnet_id BIGINT NOT NULL,
+    state INT8 NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, state)
+);
+
+--
+-- Create v4 insert trigger procedure
+CREATE FUNCTION proc_stat_lease4_insert () RETURNS trigger AS $stat_lease4_insert$
+BEGIN
+    IF NEW.state < 2 THEN
+        UPDATE lease4_stat
+            SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+        IF NOT FOUND THEN
+            INSERT INTO lease4_stat VALUES (new.subnet_id, new.state, 1);
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease4_insert$ LANGUAGE plpgsql;
+
+-- Create v4 insert trigger procedure
+CREATE TRIGGER stat_lease4_insert
+AFTER INSERT ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_insert();
+
+--
+-- Create v4 update trigger procedure
+CREATE FUNCTION proc_stat_lease4_update () RETURNS trigger AS $stat_lease4_update$
+BEGIN
+    IF OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease4_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease4_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease4_update$ LANGUAGE plpgsql;
+
+-- Create v4 update trigger
+CREATE TRIGGER stat_lease4_update
+AFTER UPDATE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_update();
+
+
+--
+-- Create the v4 delete trigger procedure
+CREATE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS $stat_lease4_delete$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease4_stat SET leases = leases - 1
+        WHERE subnet_id = OLD.subnet_id AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease4_delete$ LANGUAGE plpgsql;
+
+-- Create the v4 delete trigger
+CREATE TRIGGER stat_lease4_delete
+AFTER DELETE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_delete();
+
+-- Create v6 lease statistics table
+CREATE TABLE lease6_stat (
+    subnet_id BIGINT NOT NULL,
+    lease_type SMALLINT NOT NULL,
+    state INT8 NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, lease_type, state)
+);
+
+--
+-- Create v6 insert trigger procedure
+CREATE FUNCTION proc_stat_lease6_insert () RETURNS trigger AS $stat_lease6_insert$
+BEGIN
+    IF NEW.state < 2 THEN
+        UPDATE lease6_stat
+        SET leases = leases + 1
+        WHERE
+        subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+        AND state = NEW.state;
+
+        IF NOT FOUND THEN
+            INSERT INTO lease6_stat
+            VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease6_insert$ LANGUAGE plpgsql;
+
+-- Create v6 insert trigger procedure
+CREATE TRIGGER stat_lease6_insert
+AFTER INSERT ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_insert();
+
+--
+-- Create v6 update trigger procedure
+CREATE FUNCTION proc_stat_lease6_update () RETURNS trigger AS $stat_lease6_update$
+BEGIN
+    IF OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease6_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+            AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+            AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease6_update$ LANGUAGE plpgsql;
+
+-- Create v6 update trigger
+CREATE TRIGGER stat_lease6_update
+AFTER UPDATE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_update();
+
+--
+-- Create the v6 delete trigger procedure
+CREATE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS $stat_lease6_delete$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat SET leases = leases - 1
+        WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+        AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+$stat_lease6_delete$ LANGUAGE plpgsql;
+
+-- Create the v6 delete trigger
+CREATE TRIGGER stat_lease6_delete
+AFTER DELETE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_delete();
+
+-- Set 4.0 schema version.
+UPDATE schema_version
+    SET version = '4', minor = '0';
+
+-- Schema 4.0 specification ends here.
+
+-- Upgrade to schema 5.0 begins here:
+
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD COLUMN user_context TEXT;
+ALTER TABLE lease6 ADD COLUMN user_context TEXT;
+
+--
+DROP FUNCTION IF EXISTS lease4DumpHeader();
+CREATE FUNCTION lease4DumpHeader() RETURNS text AS  $$
+    select cast('address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease4DumpData();
+CREATE FUNCTION lease4DumpData() RETURNS
+    table (address inet,
+           hwaddr text,
+           client_id text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text,
+           user_context text
+    ) as $$
+    SELECT ('0.0.0.0'::inet + l.address),
+            encode(l.hwaddr,'hex'),
+            encode(l.client_id,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name,
+            l.user_context
+    FROM lease4 l
+         left outer join lease_state s on (l.state = s.state)
+    ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease6DumpHeader();
+CREATE FUNCTION lease6DumpHeader() RETURNS text AS  $$
+    select cast('address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,state,hwaddr,hwtype,hwaddr_source,user_context' as text) as result;
+$$ LANGUAGE SQL;
+--
+
+--
+DROP FUNCTION IF EXISTS lease6DumpData();
+CREATE FUNCTION lease6DumpData() RETURNS
+    TABLE (
+           address text,
+           duid text,
+           valid_lifetime bigint,
+           expire timestamp with time zone,
+           subnet_id bigint,
+           pref_lifetime bigint,
+           name text,
+           iaid integer,
+           prefix_len smallint,
+           fqdn_fwd int,
+           fqdn_rev int,
+           hostname text,
+           state text,
+           hwaddr text,
+           hwtype smallint,
+           hwaddr_source text,
+           user_context text
+    ) AS $$
+    SELECT (l.address,
+            encode(l.duid,'hex'),
+            l.valid_lifetime,
+            l.expire,
+            l.subnet_id,
+            l.pref_lifetime,
+            t.name,
+            l.iaid,
+            l.prefix_len,
+            l.fqdn_fwd::int,
+            l.fqdn_rev::int,
+            l.hostname,
+            s.name,
+            encode(l.hwaddr,'hex'),
+            l.hwtype,
+            h.name,
+            l.user_context
+
+     )
+     FROM lease6 l
+         left outer join lease6_types t on (l.lease_type = t.lease_type)
+         left outer join lease_state s on (l.state = s.state)
+         left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+     ORDER BY l.address;
+$$ LANGUAGE SQL;
+--
+
+-- Create logs table (logs table is used by forensic logging hook library)
+CREATE TABLE logs (
+    timestamp TIMESTAMP WITH TIME ZONE
+    DEFAULT CURRENT_TIMESTAMP,          -- creation timestamp
+    address VARCHAR(43) NULL,           -- address or prefix
+    log TEXT NOT NULL                   -- the log itself
+    );
+
+-- Create search indexes
+CREATE INDEX timestamp_id ON logs (timestamp);
+CREATE INDEX address_id ON logs (address);
+
+-- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
+ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
+
+-- Set schema 5.0 version
+UPDATE schema_version
+   SET version = '5', minor = '0';
+
+-- Schema 5.0 specification ends here.
 
 -- Commit the script transaction.
 COMMIT;

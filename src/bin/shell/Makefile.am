@@ -1,26 +1,14 @@
 SUBDIRS = . tests
 
-EXTRA_DIST =
-
-if KEA_SHELL
-
-# Kea-shell is enabled, here are proper rules for it.
 pkgpython_PYTHON = kea_conn.py kea_connector2.py kea_connector3.py
 
 sbin_SCRIPTS = kea-shell
 
-else
-
-# Kea-shell is disabled, simply keep the files for make dist
-EXTRA_DIST += kea-shell kea_conn.py kea_connector2.py kea_connector3.py
-
-endif
-
 CLEANFILES = *.pyc
 
 man_MANS = kea-shell.8
-DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST += $(man_MANS) kea-shell.xml
+DISTCLEANFILES = $(sbin_SCRIPTS) $(man_MANS)
+EXTRA_DIST = $(man_MANS) kea-shell.xml
 
 if GENERATE_DOCS
 kea-shell.8: kea-shell.xml

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -52,6 +52,9 @@ using namespace std;
   HTTP_HOST "http-host"
   HTTP_PORT "http-port"
 
+  USER_CONTEXT "user-context"
+  COMMENT "comment"
+
   CONTROL_SOCKETS "control-sockets"
   DHCP4_SERVER "dhcp4"
   DHCP6_SERVER "dhcp6"
@@ -94,6 +97,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> map_value
 %type <ElementPtr> socket_type_value
 
 %printer { yyoutput << $$; } <*>;
@@ -154,6 +158,8 @@ map: LCURLY_BRACKET {
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
+
+map_value: map { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); };
 
 // Rule for map content. In some cases it is allowed to have an empty map,
 // so we should say that explicitly. In most cases, though, there will
@@ -267,6 +273,8 @@ global_param: http_host
             | http_port
             | control_sockets
             | hooks_libraries
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 
@@ -281,6 +289,58 @@ http_host: HTTP_HOST {
 http_port: HTTP_PORT COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("http-port", prf);
+};
+
+user_context: USER_CONTEXT {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON map_value {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context = $4;
+    ConstElementPtr old = parent->get("user-context");
+
+    // Handle already existing user context
+    if (old) {
+        // Check if it was a comment or a duplicate
+        if ((old->size() != 1) || !old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the comment
+        user_context->set("comment", old->get("comment"));
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
+    ctx.leave();
+};
+
+comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
+    user_context->set("comment", comment);
+
+    // Handle already existing user context
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        // Check for duplicate comment
+        if (old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context/comment entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the user context in the comment
+        merge(user_context, old);
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
+    ctx.leave();
 };
 
 // --- hooks-libraries ---------------------------------------------------------
@@ -403,6 +463,9 @@ control_socket_params: control_socket_param
 // We currently support two socket parameters: type and name.
 control_socket_param: socket_name
                     | socket_type
+                    | user_context
+                    | comment
+                    | unknown_map_entry
                     ;
 
 // This rule defines socket-name parameter.
@@ -510,6 +573,8 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,11 +23,20 @@
 namespace isc {
 namespace asiolink {
 
-    /// Defines length of IPv6 address.
-    const static size_t V6ADDRESS_LEN = 16;
+    /// Defines length of IPv6 address (in binary format).
+    static constexpr size_t V6ADDRESS_LEN = 16;
 
-    /// Defines length of IPv4 address.
-    const static size_t V4ADDRESS_LEN = 4;
+    /// Defines length of IPv4 address (in binary format).
+    static constexpr size_t V4ADDRESS_LEN = 4;
+
+    /// @brief Maximum size of an IPv4 address represented as a text string. 12
+    ///     digits plus 3 full stops (dots).
+    static constexpr size_t V4ADDRESS_TEXT_MAX_LEN = 15u;
+
+    /// @brief Maximum size of an IPv6 address represented as a text string. 32
+    ///     hexadecimal characters written in 8 groups of four, plus 7 colon
+    ///     separators.
+    static constexpr size_t V6ADDRESS_TEXT_MAX_LEN = 39u;
 
 /// \brief The \c IOAddress class represents an IP addresses (version
 /// agnostic)
@@ -136,7 +145,7 @@ public:
 
     /// \brief Creates an address from over wire data.
     ///
-    /// \param family AF_NET for IPv4 or AF_NET6 for IPv6.
+    /// \param family AF_INET for IPv4 or AF_INET6 for IPv6.
     /// \param data pointer to first char of data
     ///
     /// \return Created IOAddress object

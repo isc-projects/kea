@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <config/module_spec.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_simple_parser.h>
@@ -27,16 +26,6 @@ using namespace isc::d2;
 using namespace isc::process;
 
 namespace {
-
-/// @brief Function to create full path to the spec file
-///
-/// The full path is dependent upon the value of D2_SRC_DIR which
-/// whose value is generated from test_data_files_config.h.in
-///
-/// @param name file name to which the path should be prepended
-std::string specfile(const std::string& name) {
-    return (std::string(D2_SRC_DIR) + "/" + name);
-}
 
 /// @brief Function to create full path to test data file
 ///
@@ -228,14 +217,6 @@ public:
 #define RUN_CONFIG_OK(a) (runConfigOrFail(a, NO_ERROR, ""))
 #define SYNTAX_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,SYNTAX_ERROR,b))
 #define LOGIC_ERROR(a,b) ASSERT_TRUE(runConfigOrFail(a,LOGIC_ERROR,b))
-
-/// @brief Tests that the spec file is valid.
-/// Verifies that the DHCP-DDNS configuration specification file
-///  is valid.
-TEST(D2SpecTest, basicSpec) {
-    ASSERT_NO_THROW(isc::config::
-                    moduleSpecFromFile(specfile("dhcp-ddns.spec")));
-}
 
 /// @brief Tests a basic valid configuration for D2Param.
 TEST_F(D2CfgMgrTest, validParamsEntry) {
@@ -954,5 +935,92 @@ TEST_F(D2CfgMgrTest, configPermutations) {
     }
 }
 
+/// @brief Tests comments.
+TEST_F(D2CfgMgrTest, comments) {
+    std::string config = "{ "
+                        "\"comment\": \"D2 config\" , "
+                        "\"ip-address\" : \"192.168.1.33\" , "
+                        "\"port\" : 88 , "
+                        "\"tsig-keys\": ["
+                        "{"
+                        "  \"user-context\": { "
+                        "    \"comment\": \"Indirect comment\" } , "
+                        "  \"name\": \"d2_key.example.com\" , "
+                        "  \"algorithm\": \"hmac-md5\" , "
+                        "  \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\" "
+                        "}"
+                        "],"
+                        "\"forward-ddns\" : {"
+                        "\"ddns-domains\": [ "
+                        "{ \"comment\": \"A DDNS domain\" , "
+                        "  \"name\": \"example.com\" , "
+                        "  \"key-name\": \"d2_key.example.com\" , "
+                        "  \"dns-servers\" : [ "
+                        "  { \"ip-address\": \"127.0.0.1\" , "
+                        "    \"user-context\": { \"version\": 1 } } "
+                        "  ] } "
+                        "] } }";
+
+    // Should parse without error.
+    RUN_CONFIG_OK(config);
+
+    // Check the D2 context.
+    D2CfgContextPtr d2_context;
+    ASSERT_NO_THROW(d2_context = cfg_mgr_->getD2CfgContext());
+    ASSERT_TRUE(d2_context);
+
+    // Check global user context.
+    ConstElementPtr ctx = d2_context->getContext();
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(1, ctx->size());
+    ASSERT_TRUE(ctx->get("comment"));
+    EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
+
+    // Check TSIG keys.
+    TSIGKeyInfoMapPtr keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    ASSERT_EQ(1, keys->size());
+
+    // Check the TSIG key.
+    TSIGKeyInfoMap::iterator gotkey = keys->find("d2_key.example.com");
+    ASSERT_TRUE(gotkey != keys->end());
+    TSIGKeyInfoPtr key = gotkey->second;
+    ASSERT_TRUE(key);
+
+    // Check the TSIG key user context.
+    ConstElementPtr key_ctx = key->getContext();
+    ASSERT_TRUE(key_ctx);
+    ASSERT_EQ(1, key_ctx->size());
+    ASSERT_TRUE(key_ctx->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", key_ctx->get("comment")->str());
+
+    // Check the forward manager.
+    DdnsDomainListMgrPtr mgr = d2_context->getForwardMgr();
+    ASSERT_TRUE(mgr);
+    EXPECT_EQ("forward-ddns", mgr->getName());
+    DdnsDomainMapPtr domains = mgr->getDomains();
+    ASSERT_TRUE(domains);
+    ASSERT_EQ(1, domains->size());
+
+    // Check the DDNS domain.
+    DdnsDomainMap::iterator gotdns = domains->find("example.com");
+    ASSERT_TRUE(gotdns != domains->end());
+    DdnsDomainPtr domain = gotdns->second;
+    ASSERT_TRUE(domain);
+
+    // Check the DNS server.
+    DnsServerInfoStoragePtr servers = domain->getServers();
+    ASSERT_TRUE(servers);
+    ASSERT_EQ(1, servers->size());
+    DnsServerInfoPtr server = (*servers)[0];
+    ASSERT_TRUE(server);
+
+    // Check the DNS server user context.
+    ConstElementPtr srv_ctx = server->getContext();
+    ASSERT_TRUE(srv_ctx);
+    ASSERT_EQ(1, srv_ctx->size());
+    ASSERT_TRUE(srv_ctx->get("version"));
+    EXPECT_EQ("1", srv_ctx->get("version")->str());
+}
 
 } // end of anonymous namespace

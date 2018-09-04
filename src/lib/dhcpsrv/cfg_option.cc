@@ -1,13 +1,15 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <dhcp/libdhcp++.h>
-#include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_space.h>
 #include <util/encode/hex.h>
 #include <string>
 #include <sstream>
@@ -169,9 +171,7 @@ CfgOption::mergeInternal(const OptionSpaceContainer<OptionContainer,
             // If there is no such option in the destination container,
             // add one.
             if (std::distance(range.first, range.second) == 0) {
-                dest_container.addItem(OptionDescriptor(src_opt->option_,
-                                                        src_opt->persistent_),
-                                       *it);
+                dest_container.addItem(OptionDescriptor(*src_opt), *it);
             }
         }
     }
@@ -201,7 +201,9 @@ CfgOption::toElement() const {
              opt != opts->end(); ++opt) {
             // Get and fill the map for this option
             ElementPtr map = Element::createMap();
-            // First set space from parent iterator
+            // Set user context
+            opt->contextToElement(map);
+            // Set space from parent iterator
             map->set("space", Element::create(*name));
             // Set the code
             uint16_t code = opt->option_->getType();
@@ -210,6 +212,9 @@ CfgOption::toElement() const {
             OptionDefinitionPtr def = LibDHCP::getOptionDef(*name, code);
             if (!def) {
                 def = LibDHCP::getRuntimeOptionDef(*name, code);
+            }
+            if (!def) {
+                def = LibDHCP::getLastResortOptionDef(*name, code);
             }
             if (def) {
                 map->set("name", Element::create(def->getName()));
@@ -239,7 +244,9 @@ CfgOption::toElement() const {
              opt != opts->end(); ++opt) {
             // Get and fill the map for this option
             ElementPtr map = Element::createMap();
-            // First set space from parent iterator
+            // Set user context
+            opt->contextToElement(map);
+            // Set space from parent iterator
             std::ostringstream oss;
             oss << "vendor-" << *id;
             map->set("space", Element::create(oss.str()));
@@ -276,5 +283,5 @@ CfgOption::toElement() const {
     return (result);
 }
 
-} // end of namespace isc::dhcp
-} // end of namespace isc
+}  // namespace dhcp
+}  // namespace isc

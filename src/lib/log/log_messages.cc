@@ -1,5 +1,7 @@
 // File created from log_messages.mes on Tue Jan 24 2017 20:17
 
+#include <config.h>
+
 #include <cstddef>
 #include <log/message_types.h>
 #include <log/message_initializer.h>

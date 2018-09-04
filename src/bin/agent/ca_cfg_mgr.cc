@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,12 +57,6 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     }
 
     return (s.str());
-}
-
-isc::dhcp::ParserPtr
-CtrlAgentCfgMgr::createConfigParser(const std::string& /*element_id*/,
-                                    const isc::data::Element::Position& /*pos*/) {
-    isc_throw(NotImplemented, "We don't use parser pointers anymore");
 }
 
 DCfgContextBasePtr
@@ -149,6 +143,8 @@ CtrlAgentCfgContext::getControlSocketInfoSummary() const {
 ElementPtr
 CtrlAgentCfgContext::toElement() const {
     ElementPtr ca = Element::createMap();
+    // Set user-context
+    contextToElement(ca);
     // Set http-host
     ca->set("http-host", Element::create(http_host_));
     // Set http-port
@@ -158,7 +154,8 @@ CtrlAgentCfgContext::toElement() const {
     // Set control-sockets
     ElementPtr control_sockets = Element::createMap();
     for (auto si = ctrl_sockets_.cbegin(); si != ctrl_sockets_.cend(); ++si) {
-        control_sockets->set(si->first, si->second);
+        ConstElementPtr socket = UserContext::toElement(si->second);
+        control_sockets->set(si->first, socket);
     }
     ca->set("control-sockets", control_sockets);
     // Set Control-agent

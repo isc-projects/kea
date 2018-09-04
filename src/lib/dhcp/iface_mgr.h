@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -595,6 +595,15 @@ public:
         return (test_mode_);
     }
 
+    /// @brief Allows or disallows the loopback interface
+    ///
+    /// By default the loopback interface is not considered when opening
+    /// sockets. This flag provides a way to relax this constraint.
+    ///
+    void setAllowLoopBack(const bool allow_loopback) {
+        allow_loopback_ = allow_loopback;
+    }
+
     /// @brief Check if packet be sent directly to the client having no address.
     ///
     /// Checks if IfaceMgr can send DHCPv4 packet to the client
@@ -838,8 +847,8 @@ public:
     ///
     /// This method opens sockets only on interfaces which have the
     /// @c inactive6_ field set to false (are active). If the interface is active
-    /// but it is not running, it is down, or is a loopback interface,
-    /// an error is reported.
+    /// but it is not running, it is down, or is a loopback interface when
+    /// loopback is not allowed, an error is reported.
     ///
     /// On the systems with multiple interfaces, it is often desired that the
     /// failure to open a socket on a particular interface doesn't cause a
@@ -883,8 +892,8 @@ public:
     ///
     /// This method opens sockets only on interfaces which have the
     /// @c inactive4_ field set to false (are active). If the interface is active
-    /// but it is not running, it is down, or is a loopback interface,
-    /// an error is reported.
+    /// but it is not running, it is down, or is a loopback interface when
+    /// oopback is not allowed, an error is reported.
     ///
     /// The type of the socket being open depends on the selected Packet Filter
     /// represented by a class derived from @c isc::dhcp::PktFilter abstract
@@ -1217,6 +1226,9 @@ private:
 
     /// @brief Indicates if the IfaceMgr is in the test mode.
     bool test_mode_;
+
+    /// @brief Allows to use loopback
+    bool allow_loopback_;
 };
 
 }; // namespace isc::dhcp

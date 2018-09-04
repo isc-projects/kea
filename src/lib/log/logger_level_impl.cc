@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <algorithm>
 #include <string.h>
 #include <iostream>
@@ -177,20 +179,26 @@ LoggerLevelImpl::logLevelFromString(const log4cplus::tstring& level) {
 
 // Convert logging level to string.  If the level is a valid debug level,
 // return the string DEBUG, else return the empty string.
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
 LoggerLevelImpl::LogLevelString
+#else
+const LoggerLevelImpl::LogLevelString&
+#endif
 LoggerLevelImpl::logLevelToString(log4cplus::LogLevel level) {
     Level bindlevel = convertToBindLevel(level);
     Severity& severity = bindlevel.severity;
     int& dbglevel = bindlevel.dbglevel;
+    static LoggerLevelImpl::LogLevelString debug_ = tstring("DEBUG");
+    static LoggerLevelImpl::LogLevelString empty_ = tstring();
 
     if ((severity == DEBUG) &&
         ((dbglevel >= MIN_DEBUG_LEVEL) && (dbglevel <= MAX_DEBUG_LEVEL))) {
-        return (tstring("DEBUG"));
+        return (debug_);
     }
 
     // Unknown, so return empty string for log4cplus to try other conversion
     // functions.
-    return (tstring());
+    return (empty_);
 }
 
 // Initialization.  Register the conversion functions with the LogLevelManager.

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,11 +9,9 @@
 
 #include <asiolink/io_address.h>
 #include <cc/data.h>
-#include <dhcp/option.h>
-#include <dhcp/classify.h>
+#include <cc/user_context.h>
 #include <dhcp/option_space_container.h>
-#include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/cfg_4o6.h>
+#include <dhcpsrv/assignable_network.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
@@ -24,54 +22,21 @@
 #include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/random_access_index.hpp>
 #include <boost/multi_index_container.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <map>
 
 namespace isc {
 namespace dhcp {
 
-class Subnet {
+class Subnet : public virtual UserContext, public data::CfgToElement {
+
+    // Assignable network is our friend to allow it to call
+    // @ref Subnet::setSharedNetwork private function.
+    friend class AssignableNetwork;
+
 public:
-
-    /// @brief Holds optional information about relay.
-    ///
-    /// In some cases it is beneficial to have additional information about
-    /// a relay configured in the subnet. For now, the structure holds only
-    /// IP address, but there may potentially be additional parameters added
-    /// later, e.g. relay interface-id or relay-id.
-    struct RelayInfo {
-
-        /// @brief default and the only constructor
-        ///
-        /// @param addr an IP address of the relay (may be :: or 0.0.0.0)
-        RelayInfo(const isc::asiolink::IOAddress& addr);
-
-        /// @brief IP address of the relay
-        isc::asiolink::IOAddress addr_;
-    };
-
-    /// @brief Specifies allowed host reservation mode.
-    ///
-    typedef enum  {
-
-        /// None - host reservation is disabled. No reservation types
-        /// are allowed.
-        HR_DISABLED,
-
-        /// Only out-of-pool reservations is allowed. This mode
-        /// allows AllocEngine to skip reservation checks when
-        /// dealing with with addresses that are in pool.
-        HR_OUT_OF_POOL,
-
-        /// Both out-of-pool and in-pool reservations are allowed. This is the
-        /// most flexible mode, where sysadmin have biggest liberty. However,
-        /// there is a non-trivial performance penalty for it, as the
-        /// AllocEngine code has to check whether there are reservations, even
-        /// when dealing with reservations from within the dynamic pools.
-        HR_ALL
-    } HRMode;
-
-    /// Pointer to the RelayInfo structure
-    typedef boost::shared_ptr<Subnet::RelayInfo> RelayInfoPtr;
 
     /// @brief checks if specified address is in range
     bool inRange(const isc::asiolink::IOAddress& addr) const;
@@ -92,52 +57,50 @@ public:
     /// @return true if the address is in any of the pools
     bool inPool(Lease::Type type, const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Return valid-lifetime for addresses in that prefix
-    Triplet<uint32_t> getValid() const {
-        return (valid_);
-    }
+    /// @brief checks if the specified address is in allowed pools
+    ///
+    /// This takes also into account client classes
+    ///
+    /// @param type type of pools to iterate over
+    /// @param addr this address will be checked if it belongs to any pools in
+    ///        that subnet
+    /// @param client_classes client class list which must be allowed
+    /// @return true if the address is in any of the allowed pools
+    bool inPool(Lease::Type type,
+                const isc::asiolink::IOAddress& addr,
+                const ClientClasses& client_classes) const;
 
-    /// @brief Returns T1 (renew timer), expressed in seconds
-    Triplet<uint32_t> getT1() const {
-        return (t1_);
-    }
-
-    /// @brief Returns T2 (rebind timer), expressed in seconds
-    Triplet<uint32_t> getT2() const {
-        return (t2_);
-    }
-
-    /// @brief Returns pointer to the option data configuration for this subnet.
-    CfgOptionPtr getCfgOption() {
-        return (cfg_option_);
-    }
-
-    /// @brief Returns const pointer to the option data configuration for this
-    /// subnet.
-    ConstCfgOptionPtr getCfgOption() const {
-        return (cfg_option_);
-    }
-
-    /// @brief returns the last address that was tried from this pool
+    /// @brief returns the last address that was tried from this subnet
     ///
     /// This method returns the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
-    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     ///
     /// @param type lease type to be returned
-    /// @return address/prefix that was last tried from this pool
+    /// @return address/prefix that was last tried from this subnet
     isc::asiolink::IOAddress getLastAllocated(Lease::Type type) const;
 
-    /// @brief sets the last address that was tried from this pool
+    /// @brief Returns the timestamp when the @c setLastAllocated function
+    /// was called.
+    ///
+    /// @param lease_type Lease type for which last allocation timestamp should
+    /// be returned.
+    ///
+    /// @return Time when a lease of a specified type has been allocated from
+    /// this subnet. The negative infinity time is returned if a lease type is
+    /// not recognized (which is unlikely).
+    boost::posix_time::ptime getLastAllocatedTime(const Lease::Type& lease_type) const;
+
+    /// @brief sets the last address that was tried from this subnet
     ///
     /// This method sets the last address that was attempted to be allocated
     /// from this subnet. This is used as helper information for the next
     /// iteration of the allocation algorithm.
     ///
-    /// @todo: Define map<SubnetID, IOAddress> somewhere in the
+    /// @todo: Define map<SubnetID, ClientClass, IOAddress> somewhere in the
     ///        AllocEngine::IterativeAllocator and keep the data there
     /// @param addr address/prefix to that was tried last
     /// @param type lease type to be set
@@ -206,6 +169,17 @@ public:
     const PoolPtr getPool(Lease::Type type, const isc::asiolink::IOAddress& addr,
                           bool anypool = true) const;
 
+    /// @brief Returns a pool that specified address belongs to with classes
+    ///
+    /// Variant using only pools allowing given classes
+    ///
+    /// @param type pool type that the pool is looked for
+    /// @param client_classes client class list which must be allowed
+    /// @param addr address that the returned pool should cover (optional)
+    const PoolPtr getPool(Lease::Type type,
+                          const ClientClasses& client_classes,
+                          const isc::asiolink::IOAddress& addr) const;
+
     /// @brief Returns a pool without any address specified
     ///
     /// @param type pool type that the pool is looked for
@@ -233,15 +207,13 @@ public:
     /// @param type type of the lease
     uint64_t getPoolCapacity(Lease::Type type) const;
 
-    /// @brief Sets name of the network interface for directly attached networks
+    /// @brief Returns the number of possible leases for specified lease type
+    /// allowed for a client which belongs to classes.
     ///
-    /// @param iface_name name of the interface
-    void setIface(const std::string& iface_name);
-
-    /// @brief Network interface name used to reach subnet (or "" for remote
-    /// subnets)
-    /// @return network interface name for directly attached subnets or ""
-    std::string getIface() const;
+    /// @param type type of the lease
+    /// @param client_classes List of classes the client belongs to.
+    uint64_t getPoolCapacity(Lease::Type type,
+                             const ClientClasses& client_classes) const;
 
     /// @brief Returns textual representation of the subnet (e.g.
     /// "2001:db8::/64")
@@ -258,95 +230,39 @@ public:
         static_id_ = 1;
     }
 
-    /// @brief Sets information about relay
+    /// @brief Retrieves pointer to a shared network associated with a subnet.
     ///
-    /// In some situations where there are shared subnets (i.e. two different
-    /// subnets are available on the same physical link), there is only one
-    /// relay that handles incoming requests from clients. In such a case,
-    /// the usual subnet selection criteria based on relay belonging to the
-    /// subnet being selected are no longer sufficient and we need to explicitly
-    /// specify a relay. One notable example of such uncommon, but valid
-    /// scenario is a cable network, where there is only one CMTS (one relay),
-    /// but there are 2 distinct subnets behind it: one for cable modems
-    /// and another one for CPEs and other user equipment behind modems.
-    /// From manageability perspective, it is essential that modems get addresses
-    /// from different subnet, so users won't tinker with their modems.
+    /// By implementing it as a template function we overcome a need to
+    /// include shared_network.h header file to specify return type explicitly.
+    /// The header can't be included because it would cause circular dependency
+    /// between subnet.h and shared_network.h.
     ///
-    /// Setting this parameter is not needed in most deployments.
-    /// This structure holds IP address only for now, but it is expected to
-    /// be extended in the future.
+    /// This method uses an argument to hold a return value to allow the compiler
+    /// to infer the return type without a need to call this function with an
+    /// explicit return type as template argument.
     ///
-    /// @param relay structure that contains relay information
-    void setRelayInfo(const isc::dhcp::Subnet::RelayInfo& relay);
-
-
-    /// @brief Returns const reference to relay information
+    /// @param [out] shared_network Pointer to the shared network where returned
+    /// value should be assigned.
     ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned it is valid.
-    ///
-    /// @return const reference to the relay information
-    const isc::dhcp::Subnet::RelayInfo& getRelayInfo() const {
-        return (relay_);
+    /// @tparam Type of the shared network, i.e. @ref SharedNetwork4 or a
+    /// @ref SharedNetwork6.
+    template<typename SharedNetworkPtrType>
+    void getSharedNetwork(SharedNetworkPtrType& shared_network) const {
+        shared_network = boost::dynamic_pointer_cast<
+            typename SharedNetworkPtrType::element_type>(shared_network_.lock());
     }
 
-    /// @brief checks whether this subnet supports client that belongs to
-    ///        specified classes.
-    ///
-    /// This method checks whether a client that belongs to given classes can
-    /// use this subnet. For example, if this class is reserved for client
-    /// class "foo" and the client belongs to classes "foo", "bar" and "baz",
-    /// it is supported. On the other hand, client belonging to classes
-    /// "foobar" and "zyxxy" is not supported.
-    ///
-    /// @todo: Currently the logic is simple: client is supported if it belongs
-    /// to any class mentioned in white_list_. We will eventually need a
-    /// way to specify more fancy logic (e.g. to meet all classes, not just
-    /// any)
-    ///
-    /// @param client_classes list of all classes the client belongs to
-    /// @return true if client can be supported, false otherwise
-    bool
-    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+private:
 
-    /// @brief adds class class_name to the list of supported classes
+    /// @brief Assigns shared network to a subnet.
     ///
-    /// Also see explanation note in @ref white_list_.
+    /// This method replaces any shared network associated with a subnet with
+    /// a new shared network.
     ///
-    /// @param class_name client class to be supported by this subnet
-    void
-    allowClientClass(const isc::dhcp::ClientClass& class_name);
-
-    /// @brief returns the client class white list
-    ///
-    /// @note The returned reference is only valid as long as the object
-    /// returned it is valid.
-    ///
-    /// @return client classes @ref white_list_
-    const isc::dhcp::ClientClasses& getClientClasses() const {
-        return (white_list_);
-    }
-
-    /// @brief Specifies what type of Host Reservations are supported.
-    ///
-    /// Host reservations may be either in-pool (they reserve an address that
-    /// is in the dynamic pool) or out-of-pool (they reserve an address that is
-    /// not in the dynamic pool). HR may also be completely disabled for
-    /// performance reasons.
-    ///
-    /// @return whether in-pool host reservations are allowed.
-    HRMode
-    getHostReservationMode() const {
-        return (host_reservation_mode_);
-    }
-
-    /// @brief Sets host reservation mode.
-    ///
-    /// See @ref getHostReservationMode for details.
-    ///
-    /// @param mode mode to be set
-    void setHostReservationMode(HRMode mode) {
-        host_reservation_mode_ = mode;
+    /// @param shared_network Pointer to a new shared network to be associated
+    /// with the subnet.
+    void setSharedNetwork(const NetworkPtr& shared_network) {
+        shared_network_ = shared_network;
     }
 
 protected:
@@ -370,17 +286,9 @@ protected:
     ///
     /// @param prefix subnet prefix
     /// @param len prefix length for the subnet
-    /// @param t1 T1 (renewal-time) timer, expressed in seconds
-    /// @param t2 T2 (rebind-time) timer, expressed in seconds
-    /// @param valid_lifetime valid lifetime of leases in this subnet (in seconds)
-    /// @param relay optional relay information (currently with address only)
     /// @param id arbitrary subnet id, value of 0 triggers autogeneration
     /// of subnet id
     Subnet(const isc::asiolink::IOAddress& prefix, uint8_t len,
-           const Triplet<uint32_t>& t1,
-           const Triplet<uint32_t>& t2,
-           const Triplet<uint32_t>& valid_lifetime,
-           const isc::dhcp::Subnet::RelayInfo& relay,
            const SubnetID id);
 
     /// @brief virtual destructor
@@ -407,6 +315,10 @@ protected:
     ///
     /// @return the next unique Subnet-ID
     static SubnetID generateNextID() {
+        if (static_id_ == SUBNET_ID_MAX) {
+            resetSubnetID();
+        }
+
         return (static_id_++);
     }
 
@@ -420,10 +332,17 @@ protected:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const = 0;
 
-    /// @brief returns a sum of possible leases in all pools
+    /// @brief Returns a sum of possible leases in all pools
     /// @param pools list of pools
     /// @return sum of possible leases
     uint64_t sumPoolCapacity(const PoolCollection& pools) const;
+
+    /// @brief Returns a sum of possible leases in all pools allowing classes
+    /// @param pools list of pools
+    /// @param client_classes list of classes
+    /// @return sum of possible/allowed leases
+    uint64_t sumPoolCapacity(const PoolCollection& pools,
+                             const ClientClasses& client_classes) const;
 
     /// @brief Checks if the specified pool overlaps with an existing pool.
     ///
@@ -461,15 +380,6 @@ protected:
     /// @brief a prefix length of the subnet
     uint8_t prefix_len_;
 
-    /// @brief a triplet (min/default/max) holding allowed renew timer values
-    Triplet<uint32_t> t1_;
-
-    /// @brief a triplet (min/default/max) holding allowed rebind timer values
-    Triplet<uint32_t> t2_;
-
-    /// @brief a triplet (min/default/max) holding allowed valid lifetime values
-    Triplet<uint32_t> valid_;
-
     /// @brief last allocated address
     ///
     /// This is the last allocated address that was previously allocated from
@@ -491,47 +401,35 @@ protected:
     /// See @ref last_allocated_ia_ for details.
     isc::asiolink::IOAddress last_allocated_pd_;
 
+    /// @brief Timestamp indicating when a lease of a specified type has been
+    /// last allocated from this subnet.
+    std::map<Lease::Type, boost::posix_time::ptime> last_allocated_time_;
+
     /// @brief Name of the network interface (if connected directly)
     std::string iface_;
 
-    /// @brief Relay information
-    ///
-    /// See @ref RelayInfo for detailed description. This structure is public,
-    /// so its fields are easily accessible. Making it protected would bring in
-    /// the issue of returning references that may become stale after its parent
-    /// subnet object disappears.
-    RelayInfo relay_;
-
-    /// @brief optional definition of a client class
-    ///
-    /// If defined, only clients belonging to that class will be allowed to use
-    /// this particular subnet. The default value for this is an empty list,
-    /// which means that any client is allowed, regardless of its class.
-    ///
-    /// @todo This is just a single list of allowed classes. We'll also need
-    /// to add a black-list (only classes on the list are rejected, the rest
-    /// are allowed). Implementing this will require more fancy parser logic,
-    /// so it may be a while until we support this.
-    ClientClasses white_list_;
-
-    /// @brief Specifies host reservation mode
-    ///
-    /// See @ref HRMode type for details.
-    HRMode host_reservation_mode_;
-private:
-
-    /// @brief Pointer to the option data configuration for this subnet.
-    CfgOptionPtr cfg_option_;
+    /// @brief Pointer to a shared network that subnet belongs to.
+    WeakNetworkPtr shared_network_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
 typedef boost::shared_ptr<Subnet> SubnetPtr;
 
 
+class Subnet4;
+
+/// @brief A const pointer to a @c Subnet4 object.
+typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
+
+/// @brief A pointer to a @c Subnet4 object.
+typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
+
 /// @brief A configuration holder for IPv4 subnet.
 ///
 /// This class represents an IPv4 subnet.
-class Subnet4 : public Subnet {
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
+class Subnet4 : public Subnet, public Network4 {
 public:
 
     /// @brief Constructor with all parameters
@@ -551,6 +449,49 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
+    /// @brief Returns next subnet within shared network.
+    ///
+    /// If the current subnet doesn't belong to any shared network or if
+    /// the next subnet is the same as first subnet (specified in the
+    /// argument) a NULL pointer is returned.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet) const;
+
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
+    ///
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet4Ptr getNextSubnet(const Subnet4Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
+
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
+
     /// @brief Sets siaddr for the Subnet4
     ///
     /// Will be used for siaddr field (the next server) that typically is used
@@ -563,22 +504,25 @@ public:
     /// @return siaddr value
     isc::asiolink::IOAddress getSiaddr() const;
 
-    /// @brief Sets the flag indicating if the client identifier should be
-    /// used to identify the client's lease.
+    /// @brief Sets server hostname for the Subnet4 
     ///
-    /// @param match If this value is true, the client identifiers are not
-    /// used for lease lookup.
-    void setMatchClientId(const bool match) {
-        match_client_id_ = match;
-    }
+    /// Will be used for server hostname field (may be empty if not defined)
+    void setSname(const std::string& sname);
 
-    /// @brief Returns the flag indicating if the client identifiers should
-    /// be used to identify the client's lease.
+    /// @brief Returns server hostname for this subnet
     ///
-    /// @return true if client identifiers should be used, false otherwise.
-    bool getMatchClientId() const {
-        return (match_client_id_);
-    }
+    /// @return server hostname value
+    const std::string& getSname() const;
+
+    /// @brief Sets boot file name for the Subnet4 
+    ///
+    /// Will be used for boot file name (may be empty if not defined)
+    void setFilename(const std::string& filename);
+
+    /// @brief Returns boot file name for this subnet
+    ///
+    /// @return boot file name value
+    const std::string& getFilename() const;
 
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
@@ -620,25 +564,30 @@ private:
     /// @brief siaddr value for this subnet
     isc::asiolink::IOAddress siaddr_;
 
-    /// @brief Should server use client identifiers for client lease
-    /// lookup.
-    bool match_client_id_;
+    /// @brief server hostname for this subnet
+    std::string sname_;
+
+    /// @brief boot file name for this subnet
+    std::string filename_;
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;
 };
 
-/// @brief A const pointer to a @c Subnet4 object.
-typedef boost::shared_ptr<const Subnet4> ConstSubnet4Ptr;
+class Subnet6;
 
-/// @brief A pointer to a @c Subnet4 object.
-typedef boost::shared_ptr<Subnet4> Subnet4Ptr;
+/// @brief A const pointer to a @c Subnet6 object.
+typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
 
+/// @brief A pointer to a Subnet6 object
+typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
 /// @brief A configuration holder for IPv6 subnet.
 ///
 /// This class represents an IPv6 subnet.
-class Subnet6 : public Subnet {
+/// @note Subnet and Network use virtual inheritance to avoid
+/// a diamond issue with UserContext
+class Subnet6 : public Subnet, public Network6 {
 public:
 
     /// @brief Constructor with all parameters
@@ -660,41 +609,48 @@ public:
             const Triplet<uint32_t>& valid_lifetime,
             const SubnetID id = 0);
 
-    /// @brief Returns preferred lifetime (in seconds)
+    /// @brief Returns next subnet within shared network.
     ///
-    /// @return a triplet with preferred lifetime
-    Triplet<uint32_t> getPreferred() const {
-        return (preferred_);
-    }
-
-    /// @brief sets interface-id option (if defined)
+    /// If the current subnet doesn't belong to any shared network or if
+    /// the next subnet is the same as first subnet (specified in the
+    /// arguments) a NULL pointer is returned.
     ///
-    /// @param ifaceid pointer to interface-id option
-    void setInterfaceId(const OptionPtr& ifaceid) {
-        interface_id_ = ifaceid;
-    }
-
-    /// @brief returns interface-id value (if specified)
-    /// @return interface-id option (if defined)
-    OptionPtr getInterfaceId() const {
-        return interface_id_;
-    }
-
-    /// @brief Enables or disables Rapid Commit option support for the subnet.
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
     ///
-    /// @param rapid_commit A boolean value indicating that the Rapid Commit
-    /// option support is enabled (if true), or disabled (if false).
-    void setRapidCommit(const bool rapid_commit) {
-        rapid_commit_ = rapid_commit;
-    };
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet) const;
 
-    /// @brief Returns boolean value indicating that the Rapid Commit option
-    /// is supported or unsupported for the subnet.
+    /// @brief Returns next subnet within shared network that matches
+    /// client classes.
     ///
-    /// @return true if the Rapid Commit option is supported, false otherwise.
-    bool getRapidCommit() const {
-        return (rapid_commit_);
-    }
+    /// @param first_subnet Pointer to the subnet from which iterations have
+    /// started.
+    /// @param client_classes List of classes that the client belongs to.
+    /// The subnets not matching the classes aren't returned by this
+    /// method.
+    ///
+    /// @return Pointer to the next subnet or NULL pointer if the next subnet
+    /// is the first subnet or if the current subnet doesn't belong to a
+    /// shared network.
+    Subnet6Ptr getNextSubnet(const Subnet6Ptr& first_subnet,
+                             const ClientClasses& client_classes) const;
+
+    /// @brief Checks whether this subnet and parent shared network supports
+    /// the client that belongs to specified classes.
+    ///
+    /// This method extends the @ref Network::clientSupported method with
+    /// additional checks whether shared network owning this class supports
+    /// the client belonging to specified classes. If the class doesn't
+    /// belong to a shared network this method only checks if the subnet
+    /// supports specified classes.
+    ///
+    /// @param client_classes List of classes the client belongs to.
+    /// @return true if client can be supported, false otherwise.
+    virtual bool
+    clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
     /// @brief Unparse a subnet object.
     ///
@@ -717,26 +673,7 @@ private:
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const;
 
-    /// @brief specifies optional interface-id
-    OptionPtr interface_id_;
-
-    /// @brief a triplet with preferred lifetime (in seconds)
-    Triplet<uint32_t> preferred_;
-
-    /// @brief A flag indicating if Rapid Commit option is supported
-    /// for this subnet.
-    ///
-    /// It's default value is false, which indicates that the Rapid
-    /// Commit is disabled for the subnet.
-    bool rapid_commit_;
-
 };
-
-/// @brief A const pointer to a @c Subnet6 object.
-typedef boost::shared_ptr<const Subnet6> ConstSubnet6Ptr;
-
-/// @brief A pointer to a Subnet6 object
-typedef boost::shared_ptr<Subnet6> Subnet6Ptr;
 
 /// @name Definition of the multi index container holding subnet information
 ///
@@ -751,13 +688,20 @@ struct SubnetSubnetIdIndexTag { };
 /// @brief Tag for the index for searching by subnet prefix.
 struct SubnetPrefixIndexTag { };
 
-/// @brief Multi index container holding subnets.
+/// @brief Tag for the index for searching by server identifier.
+struct SubnetServerIdIndexTag { };
+
+/// @brief A collection of @c Subnet4 objects
 ///
-/// This multi index container can hold pointers to @ref Subnet4 or
-/// @ref Subnet6 objects representing subnets. It provides indexes for
-/// subnet lookups using subnet properties such as: subnet identifier
-/// or subnet prefix. It also provides a random access index which
-/// allows for using the container like a vector.
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+///
+/// This multi index container can hold pointers to @ref Subnet4
+/// objects representing subnets. It provides indexes for subnet lookups
+/// using subnet properties such as: subnet identifier,
+/// subnet prefix or server identifier specified for a subnet. It also
+/// provides a random access index which allows for using the container
+/// like a vector.
 ///
 /// The random access index is used by the DHCP servers which perform
 /// a full scan on subnets to find the one that matches some specific
@@ -770,12 +714,61 @@ struct SubnetPrefixIndexTag { };
 /// @todo We should consider optimizing subnet selection by leveraging
 /// the indexing capabilities of this container, e.g. searching for
 /// a subnet by interface name, relay address etc.
-///
-/// @tparam SubnetType Type of the subnet: @ref Subnet4 or @ref Subnet6.
-template<typename SubnetType>
-using SubnetCollection = boost::multi_index_container<
+typedef boost::multi_index_container<
     // Multi index container holds pointers to the subnets.
-    boost::shared_ptr<SubnetType>,
+    Subnet4Ptr,
+    // The following holds all indexes.
+    boost::multi_index::indexed_by<
+        // First is the random access index allowing for accessing
+        // objects just like we'd do with a vector.
+        boost::multi_index::random_access<
+            boost::multi_index::tag<SubnetRandomAccessIndexTag>
+        >,
+        // Second index allows for searching using subnet identifier.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetSubnetIdIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, SubnetID, &Subnet::getID>
+        >,
+        // Third index allows for searching using an output from toText function.
+        boost::multi_index::ordered_unique<
+            boost::multi_index::tag<SubnetPrefixIndexTag>,
+            boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >,
+
+        // Fourth index allows for searching using an output from getServerId
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetServerIdIndexTag>,
+            boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
+                                              &Network4::getServerId>
+        >
+    >
+> Subnet4Collection;
+
+/// @brief A collection of @c Subnet6 objects
+///
+/// This container provides a set of indexes which can be used to retrieve
+/// subnets by various properties.
+///
+/// This multi index container can hold pointers to @ref Subnet6 objects
+/// representing subnets. It provides indexes for subnet lookups using
+/// subnet properties such as: subnet identifier or subnet prefix. It
+/// also provides a random access index which allows for using the
+/// container like a vector.
+///
+/// The random access index is used by the DHCP servers which perform
+/// a full scan on subnets to find the one that matches some specific
+/// criteria for subnet selection.
+///
+/// The remaining indexes are used for searching for a specific subnet
+/// as a result of receiving a command over the control API, e.g.
+/// when 'subnet-get' command is received.
+///
+/// @todo We should consider optimizing subnet selection by leveraging
+/// the indexing capabilities of this container, e.g. searching for
+/// a subnet by interface name, relay address etc.
+typedef boost::multi_index_container<
+    // Multi index container holds pointers to the subnets.
+    Subnet6Ptr,
     // The following holds all indexes.
     boost::multi_index::indexed_by<
         // First is the random access index allowing for accessing
@@ -794,19 +787,7 @@ using SubnetCollection = boost::multi_index_container<
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >
     >
->;
-
-/// @brief A collection of @c Subnet4 objects
-///
-/// This container provides a set of indexes which can be used to retrieve
-/// subnets by various properties.
-typedef SubnetCollection<Subnet4> Subnet4Collection;
-
-/// @brief A collection of @c Subnet6 objects
-///
-/// This container provides a set of indexes which can be used to retrieve
-/// subnets by various properties.
-typedef SubnetCollection<Subnet6> Subnet6Collection;
+> Subnet6Collection;
 
 //@}
 

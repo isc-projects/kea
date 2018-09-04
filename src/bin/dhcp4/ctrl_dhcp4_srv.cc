@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,12 +15,15 @@
 #include <dhcp4/json_config_parser.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <hooks/hooks.h>
 #include <hooks/hooks_manager.h>
 #include <stats/stats_mgr.h>
 #include <cfgrpt/config_report.h>
 #include <signal.h>
+#include <sstream>
 
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::config;
@@ -28,6 +31,23 @@ using namespace isc::stats;
 using namespace std;
 
 namespace {
+
+/// Structure that holds registered hook indexes.
+struct CtrlDhcp4Hooks {
+    int hooks_index_dhcp4_srv_configured_;
+
+    /// Constructor that registers hook points for the DHCPv4 server.
+    CtrlDhcp4Hooks() {
+        hooks_index_dhcp4_srv_configured_ = HooksManager::registerHook("dhcp4_srv_configured");
+    }
+
+};
+
+// Declare a Hooks object. As this is outside any function or method, it
+// will be instantiated (and the constructor run) when the module is loaded.
+// As a result, the hook indexes will be defined before any method in this
+// module is called.
+CtrlDhcp4Hooks Hooks;
 
 /// @brief Signals handler for DHCPv4 server.
 ///
@@ -318,6 +338,10 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
     Daemon::configureLogger(args->get("Logging"),
                             CfgMgr::instance().getStagingCfg());
 
+    // Let's apply the new logging. We do it early, so we'll be able to print
+    // out what exactly is wrong with the new socnfig in case of problems.
+    CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
     // Now we configure the server proper.
     ConstElementPtr result = processConfig(dhcp4);
 
@@ -331,6 +355,11 @@ ControlledDhcpv4Srv::commandConfigSetHandler(const string&,
 
         // Use new configuration.
         CfgMgr::instance().commit();
+    } else {
+        // Ok, we applied the logging from the upcoming configuration, but
+        // there were problems with the config. As such, we need to back off
+        // and revert to the previous logging configuration.
+        CfgMgr::instance().getCurrentCfg()->applyLoggingCfg();
     }
 
     return (result);
@@ -372,6 +401,64 @@ ControlledDhcpv4Srv::commandConfigTestHandler(const string&,
 
     // Now we check the server proper.
     return (checkConfig(dhcp4));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandDhcpDisableHandler(const std::string&,
+                                               ConstElementPtr args) {
+    std::ostringstream message;
+    int64_t max_period = 0;
+
+    // Parse arguments to see if the 'max-period' parameter has been specified.
+    if (args) {
+        // Arguments must be a map.
+        if (args->getType() != Element::map) {
+            message << "arguments for the 'dhcp-disable' command must be a map";
+
+        } else {
+            ConstElementPtr max_period_element = args->get("max-period");
+            // max-period is optional.
+            if (max_period_element) {
+                // It must be an integer, if specified.
+                if (max_period_element->getType() != Element::integer) {
+                    message << "'max-period' argument must be a number";
+
+                } else {
+                    // It must be positive integer.
+                    max_period = max_period_element->intValue();
+                    if (max_period <= 0) {
+                        message << "'max-period' must be positive integer";
+                    }
+
+                    // The user specified that the DHCP service should resume not
+                    // later than in max-period seconds. If the 'dhcp-enable' command
+                    // is not sent, the DHCP service will resume automatically.
+                    network_state_->delayedEnableAll(static_cast<unsigned>(max_period));
+                }
+            }
+        }
+    }
+
+    // No error occurred, so let's disable the service.
+    if (message.tellp() == 0) {
+        network_state_->disableService();
+
+        message << "DHCPv4 service disabled";
+        if (max_period > 0) {
+            message << " for " << max_period << " seconds";
+        }
+        // Success.
+        return (config::createAnswer(CONTROL_RESULT_SUCCESS, message.str()));
+    }
+
+    // Failure.
+    return (config::createAnswer(CONTROL_RESULT_ERROR, message.str()));
+}
+
+ConstElementPtr
+ControlledDhcpv4Srv::commandDhcpEnableHandler(const std::string&, ConstElementPtr) {
+    network_state_->enableService();
+    return (config::createAnswer(CONTROL_RESULT_SUCCESS, "DHCP service successfully enabled"));
 }
 
 ConstElementPtr
@@ -455,6 +542,12 @@ ControlledDhcpv4Srv::processCommand(const string& command,
         } else if (command == "config-test") {
             return (srv->commandConfigTestHandler(command, args));
 
+        } else if (command == "dhcp-disable") {
+            return (srv->commandDhcpDisableHandler(command, args));
+
+        } else if (command == "dhcp-enable") {
+            return (srv->commandDhcpEnableHandler(command, args));
+
         } else if (command == "version-get") {
             return (srv->commandVersionGetHandler(command, args));
 
@@ -511,10 +604,11 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Re-open lease and host database with new parameters.
     try {
+        DatabaseConnection::db_lost_callback =
+            boost::bind(&ControlledDhcpv4Srv::dbLostCallback, srv, _1);
         CfgDbAccessPtr cfg_db = CfgMgr::instance().getStagingCfg()->getCfgDbAccess();
         cfg_db->setAppendedParameters("universe=4");
         cfg_db->createManagers();
-
     } catch (const std::exception& ex) {
         err << "Unable to open database: " << ex.what();
         return (isc::config::createAnswer(1, err.str()));
@@ -561,6 +655,26 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
             " reclamation of the expired leases: "
             << ex.what() << ".";
         return (isc::config::createAnswer(1, err.str()));
+    }
+
+    // This hook point notifies hooks libraries that the configuration of the
+    // DHCPv4 server has completed. It provides the hook library with the pointer
+    // to the common IO service object, new server configuration in the JSON
+    // format and with the pointer to the configuration storage where the
+    // parsed configuration is stored.
+    if (HooksManager::calloutsPresent(Hooks.hooks_index_dhcp4_srv_configured_)) {
+        CalloutHandlePtr callout_handle = HooksManager::createCalloutHandle();
+
+        callout_handle->setArgument("io_context", srv->getIOService());
+        callout_handle->setArgument("network_state", srv->getNetworkState());
+        callout_handle->setArgument("json_config", config);
+        callout_handle->setArgument("server_config", CfgMgr::instance().getStagingCfg());
+
+        HooksManager::callCallouts(Hooks.hooks_index_dhcp4_srv_configured_,
+                                   *callout_handle);
+
+        // Ignore status code as none of them would have an effect on further
+        // operation.
     }
 
     return (answer);
@@ -619,6 +733,12 @@ ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
     CommandMgr::instance().registerCommand("config-write",
         boost::bind(&ControlledDhcpv4Srv::commandConfigWriteHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand("dhcp-enable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpEnableHandler, this, _1, _2));
+
+    CommandMgr::instance().registerCommand("dhcp-disable",
+        boost::bind(&ControlledDhcpv4Srv::commandDhcpDisableHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand("libreload",
         boost::bind(&ControlledDhcpv4Srv::commandLibReloadHandler, this, _1, _2));
 
@@ -661,6 +781,10 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
     try {
         cleanup();
 
+        // The closure captures either a shared pointer (memory leak)
+        // or a raw pointer (pointing to a deleted object).
+        DatabaseConnection::db_lost_callback = 0;
+
         timer_mgr_->unregisterTimers();
 
         // Close the command socket (if it exists).
@@ -675,6 +799,8 @@ ControlledDhcpv4Srv::~ControlledDhcpv4Srv() {
         CommandMgr::instance().deregisterCommand("leases-reclaim");
         CommandMgr::instance().deregisterCommand("libreload");
         CommandMgr::instance().deregisterCommand("config-set");
+        CommandMgr::instance().deregisterCommand("dhcp-disable");
+        CommandMgr::instance().deregisterCommand("dhcp-enable");
         CommandMgr::instance().deregisterCommand("shutdown");
         CommandMgr::instance().deregisterCommand("statistic-get");
         CommandMgr::instance().deregisterCommand("statistic-get-all");
@@ -719,6 +845,81 @@ ControlledDhcpv4Srv::deleteExpiredReclaimedLeases(const uint32_t secs) {
     server_->alloc_engine_->deleteExpiredReclaimedLeases4(secs);
     // We're using the ONE_SHOT timer so there is a need to re-schedule it.
     TimerMgr::instance()->setup(CfgExpiration::FLUSH_RECLAIMED_TIMER_NAME);
+}
+
+void
+ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
+    bool reopened = false;
+
+    // Re-open lease and host database with new parameters.
+    try {
+        CfgDbAccessPtr cfg_db = CfgMgr::instance().getCurrentCfg()->getCfgDbAccess();
+        cfg_db->createManagers();
+        reopened = true;
+    } catch (const std::exception& ex) {
+        LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_FAILED).arg(ex.what());
+    }
+
+    if (reopened) {
+        // Cancel the timer.
+        if (TimerMgr::instance()->isTimerRegistered("Dhcp4DbReconnectTimer")) {
+            TimerMgr::instance()->cancel("Dhcp4DbReconnectTimer");
+        }
+
+        // Set network state to service enabled
+        network_state_->enableService();
+
+        // Toss the reconnect control, we're done with it
+        db_reconnect_ctl.reset();
+    } else {
+        if (!db_reconnect_ctl->checkRetries()) {
+            LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED)
+            .arg(db_reconnect_ctl->maxRetries());
+            shutdown();
+            return;
+        }
+
+        LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE)
+                .arg(db_reconnect_ctl->maxRetries() - db_reconnect_ctl->retriesLeft() + 1)
+                .arg(db_reconnect_ctl->maxRetries())
+                .arg(db_reconnect_ctl->retryInterval());
+
+        if (!TimerMgr::instance()->isTimerRegistered("Dhcp4DbReconnectTimer")) {
+            TimerMgr::instance()->registerTimer("Dhcp4DbReconnectTimer",
+                            boost::bind(&ControlledDhcpv4Srv::dbReconnect, this,
+                                        db_reconnect_ctl),
+                            db_reconnect_ctl->retryInterval() * 1000,
+                            asiolink::IntervalTimer::ONE_SHOT);
+        }
+
+        TimerMgr::instance()->setup("Dhcp4DbReconnectTimer");
+    }
+}
+
+bool
+ControlledDhcpv4Srv::dbLostCallback(ReconnectCtlPtr db_reconnect_ctl) {
+    // Disable service until we recover
+    network_state_->disableService();
+
+    if (!db_reconnect_ctl) {
+        // This shouldn't never happen
+        LOG_ERROR(dhcp4_logger, DHCP4_DB_RECONNECT_NO_DB_CTL);
+        return (false);
+    }
+
+    // If reconnect isn't enabled, log it and return false
+    if (!db_reconnect_ctl->retriesLeft() ||
+        !db_reconnect_ctl->retryInterval()) {
+        LOG_INFO(dhcp4_logger, DHCP4_DB_RECONNECT_DISABLED)
+            .arg(db_reconnect_ctl->retriesLeft())
+            .arg(db_reconnect_ctl->retryInterval());
+        return(false);
+    }
+
+    // Invoke reconnect method
+    dbReconnect(db_reconnect_ctl);
+
+    return(true);
 }
 
 }; // end of isc::dhcp namespace

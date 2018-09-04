@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/callout_manager.h>
 #include <hooks/library_handle.h>
@@ -78,7 +80,7 @@ LibraryHandle::deregisterAllCallouts(const std::string& name) {
 }
 
 isc::data::ConstElementPtr
-LibraryHandle::getParameter(const std::string& name) {
+LibraryHandle::getParameters() {
     HookLibsCollection libinfo = HooksManager::getHooksManager().getLibraryInfo();
 
     int index = index_;
@@ -101,8 +103,13 @@ LibraryHandle::getParameter(const std::string& name) {
     // * 1..numlib - indexes for actual libraries
     // * INT_MAX - post-user library callout
 
+    return (libinfo[index - 1].second);
+}
+
+isc::data::ConstElementPtr
+LibraryHandle::getParameter(const std::string& name) {
     // Try to find appropriate parameter. May return null pointer
-    isc::data::ConstElementPtr params = libinfo[index - 1].second;
+    isc::data::ConstElementPtr params = getParameters();
     if (!params) {
         return (isc::data::ConstElementPtr());
     }
@@ -110,6 +117,24 @@ LibraryHandle::getParameter(const std::string& name) {
     // May return null pointer if there's no parameter.
     return (params->get(name));
 }
+
+std::vector<std::string>
+LibraryHandle::getParameterNames() {
+    std::vector<std::string> names;
+    // Find all parameter names.
+    isc::data::ConstElementPtr params = getParameters();
+    if (!params ||
+        (params->getType() != isc::data::Element::map) ||
+        (params->size() == 0)) {
+        return (names);
+    }
+    auto map = params->mapValue();
+    for (auto elem = map.begin(); elem != map.end(); ++elem) {
+        names.push_back(elem->first);
+    }
+    return (names);
+}
+
 
 } // namespace util
 } // namespace isc

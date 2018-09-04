@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,8 +105,8 @@ TEST_F(ClientConnectionTest, success) {
     bool handler_invoked = false;
     conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
                ClientConnection::ControlCommand(command),
-        [this, &handler_invoked](const boost::system::error_code& ec,
-                                 const ConstJSONFeedPtr& feed) {
+        [&handler_invoked](const boost::system::error_code& ec,
+                           const ConstJSONFeedPtr& feed) {
         // Indicate that the handler has been called to break from the
         // while loop below.
         handler_invoked = true;
@@ -146,8 +146,8 @@ TEST_F(ClientConnectionTest, timeout) {
     bool handler_invoked = false;
     conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
               ClientConnection::ControlCommand(command),
-    [this, &handler_invoked](const boost::system::error_code& ec,
-                             const ConstJSONFeedPtr& /*feed*/) {
+    [&handler_invoked](const boost::system::error_code& ec,
+                       const ConstJSONFeedPtr& /*feed*/) {
         // Indicate that the callback has been invoked to break the loop
         // below.
         handler_invoked = true;
@@ -172,8 +172,8 @@ TEST_F(ClientConnectionTest, connectionError) {
     bool handler_invoked = false;
     conn.start(ClientConnection::SocketPath(unixSocketFilePath()),
                ClientConnection::ControlCommand(command),
-    [this, &handler_invoked](const boost::system::error_code& ec,
-                             const ConstJSONFeedPtr& /*feed*/) {
+    [&handler_invoked](const boost::system::error_code& ec,
+                       const ConstJSONFeedPtr& /*feed*/) {
         handler_invoked = true;
         ASSERT_TRUE(ec);
     });

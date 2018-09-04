@@ -1,8 +1,5 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,21 +7,20 @@
 -->
 
 <refentry>
-  <refentryinfo>
+  <info>
     <productname>ISC Kea</productname>
-    <date>Sep. 28, 2016</date>
-    <edition>1.1.0</edition>
+    <date>June 15, 2018</date>
+    <edition>1.4.0</edition>
     <author>
+      <personname/>
       <contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
         Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-      <orgname>Internet Systems Consortium, Inc.</orgname>
-    </author>
-  </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
 
   <refmeta>
     <refentrytitle>keactrl</refentrytitle>
@@ -39,17 +35,18 @@
 
   <docinfo>
     <copyright>
-      <year>2014-2016</year>
+      <year>2014-2018</year>
       <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
     </copyright>
   </docinfo>
 
   <refsynopsisdiv>
-    <cmdsynopsis>
+    <cmdsynopsis sepchar=" ">
       <command>keactrl</command>
-      <arg>command</arg>
-      <arg><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
-      <arg><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat">command</arg>
+      <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">keactrl-config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">server[,server,...]</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -184,6 +181,15 @@
         </listitem>
       </varlistentry>
 
+      <varlistentry>
+        <term><option>-v|--version</option></term>
+        <listitem>
+          <para>
+            Prints keactrl version and quits.
+          </para>
+        </listitem>
+      </varlistentry>
+
     </variablelist>
   </refsect1>
 
@@ -249,6 +255,11 @@
 
       <citerefentry>
         <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

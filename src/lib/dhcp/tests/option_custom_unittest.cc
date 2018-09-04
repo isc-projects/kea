@@ -102,13 +102,13 @@ public:
         switch (sizeof(T)) {
         case 4:
             buf.push_back((value >> 24) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 3:
             buf.push_back((value >> 16) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 2:
             buf.push_back((value >> 8) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 1:
             buf.push_back(value & 0xFF);
             break;
@@ -1275,6 +1275,97 @@ TEST_F(OptionCustomTest, recordData) {
     EXPECT_EQ("ABCD", value6);
 }
 
+// The purpose of this test is to verify that the option definition comprising
+// a record of various data fields with an array for the last can be used
+// to create an instance of custom option.
+TEST_F(OptionCustomTest, recordArrayData) {
+    // Create the definition of an option which comprises
+    // a record of fields of different types.
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record", true);
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("psid"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+
+    const char fqdn_data[] = {
+        8, 109, 121, 100, 111, 109, 97, 105, 110, // "mydomain"
+        7, 101, 120, 97, 109, 112, 108, 101,      // "example"
+        3, 99, 111, 109,                          // "com"
+        0,
+    };
+
+    OptionBuffer buf;
+    // Initialize field 0 to 8712.
+    writeInt<uint16_t>(8712, buf);
+    // Initialize field 1 to 'true'
+    writeInt<uint8_t>(1, buf);
+    // Initialize field 2 to 'mydomain.example.com'.
+    buf.insert(buf.end(), fqdn_data, fqdn_data + sizeof(fqdn_data));
+    // Initialize field 3 to IPv4 address.
+    writeAddress(IOAddress("192.168.0.1"), buf);
+    // Initialize field 4 to IPv6 address.
+    writeAddress(IOAddress("2001:db8:1::1"), buf);
+    // Initialize PSID len and PSID value.
+    writeInt<uint8_t>(6, buf);
+    writeInt<uint16_t>(0xD400, buf);
+    // Initialize last field 6 to a pair of int 12345678 and 87654321.
+    writeInt<uint32_t>(12345678, buf);
+    writeInt<uint32_t>(87654321, buf);
+
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+         option.reset(new OptionCustom(opt_def, Option::V6, buf.begin(), buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 7+1 data fields.
+    ASSERT_EQ(8, option->getDataFieldsNum());
+
+    // Verify value in the field 0.
+    uint16_t value0 = 0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(8712, value0);
+
+    // Verify value in the field 1.
+    bool value1 = false;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_TRUE(value1);
+
+    // Verify value in the field 2.
+    std::string value2 = "";
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("mydomain.example.com.", value2);
+
+    // Verify value in the field 3.
+    IOAddress value3("127.0.0.1");
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("192.168.0.1", value3.toText());
+
+    // Verify value in the field 4.
+    IOAddress value4("::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::1", value4.toText());
+
+    // Verify value in the field 5.
+    PSIDTuple value5;
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(6, value5.first.asUnsigned());
+    EXPECT_EQ(0x35, value5.second.asUint16());
+
+    // Verify value in the field 6.
+    uint32_t value6;
+    ASSERT_NO_THROW(value6 = option->readInteger<uint32_t>(6));
+    EXPECT_EQ(12345678, value6);
+
+    // Verify value in the extra field 7.
+    uint32_t value7;
+    ASSERT_NO_THROW(value7 = option->readInteger<uint32_t>(7));
+    EXPECT_EQ(87654321, value7);
+}
+
 // The purpose of this test is to verify that truncated buffer
 // can't be used to create an option being a record of value of
 // different types.
@@ -2000,6 +2091,103 @@ TEST_F(OptionCustomTest, setRecordData) {
     EXPECT_EQ(value8, "hello world");
 }
 
+TEST_F(OptionCustomTest, setRecordArrayData) {
+    OptionDefinition opt_def("OPTION_FOO", 1000, "record", true);
+
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("boolean"));
+    ASSERT_NO_THROW(opt_def.addRecordField("fqdn"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-address"));
+    ASSERT_NO_THROW(opt_def.addRecordField("psid"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv6-prefix"));
+    ASSERT_NO_THROW(opt_def.addRecordField("tuple"));
+    ASSERT_NO_THROW(opt_def.addRecordField("uint32"));
+
+    // Create an option and let the data field be initialized
+    // to default value (do not provide any data buffer).
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V6));
+    );
+    ASSERT_TRUE(option);
+
+    // The number of elements should be equal to number of elements
+    // in the record.
+    ASSERT_EQ(9, option->getDataFieldsNum());
+
+    // Check that the default values have been correctly set.
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(0, value0);
+    bool value1 = true;
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_FALSE(value1);
+    std::string value2;
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ(".", value2);
+    IOAddress value3("127.0.0.1");
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("0.0.0.0", value3.toText());
+    IOAddress value4("2001:db8:1::1");
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("::", value4.toText());
+    PSIDTuple value5;
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(0, value5.first.asUnsigned());
+    EXPECT_EQ(0, value5.second.asUint16());
+    PrefixTuple value6(ZERO_PREFIX_TUPLE);
+    ASSERT_NO_THROW(value6 = option->readPrefix(6));
+    EXPECT_EQ(0, value6.first.asUnsigned());
+    EXPECT_EQ("::", value6.second.toText());
+    std::string value7 = "abc";
+    // Tuple has no default value
+    EXPECT_THROW(option->readTuple(7), BadDataTypeCast);
+    uint32_t value8;
+    ASSERT_NO_THROW(value8 = option->readInteger<uint32_t>(8));
+    EXPECT_EQ(0, value8);
+
+    // Override each value with a new value.
+    ASSERT_NO_THROW(option->writeInteger<uint16_t>(1234, 0));
+    ASSERT_NO_THROW(option->writeBoolean(true, 1));
+    ASSERT_NO_THROW(option->writeFqdn("example.com", 2));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("192.168.0.1"), 3));
+    ASSERT_NO_THROW(option->writeAddress(IOAddress("2001:db8:1::100"), 4));
+    ASSERT_NO_THROW(option->writePsid(PSIDLen(4), PSID(8), 5));
+    ASSERT_NO_THROW(option->writePrefix(PrefixLen(48),
+                                        IOAddress("2001:db8:1::"), 6));
+    ASSERT_NO_THROW(option->writeTuple("foobar", 7));
+    ASSERT_NO_THROW(option->writeInteger<uint32_t>(12345678, 8));
+    ASSERT_NO_THROW(option->addArrayDataField<uint32_t>(87654321));
+
+    // Check that the new values have been correctly set.
+    ASSERT_EQ(10, option->getDataFieldsNum());
+
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(1234, value0);
+    ASSERT_NO_THROW(value1 = option->readBoolean(1));
+    EXPECT_TRUE(value1);
+    ASSERT_NO_THROW(value2 = option->readFqdn(2));
+    EXPECT_EQ("example.com.", value2);
+    ASSERT_NO_THROW(value3 = option->readAddress(3));
+    EXPECT_EQ("192.168.0.1", value3.toText());
+    ASSERT_NO_THROW(value4 = option->readAddress(4));
+    EXPECT_EQ("2001:db8:1::100", value4.toText());
+    ASSERT_NO_THROW(value5 = option->readPsid(5));
+    EXPECT_EQ(4, value5.first.asUnsigned());
+    EXPECT_EQ(8, value5.second.asUint16());
+    ASSERT_NO_THROW(value6 = option->readPrefix(6));
+    EXPECT_EQ(48, value6.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", value6.second.toText());
+    ASSERT_NO_THROW(value7 = option->readTuple(7));
+    EXPECT_EQ(value7, "foobar");
+    ASSERT_NO_THROW(value8 = option->readInteger<uint32_t>(8));
+    EXPECT_EQ(12345678, value8);
+    uint32_t value9;
+    ASSERT_NO_THROW(value9 = option->readInteger<uint32_t>(9));
+    EXPECT_EQ(87654321, value9);
+}
+
 // The purpose of this test is to verify that pack function for
 // DHCPv4 custom option works correctly.
 TEST_F(OptionCustomTest, pack4) {
@@ -2128,6 +2316,55 @@ TEST_F(OptionCustomTest, unpack) {
         ASSERT_NO_THROW(address = option->readAddress(i));
         EXPECT_EQ(addresses[i], address);
     }
+}
+
+// The purpose of this test is to verify that unpack function works
+// correctly for a custom option with record and trailing array.
+TEST_F(OptionCustomTest, unpackRecordArray) {
+    OptionDefinition opt_def("OPTION_FOO", 231, "record", true);
+
+    ASSERT_NO_THROW(opt_def.addRecordField("uint16"));
+    ASSERT_NO_THROW(opt_def.addRecordField("ipv4-address"));
+
+    // Initialize reference data.
+    OptionBuffer buf;
+    writeInt<uint16_t>(8712, buf);
+
+    std::vector<IOAddress> addresses;
+    addresses.push_back(IOAddress("192.168.0.1"));
+    addresses.push_back(IOAddress("127.0.0.1"));
+    addresses.push_back(IOAddress("10.10.1.2"));
+
+    // Store the collection of IPv4 addresses into the buffer.
+    for (size_t i = 0; i < addresses.size(); ++i) {
+        writeAddress(addresses[i], buf);
+    }
+
+    // Use the input buffer to create custom option.
+    boost::scoped_ptr<OptionCustom> option;
+    ASSERT_NO_THROW(
+        option.reset(new OptionCustom(opt_def, Option::V4, buf.begin(), buf.end()));
+    );
+    ASSERT_TRUE(option);
+
+    // We should have 4 data fields.
+    ASSERT_EQ(4, option->getDataFieldsNum());
+
+    // We expect a 16 bit integer
+    uint16_t value0;
+    ASSERT_NO_THROW(value0 = option->readInteger<uint16_t>(0));
+    EXPECT_EQ(8712, value0);
+
+    // ... and 3 IPv4 addresses being stored in the option.
+    for (int i = 0; i < 3; ++i) {
+        IOAddress address("10.10.10.10");
+        ASSERT_NO_THROW(address = option->readAddress(i + 1));
+        EXPECT_EQ(addresses[i], address);
+    }
+
+    std::string text = option->toText();
+    EXPECT_EQ("type=231, len=014: 8712 (uint16) 192.168.0.1 (ipv4-address) "
+              "127.0.0.1 (ipv4-address) 10.10.1.2 (ipv4-address)", text);
 }
 
 // The purpose of this test is to verify that new data can be set for

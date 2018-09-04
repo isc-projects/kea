@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,12 +8,12 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -25,6 +25,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
@@ -39,11 +41,8 @@ namespace {
 
 class MySqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    MySqlLeaseMgrTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyMySQLSchema();
         createMySQLSchema();
@@ -59,7 +58,26 @@ public:
                          "*** accompanying exception output.\n";
             throw;
         }
+
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    /// @brief Destroys the LM and the schema.
+    void destroyTest() {
+        try {
+            lmptr_->rollback();
+        } catch (...) {
+            // Rollback may fail if backend is in read only mode. That's ok.
+        }
+        LeaseMgrFactory::destroy();
+        destroyMySQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    MySqlLeaseMgrTest() {
+        initializeTest();
     }
 
     /// @brief Destructor
@@ -67,9 +85,7 @@ public:
     /// Rolls back all pending transactions.  The deletion of lmptr_ will close
     /// the database.  Then reopen it and delete everything created by the test.
     virtual ~MySqlLeaseMgrTest() {
-        lmptr_->rollback();
-        LeaseMgrFactory::destroy();
-        destroyMySQLSchema();
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -84,7 +100,6 @@ public:
         LeaseMgrFactory::create(validMySQLConnectionString());
         lmptr_ = &(LeaseMgrFactory::instance());
     }
-
 };
 
 /// @brief Check that database can be opened
@@ -93,9 +108,7 @@ public:
 /// only if the database can be opened.  Note that this is not part of the
 /// MySqlLeaseMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
-
 TEST(MySqlOpenTest, OpenDatabase) {
-
     // Schema needs to be created for the test to work.
     destroyMySQLSchema(true);
     createMySQLSchema(true);
@@ -104,7 +117,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     // If it fails, print the error message.
     try {
         LeaseMgrFactory::create(validMySQLConnectionString());
-        EXPECT_NO_THROW((void) LeaseMgrFactory::instance());
+        EXPECT_NO_THROW((void)LeaseMgrFactory::instance());
         LeaseMgrFactory::destroy();
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
@@ -138,6 +151,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
@@ -146,18 +160,30 @@ TEST(MySqlOpenTest, OpenDatabase) {
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
+#ifndef OS_OSX
+    // Under MacOS, connecting with an invalid host can cause a TCP/IP socket
+    // to be orphaned and never closed.  This can interfere with subsequent tests
+    // which attempt to locate and manipulate MySQL client socket descriptor.
+    // In the interests of progress, we'll just avoid this test.
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
+#endif
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
+
+    // Check for invalid timeouts
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
+
     EXPECT_THROW(LeaseMgrFactory::create(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
@@ -169,6 +195,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
 
     // Tidy up after the test
     destroyMySQLSchema(true);
+    LeaseMgrFactory::destroy();
 }
 
 /// @brief Check the getType() method
@@ -219,7 +246,6 @@ TEST_F(MySqlLeaseMgrTest, checkTimeConversion) {
     MySqlConnection::convertFromDatabaseTime(mysql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
-
 
 /// @brief Check getName() returns correct database name
 TEST_F(MySqlLeaseMgrTest, getName) {
@@ -321,10 +347,40 @@ TEST_F(MySqlLeaseMgrTest, getLease4ClientIdSubnetId) {
     testGetLease4ClientIdSubnetId();
 }
 
+// This test checks that all IPv4 leases for a specified subnet id are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4SubnetId) {
+    testGetLeases4SubnetId();
+}
+
+// This test checks that all IPv4 leases are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases4) {
+    testGetLeases4();
+}
+
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(MySqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
+// This test checks that all IPv6 leases for a specified subnet id are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6SubnetId) {
+    testGetLeases6SubnetId();
+}
+
+// This test checks that all IPv6 leases are returned.
+TEST_F(MySqlLeaseMgrTest, getLeases6) {
+    testGetLeases6();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(MySqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
-/// updateLease4() and deleteLease (IPv4 address) can handle NULL client-id.
+/// updateLease4() and deleteLease can handle NULL client-id.
 /// (client-id is optional and may not be present)
 TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
     testLease4NullClientId();
@@ -336,6 +392,22 @@ TEST_F(MySqlLeaseMgrTest, lease4NullClientId) {
 /// length exceeds 255 characters.
 TEST_F(MySqlLeaseMgrTest, lease4InvalidHostname) {
     testLease4InvalidHostname();
+}
+
+/// @brief Check that the expired DHCPv4 leases can be retrieved.
+///
+/// This test adds a number of leases to the lease database and marks
+/// some of them as expired. Then it queries for expired leases and checks
+/// whether only expired leases are returned, and that they are returned in
+/// the order from most to least expired. It also checks that the lease
+/// which is marked as 'reclaimed' is not returned.
+TEST_F(MySqlLeaseMgrTest, getExpiredLeases4) {
+    testGetExpiredLeases4();
+}
+
+/// @brief Check that expired reclaimed DHCPv4 leases are removed.
+TEST_F(MySqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
+    testDeleteExpiredReclaimedLeases4();
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -405,6 +477,14 @@ TEST_F(MySqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
 }
 
+// @brief check leases could be retrieved by DUID
+///
+/// Create leases, add them to backend and verify if it can be queried
+/// using DUID index
+TEST_F(MySqlLeaseMgrTest, getLeases6Duid) {
+    testGetLeases6Duid();
+}
+
 /// @brief Lease6 update tests
 ///
 /// Checks that we are able to update a lease in the database.
@@ -445,17 +525,6 @@ TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
 
-/// @brief Check that the expired DHCPv4 leases can be retrieved.
-///
-/// This test adds a number of leases to the lease database and marks
-/// some of them as expired. Then it queries for expired leases and checks
-/// whether only expired leases are returned, and that they are returned in
-/// the order from most to least expired. It also checks that the lease
-/// which is marked as 'reclaimed' is not returned.
-TEST_F(MySqlLeaseMgrTest, getExpiredLeases4) {
-    testGetExpiredLeases4();
-}
-
 /// @brief Check that the expired DHCPv6 leases can be retrieved.
 ///
 /// This test adds a number of leases to the lease database and marks
@@ -472,29 +541,66 @@ TEST_F(MySqlLeaseMgrTest, deleteExpiredReclaimedLeases6) {
     testDeleteExpiredReclaimedLeases6();
 }
 
-/// @brief Check that expired reclaimed DHCPv4 leases are removed.
-TEST_F(MySqlLeaseMgrTest, deleteExpiredReclaimedLeases4) {
-    testDeleteExpiredReclaimedLeases4();
-}
-
-// Verifies that IPv4 lease statistics can be recalculated.
+/// @brief Verifies that IPv4 lease statistics can be recalculated.
 TEST_F(MySqlLeaseMgrTest, recountLeaseStats4) {
     testRecountLeaseStats4();
 }
 
-// Verifies that IPv6 lease statistics can be recalculated.
+/// @brief Verifies that IPv6 lease statistics can be recalculated.
 TEST_F(MySqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// Tests that leases from specific subnet can be removed.
+// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }
 
-}; // Of anonymous namespace
+/// @brief Test fixture class for validating @c LeaseMgr using
+/// MySQL as back end and MySQL connectivity loss.
+class MySQLLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
+public:
+    virtual void destroySchema() {
+        destroyMySQLSchema();
+    }
+
+    virtual void createSchema() {
+        createMySQLSchema();
+    }
+
+    virtual std::string validConnectString() {
+        return (validMySQLConnectionString());
+    }
+
+    virtual std::string invalidConnectString() {
+       return (connectionString(MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST,
+                        VALID_USER, VALID_PASSWORD));
+    }
+};
+
+// Verifies that db lost callback is not invoked on an open failure
+TEST_F(MySQLLeaseMgrDbLostCallbackTest, testNoCallbackOnOpenFailure) {
+    testNoCallbackOnOpenFailure();
+}
+
+// Verifies that loss of connectivity to MySQL is handled correctly.
+TEST_F(MySQLLeaseMgrDbLostCallbackTest, testDbLostCallback) {
+    testDbLostCallback();
+}
+
+// Tests v4 lease stats query variants.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQuery4) {
+    testLeaseStatsQuery4();
+}
+
+// Tests v6 lease stats query variants.
+TEST_F(MySqlLeaseMgrTest, leaseStatsQuery6) {
+    testLeaseStatsQuery6();
+}
+
+}  // namespace

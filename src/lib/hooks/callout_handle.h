@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <hooks/library_handle.h>
+#include <hooks/parking_lots.h>
 
 #include <boost/any.hpp>
 #include <boost/shared_ptr.hpp>
@@ -91,7 +92,8 @@ public:
     enum CalloutNextStep {
         NEXT_STEP_CONTINUE = 0, ///< continue normally
         NEXT_STEP_SKIP = 1,     ///< skip the next processing step
-        NEXT_STEP_DROP = 2      ///< drop the packet
+        NEXT_STEP_DROP = 2,     ///< drop the packet
+        NEXT_STEP_PARK = 3      ///< park the packet
     };
 
 
@@ -223,6 +225,11 @@ public:
     /// NEXT_STEP_DROP - tells the server to unconditionally drop the packet
     ///                  and do not process it further.
     ///
+    /// NEXT_STEP_PARK - tells the server to "park" the packet. The packet will
+    ///                  wait in the queue for being unparked, e.g. as a result
+    ///                  of completion of the asynchronous performed by the
+    ///                  hooks library operation.
+    ///
     /// This variable is interrogated by the server to see if the remaining
     /// callouts associated with the current hook should be bypassed.
     ///
@@ -337,7 +344,13 @@ public:
     /// @return Name of the current hook or the empty string if none.
     std::string getHookName() const;
 
+    /// @brief Returns pointer to the parking lot handle for this hook point.
+    ///
+    /// @return pointer to the parking lot handle
+    ParkingLotHandlePtr getParkingLotHandlePtr() const;
+
 private:
+
     /// @brief Check index
     ///
     /// Gets the current library index, throwing an exception if it is not set
@@ -401,6 +414,72 @@ private:
 
 /// A shared pointer to a CalloutHandle object.
 typedef boost::shared_ptr<CalloutHandle> CalloutHandlePtr;
+
+/// @brief Wrapper class around callout handle which automatically
+/// resets handle's state.
+///
+/// The Kea servers often require to associate processed packets with
+/// @c CalloutHandle instances. This is to facilitate the case when the
+/// hooks library passes information between the callouts using the
+/// 'context' stored in the callout handle. The callouts invoked throughout
+/// the packet lifetime have access to the context information for the
+/// given packet.
+///
+/// The association between the packets and the callout handles is
+/// achieved by giving the ownership of the @c CalloutHandle objects to
+/// the @c Pkt objects. When the @c Pkt object goes out of scope, it should
+/// also release the pointer to the owned @c CalloutHandle object.
+/// However, this causes a risk of circular dependency between the shared
+/// pointer to the @c Pkt object and the shared pointer to the
+/// @c CalloutHandle it owns, because the pointer to the packet is often
+/// set as an argument of the callout handle prior to invoking a callout.
+///
+/// In order to break the circular dependency, the arguments of the
+/// callout handle must be deleted as soon as they are not needed
+/// anymore. This class is a wrapper around the callout handle object,
+/// which resets its state during construction and destruction. All
+/// Kea hook points must use this class within the scope where the
+/// @c HooksManager::callCallouts is invoked to reset the state of the
+/// callout handle. The state is reset when this object goes out of
+/// scope.
+///
+/// Currently, the following operations are performed during the reset:
+/// - all arguments of the callout handle are deleted,
+/// - the next step status is set to @c CalloutHandle::NEXT_STEP CONTINUE
+///
+/// This class must never be modified to also delete the context
+/// information from the callout handle. The context is intended
+/// to be used to share stateful data across callouts and hook points
+/// and its contents must exist for the duration of the packet lifecycle.
+/// Otherwise, we could simply re-create the callout handle for
+/// each hook point and we wouldn't need this RAII class.
+class ScopedCalloutHandleState {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Resets state of the callout handle.
+    ///
+    /// @param callout_handle reference to the pointer to the callout
+    /// handle which state should be reset.
+    /// @throw isc::BadValue if the callout handle is null.
+    explicit ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle);
+
+    /// @brief Destructor.
+    ///
+    /// Resets state of the callout handle.
+    ~ScopedCalloutHandleState();
+
+private:
+
+    /// @brief Resets the callout handle state.
+    ///
+    /// It is used internally by the constructor and destructor.
+    void resetState();
+
+    /// @brief Holds pointer to the wrapped callout handle.
+    CalloutHandlePtr callout_handle_;
+};
 
 } // namespace hooks
 } // namespace isc

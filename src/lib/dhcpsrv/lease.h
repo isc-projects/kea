@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
 
 namespace isc {
@@ -22,11 +23,16 @@ namespace dhcp {
 /// because subnet.h needs Lease::Type, so it includes lease.h
 typedef uint32_t SubnetID;
 
+struct Lease;
+
+/// @brief Pointer to the lease object.
+typedef boost::shared_ptr<Lease> LeasePtr;
+
 /// @brief a common structure for IPv4 and IPv6 leases
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease : public isc::data::CfgToElement {
+struct Lease : public UserContext, public isc::data::CfgToElement {
 
     /// @brief Type of lease or pool
     typedef enum {
@@ -40,6 +46,13 @@ struct Lease : public isc::data::CfgToElement {
     /// @param type lease or pool type to be converted
     /// @return text description
     static std::string typeToText(Type type);
+
+    /// @brief Converts type name to the actual type.
+    ///
+    /// @param text lease type as text.
+    /// @return converted type.
+    /// @throw BadValue if the text contains unsupported value.
+    static Type textToType(const std::string& text);
 
     /// @name Common lease states constants.
     //@{
@@ -208,7 +221,29 @@ struct Lease : public isc::data::CfgToElement {
     ///
     /// @param probation_period lease lifetime will be set to this value
     virtual void decline(uint32_t probation_period) = 0;
+
+    /// Avoid a clang spurious error
+    using isc::data::CfgToElement::toElement;
+
+protected:
+
+    /// @brief Sets common (for v4 and v6) properties of the lease object.
+    ///
+    /// This method is called by the @c fromElement methods of the @c Lease
+    /// class derivations.
+    ///
+    /// @param [out] lease pointer to the lease object for which common
+    /// properties should be set.
+    /// @param element pointer to the data element object to be parsed.
+    static void fromElementCommon(const LeasePtr& lease,
+                                  const data::ConstElementPtr& element);
+
 };
+
+struct Lease4;
+
+/// @brief Pointer to a Lease4 structure.
+typedef boost::shared_ptr<Lease4> Lease4Ptr;
 
 /// @brief Structure that holds a lease for IPv4 address
 ///
@@ -404,14 +439,26 @@ struct Lease4 : public Lease {
     /// @brief Return the JSON representation of a lease
     virtual isc::data::ElementPtr toElement() const;
 
+    /// @brief Returns pointer to the IPv4 lease created from JSON
+    /// representation.
+    ///
+    /// @param element pointer to the data element object to be parsed.
+    /// @return Pointer to the created lease.
+    static Lease4Ptr fromElement(const data::ConstElementPtr& element);
+
     /// @todo: Add DHCPv4 failover related fields here
 };
 
-/// @brief Pointer to a Lease4 structure.
-typedef boost::shared_ptr<Lease4> Lease4Ptr;
-
 /// @brief A collection of IPv4 leases.
 typedef std::vector<Lease4Ptr> Lease4Collection;
+
+/// @brief A shared pointer to the collection of IPv4 leases.
+typedef boost::shared_ptr<Lease4Collection> Lease4CollectionPtr;
+
+struct Lease6;
+
+/// @brief Pointer to a Lease6 structure.
+typedef boost::shared_ptr<Lease6> Lease6Ptr;
 
 /// @brief Structure that holds a lease for IPv6 address and/or prefix
 ///
@@ -539,16 +586,24 @@ struct Lease6 : public Lease {
 
     /// @brief Return the JSON representation of a lease
     virtual isc::data::ElementPtr toElement() const;
-};
 
-/// @brief Pointer to a Lease6 structure.
-typedef boost::shared_ptr<Lease6> Lease6Ptr;
+    /// @brief Returns pointer to the IPv6 lease created from JSON
+    /// representation.
+    ///
+    /// @param element pointer to the data element object to be parsed.
+    /// @return Pointer to the created lease.
+    static Lease6Ptr fromElement(const data::ConstElementPtr& element);
+};
 
 /// @brief Pointer to a const Lease6 structure.
 typedef boost::shared_ptr<const Lease6> ConstLease6Ptr;
 
 /// @brief A collection of IPv6 leases.
 typedef std::vector<Lease6Ptr> Lease6Collection;
+
+
+/// @brief A shared pointer to the collection of IPv6 leases.
+typedef boost::shared_ptr<Lease6Collection> Lease6CollectionPtr;
 
 /// @brief Stream output operator.
 ///

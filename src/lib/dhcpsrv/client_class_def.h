@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,11 +8,15 @@
 #define CLIENT_CLASS_DEF_H
 
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/cfg_option_def.h>
 #include <eval/token.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
+#include <unordered_map>
+#include <list>
 
 /// @file client_class_def.h
 ///
@@ -38,7 +42,7 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef : public isc::data::CfgToElement {
+class ClientClassDef : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -78,6 +82,30 @@ public:
     ///
     /// @param test the original expression to assign the class
     void setTest(const std::string& test);
+
+    /// @brief Fetches the only if required flag
+    bool getRequired() const;
+
+    /// @brief Sets the only if required flag
+    ///
+    /// @param required the value of the only if required flag
+    void setRequired(bool required);
+
+    /// @brief Fetches the depend on known flag aka use host flag
+    bool getDependOnKnown() const;
+
+    /// @brief Sets the depend on known flag aka use host flag
+    ///
+    /// @param depend_on_known the value of the depend on known flag
+    void setDependOnKnown(bool depend_on_known);
+
+    /// @brief Fetches the class's option definitions
+    const CfgOptionDefPtr& getCfgOptionDef() const;
+
+    /// @brief Sets the class's option definition collection
+    ///
+    /// @param cfg_option_def the option definitions to assign the class
+    void setCfgOptionDef(const CfgOptionDefPtr& cfg_option_def);
 
     /// @brief Fetches the class's option collection
     const CfgOptionPtr& getCfgOption() const;
@@ -171,6 +199,25 @@ private:
     /// this class.
     std::string test_;
 
+    /// @brief The only-if-required flag: when false (the default) membership
+    /// is determined during classification so is available, of instance,
+    /// for subnet selection. When true, membership is evaluated
+    /// only when required and is usable only for option configuration.
+    bool required_;
+
+    /// @brief The depend on known aka use host flag: when false (the default),
+    /// the required flag is false and the class has a match expression
+    /// the expression is evaluated in the first pass. When true and the
+    /// two other conditions stand the expression is evaluated later when
+    /// the host reservation membership was determined.
+    /// This flag is set to true during the match expression parsing if
+    /// direct or indirect dependency on the builtin [UN]KNOWN classes is
+    /// detected.
+    bool depend_on_known_;
+
+    /// @brief The option definition configuration for this class
+    CfgOptionDefPtr cfg_option_def_;
+
     /// @brief The option data configuration for this class
     CfgOptionPtr cfg_option_;
 
@@ -197,13 +244,16 @@ private:
 typedef boost::shared_ptr<ClientClassDef> ClientClassDefPtr;
 
 /// @brief Defines a map of ClientClassDef's, keyed by the class name.
-typedef std::map<std::string, ClientClassDefPtr> ClientClassDefMap;
+typedef std::unordered_map<std::string, ClientClassDefPtr> ClientClassDefMap;
 
 /// @brief Defines a pointer to a ClientClassDefMap
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
-/// @brief Defines a pair for working with ClientClassMap
-typedef std::pair<std::string, ClientClassDefPtr> ClientClassMapPair;
+/// @brief Defines a list of ClientClassDefPtr's, using insert order.
+typedef std::list<ClientClassDefPtr> ClientClassDefList;
+
+/// @brief Defines a pointer to a ClientClassDefList
+typedef boost::shared_ptr<ClientClassDefList> ClientClassDefListPtr;
 
 /// @brief Maintains a list of ClientClassDef's
 class ClientClassDictionary : public isc::data::CfgToElement {
@@ -222,7 +272,11 @@ public:
     /// @param name Name to assign to this class
     /// @param match_expr Expression the class will use to determine membership
     /// @param test Original version of match_expr
+    /// @param required Original value of the only if required flag
+    /// @param depend_on_known Using host so will be evaluated later
     /// @param options Collection of options members should be given
+    /// @param defs Option definitions (optional)
+    /// @param user_context User context (optional)
     /// @param next_server next-server value for this class (optional)
     /// @param sname server-name value for this class (optional)
     /// @param filename boot-file-name value for this class (optional)
@@ -231,7 +285,10 @@ public:
     /// dictionary.  See @ref dhcp::ClientClassDef::ClientClassDef() for
     /// others.
     void addClass(const std::string& name, const ExpressionPtr& match_expr,
-                  const std::string& test, const CfgOptionPtr& options,
+                  const std::string& test, bool required, bool depend_on_known,
+                  const CfgOptionPtr& options,
+                  CfgOptionDefPtr defs = CfgOptionDefPtr(),
+                  isc::data::ConstElementPtr user_context = isc::data::ConstElementPtr(),
                   asiolink::IOAddress next_server = asiolink::IOAddress("0.0.0.0"),
                   const std::string& sname = std::string(),
                   const std::string& filename = std::string());
@@ -260,10 +317,10 @@ public:
     /// @param name the name of the class to remove
     void removeClass(const std::string& name);
 
-    /// @brief Fetches the dictionary's map of classes
+    /// @brief Fetches the dictionary's list of classes
     ///
-    /// @return ClientClassDefMapPtr to the map of classes
-    const ClientClassDefMapPtr& getClasses() const;
+    /// @return ClientClassDefListPtr to the list of classes
+    const ClientClassDefListPtr& getClasses() const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///
@@ -298,12 +355,44 @@ public:
 private:
 
     /// @brief Map of the class definitions
-    ClientClassDefMapPtr classes_;
+    ClientClassDefMapPtr map_;
 
+    /// @brief List of the class definitions
+    ClientClassDefListPtr list_;
 };
 
 /// @brief Defines a pointer to a ClientClassDictionary
 typedef boost::shared_ptr<ClientClassDictionary> ClientClassDictionaryPtr;
+
+/// @brief List of built-in client class names.
+/// i.e. ALL, KNOWN and UNKNOWN.
+extern std::list<std::string> builtinNames;
+
+/// @brief List of built-in client class prefixes
+/// i.e. VENDOR_CLASS_, HA_, AFTER_ and EXTERNAL_.
+extern std::list<std::string> builtinPrefixes;
+
+/// @brief Check if a client class name is builtin.
+///
+/// @param client_class A client class name to look for.
+/// @return true if built-in, false if not.
+bool isClientClassBuiltIn(const ClientClass& client_class);
+
+
+/// @brief Check if a client class name is already defined,
+/// i.e. is built-in or in the dictionary,
+///
+/// The reference to depend on known flag is set to true if the class
+/// is KNOWN or UNKNOWN (direct dependency) or has this flag set
+/// (indirect dependency).
+///
+/// @param class_dictionary A class dictionary where to look for.
+/// @param depend_on_known A reference to depend on known flag.
+/// @param client_class A client class name to look for.
+/// @return true if defined or built-in, false if not.
+bool isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                          bool& depend_on_known,
+                          const ClientClass& client_class);
 
 } // namespace isc::dhcp
 } // namespace isc

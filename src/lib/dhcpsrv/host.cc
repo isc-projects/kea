@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,11 @@
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <boost/random.hpp>
+#include <boost/random/uniform_int_distribution.hpp>
+#include <boost/random/mersenne_twister.hpp>
 #include <exceptions/exceptions.h>
+#include <random>
 #include <sstream>
 
 using namespace isc::data;
@@ -18,6 +22,54 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
+
+
+AuthKey::AuthKey(const std::string key) {
+    setAuthKey(key);
+}
+
+AuthKey::AuthKey(void) {
+    authKey_ = AuthKey::getRandomKeyString();
+}
+
+std::string
+AuthKey::getRandomKeyString() {
+    std::array <char, AuthKey::KEY_LEN> randomString;
+    
+    std::random_device rd;
+    boost::random::mt19937 gen(rd());
+
+    std::for_each(randomString.begin(), randomString.end() - 1,
+        [&gen](char& a){ boost::random::uniform_int_distribution<char> dist('!', '~');
+        a = dist(gen); } );
+
+    return std::string(randomString.begin(), randomString.end());
+}
+
+std::string 
+AuthKey::ToText() const {
+    //this will need enhancement if the stored container is not
+    //string
+    return authKey_;
+}
+
+void
+AuthKey::setAuthKey(const std::string& key) {
+    authKey_ = key;
+    if (authKey_.size() > AuthKey::KEY_LEN) {
+        authKey_.resize(AuthKey::KEY_LEN);
+    }
+}
+
+bool
+AuthKey::operator==(const AuthKey& other) const {
+    return (authKey_ == other.authKey_);
+}
+
+bool
+AuthKey::operator!=(const AuthKey& other) const {
+    return (authKey_ != other.authKey_);
+}
 
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
@@ -82,7 +134,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
 
     : identifier_type_(identifier_type),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
@@ -92,7 +145,9 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       dhcp6_client_classes_(dhcp6_client_classes),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
-      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      host_id_(0), cfg_option4_(new CfgOption()),
+      cfg_option6_(new CfgOption()), negative_(false), 
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -116,7 +171,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
     : identifier_type_(IDENT_HWADDR),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
@@ -125,7 +181,9 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       dhcp6_client_classes_(dhcp6_client_classes),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
-      host_id_(0), cfg_option4_(new CfgOption()), cfg_option6_(new CfgOption()) {
+      host_id_(0), cfg_option4_(new CfgOption()),
+      cfg_option6_(new CfgOption()), negative_(false),
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -409,6 +467,8 @@ Host::toElement4() const {
 
     // Prepare the map
     ElementPtr map = Element::createMap();
+    // Set the user context
+    contextToElement(map);
     // Set the identifier
     Host::IdentifierType id_type = getIdentifierType();
     if (id_type == Host::IDENT_HWADDR) {
@@ -432,9 +492,11 @@ Host::toElement4() const {
     } else {
         isc_throw(ToElementError, "invalid identifier type: " << id_type);
     }
-    // Set the reservation
+    // Set the reservation (if not 0.0.0.0 which may not be re-read)
     const IOAddress& address = getIPv4Reservation();
-    map->set("ip-address", Element::create(address.toText()));
+    if (!address.isV4Zero()) {
+        map->set("ip-address", Element::create(address.toText()));
+    }
     // Set the hostname
     const std::string& hostname = getHostname();
     map->set("hostname", Element::create(hostname));
@@ -451,7 +513,7 @@ Host::toElement4() const {
     const ClientClasses& cclasses = getClientClasses4();
     ElementPtr classes = Element::createList();
     for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.end(); ++cclass) {
+         cclass != cclasses.cend(); ++cclass) {
         classes->add(Element::create(*cclass));
     }
     map->set("client-classes", classes);
@@ -466,6 +528,8 @@ ElementPtr
 Host::toElement6() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+    // Set the user context
+    contextToElement(map);
     // Set the identifier
     Host::IdentifierType id_type = getIdentifierType();
     if (id_type == Host::IDENT_HWADDR) {
@@ -508,7 +572,7 @@ Host::toElement6() const {
     const ClientClasses& cclasses = getClientClasses6();
     ElementPtr classes = Element::createList();
     for (ClientClasses::const_iterator cclass = cclasses.cbegin();
-         cclass != cclasses.end(); ++cclass) {
+         cclass != cclasses.cend(); ++cclass) {
         classes->add(Element::create(*cclass));
     }
     map->set("client-classes", classes);
@@ -517,6 +581,10 @@ Host::toElement6() const {
     ConstCfgOptionPtr opts = getCfgOption6();
     map->set("option-data", opts->toElement());
 
+    // Set auth key
+    //@todo: uncomment once storing in configuration file is enabled
+    //map->set("auth-key", Element::create(getKey().ToText()));
+    
     return (map);
 }
 
@@ -527,13 +595,13 @@ Host::toText() const {
     // Add HW address or DUID.
     s << getIdentifierAsText();
 
-    // Add IPv4 subnet id if exists (non-zero).
-    if (ipv4_subnet_id_) {
+    // Add IPv4 subnet id if exists.
+    if (ipv4_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv4_subnet_id=" << ipv4_subnet_id_;
     }
 
-    // Add IPv6 subnet id if exists (non-zero).
-    if (ipv6_subnet_id_) {
+    // Add IPv6 subnet id if exists.
+    if (ipv6_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv6_subnet_id=" << ipv6_subnet_id_;
     }
 
@@ -554,6 +622,8 @@ Host::toText() const {
     // Add boot file name.
     s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
 
+    s << " key=" << (key_.ToText().empty() ? "(empty)" : key_.ToText());
+
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";
 
@@ -568,19 +638,24 @@ Host::toText() const {
     }
 
     // Add DHCPv4 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.begin();
-         cclass != dhcp4_client_classes_.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = dhcp4_client_classes_.cbegin();
+         cclass != dhcp4_client_classes_.cend(); ++cclass) {
         s << " dhcp4_class"
-          << std::distance(dhcp4_client_classes_.begin(), cclass)
+          << std::distance(dhcp4_client_classes_.cbegin(), cclass)
           << "=" << *cclass;
     }
 
     // Add DHCPv6 client classes.
-    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.begin();
-         cclass != dhcp6_client_classes_.end(); ++cclass) {
+    for (ClientClasses::const_iterator cclass = dhcp6_client_classes_.cbegin();
+         cclass != dhcp6_client_classes_.cend(); ++cclass) {
         s << " dhcp6_class"
-          << std::distance(dhcp6_client_classes_.begin(), cclass)
+          << std::distance(dhcp6_client_classes_.cbegin(), cclass)
           << "=" << *cclass;
+    }
+
+    // Add negative cached.
+    if (negative_) {
+        s << " negative cached";
     }
 
     return (s.str());

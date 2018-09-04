@@ -18,8 +18,7 @@ check-local:
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
-AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
-AM_CPPFLAGS += -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/dhcp4/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -30,7 +29,8 @@ CLEANFILES += $(builddir)/load_marker.txt $(builddir)/unload_marker.txt
 CLEANFILES += $(builddir)/test_leases.csv.*
 CLEANFILES += *.json *.log
 
-DISTCLEANFILES = dhcp4_process_tests.sh
+DISTCLEANFILES = dhcp4_process_tests.sh marker_file.h
+DISTCLEANFILES += test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -56,7 +56,7 @@ if HAVE_GTEST
 # to unexpected errors. For this reason, the --enable-static-link option is
 # ignored for unit tests built here.
 
-noinst_LTLIBRARIES = libco1.la libco2.la
+noinst_LTLIBRARIES = libco1.la libco2.la libco3.la
 
 # -rpath /nowhere is a hack to trigger libtool to not create a
 # convenience archive, resulting in shared modules
@@ -70,6 +70,11 @@ libco2_la_SOURCES  = callout_library_2.cc callout_library_common.h
 libco2_la_CXXFLAGS = $(AM_CXXFLAGS)
 libco2_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco2_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
+
+libco3_la_SOURCES  = callout_library_3.cc callout_library_common.h
+libco3_la_CXXFLAGS = $(AM_CXXFLAGS)
+libco3_la_CPPFLAGS = $(AM_CPPFLAGS)
+libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp4_unittests
 
@@ -96,6 +101,8 @@ dhcp4_unittests_SOURCES += kea_controller_unittest.cc
 dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
 dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
 dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
+dhcp4_unittests_SOURCES += shared_network_unittest.cc
+dhcp4_unittests_SOURCES += host_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
@@ -123,11 +130,28 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+
+if HAVE_MYSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
@@ -139,3 +163,21 @@ endif
 noinst_EXTRA_DIST = configs-list.txt
 
 noinst_PROGRAMS = $(TESTS)
+
+# Use this target if you want to rebuild the get-config unit-tests.
+#
+# TODO: We could also automate the replacement step with some variation
+# of this: https://stackoverflow.com/questions/6790631
+rebuild-tests:
+	rm -f x u get_config_unittest.cc
+	cp -f get_config_unittest.cc.skel get_config_unittest.cc
+	$(MAKE) CXXFLAGS=-DEXTRACT_CONFIG V=1
+	./dhcp4_unittests --gtest_filter="Dhcp4Parser*" > /dev/null 2> x
+	echo "Please copy content of x file into EXTRACTED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	$(MAKE) CXXFLAGS=-DGENERATE_ACTION V=1
+	./dhcp4_unittests --gtest_filter="Dhcp4GetConfig*" > /dev/null 2> u
+	echo "Please copy content of u file into UNPARSED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	touch get_config_unittest.cc
+	$(MAKE)

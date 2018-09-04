@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,9 @@
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
+#include <dhcp/option.h>
 #include <cfgrpt/config_report.h>
+#include <util/encode/hex.h>
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -28,6 +30,7 @@ extern int optreset;
 
 using namespace std;
 using namespace isc;
+using namespace isc::dhcp;
 
 namespace isc {
 namespace perfdhcp {
@@ -124,6 +127,7 @@ CommandOptions::reset() {
     mac_list_file_.clear();
     mac_list_.clear();
     num_request_.clear();
+    exit_wait_time_ = 0;
     period_ = 0;
     drop_time_set_ = 0;
     drop_time_.assign(dt, dt + 2);
@@ -150,6 +154,7 @@ CommandOptions::reset() {
     server_name_.clear();
     v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
+    extra_opts_.clear();
 }
 
 bool
@@ -217,7 +222,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
-                        "s:iBc1T:X:O:E:S:I:x:w:e:f:F:")) != -1) {
+                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -307,7 +312,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                 max_pdrop_.push_back(drop_percent);
             } else {
                 num_drops = positiveInteger("value of max drops number:"
-                                            " -d<value> must be a positive integer");
+                                            " -D<value> must be a positive integer");
                 max_drop_.push_back(num_drops);
             }
             break;
@@ -368,6 +373,12 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             loadMacs();
             break;
 
+        case 'W':
+            exit_wait_time_ = nonNegativeInteger("value of exist wait time: "
+                                                  "-W<value> must not be a "
+                                                  "negative integer");
+            break;
+
         case 'n':
             num_req = positiveInteger("value of num-request:"
                                       " -n<value> must be a positive integer");
@@ -393,7 +404,46 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                   " -O<value> must be greater than 3 ");
             rnd_offset_.push_back(offset_arg);
             break;
+        case 'o': {
 
+            // we must know how to contruct the option: whether it's v4 or v6.
+            check( (ipversion_ != 4) && (ipversion_ != 6),
+                   "-4 or -6 must be explicitly specified before -o is used.");
+
+            // custom option (expected format: code,hexstring)
+            std::string opt_text = std::string(optarg);
+            size_t coma_loc = opt_text.find(',');
+            check(coma_loc == std::string::npos,
+                  "-o option must provide option code, a coma and hexstring for"
+                  " the option content, e.g. -o60,646f63736973 for sending option"
+                  " 60 (class-id) with the value 'docsis'");
+            int code = 0;
+
+            // Try to parse the option code
+            try {
+                code = boost::lexical_cast<int>(opt_text.substr(0,coma_loc));
+                check(code <= 0, "Option code can't be negative");
+            } catch (boost::bad_lexical_cast&) {
+                isc_throw(InvalidParameter, "Invalid option code specified for "
+                          "-o option, expected format: -o<integer>,<hexstring>");
+            }
+
+            // Now try to interpret the hexstring
+            opt_text = opt_text.substr(coma_loc + 1);
+            std::vector<uint8_t> bin;
+            try {
+                isc::util::encode::decodeHex(opt_text, bin);
+            } catch (BadValue& e) {
+                isc_throw(InvalidParameter, "Error during encoding option -o:"
+                          << e.what());
+            }
+
+            // Create and remember the option.
+            OptionPtr opt(new Option(ipversion_ == 4 ? Option::V4 : Option::V6,
+                                     code, bin));
+            extra_opts_.insert(make_pair(code, opt));
+            break;
+        }
         case 'p':
             period_ = positiveInteger("value of test period:"
                                       " -p<value> must be a positive integer");
@@ -714,11 +764,16 @@ CommandOptions::convertHexString(const std::string& text) const {
 }
 
 void CommandOptions::loadMacs() {
-  std::string line;
-  std::ifstream infile(mac_list_file_.c_str());
-  while (std::getline(infile, line)) {
-    check(decodeMacString(line), "invalid mac in input");
-  }
+    std::string line;
+    std::ifstream infile(mac_list_file_.c_str());
+    size_t cnt = 0;
+    while (std::getline(infile, line)) {
+        cnt++;
+        stringstream tmp;
+        tmp << "invalid mac in input line " << cnt;
+        // Let's print more meaningful error that contains line with error.
+        check(decodeMacString(line), tmp.str());
+    }
 }
 
 bool CommandOptions::decodeMacString(const std::string& line) {
@@ -787,15 +842,6 @@ CommandOptions::validate() const {
           "-F<release-rate> is not compatible with -i");
     check((getExchangeMode() != DO_SA) && (isRapidCommit() != 0),
           "-i must be set to use -c");
-    check((getRate() == 0) && (getReportDelay() != 0),
-          "-r<rate> must be set to use -t<report>");
-    check((getRate() == 0) && (getNumRequests().size() > 0),
-          "-r<rate> must be set to use -n<num-request>");
-    check((getRate() == 0) && (getPeriod() != 0),
-          "-r<rate> must be set to use -p<test-period>");
-    check((getRate() == 0) &&
-          ((getMaxDrop().size() > 0) || getMaxDropPercentage().size() > 0),
-          "-r<rate> must be set to use -D<max-drop>");
     check((getRate() != 0) && (getRenewRate() + getReleaseRate() > getRate()),
           "The sum of Renew rate (-f<renew-rate>) and Release rate"
           " (-F<release-rate>) must not be greater than the exchange"
@@ -981,6 +1027,7 @@ CommandOptions::usage() const {
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
         "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
+        "         [-W<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
@@ -1065,6 +1112,9 @@ CommandOptions::usage() const {
         "-T<template-file>: The name of a file containing the template to use\n"
         "    as a stream of hexadecimal digits.\n"
         "-v: Report the version number of this program.\n"
+        "-W<time>: Specifies exit-wait-time parameter, that makes perfdhcp wait\n"
+        "    for <time> us after an exit condition has been met to receive all\n"
+        "    packets without sending any new packets. Expressed in microseconds.\n"
         "-w<wrapped>: Command to call with start/stop at the beginning/end of\n"
         "    the program.\n"
         "-x<diagnostic-selector>: Include extended diagnostics in the output.\n"
@@ -1096,14 +1146,14 @@ CommandOptions::usage() const {
         "    traffic is an equivalent of the traffic passing through a single\n"
         "    relay agent.\n"
         "\n"
-        "The remaining options are used only in conjunction with -r:\n"
+        "The remaining options are typically used in conjunction with -r:\n"
         "\n"
-        "-D<max-drop>: Abort the test if more than <max-drop> requests have\n"
-        "    been dropped.  Use -D0 to abort if even a single request has been\n"
-        "    dropped.  If <max-drop> includes the suffix '%', it specifies a\n"
-        "    maximum percentage of requests that may be dropped before abort.\n"
-        "    In this case, testing of the threshold begins after 10 requests\n"
-        "    have been expected to be received.\n"
+        "-D<max-drop>: Abort the test immediately if max-drop requests have\n"
+        "    been dropped.  max-drop must be a positive integer. If max-drop\n"
+        "    includes the suffix '%', it specifies a maximum percentage of\n"
+        "    requests that may be dropped before abort. In this case, testing\n"
+        "    of the threshold begins after 10 requests have been expected to\n"
+        "    be received.\n"
         "-n<num-request>: Initiate <num-request> transactions.  No report is\n"
         "    generated until all transactions have been initiated/waited-for,\n"
         "    after which a report is generated and the program terminates.\n"
@@ -1133,6 +1183,5 @@ CommandOptions::version() const {
     std::cout << "VERSION: " << VERSION << std::endl;
 }
 
-
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc

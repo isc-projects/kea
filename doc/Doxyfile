@@ -778,7 +778,10 @@ INPUT                  = ../src/bin/agent \
                          ../src/bin/perfdhcp \
                          ../src/bin/sockcreator \
                          ../src/bin/lfc \
+                         ../src/hooks/dhcp/high_availability \
                          ../src/hooks/dhcp/user_chk \
+                         ../src/hooks/dhcp/lease_cmds \
+                         ../src/hooks/dhcp/stat_cmds \
                          ../src/lib/asiodns \
                          ../src/lib/asiolink \
                          ../src/lib/cc \
@@ -789,6 +792,7 @@ INPUT                  = ../src/bin/agent \
                          ../src/lib/dhcp_ddns \
                          ../src/lib/dhcpsrv \
                          ../src/lib/dhcpsrv/parsers \
+                         ../src/lib/dhcpsrv/benchmarks \
                          ../src/lib/dns \
                          ../src/lib/eval \
                          ../src/lib/exceptions \

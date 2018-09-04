@@ -2,7 +2,5 @@
 /kea-dhcp4.8
 /dhcp4_messages.cc
 /dhcp4_messages.h
-/spec_config.h
-/spec_config.h.pre
 /s-messages
 /dhcp4_parser.report

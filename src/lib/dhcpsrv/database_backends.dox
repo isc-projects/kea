@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,12 +23,12 @@
 
   - The MySQL lease manager uses the freely available MySQL as its backend
   database.  This is not included in Kea DHCP by default:
-  the \--with-dhcp-mysql switch must be supplied to "configure" for support
+  the \--with-mysql switch must be supplied to "configure" for support
   to be compiled into the software.
 
   - The PostgreSQL lease manager uses the freely available PostgreSQL as its
   backend database.  This is not included in Kea DHCP by default:
-  the \--with-dhcp-pgsql switch must be supplied to "configure" for
+  the \--with-pgsql switch must be supplied to "configure" for
   support to be compiled into the software.
 
   @section dhcpdb-instantiation Instantiation of Lease Managers
@@ -104,5 +104,81 @@
     of 'keatest' will be used.
 
   For details, see @ref isc::dhcp::CqlConnection::openDatabase().
+
+  @section dhcpdb-host Host Backends
+
+  Host backends (known also as host data sources) are similar to lease
+  backends with a few differences:
+
+  - host backends are optional (so it is allowed to have none) because
+    the first source of host reservations is the server configuration,
+    others are alternate backends.
+
+  - there may be more than one host backend. In such a case for lookups
+    returning a collection all results are appended, for lookups returning
+    at most one entry the first found is returned. Add operation is submitted
+    to all alternate backends which can ignore it, add the entry or throw
+    if the new entry conflicts with an already existing one. Delete
+    operations are submitted in sequence to all alternate backends until
+    one finds the entry, deletes it and returns true.
+
+  - the first alternate backend can be a cache (host cache hook library
+    is a premium feature) which avoids to lookup slow databases.
+    For subnet ID and identifier negative caching is optionally supported.
+
+  @subsection dhcpdb-caching Caching
+
+  Some of these considerations apply to lease backends too but only
+  the host caching was analyzed and implemented.
+
+  Caching divides into two parts, positive and negative caching, and
+  its support is implemented at two places, a cache backend and inside
+  the host manager, i.e. the entity calling backends in sequence
+  providing the result of lookups to allocation engines.
+
+  The idea of positive caching is simple: when a value not in the
+  cache in returned by a database, this value is added to the cache
+  so the next time it will be available without calling and waiting
+  for the database.
+
+  This cannot be extended to lookups returning a collection because
+  they are supposed to collect and append results from all backends.
+  If you replace append by merge you avoid duplicate items in the
+  result but still get no benefit from caching. So in general a cache
+  backend should simply return nothing for these lookups.
+
+  Add (or any operation which can fail) has to wait that all backends
+  are called and possibly one fails before the new entry being cached.
+  Del is simpler: the cache backend processes it but always returns
+  false so the backend holding it if any is called.
+
+  Negative caching consists into adding fake entries indicating that
+  a particular host does not exists. As no host constructor allows
+  a host object without an identifier or with an empty identifier,
+  negative caching applies only to by identifier lookups. This is
+  no a problem because out-of-pools provides a clearer and simpler
+  to implement performance benefit than by address negative caching.
+  Note that by identifier negative caching can be critical for
+  performance because the non-existence is the worst case for lookups.
+
+  Negative cache entries should be easily identified (current
+  implementation uses the negative_ flag member in @c host class)
+  so all lookups returning at most one entry can (in fact have to)
+  return a null pointer when they get a negative cache entry.
+  Note this is for all such lookups, not only by identifier lookups,
+  to allow to negative cached entries with any value, for instance
+  with a IP address.
+
+  There is no direct and simple way to support negative caching
+  for collection lookups so again cache backends should return nothing
+  for these lookups which have not to filter out negative cached entries
+  from result.
+
+  Negative caching can be performed by the host manager: when a by
+  identifier lookup returns a null pointer, a fake entry with lookup
+  parameters and the negative cache mark is inserted into the cache.
+  Note this leads to negative cache entries without IP reservations,
+  this property should not be used because it limits negative cache
+  addition to only be performed by the host manager.
 
   */

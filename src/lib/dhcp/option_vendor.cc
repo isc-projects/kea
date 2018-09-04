@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,12 +14,18 @@
 using namespace isc::dhcp;
 
 OptionVendor::OptionVendor(Option::Universe u, const uint32_t vendor_id)
-    :Option(u, u==Option::V4?DHO_VIVSO_SUBOPTIONS:D6O_VENDOR_OPTS), vendor_id_(vendor_id) {
+    : Option(u, u == Option::V4 ?
+             static_cast<uint16_t>(DHO_VIVSO_SUBOPTIONS) :
+             static_cast<uint16_t>(D6O_VENDOR_OPTS)),
+      vendor_id_(vendor_id) {
 }
 
 OptionVendor::OptionVendor(Option::Universe u, OptionBufferConstIter begin,
                            OptionBufferConstIter end)
-    :Option(u, u==Option::V4?DHO_VIVSO_SUBOPTIONS:D6O_VENDOR_OPTS), vendor_id_(0) {
+    : Option(u, u == Option::V4?
+             static_cast<uint16_t>(DHO_VIVSO_SUBOPTIONS) :
+             static_cast<uint16_t>(D6O_VENDOR_OPTS)),
+      vendor_id_(0) {
     unpack(begin, end);
 }
 
@@ -47,8 +53,12 @@ void OptionVendor::pack(isc::util::OutputBuffer& buf) const {
 
 void OptionVendor::unpack(OptionBufferConstIter begin,
                           OptionBufferConstIter end) {
+
+    // We throw SkipRemainingOptionsError so callers can
+    // abandon further unpacking, if desired.
     if (distance(begin, end) < sizeof(uint32_t)) {
-        isc_throw(OutOfRange, "Truncated vendor-specific information option"
+        isc_throw(SkipRemainingOptionsError,
+                  "Truncated vendor-specific information option"
                   << ", length=" << distance(begin, end));
     }
 

@@ -1,10 +1,12 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-
-<chapter id="stats">
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="stats">
   <title>Statistics</title>
 
   <section>
@@ -51,13 +53,12 @@
 
     <para>
       During normal operation, DHCPv4 and DHCPv6 servers gather statistics.
-      For a list of DHCPv4 and DHCPv6 statistics, see <xref
-      linkend="dhcp4-stats"/> and <xref linkend="dhcp6-stats"/>, respectively.
+      For a list of DHCPv4 and DHCPv6 statistics, see <xref linkend="dhcp4-stats"/> and <xref linkend="dhcp6-stats"/>, respectively.
     </para>
 
     <para>
       To extract data from the statistics module, the control channel can be
-      used. See <xref linkend="ctrl-channel" /> for details. It is possible to
+      used. See <xref linkend="ctrl-channel"/> for details. It is possible to
       retrieve a single or all statistics, reset statistics (i.e. set to neutral
       value, typically zero) or even remove completely a single or all
       statistics. See section <xref linkend="command-stats"/> for a list of
@@ -65,7 +66,7 @@
     </para>
   </section>
 
-  <section id="stats-lifecycle">
+  <section xml:id="stats-lifecycle">
     <title>Statistics Lifecycle</title>
     <para>
       It is useful to understand how the Statistics Manager module works. When
@@ -99,7 +100,7 @@
     </para>
   </section>
 
-  <section id="command-stats">
+  <section xml:id="command-stats">
     <title>Commands for Manipulating Statistics</title>
     <para>
       There are several commands defined that can be used for accessing (-get),
@@ -120,7 +121,7 @@
     sending commands to Kea, see <xref linkend="ctrl-channel"/>.
     </para></note>
 
-    <section id="command-statistic-get">
+    <section xml:id="command-statistic-get">
       <title>statistic-get command</title>
 
       <para>
@@ -146,7 +147,7 @@
       </para>
     </section> <!-- end of command-statistic-get -->
 
-    <section id="command-statistic-reset">
+    <section xml:id="command-statistic-reset">
       <title>statistic-reset command</title>
 
       <para>
@@ -173,7 +174,7 @@
       </para>
     </section> <!-- end of command-statistic-reset -->
 
-    <section id="command-statistic-remove">
+    <section xml:id="command-statistic-remove">
       <title>statistic-remove command</title>
 
       <para>
@@ -199,7 +200,7 @@
       </para>
     </section> <!-- end of command-statistic-reset -->
 
-    <section id="command-statistic-get-all">
+    <section xml:id="command-statistic-get-all">
       <title>statistic-get-all command</title>
 
       <para>
@@ -219,7 +220,7 @@
       </para>
     </section> <!-- end of command-statistic-get-all -->
 
-    <section id="command-statistic-reset-all">
+    <section xml:id="command-statistic-reset-all">
       <title>statistic-reset-all command</title>
 
       <para>
@@ -241,7 +242,7 @@
       </para>
     </section> <!-- end of command-statistic-reset-all -->
 
-    <section id="command-statistic-remove-all">
+    <section xml:id="command-statistic-remove-all">
       <title>statistic-remove-all command</title>
 
       <para>

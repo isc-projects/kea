@@ -35,8 +35,7 @@ class ParseError : public isc::Exception {
 ///              << " (" << getPosition(what) << ")");
 /// }
 
-/// @todo: move this header into simple_parser.h as soon as
-/// there is no dependency through DhcpConfigParser
+/// @todo: move this header into simple_parser.h
 /// @todo: create an isc_throw like macro to add the
 /// position more easily.
 /// @todo: replace all references to DhcpConfigError with ConfigError,

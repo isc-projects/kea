@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,9 +63,10 @@ void Dhcp4to6Ipc::handler() {
 
         // from Dhcpv4Srv::run_one() after receivePacket()
         if (pkt) {
-            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP6_DHCP4O6_PACKET_RECEIVED)
+            LOG_DEBUG(packet4_logger, DBG_DHCP4_BASIC, DHCP4_DHCP4O6_PACKET_RECEIVED)
                 .arg(static_cast<int>(pkt->getType()))
                 .arg(pkt->getRemoteAddr().toText())
+                .arg(pkt->getRemotePort())
                 .arg(pkt->getIface());
         }
     } catch (const std::exception& e) {
@@ -89,7 +90,7 @@ void Dhcp4to6Ipc::handler() {
         return;
     }
 
-    // Get the DHCPv4 message 
+    // Get the DHCPv4 message.
     OptionPtr msg = msgs.begin()->second;
     if (!msg) {
         LOG_DEBUG(packet4_logger, DBG_DHCP4_DETAIL, DHCP4_DHCP4O6_BAD_PACKET)
@@ -103,7 +104,7 @@ void Dhcp4to6Ipc::handler() {
     // From Dhcpv4Srv::run_one() processing and after
     Pkt4Ptr rsp;
 
-    ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp);
+    ControlledDhcpv4Srv::getInstance()->processPacket(query, rsp, false);
 
     if (!rsp) {
         return;
@@ -133,14 +134,13 @@ void Dhcp4to6Ipc::handler() {
             // Callouts decided to skip the next processing step. The next
             // processing step would to parse the packet, so skip at this
             // stage means drop.
-            if (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) {
+            if ((callout_handle->getStatus() == CalloutHandle::NEXT_STEP_SKIP) ||
+                (callout_handle->getStatus() == CalloutHandle::NEXT_STEP_DROP)) {
                 LOG_DEBUG(hooks_logger, DBG_DHCP4_HOOKS,
                           DHCP4_HOOK_BUFFER_SEND_SKIP)
                     .arg(rsp->getLabel());
                 return;
             }
-
-            /// @todo: Add support for DROP status.
 
             callout_handle->getArgument("response4", rsp);
         }
@@ -156,6 +156,7 @@ void Dhcp4to6Ipc::handler() {
             .arg(rsp6->getName())
             .arg(static_cast<int>(rsp6->getType()))
             .arg(rsp6->getRemoteAddr())
+            .arg(rsp6->getRemotePort())
             .arg(rsp6->getIface())
             .arg(rsp->getLabel())
             .arg(rsp->getName())

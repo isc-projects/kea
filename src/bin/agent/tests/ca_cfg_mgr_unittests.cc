@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,6 +254,23 @@ const char* AGENT_CONFIGS[] = {
     "            \"socket-name\": \"/tmp/socket-v6\"\n"
     "        }\n"
     "    }\n"
+    "}",
+
+    // Configuration 7: http and 2 sockets with user contexts and comments
+    "{\n"
+    "    \"user-context\": { \"comment\": \"Indirect comment\" },\n"
+    "    \"http-host\": \"betelgeuse\",\n"
+    "    \"http-port\": 8001,\n"
+    "    \"control-sockets\": {\n"
+    "        \"dhcp4\": {\n"
+    "            \"comment\": \"dhcp4 socket\",\n"
+    "            \"socket-name\": \"/tmp/socket-v4\"\n"
+    "        },\n"
+    "        \"dhcp6\": {\n"
+    "            \"socket-name\": \"/tmp/socket-v6\",\n"
+    "            \"user-context\": { \"version\": 1 }\n"
+    "        }\n"
+    "   }\n"
     "}"
 };
 
@@ -395,5 +412,40 @@ TEST_F(AgentParserTest, configParseHooks) {
     EXPECT_EQ("{ \"param1\": \"foo\" }", libs[0].second->str());
 }
 
+// This test checks comments.
+TEST_F(AgentParserTest, comments) {
+    configParse(AGENT_CONFIGS[7], 0);
+    CtrlAgentCfgContextPtr agent_ctx = cfg_mgr_.getCtrlAgentCfgContext();
+    ASSERT_TRUE(agent_ctx);
+
+    // Check global user context.
+    ConstElementPtr ctx = agent_ctx->getContext();
+    ASSERT_TRUE(ctx);
+    ASSERT_EQ(1, ctx->size());
+    ASSERT_TRUE(ctx->get("comment"));
+    EXPECT_EQ("\"Indirect comment\"", ctx->get("comment")->str());
+
+    // There is a DHCP4 control socket.
+    ConstElementPtr socket4 = agent_ctx->getControlSocketInfo("dhcp4");
+    ASSERT_TRUE(socket4);
+
+    // Check DHCP4 control socket user context.
+    ConstElementPtr ctx4 = socket4->get("user-context");
+    ASSERT_TRUE(ctx4);
+    ASSERT_EQ(1, ctx4->size());
+    ASSERT_TRUE(ctx4->get("comment"));
+    EXPECT_EQ("\"dhcp4 socket\"", ctx4->get("comment")->str());
+
+    // There is a DHCP6 control socket.
+    ConstElementPtr socket6 = agent_ctx->getControlSocketInfo("dhcp6");
+    ASSERT_TRUE(socket6);
+
+    // Check DHCP6 control socket user context.
+    ConstElementPtr ctx6 = socket6->get("user-context");
+    ASSERT_TRUE(ctx6);
+    ASSERT_EQ(1, ctx6->size());
+    ASSERT_TRUE(ctx6->get("version"));
+    EXPECT_EQ("1", ctx6->get("version")->str());
+}
 
 }; // end of anonymous namespace

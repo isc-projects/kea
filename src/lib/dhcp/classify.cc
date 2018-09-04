@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,7 @@ namespace isc {
 namespace dhcp {
 
 ClientClasses::ClientClasses(const std::string& class_names)
-    : std::set<ClientClass>() {
+    : list_(), set_() {
     std::vector<std::string> split_text;
     boost::split(split_text, class_names, boost::is_any_of(","),
                  boost::algorithm::token_compress_off);
@@ -33,8 +33,8 @@ ClientClasses::ClientClasses(const std::string& class_names)
 std::string
 ClientClasses::toText(const std::string& separator) const {
     std::stringstream s;
-    for (const_iterator class_it = begin(); class_it != end(); ++class_it) {
-        if (class_it != begin()) {
+    for (const_iterator class_it = cbegin(); class_it != cend(); ++class_it) {
+        if (class_it != cbegin()) {
             s << separator;
         }
         s << *class_it;
@@ -44,4 +44,3 @@ ClientClasses::toText(const std::string& separator) const {
     
 } // end of namespace isc::dhcp
 } // end of namespace isc
-

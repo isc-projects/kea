@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /// Defines the logger used by the user check hooks library.
+#include <config.h>
+
 #include <user_chk_log.h>
 
 namespace user_chk {

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,6 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/classify.h>
+#include <hooks/callout_handle_associate.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -86,7 +87,7 @@ private:
 ///
 /// @note This is abstract class. Please instantiate derived classes
 /// such as @c Pkt4 or @c Pkt6.
-class Pkt {
+class Pkt : public hooks::CalloutHandleAssociate {
 protected:
 
     /// @brief Constructor.
@@ -285,13 +286,20 @@ public:
     /// so I decided to stick with addClass().
     ///
     /// @param client_class name of the class to be added
-    void addClass(const isc::dhcp::ClientClass& client_class);
+    /// @param required the class is marked for required evaluation
+    void addClass(const isc::dhcp::ClientClass& client_class,
+                  bool required = false);
 
     /// @brief Returns the class set
     ///
     /// @note This should be used only to iterate over the class set.
-    /// @return
-    const ClientClasses& getClasses() const { return (classes_); }
+    /// @param required return classes or required to be evaluated classes.
+    /// @return if required is false (the default) the classes the
+    /// packet belongs to else the classes which are required to be
+    /// evaluated.
+    const ClientClasses& getClasses(bool required = false) const {
+        return (!required ? classes_ : required_classes_);
+    }
 
     /// @brief Unparsed data (in received packets).
     ///
@@ -468,12 +476,24 @@ public:
         ifindex_ = ifindex;
     };
 
+    /// @brief Resets interface index to negative value.
+    void resetIndex() {
+        ifindex_ = -1;
+    }
+
     /// @brief Returns interface index.
     ///
     /// @return interface index
     uint32_t getIndex() const {
         return (ifindex_);
     };
+
+    /// @brief Checks if interface index has been set.
+    ///
+    /// @return true if interface index set, false otherwise.
+    bool indexSet() const {
+        return (ifindex_ >= 0);
+    }
 
     /// @brief Returns interface name.
     ///
@@ -566,6 +586,14 @@ public:
     /// of returned reference lifetime. It is preferred to use @ref inClass and
     /// @ref addClass should be used to operate on this field.
     ClientClasses classes_;
+
+    /// @brief Classes which are required to be evaluated.
+    ///
+    /// The comment on @ref classes_ applies here.
+    ///
+    /// Before output option processing these classes will be evaluated
+    /// and if evaluation status is true added to the previous collection.
+    ClientClasses required_classes_;
 
     /// @brief Collection of options present in this message.
     ///
@@ -697,7 +725,7 @@ protected:
     /// Each network interface has assigned an unique ifindex.
     /// It is a functional equivalent of a name, but sometimes more useful, e.g.
     /// when using odd systems that allow spaces in interface names.
-    int ifindex_;
+    int64_t ifindex_;
 
     /// @brief Local IP (v4 or v6) address.
     ///

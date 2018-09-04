@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,6 +56,10 @@ public:
 /// is decreased. When the counter is decreased to 0 it indicates that the
 /// entire JSON structure has been received and processed.
 ///
+/// As '{', '}', '[' and ']' can be embedded in JSON strings two states
+/// for strings and escape in strings are required. Note the processing
+/// of escapes is greatly simplified compared to ECMA 404 figure 5.
+
 /// Note that this mechanism doesn't check if the JSON structure is well
 /// formed. It merely detects the end of the JSON structure if this structure
 /// is well formed. The structure is validated when @ref JSONFeed::toElement
@@ -80,8 +84,14 @@ public:
     /// @brief Parsing JSON.
     static const int INNER_JSON_ST = SM_DERIVED_STATE_MIN + 4;
 
+    /// @brief Parsing JSON string.
+    static const int STRING_JSON_ST = SM_DERIVED_STATE_MIN + 5;
+
+    /// @brief JSON escape next character.
+    static const int ESCAPE_JSON_ST = SM_DERIVED_STATE_MIN + 6;
+
     /// @brief Found last closing brace or square bracket.
-    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 5;
+    static const int JSON_END_ST = SM_DERIVED_STATE_MIN + 7;
 
     /// @brief Found opening and closing brace or square bracket.
     ///
@@ -152,6 +162,11 @@ public:
     /// @brief Returns error string when data processing has failed.
     std::string getErrorMessage() const {
         return (error_message_);
+    }
+
+    /// @brief Returns the text parsed into the buffer.
+    std::string getProcessedText() const {
+        return (output_);
     }
 
     /// @brief Returns processed data as a structure of @ref isc::data::Element
@@ -248,8 +263,14 @@ private:
     /// @brief Handler for WHITESPACE_BEFORE_JSON_ST.
     void whiteSpaceBeforeJSONHandler();
 
-    /// @brief Handle for the FIRST_BRACE_ST.
+    /// @brief Handler for the FIRST_BRACE_ST.
     void innerJSONHandler();
+
+    /// @brief Handler for the STRING_JSON_ST.
+    void stringJSONHandler();
+
+    /// @brief Handler for the ESCAPE_JSON_ST;
+    void escapeJSONHandler();
 
     /// @brief Handler for the JSON_END_ST.
     void endJSONHandler();

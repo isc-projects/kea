@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,21 @@ public:
         callback_qry_pkt6_.reset();
         callback_qry_options_copy_ = false;
         callback_skip_ = 0;
+    }
+
+    /// @brief Checks if the state of the callout handle associated with a query
+    /// was reset after the callout invocation.
+    ///
+    /// The check includes verification if the status was set to 'continue' and
+    /// that all arguments were deleted.
+    ///
+    /// @param query pointer to the query which callout handle is associated
+    /// with.
+    void checkCalloutHandleReset(const Pkt6Ptr& query) {
+        CalloutHandlePtr callout_handle = query->getCalloutHandle();
+        ASSERT_TRUE(callout_handle);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+        EXPECT_TRUE(callout_handle->getArgumentNames().empty());
     }
 
     /// callback that stores received callout name and received values
@@ -189,7 +204,7 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     ASSERT_TRUE(lease);
 
     // Do all checks on the lease
-    checkLease6(lease, Lease::TYPE_NA, 128);
+    checkLease6(duid_, lease, Lease::TYPE_NA, 128);
 
     // Check that the lease is indeed in LeaseMgr
     Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(lease->type_,
@@ -227,6 +242,9 @@ TEST_F(HookAllocEngine6Test, lease6_select) {
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 // This test checks if lease6_select callout is able to override the values
@@ -282,6 +300,9 @@ TEST_F(HookAllocEngine6Test, change_lease6_select) {
     EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(pref_override_, from_mgr->preferred_lft_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 // This test checks if lease6_select callout can set the status to next
@@ -313,6 +334,9 @@ TEST_F(HookAllocEngine6Test, skip_lease6_select) {
 
     // Check no retry was attempted
     EXPECT_EQ(1, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 /// @brief helper class used in Hooks testing in AllocEngine4
@@ -346,6 +370,21 @@ public:
         callback_qry_pkt4_.reset();
         callback_qry_options_copy_ = false;
         callback_skip_ = 0;
+    }
+
+    /// @brief Checks if the state of the callout handle associated with a query
+    /// was reset after the callout invocation.
+    ///
+    /// The check includes verification if the status was set to 'continue' and
+    /// that all arguments were deleted.
+    ///
+    /// @param query pointer to the query which callout handle is associated
+    /// with.
+    void checkCalloutHandleReset(const Pkt4Ptr& query) {
+        CalloutHandlePtr callout_handle = query->getCalloutHandle();
+        ASSERT_TRUE(callout_handle);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, callout_handle->getStatus());
+        EXPECT_TRUE(callout_handle->getArgumentNames().empty());
     }
 
     /// callback that stores received callout name and received values
@@ -522,6 +561,9 @@ TEST_F(HookAllocEngine4Test, lease4_select) {
     EXPECT_TRUE(callback_argument_names_ == expected_argument_names);
 
     EXPECT_TRUE(callback_qry_options_copy_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 // This test checks if lease4_select callout is able to override the values
@@ -580,6 +622,9 @@ TEST_F(HookAllocEngine4Test, change_lease4_select) {
     EXPECT_EQ(t1_override_, from_mgr->t1_);
     EXPECT_EQ(t2_override_, from_mgr->t2_);
     EXPECT_EQ(valid_override_, from_mgr->valid_lft_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 // This test checks if lease4_select callout can set the status to next
@@ -615,6 +660,9 @@ TEST_F(HookAllocEngine4Test, skip_lease4_select) {
 
     // Check no retry was attempted
     EXPECT_EQ(1, callback_skip_);
+
+    // Check if the callout handle state was reset after the callout.
+    checkCalloutHandleReset(ctx.query_);
 }
 
 }; // namespace test

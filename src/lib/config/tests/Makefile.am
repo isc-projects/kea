@@ -11,6 +11,7 @@ AM_LDFLAGS = -static
 endif
 
 CLEANFILES = *.gcno *.gcda
+DISTCLEANFILES = data_def_unittests_config.h
 
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
@@ -18,9 +19,8 @@ TESTS_ENVIRONMENT = \
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES = module_spec_unittests.cc
-run_unittests_SOURCES += client_connection_unittests.cc
-run_unittests_SOURCES += config_data_unittests.cc run_unittests.cc
+run_unittests_SOURCES = client_connection_unittests.cc
+run_unittests_SOURCES += run_unittests.cc
 run_unittests_SOURCES += command_mgr_unittests.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

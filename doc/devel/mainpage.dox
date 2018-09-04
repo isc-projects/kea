@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,6 +42,9 @@
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
  *
+ * @section performance Performance
+ * - @subpage benchmarks
+ *
  * @section hooksFramework Hooks Framework
  * - @subpage hooksdgDevelopersGuide
  * - @subpage dhcpv4Hooks
@@ -49,7 +52,10 @@
  * - @subpage agentHooks
  * - @subpage hooksComponentDeveloperGuide
  * - @subpage hooksmgMaintenanceGuide
+ * - @subpage libdhcp_ha
  * - @subpage libdhcp_user_chk
+ * - @subpage libdhcp_lease_cmds
+ * - @subpage libdhcp_stat_cmds
  *
  * @section dhcpMaintenanceGuide DHCP Maintenance Guide
  * - @subpage dhcp4
@@ -136,4 +142,3 @@
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
  */
-

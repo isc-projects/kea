@@ -1,4 +1,4 @@
--- Copyright (C) 2016 Internet Systems Consortium.
+-- Copyright (C) 2016-2018 Internet Systems Consortium.
 
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,3 +20,12 @@ DROP FUNCTION IF EXISTS lease4DumpHeader();
 DROP FUNCTION IF EXISTS lease4DumpData();
 DROP FUNCTION IF EXISTS lease6DumpHeader();
 DROP FUNCTION IF EXISTS lease6DumpData();
+DROP TABLE IF EXISTS lease4_stat CASCADE;
+DROP FUNCTION IF EXISTS proc_stat_lease4_insert ();
+DROP FUNCTION IF EXISTS proc_stat_lease4_update ();
+DROP FUNCTION IF EXISTS proc_stat_lease4_delete ();
+DROP TABLE IF EXISTS lease6_stat CASCADE;
+DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
+DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
+DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
+DROP TABLE IF EXISTS logs CASCADE;

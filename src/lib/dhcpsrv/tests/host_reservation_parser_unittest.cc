@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,7 +154,7 @@ protected:
         ASSERT_TRUE(host);
 
         EXPECT_EQ(10, host->getIPv4SubnetID());
-        EXPECT_EQ(0, host->getIPv6SubnetID());
+        EXPECT_EQ(SUBNET_ID_UNUSED, host->getIPv6SubnetID());
         EXPECT_EQ("192.0.2.112", host->getIPv4Reservation().toText());
         EXPECT_TRUE(host->getHostname().empty());
     }
@@ -364,12 +364,13 @@ TEST_F(HostReservationParserTest, dhcp4NoHostname) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("192.0.2.10", hosts[0]->getIPv4Reservation().toText());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 
@@ -404,14 +405,15 @@ TEST_F(HostReservationParserTest, dhcp4ClientClasses) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
+                                              &hwaddr_->hwaddr_[0],
+                                              hwaddr_->hwaddr_.size()));
     ASSERT_EQ(1, hosts.size());
 
     const ClientClasses& classes = hosts[0]->getClientClasses4();
     ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(1, classes.count("foo"));
-    EXPECT_EQ(1, classes.count("bar"));
+    EXPECT_TRUE(classes.contains("foo"));
+    EXPECT_TRUE(classes.contains("bar"));
 
     CfgMgr::instance().setFamily(AF_INET);
     CfgHostsSubnet cfg_subnet(cfg_hosts, SubnetID(10));
@@ -555,12 +557,13 @@ TEST_F(HostReservationParserTest, noIPAddress) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
     EXPECT_EQ(10, hosts[0]->getIPv4SubnetID());
-    EXPECT_EQ(0, hosts[0]->getIPv6SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("0.0.0.0", hosts[0]->getIPv4Reservation().toText());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -668,11 +671,12 @@ TEST_F(HostReservationParserTest, dhcp6HWaddr) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_, DuidPtr()));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
+                                              &hwaddr_->hwaddr_[0],
+                                              hwaddr_->hwaddr_.size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(10, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -737,11 +741,12 @@ TEST_F(HostReservationParserTest, dhcp6DUID) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_EQ("foo.example.com", hosts[0]->getHostname());
 
@@ -817,11 +822,12 @@ TEST_F(HostReservationParserTest, dhcp6NoHostname) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
-
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
-    EXPECT_EQ(0, hosts[0]->getIPv4SubnetID());
+    EXPECT_EQ(SUBNET_ID_UNUSED, hosts[0]->getIPv4SubnetID());
     EXPECT_EQ(12, hosts[0]->getIPv6SubnetID());
     EXPECT_TRUE(hosts[0]->getHostname().empty());
 
@@ -881,8 +887,8 @@ TEST_F(HostReservationParserTest, dhcp6ClientClasses) {
 
     const ClientClasses& classes = hosts[0]->getClientClasses6();
     ASSERT_EQ(2, classes.size());
-    EXPECT_EQ(1, classes.count("foo"));
-    EXPECT_EQ(1, classes.count("bar"));
+    EXPECT_TRUE(classes.contains("foo"));
+    EXPECT_TRUE(classes.contains("bar"));
 
     // lower duid value
     boost::algorithm::to_lower(config);
@@ -938,6 +944,30 @@ TEST_F(HostReservationParserTest, dhcp6NullPrefix) {
 TEST_F(HostReservationParserTest, dhcp6NullPrefix2) {
     std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
         "\"prefixes\": [ \"/\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when slash is missing for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix3) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when slash is followed by nothing for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix4) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::/\" ] }";
+    testInvalidConfig<HostReservationParser6>(config);
+}
+
+// This test verifies that the configuration parser throws an exception
+// when slash is not followed by a number for the prefix..
+TEST_F(HostReservationParserTest, dhcp6NullPrefix5) {
+    std::string config = "{ \"duid\": \"01:02:03:04:05:06:07:08:09:0A\","
+        "\"prefixes\": [ \"2001:db8:2000:0101::/foo\" ] }";
     testInvalidConfig<HostReservationParser6>(config);
 }
 
@@ -1004,7 +1034,9 @@ TEST_F(HostReservationParserTest, options4) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(hwaddr_));
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_HWADDR,
+                                              &hwaddr_->hwaddr_[0],
+                                              hwaddr_->hwaddr_.size()));
     ASSERT_EQ(1, hosts.size());
 
     // Retrieve and sanity check name servers.
@@ -1095,7 +1127,9 @@ TEST_F(HostReservationParserTest, options6) {
     ASSERT_NO_THROW(cfg_hosts->add(host));
 
     HostCollection hosts;
-    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(HWAddrPtr(), duid_));
+    ASSERT_NO_THROW(hosts = cfg_hosts->getAll(Host::IDENT_DUID,
+                                              &duid_->getDuid()[0],
+                                              duid_->getDuid().size()));
     ASSERT_EQ(1, hosts.size());
 
     // Retrieve and sanity check DNS servers option.

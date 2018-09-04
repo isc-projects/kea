@@ -1,12 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-  <chapter id="ctrl-channel">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="ctrl-channel">
     <title>Management API</title>
 
     <para>A classic approach to daemon configuration assumes that
@@ -29,8 +30,7 @@
 
     <para>The DHCPv4 and DHCPv6 servers receive commands over the
     unix domain sockets. The details how to configure these sockets,
-    see <xref linkend="dhcp4-ctrl-channel" /> and <xref
-    linkend="dhcp6-ctrl-channel" />. While it is possible control
+    see <xref linkend="dhcp4-ctrl-channel"/> and <xref linkend="dhcp6-ctrl-channel"/>. While it is possible control
     the servers directly using unix domain sockets it requires that
     the controlling client be running on the same machine as
     the server. In order to connect remotely SSH is usually used to
@@ -74,7 +74,7 @@
       </simpara>
     </note>
 
-    <section id="ctrl-channel-syntax">
+    <section xml:id="ctrl-channel-syntax">
     <title>Data Syntax</title>
     <para>Communication over the control channel is conducted using JSON
     structures. If configured, Kea will open a socket and listen
@@ -123,7 +123,7 @@
       command to the DHCPv4 server for processing via unix domain socket.
       Sometimes, the command including a service value may also be processed by the
       CA, if the CA is running a hooks library which handles such command for the
-      given server. As an example, the hooks library attached to the CA
+      given server. As an example, the hooks library loaded by the CA
       may perform some operations on the database (like adding host reservations,
       modifying leases etc.). An advantage of performing DHCPv4 specific
       administrative operations in the CA rather than forwarding it to
@@ -175,7 +175,7 @@
     the form:
 <screen>
 {
-    "result": 0|1,
+    "result": 0|1|2|3,
     "text": "textual description",
     "arguments": {
         "argument1": "value1",
@@ -185,14 +185,26 @@
 }
 </screen>
     <command>result</command> indicates the outcome of the command. A value of 0
-    means success while any non-zero value designates an error. Currently 1 is
-    used as a generic error, but additional error codes may be added in the
-    future. The <command>text</command> field typically appears when result is
-    non-zero and contains a description of the error encountered, but it may
-    also appear for successful results (that is command specific).
-    <command>arguments</command> is a map of additional data values returned by
-    the server which is specific to the command issued. The map is always present, even
-    if it contains no data values.</para>
+    means success while any non-zero value designates an error or at least a
+    failure to complete the requested action. Currently 1 is used as a generic
+    error, 2 means that a command is not supported and 3 means that the
+    requested operation was completed, but the requested object was not
+    found. Additional error codes may be added in the future. For example a well
+    formed command that requests a subnet that exists in server's configuration
+    would return result 0. If the server encounters an error condition, it would
+    return 1. If the command was asking for IPv6 subnet, but was sent to DHCPv4
+    server, it would return 2. If the query was asking for a subnet-id and there
+    is no subnet with such id, the result would be set to 3.</para>
+
+    <para>
+    The <command>text</command> field typically appears when result is non-zero
+    and contains a description of the error encountered, but it often also appears
+    for successful outcomes. The exact text is command specific, but in general
+    uses plain English to describe the outcome of the command.
+    <command>arguments</command> is a map of additional data values
+    returned by the server which is specific to the command issued. The map is
+    may be present, but that depends on specific command.
+    </para>
 
     <note>
       <simpara>
@@ -205,31 +217,38 @@
 
     </section>
 
-    <section id="ctrl-channel-client">
+    <section xml:id="ctrl-channel-client">
     <title>Using the Control Channel</title>
 
     <para>Kea development team is actively working on providing client applications
     which can be used to control the servers. These applications are, however, in the
     early stages of development and as of Kea 1.2.0 release have certain limitations.
-    The easiest way to start playing with the control API is to use common Unix/Linux tools
+    The easiest way to start interacting with the control API is to use common Unix/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
     <para>In order to control the given Kea service via unix domain socket, use
-    <command>socat</command> as follows:
+    <command>socat</command> in interactive mode as follows:
 <screen>
 $ socat UNIX:/path/to/the/kea/socket -
+</screen>
+    or in batch mode, include the "ignoreeof" option as shown below to ensure
+    socat waits long enough for the server to respond:
+<screen>
+$ echo "{ some command...}" | socat UNIX:/path/to/the/kea/socket -,ignoreeof
 </screen>
 where <command>/path/to/the/kea/socket</command> is the path specified in the
 <command>Dhcp4/control-socket/socket-name</command> parameter in the Kea
 configuration file. Text passed to <command>socat</command>
-will be sent to Kea and the responses received from Kea printed to standard output.</para>
+will be sent to Kea and the responses received from Kea printed to standard
+    output. This approach communicates with the specific server directly and
+    bypasses Control Agent.</para>
 
     <para>It is also easy to open UNIX socket programmatically. An example of
     such a simplistic client written in C is available in the Kea Developer's
     Guide, chapter Control Channel Overview, section Using Control Channel.</para>
 
-    <para>In order to use Kea's RESTful API with <command>curl</command> try the
-    following:
+    <para>In order to use Kea's RESTful API with <command>curl</command> you may
+    use the following:
 <screen>
 $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }' http://ca.example.org:8000/
 </screen>
@@ -240,10 +259,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     </section>
 
-    <section id="commands-common">
+    <section xml:id="commands-common">
       <title>Commands Supported by Both the DHCPv4 and DHCPv6 Servers</title>
 
-      <section id="command-build-report">
+      <section xml:id="command-build-report">
         <title>build-report</title>
         <para>
           The <emphasis>build-report</emphasis> command returns
@@ -259,7 +278,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
       </section> <!-- end of command-build-report -->
 
-      <section id="command-config-get">
+      <section xml:id="command-config-get">
         <title>config-get</title>
 
         <para>The <emphasis>config-get</emphasis> command retrieves the current
@@ -286,7 +305,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </para>
       </section> <!-- end of command-config-get -->
 
-      <section id="command-config-reload">
+      <section xml:id="command-config-reload">
         <title>config-reload</title>
 
         <para>The <emphasis>config-reload</emphasis> command instructs
@@ -315,7 +334,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </section> <!-- end of command-config-reload -->
 
 
-      <section id="command-config-test">
+      <section xml:id="command-config-test">
         <title>config-test</title>
 
       <para>
@@ -333,7 +352,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 {
     "command": "config-test",
     "arguments":  {
-        "&#60;server&#62;": {
+        "&lt;server&gt;": {
         },
         "Logging": {
         }
@@ -341,7 +360,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 }
 </screen>
       <para>
-    where &#60;server&#62; is the configuration element name for a given server
+    where &lt;server&gt; is the configuration element name for a given server
     such as "Dhcp4" or "Dhcp6".  For example:
       </para>
 <screen>
@@ -365,12 +384,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     or
 
-    {"result": 1, "text": "unsupported parameter: BOGUS (&#60;string&#62;:16:26)" }
+    {"result": 1, "text": "unsupported parameter: BOGUS (&lt;string&gt;:16:26)" }
 </screen>
       </para>
     </section> <!-- end of command-config-test -->
 
-      <section id="command-config-write">
+      <section xml:id="command-config-write">
         <title>config-write</title>
 
         <para>The <emphasis>config-write</emphasis> command instructs Kea server
@@ -393,7 +412,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </para>
       </section> <!-- end of command-config-write -->
 
-      <section id="command-leases-reclaim">
+      <section xml:id="command-leases-reclaim">
         <title>leases-reclaim</title>
         <para>
           The <emphasis>leases-reclaim</emphasis> command instructs the server to
@@ -420,7 +439,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         about the processing of expired leases (leases reclamation).</para>
       </section>
 
-      <section id="command-libreload">
+      <section xml:id="command-libreload">
         <title>libreload</title>
 
         <para>
@@ -443,7 +462,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
        </para>
      </section> <!-- end of command-libreload -->
 
-      <section id="command-list-commands">
+      <section xml:id="command-list-commands">
       <title>list-commands</title>
 
       <para>
@@ -464,7 +483,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-list-commands -->
 
-    <section id="command-config-set">
+    <section xml:id="command-config-set">
       <title>config-set</title>
 
       <para>
@@ -480,7 +499,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 {
     "command": "config-set",
     "arguments":  {
-        "&#60;server&#62;": {
+        "&lt;server&gt;": {
         },
         "Logging": {
         }
@@ -488,7 +507,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 }
 </screen>
       <para>
-    where &#60;server&#62; is the configuration element name for a given server
+    where &lt;server&gt; is the configuration element name for a given server
     such as "Dhcp4" or "Dhcp6".  For example:
       </para>
 <screen>
@@ -518,12 +537,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     or
 
-    {"result": 1, "text": "unsupported parameter: BOGUS (&#60;string&#62;:16:26)" }
+    {"result": 1, "text": "unsupported parameter: BOGUS (&lt;string&gt;:16:26)" }
 </screen>
       </para>
     </section> <!-- end of command-config-set -->
 
-    <section id="command-shutdown">
+    <section xml:id="command-shutdown">
       <title>shutdown</title>
 
       <para>
@@ -543,7 +562,43 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </para>
     </section> <!-- end of command-shutdown -->
 
-      <section id="command-version-get">
+    <section id="command-dhcp-disable">
+      <title>dhcp-disable</title>
+      <para>
+        The <emphasis>dhcp-disable</emphasis> command globally disables the DHCP
+        service. The server continues to operate, but it drops all received DHCP
+        messages. This command is useful when the server's maintenance requires that
+        the server temporarily stops allocating new leases and renew existing leases.
+        It is also useful in failover like configurations during a synchronization of
+        the lease databases at startup or recovery after a failure. The optional parameter
+        <emphasis>max-period</emphasis> specifies the time in seconds after which the
+        DHCP service should be automatically re-enabled if the
+        <emphasis>dhcp-enable</emphasis> command is not sent before this time elapses.
+      </para>
+<screen>
+{
+    "command": "dhcp-disable",
+    "arguments": {
+        "max-period": 20
+    }
+}
+</screen>
+    </section> <!-- end of command-dhcp-disable -->
+
+    <section id="command-dhcp-enable">
+      <title>dhcp-enable</title>
+      <para>
+        The <emphasis>dhcp-enable</emphasis> command globally enables the DHCP
+        service.
+      </para>
+<screen>
+{
+    "command": "dhcp-enable"
+}
+</screen>
+    </section> <!-- end of command-dhcp-disable -->
+
+      <section xml:id="command-version-get">
         <title>version-get</title>
         <para>
           The <emphasis>version-get</emphasis> command returns on the control
@@ -561,7 +616,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     </section> <!-- end of commands supported by both servers -->
 
-    <section id="agent-commands">
+    <section xml:id="agent-commands">
       <title>Commands Supported by Control Agent</title>
       <para>The following commands listed in <xref linkend="commands-common"/>
       are also supported by the Control Agent, i.e. when the

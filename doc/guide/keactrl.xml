@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-  <chapter id="keactrl">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="keactrl">
     <title>Managing Kea with keactrl</title>
 
-    <section id="keactrl-overview">
+    <section xml:id="keactrl-overview">
       <title>Overview</title>
       <para>keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
@@ -18,7 +21,7 @@
       </para>
     </section>
 
-    <section id="keactrl-usage">
+    <section xml:id="keactrl-usage">
       <title>Command Line Options</title>
       <para><command>keactrl</command> is run as follows:
 <screen>
@@ -51,7 +54,7 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
       </para>
     </section>
 
-    <section id="keactrl-config-file">
+    <section xml:id="keactrl-config-file">
       <title>The keactrl Configuration File</title>
       <para>
         Depending on requirements, not all of the available servers need
@@ -73,7 +76,11 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
 prefix=@prefix@
 
 # Location of Kea configuration file.
-kea_config_file=@sysconfdir@/@PACKAGE@/kea.conf
+kea_dhcp4_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp4.conf
+kea_dhcp6_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp6.conf
+kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
+kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
+
 
 # Location of Kea binaries.
 exec_prefix=@exec_prefix@
@@ -143,7 +150,7 @@ kea_verbose=no
       </note>
     </section>
 
-    <section id="keactrl-commands">
+    <section xml:id="keactrl-commands">
       <title>Commands</title>
       <para>The following commands are supported by <command>keactrl</command>:
       <itemizedlist>
@@ -161,6 +168,10 @@ kea_verbose=no
           <command>status</command> - returns the status of the servers (active
           or inactive) and the names of the configuration files in use.
         </simpara></listitem>
+        <listitem><simpara>
+          <command>version</command> - prints out a version of the
+          keactrl tool itself, but also the Kea daemons.
+        </simpara></listitem>
       </itemizedlist>
       </para>
 
@@ -168,10 +179,10 @@ kea_verbose=no
       the servers looks similar to the following:
 <screen>
 <userinput>$ keactrl start</userinput>
-INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea.conf -d
-INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea.conf -d
-INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea.conf -d
-INFO/keactrl: Starting kea-ctrl-agent -c /usr/local/etc/kea/kea.conf -d
+INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea-dhcp4.conf -d
+INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea-dhcp6.conf -d
+INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea-dhcp-ddns.conf -d
+INFO/keactrl: Starting kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf -d
 </screen>
       </para>
 
@@ -261,12 +272,16 @@ DHCPv6 server: inactive
 DHCP DDNS: active
 Control Agent: active
 Kea configuration file: /usr/local/etc/kea/kea.conf
+Kea DHCPv4 configuration file: /usr/local/etc/kea/kea-dhcp4.conf
+Kea DHCPv6 configuration file: /usr/local/etc/kea/kea-dhcp6.conf
+Kea DHCP DDNS configuration file: /usr/local/etc/kea/kea-dhcp-ddns.conf
+Kea Control Agent configuration file: /usr/local/etc/kea/kea-ctrl-agent.conf
 keactrl configuration file: /usr/local/etc/kea/keactrl.conf
 </screen>
       </para>
     </section>
 
-    <section id="keactrl-overriding-servers">
+    <section xml:id="keactrl-overriding-servers">
       <title>Overriding the Server Selection</title>
       <para>
         The optional <command>-s</command> switch allows

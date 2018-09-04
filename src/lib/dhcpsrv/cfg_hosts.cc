@@ -1,10 +1,12 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/duid.h>
+#include <dhcp/hwaddr.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_hosts_util.h>
 #include <dhcpsrv/hosts_log.h>
@@ -20,24 +22,6 @@ using namespace isc::data;
 
 namespace isc {
 namespace dhcp {
-
-ConstHostCollection
-CfgHosts::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) const {
-    // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
-    ConstHostCollection collection;
-    getAllInternal<ConstHostCollection>(hwaddr, duid, collection);
-    return (collection);
-}
-
-HostCollection
-CfgHosts::getAll(const HWAddrPtr& hwaddr, const DuidPtr& duid) {
-    // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
-    HostCollection collection;
-    getAllInternal<HostCollection>(hwaddr, duid, collection);
-    return (collection);
-}
 
 ConstHostCollection
 CfgHosts::getAll(const Host::IdentifierType& identifier_type,
@@ -139,26 +123,6 @@ CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
 
 template<typename Storage>
 void
-CfgHosts::getAllInternal(const HWAddrPtr& hwaddr, const DuidPtr& duid,
-                         Storage& storage) const {
-    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_HWADDR_DUID)
-        .arg(hwaddr ? hwaddr->toText() : "(no-hwaddr)")
-        .arg(duid ? duid->toText() : "(no-duid)");
-
-    // Get hosts using HW address.
-    if (hwaddr && !hwaddr->hwaddr_.empty()) {
-        getAllInternal<Storage>(Host::IDENT_HWADDR, &hwaddr->hwaddr_[0],
-                                hwaddr->hwaddr_.size(), storage);
-    }
-    // Get hosts using DUID.
-    if (duid && !duid->getDuid().empty()) {
-        getAllInternal<Storage>(Host::IDENT_DUID, &duid->getDuid()[0],
-                                duid->getDuid().size(), storage);
-    }
-}
-
-template<typename Storage>
-void
 CfgHosts::getAllInternal4(const IOAddress& address, Storage& storage) const {
     LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_ADDRESS4)
         .arg(address.toText());
@@ -216,44 +180,6 @@ CfgHosts::getAllInternal6(const IOAddress& address, Storage& storage) const {
 }
 
 ConstHostPtr
-CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-               const DuidPtr& duid) const {
-    // Do not log here because getHostInternal logs.
-    // The false value indicates that it is an IPv4 subnet.
-    HostPtr host;
-    if (hwaddr && !hwaddr->hwaddr_.empty()) {
-        host = getHostInternal(subnet_id, false, Host::IDENT_HWADDR,
-                               &hwaddr->hwaddr_[0],
-                               hwaddr->hwaddr_.size());
-    }
-    if (!host && duid && !duid->getDuid().empty()) {
-        host = getHostInternal(subnet_id, false, Host::IDENT_DUID,
-                               &duid->getDuid()[0],
-                               duid->getDuid().size());
-    }
-    return (host);
-}
-
-HostPtr
-CfgHosts::get4(const SubnetID& subnet_id, const HWAddrPtr& hwaddr,
-               const DuidPtr& duid) {
-    // Do not log here because getHostInternal logs.
-    // The false value indicates that it is an IPv4 subnet.
-    HostPtr host;
-    if (hwaddr && !hwaddr->hwaddr_.empty()) {
-        host = getHostInternal(subnet_id, false, Host::IDENT_HWADDR,
-                               &hwaddr->hwaddr_[0],
-                               hwaddr->hwaddr_.size());
-    }
-    if (!host && duid && !duid->getDuid().empty()) {
-        host = getHostInternal(subnet_id, false, Host::IDENT_DUID,
-                               &duid->getDuid()[0],
-                               duid->getDuid().size());
-    }
-    return (host);
-}
-
-ConstHostPtr
 CfgHosts::get4(const SubnetID& subnet_id,
                const Host::IdentifierType& identifier_type,
                const uint8_t* identifier_begin,
@@ -294,46 +220,6 @@ CfgHosts::get4(const SubnetID& subnet_id, const IOAddress& address) const {
     return (ConstHostPtr());
 }
 
-
-ConstHostPtr
-CfgHosts::get6(const SubnetID& subnet_id, const DuidPtr& duid,
-               const HWAddrPtr& hwaddr) const {
-    // Do not log here because getHostInternal logs.
-    // The true value indicates that it is an IPv6 subnet.
-    HostPtr host;
-    if (duid && !duid->getDuid().empty()) {
-        host = getHostInternal(subnet_id, true, Host::IDENT_DUID,
-                               &duid->getDuid()[0],
-                               duid->getDuid().size());
-    }
-    if (!host && hwaddr && !hwaddr->hwaddr_.empty()) {
-        host = getHostInternal(subnet_id, true, Host::IDENT_HWADDR,
-                               &hwaddr->hwaddr_[0],
-                               hwaddr->hwaddr_.size());
-    }
-
-    return (host);
-}
-
-HostPtr
-CfgHosts::get6(const SubnetID& subnet_id, const DuidPtr& duid,
-               const HWAddrPtr& hwaddr) {
-    // Do not log here because getHostInternal logs.
-    // The true value indicates that it is an IPv6 subnet.
-    HostPtr host;
-    if (duid && !duid->getDuid().empty()) {
-        host = getHostInternal(subnet_id, true, Host::IDENT_DUID,
-                               &duid->getDuid()[0],
-                               duid->getDuid().size());
-    }
-    if (!host && hwaddr && !hwaddr->hwaddr_.empty()) {
-        host = getHostInternal(subnet_id, true, Host::IDENT_HWADDR,
-                               &hwaddr->hwaddr_[0],
-                               hwaddr->hwaddr_.size());
-    }
-
-    return (host);
-}
 
 ConstHostPtr
 CfgHosts::get6(const SubnetID& subnet_id,
@@ -560,8 +446,9 @@ CfgHosts::add(const HostPtr& host) {
                   " is added to the configuration");
     }
 
-    // At least one subnet ID must be non-zero
-    if (host->getIPv4SubnetID() == 0 && host->getIPv6SubnetID() == 0) {
+    // At least one subnet ID must be used
+    if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED && 
+        host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
                   " 0 when adding new host reservation");
     }
@@ -603,28 +490,46 @@ CfgHosts::add4(const HostPtr& host) {
     }
 
     // Check for duplicates for the specified IPv4 subnet.
-    if ((host->getIPv4SubnetID() > 0) &&
-        get4(host->getIPv4SubnetID(), hwaddr, duid)) {
-        isc_throw(DuplicateHost, "failed to add new host using the HW"
-                  " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
-                  << " and DUID '" << (duid ? duid->toText() : "(null)")
-                  << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
-                  << "' as this host has already been added");
-
-
+    if (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) {
+        if (hwaddr && !hwaddr->hwaddr_.empty() &&
+            get4(host->getIPv4SubnetID(), Host::IDENT_HWADDR,
+                 &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
+            isc_throw(DuplicateHost, "failed to add new host using the HW"
+                      << " address '" << hwaddr->toText(false)
+                      << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
+                      << "' as this host has already been added");
+        }
+        if (duid && !duid->getDuid().empty() &&
+            get4(host->getIPv4SubnetID(), Host::IDENT_DUID,
+                 &duid->getDuid()[0], duid->getDuid().size())) {
+            isc_throw(DuplicateHost, "failed to add new host using the "
+                      << "DUID '" << duid->toText()
+                      << "' to the IPv4 subnet id '" << host->getIPv4SubnetID()
+                      << "' as this host has already been added");
+        }
     // Check for duplicates for the specified IPv6 subnet.
-    } else if (host->getIPv6SubnetID() &&
-               get6(host->getIPv6SubnetID(), duid, hwaddr)) {
-        isc_throw(DuplicateHost, "failed to add new host using the HW"
-                  " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
-                  << " and DUID '" << (duid ? duid->toText() : "(null)")
-                  << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
-                  << "' as this host has already been added");
+    } else if (host->getIPv6SubnetID() != SUBNET_ID_UNUSED) {
+        if (duid && !duid->getDuid().empty() &&
+            get6(host->getIPv6SubnetID(), Host::IDENT_DUID,
+                 &duid->getDuid()[0], duid->getDuid().size())) {
+            isc_throw(DuplicateHost, "failed to add new host using the "
+                      << "DUID '" << duid->toText()
+                      << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
+                      << "' as this host has already been added");
+        }
+        if (hwaddr && !hwaddr->hwaddr_.empty() &&
+            get6(host->getIPv6SubnetID(), Host::IDENT_HWADDR,
+                 &hwaddr->hwaddr_[0], hwaddr->hwaddr_.size())) {
+            isc_throw(DuplicateHost, "failed to add new host using the HW"
+                      << " address '" << hwaddr->toText(false)
+                      << "' to the IPv6 subnet id '" << host->getIPv6SubnetID()
+                      << "' as this host has already been added");
+        }
     }
 
     // Check if the address is already reserved for the specified IPv4 subnet.
     if (!host->getIPv4Reservation().isV4Zero() &&
-        (host->getIPv4SubnetID() > 0) &&
+        (host->getIPv4SubnetID() != SUBNET_ID_UNUSED) &&
         get4(host->getIPv4SubnetID(), host->getIPv4Reservation())) {
         isc_throw(ReservedAddress, "failed to add new host using the HW"
                   " address '" << (hwaddr ? hwaddr->toText(false) : "(null)")
@@ -636,7 +541,7 @@ CfgHosts::add4(const HostPtr& host) {
 
     // Check if the (identifier type, identifier) tuple is already used.
     const std::vector<uint8_t>& id = host->getIdentifier();
-    if ((host->getIPv4SubnetID() > 0) && !id.empty()) {
+    if ((host->getIPv4SubnetID() != SUBNET_ID_UNUSED) && !id.empty()) {
         if (get4(host->getIPv4SubnetID(), host->getIdentifierType(), &id[0],
                  id.size())) {
             isc_throw(DuplicateHost, "failed to add duplicate IPv4 host using identifier: "
@@ -652,7 +557,7 @@ CfgHosts::add4(const HostPtr& host) {
 void
 CfgHosts::add6(const HostPtr& host) {
 
-    if (host->getIPv6SubnetID() == 0) {
+    if (host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         // This is IPv4-only host. No need to add it to v6 tables.
         return;
     }

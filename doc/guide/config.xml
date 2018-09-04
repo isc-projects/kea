@@ -1,16 +1,20 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
-<chapter id="kea-config">
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config">
   <title>Kea Configuration</title>
 
   <para>Kea is using JSON structures to handle configuration. Previously
   we there was a concept of other configuration backends, but that never was
   implemented and the idea was abandoned.</para>
 
-  <section id="json">
+  <section xml:id="json">
     <title>JSON Configuration</title>
     <para>JSON is notation used throughout the Kea project. The most obvious
     usage is for configuration file, but it is also used for sending commands
@@ -22,11 +26,10 @@
     The JSON backend uses certain signals to influence Kea. The
     configuration file is specified upon startup using the -c parameter.</para>
 
-    <section id="json-format">
+    <section xml:id="json-format">
       <title>JSON Syntax</title>
       <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
-      in an extended JSON format. Basic JSON is defined in <ulink
-      url="http://tools.ietf.org/html/rfc7159">RFC 7159</ulink>. Note that Kea
+      in an extended JSON format. Basic JSON is defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link>. Note that Kea
       1.2 introduces a new parser that is better at following the JSON spec.  In
       particular, the only values allowed for boolean are true or false (all
       lowercase). The capitalized versions (True or False) are not accepted.

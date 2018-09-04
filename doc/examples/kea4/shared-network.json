@@ -1,0 +1,125 @@
+// This is an example configuration file for DHCPv4 server in Kea.
+// It demonstrates an advanced feature called shared network. Typically, for
+// each physical link there is one IPv4 subnet that the server is expected
+// to manage. However, in some cases there is a need to configure more subnets
+// in the same physical location. The most common use case is an existing
+// subnet that grew past its original assumptions and ran out of addresses,
+// so the sysadmin needs to add another subnet on top of existing one.
+{
+    "Dhcp4": {
+
+        // As with any other configuration, you need to tell Kea the interface
+        // names, so it would listen to incoming traffic.
+        "interfaces-config": {
+            "interfaces": [ "ethX" ]
+        },
+
+        // You also need to tell where to store lease information.
+        // memfile is the backend that is easiest to set up.
+        "lease-database": {
+            "type": "memfile",
+            "lfc-interval": 3600
+        },
+
+        // The shared networks definition starts here. shared-networks can
+        // contain a list of shared networks. There are many parameters
+        // that can be specified here, so this example may be overwhelming
+        // at first, but the only mandatory parameter for each shared
+        // network is name. It must be unique. Typically, each shared
+        // network also needs to have at least two subnets to be functional,
+        // but if you really want to, you can define a degraded shared
+        // network that has 1 or even 0 subnets. This may come in handy
+        // when migrating between regular subnets and shared networks
+        // or when debugging a problem. It is not recommended to use
+        // 1 subnet per shared network, as there is extra processing
+        // overhead for shared networks.
+        "shared-networks": [
+        {
+            // Name of the shared network. It may be an arbitrary string
+            // and it must be unique among all shared networks.
+            "name": "frog",
+
+            // You may specify interface name if the shared network is
+            // reachable directly from the server.
+            "interface": "eth1",
+
+            // You can specify many parameters that are allowed in subnet scope
+            // here. It's useful to put them here if they apply to all subnets
+            // in this shared network. It's likely that the most common
+            // parameter here will be option values defined with option-data.
+            "match-client-id": false,
+            "option-data": [ ],
+            "rebind-timer": 150,
+
+            // If all the traffic coming from that shared network is reachable
+            // via relay and that relay always use the same IP address, you
+            // can specify that relay address here. Since this example shows
+            // a shared network reachable directly, we put 0.0.0.0 here.
+            // It would be better to skip the relay scope altogether, but
+            // it was left here for demonstration purposes.
+            "relay": {
+                "ip-address": "0.0.0.0"
+            },
+
+            // Timer values can be overridden here.
+            "renew-timer": 100,
+            "reservation-mode": "all",
+
+            // This starts a list of subnets allowed in this shared network.
+            // In our example, there are two subnets.
+            "subnet4": [
+                {
+                    "id": 1,
+                    "match-client-id": true,
+                    "next-server": "0.0.0.0",
+                    "server-hostname": "",
+                    "boot-file-name": "",
+                    "option-data": [ ],
+                    "pools": [ ],
+                    "rebind-timer": 20,
+
+                    // You can override the value inherited from shared-network
+                    // here if your relay uses different IP addresses for
+                    // each subnet.
+                    "relay": {
+                        "ip-address": "0.0.0.0"
+                    },
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "10.0.0.0/8",
+                    "valid-lifetime": 30
+                },
+                {
+                    "id": 2,
+                    "match-client-id": true,
+                    "next-server": "0.0.0.0",
+                    "server-hostname": "",
+                    "boot-file-name": "",
+                    "option-data": [ ],
+                    "pools": [ ],
+                    "rebind-timer": 20,
+                    "renew-timer": 10,
+                    "reservation-mode": "all",
+                    "subnet": "192.0.2.0/24",
+                    "valid-lifetime": 30
+                }
+            ],
+            "valid-lifetime": 200
+        } ], // end of shared-networks
+
+        // It is likely that in your network you'll have a mix of regular,
+        // "plain" subnets and shared networks. It is perfectly valid to mix
+        // them in the same config file.
+        //
+        // This is regular subnet. It's not part of any shared-network.
+        "subnet4": [
+            {
+                "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+                "subnet": "192.0.3.0/24",
+                "interface": "eth0",
+                "id": 3
+            }
+        ]
+
+    } // end of Dhcp4
+}

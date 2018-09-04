@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_log.h>
@@ -46,6 +48,11 @@ ServerHooks::registerHook(const string& name) {
     pair<HookCollection::iterator, bool> result =
         hooks_.insert(make_pair(name, index));
 
+    /// @todo: We also need to call CalloutManager::ensureVectorSize(), so it
+    /// adjusts its vector. Since CalloutManager is not a singleton, there's
+    /// no getInstance() or similar. Also, CalloutManager uses ServerHooks,
+    /// so such a call would induce circular dependencies. Ugh.
+
     if (!result.second) {
 
         // There's a problem with hook libraries that need to be linked with
@@ -82,6 +89,7 @@ ServerHooks::initialize() {
     // Clear out the name->index and index->name maps.
     hooks_.clear();
     inverse_hooks_.clear();
+    parking_lots_.reset(new ParkingLots());
 
     // Register the pre-defined hooks.
     int create = registerHook("context_create");
@@ -171,6 +179,21 @@ ServerHooksPtr
 ServerHooks::getServerHooksPtr() {
     static ServerHooksPtr hooks(new ServerHooks());
     return (hooks);
+}
+
+ParkingLotsPtr
+ServerHooks::getParkingLotsPtr() const {
+    return (parking_lots_);
+}
+
+ParkingLotPtr
+ServerHooks::getParkingLotPtr(const int hook_index) {
+    return (parking_lots_->getParkingLotPtr(hook_index));
+}
+
+ParkingLotPtr
+ServerHooks::getParkingLotPtr(const std::string& hook_name) {
+    return (parking_lots_->getParkingLotPtr(getServerHooks().getIndex(hook_name)));
 }
 
 std::string

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <testutils/user_context_utils.h>
 #include <process/testutils/d_test_stubs.h>
 #include <d2/d2_config.h>
 #include <d2/d2_cfg_mgr.h>
@@ -25,6 +26,7 @@ using namespace isc::config;
 using namespace isc::d2;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::test;
 
 namespace {
 
@@ -238,9 +240,17 @@ TEST_F(D2GetConfigTest, sample1) {
         prettyPrint(unparsed, std::cerr, 0, 4);
         std::cerr << "\n";
     } else {
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCPDDNS(expected, true));
-        EXPECT_TRUE(isEquivalent(unparsed, json));
+        // get the expected config using the d2 syntax parser
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseDHCPDDNS(expected, true));
+        // get the expected config using the generic JSON syntax parser
+        ElementPtr jsonj;
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        // the generic JSON parser does not handle comments
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // check that unparsed and expected values match
+        EXPECT_TRUE(isEquivalent(unparsed, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(unparsed, 0, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {

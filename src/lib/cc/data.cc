@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -342,7 +342,7 @@ skipTo(std::istream& in, const std::string& file, int& line,
 // error on the rest)?
 std::string
 strFromStringstream(std::istream& in, const std::string& file,
-                    const int line, int& pos) throw (JSONError)
+                    const int line, int& pos)
 {
     std::stringstream ss;
     int c = in.get();
@@ -608,7 +608,7 @@ Element::nameToType(const std::string& type_name) {
 }
 
 ElementPtr
-Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
+Element::fromJSON(std::istream& in, bool preproc) {
 
     int line = 1, pos = 1;
     stringstream filtered;
@@ -623,7 +623,6 @@ Element::fromJSON(std::istream& in, bool preproc) throw(JSONError) {
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
-    throw(JSONError)
 {
     int line = 1, pos = 1;
     stringstream filtered;
@@ -635,7 +634,7 @@ Element::fromJSON(std::istream& in, const std::string& file_name, bool preproc)
 
 ElementPtr
 Element::fromJSON(std::istream& in, const std::string& file, int& line,
-                  int& pos) throw(JSONError)
+                  int& pos)
 {
     int c = 0;
     ElementPtr element;
@@ -1236,7 +1235,7 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
 
         // open the list
         out << "[" << (complex ? "\n" : " ");
-        
+
         // iterate on items
         typedef std::vector<ElementPtr> ListType;
         const ListType& l = element->listValue();
@@ -1271,13 +1270,32 @@ prettyPrint(ConstElementPtr element, std::ostream& out,
         // open the map
         out << "{\n";
 
+        bool first = true;
+        // output comment first
+        if (element->contains("comment")) {
+            // add indentation
+            out << std::string(indent + step, ' ');
+            // add keyword:
+            out << "\"comment\": ";
+            // recursive call
+            prettyPrint(element->get("comment"), out, indent + step, step);
+            // it was the first
+            first = false;
+        }
+
         // iterate on keyword: value
         typedef std::map<std::string, ConstElementPtr> MapType;
         const MapType& m = element->mapValue();
         for (MapType::const_iterator it = m.begin();
              it != m.end(); ++it) {
+            // skip comment
+            if (it->first == "comment") {
+                continue;
+            }
             // add the separator if not the first item
-            if (it != m.begin()) {
+            if (first) {
+                first = false;
+            } else {
                 out << ",\n";
             }
             // add indentation

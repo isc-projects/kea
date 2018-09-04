@@ -1,13 +1,16 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <dhcp4/parser_context.h>
 #include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
 
 using namespace isc::data;
 using namespace isc::test;
@@ -199,6 +202,24 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, Parser4Context::PARSER_DHCP4, false);
 }
 
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Dhcp4\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"comment\": \"a comment\",\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet4\": [ { "
+                "    \"user-context\": { \"comment\": \"indirect\" },"
+                "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+                "    \"subnet\": \"192.0.2.0/24\", "
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"user-context\": { \"compatible\": true },"
+                "\"valid-lifetime\": 4000 } }";
+    testParser(txt, Parser4Context::PARSER_DHCP4, false);
+}
 
 /// @brief Loads specified example config file
 ///
@@ -209,6 +230,7 @@ TEST(ParserTest, multilineComments) {
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
+    ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
@@ -216,7 +238,8 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    reference_json = moveComments(json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
@@ -242,8 +265,10 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
                                "backends.json",
-                               "classify.json",
                                "cassandra.json",
+                               "classify.json",
+                               "classify2.json",
+                               "comments.json",
                                "dhcpv4-over-dhcpv6.json",
                                "hooks.json",
                                "leases-expiration.json",
@@ -252,12 +277,32 @@ TEST(ParserTest, file) {
                                "pgsql-reservations.json",
                                "reservations.json",
                                "several-subnets.json",
+                               "shared-network.json",
                                "single-subnet.json",
                                "with-ddns.json" };
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
+}
+
+// Basic test that checks if it's possible to specify outbound-interface.
+TEST(ParserTest, outboundIface) {
+    std::string fname = string(CFG_EXAMPLES) + "/" + "advanced.json";
+    Parser4Context ctx;
+    ConstElementPtr test_json = ctx.parseFile(fname, Parser4Context::PARSER_DHCP4);
+
+    ConstElementPtr tmp;
+    tmp = test_json->get("Dhcp4");
+    ASSERT_TRUE(tmp);
+
+    tmp = tmp->get("interfaces-config");
+    ASSERT_TRUE(tmp);
+
+    tmp = tmp->get("outbound-interface");
+    ASSERT_TRUE(tmp);
+    EXPECT_EQ(Element::string, tmp->getType());
+    EXPECT_EQ("use-routing", tmp->stringValue());
 }
 
 /// @brief Tests error conditions in Dhcp4Parser
@@ -501,6 +546,52 @@ TEST(ParserTest, errors) {
               Parser4Context::PARSER_DHCP4,
               "<string>:2.2-17: got unexpected keyword "
               "\"valid_lifetime\" in Dhcp4 map.");
+
+    // missing parameter
+    testError("{ \"name\": \"foo\",\n"
+              "  \"code\": 123 }\n",
+              Parser4Context::PARSER_OPTION_DEF,
+              "missing parameter 'type' (<string>:1:1) "
+              "[option-def map between <string>:1:1 and <string>:2:15]");
+
+    // user context and embedded comments
+    testError("{ \"Dhcp4\":{\n"
+              "  \"comment\": true,\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Dhcp4\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"valid-lifetime\": 600 }}\n",
+              Parser4Context::PARSER_DHCP4,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -37,6 +37,14 @@ namespace {
 #define NO_RECORD_DEF 0, 0
 #endif
 
+// SLP Directory Agent option.
+RECORD_DECL(DIRECTORY_AGENT_RECORDS, OPT_BOOLEAN_TYPE, OPT_IPV4_ADDRESS_TYPE);
+
+// SLP Service Scope option.
+//
+// The scope list is optional.
+RECORD_DECL(SERVICE_SCOPE_RECORDS, OPT_BOOLEAN_TYPE, OPT_STRING_TYPE);
+
 // fqdn option record fields.
 //
 // Note that the flags field indicates the type of domain
@@ -59,6 +67,23 @@ RECORD_DECL(VIVCO_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
 RECORD_DECL(CLIENT_NDI_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE, OPT_UINT8_TYPE);
 // A client identifier: a 1 byte type field followed by opaque data depending on the type
 RECORD_DECL(UUID_GUID_RECORDS, OPT_UINT8_TYPE, OPT_BINARY_TYPE);
+
+// RFC6731 DHCPv4 Recursive DNS Server Selection option.
+//
+// Flag, two addresses and domain list
+RECORD_DECL(V4_RDNSS_SELECT_RECORDS, OPT_UINT8_TYPE, OPT_IPV4_ADDRESS_TYPE,
+            OPT_IPV4_ADDRESS_TYPE, OPT_FQDN_TYPE);
+
+// RFC7618 DHCPv4 Port Parameter option.
+//
+// PSID offset, PSID-len and PSID
+RECORD_DECL(V4_PORTPARAMS_RECORDS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
+
+// RFC5969 DHCPv6 6RD option.
+//
+// two 8 bit lengthes, an IPv6 address and one or more IPv4 addresses
+RECORD_DECL(OPT_6RD_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
+            OPT_IPV6_ADDRESS_TYPE, OPT_IPV4_ADDRESS_TYPE);
 
 /// @brief Definitions of standard DHCPv4 options.
 const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
@@ -124,8 +149,7 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "nis-domain", DHO_NIS_DOMAIN, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "nis-servers", DHO_NIS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "ntp-servers", DHO_NTP_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
-    { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
-      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" },
+    /// vendor-encapsulated-options (43) is deferred
     { "netbios-name-servers", DHO_NETBIOS_NAME_SERVERS,
       OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "netbios-dd-server", DHO_NETBIOS_DD_SERVER,
@@ -174,10 +198,19 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "streettalk-server", DHO_STREETTALK_SERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "streettalk-directory-assistance-server", DHO_STDASERVER, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
     { "user-class", DHO_USER_CLASS, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "slp-directory-agent", DHO_DIRECTORY_AGENT, OPT_RECORD_TYPE, true,
+      RECORD_DEF(DIRECTORY_AGENT_RECORDS), "" },
+    { "slp-service-scope", DHO_SERVICE_SCOPE, OPT_RECORD_TYPE, false,
+      RECORD_DEF(SERVICE_SCOPE_RECORDS), "" },
     { "fqdn", DHO_FQDN, OPT_RECORD_TYPE, false, RECORD_DEF(FQDN_RECORDS), "" },
     { "dhcp-agent-options", DHO_DHCP_AGENT_OPTIONS,
       OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "dhcp-agent-options-space" },
-    // Unfortunately the AUTHENTICATE option contains a 64-bit
+    { "nds-servers", DHO_NDS_SERVERS, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "nds-tree-name", DHO_NDS_TREE_NAME, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "nds-context", DHO_NDS_CONTEXT, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "bcms-controller-names", DHO_BCMCS_DOMAIN_NAME_LIST, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "bcms-controller-address", DHO_BCMCS_IPV4_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    // Unfortunatelly the AUTHENTICATE option contains a 64-bit
     // data field called 'replay-detection' that can't be added
     // as a record field to a custom option. Also, there is no
     // dedicated option class to handle it so we simply return
@@ -190,6 +223,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     { "client-system", DHO_SYSTEM, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "client-ndi", DHO_NDI, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NDI_RECORDS), "" },
     { "uuid-guid", DHO_UUID_GUID, OPT_RECORD_TYPE, false, RECORD_DEF(UUID_GUID_RECORDS), "" },
+    { "uap-servers", DHO_USER_AUTH, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "geoconf-civic", DHO_GEOCONF_CIVIC, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "pcode", DHO_PCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "tcode", DHO_TCODE, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "netinfo-server-address", DHO_NETINFO_ADDR, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "netinfo-server-tag", DHO_NETINFO_TAG, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "default-url", DHO_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "auto-config", DHO_AUTO_CONFIG, OPT_UINT8_TYPE, false, NO_RECORD_DEF, "" },
+    { "name-service-search", DHO_NAME_SERVICE_SEARCH, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "subnet-selection", DHO_SUBNET_SELECTION,
       OPT_IPV4_ADDRESS_TYPE, false, NO_RECORD_DEF, "" },
     { "domain-search", DHO_DOMAIN_SEARCH, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
@@ -208,7 +250,18 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
     /// ok to specify multiple instances of the "vivso-suboptions" which will be
     /// combined in a single option by the server before responding to a client.
     { "vivso-suboptions", DHO_VIVSO_SUBOPTIONS, OPT_UINT32_TYPE,
-      false, NO_RECORD_DEF, "" }
+      false, NO_RECORD_DEF, "" },
+    { "pana-agent", DHO_PANA_AGENT, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "v4-lost", DHO_V4_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "capwap-ac-v4", DHO_CAPWAP_AC_V4, OPT_IPV4_ADDRESS_TYPE, true, NO_RECORD_DEF, "" },
+    { "sip-ua-cs-domains", DHO_SIP_UA_CONF_SERVICE_DOMAINS, OPT_FQDN_TYPE, true, NO_RECORD_DEF, "" },
+    { "rdnss-selection", DHO_RDNSS_SELECT, OPT_RECORD_TYPE, true,
+      RECORD_DEF(V4_RDNSS_SELECT_RECORDS), "" },
+    { "v4-portparams", DHO_V4_PORTPARAMS, OPT_RECORD_TYPE, false,
+      RECORD_DEF(V4_PORTPARAMS_RECORDS), "" },
+    { "v4-captive-portal", DHO_V4_CAPTIVE_PORTAL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
+    { "option-6rd", DHO_6RD, OPT_RECORD_TYPE, true, RECORD_DEF(OPT_6RD_RECORDS), "" },
+    { "v4-access-domain", DHO_V4_ACCESS_DOMAIN, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" }
 
         // @todo add definitions for all remaining options.
 };
@@ -216,6 +269,15 @@ const OptionDefParams STANDARD_V4_OPTION_DEFINITIONS[] = {
 /// Number of option definitions defined.
 const int STANDARD_V4_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V4_OPTION_DEFINITIONS) / sizeof(STANDARD_V4_OPTION_DEFINITIONS[0]);
+
+/// Last resort definitions (only option 43 for now, these definitions
+/// are applied in deferred unpacking when none is found).
+const OptionDefParams LAST_RESORT_V4_OPTION_DEFINITIONS[] = {
+    { "vendor-encapsulated-options", DHO_VENDOR_ENCAPSULATED_OPTIONS,
+      OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "vendor-encapsulated-options-space" }
+};
+
+const int LAST_RESORT_V4_OPTION_DEFINITIONS_SIZE = 1;
 
 /// Start Definition of DHCPv6 options
 
@@ -251,6 +313,9 @@ RECORD_DECL(S46_PORTPARAMS, OPT_UINT8_TYPE, OPT_PSID_TYPE);
 RECORD_DECL(STATUS_CODE_RECORDS, OPT_UINT16_TYPE, OPT_STRING_TYPE);
 // vendor-class
 RECORD_DECL(VENDOR_CLASS_RECORDS, OPT_UINT32_TYPE, OPT_BINARY_TYPE);
+// rdnss-selection
+RECORD_DECL(V6_RDNSS_SELECT_RECORDS, OPT_IPV6_ADDRESS_TYPE, OPT_UINT8_TYPE,
+            OPT_FQDN_TYPE);
 // sedhcpv6 signature
 RECORD_DECL(SIGNATURE_RECORDS, OPT_UINT8_TYPE, OPT_UINT8_TYPE,
             OPT_BINARY_TYPE);
@@ -349,18 +414,38 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       RECORD_DEF(LQ_RELAY_DATA_RECORDS), "" },
     { "lq-client-link", D6O_LQ_CLIENT_LINK, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
+    { "v6-lost", D6O_V6_LOST, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "capwap-ac-v6", D6O_CAPWAP_AC_V6, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" },
+    { "relay-id", D6O_RELAY_ID, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
+    { "v6-access-domain", D6O_V6_ACCESS_DOMAIN, OPT_FQDN_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "sip-ua-cs-list", D6O_SIP_UA_CS_LIST, OPT_FQDN_TYPE, true,
+      NO_RECORD_DEF, "" },      
     { "bootfile-url", D6O_BOOTFILE_URL, OPT_STRING_TYPE, false, NO_RECORD_DEF, "" },
     { "bootfile-param", D6O_BOOTFILE_PARAM, OPT_TUPLE_TYPE, true, NO_RECORD_DEF, "" },
     { "client-arch-type", D6O_CLIENT_ARCH_TYPE, OPT_UINT16_TYPE, true, NO_RECORD_DEF, "" },
     { "nii", D6O_NII, OPT_RECORD_TYPE, false, RECORD_DEF(CLIENT_NII_RECORDS), "" },
+    { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
     { "erp-local-domain-name", D6O_ERP_LOCAL_DOMAIN_NAME, OPT_FQDN_TYPE, false,
       NO_RECORD_DEF, "" },
     { "rsoo", D6O_RSOO, OPT_EMPTY_TYPE, false, NO_RECORD_DEF, "rsoo-opts" },
     { "pd-exclude", D6O_PD_EXCLUDE, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" },
+    { "rdnss-selection", D6O_RDNSS_SELECTION, OPT_RECORD_TYPE, true,
+      RECORD_DEF(V6_RDNSS_SELECT_RECORDS), "" },
     { "client-linklayer-addr", D6O_CLIENT_LINKLAYER_ADDR, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
+    { "link-address", D6O_LINK_ADDRESS, OPT_IPV6_ADDRESS_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "solmax-rt", D6O_SOL_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
+    { "inf-max-rt", D6O_INF_MAX_RT, OPT_UINT32_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcpv4-message", D6O_DHCPV4_MSG, OPT_BINARY_TYPE, false, NO_RECORD_DEF, "" },
     { "dhcp4o6-server-addr", D6O_DHCPV4_O_DHCPV6_SERVER, OPT_IPV6_ADDRESS_TYPE, true,
+      NO_RECORD_DEF, "" },
+    { "v6-captive-portal", D6O_V6_CAPTIVE_PORTAL, OPT_STRING_TYPE, false,
+      NO_RECORD_DEF, "" },
+    { "relay-source-port", D6O_RELAY_SOURCE_PORT, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
+    { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
     { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
@@ -370,7 +455,12 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       RECORD_DEF(SIGNATURE_RECORDS), "" },
     { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
-    { "aftr-name", D6O_AFTR_NAME, OPT_FQDN_TYPE, false, NO_RECORD_DEF, "" },
+    { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPE_V6_OPTION_SPACE },
+    { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        MAPT_V6_OPTION_SPACE },
+    { "s46-cont-lw", D6O_S46_CONT_LW, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
+        LW_V6_OPTION_SPACE }
 
     // @todo There is still a bunch of options for which we have to provide
     // definitions but we don't do it because they are not really
@@ -382,6 +472,14 @@ const int STANDARD_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(STANDARD_V6_OPTION_DEFINITIONS) /
     sizeof(STANDARD_V6_OPTION_DEFINITIONS[0]);
 
+// Option definitions that belong to two or more option spaces are defined here.
+const OptionDefParams OPTION_DEF_PARAMS_S46_BR = { "s46-br", D6O_S46_BR,
+    OPT_IPV6_ADDRESS_TYPE, false, NO_RECORD_DEF, "" };
+const OptionDefParams OPTION_DEF_PARAMS_S46_RULE = { "s46-rule", D6O_S46_RULE,
+    OPT_RECORD_TYPE, false, RECORD_DEF(S46_RULE), V4V6_RULE_OPTION_SPACE };
+const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
+    D6O_S46_PORTPARAMS, OPT_RECORD_TYPE, false, RECORD_DEF(S46_PORTPARAMS), "" };
+
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
 /// http://kea.isc.org/wiki/Dhcp4o6Design
@@ -392,7 +490,9 @@ const OptionDefParams ISC_V6_OPTION_DEFINITIONS[] = {
     { "4o6-interface", ISC_V6_4O6_INTERFACE, OPT_STRING_TYPE, false,
         NO_RECORD_DEF, "" },
     { "4o6-source-address", ISC_V6_4O6_SRC_ADDRESS, OPT_IPV6_ADDRESS_TYPE,
-        false, NO_RECORD_DEF, "" }
+        false, NO_RECORD_DEF, "" },
+    { "4o6-source-port", ISC_V6_4O6_SRC_PORT, OPT_UINT16_TYPE, false,
+        NO_RECORD_DEF, "" }
 };
 
 const int ISC_V6_OPTION_DEFINITIONS_SIZE =
@@ -401,43 +501,52 @@ const int ISC_V6_OPTION_DEFINITIONS_SIZE =
 
 /// @brief MAPE option definitions
 const OptionDefParams MAPE_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_BR,
+    OPTION_DEF_PARAMS_S46_RULE
 };
 
 const int MAPE_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPE_V6_OPTION_DEFINITIONS) /
-    sizeof(const OptionDefParams);
+    sizeof(MAPE_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief MAPT option definitions
 const OptionDefParams MAPT_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_RULE,
+    { "s46-dmr", D6O_S46_DMR, OPT_IPV6_PREFIX_TYPE, false, NO_RECORD_DEF, "" }
 };
 
 const int MAPT_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(MAPT_V6_OPTION_DEFINITIONS) /
-    sizeof(const OptionDefParams);
+    sizeof(MAPT_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief LW option definitions
 const OptionDefParams LW_V6_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_BR,
+    { "s46-v4v6bind", D6O_S46_V4V6BIND, OPT_RECORD_TYPE, false,
+        RECORD_DEF(S46_V4V6BIND), V4V6_BIND_OPTION_SPACE }
 };
 
 const int LW_V6_OPTION_DEFINITIONS_SIZE =
     sizeof(LW_V6_OPTION_DEFINITIONS) /
-    sizeof(const OptionDefParams);
+    sizeof(LW_V6_OPTION_DEFINITIONS[0]);
 
 /// @brief Rule option definitions
 const OptionDefParams V4V6_RULE_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_RULE_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_RULE_OPTION_DEFINITIONS) /
-    sizeof(const OptionDefParams);
+    sizeof(V4V6_RULE_OPTION_DEFINITIONS[0]);
 
 /// @brief Bind option definitions
 const OptionDefParams V4V6_BIND_OPTION_DEFINITIONS[] = {
+    OPTION_DEF_PARAMS_S46_PORTPARAMS
 };
 
 const int V4V6_BIND_OPTION_DEFINITIONS_SIZE =
     sizeof(V4V6_BIND_OPTION_DEFINITIONS) /
-    sizeof(const OptionDefParams);
+    sizeof(V4V6_BIND_OPTION_DEFINITIONS[0]);
 
 } // unnamed namespace
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -183,6 +183,76 @@ public:
         isc::dhcp::LeaseMgrFactory::destroy();
     }
 
+    /// @brief Processes incoming Request message.
+    ///
+    /// @param request a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRequest(const Pkt6Ptr& request) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(request, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processRequest(ctx));
+    }
+
+    /// @brief Processes incoming Renew message.
+    ///
+    /// @param renew a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRenew(const Pkt6Ptr& renew) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(renew, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processRenew(ctx));
+    }
+
+    /// @brief Processes incoming Rebind message.
+    ///
+    /// @param rebind a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRebind(const Pkt6Ptr& rebind) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(rebind, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processRebind(ctx));
+    }
+
+    /// @brief Processes incoming Release message.
+    ///
+    /// @param release a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processRelease(const Pkt6Ptr& release) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(release, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processRelease(ctx));
+    }
+
+    /// @brief Processes incoming Decline message.
+    ///
+    /// @param decline a message received from client
+    /// @return REPLY message or NULL
+    Pkt6Ptr processDecline(const Pkt6Ptr& decline) {
+        AllocEngine::ClientContext6 ctx;
+        bool drop = false;
+        initContext(decline, ctx, drop);
+        if (drop) {
+            return (Pkt6Ptr());
+        }
+        return (processDecline(ctx));
+    }
+
     using Dhcpv6Srv::processSolicit;
     using Dhcpv6Srv::processRequest;
     using Dhcpv6Srv::processRenew;
@@ -242,6 +312,12 @@ public:
     // Generate client-id option
     isc::dhcp::OptionPtr generateClientId(size_t duid_size = 32) {
 
+        if (duid_size == 0) {
+            return (isc::dhcp::OptionPtr
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID)));
+
+        }
+
         isc::dhcp::OptionBuffer clnt_duid(duid_size);
         for (size_t i = 0; i < duid_size; i++) {
             clnt_duid[i] = 100 + i;
@@ -251,6 +327,29 @@ public:
 
         return (isc::dhcp::OptionPtr
                 (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_CLIENTID,
+                                       clnt_duid.begin(),
+                                       clnt_duid.begin() + duid_size)));
+    }
+
+    /// Generate server-id option
+    /// @param duid_size size of the duid
+    isc::dhcp::OptionPtr generateServerId(size_t duid_size = 32) {
+
+        if (duid_size == 0) {
+            return (isc::dhcp::OptionPtr
+                    (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID)));
+
+        }
+
+        isc::dhcp::OptionBuffer clnt_duid(duid_size);
+        for (size_t i = 0; i < duid_size; i++) {
+            clnt_duid[i] = 100 + i;
+        }
+
+        duid_ = isc::dhcp::DuidPtr(new isc::dhcp::DUID(clnt_duid));
+
+        return (isc::dhcp::OptionPtr
+                (new isc::dhcp::Option(isc::dhcp::Option::V6, D6O_SERVERID,
                                        clnt_duid.begin(),
                                        clnt_duid.begin() + duid_size)));
     }
@@ -696,11 +795,11 @@ parseDHCP6(const std::string& in, bool verbose = false)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseOPTION_DEF(const std::string& in, bool verbose = false)
+parseOPTION_DEFS(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser6Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEF));
+        return (ctx.parseString(in, isc::dhcp::Parser6Context::PARSER_OPTION_DEFS));
     }
     catch (const std::exception& ex) {
         if (verbose) {

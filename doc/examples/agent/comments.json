@@ -1,0 +1,37 @@
+// This is a example of a configuration for Control-Agent (CA) or simply Agent.
+// It uses embedded (i.e., which will be included in configuration objects
+// and not stripped by at lexical analysis) comments.
+
+{
+    "Control-agent":
+    {
+        // Global scope
+        "comment": "A Control Agent",
+
+        "http-host": "127.0.0.1",
+        "http-port": 8000,
+
+        // In control socket
+        "control-sockets":
+        {
+            "dhcp4":
+            {
+                "comment": "control socket for DHCP4 server",
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-v4"
+            }
+        }
+
+    },
+
+    "Logging":
+    {
+        // In loggers
+        "loggers": [
+            {
+                "comment": "A logger",
+                "name": "kea-ctrl-agent"
+            }
+        ]
+    }
+}

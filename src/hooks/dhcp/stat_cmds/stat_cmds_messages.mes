@@ -1,0 +1,53 @@
+# Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+
+% STAT_CMDS_DEINIT_FAILED unloading Stat Commands hooks library failed: %1
+This error message indicates an error during unloading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% STAT_CMDS_DEINIT_OK unloading Stat Commands hooks library successful
+This info message indicates that the Stat Commands hooks library has been
+removed successfully.
+
+% STAT_CMDS_INIT_FAILED loading Stat Commands hooks library failed: %1
+This error message indicates an error during loading the Lease Commands
+hooks library. The details of the error are provided as argument of
+the log message.
+
+% STAT_CMDS_INIT_OK loading Stat Commands hooks library successful
+This info message indicates that the Stat Commands hooks library has been
+loaded successfully. Enjoy!
+
+% STAT_CMDS_LEASE4_GET stat-lease4-get command successful, parameters: %1 rows found: %2
+The stat-lease4-get command has been successful. The log will contain
+the parameters supplied and the number of rows found.
+
+% STAT_CMDS_LEASE4_GET_FAILED stat-lease4-get command failed: parameters: %1, reason: %2
+The stat-lease4-get command has failed. Both the parameters supplied and
+the reason for failure are logged.
+
+% STAT_CMDS_LEASE4_GET_INVALID stat-lease4-get command is malformed or invalid, reason: %1
+The stat-lease4-get command was either malformed or contained invalid
+parameters.  A detailed explanation should be logged.
+
+% STAT_CMDS_LEASE4_GET_NO_SUBNETS stat-lease4-get, parameters: %1, %2"
+The parameters submitted with stat-lease4-get were valid but excluded all
+known subnets.  The parameters supplied along with an explanation should
+be logged.
+
+% STAT_CMDS_LEASE6_GET stat-lease6-get command successful, parameters: %1 rows found: %2
+The stat-lease6-get command has been successful. The log will contain
+the parameters supplied and the number of rows found.
+
+% STAT_CMDS_LEASE6_GET_FAILED stat-lease4-get command failed: parameters: %1, reason: %2
+The stat-lease6-get command has failed. Both the parameters supplied and
+the reason for failure are logged.
+
+% STAT_CMDS_LEASE6_GET_INVALID stat-lease6-get command is malformed or invalid, reason: %1
+The stat-lease6-get command was either malformed or contained invalid
+parameters.  A detailed explanation should be logged.
+
+% STAT_CMDS_LEASE6_GET_NO_SUBNETS stat-lease6-get, parameters: %1, %2"
+The parameters submitted with stat-lease6-get were valid but excluded all
+known subnets.  The parameters supplied along with an explanation should
+be logged.

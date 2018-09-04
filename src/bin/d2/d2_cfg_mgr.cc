@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -56,6 +56,8 @@ D2CfgContext::~D2CfgContext() {
 ElementPtr
 D2CfgContext::toElement() const {
     ElementPtr d2 = Element::createMap();
+    // Set user-context
+    contextToElement(d2);
     // Set ip-address
     const IOAddress& ip_address = d2_params_->getIpAddress();
     d2->set("ip-address", Element::create(ip_address.toText()));
@@ -247,7 +249,7 @@ D2CfgMgr::getConfigSummary(const uint32_t) {
 namespace {
 
 template <typename int_type> int_type
-getInt(const std::string& name, isc::data::ConstElementPtr value) {
+getInt(const std::string& name, ConstElementPtr value) {
     int64_t val_int = value->intValue();
     if ((val_int < std::numeric_limits<int_type>::min()) ||
         (val_int > std::numeric_limits<int_type>::max())) {
@@ -259,7 +261,7 @@ getInt(const std::string& name, isc::data::ConstElementPtr value) {
 }
 
 isc::asiolink::IOAddress
-getIOAddress(const std::string& name, isc::data::ConstElementPtr value) {
+getIOAddress(const std::string& name, ConstElementPtr value) {
     std::string str = value->stringValue();
     try {
         return (isc::asiolink::IOAddress(str));
@@ -271,7 +273,7 @@ getIOAddress(const std::string& name, isc::data::ConstElementPtr value) {
 }
 
 dhcp_ddns::NameChangeProtocol
-getProtocol(const std::string& name, isc::data::ConstElementPtr value) {
+getProtocol(const std::string& name, ConstElementPtr value) {
     std::string str = value->stringValue();
     try {
         return (dhcp_ddns::stringToNcrProtocol(str));
@@ -284,7 +286,7 @@ getProtocol(const std::string& name, isc::data::ConstElementPtr value) {
 }
 
 dhcp_ddns::NameChangeFormat
-getFormat(const std::string& name, isc::data::ConstElementPtr value) {
+getFormat(const std::string& name, ConstElementPtr value) {
     std::string str = value->stringValue();
     try {
         return (dhcp_ddns::stringToNcrFormat(str));
@@ -300,7 +302,7 @@ getFormat(const std::string& name, isc::data::ConstElementPtr value) {
 
 void
 D2CfgMgr::parseElement(const std::string& element_id,
-                       isc::data::ConstElementPtr element) {
+                       ConstElementPtr element) {
     try {
         // Get D2 specific context.
         D2CfgContextPtr context = getD2CfgContext();
@@ -311,6 +313,10 @@ D2CfgMgr::parseElement(const std::string& element_id,
             (element_id == "port")  ||
             (element_id == "dns-server-timeout"))  {
             // global scalar params require nothing extra be done
+        } else if (element_id == "user-context") {
+            if (element->getType() == Element::map) {
+                context->setContext(element);
+            }
         } else if (element_id == "tsig-keys") {
             TSIGKeyInfoListParser parser;
             context->setKeys(parser.parse(element));
@@ -339,12 +345,12 @@ D2CfgMgr::parseElement(const std::string& element_id,
 };
 
 void
-D2CfgMgr::setCfgDefaults(isc::data::ElementPtr mutable_config) {
+D2CfgMgr::setCfgDefaults(ElementPtr mutable_config) {
     D2SimpleParser::setAllDefaults(mutable_config);
 }
 
 void
-D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
+D2CfgMgr::buildParams(ConstElementPtr params_config) {
 
     // Base class build creates parses and invokes build on each parser.
     // This populate the context scalar stores with all of the parameters.
@@ -361,7 +367,7 @@ D2CfgMgr::buildParams(isc::data::ConstElementPtr params_config) {
     // Assumes that params_config has had defaults added
     BOOST_FOREACH(isc::dhcp::ConfigPair param, params_config->mapValue()) {
         std::string entry(param.first);
-        isc::data::ConstElementPtr value(param.second);
+        ConstElementPtr value(param.second);
         try {
             if (entry == "ip-address") {
                 ip_address = getIOAddress(entry, value);

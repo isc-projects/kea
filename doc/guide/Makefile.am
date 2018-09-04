@@ -7,8 +7,9 @@ dist_html_DATA = $(HTMLDOCS) kea-guide.css kea-logo-100x70.png
 
 DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xml
 DOCBOOK += keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml logging.xml
-DOCBOOK += ddns.xml hooks.xml libdhcp.xml lfc.xml stats.xml ctrl-channel.xml faq.xml
-DOCBOOK += classify.xml shell.xml agent.xml
+DOCBOOK += ddns.xml hooks.xml hooks-ha.xml hooks-host-cache.xml hooks-lease-cmds.xml
+DOCBOOK += hooks-radius.xml hooks-stat-cmds.xml libdhcp.xml lfc.xml stats.xml
+DOCBOOK += ctrl-channel.xml faq.xml classify.xml shell.xml agent.xml netconf.xml
 
 EXTRA_DIST = $(DOCBOOK)
 
@@ -49,7 +50,7 @@ $(HTMLDOCS) $(DOCS):
 	@echo Doc generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
 	@echo Doc generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
 
-endif 
+endif
 
 if HAVE_DBLATEX
 

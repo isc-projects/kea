@@ -1,4 +1,4 @@
-/* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,6 +62,8 @@ using namespace std;
   TCP "TCP"
   NCR_FORMAT "ncr-format"
   JSON "JSON"
+  USER_CONTEXT "user-context"
+  COMMENT "comment"
   FORWARD_DDNS "forward-ddns"
   REVERSE_DDNS "reverse-ddns"
   DDNS_DOMAINS "ddns-domains"
@@ -103,6 +105,7 @@ using namespace std;
 %token <bool> BOOLEAN "boolean"
 
 %type <ElementPtr> value
+%type <ElementPtr> map_value
 %type <ElementPtr> ncr_protocol_value
 
 %printer { yyoutput << $$; } <*>;
@@ -154,6 +157,8 @@ map2: LCURLY_BRACKET {
     // (maybe some sanity checking), this would be the best place
     // for it.
 };
+
+map_value: map2 { $$ = ctx.stack_.back(); ctx.stack_.pop_back(); };
 
 // Assignments rule
 map_content: %empty // empty map
@@ -265,6 +270,8 @@ dhcpddns_param: ip_address
               | forward_ddns
               | reverse_ddns
               | tsig_keys
+              | user_context
+              | comment
               | unknown_map_entry
               ;
 
@@ -310,6 +317,58 @@ ncr_format: NCR_FORMAT {
 } COLON JSON {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
+    ctx.leave();
+};
+
+user_context: USER_CONTEXT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context = $4;
+    ConstElementPtr old = parent->get("user-context");
+
+    // Handle already existing user context
+    if (old) {
+        // Check if it was a comment or a duplicate
+        if ((old->size() != 1) || !old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the comment
+        user_context->set("comment", old->get("comment"));
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
+    ctx.leave();
+};
+
+comment: COMMENT {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr parent = ctx.stack_.back();
+    ElementPtr user_context(new MapElement(ctx.loc2pos(@1)));
+    ElementPtr comment(new StringElement($4, ctx.loc2pos(@4)));
+    user_context->set("comment", comment);
+
+    // Handle already existing user context
+    ConstElementPtr old = parent->get("user-context");
+    if (old) {
+        // Check for duplicate comment
+        if (old->contains("comment")) {
+            std::stringstream msg;
+            msg << "duplicate user-context/comment entries (previous at "
+                << old->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+        // Merge the user context in the comment
+        merge(user_context, old);
+    }
+
+    // Set the user context
+    parent->set("user-context", user_context);
     ctx.leave();
 };
 
@@ -394,6 +453,8 @@ ddns_domain_params: ddns_domain_param
 ddns_domain_param: ddns_domain_name
                  | ddns_domain_key_name
                  | dns_servers
+                 | user_context
+                 | comment
                  | unknown_map_entry
                  ;
 
@@ -465,6 +526,8 @@ dns_server_params: dns_server_param
 dns_server_param: dns_server_hostname
               | dns_server_ip_address
               | dns_server_port
+              | user_context
+              | comment
               | unknown_map_entry
               ;
 
@@ -552,6 +615,8 @@ tsig_key_param: tsig_key_name
               | tsig_key_algorithm
               | tsig_key_digest_bits
               | tsig_key_secret
+              | user_context
+              | comment
               | unknown_map_entry
               ;
 
@@ -682,6 +747,8 @@ logger_param: name
             | output_options_list
             | debuglevel
             | severity
+            | user_context
+            | comment
             | unknown_map_entry
             ;
 

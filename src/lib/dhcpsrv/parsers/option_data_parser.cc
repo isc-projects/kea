@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
@@ -24,8 +26,9 @@ namespace dhcp {
 
 // **************************** OptionDataParser *************************
 
-OptionDataParser::OptionDataParser(const uint16_t address_family)
-    : address_family_(address_family) {
+OptionDataParser::OptionDataParser(const uint16_t address_family,
+                                   CfgOptionDefPtr cfg_option_def)
+    : address_family_(address_family), cfg_option_def_(cfg_option_def) {
 }
 
 std::pair<OptionDescriptor, std::string>
@@ -35,6 +38,7 @@ OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
     std::pair<OptionDescriptor, std::string> opt = createOption(single_option);
 
     if (!opt.first.option_) {
+        // Should never happen (@todo: update message)
         isc_throw(isc::InvalidOperation,
             "parser logic error: no option has been configured and"
             " thus there is nothing to commit. Has build() been called?");
@@ -179,7 +183,16 @@ template<typename SearchKey>
 OptionDefinitionPtr
 OptionDataParser::findOptionDefinition(const std::string& option_space,
                                        const SearchKey& search_key) const {
-    OptionDefinitionPtr def = LibDHCP::getOptionDef(option_space, search_key);
+    OptionDefinitionPtr def;
+    if (cfg_option_def_) {
+        // Check if the definition was given in the constructor
+        def = cfg_option_def_->get(option_space, search_key);
+    }
+
+    if (!def) {
+        // Check if this is a standard option.
+        def = LibDHCP::getOptionDef(option_space, search_key);
+    }
 
     if (!def) {
         // Check if this is a vendor-option. If it is, get vendor-specific
@@ -205,6 +218,11 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
         def = LibDHCP::getRuntimeOptionDef(option_space, search_key);
     }
 
+    if (!def) {
+        // Finish by last resort definitions.
+        def = LibDHCP::getLastResortOptionDef(option_space, search_key);
+    }
+
     return (def);
 }
 
@@ -219,6 +237,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     OptionalValue<bool> persist_param = extractPersistent(option_data);
     std::string data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
+    ConstElementPtr user_context = option_data->get("user-context");
 
     // Require that option code or option name is specified.
     if (!code_param.isSpecified() && !name_param.isSpecified()) {
@@ -341,6 +360,11 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         }
     }
 
+    // Add user context
+    if (user_context) {
+        desc.setContext(user_context);
+    }
+
     // All went good, so we can set the option space name.
     return make_pair(desc, space_param);
 }
@@ -348,14 +372,15 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 // **************************** OptionDataListParser *************************
 OptionDataListParser::OptionDataListParser(//const std::string&,
                                            //const CfgOptionPtr& cfg,
-                                           const uint16_t address_family)
-    : address_family_(address_family) {
+                                           const uint16_t address_family,
+                                           CfgOptionDefPtr cfg_option_def)
+    : address_family_(address_family), cfg_option_def_(cfg_option_def) {
 }
 
 
 void OptionDataListParser::parse(const CfgOptionPtr& cfg,
                                  isc::data::ConstElementPtr option_data_list) {
-    OptionDataParser option_parser(address_family_);
+    OptionDataParser option_parser(address_family_, cfg_option_def_);
     BOOST_FOREACH(ConstElementPtr data, option_data_list->listValue()) {
         std::pair<OptionDescriptor, std::string> option =
             option_parser.parse(data);

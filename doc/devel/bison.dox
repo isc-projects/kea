@@ -28,12 +28,15 @@ Unfortunately this gave rise to other problems such as data duplication.) The ou
 parsers was a tree of @ref isc::data::Element objects using shared pointers.  This part of the
 processing we can refer to as phase 1.
 
-The Element tree was then processed by set of dedicated parsers.  Each parser was able to handle its
-own context, e.g. global, subnet list, subnet, pool etc. This step took the tree generated in phase
-1, parsed it and generated an output configuration (e.g. @ref isc::dhcp::SrvConfig) or dynamic
-structures (e.g. isc::data::Host). During this stage, a large number of parser objects derived from
-@ref isc::dhcp::DhcpConfigParser could be instantiated for each scope and instance of data (e.g. to
-parse 1000 host reservation entries a thousand dedicated parsers were created).  For convenience,
+The Element tree was then processed by set of dedicated parsers.  Each
+parser was able to handle its own context, e.g. global, subnet list,
+subnet, pool etc. This step took the tree generated in phase 1, parsed
+it and generated an output configuration (e.g. @ref
+isc::dhcp::SrvConfig) or dynamic structures
+(e.g. isc::data::Host). During this stage, a large number of parser
+objects derived from DhcpConfigParser could be instantiated for each
+scope and instance of data (e.g. to parse 1000 host reservation
+entries a thousand dedicated parsers were created).  For convenience,
 this step is called phase 2.
 
 Other issues with the old parsers are discussed here: @ref dhcpv6ConfigParserBison (this section is

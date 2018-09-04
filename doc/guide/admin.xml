@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<chapter id="admin">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="admin">
   <title>Kea Database Administration</title>
 
-  <section id="kea-database-version">
+  <section xml:id="kea-database-version">
     <title>Databases and Database Version Numbers</title>
 
     <para>
@@ -52,7 +55,7 @@
     </para>
   </section>
 
-  <section id="kea-admin">
+  <section xml:id="kea-admin">
     <title>The kea-admin Tool</title>
 
     <para>
@@ -71,7 +74,7 @@
       <itemizedlist>
         <listitem>
           <simpara>
-            <command>lease-init</command> &mdash;
+            <command>lease-init</command> —
             Initializes a new lease database. This is useful during a new
             Kea installation. The database is initialized to the
             latest version supported by the version of the software being
@@ -81,7 +84,7 @@
 
         <listitem>
           <simpara>
-            <command>lease-version</command> &mdash;
+            <command>lease-version</command> —
             Reports the lease database version number. This is
             not necessarily equal to the Kea version number as
             each backend has its own versioning scheme.
@@ -90,7 +93,7 @@
 
         <listitem>
           <simpara>
-            <command>lease-upgrade</command> &mdash;
+            <command>lease-upgrade</command> —
             Conducts a lease database upgrade. This is useful when
             upgrading Kea.
           </simpara>
@@ -98,7 +101,7 @@
 
         <listitem>
           <simpara>
-            <command>lease-dump</command> &mdash;
+            <command>lease-dump</command> —
             Dumps the contents of the lease database (for MySQL, PostgreSQL or
             CQL backends) to a CSV (comma separated values) text file. The first
             line of the file contains the column names.  This is meant to be
@@ -114,28 +117,28 @@
       <itemizedlist>
         <listitem>
           <simpara>
-            <command>memfile</command> &mdash; Lease information is
+            <command>memfile</command> — Lease information is
             stored on disk in a text file.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
-            <command>mysql</command> &mdash;
+            <command>mysql</command> —
             Lease information is stored in a MySQL relational database.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
-            <command>pgsql</command> &mdash;
+            <command>pgsql</command> —
             Lease information is stored in a PostgreSQL relational database.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
-            <command>cql</command> &mdash;
+            <command>cql</command> —
             Lease information is stored in a CQL database.
           </simpara>
         </listitem>
@@ -149,7 +152,7 @@
     </para>
   </section>
 
-  <section id="supported-databases">
+  <section xml:id="supported-databases">
     <title>Supported Databases</title>
 
     <para>The following table presents the capabilities of available
@@ -158,21 +161,21 @@
     backend may be essential for success or failure of your deployment.</para>
 
     <para>
-      <table frame="all" id="backends">
+      <table frame="all" xml:id="backends">
         <title>List of available backends</title>
-        <tgroup cols='2'>
+        <tgroup cols='5'>
           <colspec colname='feature'/>
           <colspec colname='memfile'/>
           <colspec colname='mysql'/>
           <colspec colname='pgsql'/>
-          <colspec colname='cql'/>
+          <colspec colname='cql' colwidth='1.5*'/>
           <thead>
             <row>
               <entry>Feature</entry>
               <entry>Memfile</entry>
               <entry>MySQL</entry>
               <entry>PostgreSQL</entry>
-              <entry>CQL(Cassandra)</entry>
+              <entry>CQL (Cassandra)</entry>
             </row>
           </thead>
           <tbody>
@@ -206,7 +209,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
             <row>
@@ -214,7 +217,7 @@
               <entry>no</entry>
               <entry>yes</entry>
               <entry>yes</entry>
-              <entry>no</entry>
+              <entry>yes</entry>
             </row>
 
           </tbody>
@@ -240,7 +243,7 @@
         present. Necessary disk write permission is required.
       </para>
 
-      <section id="memfile-upgrade">
+      <section xml:id="memfile-upgrade">
         <title>Upgrading Memfile Lease Files from an Earlier Version of Kea</title>
         <para>
         There are no special steps required to upgrade memfile lease files
@@ -264,7 +267,7 @@
       <!-- @todo: document lease file upgrades once they are implemented in kea-admin -->
     </section>
 
-    <section>
+    <section id="mysql-database">
       <title>MySQL</title>
 
       <para>
@@ -273,7 +276,7 @@
         if you chose to store the data in other backends.
       </para>
 
-      <section id="mysql-database-create">
+      <section xml:id="mysql-database-create">
         <title>First Time Creation of the MySQL Database</title>
 
         <para>
@@ -294,7 +297,7 @@
 <screen>
 $ <userinput>mysql -u root -p</userinput>
 Enter password:
-mysql>
+mysql&gt;
 </screen>
               </para>
             </listitem>
@@ -303,7 +306,7 @@ mysql>
               <para>
                 Create the MySQL database:
 <screen>
-mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput>
+mysql&gt; <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</userinput>
 </screen>
                 (<replaceable>database-name</replaceable> is the name
                 you have chosen for the database.)
@@ -316,8 +319,8 @@ mysql> <userinput>CREATE DATABASE <replaceable>database-name</replaceable>;</use
                 (and give it a password), then grant it access to the
                 database tables:
 <screen>
-mysql> <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
-mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput>
+mysql&gt; <userinput>CREATE USER '<replaceable>user-name</replaceable>'@'localhost' IDENTIFIED BY '<replaceable>password</replaceable>';</userinput>
+mysql&gt; <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<replaceable>user-name</replaceable>'@'localhost';</userinput>
 </screen>
                 (<replaceable>user-name</replaceable> and
                 <replaceable>password</replaceable> are the user ID
@@ -334,8 +337,8 @@ mysql> <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO '<r
                 the tables using the <command>kea-admin</command> tool,
                 as explained below.)  To do this:
 <screen>
-mysql> <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
-mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/scripts/mysql/dhcpdb_create.mysql</userinput>
+mysql&gt; <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
+mysql&gt; <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/scripts/mysql/dhcpdb_create.mysql</userinput>
 </screen>
                 (<replaceable>path-to-kea</replaceable> is the
                 location where you installed Kea.)
@@ -346,7 +349,7 @@ mysql> <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/script
               <para>
                 Exit MySQL:
 <screen>
-mysql> <userinput>quit</userinput>
+mysql&gt; <userinput>quit</userinput>
 Bye
 $
 </screen>
@@ -371,7 +374,7 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
         </para>
       </section>
 
-      <section id="mysql-upgrade">
+      <section xml:id="mysql-upgrade">
         <title>Upgrading a MySQL Database from an Earlier Version of Kea</title>
 
         <para>
@@ -405,16 +408,18 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of MySQL sections -->
 
-    <section>
+    <section id="pgsql-database">
       <title>PostgreSQL</title>
 
       <para>
+        PostgreSQL is able to store leases, host reservations and options
+        defined on a per host basis.
         A PostgreSQL database must be set up if you want Kea to store
         lease and other information in PostgreSQL. This step can be
         safely ignored if you are using other database backends.
       </para>
 
-      <section id="pgsql-database-create">
+      <section xml:id="pgsql-database-create">
         <title>First Time Creation of the PostgreSQL Database</title>
 
         <para>
@@ -563,7 +568,7 @@ $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceab
           by <command>kea-admin</command>.)
         </para>
       </section>
-      <section id="pgsql-upgrade">
+      <section xml:id="pgsql-upgrade">
         <title>Upgrading a PostgreSQL Database from an Earlier Version of Kea</title>
         <para>
           The PostgreSQL database schema can be upgraded using the same tool and
@@ -584,16 +589,15 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
       </section>
     </section> <!-- end of PostgreSQL sections -->
 
-    <section>
+    <section id="cql-database">
       <title>CQL (Cassandra)</title>
 
       <para>
         Cassandra, or Cassandra Query Language (CQL), is the newest backend
         added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental: please use
-        with caution. The CQL backend is currently able to store leases only. The
-        ability to store host reservations will likely be added some time in the
-        future.
+        testing as other backends, it is considered experimental. Please use
+        with caution. The Cassandra backend is able to store leases,
+        host reservations and options defined on a per host basis.
       </para>
 
       <para>
@@ -602,7 +606,7 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
         store the data in other backends.
       </para>
 
-    <section id="cql-database-create">
+    <section xml:id="cql-database-create">
       <title>First Time Creation of the Cassandra Database</title>
 
       <para>
@@ -627,7 +631,7 @@ $ <userinput>export CQLSH_HOST=localhost</userinput>
               Log into CQL:
 <screen>
 $ <userinput>cqlsh</userinput>
-cql>
+cql&gt;
 </screen>
               </para>
             </listitem>
@@ -636,7 +640,7 @@ cql>
             <para>
               Create the CQL keyspace:
 <screen>
-cql> <userinput>CREATE KEYSPACE keyspace-name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};</userinput>
+cql&gt; <userinput>CREATE KEYSPACE keyspace-name WITH replication = {'class' : 'SimpleStrategy','replication_factor' : 1};</userinput>
 </screen>
               (<replaceable>keyspace-name</replaceable> is the name you have
               chosen for the keyspace)
@@ -674,7 +678,7 @@ $ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable
       </para>
     </section>
 
-    <section id="cql-upgrade">
+    <section xml:id="cql-upgrade">
       <title>Upgrading a CQL Database from an Earlier Version of Kea</title>
 
       <para>

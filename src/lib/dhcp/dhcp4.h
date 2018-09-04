@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2016 Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 2004-2018 Internet Systems Consortium, Inc. ("ISC")
  * Copyright (c) 1995-2003 by Internet Software Consortium
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
@@ -144,18 +144,18 @@ enum DHCPOptionType {
     DHO_STREETTALK_SERVER            = 75,
     DHO_STDASERVER                   = 76,
     DHO_USER_CLASS                   = 77,
-//  DHO_DIRECTORY_AGENT              = 78,
-//  DHO_SERVICE_SCOPE                = 79,
-//  DHO_RAPID_COMMIT                 = 80,,
+    DHO_DIRECTORY_AGENT              = 78,
+    DHO_SERVICE_SCOPE                = 79,
+//  DHO_RAPID_COMMIT                 = 80,
     DHO_FQDN                         = 81,
     DHO_DHCP_AGENT_OPTIONS           = 82,
 //  DHO_ISNS                         = 83,
     // 84 is removed/unassigned
-//  DHO_NDS_SERVERS                  = 85,
-//  DHO_NDS_TREE_NAME                = 86,
-//  DHO_NDS_CONTEXT                  = 87,
-//  DHO_BCMCS_DOMAIN_NAME_LIST       = 88,
-//  DHO_BCMCS_IPV4_ADDR              = 89,
+    DHO_NDS_SERVERS                  = 85,
+    DHO_NDS_TREE_NAME                = 86,
+    DHO_NDS_CONTEXT                  = 87,
+    DHO_BCMCS_DOMAIN_NAME_LIST       = 88,
+    DHO_BCMCS_IPV4_ADDR              = 89,
     DHO_AUTHENTICATE                 = 90,  /* RFC3118, was 210 */
     DHO_CLIENT_LAST_TRANSACTION_TIME = 91,
     DHO_ASSOCIATED_IP                = 92,
@@ -164,17 +164,17 @@ enum DHCPOptionType {
 //  DHO_LDAP                         = 95,
     // 96 is removed/unassigned
     DHO_UUID_GUID                    = 97, /* RFC4578 */
-//  DHO_USER_AUTH                    = 98,
-//  DHO_GEOCONF_CIVIC                = 99,
-//  DHO_PCODE                        = 100,
-//  DHO_TCODE                        = 101,
+    DHO_USER_AUTH                    = 98,
+    DHO_GEOCONF_CIVIC                = 99,
+    DHO_PCODE                        = 100,
+    DHO_TCODE                        = 101,
     // 102-111 are removed/unassigned
-//  DHO_NETINFO_ADDR                 = 112,
-//  DHO_NETINFO_TAG                  = 113,
-//  DHO_URL                          = 114,
+    DHO_NETINFO_ADDR                 = 112,
+    DHO_NETINFO_TAG                  = 113,
+    DHO_URL                          = 114,
     // 115 is removed/unassigned
-//  DHO_AUTO_CONFIG                  = 116,
-//  DHO_NAME_SERVICE_SEARCH          = 117,
+    DHO_AUTO_CONFIG                  = 116,
+    DHO_NAME_SERVICE_SEARCH          = 117,
     DHO_SUBNET_SELECTION             = 118, /* RFC3011 */
     DHO_DOMAIN_SEARCH                = 119, /* RFC3397 */
 //  DHO_SIP_SERVERS                  = 120,
@@ -185,17 +185,17 @@ enum DHCPOptionType {
     DHO_VIVSO_SUBOPTIONS             = 125,
     // 126-127 are removed/unassigned
     // 128-135 have multiple definitions including PXE
-//  DHO_PANA_AGENT                   = 136,
-//  DHO_V4_LOST                      = 137,
-//  DHO_CAPWAP_AC_V4                 = 138,
+    DHO_PANA_AGENT                   = 136,
+    DHO_V4_LOST                      = 137,
+    DHO_CAPWAP_AC_V4                 = 138,
 //  DHO_IPV4_ADDR_MOS                = 139,
 //  DHO_IPV4_FQDN_MOS                = 140,
-//  DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141,
+    DHO_SIP_UA_CONF_SERVICE_DOMAINS  = 141,
 //  DHO_IPV4_ADDR_ANDSF              = 142,
     // 143 is removed/unassigned
 //  DHO_GEOLOC                       = 144,
 //  DHO_FORCERENEW_NONCE_CAPABLE     = 145,
-//  DHO_RDNSS_SELECT                 = 146,
+    DHO_RDNSS_SELECT                 = 146,
     // 147-149 are removed/unassigned
     // 150 have multiple definitions
 //  DHO_STATUS_CODE                  = 151,
@@ -206,10 +206,13 @@ enum DHCPOptionType {
 //  DHO_DHCP_STATE                   = 156,
 //  DHO_DATA_SOURCE                  = 157,
 //  DHO_V4_PCP_SERVER                = 158,
-//  DHO_V4_PORTPARAMS                = 159,
-    // 160-211 are removed/unassigned
-//  DHO_6RD                          = 212,
-//  DHO_V4_ACCESS_DOMAIN             = 213,
+    DHO_V4_PORTPARAMS                = 159,
+    DHO_V4_CAPTIVE_PORTAL            = 160,
+    // 161-209 are removed/unassigned
+//  DHO_PATH_PREFIX                  = 210,
+//  DHO_REBOOT_TIME                  = 211,    
+    DHO_6RD                          = 212,
+    DHO_V4_ACCESS_DOMAIN             = 213,
     // 214-219 are removed/unassigned
 //  DHO_SUBNET_ALLOC                 = 220,
 //  DHO_VSS                          = 221,
@@ -236,7 +239,11 @@ enum DHCPMessageType {
     DHCPLEASEUNKNOWN    =  12,
     DHCPLEASEACTIVE     =  13,
     DHCPBULKLEASEQUERY  =  14,
-    DHCPLEASEQUERYDONE  =  15
+    DHCPLEASEQUERYDONE  =  15,
+// DHCPACTIVELEASEQUERY =  16,
+    DHCPLEASEQUERYSTATUS =  17,
+    DHCPTLS              =  18,
+    DHCP_TYPES_EOF
 };
 
 static const uint16_t DHCP4_CLIENT_PORT = 68;
@@ -260,6 +267,13 @@ static const uint16_t RAI_OPTION_VSI = 9; // RFC4243
 static const uint16_t RAI_OPTION_RELAY_FLAGS = 10; // RFC5010
 static const uint16_t RAI_OPTION_SERVER_ID_OVERRIDE = 11; // RFC5107
 static const uint16_t RAI_OPTION_RELAY_ID = 12; //RFC6925
+static const uint16_t RAI_OPTION_ACCESS_TECHNO_TYPE = 13; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_NETWORK_NAME = 14; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_POINT_NAME = 15; // RFC7839
+static const uint16_t RAI_OPTION_ACCESS_POINT_BSSID = 16; // RFC7839
+static const uint16_t RAI_OPTION_OPERATOR_ID = 17; // RFC7839
+static const uint16_t RAI_OPTION_OPERATOR_REALM = 18; // RFC7839
+static const uint16_t RAI_OPTION_RELAY_PORT = 19; // RFC8357
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT = 151; //RFC6607
 static const uint16_t RAI_OPTION_VIRTUAL_SUBNET_SELECT_CTRL = 152; //RFC6607
 

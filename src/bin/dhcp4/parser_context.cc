@@ -1,8 +1,10 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <dhcp4/parser_context.h>
 #include <dhcp4/dhcp4_parser.h>
@@ -74,13 +76,13 @@ Parser4Context::error(const isc::dhcp::location& loc, const std::string& what)
 }
 
 void
-Parser4Context::error (const std::string& what)
+Parser4Context::error(const std::string& what)
 {
     isc_throw(Dhcp4ParseError, what);
 }
 
 void
-Parser4Context::fatal (const std::string& what)
+Parser4Context::fatal(const std::string& what)
 {
     isc_throw(Dhcp4ParseError, what);
 }
@@ -92,6 +94,21 @@ Parser4Context::loc2pos(isc::dhcp::location& loc)
     const uint32_t line = loc.begin.line;
     const uint32_t pos = loc.begin.column;
     return (isc::data::Element::Position(file, line, pos));
+}
+
+void
+Parser4Context::require(const std::string& name,
+                        isc::data::Element::Position open_loc,
+                        isc::data::Element::Position close_loc)
+{
+    ConstElementPtr value = stack_.back()->get(name);
+    if (!value) {
+        isc_throw(Dhcp4ParseError,
+                  "missing parameter '" << name << "' ("
+                  << stack_.back()->getPosition() << ") ["
+                  << contextName() << " map between "
+                  << open_loc << " and " << close_loc << "]");
+    }
 }
 
 void
@@ -129,6 +146,8 @@ Parser4Context::contextName()
         return ("interfaces-config");
     case DHCP_SOCKET_TYPE:
         return ("dhcp-socket-type");
+    case OUTBOUND_INTERFACE:
+        return ("outbound-interface");
     case LEASE_DATABASE:
         return ("lease-database");
     case HOSTS_DATABASE:
@@ -161,8 +180,6 @@ Parser4Context::contextName()
         return ("reservations");
     case RELAY:
         return ("relay");
-    case CLIENT_CLASS:
-        return ("client-class");
     case LOGGERS:
         return ("loggers");
     case OUTPUT_OPTIONS:
@@ -175,6 +192,10 @@ Parser4Context::contextName()
         return ("ncr-format");
     case REPLACE_CLIENT_NAME:
         return ("replace-client-name");
+    case SHARED_NETWORK:
+        return ("shared-networks");
+    case SANITY_CHECKS:
+        return ("sanity-checks");
     default:
         return ("__unknown__");
     }

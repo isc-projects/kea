@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,7 +61,11 @@ public:
 
     /// \brief Return file descriptor of underlying socket
     virtual int getNative() const {
+#if BOOST_VERSION < 106600
         return (socket_.native());
+#else
+        return (socket_.native_handle());
+#endif
     }
 
     /// \brief Return protocol of socket

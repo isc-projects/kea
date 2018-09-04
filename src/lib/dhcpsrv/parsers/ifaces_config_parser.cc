@@ -76,6 +76,23 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
                 }
             }
 
+            if (element.first == "outbound-interface") {
+                if (protocol_ == AF_INET) {
+                    CfgIface::OutboundIface type =
+                        CfgIface::textToOutboundIface(element.second->stringValue());
+                    cfg->setOutboundIface(type);
+                    continue;
+                } else {
+                    isc_throw(DhcpConfigError,
+                              "outbound-interface is not supported in DHCPv6");
+                }
+            }
+
+            if (element.first == "user-context") {
+                cfg->setContext(element.second);
+                continue;
+            }
+
             // This should never happen as the input produced by the parser
             // see (src/bin/dhcpX/dhcpX_parser.yy) should not produce any
             // other parameter, so this case is only to catch bugs in

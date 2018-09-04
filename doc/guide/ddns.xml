@@ -1,54 +1,105 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-  <chapter id="dhcp-ddns-server">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp-ddns-server">
     <title>The DHCP-DDNS Server</title>
-    <para>
-    The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts the client side of
-    the DDNS protocol (defined in <ulink url="http://tools.ietf.org/html/rfc2136">RFC 2136</ulink>)
-    on behalf of the DHCPv4 and DHCPv6
-    servers (kea-dhcp4 and kea-dhcp6 respectively). The DHCP servers construct
-    DDNS update requests, known as NameChangeRequests (NCRs), based upon DHCP
-    lease change events and then post these to D2. D2 attempts to match
-    each such request to the appropriate DNS server(s) and carry out the
-    necessary conversation with those servers to update the DNS data.
+
+    <section id="dhcp-ddns-overview">
+      <title>Overview</title>
+      <para>
+      The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts
+      the client side of the DDNS protocol (defined in  <link
+      xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2136">RFC 2136</link>)
+      on behalf of the DHCPv4 and DHCPv6 servers (kea-dhcp4 and kea-dhcp6
+      respectively). The DHCP servers construct DDNS update requests, known
+      as NameChangeRequests (NCRs), based upon DHCP lease change events and
+      then post these to D2. D2 attempts to match each such request to the
+      appropriate DNS server(s) and carry out the necessary conversation with
+      those servers to update the DNS data.
     </para>
-    <para>
-    In order to match a request to the appropriate DNS servers, D2 must have a
-    catalog of servers from which to select. In fact, D2 has two such catalogs,
-    one for forward DNS and one for reverse DNS; these catalogs are referred
-    to as DDNS Domain Lists.  Each list consists of one or more named DDNS
-    Domains. Further, each DDNS Domain has a list of one or more DNS
-    servers that publish the DNS data for that domain.
-    </para>
-    <para>
-    When conducting forward domain matching, D2 will compare the FQDN in
-    the request against the name of each forward DDNS Domain. The domain
-    whose name matches the longest portion of the FQDN is considered the
-    best match.  For example, if the FQDN is "myhost.sample.example.com.",
-    and there are two forward domains in the catalog: "sample.example.com."
-    and "example.com.", the former is regarded as the best match.  In some
-    cases, it may not be possible to find a suitable match. Given the same two
-    forward domains there would be no match for the FQDN, "bogus.net", so the
-    request would be rejected.   Finally, if there are no forward DDNS Domains
-    defined, D2 will simply disregard the forward update portion of requests.
-    </para>
-    <para>
-    When conducting reverse domain matching, D2 constructs a reverse
-    FQDN from the lease address in the request and compare that against
-    the name of each reverse DDNS Domain. Again, the domain whose name matches
-    the longest portion of the FQDN is considered the best match. For instance,
-    if the lease address is "172.16.1.40" and there are two reverse domains in
-    the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
-    former is the best match.  As with forward matching, it is possible to not
-    find a suitable match.  Given the same two domains, there would be no
-    match for the lease address, "192.168.1.50", and the request would be
-    rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
-    simply disregard the reverse update portion of requests.
-    </para>
+    <section id="dhcp-ddns-dns-server-selection">
+      <title>DNS Server selection</title>
+      <para>
+      In order to match a request to the appropriate DNS servers, D2 must have a
+      catalog of servers from which to select. In fact, D2 has two such catalogs,
+      one for forward DNS and one for reverse DNS; these catalogs are referred
+      to as DDNS Domain Lists.  Each list consists of one or more named DDNS
+      Domains. Further, each DDNS Domain has a list of one or more DNS
+      servers that publish the DNS data for that domain.
+      </para>
+      <para>
+      When conducting forward domain matching, D2 will compare the FQDN in
+      the request against the name of each forward DDNS Domain. The domain
+      whose name matches the longest portion of the FQDN is considered the
+      best match.  For example, if the FQDN is "myhost.sample.example.com.",
+      and there are two forward domains in the catalog: "sample.example.com."
+      and "example.com.", the former is regarded as the best match.  In some
+      cases, it may not be possible to find a suitable match. Given the same two
+      forward domains there would be no match for the FQDN, "bogus.net", so the
+      request would be rejected.   Finally, if there are no forward DDNS Domains
+      defined, D2 will simply disregard the forward update portion of requests.
+      </para>
+      <para>
+      When conducting reverse domain matching, D2 constructs a reverse
+      FQDN from the lease address in the request and compare that against
+      the name of each reverse DDNS Domain. Again, the domain whose name matches
+      the longest portion of the FQDN is considered the best match. For instance,
+      if the lease address is "172.16.1.40" and there are two reverse domains in
+      the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
+      former is the best match.  As with forward matching, it is possible to not
+      find a suitable match.  Given the same two domains, there would be no
+      match for the lease address, "192.168.1.50", and the request would be
+      rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
+      simply disregard the reverse update portion of requests.
+      </para>
+    </section>
+    <section xml:id="dhcp-ddns-conflict-resolution">
+      <title>Conflict Resolution</title>
+        <para>
+        D2 implements the conflict resolution strategy prescribed by
+        <ulink url="http://tools.ietf.org/html/rfc4703">RFC 4703</ulink>.
+        Conflict resolution is intended to prevent different clients from
+        mapping to the same FQDN at the same time.  To make this possible, the
+        RFC requires that forward DNS entries for a given FQDN must be
+        accompanied by a DHCID resource record (RR).  This record contains a
+        client identifier that uniquely identifies the client to whom the name
+        belongs. Furthermore, any DNS updater who wishes to update or remove
+        existing forward entries for an FQDN may only do so if their client
+        matches that of the DHCID RR.
+        </para>
+        <para>
+        In other words, the DHCID RR maps an FQDN to the client to whom it
+        belongs and thereafter only changes to that mapping should only be
+        done by or at the behest of that client.
+        </para>
+        <para>
+        Currently, conflict detection is always performed.  Future releases may
+        offer alternative behavior.
+        </para>
+    </section>
+    <section id="dhcp-ddns-dual-stack">
+      <title>Dual Stack Environments</title>
+      <para>
+        <ulink url="http://tools.ietf.org/html/rfc4703#section-5.2">RFC 4703,
+        sec. 5.2,</ulink> describes issues that may arise with dual stack
+        clients. These are clients that wish to have have both IPv4 and IPv6
+        mappings for the same FQDN.  In order for this work properly, such
+        clients are required to embed ther IPv6 DUID within their IPv4 client
+        identifier option as described in
+        <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
+        In this way, DNS upates for both IPv4 and IPv6 can be managed under
+        the same DHCID RR. Support for this does not yet exist in Kea but is
+        called for in the ticket, http://kea.isc.org/ticket/4519, which we
+        hope to include in a future release.
+      </para>
+    </section>
+    </section>
     <section id="dhcp-ddns-server-start-stop">
       <title>Starting and Stopping the DHCP-DDNS Server</title>
 
@@ -154,7 +205,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 
 
     </section> <!-- end start-stop -->
-    <section id="d2-configuration">
+    <section xml:id="d2-configuration">
       <title>Configuring the DHCP-DDNS Server</title>
       <para>
         Before starting <command>kea-dhcp-ddns</command> module for the
@@ -203,7 +254,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
             </simpara>
           </listitem>
         </itemizedlist>
-      <section id="d2-server-parameter-config">
+      <section xml:id="d2-server-parameter-config">
         <title>Global Server Parameters</title>
       <itemizedlist>
 
@@ -269,12 +320,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </note>
       </section> <!-- "d2-server-parameter-config" -->
 
-      <section id="d2-tsig-key-list-config">
+      <section xml:id="d2-tsig-key-list-config">
         <title>TSIG Key List</title>
         <para>
         A DDNS protocol exchange can be conducted with or without TSIG
-        (defined in <ulink url="http://tools.ietf/org/html/rfc2845">RFC
-        2845</ulink>). This configuration section allows the administrator
+        (defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf/org/html/rfc2845">RFC
+        2845</link>). This configuration section allows the administrator
         to define the set of TSIG keys that may be used in such
         exchanges.</para>
 
@@ -396,7 +447,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
       </section>
         <!-- "d2-tsig-key-list-config" -->
 
-      <section id="d2-forward-ddns-config">
+      <section xml:id="d2-forward-ddns-config">
         <title>Forward DDNS</title>
         <para>
         The Forward DDNS section is used to configure D2's forward update
@@ -414,7 +465,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         By default, this list is empty, which will cause the server to ignore
         the forward update portions of requests.
         </para>
-        <section id="add-forward-ddns-domain">
+        <section xml:id="add-forward-ddns-domain">
           <title>Adding Forward DDNS Domains</title>
           <para>
           A forward DDNS Domain maps a forward DNS zone to a set of
@@ -485,7 +536,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         server to it.
         </para>
 
-        <section id="add-forward-dns-servers">
+        <section xml:id="add-forward-dns-servers">
           <title>Adding Forward DNS Servers</title>
           <para>
           This section describes how to add DNS servers to a Forward DDNS Domain.
@@ -554,7 +605,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       </section> <!-- "d2-forward-ddns-config" -->
 
-      <section id="d2-reverse-ddns-config">
+      <section xml:id="d2-reverse-ddns-config">
         <title>Reverse DDNS</title>
         <para>
         The Reverse DDNS section is used to configure D2's reverse update
@@ -572,7 +623,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         By default, this list is empty, which will cause the server to ignore
         the reverse update portions of requests.
         </para>
-        <section id="add-reverse-ddns-domain">
+        <section xml:id="add-reverse-ddns-domain">
           <title>Adding Reverse DDNS Domains</title>
           <para>
           A reverse DDNS Domain maps a reverse DNS zone to a set of DNS
@@ -651,7 +702,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         server to it.
         </para>
 
-        <section id="add-reverse-dns-servers">
+        <section xml:id="add-reverse-dns-servers">
           <title>Adding Reverse DNS Servers</title>
           <para>
           This section describes how to add DNS servers to a Reverse DDNS Domain.
@@ -721,7 +772,31 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
       </section> <!-- "d2-reverse-ddns-config" -->
 
-      <section id="d2-example-config">
+      <section xml:id="d2-user-contexts">
+        <title>User context in DDNS</title>
+
+        <note>
+          <para>User contexts were designed for hook libraries which
+          are not yet supported for DHCP-DDNS server configuration.</para>
+        </note>
+
+        <para>
+          User contexts can store arbitrary data as long as it is valid JSON
+          syntax and its top level element is a map (i.e. the data must be
+          enclosed in curly brackets).
+        </para>
+
+        <para>
+          User contexts can be specified on either global scope, ddns
+          domain, dns server, tsig key and loggers. One other useful
+          usage is the ability to store comments or descriptions: the
+          parser translates a "comment" entry into a user-context with
+          the entry, this allows to attach a comment inside the
+          configuration itself.
+        </para>
+      </section> <!-- "d2-user-contexts" -->
+
+      <section xml:id="d2-example-config">
         <title>Example DHCP-DDNS Server Configuration</title>
         <para>
         This section provides an example DHCP-DDNS server configuration based
@@ -730,11 +805,11 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
         <table>
           <title>Our example network</title>
-          <tgroup cols='4' align='left'>
-          <colspec colname='domain'/>
-          <colspec colname='subnet'/>
-          <colspec colname='fservers'/>
-          <colspec colname='rservers'/>
+          <tgroup cols="4" align="left">
+          <colspec colname="domain"/>
+          <colspec colname="subnet"/>
+          <colspec colname="fservers"/>
+          <colspec colname="rservers"/>
           <thead>
             <row>
               <entry>Domain</entry>
@@ -770,10 +845,10 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         We need to construct three forward DDNS Domains:
         <table>
           <title>Forward DDNS Domains Needed</title>
-          <tgroup cols='3' align='left'>
-          <colspec colname='num'/>
-          <colspec colname='name'/>
-          <colspec colname='servers'/>
+          <tgroup cols="3" align="left">
+          <colspec colname="num"/>
+          <colspec colname="name"/>
+          <colspec colname="servers"/>
           <thead>
             <row>
               <entry>#</entry>
@@ -811,6 +886,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         The following example configuration specified the Forward DDNS Domains.
 <screen><userinput>
 "DhcpDdns": {
+    "comment": "example configuration: forward part",
     "forward-ddns": {
         "ddns-domains": [
             {
@@ -833,7 +909,8 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
                 "key-name": "",
                 "dns-servers": [
                     { "ip-address": "172.16.2.5" }
-                ]
+                ],
+                "user-context": { "backup": false }
             },
 
         ]
@@ -846,10 +923,10 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         Similarly, we need to construct the three reverse DDNS Domains:
         <table>
           <title>Reverse DDNS Domains Needed</title>
-          <tgroup cols='3' align='left'>
-          <colspec colname='num'/>
-          <colspec colname='DDNS Domain name'/>
-          <colspec colname='DDNS Domain DNS Servers'/>
+          <tgroup cols="3" align="left">
+          <colspec colname="num"/>
+          <colspec colname="DDNS Domain name"/>
+          <colspec colname="DDNS Domain DNS Servers"/>
           <thead>
             <row>
               <entry>#</entry>
@@ -885,6 +962,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
 <screen><userinput>
 "DhcpDdns": {
+    "comment": "example configuration: reverse part",
     "reverse-ddns": {
         "ddns-domains": [
             {
@@ -930,4 +1008,4 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         </listitem>
       </itemizedlist>
     </section>
-  </chapter> <!-- DHCP-DDNS Server -->
+  </chapter>

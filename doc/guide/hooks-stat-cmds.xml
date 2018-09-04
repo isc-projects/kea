@@ -1,0 +1,258 @@
+<section xml:id="hooks-stat-cmds">
+  <title>stat_cmds: Supplemental Statistics Commands</title>
+  <para>
+    This library provides additional statistics commands for
+    retrieving lease statistics from Kea DHCP servers.  These commands
+    were added to address an issue with obtaining accurate lease
+    statistics in deployments running multiple Kea servers that use
+    shared lease back end.  The in-memory statistics kept by individual
+    servers only track lease changes made by that server.  Thus in a
+    deployment with multiple servers (e.g. two kea-dhcp6 servers using the
+    same PostgreSQL database for lease storage), these statistics are incomplete.
+    In Kea 1.4, the MySQL and PostgreSQL back ends were modified to track
+    lease allocation changes as they occur via database triggers. Additionally,
+    all four lease back ends were extended to support retrieving lease
+    statistics for all subnets, a single subnet, or a range of subnets.
+    Finally, this library was constructed to provide commands for retrieving
+    these statistics.  Additional statistics commands may be added to this
+    library in future releases.
+
+    <note>
+      <para>This library may only be loaded by <command>kea-dhcp4</command>
+      or <command>kea-dhcp6</command> process.
+      </para>
+    </note>
+  </para>
+
+  <para>
+    The commands currently provided by this library are:
+  <itemizedlist>
+    <listitem>
+      <para><command>stat-lease4-get</command> - fetches DHCPv4 lease statistics</para>
+    </listitem>
+    <listitem>
+      <para><command>stat-lease6-get</command> - fetches DHCPv6 lease statistics</para>
+    </listitem>
+  </itemizedlist>
+  </para>
+
+  <para>
+    The Stat commands library is part of the open source code and is
+    available to every Kea user.
+  </para>
+
+  <para>
+    All commands use JSON syntax and can be issued either directly to
+    the servers via the control channel (see <xref linkend="ctrl-channel"/>)
+    or via Control Agent (see <xref linkend="kea-ctrl-agent"/>).
+  </para>
+
+  <para>
+    This library may be loaded by both kea-dhcp4 and kea-dhcp6 servers.
+    It is loaded in the same way as other libraries and currently has
+    no parameters:
+  </para>
+<para>
+<screen>
+"Dhcp6": { <userinput>
+    "hooks-libraries": [
+        {
+            "library": "/path/libdhcp_stat_cmds.so"
+        }
+        ...
+    ] </userinput>
+}
+</screen>
+</para>
+
+  <para>
+    In a deployment with multiple Kea DHCP servers sharing a common lease
+    storage, it may be loaded by any or all of the servers.  However, one
+    thing to keep in mind is that a server's response to a stat-lease{4/6}-get
+    command will only contain data for subnets known to that server.  In
+    other words, if subnet does not appear in a server's configuration, it
+    will not retrieve statistics for it.
+ </para>
+
+<section>
+  <title>stat-lease4-get, stat-lease6-get commands</title>
+    <para>
+      The <command>stat-lease4-get</command> and <command>stat-lease6-get</command>
+      commands fetch lease statistics for a range of known subnets.  The
+      range of subnets is determined through the use of optional command
+      input parameters:
+      <itemizedlist>
+          <listitem>
+            <para><command>subnet-id</command> - ID of the subnet for which
+            lease statistics should be fetched. Use this to get statistics for
+            a single subnet.  If the subnet does not exist the command result
+            code will be 3 (i.e. CONTROL_RESULT_EMPTY).
+            </para>
+          </listitem>
+          <listitem>
+            <para><command>subnet-range</command> - A pair of subnet IDs which
+            describe an inclusive range of subnets for which statistics should
+            be retrieved.  Note that fuzzy values are supported thus allowing
+            for a query for statistics using approximate ID values. If the
+            range does not include any known subnets, the command result code
+            will be 3 (i.e. CONTROL_RESULT_EMPTY).
+            <itemizedlist>
+              <listitem>
+                <para><command>first-subnet-id</command> - ID of the first
+                subnet in the range.</para>
+              </listitem>
+              <listitem>
+                <para><command>last-subnet-id</command> - ID of the first
+                subnet in the range.</para>
+              </listitem>
+            </itemizedlist>
+            </para>
+          </listitem>
+        </itemizedlist>
+        The use of subnet-id and subnet-range are mutually exclusive.
+        If no parameters are given, the result will contain data for all
+        known subnets.  Note that in configurations with large numbers of
+        subnets, this can be result in a large response.
+    </para>
+    <para>
+      The following command would fetch lease statistics for all known subnets from kea-dhcp4 server:
+<screen>
+{
+  "command": "stat-lease4-get"
+}
+</screen>
+    </para>
+    <para>
+        The following command would fetch lease statistcis for subnet ID 10 from kea-dhcp6 server:
+<screen>
+{
+  "command": "stat-lease6-get",
+  "arguments": {
+    "subnet-id" : 10
+  }
+}
+</screen>
+    </para>
+    <para>
+        The following command would fetch lease statistcis for all subnets from subnet ID 10 through 50 from kea-dhcp4 server:
+<screen>
+{
+  "command": "stat-lease4-get",
+  "arguments": {
+    "subnet-range" {
+      "first-subnet-id": 10,
+      "last-subnet-id": 50,
+    }
+  }
+}
+</screen>
+    </para>
+
+    <para>
+      The response to the either command will contain three elements:
+      <itemizedlist>
+        <listitem>
+          <para><command>result</command> - numeric value indicating the outcome of the
+          command where:
+          <itemizedlist>
+            <listitem><simpara><command>0</command> - command was successful</simpara></listitem>
+            <listitem><simpara><command>1</command> - an error occurred, an explanation will
+            be the "text" element</simpara></listitem>
+            <listitem><simpara><command>2</command> - indicates the fetch found no matching data</simpara></listitem>
+          </itemizedlist>
+          </para>
+        </listitem>
+        <listitem>
+          <para><command>text</command> - an explanation of the command outcome. When the command
+      succeeds it will contain the command name along with the number of rows returned.</para>
+        </listitem>
+        <listitem>
+          <para><command>arguments</command> - a map containing the data returned by the
+          command as the element "result-set", which patterned after SQL statement responses:
+          <itemizedlist>
+            <listitem><para><command>columns</command> - a list of text column labels.
+            The columns returned for DHCPv4 are:
+            <itemizedlist>
+              <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
+              <listitem><simpara><command>total-addresses</command> - total number of addresses
+              available for DHCPv4 management in the subnet. In other words, this is the sum of all
+              addresses in all the configured pools in the subnet.</simpara></listitem>
+              <listitem><simpara><command>assigned-addresses</command> - number of addresses
+              in the subnet that are currently assigned to a client.</simpara></listitem>
+              <listitem><simpara><command>declined-addresses</command> - number of addresses
+              in the subnet that are currently declined and are thus unavailable for assignment.
+              </simpara></listitem>
+            </itemizedlist></para>
+            </listitem>
+          <listitem><para>The columns returned for DHCPv6 are:
+            <itemizedlist>
+              <listitem><simpara><command>subnet-id</command> - ID of the subnet</simpara></listitem>
+              <listitem><simpara><command>total-nas</command> - number of NA addresses available
+              for DHCPv6 management in the subnet. In other words, this is the sum of all
+              the NA addresses in the all configured NA pools in the subnet.</simpara></listitem>
+              <listitem><simpara><command>assigned-nas</command> - number of NA addresses in a
+              the subnet that are currently assigned to a client.</simpara></listitem>
+              <listitem><simpara><command>declined-nas</command> - number of NA addresses that
+              are currently declined and are thus unavailable for assignment.</simpara></listitem>
+              <listitem><simpara><command>total-pds</command> - total number of prefixes available
+              of DHCPv6 management in the subnet. In other words, this is the sum of all prefixes
+              in all the configured prefix pools in the subnet.</simpara></listitem>
+              <listitem><simpara><command>assigned-pds</command> - number of prefixes in the subnet
+              that are currently assigned to a client.</simpara></listitem>
+            </itemizedlist></para>
+            </listitem>
+            <listitem><para><command>rows</command> - a list of rows, one per subnet ID. Each row
+            contains a data value for corresponding to and in the same order as each column
+            listed in "columns" for a given subnet.
+            </para></listitem>
+            <listitem><para><command>timestamp</command> - textual date and time the data was fetched,
+            expressed as GMT</para></listitem>
+          </itemizedlist>
+        </para>
+      </listitem>
+    </itemizedlist>
+  </para>
+  <para>
+      The response to a DHCPv4 command might look as follows:
+<screen>
+  {
+    "result": 0,
+    "text": "stat-lease4-get: 2 rows found",
+    "arguments": {
+      "result-set": {
+        "columns": [ "subnet-id", "total-addresses", "assigned-addresses", "declined-addresses" ]
+        "rows": [
+          [ 10, 256, 111, 0 ],
+          [ 20, 4098, 2034, 4 ]
+        ],
+      "timestamp": "2018-05-04 15:03:37.000000"
+      }
+    }
+  }
+</screen>
+    </para>
+    <para>
+      The response to a DHCPv6 command might look as follows (subnet 10 has no
+      prefix pools, subnet 20 has no NA pools, and subnet 30 has both NA and PD
+      pools):
+<screen>
+  {
+    "result": 0,
+    "text": "stat-lease6-get: 2 rows found",
+    "arguments": {
+      "result-set": {
+        "columns": [ "subnet-id", "total-nas", "assigned-nas", "declined-nas", "total-pds", "assigned-pds" ]
+        "rows": [
+          [ 10, 4096, 2400, 3, 0, 0],
+          [ 20, 0, 0, 0, 1048, 233 ]
+          [ 30, 256, 60, 0, 1048, 15 ]
+        ],
+      "timestamp": "2018-05-04 15:03:37.000000"
+      }
+    }
+  }
+</screen>
+    </para>
+
+</section>
+</section>

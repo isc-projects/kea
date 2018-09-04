@@ -5,6 +5,10 @@
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %{ /* -*- C++ -*- */
+
+/* Generated files do not make clang static analyser so happy */
+#ifndef __clang_analyzer__
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -196,9 +200,11 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "substring"    return isc::eval::EvalParser::make_SUBSTRING(loc);
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
+"ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
+"member"       return isc::eval::EvalParser::make_MEMBER(loc);
 "."            return isc::eval::EvalParser::make_DOT(loc);
 "("            return isc::eval::EvalParser::make_LPAREN(loc);
 ")"            return isc::eval::EvalParser::make_RPAREN(loc);
@@ -241,3 +247,4 @@ class Dummy {
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
+#endif /* !__clang_analyzer__ */

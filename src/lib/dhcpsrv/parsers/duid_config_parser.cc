@@ -27,6 +27,7 @@ void
 DUIDConfigParser::parse(const CfgDUIDPtr& cfg,
                         isc::data::ConstElementPtr duid_configuration) {
     if (!cfg) {
+        // Sanity check
         isc_throw(DhcpConfigError, "Must provide valid pointer to cfg when parsing duid");
     }
 
@@ -72,6 +73,12 @@ DUIDConfigParser::parse(const CfgDUIDPtr& cfg,
         param = "persist";
         if (duid_configuration->contains(param)) {
             cfg->setPersist(getBoolean(duid_configuration, param));
+        }
+
+        param = "user-context";
+        ConstElementPtr user_context = duid_configuration->get("user-context");
+        if (user_context) {
+            cfg->setContext(user_context);
         }
     } catch (const DhcpConfigError&) {
         throw;

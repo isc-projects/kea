@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,37 @@ db_host="localhost"
 
 # Set location of the kea-admin.
 keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+
+# Convenience function for running an SQL statement
+# param hdr - text message to prepend to any error
+# param qry - SQL statement to run
+# param exp_valu - optional expected value.  This can be used IF the SQL statement
+# generates a single value, such as a SELECT which returns one column for one row.
+# Examples:
+#
+#   qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0);"
+#   run_statement "#2" "$qry"
+#
+#   qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+#   run_statement "#3" "$qry" 1
+run_statement() {
+    hdr="$1";shift;
+    qry="$1";shift;
+    exp_value="$1";
+
+    # Execute the statment
+    value=`pgsql_execute "${qry}"`
+    ERRCODE=$?
+
+    # Execution should succeed
+    assert_eq 0 $ERRCODE "$hdr: SQL=[$qry] failed: (expected status code %d, returned %d)"
+
+    # If there's an expected value, test it
+    if [ "x$exp_value" != "x" ]
+    then
+        assert_str_eq "$exp_value" "$value" "$hdr: SQL=[$qry] wrong: (expected value %s, returned %s)"
+    fi
+}
 
 # Wipe all tables from the DB:
 pgsql_wipe() {
@@ -49,11 +80,11 @@ pgsql_lease_init_test() {
     assert_eq 0 $? "schema_version table check failed, expected exit code: %d, actual: %d"
 
     # Check lease4 table
-    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state FROM lease4;"`
+    RESULT=`pgsql_execute "SELECT address, hwaddr, client_id, valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease4;"`
     assert_eq 0 $? "lease4 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6 table
-    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state FROM lease6;"`
+    RESULT=`pgsql_execute "SELECT address, duid, valid_lifetime, expire, subnet_id, pref_lifetime, lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, state, user_context FROM lease6;"`
     assert_eq 0 $? "lease6 table check failed, expected exit code: %d, actual: %d"
 
     # Check lease6_types table
@@ -89,7 +120,7 @@ pgsql_lease_version_test() {
 
     # Verify that kea-admin lease-version returns the correct version
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name)
-    assert_str_eq "3.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "5.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -134,7 +165,7 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 0 $ERRCODE "lease_hwaddr_source table is missing or broken. (expected status code %d, returned %d)"
 
     # Added hosts table
-    output=`pgsql_execute "select host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts;"`
+    output=`pgsql_execute "select host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts;"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
 
@@ -199,10 +230,25 @@ pgsql_upgrade_2_0_to_3_0() {
     assert_eq 1 "$output" "lease_hwaddr_source does not contain entry for HWADDR_SOURCE_UNKNOWN. (record count %d, expected %d)"
 }
 
-pgsql_upgrade_3_0_to_3_1() {
-    # Verify upgraded schema reports version 3.1.
+pgsql_upgrade_3_0_to_5_0() {
+    # Verify upgraded schema reports version 5.0.
     version=$(${keaadmin} lease-version pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "3.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "5.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+
+    # Added user_context to lease4
+    output=`pgsql_execute "select user_context from lease4;"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease4 is missing user_context column. (expected status code %d, returned %d)"
+
+    # Added user_context to lease6
+    output=`pgsql_execute "select user_context from lease6;"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "lease6 is missing user_context column. (expected status code %d, returned %d)"
+
+    # Added logs table
+    output=`pgsql_execute "select timestamp, address, log from logs;"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
 }
 
 pgsql_upgrade_test() {
@@ -224,8 +270,8 @@ pgsql_upgrade_test() {
     # Check 2.0 to 3.0 upgrade
     pgsql_upgrade_2_0_to_3_0
 
-    # Check 3.0 to 3.1 upgrade
-    pgsql_upgrade_3_0_to_3_1
+    # Check 3.0 to 5.0 upgrade
+    pgsql_upgrade_3_0_to_5_0
 
     # Let's wipe the whole database
     pgsql_wipe
@@ -297,9 +343,9 @@ pgsql_lease4_dump_test() {
 
     # Insert the reference records
     insert_sql="\
-insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.example.com', 0);\
-insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','', 1);\
-insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com', 2);"
+insert into lease4 values(10,E'\\x20',E'\\x30',40,'$timestamp1',50,'t','t','one.example.com', 0, '');\
+insert into lease4 values(11,'',E'\\x0123',40,'$timestamp2',50,'t','t','', 1, '');\
+insert into lease4 values(12,E'\\x22','',40,'$timestamp3',50,'t','t','three.example.com', 2, '');"
 
     pgsql_execute "$insert_sql"
     ERRCODE=$?
@@ -392,9 +438,9 @@ pgsql_lease6_dump_test() {
 
     # Insert the reference records
     insert_sql="\
-insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com', 0,decode('80','hex'),90,16);\
-insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1,decode('80','hex'),90,1);\
-insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2,decode('80','hex'),90,4);"
+insert into lease6 values(10,E'\\x20',30,'$timestamp1',40,50,1,60,70,'t','t','one.example.com', 0,decode('80','hex'),90,16,'');\
+insert into lease6 values(11,'',30,'$timestamp2',40,50,1,60,70,'t','t','', 1,decode('80','hex'),90,1,'');\
+insert into lease6 values(12,E'\\x21',30,'$timestamp3',40,50,1,60,70,'t','t','three.example.com', 2,decode('80','hex'),90,4,'');"
 
     pgsql_execute "$insert_sql"
     ERRCODE=$?
@@ -437,8 +483,319 @@ sed 's/<timestamp3>/$local_timestamp3/g' "
     test_finish 0
 }
 
+# Upgrades an existing schema to a target newer version
+# param target_version - desired schema version as "major.minor"
+pgsql_upgrade_schema_to_version() {
+    target_version=$1
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${db_scripts_dir}/pgsql ]; then
+        log_error "Invalid scripts directory: ${db_scripts_dir}/pgsql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${db_scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${db_scripts_dir}/pgsql?"
+        exit 1
+    fi
+
+    # Postgres psql does not accept pw on command line, but can do it
+    # thru an env
+    export PGPASSWORD=$db_password
+
+    for script in ${db_scripts_dir}/pgsql/upgrade*.sh
+    do
+        if [ $version = "$target_version" ]
+        then
+            break;
+        fi
+
+        echo "Processing $script file..."
+        sh ${script} -U ${db_user} -h ${db_host} -d ${db_name}
+
+        version=`pgsql_version`
+    done
+
+    echo "Schema upgraded to $version"
+}
+
+# Verifies lease4_stat trigger operations on
+# an new, empty database.  It inserts, updates, and
+# deletes various leases, checking lease4_stat
+# values along the way.
+pgsql_lease4_stat_test() {
+    test_start "pgsql.lease4_stat_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # Ok, now let's initialize the database
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-init pgsql returned non-zero status code %d, expected %d"
+
+    # Verify lease4 stat table is present
+    qry="select count(subnet_id) from lease4_stat"
+    run_statement "#1" "$qry" 0
+
+    # Insert lease4
+    qry="insert into lease4 (address, subnet_id, state) values (111,1,0)"
+    run_statement "#2" "$qry"
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
+    run_statement "#3" "$qry" 1
+
+    # Set lease state to declined
+    qry="update lease4 set state = 1 where address = 111"
+    run_statement "#4" "$qry"
+
+    # Leases state count for assigned should be 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0"
+    run_statement "#5" "$qry" 0
+
+    # Leases state count for declined should be 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1"
+    run_statement "#6" "$qry" 1
+
+    # Delete the lease
+    qry="delete from lease4 where address = 111"
+    run_statement "#7" "$qry"
+
+    # Leases state count for declined should be 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1"
+    run_statement "#8" "$qry" 0
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that lease6_stat triggers operate correctly
+# for using a given address and lease_type.  It will
+# insert a lease, update it, and delete checking the
+# lease stat counts along the way.  It assumes the
+# database has been created but is empty.
+# param addr - address to use to add to subnet 1
+# param ltype - type of lease to create
+pgsql_lease6_stat_per_type() {
+    addr=$1;shift;
+    ltype=$1;
+
+    # insert a lease6 for addr and ltype, state assigned
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values ('$addr',$ltype,1,0);"
+    run_statement "#2" "$qry"
+
+    # assigned stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+    run_statement "#3" "$qry" 1
+
+    # update the lease, changing state to declined
+    qry="update lease6 set state = 1 where address = '$addr'"
+    run_statement "#4" "$qry"
+
+    # leases stat for assigned state should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
+    run_statement "#5" "$qry" 0
+
+    # leases count for declined state should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 1";
+    run_statement "#6" "$qry" 1
+
+    # delete the lease
+    qry="delete from lease6 where address = '$addr';"
+    run_statement "#7" "$qry"
+
+    # leases count for declined state should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
+    run_statement "#6" "$qry" 0
+}
+
+# Verifies that lease6_stat triggers operation correctly
+# for both NA and PD lease types, pgsql_lease6_stat_per_type()
+pgsql_lease6_stat_test() {
+
+    test_start "pgsql.lease6_stat_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # Ok, now let's initialize the database
+    ${keaadmin} lease-init pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin lease-init pgsql returned non-zero status code %d, expected %d"
+
+    # verify lease6 stat table is present
+    qry="select count(subnet_id) from lease6_stat"
+    run_statement "#1" "$qry"
+
+    # Test for address 111, NA lease type
+    pgsql_lease6_stat_per_type "111" "0"
+
+    # Test for address 222, PD lease type
+    pgsql_lease6_stat_per_type "222" "1"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    test_finish 0
+}
+
+# Verifies that you can upgrade from earlier version and
+# lease<4/6>_stat tables will be populated based on existing
+# leases and that the stat triggers work properly.
+pgsql_lease_stat_upgrade_test() {
+    test_start "pgsql.lease_stat_upgrade_test"
+
+    # Let's wipe the whole database
+    pgsql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to scheme 1.0.
+    pgsql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.pgsql
+    assert_eq 0 $? "cannot initialize 1.0 database, expected exit code: %d, actual: %d"
+
+    # Now upgrade to schema 2.0, this has lease_state in it
+    pgsql_upgrade_schema_to_version 2.0
+
+    # Now we need insert some leases to "migrate" for both v4 and v6
+    qry=\
+"insert into lease4 (address, subnet_id, state) values (111,10,0);\
+ insert into lease4 (address, subnet_id, state) values (222,10,0);\
+ insert into lease4 (address, subnet_id, state) values (333,10,1);\
+ insert into lease4 (address, subnet_id, state) values (444,10,2);\
+ insert into lease4 (address, subnet_id, state) values (555,77,0);"
+    run_statement "insert v4 leases" "$qry"
+
+    qry=\
+"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
+    run_statement "insert v6 leases" "$qry"
+
+    # Ok, we have a 2.0 database with leases. Let's upgrade it to 4.0
+    ${keaadmin} lease-upgrade pgsql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    #
+    # First we'll verify lease4_stats are correct after migration.
+    #
+
+    # Assigned leases for subnet 10 should be 2
+    qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
+    run_statement "#4.1" "$qry" 2
+
+    # Assigned leases for subnet 77 should be 1
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.2" "$qry" 1
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#4.3" "$qry" 0
+
+    #
+    # Now we'll verify v4 trigger operation for insert,update, and delete
+    #
+
+    # Insert a new lease subnet 77
+    qry="insert into lease4 (address, subnet_id, state) values (777,77,0);"
+    run_statement "#4.4" "$qry"
+
+    # Assigned count for subnet 77 should be 2
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.5" "$qry" 2
+
+    # Update the state of the new lease to declined
+    qry="update lease4 set state = 1 where address = 777;"
+    run_statement "#4.6" "$qry"
+
+    # Assigned count for subnet 77 should be 1 again
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.7" "$qry" 1
+
+    # Declined count for subnet 77 should be 1
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
+    run_statement "#4.8" "$qry" 1
+
+    # Delete the lease.
+    qry="delete from lease4 where address = 777;"
+    run_statement "#4.9" "$qry"
+
+    # Declined count for subnet 77 should be 0
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
+    run_statement "#4.10" "$qry" 0
+
+    #
+    # Next we'll verify lease6_stats are correct after migration.
+    #
+
+    # Assigned leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
+    run_statement "#6.1" "$qry" 1
+
+    # Assigned (PD) leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
+    run_statement "#6.2" "$qry" 1
+
+    # Declined leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
+    run_statement "#6.3" "$qry" 1
+
+    # Assigned (PD) leases for subnet 50 should be 2
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.4" "$qry" 2
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#6.5" "$qry" 0
+
+    #
+    # Finally we'll verify v6 trigger operation for insert,update, and delete
+    #
+
+    # Insert a new lease subnet 50
+    qry="insert into lease6 (address, subnet_id, lease_type, state) values ('777',50,1,0)"
+    run_statement "#6.5" "$qry"
+
+    # Assigned count for subnet 50 should be 3
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.6" "$qry" 3
+
+    # Update the state of the new lease to expired
+    qry="update lease6 set state = 2 where address = '777';"
+    run_statement "#6.7" "$qry"
+
+    # Assigned count for subnet 50 should be 2 again
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.8" "$qry" 2
+
+    # Delete another PD lease.
+    qry="delete from lease6 where address = '555'"
+    run_statement "#6.9" "$qry"
+
+    # Assigned leases for subnet 50 should be 1
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.10" "$qry" 1
+
+    # Let's wipe the whole database
+    pgsql_wipe
+}
+
 pgsql_lease_init_test
 pgsql_lease_version_test
 pgsql_upgrade_test
 pgsql_lease4_dump_test
 pgsql_lease6_dump_test
+pgsql_lease4_stat_test
+pgsql_lease6_stat_test
+pgsql_lease_stat_upgrade_test

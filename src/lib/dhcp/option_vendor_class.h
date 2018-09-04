@@ -156,7 +156,11 @@ private:
     /// @param u universe (V4 or V6).
     /// @return DHCPv4 V-I Vendor Class or DHCPv6 Vendor Class option code.
     static uint16_t getOptionCode(Option::Universe u) {
-        return (u == V4 ? DHO_VIVCO_SUBOPTIONS : D6O_VENDOR_CLASS);
+        if (u == V4) {
+            return (DHO_VIVCO_SUBOPTIONS);
+        } else {
+            return (D6O_VENDOR_CLASS);
+        }
     }
 
     /// @brief Returns the tuple length field type for the given universe.
@@ -171,8 +175,22 @@ private:
     }
 
     /// @brief Returns minimal length of the option for the given universe.
+    ///
+    /// For DHCPv6, The Vendor Class option mandates a 2-byte
+    /// OPTION_VENDOR_CLASS followed by a 2-byte option-len with a 4-byte
+    /// enterprise-number.  While section 22.16 of RFC3315 specifies that the
+    /// information contained within the data area can contain one or more
+    /// opaque fields, the inclusion of the vendor-class-data is not mandatory
+    /// and therefore not factored into the overall possible minimum length.
+    ///
+    /// For DHCPv4, The V-I Vendor Class option mandates a 1-byte option-code
+    /// followed by a 1-byte option-len with a 4-byte enterprise-number.
+    /// While section 3 of RFC3925 specifies that the information contained
+    /// within the per-vendor data area can contain one or more opaque fields,
+    /// the inclusion of the vendor-class-data is not mandatory and therefore
+    /// not factored into the overall possible minimum length.
     uint16_t getMinimalLength() const {
-        return (getUniverse() == Option::V4 ? 7 : 8);
+        return (getUniverse() == Option::V4 ? 6 : 8);
     }
 
     /// @brief Enterprise ID.

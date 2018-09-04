@@ -41,8 +41,10 @@ public:
     static const isc::data::SimpleDefaults OPTION4_DEFAULTS;
     static const isc::data::SimpleDefaults GLOBAL4_DEFAULTS;
     static const isc::data::SimpleDefaults SUBNET4_DEFAULTS;
+    static const isc::data::SimpleDefaults SHARED_SUBNET4_DEFAULTS;
+    static const isc::data::SimpleDefaults SHARED_NETWORK4_DEFAULTS;
     static const isc::data::SimpleDefaults IFACE4_DEFAULTS;
-    static const isc::data::ParamsList INHERIT_GLOBAL_TO_SUBNET4;
+    static const isc::data::ParamsList INHERIT_TO_SUBNET4;
 };
 
 };

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -469,6 +469,8 @@ ALTER TABLE dhcp6_options
 ALTER TABLE ipv6_reservations
     MODIFY reservation_id INT UNSIGNED NOT NULL AUTO_INCREMENT;
 
+# This line concludes database upgrade to version 7.0.
+
 # Add columns holding reservations for siaddr, sname and file fields
 # carried within DHCPv4 message.
 ALTER TABLE hosts ADD COLUMN dhcp4_next_server INT UNSIGNED NULL;
@@ -498,11 +500,279 @@ END
 $$
 DELIMITER ;
 
-
 # Update the schema version number
 UPDATE schema_version
 SET version = '5', minor = '1';
 # This line concludes database upgrade to version 5.1.
+
+# Make subnet_id column types consistent with lease table columns
+ALTER TABLE dhcp4_options MODIFY dhcp4_subnet_id INT UNSIGNED;
+ALTER TABLE dhcp6_options MODIFY dhcp6_subnet_id INT UNSIGNED;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '5', minor = '2';
+
+# This line concludes database upgrade to version 5.2.
+
+# Add user context into table holding hosts
+ALTER TABLE hosts ADD COLUMN user_context TEXT NULL;
+
+# Add user contexts into tables holding DHCP options
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT NULL;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT NULL;
+
+# Create index for searching leases by subnet identifier.
+CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
+
+# Create for searching leases by subnet identifier and lease type.
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+# The index by iaid_subnet_id_duid is not the best choice because there are
+# cases when we don't specify subnet identifier while searching leases. The
+# index will be universal if the subnet_id is the right most column in the
+# index.
+DROP INDEX lease6_by_iaid_subnet_id_duid on lease6;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
+
+# Create lease4_stat table
+CREATE TABLE lease4_stat (
+    subnet_id INT UNSIGNED NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, state)
+) ENGINE = INNODB;
+
+# Create stat_lease4_insert trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease4_insert AFTER INSERT ON lease4
+    FOR EACH ROW
+    BEGIN
+        IF NEW.state = 0 OR NEW.state = 1 THEN
+            # Update the state count if it exists
+            UPDATE lease4_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+            # Insert the state count record if it does not exist
+            IF ROW_COUNT() <= 0 THEN
+                INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Create stat_lease4_update trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease4_update AFTER UPDATE ON lease4
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state != NEW.state THEN
+            IF OLD.state = 0 OR OLD.state = 1 THEN
+                # Decrement the old state count if record exists
+                UPDATE lease4_stat SET leases = leases - 1
+                WHERE subnet_id = OLD.subnet_id AND state = OLD.state;
+            END IF;
+
+            IF NEW.state = 0 OR NEW.state = 1 THEN
+                # Increment the new state count if record exists
+                UPDATE lease4_stat SET leases = leases + 1
+                WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+                # Insert new state record if it does not exist
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+                END IF;
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Create stat_lease4_delete trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease4_delete AFTER DELETE ON lease4
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            # Decrement the state count if record exists
+            UPDATE lease4_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND OLD.state = state;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Create lease6_stat table
+CREATE TABLE lease6_stat (
+    subnet_id INT UNSIGNED NOT NULL,
+    lease_type INT UNSIGNED NOT NULL,
+    state INT UNSIGNED NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, lease_type, state)
+) ENGINE = INNODB;
+
+# Create stat_lease6_insert trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease6_insert AFTER INSERT ON lease6
+    FOR EACH ROW
+    BEGIN
+        IF NEW.state = 0 OR NEW.state = 1 THEN
+            # Update the state count if it exists
+            UPDATE lease6_stat SET leases = leases + 1
+            WHERE
+                subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+                AND state = NEW.state;
+
+            # Insert the state count record if it does not exist
+            IF ROW_COUNT() <= 0 THEN
+                INSERT INTO lease6_stat
+                VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Create stat_lease6_update trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease6_update AFTER UPDATE ON lease6
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state != NEW.state THEN
+            IF OLD.state = 0 OR OLD.state = 1 THEN
+                # Decrement the old state count if record exists
+                UPDATE lease6_stat SET leases = leases - 1
+                WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+                AND state = OLD.state;
+            END IF;
+
+            IF NEW.state = 0 OR NEW.state = 1 THEN
+                # Increment the new state count if record exists
+                UPDATE lease6_stat SET leases = leases + 1
+                WHERE subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+                AND state = NEW.state;
+
+                # Insert new state record if it does not exist
+                IF ROW_COUNT() <= 0 THEN
+                    INSERT INTO lease6_stat
+                    VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+                END IF;
+            END IF;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Create stat_lease6_delete trigger
+DELIMITER $$
+CREATE TRIGGER stat_lease6_delete AFTER DELETE ON lease6
+    FOR EACH ROW
+    BEGIN
+        IF OLD.state = 0 OR OLD.state = 1 THEN
+            # Decrement the state count if record exists
+            UPDATE lease6_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+            AND state = OLD.state;
+        END IF;
+    END $$
+DELIMITER ;
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '6', minor = '0';
+
+# This line concludes database upgrade to version 6.0.
+
+# Add user context into tables holding leases
+ALTER TABLE lease4 ADD COLUMN user_context TEXT NULL;
+ALTER TABLE lease6 ADD COLUMN user_context TEXT NULL;
+
+DROP PROCEDURE IF EXISTS lease4DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpHeader()
+BEGIN
+SELECT 'address,hwaddr,client_id,valid_lifetime,expire,subnet_id,fqdn_fwd,fqdn_rev,hostname,state,user_context';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease4 dumps
+DROP PROCEDURE IF EXISTS lease4DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease4DumpData()
+BEGIN
+SELECT
+    INET_NTOA(l.address),
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(HEX(l.client_id), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    s.name,
+    IFNULL(l.user_context, '')
+FROM
+    lease4 l
+    LEFT OUTER JOIN lease_state s on (l.state = s.state)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+DROP PROCEDURE IF EXISTS lease6DumpHeader;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpHeader()
+BEGIN
+SELECT 'address,duid,valid_lifetime,expire,subnet_id,pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,fqdn_rev,hostname,hwaddr,hwtype,hwaddr_source,state,user_context';
+END  $$
+DELIMITER ;
+
+# FUNCTION that returns a result set containing the data for lease6 dumps
+DROP PROCEDURE IF EXISTS lease6DumpData;
+DELIMITER $$
+CREATE PROCEDURE lease6DumpData()
+BEGIN
+SELECT
+    l.address,
+    IFNULL(HEX(l.duid), ''),
+    l.valid_lifetime,
+    l.expire,
+    l.subnet_id,
+    l.pref_lifetime,
+    IFNULL(t.name, ''),
+    l.iaid,
+    l.prefix_len,
+    l.fqdn_fwd,
+    l.fqdn_rev,
+    l.hostname,
+    IFNULL(HEX(l.hwaddr), ''),
+    IFNULL(l.hwtype, ''),
+    IFNULL(h.name, ''),
+    IFNULL(s.name, ''),
+    IFNULL(l.user_context, '')
+FROM lease6 l
+    left outer join lease6_types t on (l.lease_type = t.lease_type)
+    left outer join lease_state s on (l.state = s.state)
+    left outer join lease_hwaddr_source h on (l.hwaddr_source = h.hwaddr_source)
+ORDER BY l.address;
+END $$
+DELIMITER ;
+
+# Create logs table (logs table is used by forensic logging hook library)
+CREATE TABLE logs (
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,  # creation timestamp
+    address VARCHAR(43) NULL,                       # address or prefix
+    log TEXT NOT NULL                               # the log itself
+    ) ENGINE = INNODB;
+
+# Create search index
+CREATE INDEX timestamp_index ON logs (timestamp);
+
+#add auth key for reconfiguration
+ALTER TABLE hosts  
+    ADD COLUMN auth_key VARCHAR(16) NULL; 
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '7', minor = '0';
+
+# This line concludes database upgrade to version 7.0.
 
 # Notes:
 #

@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <hooks/hooks_manager.h>
@@ -12,9 +14,10 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <cc/command_interpreter.h>
 #include <cc/data.h>
+#include <testutils/user_context_utils.h>
 #include <gtest/gtest.h>
-#include <cc/data.h>
 #include <errno.h>
+#include <set>
 
 using namespace std;
 using namespace isc;
@@ -23,6 +26,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
+using namespace isc::test;
 
 namespace {
 
@@ -255,49 +259,65 @@ public:
 
         CfgMgr& cfg_mgr = CfgMgr::instance();
         if (v6) {
-            Subnet6Ptr subnet6(new Subnet6(IOAddress("2001:db8::"), 48, 1, 2, 3, 4, 66));
+            Subnet6Ptr subnet66(new Subnet6(IOAddress("2001:db8:1::"), 48, 1, 2, 3, 4, 66));
+            Subnet6Ptr subnet99(new Subnet6(IOAddress("2001:db8:2::"), 48, 1, 2, 3, 4, 99));
             CfgSubnets6Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets6();
-            subnets->add(subnet6);
+            subnets->add(subnet66);
+            subnets->add(subnet99);
             cfg_mgr.commit();
         } else {
-            Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 44));
+            Subnet4Ptr subnet44(new Subnet4(IOAddress("192.0.2.0"), 24, 1, 2, 3, 44));
+            Subnet4Ptr subnet88(new Subnet4(IOAddress("192.0.3.0"), 24, 1, 2, 3, 88));
             CfgSubnets4Ptr subnets = cfg_mgr.getStagingCfg()->getCfgSubnets4();
-            subnets->add(subnet4);
+            subnets->add(subnet44);
+            subnets->add(subnet88);
             cfg_mgr.commit();
         }
 
         if (insert_lease) {
             if (v6) {
-                lmptr_->addLease(createLease6());
+                lmptr_->addLease(createLease6("2001:db8:1::1", 66, 0x42));
+                lmptr_->addLease(createLease6("2001:db8:1::2", 66, 0x56));
+                lmptr_->addLease(createLease6("2001:db8:2::1", 99, 0x42));
+                lmptr_->addLease(createLease6("2001:db8:2::2", 99, 0x56));
             } else {
-                lmptr_->addLease(createLease4());
+                lmptr_->addLease(createLease4("192.0.2.1", 44, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.2.2", 44, 0x09, 0x56));
+                lmptr_->addLease(createLease4("192.0.3.1", 88, 0x08, 0x42));
+                lmptr_->addLease(createLease4("192.0.3.2", 88, 0x09, 0x56));
             }
         }
     }
 
     /// @brief Creates an IPv4 lease
     ///
-    /// Lease parameters: ip-address = 192.0.2.1, hwaddr = 08:08:08:08:08:08,
-    /// client-id = 42:42:42:42:42:42:42:42, valid lifetime = 3600,
-    /// cltt = 12345678, subnet-id = 44, fqdn-fwd = false, fqdn-rev = true
-    /// hostname = myhost.example.com
+    /// Lease parameters: valid lifetime = 3600, cltt = 12345678, fqdn-fwd = false,
+    /// fqdn-rev = true, hostname = myhost.example.com
     ///
+    /// @param ip_address IP address for the lease.
+    /// @param subnet_id subnet identifier
+    /// @param hw_address_pattern value to be used for generating HW address by repeating
+    /// it 6 times.
+    /// @param client_id_pattern value to be used for generating client identifier by
+    /// repeating it 8 times.
     /// @return Returns the lease created
-    Lease4Ptr createLease4() {
+    Lease4Ptr createLease4(const std::string& ip_address, const SubnetID& subnet_id,
+                           const uint8_t hw_address_pattern,
+                           const uint8_t client_id_pattern) {
         Lease4Ptr lease(new Lease4());
 
-        lease->addr_ = IOAddress("192.0.2.1");
+        lease->addr_ = IOAddress(ip_address);
 
         // Initialize unused fields.
         lease->t1_ = 0;                             // Not saved
         lease->t2_ = 0;                             // Not saved
 
         // Set other parameters.  For historical reasons, address 0 is not used.
-        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, 0x08), HTYPE_ETHER));
-        lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, 0x42)));
+        lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, hw_address_pattern), HTYPE_ETHER));
+        lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, client_id_pattern)));
         lease->valid_lft_ = 3600;
         lease->cltt_ = 12345678;
-        lease->subnet_id_ = 44;
+        lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
@@ -307,25 +327,29 @@ public:
 
     /// @brief Creates an IPv6 lease
     ///
-    /// Lease parameters: ip-address = 2001:db8::1, duid = 77:77:77:77:77:77:77:77,
-    /// cltt = 12345678, subnet-id = 66, fqdn-fwd = false, fqdn-rev = true,
-    /// hostname = myhost.example.com preferred lifetime = 1800,
+    /// Lease parameters: cltt = 12345678, fqdn-fwd = false, fqdn-rev = true,
+    /// hostname = myhost.example.com, preferred lifetime = 1800,
     /// valid lifetime = 3600
     ///
+    /// @param ip_address IP address for the lease.
+    /// @param subnet_id subnet identifier
+    /// @param duid_address_pattern value to be used for generating DUID by
+    /// repeating it 8 times
     /// @return Returns the lease created
-    Lease6Ptr createLease6() {
+    Lease6Ptr createLease6(const std::string& ip_address, const SubnetID& subnet_id,
+                           const uint8_t duid_pattern) {
         Lease6Ptr lease(new Lease6());
 
-        lease->addr_ = IOAddress("2001:db8::1");
+        lease->addr_ = IOAddress(ip_address);
         lease->type_ = Lease::TYPE_NA;
         lease->prefixlen_ = 128;
         lease->iaid_ = 42;
-        lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, 0x77)));
+        lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, duid_pattern)));
         lease->preferred_lft_ = 1800;
         lease->valid_lft_ = 3600;
         lease->cltt_ = 12345678;
-        lease->subnet_id_ = 66;
-        lease->fqdn_fwd_ = true;
+        lease->subnet_id_ = subnet_id;
+        lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
         lease->hostname_ = "myhost.example.com.";
 
@@ -343,6 +367,22 @@ public:
                      uint32_t subnet_id, std::string hwaddr,
                      bool client_id_required) {
         ASSERT_TRUE(l);
+
+        // If the element is a list we need to retrieve the lease that
+        // we're interested in.
+        if (l->getType() == Element::list) {
+            std::vector<ElementPtr> e = l->listValue();
+            for (auto it = e.begin(); it != e.end(); ++it) {
+                ConstElementPtr ip_address = (*it)->get("ip-address");
+                if (ip_address && ip_address->stringValue() == ip) {
+                    l = (*it);
+                    break;
+                }
+            }
+
+            ASSERT_TRUE(l);
+        }
+
         ASSERT_TRUE(l->get("ip-address"));
         EXPECT_EQ(ip, l->get("ip-address")->stringValue());
 
@@ -388,6 +428,21 @@ public:
 
         ASSERT_TRUE(l);
 
+        // If the element is a list we need to retrieve the lease that
+        // we're interested in.
+        if (l->getType() == Element::list) {
+            std::vector<ElementPtr> e = l->listValue();
+            for (auto it = e.begin(); it != e.end(); ++it) {
+                ConstElementPtr ip_address = (*it)->get("ip-address");
+                if (ip_address && ip_address->stringValue() == ip) {
+                    l = (*it);
+                    break;
+                }
+            }
+
+            ASSERT_TRUE(l);
+        }
+
         ASSERT_TRUE(l->contains("ip-address"));
         EXPECT_EQ(ip, l->get("ip-address")->stringValue());
         if (prefixlen != 0) {
@@ -424,11 +479,13 @@ public:
 // Simple test that checks the library really registers the commands.
 TEST_F(LeaseCmdsTest, commands) {
 
-    vector<string> cmds = { "lease4-add",    "lease6-add",
-                            "lease4-get",    "lease6-get",
-                            "lease4-del",    "lease6-del",
-                            "lease4-update", "lease6-update",
-                            "lease4-wipe",   "lease6-wipe" };
+    vector<string> cmds = { "lease4-add",      "lease6-add",
+                            "lease4-get",      "lease6-get",
+                            "lease4-get-all",  "lease6-get-all",
+                            "lease4-get-page", "lease6-get-page",
+                            "lease4-del",      "lease6-del",
+                            "lease4-update",   "lease6-update",
+                            "lease4-wipe",     "lease6-wipe" };
     testCommands(cmds);
 }
 
@@ -458,7 +515,8 @@ TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and hwaddr missing, although
+    // subnet-id can now be figured out by Kea code)
     txt =
         "{\n"
         "    \"command\": \"lease4-add\",\n"
@@ -466,7 +524,7 @@ TEST_F(LeaseCmdsTest, Lease4AddMissingParams) {
         "            \"ip-address\": \"192.0.2.123\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (hwaddr missing).
@@ -537,11 +595,11 @@ TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
         "    \"command\": \"lease4-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 44,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
-    exp_rsp = "Non-IPv4 address specified: 2001:db8::1";
+    exp_rsp = "Non-IPv4 address specified: 2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // currently defined states are 0,1 and 2. 123 is junk.
@@ -557,6 +615,36 @@ TEST_F(LeaseCmdsTest, Lease4AddBadParams) {
         "}";
     exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
         "(declined) and 2 (expired-reclaimed)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Bad user context: not a map.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": \"bad value\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -579,7 +667,7 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -590,9 +678,10 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ(3, l->valid_lft_); // taken from subnet configuration
-    EXPECT_EQ(false, l->fqdn_fwd_);
-    EXPECT_EQ(false, l->fqdn_rev_);
+    EXPECT_FALSE(l->fqdn_fwd_);
+    EXPECT_FALSE(l->fqdn_rev_);
     EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
 
     // Test execution is fast. The cltt should be set to now. In some rare
     // cases we could have the seconds counter to tick, so having a value off
@@ -600,6 +689,66 @@ TEST_F(LeaseCmdsTest, Lease4Add) {
     EXPECT_LE(abs(l->cltt_ - time(NULL)), 1);
     EXPECT_EQ(0, l->state_);
 
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissing) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(44, l->subnet_id_);
+
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own, but if there's no subnet for address being added, it
+// should fail.
+TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingBadAddr) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command without subnet-id. Kea should select
+    // the subnet id on its own.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.55.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "subnet-id not specified and failed to find a subnet for "
+                     "address 192.0.55.1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease was not added.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.55.1"));
+    ASSERT_FALSE(l);
 }
 
 // Check that a well formed lease4 with tons of parameters can be added.
@@ -624,10 +773,11 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
         "        \"expire\": 12345678,\n"
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
-        "        \"hostname\": \"urania.example.org\""
+        "        \"hostname\": \"urania.example.org\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -642,6 +792,42 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
+}
+
+// Check that a well formed lease4 with a comment can be added.
+TEST_F(LeaseCmdsTest, Lease4AddComment) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+            "}";
+    string exp_rsp = "Lease for address 192.0.2.202, subnet-id 44 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
 // Check that lease6-add with missing parameters will fail.
@@ -663,15 +849,16 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and duid missing).
+    // Just ip is not enough (subnet-id and duid missing, but subnet-id
+    // can now be figured out by kea)
     txt =
         "{\n"
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8::3\"\n"
+        "        \"ip-address\": \"2001:db8:1::3\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'duid' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Just subnet-id and ip is not enough (duid missing).
@@ -680,7 +867,7 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::3\"\n"
+        "        \"ip-address\": \"2001:db8:1::3\"\n"
         "    }\n"
         "}";
     exp_rsp = "missing parameter 'duid' (<string>:3:19)";
@@ -718,7 +905,7 @@ TEST_F(LeaseCmdsTest, Lease6AddMissingParams) {
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
-        "        \"ip-address\": \"2001:db8::3\"\n"
+        "        \"ip-address\": \"2001:db8:1::3\"\n"
         "    }\n"
         "}";
     exp_rsp = "missing parameter 'iaid' (<string>:3:19)";
@@ -741,7 +928,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 123,\n"
-        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n"
         "    }\n"
@@ -760,7 +947,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8::/48, subnet-id=66";
+    exp_rsp = "The address 3000::3 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // v4? You're a time traveler from early 80s or what?
@@ -783,7 +970,7 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n,"
         "        \"state\": 123\n"
@@ -791,6 +978,38 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "}";
     exp_rsp = "Invalid state value: 123, supported values are: 0 (default), 1 "
         "(declined) and 2 (expired-reclaimed)";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Bad user context: not a map.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": \"bad value\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -809,16 +1028,78 @@ TEST_F(LeaseCmdsTest, Lease6Add) {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
         "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
-    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::3")));
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own.
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissing) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command (without subnet-id)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there and has correct subnet-id.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+    EXPECT_EQ(66, l->subnet_id_);
+}
+
+// Check that subnet-id is optional. If not specified, Kea should select
+// it on its own, but if there's no subnet for address being added, it
+// should fail.
+TEST_F(LeaseCmdsTest, Lease6AddSubnetIdMissingBadAddr) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command (without subnet-id)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:ffff::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "subnet-id not specified and failed to find a subnet for "
+                     "address 2001:ffff::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease is really there and has correct subnet-id.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:ffff::1"));
+    ASSERT_FALSE(l);
 }
 
 // Check that a simple, well formed prefix lease can be added.
@@ -843,7 +1124,7 @@ TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
         "        \"iaid\": 1234\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for prefix 2001:db8:abcd::/48, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
@@ -851,6 +1132,8 @@ TEST_F(LeaseCmdsTest, Lease6AddPrefix) {
     ASSERT_TRUE(l);
     EXPECT_EQ(Lease::TYPE_PD, l->type_);
     EXPECT_EQ(48, l->prefixlen_);
+    EXPECT_EQ("", l->hostname_);
+    EXPECT_FALSE(l->getContext());
 }
 
 // Check that a well formed lease6 with tons of parameters can be added.
@@ -868,7 +1151,7 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
         "    \"command\": \"lease6-add\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::3\",\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
         "        \"duid\": \"01:02:03:04:05:06:07:08\",\n"
         "        \"iaid\": 1234,\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
@@ -877,17 +1160,18 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
         "        \"expire\": 12345678,\n"
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
-        "        \"hostname\": \"urania.example.org\""
+        "        \"hostname\": \"urania.example.org\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
         "    }\n"
         "}";
-    string exp_rsp = "Lease added.";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::3"));
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
     ASSERT_TRUE(l);
     EXPECT_EQ(Lease::TYPE_NA, l->type_);
-    EXPECT_EQ("2001:db8::3", l->addr_.toText());
+    EXPECT_EQ("2001:db8:1::3", l->addr_.toText());
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->duid_);
@@ -896,6 +1180,41 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", l->getContext()->str());
+}
+
+// Check that a well formed lease6 with a comment can be added.
+TEST_F(LeaseCmdsTest, Lease6AddComment) {
+
+    // Initialize lease manager (true = v6, false = don't add leases)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::3\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234,\n"
+        "        \"comment\": \"a comment\"\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease for address 2001:db8:1::3, subnet-id 66 added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::3"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease have proper value set.
+    ASSERT_TRUE(l->getContext());
+    EXPECT_EQ("{ \"comment\": \"a comment\" }", l->getContext()->str());
 }
 
 // Checks that lease6-get can handle a situation when the query is
@@ -986,10 +1305,10 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddrBadParam) {
         "{\n"
         "    \"command\": \"lease4-get\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8::1\""
+        "        \"ip-address\": \"2001:db8:1::1\""
         "    }\n"
         "}";
-    string exp_rsp = "Invalid IPv4 address specified: 2001:db8::1";
+    string exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // This is way off
@@ -1047,7 +1366,7 @@ TEST_F(LeaseCmdsTest, Lease4GetByAddr) {
     ASSERT_TRUE(lease);
 
     // Let's check if the response makes any sense.
-    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", true);
 }
 
 // Checks that lease4-get can handle a situation when the query is
@@ -1112,7 +1431,7 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr6NotFound) {
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 1,\n"
-        "        \"ip-address\": \"2001:db8::2\"\n"
+        "        \"ip-address\": \"2001:db8:1::10\"\n"
         "    }\n"
         "}";
     string exp_rsp = "Lease not found.";
@@ -1120,6 +1439,73 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr6NotFound) {
     // Note the status expected is empty. The query completed correctly,
     // just didn't found the lease.
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that lease4-get can handle a situation when the query is
+// well formed, but the lease is not there.
+TEST_F(LeaseCmdsTest, Lease4GetByClientIdNotFound) {
+
+    // Initialize lease manager (false = v4, false = don't add a lease)
+    initLeaseMgr(false, false);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Check that lease4-get can find a lease by client identifier.
+TEST_F(LeaseCmdsTest, Lease4GetByClientId) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+    ConstElementPtr lease = rsp->get("arguments");
+    ASSERT_TRUE(lease);
+
+    // Let's check if the response makes any sense.
+    checkLease4(lease, "192.0.2.1", 44, "08:08:08:08:08:08", false);
+}
+
+// Checks that lease6-get rejects queries by client-id.
+TEST_F(LeaseCmdsTest, Lease6GetByClientIdInvalidType) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // client-id query is allowed in v4 only.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "Query by client-id is not allowed in v6.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Checks that lease6-get(subnet-id, addr) can handle a situation when
@@ -1156,7 +1542,7 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr) {
         "{\n"
         "    \"command\": \"lease6-get\",\n"
         "    \"arguments\": {\n"
-        "        \"ip-address\": \"2001:db8::1\"\n"
+        "        \"ip-address\": \"2001:db8:1::1\"\n"
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease found.";
@@ -1169,7 +1555,7 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddr) {
     ASSERT_TRUE(lease);
 
     // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8::1", 0, 66, "77:77:77:77:77:77:77:77", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
 }
 
 // Checks that lease6-get sanitizes its input.
@@ -1209,7 +1595,7 @@ TEST_F(LeaseCmdsTest, Lease6GetByAddrPrefix) {
     initLeaseMgr(true, false); // (true = v6, true = create a lease)
 
     // Let's start with regular address lease and make it a prefix lease.
-    Lease6Ptr l = createLease6();
+    Lease6Ptr l = createLease6("2001:db8:1::1", 66, 0x77);
     l->addr_ = IOAddress("2001:db8:1234:ab::");
     l->type_ = Lease::TYPE_PD;
     l->prefixlen_ = 56;
@@ -1251,7 +1637,7 @@ TEST_F(LeaseCmdsTest, Lease6GetByDUID) {
         "        \"subnet-id\": 66,\n"
         "        \"iaid\": 42,"
         "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"77:77:77:77:77:77:77:77\"\n"
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease found.";
@@ -1264,7 +1650,759 @@ TEST_F(LeaseCmdsTest, Lease6GetByDUID) {
     ASSERT_TRUE(lease);
 
     // Now check that the lease was indeed returned.
-    checkLease6(lease, "2001:db8::1", 0, 66, "77:77:77:77:77:77:77:77", false);
+    checkLease6(lease, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+}
+
+// Checks that lease4-get-all returns all leases.
+TEST_F(LeaseCmdsTest, Lease4GetAll) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\"\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all returns empty set if no leases are found.
+TEST_F(LeaseCmdsTest, Lease4GetAllNoLeases) {
+
+    // Initialize lease manager (false = v4, false = do not add leasesxs)
+    initLeaseMgr(false, false);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\"\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
+}
+
+
+// Checks that lease4-get-all returns all leases for a subnet.
+TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetId) {
+
+    // Initialize lease manager (false = v4, true = add leases)
+    initLeaseMgr(false, true);
+
+    // Query for leases from subnet 44. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all returns empty set when no leases are found.
+TEST_F(LeaseCmdsTest, Lease4GetAllBySubnetIdNoLeases) {
+
+    // Initialize lease manager (false = v4, true = do not add leases)
+    initLeaseMgr(false, false);
+
+    // Query for leases from subnet 44. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
+}
+
+// Checks that lease4-get-all returns leases from multiple subnets.
+TEST_F(LeaseCmdsTest, Lease4GetAllByMultipleSubnetIds) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for leases from subnet 44 and 88.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 44, 88 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv4 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease4(leases, "192.0.2.1", 44, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.2.2", 44, "09:09:09:09:09:09", true);
+    checkLease4(leases, "192.0.3.1", 88, "08:08:08:08:08:08", true);
+    checkLease4(leases, "192.0.3.2", 88, "09:09:09:09:09:09", true);
+}
+
+// Checks that lease4-get-all checks its input arguments.
+TEST_F(LeaseCmdsTest, Lease4GetBySubnetIdInvalidArguments) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Subnets not specified in arguments.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"foo\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "'subnets' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets are not a list.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": 1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnets' parameter must be a list";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets list must contain numbers.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": [ \"x\", \"y\" ]\n"
+        "    }\n"
+        "}";
+    exp_rsp = "listed subnet identifiers must be numbers";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that multiple calls to lease4-get-pages return all leases.
+TEST_F(LeaseCmdsTest, Lease4GetPaged) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Gather all returned addresses to verify that all were returned.
+    std::set<std::string> lease_addresses;
+
+    // Keyword start indicates that we want to retrieve the first page.
+    std::string last_address = "start";
+
+    // There are 4 leases in the database, so the first two pages should
+    // include leases and the 3 page should be empty.
+    for (auto i = 0; i < 3; ++i) {
+        // Query for a page of leases.
+        string cmd =
+            "{\n"
+            "    \"command\": \"lease4-get-page\",\n"
+            "    \"arguments\": {"
+            "        \"from\": \"" + last_address + "\","
+            "        \"limit\": 2"
+            "    }"
+            "}";
+
+        // For the first two pages we shuould get success. For the last
+        // one an empty status code.
+        ConstElementPtr rsp;
+        if (i < 2) {
+            string exp_rsp = "2 IPv4 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        } else {
+            string exp_rsp = "0 IPv4 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+        }
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+
+        // Arguments must exist.
+        ConstElementPtr args = rsp->get("arguments");
+        ASSERT_TRUE(args);
+        ASSERT_EQ(Element::map, args->getType());
+
+        // For convenience, we return the number of returned leases,
+        // so as the client can check whether there was anything returned
+        // before parsing the leases structure.
+        ConstElementPtr page_count = args->get("count");
+        ASSERT_TRUE(page_count);
+        ASSERT_EQ(Element::integer, page_count->getType());
+
+        // leases must exist, but may be empty.
+        ConstElementPtr leases = args->get("leases");
+        ASSERT_TRUE(leases);
+        ASSERT_EQ(Element::list, leases->getType());
+
+        if (!leases->empty()) {
+            EXPECT_EQ(2, page_count->intValue());
+
+            // Go over each lease and verify its correctness.
+            for (ConstElementPtr lease : leases->listValue()) {
+                ASSERT_EQ(Element::map, lease->getType());
+                ASSERT_TRUE(lease->contains("ip-address"));
+                ConstElementPtr ip_address = lease->get("ip-address");
+                ASSERT_EQ(Element::string, ip_address->getType());
+                last_address = ip_address->stringValue();
+
+                lease_addresses.insert(last_address);
+
+                // The easiest way to retrieve the subnet id and HW address is to
+                // ask the Lease Manager.
+                Lease4Ptr from_mgr = LeaseMgrFactory::instance().getLease4(IOAddress(last_address));
+                ASSERT_TRUE(from_mgr);
+                checkLease4(leases, last_address, from_mgr->subnet_id_,
+                            from_mgr->hwaddr_->toText(false), true);
+            }
+
+        } else {
+            // In the third iteration the page should be empty.
+            EXPECT_EQ(0, page_count->intValue());
+        }
+    }
+
+    // Check if all addresses were returned.
+    EXPECT_EQ(1, lease_addresses.count("192.0.2.1"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.2.2"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.3.1"));
+    EXPECT_EQ(1, lease_addresses.count("192.0.3.2"));
+}
+
+// Verifies that first page of IPv4 leases can be retrieved by specifying
+// zero IPv4 address.
+TEST_F(LeaseCmdsTest, Lease4GetPagedZeroAddress) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"0.0.0.0\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "2 IPv4 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+}
+
+// Verifies that IPv6 address as a start address is rejected.
+TEST_F(LeaseCmdsTest, Lease4GetPagedIPv4Address) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"2001:db8::1\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value 2001:db8::1 is not an IPv4 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that lease6-get-all returns all leases.
+TEST_F(LeaseCmdsTest, Lease6GetAll) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\"\n"
+        "}";
+    string exp_rsp = "4 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
+    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
+}
+
+// Checks that lease6-get-all returns empty set if no leases are found.
+TEST_F(LeaseCmdsTest, Lease6GetAllNoLeases) {
+
+    // Initialize lease manager (true = v6, false = do not add leasesxs)
+    initLeaseMgr(true, false);
+
+    // Query for all leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\"\n"
+        "}";
+    string exp_rsp = "0 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
+}
+
+
+// Checks that lease6-get-all returns all leases for a subnet.
+TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetId) {
+
+    // Initialize lease manager (true = v6, true = add leases)
+    initLeaseMgr(true, true);
+
+    // Query for leases from subnet 66. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 66, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "2 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+}
+
+// Checks that lease6-get-all returns empty set when no leases are found.
+TEST_F(LeaseCmdsTest, Lease6GetAllBySubnetIdNoLeases) {
+
+    // Initialize lease manager (true = v6, true = do not add leases)
+    initLeaseMgr(true, false);
+
+    // Query for leases from subnet 66. Subnet 127 will be ignored because
+    // it doesn't contain any leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 66, 127 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "0 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    EXPECT_EQ(0, leases->size());
+}
+
+// Checks that lease6-get-all returns leases from multiple subnets.
+TEST_F(LeaseCmdsTest, Lease6GetAllByMultipleSubnetIds) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for leases from subnet 66 and 99.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {\n"
+        "        \"subnets\": [ 66, 99 ]"
+        "    }\n"
+        "}";
+    string exp_rsp = "4 IPv6 lease(s) found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease parameters were indeed returned.
+    ASSERT_TRUE(rsp);
+
+    ConstElementPtr args = rsp->get("arguments");
+    ASSERT_TRUE(args);
+    ASSERT_EQ(Element::map, args->getType());
+
+    ConstElementPtr leases = args->get("leases");
+    ASSERT_TRUE(leases);
+    ASSERT_EQ(Element::list, leases->getType());
+
+    // Let's check if the response contains desired leases.
+    checkLease6(leases, "2001:db8:1::1", 0, 66, "42:42:42:42:42:42:42:42", false);
+    checkLease6(leases, "2001:db8:1::2", 0, 66, "56:56:56:56:56:56:56:56", false);
+    checkLease6(leases, "2001:db8:2::1", 0, 99, "42:42:42:42:42:42:42:42", false);
+    checkLease6(leases, "2001:db8:2::2", 0, 99, "56:56:56:56:56:56:56:56", false);
+}
+
+// Checks that lease6-get-all checks its input arguments.
+TEST_F(LeaseCmdsTest, Lease6GetBySubnetIdInvalidArguments) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Subnets not specified in arguments.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"foo\": 1\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "'subnets' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets are not a list.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": 1\n"
+        "    }\n"
+        "}";
+    exp_rsp = "'subnets' parameter must be a list";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Subnets list must contain numbers.
+    cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-all\",\n"
+        "    \"arguments\": {"
+        "        \"subnets\": [ \"x\", \"y\" ]\n"
+        "    }\n"
+        "}";
+    exp_rsp = "listed subnet identifiers must be numbers";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Checks that multiple calls to lease6-get-page return all leases.
+TEST_F(LeaseCmdsTest, Lease6GetPaged) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Gather all returned addresses to verify that all were returned.
+    std::set<std::string> lease_addresses;
+
+    // Keyword start indicates that we want to retrieve the first page.
+    std::string last_address = "start";
+
+    // There are 4 leases in the database, so the first two pages should
+    // include leases and the 3 page should be empty.
+    for (auto i = 0; i < 3; ++i) {
+        // Query for a page of leases.
+        string cmd =
+            "{\n"
+            "    \"command\": \"lease6-get-page\",\n"
+            "    \"arguments\": {"
+            "        \"from\": \"" + last_address + "\","
+            "        \"limit\": 2"
+            "    }"
+            "}";
+
+        // For the first two pages we shuould get success. For the last
+        // one an empty status code.
+        ConstElementPtr rsp;
+        if (i < 2) {
+            string exp_rsp = "2 IPv6 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+        } else {
+            string exp_rsp = "0 IPv6 lease(s) found.";
+            rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+        }
+
+        // Now check that the lease parameters were indeed returned.
+        ASSERT_TRUE(rsp);
+
+        // Arguments must exist.
+        ConstElementPtr args = rsp->get("arguments");
+        ASSERT_TRUE(args);
+        ASSERT_EQ(Element::map, args->getType());
+
+        // For convenience, we return the number of returned leases,
+        // so as the client can check whether there was anything returned
+        // before parsing the leases structure.
+        ConstElementPtr page_count = args->get("count");
+        ASSERT_TRUE(page_count);
+        ASSERT_EQ(Element::integer, page_count->getType());
+
+        // leases must exist, but may be empty.
+        ConstElementPtr leases = args->get("leases");
+        ASSERT_TRUE(leases);
+        ASSERT_EQ(Element::list, leases->getType());
+
+        if (!leases->empty()) {
+            EXPECT_EQ(2, page_count->intValue());
+
+            // Go over each lease and verify its correctness.
+            for (ConstElementPtr lease : leases->listValue()) {
+                ASSERT_EQ(Element::map, lease->getType());
+                ASSERT_TRUE(lease->contains("ip-address"));
+                ConstElementPtr ip_address = lease->get("ip-address");
+                ASSERT_EQ(Element::string, ip_address->getType());
+                last_address = ip_address->stringValue();
+
+                lease_addresses.insert(last_address);
+
+                // The easiest way to retrieve the subnet id and HW address is to
+                // ask the Lease Manager.
+                Lease6Ptr from_mgr = LeaseMgrFactory::instance().getLease6(Lease::TYPE_NA,
+                                                                           IOAddress(last_address));
+                ASSERT_TRUE(from_mgr);
+                checkLease6(leases, last_address, 0, from_mgr->subnet_id_,
+                            from_mgr->duid_->toText(), false);
+            }
+
+        } else {
+            // In the third iteration the page should be empty.
+            EXPECT_EQ(0, page_count->intValue());
+        }
+    }
+
+    // Check if all addresses were returned.
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::1"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:1::2"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::1"));
+    EXPECT_EQ(1, lease_addresses.count("2001:db8:2::2"));
+}
+
+// Verifies that first page of IPv6 leases can be retrieved by specifying
+// zero IPv6 address.
+TEST_F(LeaseCmdsTest, Lease6GetPagedZeroAddress) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"::\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "2 IPv6 lease(s) found.";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+}
+
+// Verifies that IPv4 address as a start address is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedIPv4Address) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"192.0.2.3\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value 192.0.2.3 is not an IPv6 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that value of 'from' parameter other than 'start' or an IPv6
+// address is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedInvalidFrom) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"foo\","
+        "        \"limit\": 2"
+        "    }"
+        "}";
+
+    string exp_rsp = "'from' parameter value is neither 'start' keyword "
+        "nor a valid IPv6 address";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that limit is mandatory.
+TEST_F(LeaseCmdsTest, Lease6GetPagedNoLimit) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\""
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter not specified";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that the limit must be a number.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitNotNumber) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": false"
+        "    }"
+        "}";
+
+    string exp_rsp = "'limit' parameter must be a number";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Verifies that the limit of 0 is rejected.
+TEST_F(LeaseCmdsTest, Lease6GetPagedLimitIsZero) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Query for a page of leases.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-get-page\",\n"
+        "    \"arguments\": {"
+        "        \"from\": \"start\","
+        "        \"limit\": 0"
+        "    }"
+        "}";
+
+    string exp_rsp = "page size of retrieved leases must not be 0";
+    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
 // Test checks if lease4-update handler refuses calls with missing parameters.
@@ -1285,7 +2423,8 @@ TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and hwaddr missing, although
+    // Kea can now figure out subnet-id on its own).
     txt =
         "{\n"
         "    \"command\": \"lease4-update\",\n"
@@ -1293,7 +2432,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateMissingParams) {
         "            \"ip-address\": \"192.0.2.123\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'hw-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (hwaddr missing).
@@ -1364,11 +2503,41 @@ TEST_F(LeaseCmdsTest, Lease4UpdateBadParams) {
         "    \"command\": \"lease4-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 44,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
         "    }\n"
         "}";
-    exp_rsp = "Non-IPv4 address specified: 2001:db8::1";
+    exp_rsp = "Non-IPv4 address specified: 2001:db8:1::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Bad user context: not a map.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": \"bad value\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -1429,6 +2598,185 @@ TEST_F(LeaseCmdsTest, Lease4Update) {
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease4 can be updated. We're changing hw-address
+// and a hostname. The subnet-id is not specified.
+TEST_F(LeaseCmdsTest, Lease4UpdateNoSubnetId) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it's been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease4 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command.
+TEST_F(LeaseCmdsTest, Lease4UpdateForceCreate) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it contains expected values..
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease4 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command. The subnet-id is not specified, Kea will
+// figure it out.
+TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
+    // Initialize lease manager (false = v4, false = don't add any lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(44, l->subnet_id_);
+    
+    // Make sure it contains expected values..
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that lease4-update correctly handles case when the 'force-create'
+// parameter is explicitly set to false.
+TEST_F(LeaseCmdsTest, Lease4UpdateDoNotForceCreate) {
+
+    // Initialize lease manager (false = v4, false = don't add any lease)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 192.0.2.1 - no such lease";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Check that a lease4 can be updated. We're adding a comment and an user
+// context.
+TEST_F(LeaseCmdsTest, Lease4UpdateComment) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 44,\n"
+        "        \"ip-address\": \"192.0.2.1\",\n"
+        "        \"hw-address\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"comment\": \"a comment\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is still there.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(l);
+
+    // Make sure it's been updated.
+    ASSERT_TRUE(l->hwaddr_);
+    EXPECT_EQ("42:42:42:42:42:42:42:42", l->hwaddr_->toText(false));
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(2, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
+    ASSERT_TRUE(ctx->contains("foobar"));
+    EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
 // Test checks if lease6-update handler refuses calls with missing parameters.
@@ -1449,15 +2797,16 @@ TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
     string exp_rsp = "missing parameter 'ip-address' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
-    // Just ip is not enough (subnet-id and hwaddr missing).
+    // Just ip is not enough (subnet-id and duid missing, although
+    // kea should be able to figure out the subnet-id on its own.
     txt =
         "{\n"
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
-        "            \"ip-address\": \"2001:db8::1\"\n"
+        "            \"ip-address\": \"2001:db8:1::1\"\n"
         "    }\n"
         "}";
-    exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
+    exp_rsp = "missing parameter 'duid' (<string>:3:19)";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Better, but still no luck. (duid missing).
@@ -1466,7 +2815,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateMissingParams) {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "            \"subnet-id\": 44,\n"
-        "            \"ip-address\": \"2001:db8::1\"\n"
+        "            \"ip-address\": \"2001:db8:1::1\"\n"
         "    }\n"
         "}";
     exp_rsp = "missing parameter 'duid' (<string>:3:19)";
@@ -1502,7 +2851,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 123,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\"\n"
         "    }\n"
         "}";
@@ -1519,7 +2868,7 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "        \"duid\": \"88:88:88:88:88:88:88:88\"\n"
         "    }\n"
         "}";
-    exp_rsp = "The address 3000::1 does not belong to subnet 2001:db8::/48, subnet-id=66";
+    exp_rsp = "The address 3000::1 does not belong to subnet 2001:db8:1::/48, subnet-id=66";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
     // Nope, can't do v4 address in v6 lease.
@@ -1533,6 +2882,38 @@ TEST_F(LeaseCmdsTest, Lease6UpdateBadParams) {
         "    }\n"
         "}";
     exp_rsp = "Non-IPv6 address specified: 192.0.2.1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Bad user context: not a map.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": \"bad value\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Invalid user context '\"bad value\"' is not a JSON map.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Duplicated comment.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"comment\": \"direct\"\n"
+        "    }\n"
+        "}";
+    exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
+        "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -1552,7 +2933,7 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"iaid\": 7654321,\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
         "        \"hostname\": \"newhostname.example.org\""
@@ -1562,7 +2943,7 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Now check that the lease is really there.
-    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1"));
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
     ASSERT_TRUE(l);
 
     // Make sure the lease has been updated.
@@ -1570,6 +2951,90 @@ TEST_F(LeaseCmdsTest, Lease6Update) {
     EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
     EXPECT_EQ("newhostname.example.org", l->hostname_);
     EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease6 can be updated. We're changing hw-address
+// and a hostname. The subnet-id is not specified.
+TEST_F(LeaseCmdsTest, Lease6UpdateNoSubnetId) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\""
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is correct.
+    EXPECT_EQ(66, l->subnet_id_);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+
+// Check that a lease6 can be updated. We're adding a comment and an user
+// context.
+TEST_F(LeaseCmdsTest, Lease6UpdateComment) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, true);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 42,\n"
+        "        \"duid\": \"42:42:42:42:42:42:42:42\",\n"
+        "        \"comment\": \"a comment\",\n"
+        "        \"user-context\": { \"foobar\": true }\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease updated.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease has been updated.
+    ASSERT_TRUE(l->duid_);
+
+    // Check user context.
+    ConstElementPtr ctx = l->getContext();
+    ASSERT_TRUE(ctx);
+    EXPECT_EQ(2, ctx->size());
+    ASSERT_TRUE(ctx->contains("comment"));
+    EXPECT_EQ("\"a comment\"", ctx->get("comment")->str());
+    ASSERT_TRUE(ctx->contains("foobar"));
+    EXPECT_EQ("true", ctx->get("foobar")->str());
 }
 
 
@@ -1589,13 +3054,121 @@ TEST_F(LeaseCmdsTest, Lease6UpdateNoLease) {
         "    \"command\": \"lease6-update\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::1\",\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
         "        \"iaid\": 7654321,\n"
         "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
         "        \"hostname\": \"newhostname.example.org\""
         "    }\n"
         "}";
-    string exp_rsp = "failed to update the lease with address 2001:db8::1 - no such lease";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 - no such lease";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
+// Check that a lease6 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command.
+TEST_F(LeaseCmdsTest, Lease6UpdateForceCreate) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that a lease6 is created if it doesn't exist during the update.
+// To trigger this behavior 'force-create' boolean parameter must be
+// included in the command. The subnet-id is not specified, Kea will
+// figure it out.
+TEST_F(LeaseCmdsTest, Lease6UpdateForceCreateNoSubnetId) {
+
+    // Initialize lease manager (true = v6, true = add a lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": true"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv6 lease added.";
+    testCommand(txt, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Now check that the lease is really there.
+    Lease6Ptr l = lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(l);
+
+    // Make sure the subnet-id is figured out correctly.
+    EXPECT_EQ(66, l->subnet_id_);
+
+    // Make sure the lease is correct.
+    ASSERT_TRUE(l->duid_);
+    EXPECT_EQ("88:88:88:88:88:88:88:88", l->duid_->toText());
+    EXPECT_EQ("newhostname.example.org", l->hostname_);
+    EXPECT_EQ(7654321, l->iaid_);
+    EXPECT_FALSE(l->getContext());
+}
+
+// Check that lease6-update correctly handles case when the 'force-create'
+// parameter is explicitly set to false.
+TEST_F(LeaseCmdsTest, Lease6UpdateDoNotForceCreate) {
+
+    // Initialize lease manager (true = v6, false = don't add any lease)
+    initLeaseMgr(true, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease6-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"iaid\": 7654321,\n"
+        "        \"duid\": \"88:88:88:88:88:88:88:88\",\n"
+        "        \"hostname\": \"newhostname.example.org\","
+        "        \"force-create\": false"
+        "    }\n"
+        "}";
+    string exp_rsp = "failed to update the lease with address 2001:db8:1::1 - no such lease";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 }
 
@@ -1729,10 +3302,10 @@ TEST_F(LeaseCmdsTest, Lease4DelByAddrBadParam) {
         "{\n"
         "    \"command\": \"lease4-del\",\n"
         "    \"arguments\": {"
-        "        \"ip-address\": \"2001:db8::1\""
+        "        \"ip-address\": \"2001:db8:1::1\""
         "    }\n"
         "}";
-    string exp_rsp = "Invalid IPv4 address specified: 2001:db8::1";
+    string exp_rsp = "Invalid IPv4 address specified: 2001:db8:1::1";
     testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
 
     // This is way off
@@ -1794,6 +3367,52 @@ TEST_F(LeaseCmdsTest, Lease4DelByHWAddr) {
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
 }
 
+// Checks that lease4-del can handle a situation when the query is
+// well formed, but the lease is not there.
+TEST_F(LeaseCmdsTest, Lease4DelByClientIdNotFound) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // No such lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"01:02:03:04\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease not found.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+
+    // Make sure the lease is still there.
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
+// Checks that lease4-del can find and delete a lease by client identifier.
+TEST_F(LeaseCmdsTest, Lease4DelByClientId) {
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Invalid
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-del\",\n"
+        "    \"arguments\": {"
+        "        \"identifier-type\": \"client-id\","
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\","
+        "        \"subnet-id\": 44"
+        "    }\n"
+        "}";
+    string exp_rsp = "IPv4 lease deleted.";
+    ConstElementPtr rsp = testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the lease is really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+}
+
 // Checks that lease6-del(addr) can handle a situation when
 // the query is correctly formed, but the lease is not there.
 TEST_F(LeaseCmdsTest, Lease6DelByAddr6NotFound) {
@@ -1807,7 +3426,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr6NotFound) {
         "    \"command\": \"lease6-del\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 1,\n"
-        "        \"ip-address\": \"2001:db8::2\"\n"
+        "        \"ip-address\": \"2001:db8:1::10\"\n"
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease not found.";
@@ -1841,7 +3460,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByDuidNotFound) {
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 
     // Make sure the lease is still there.
-    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
 // Checks that lease6-del(subnet-id, addr6) can handle a situation when
@@ -1856,7 +3475,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
         "    \"command\": \"lease6-del\",\n"
         "    \"arguments\": {"
         "        \"subnet-id\": 66,\n"
-        "        \"ip-address\": \"2001:db8::1\""
+        "        \"ip-address\": \"2001:db8:1::1\""
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease deleted.";
@@ -1865,7 +3484,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddr) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
 // Checks that lease6-del sanitizes its input.
@@ -1904,7 +3523,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByAddrPrefix) {
     initLeaseMgr(true, false); // (true = v6, false = don't add any leases)
 
     // Let's start with regular address lease and make it a prefix lease.
-    Lease6Ptr l = createLease6();
+    Lease6Ptr l = createLease6("2001:db8:1::1", 66, 0x77);
     l->addr_ = IOAddress("2001:db8:1234:ab::");
     l->type_ = Lease::TYPE_PD;
     l->prefixlen_ = 56;
@@ -1942,7 +3561,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByDUID) {
         "        \"subnet-id\": 66,\n"
         "        \"iaid\": 42,"
         "        \"identifier-type\": \"duid\","
-        "        \"identifier\": \"77:77:77:77:77:77:77:77\"\n"
+        "        \"identifier\": \"42:42:42:42:42:42:42:42\"\n"
         "    }\n"
         "}";
     string exp_rsp = "IPv6 lease deleted.";
@@ -1951,24 +3570,7 @@ TEST_F(LeaseCmdsTest, Lease6DelByDUID) {
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
     // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
-}
-
-// Checks that lease4-wipe detects missing parmameter properly.
-TEST_F(LeaseCmdsTest, Lease4WipeMissingParam) {
-
-    // Initialize lease manager (false = v4, true = add a lease)
-    initLeaseMgr(false, true);
-
-    // Query for valid, existing lease.
-    string cmd =
-        "{\n"
-        "    \"command\": \"lease4-wipe\",\n"
-        "    \"arguments\": {"
-        "    }\n"
-        "}";
-    string exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
 }
 
 // Checks that lease4-wipe can remove leases.
@@ -1985,11 +3587,67 @@ TEST_F(LeaseCmdsTest, Lease4Wipe) {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 1 IPv4 lease(s).";
+    string exp_rsp = "Deleted 2 IPv4 lease(s) from subnet(s) 44";
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    // Make sure the lease is really gone.
+    // Make sure the leases in subnet 44 are really gone.
     EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.2")));
+
+    // Make sure the leases from subnet 88 are still there.
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.3.1")));
+    EXPECT_TRUE(lmptr_->getLease4(IOAddress("192.0.3.2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+// at once.
+TEST_F(LeaseCmdsTest, Lease4WipeAll) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.2")));
+
+    // Make sure the leases from subnet 88 are gone, too.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+// at once (when no parameters are specifed).
+TEST_F(LeaseCmdsTest, Lease4WipeAllNoArgs) {
+
+    // Initialize lease manager (false = v4, true = add a lease)
+    initLeaseMgr(false, true);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease4-wipe\"\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv4 lease(s) from subnet(s) 44 88";
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.2.2")));
+
+    // Make sure the leases from subnet 88 are gone, too.
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.1")));
+    EXPECT_FALSE(lmptr_->getLease4(IOAddress("192.0.3.2")));
 }
 
 // Checks that lease4-wipe properly reports when no leases were deleted.
@@ -2006,25 +3664,26 @@ TEST_F(LeaseCmdsTest, Lease4WipeNoLeases) {
         "        \"subnet-id\": 44"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv4 lease(s).";
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
-// Checks that lease4-wipe detects missing parmameter properly.
-TEST_F(LeaseCmdsTest, Lease6WipeMissingParam) {
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease4WipeNoLeasesAll) {
 
-    // Initialize lease manager (true = v6, true = add a lease)
-    initLeaseMgr(true, true);
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(false, false);
 
     // Query for valid, existing lease.
     string cmd =
         "{\n"
-        "    \"command\": \"lease6-wipe\",\n"
+        "    \"command\": \"lease4-wipe\",\n"
         "    \"arguments\": {"
+        "        \"subnet-id\": 0"
         "    }\n"
         "}";
-    string exp_rsp = "missing parameter 'subnet-id' (<string>:3:19)";
-    testCommand(cmd, CONTROL_RESULT_ERROR, exp_rsp);
+    string exp_rsp = "Deleted 0 IPv4 lease(s) from subnet(s) 44 88";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
 
 // Checks that lease4-wipe can remove leases.
@@ -2040,13 +3699,70 @@ TEST_F(LeaseCmdsTest, Lease6Wipe) {
         "        \"subnet-id\": 66\n"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 1 IPv6 lease(s).";
+    string exp_rsp = "Deleted 2 IPv6 lease(s) from subnet(s) 66";
 
     // The status expected is success. The lease should be deleted.
     testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
 
-    // Make sure the lease is really gone.
-    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8::1")));
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+
+    // The leases in subnet 88 are supposed to be still there.
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1")));
+    EXPECT_TRUE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+TEST_F(LeaseCmdsTest, Lease6WipeAll) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create a lease)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+
+    // The status expected is success. The lease should be deleted.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+
+    // The leases in subnet 88 are supposed to be still there.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
+}
+
+// Checks that lease4-wipe can remove leases from all subnets
+// (no arguments)
+TEST_F(LeaseCmdsTest, Lease6WipeAllNoArgs) {
+
+    initLeaseMgr(true, true); // (true = v6, true = create a lease)
+
+    // Now send the command.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\"\n"
+        "}";
+    string exp_rsp = "Deleted 4 IPv6 lease(s) from subnet(s) 66 99";
+
+    // The status expected is success. The lease should be deleted.
+    testCommand(cmd, CONTROL_RESULT_SUCCESS, exp_rsp);
+
+    // Make sure the leases in subnet 44 are really gone.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:1::2")));
+
+    // The leases in subnet 88 are supposed to be still there.
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::1")));
+    EXPECT_FALSE(lmptr_->getLease6(Lease::TYPE_NA, IOAddress("2001:db8:2::2")));
 }
 
 // Checks that lease4-wipe properly reports when no leases were deleted.
@@ -2063,8 +3779,57 @@ TEST_F(LeaseCmdsTest, Lease6WipeNoLeases) {
         "        \"subnet-id\": 66"
         "    }\n"
         "}";
-    string exp_rsp = "Deleted 0 IPv6 lease(s).";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66";
     testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
 }
+
+// Checks that lease4-wipe properly reports when no leases were deleted.
+TEST_F(LeaseCmdsTest, Lease6WipeNoLeasesAll) {
+
+    // Initialize lease manager (false = v4, false = no leases)
+    initLeaseMgr(true, false);
+
+    // Query for valid, existing lease.
+    string cmd =
+        "{\n"
+        "    \"command\": \"lease6-wipe\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 0"
+        "    }\n"
+        "}";
+    string exp_rsp = "Deleted 0 IPv6 lease(s) from subnet(s) 66 99";
+    testCommand(cmd, CONTROL_RESULT_EMPTY, exp_rsp);
+}
+
+// Checks that an attempt to update a lease (set incorrect subnet-id)
+// will fail.
+TEST_F(LeaseCmdsTest, brokenUpdate) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Set the sanity checks level.
+    CfgMgr::instance().getCurrentCfg()->getConsistency()
+        ->setLeaseSanityCheck(CfgConsistency::LEASE_CHECK_FIX);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Now send the command.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-update\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 444,\n"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\"\n"
+        "        ,\"force-create\": true\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "Invalid subnet-id: No IPv4 subnet with "
+                     "subnet-id=444 currently configured.";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+}
+
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,11 +14,11 @@
 #include <dhcpsrv/d2_client_cfg.h>
 #include <dhcpsrv/cfg_iface.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/srv_config.h>
-#include <dhcpsrv/parsers/dhcp_config_parser.h>
 #include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
 #include <util/optional_value.h>
@@ -169,6 +169,8 @@ private:
 
 };
 
+/// @brief Combination of parameter name and configuration contents
+typedef std::pair<std::string, isc::data::ConstElementPtr> ConfigPair;
 
 /// @brief a collection of elements that store uint32 values
 typedef ValueStorage<uint32_t> Uint32Storage;
@@ -181,129 +183,6 @@ typedef boost::shared_ptr<StringStorage> StringStoragePtr;
 /// @brief Storage for parsed boolean values.
 typedef ValueStorage<bool> BooleanStorage;
 typedef boost::shared_ptr<BooleanStorage> BooleanStoragePtr;
-
-/// @brief Simple data-type parser template class
-///
-/// This is the template class for simple data-type parsers. It supports
-/// parsing a configuration parameter with specific data-type for its
-/// possible values. It provides a common constructor, commit, and templated
-/// data storage.  The "build" method implementation must be provided by a
-/// declaring type.
-/// @param ValueType is the data type of the configuration parameter value
-/// the parser should handle.
-template<typename ValueType>
-class ValueParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor.
-    ///
-    /// @param param_name name of the parameter.
-    /// @param storage is a pointer to the storage container where the parsed
-    /// value be stored upon commit.
-    /// @throw isc::dhcp::DhcpConfigError if a provided parameter's
-    /// name is empty.
-    /// @throw isc::dhcp::DhcpConfigError if storage is null.
-    ValueParser(const std::string& param_name,
-        boost::shared_ptr<ValueStorage<ValueType> > storage)
-        : storage_(storage), param_name_(param_name), value_(), pos_() {
-        // Empty parameter name is invalid.
-        if (param_name_.empty()) {
-            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-                << "empty parameter name provided");
-        }
-
-        // Null storage is invalid.
-        if (!storage_) {
-            isc_throw(isc::dhcp::DhcpConfigError, "parser logic error:"
-                << "storage may not be NULL");
-        }
-    }
-
-    /// @brief Parse a given element into a value of type @c ValueType
-    ///
-    /// @param value a value to be parsed.
-    ///
-    /// @throw isc::BadValue Typically the implementing type will throw
-    /// a BadValue exception when given an invalid Element to parse.
-    void build(isc::data::ConstElementPtr value);
-
-    /// @brief Put a parsed value to the storage.
-    void commit() {
-        // If a given parameter already exists in the storage we override
-        // its value. If it doesn't we insert a new element.
-        storage_->setParam(param_name_, value_, pos_);
-    }
-
-private:
-
-    /// @brief Performs operations common for all specializations of the
-    /// @c build function.
-    ///
-    /// This method should be called by all specializations of the @c build
-    /// method.
-    ///
-    /// @param value a value being parsed.
-    void buildCommon(isc::data::ConstElementPtr value) {
-        // Remember position of the data element.
-        pos_ = value->getPosition();
-    }
-
-    /// Pointer to the storage where committed value is stored.
-    boost::shared_ptr<ValueStorage<ValueType> > storage_;
-
-    /// Name of the parameter which value is parsed with this parser.
-    std::string param_name_;
-
-    /// Parsed value.
-    ValueType value_;
-
-    data::Element::Position pos_;
-};
-
-/// @brief typedefs for simple data type parsers
-typedef ValueParser<bool> BooleanParser;
-typedef ValueParser<uint32_t> Uint32Parser;
-typedef ValueParser<std::string> StringParser;
-
-/// @brief a dummy configuration parser
-///
-/// It is a debugging parser. It does not configure anything,
-/// will accept any configuration and will just print it out
-/// on commit. Useful for debugging existing configurations and
-/// adding new ones.
-class DebugParser : public DhcpConfigParser {
-public:
-
-    /// @brief Constructor
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param param_name name of the parsed parameter
-    DebugParser(const std::string& param_name);
-
-    /// @brief builds parameter value
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    ///
-    /// @param new_config pointer to the new configuration
-    virtual void build(isc::data::ConstElementPtr new_config);
-
-    /// @brief pretends to apply the configuration
-    ///
-    /// This is a method required by base class. It pretends to apply the
-    /// configuration, but in fact it only prints the parameter out.
-    ///
-    /// See @ref DhcpConfigParser class for details.
-    virtual void commit();
-
-private:
-    /// name of the parsed parameter
-    std::string param_name_;
-
-    /// pointer to the actual value of the parameter
-    isc::data::ConstElementPtr value_;
-
-};
 
 /// @brief parser for MAC/hardware acquisition sources
 ///
@@ -518,12 +397,32 @@ public:
     ///
     /// The elements currently supported are:
     /// -# ip-address
+    /// -# ip-addresses
     ///
-    /// @param cfg configuration will be stored here
-    /// @param relay_info JSON structure holding relay parameters to parse
-    void parse(const isc::dhcp::Subnet::RelayInfoPtr& cfg,
-               isc::data::ConstElementPtr relay_info);
+    /// Note that ip-address and ip-addresses are mutually exclusive, with
+    /// former being deprecated.  The use of ip-address will cause an debug
+    /// log to be emitted, reminded users to switch.
+    ///
+    /// @param relay_info configuration will be stored here
+    /// @param relay_elem Element tree containing the relay and its members
+    /// @throw isc::dhcp::DhcpConfigError if both or neither of ip-address
+    /// and ip-addresses are specified.
+    void parse(const isc::dhcp::Network::RelayInfoPtr& relay_info,
+               isc::data::ConstElementPtr relay_elem);
 
+    /// @brief Attempts to add an IP address to list of relay addresses
+    ///
+    /// @param name name of the element supplying the address string, (either
+    /// "ip-address" or "ip-addresses")
+    /// @param address_str string form of the IP address to add
+    /// @param relay_elem parent relay element (needed for position info)
+    /// @param relay_info RelayInfo to which the address should be added
+    /// @throw isc::dhcp::DhcpConfigError if the address string is not a valid
+    /// IP address, is an address of the wrong family, or is already in the
+    /// relay address list
+    void addAddress(const std::string& name, const std::string& address_str, 
+                    isc::data::ConstElementPtr relay_elem,
+                    const isc::dhcp::Network::RelayInfoPtr& relay_info);
 private:
 
     /// Protocol family (IPv4 or IPv6)
@@ -593,7 +492,7 @@ protected:
     /// @throw BadValue if the text cannot be converted.
     ///
     /// @return one of allowed HRMode values
-    static Subnet::HRMode hrModeFromText(const std::string& txt);
+    static Network::HRMode hrModeFromText(const std::string& txt);
 
 private:
 
@@ -616,7 +515,7 @@ protected:
     uint16_t address_family_;
 
     /// Pointer to relay information
-    isc::dhcp::Subnet::RelayInfoPtr relay_info_;
+    isc::dhcp::Network::RelayInfoPtr relay_info_;
 
     /// Pointer to the options configuration.
     CfgOptionPtr options_;
@@ -672,6 +571,14 @@ public:
     /// @param subnets_list pointer to a list of IPv4 subnets
     /// @return number of subnets created
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet4 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv4 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet4Collection& subnets,
+                 data::ConstElementPtr subnets_list);
 };
 
 /// @brief Parser for IPv6 pool definitions.
@@ -764,7 +671,15 @@ private:
     /// A storage for pool specific option values.
     CfgOptionPtr options_;
 
+    /// @brief User context (optional, may be null)
+    ///
+    /// User context is arbitrary user data, to be used by hooks.
     isc::data::ConstElementPtr user_context_;
+
+    /// @brief Client class (a client has to belong to to use this pd-pool)
+    ///
+    /// If null, everyone is allowed.
+    isc::data::ConstElementPtr client_class_;
 };
 
 /// @brief Parser for a list of prefix delegation pools.
@@ -780,7 +695,7 @@ public:
     /// This function parses configuration entries and creates instances
     /// of prefix delegation pools .
     ///
-    /// @param storage is the pool storage in which to store the parsed
+    /// @param pools is the pool storage in which to store the parsed
     /// @param pd_pool_list pointer to an element that holds entries
     /// that define a prefix delegation pool.
     ///
@@ -849,6 +764,15 @@ public:
     /// @param subnets_list pointer to a list of IPv6 subnets
     /// @throw DhcpConfigError if CfgMgr rejects the subnet (e.g. subnet-id is a duplicate)
     size_t parse(SrvConfigPtr cfg, data::ConstElementPtr subnets_list);
+
+    /// @brief Parses contents of the subnet6 list.
+    ///
+    /// @param [out] subnets Container where parsed subnets will be stored.
+    /// @param subnets_list pointer to a list of IPv6 subnets
+    /// @return Number of subnets created.
+    size_t parse(Subnet6Collection& subnets,
+                 data::ConstElementPtr subnets_list);
+
 };
 
 /// @brief Parser for  D2ClientConfig

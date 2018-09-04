@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcp/option6_status_code.h>
 #include <dhcp/pkt6.h>
 #include <dhcpsrv/lease.h>
+#include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/pool.h>
 #include <dhcp6/tests/dhcp6_client.h>
 #include <util/buffer.h>
@@ -24,6 +25,7 @@
 #include <algorithm>
 #include <cstdlib>
 #include <time.h>
+#include <utility>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
@@ -108,7 +110,8 @@ Dhcp6Client::Dhcp6Client() :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_() {
+    fqdn_(),
+    interface_id_() {
 }
 
 Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
@@ -125,7 +128,8 @@ Dhcp6Client::Dhcp6Client(boost::shared_ptr<NakedDhcpv6Srv>& srv) :
     use_client_id_(true),
     use_rapid_commit_(false),
     client_ias_(),
-    fqdn_() {
+    fqdn_(),
+    interface_id_() {
 }
 
 void
@@ -419,6 +423,12 @@ Dhcp6Client::createMsg(const uint8_t msg_type) {
         }
     }
 
+    // Add classes.
+    for (ClientClasses::const_iterator cclass = classes_.cbegin();
+         cclass != classes_.cend(); ++cclass) {
+        msg->addClass(*cclass);
+    }
+
     return (msg);
 }
 
@@ -474,10 +484,11 @@ Dhcp6Client::doRequest() {
     copyIAs(context_.response_, query);
     appendRequestedIAs(query);
 
+    context_.query_ = query;
+
     // Add Client FQDN if configured.
     appendFQDN();
 
-    context_.query_ = query;
     sendMsg(context_.query_);
     context_.response_ = receiveOneMsg();
 
@@ -591,6 +602,25 @@ Dhcp6Client::doDecline(const bool include_address) {
 }
 
 void
+Dhcp6Client::doRelease() {
+    Pkt6Ptr query = createMsg(DHCPV6_RELEASE);
+    query->addOption(context_.response_->getOption(D6O_SERVERID));
+    copyIAsFromLeases(query);
+
+    context_.query_ = query;
+
+    sendMsg(context_.query_);
+    context_.response_ = receiveOneMsg();
+
+    // Apply configuration only if the server has responded.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+
+void
 Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
                                   const bool include_address) {
     /// @todo: add support for IAPREFIX here.
@@ -612,10 +642,14 @@ Dhcp6Client::generateIAFromLeases(const Pkt6Ptr& query,
 }
 
 void
-Dhcp6Client::fastFwdTime(const uint32_t secs) {
+Dhcp6Client::fastFwdTime(const uint32_t secs, const bool update_server) {
     // Iterate over all leases and move their cltt backwards.
     for (size_t i = 0; i < config_.leases_.size(); ++i) {
         config_.leases_[i].cltt_ -= secs;
+        if (update_server) {
+            Lease6Ptr lease(new Lease6(config_.leases_[i]));
+            LeaseMgrFactory::instance().updateLease6(lease);
+        }
     }
 }
 
@@ -867,6 +901,16 @@ Dhcp6Client::receiveOneMsg() {
 }
 
 void
+Dhcp6Client::receiveResponse() {
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        config_.clear();
+        applyRcvdConfiguration(context_.response_);
+    }
+}
+
+void
 Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     srv_->shutdown_ = false;
     // The client is configured to send through the relay. We achieve that
@@ -879,7 +923,14 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
             relay.peeraddr_ = asiolink::IOAddress("fe80::1");
             relay.msg_type_ = DHCPV6_RELAY_FORW;
             relay.hop_count_ = 1;
+
+            // Interface identifier, if specified.
+            if (interface_id_) {
+                relay.options_.insert(std::make_pair(D6O_INTERFACE_ID, interface_id_));
+            }
+
             msg->relay_info_.push_back(relay);
+
         } else {
             // The test provided relay_info_, let's use that.
             msg->relay_info_ = relay_info_;
@@ -895,8 +946,22 @@ Dhcp6Client::sendMsg(const Pkt6Ptr& msg) {
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
 
+    // Copy classes
+    const ClientClasses& classes = msg->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        msg_copy->addClass(*cclass);
+    }
+
     srv_->fakeReceive(msg_copy);
-    srv_->run();
+
+    try {
+        // Invoke run_one instead of run, because we want to avoid triggering
+        // IO service.
+        srv_->run_one();
+    } catch (...) {
+        // Suppress errors, as the DHCPv6 server does.
+    }
 }
 
 void
@@ -913,6 +978,12 @@ Dhcp6Client::requestPrefix(const uint32_t iaid,
 }
 
 void
+Dhcp6Client::useInterfaceId(const std::string& interface_id) {
+    OptionBuffer buf(interface_id.begin(), interface_id.end());
+    interface_id_.reset(new Option(Option::V6, D6O_INTERFACE_ID, buf));
+}
+
+void
 Dhcp6Client::useFQDN(const uint8_t flags, const std::string& fqdn_name,
                      Option6ClientFqdn::DomainNameType fqdn_type) {
     fqdn_.reset(new Option6ClientFqdn(flags, fqdn_name, fqdn_type));
@@ -921,6 +992,40 @@ Dhcp6Client::useFQDN(const uint8_t flags, const std::string& fqdn_name,
 void
 Dhcp6Client::addExtraOption(const OptionPtr& opt) {
     extra_options_.insert(std::make_pair(opt->getType(), opt));
+}
+
+void
+Dhcp6Client::clearExtraOptions() {
+    extra_options_.clear();
+}
+
+void
+Dhcp6Client::addClass(const ClientClass& client_class) {
+    if (!classes_.contains(client_class)) {
+        classes_.insert(client_class);
+    }
+}
+
+void
+Dhcp6Client::clearClasses() {
+    classes_.clear();
+}
+
+void
+Dhcp6Client::printConfiguration() const {
+
+    // Print DUID
+    std::cout << "Client " << (duid_ ? duid_->toText() : "(without duid)")
+              << " got " << getLeaseNum() << " lease(s): ";
+
+    // Print leases
+    for (int i = 0; i < getLeaseNum(); i++) {
+        Lease6 lease = getLease(i);
+        std::cout << lease.addr_.toText() << " ";
+    }
+
+    /// @todo: Print many other parameters.
+    std::cout << std::endl;
 }
 
 } // end of namespace isc::dhcp::test

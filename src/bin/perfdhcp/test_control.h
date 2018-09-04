@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -135,6 +135,18 @@ public:
     typedef std::vector<uint8_t> TemplateBuffer;
     /// Packet template buffers list.
     typedef std::vector<TemplateBuffer> TemplateBufferCollection;
+
+    /// @brief Delay the exit by a fixed given time to catch up to all exchanges
+    ///     that were already started.
+    /// @return true if need to wait, false = ok to exit now
+    bool waitToExit() const;
+
+    /// @brief Check if the program is in that period where the program was
+    ///     bound to exit, but was delayed by lateExit().
+    bool hasLateExitCommenced() const;
+
+    /// @brief Checks if all expected packets were already received
+    bool haveAllPacketsBeenReceived() const;
 
     /// \brief Socket wrapper structure.
     ///
@@ -927,6 +939,26 @@ protected:
     void setDefaults6(const TestControlSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
 
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt4 options will be added here
+    void addExtraOpts(const dhcp::Pkt4Ptr& pkt4);
+
+    /// @brief Inserts extra options specified by user.
+    ///
+    /// Note: addExtraOpts for v4 and v6 could easily be turned into a template.
+    /// However, this would require putting code here that uses CommandOptions,
+    /// and that would create dependency between test_control.h and
+    /// command_options.h.
+    ///
+    /// @param pkt6 options will be added here
+    void addExtraOpts(const dhcp::Pkt6Ptr& pkt6);
+
     /// \brief Find if diagnostic flag has been set.
     ///
     /// \param diag diagnostic flag (a,e,i,s,r,t,T).
@@ -1136,7 +1168,7 @@ protected:
     static bool interrupted_;  ///< Is program interrupted.
 };
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
 
 #endif // TEST_CONTROL_H

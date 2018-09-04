@@ -1,14 +1,17 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <agent/parser_context.h>
 #include <cc/dhcp_config_error.h>
 #include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
 
 using namespace isc::data;
 using namespace isc::test;
@@ -302,6 +305,22 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, ParserContext::PARSER_AGENT, false);
 }
 
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Control-agent\": {"
+                "  \"comment\": \"a comment\","
+                "  \"http-host\": \"localhost\","
+                "  \"http-port\": 9000,\n"
+                "  \"control-sockets\": {\n"
+                "    \"dhcp4\": {\n"
+                "        \"user-context\": { \"comment\": \"indirect\" },\n"
+                "        \"socket-type\": \"unix\"\n"
+                "    } },\n"
+                "  \"user-context\": { \"compatible\": true }\n"
+                "} }";
+    testParser(txt, ParserContext::PARSER_AGENT, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy
@@ -311,6 +330,7 @@ TEST(ParserTest, multilineComments) {
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
+    ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
@@ -318,7 +338,8 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    reference_json = moveComments(json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
@@ -344,6 +365,7 @@ void testFile(const std::string& fname) {
 // Hopefully the list of example configs will grow over time.
 TEST(ParserTest, file) {
     vector<string> configs;
+    configs.push_back("comments.json");
     configs.push_back("simple.json");
 
     for (int i = 0; i<configs.size(); i++) {
@@ -592,6 +614,45 @@ TEST(ParserTest, errors) {
               ParserContext::PARSER_AGENT,
               "<string>:2.2-10: got unexpected keyword "
               "\"topping\" in Control-agent map.");
+
+    // user context and embedded comments
+    testError("{ \"Control-agent\":{\n"
+              "  \"comment\": true,\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Control-agent\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"http-port\": 9000 }}\n",
+              ParserContext::PARSER_AGENT,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes

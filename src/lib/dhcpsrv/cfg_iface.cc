@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,8 @@ namespace dhcp {
 const char* CfgIface::ALL_IFACES_KEYWORD = "*";
 
 CfgIface::CfgIface()
-    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false) {
+    : wildcard_used_(false), socket_type_(SOCKET_RAW), re_detect_(false),
+      outbound_iface_(SAME_AS_INBOUND) {
 }
 
 void
@@ -55,15 +56,39 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
     // Close any open sockets because we're going to modify some properties
     // of the IfaceMgr. Those modifications require that sockets are closed.
     closeSockets();
+    // The loopback interface can be used only when:
+    //  - UDP socket will be used, i.e. not IPv4 and RAW socket
+    //  - the loopback interface is in the interface set or the address map.
+    bool loopback_used_ = false;
+    if ((family == AF_INET6) || (socket_type_ == SOCKET_UDP)) {
+        // Check interface set
+        for (IfaceSet::const_iterator iface_name = iface_set_.begin();
+             iface_name != iface_set_.end(); ++iface_name) {
+            IfacePtr iface = IfaceMgr::instance().getIface(*iface_name);
+            if (iface && iface->flag_loopback_) {
+                loopback_used_ = true;
+            }
+        }
+        // Check address map
+        for (ExplicitAddressMap::const_iterator unicast = address_map_.begin();
+             unicast != address_map_.end(); ++unicast) {
+            IfacePtr iface = IfaceMgr::instance().getIface(unicast->first);
+            if (iface && iface->flag_loopback_) {
+                loopback_used_ = true;
+            }
+        }
+    }
     // If wildcard interface '*' was not specified, set all interfaces to
     // inactive state. We will later enable them selectively using the
     // interface names specified by the user. If wildcard interface was
-    // specified, mark all interfaces active. In all cases, mark loopback
-    // inactive.
-    setState(family, !wildcard_used_, true);
+    // specified, mark all interfaces active. Mark loopback inactive when
+    // not explicitely allowed.
+    setState(family, !wildcard_used_, !loopback_used_);
     IfaceMgr& iface_mgr = IfaceMgr::instance();
     // Remove selection of unicast addresses from all interfaces.
     iface_mgr.clearUnicasts();
+    // Allow the loopback interface when required.
+    iface_mgr.setAllowLoopBack(loopback_used_);
     // For the DHCPv4 server, if the user has selected that raw sockets
     // should be used, we will try to configure the Interface Manager to
     // support the direct responses to the clients that don't have the
@@ -224,6 +249,43 @@ CfgIface::textToSocketType(const std::string& socket_type_name) const {
         isc_throw(InvalidSocketType, "unsupported socket type '"
                   << socket_type_name << "'");
     }
+}
+
+CfgIface::OutboundIface
+CfgIface::getOutboundIface() const {
+    return (outbound_iface_);
+}
+
+std::string
+CfgIface::outboundTypeToText() const {
+    switch (outbound_iface_) {
+    case SAME_AS_INBOUND:
+        return ("same-as-inbound");
+    case USE_ROUTING:
+        return ("use-routing");
+    default:
+        isc_throw(Unexpected, "unsupported outbound-type " << socket_type_);
+    }
+
+}
+
+CfgIface::OutboundIface
+CfgIface::textToOutboundIface(const std::string& txt) {
+    if (txt == "same-as-inbound") {
+        return (SAME_AS_INBOUND);
+
+    } else if (txt == "use-routing") {
+        return (USE_ROUTING);
+
+    } else {
+        isc_throw(BadValue, "unsupported outbound interface type '"
+                  << txt << "'");
+    }
+}
+
+void
+CfgIface::setOutboundIface(const OutboundIface& outbound_iface) {
+    outbound_iface_ = outbound_iface;
 }
 
 void
@@ -403,6 +465,9 @@ ElementPtr
 CfgIface::toElement() const {
     ElementPtr result = Element::createMap();
 
+    // Set user context
+    contextToElement(result);
+
     // Set interfaces
     ElementPtr ifaces = Element::createList();
     if (wildcard_used_) {
@@ -423,6 +488,10 @@ CfgIface::toElement() const {
     // @todo emit raw if and only if DHCPv4
     if (socket_type_ != SOCKET_RAW) {
         result->set("dhcp-socket-type", Element::create(std::string("udp")));
+    }
+
+    if (outbound_iface_ != SAME_AS_INBOUND) {
+        result->set("outbound-interface", Element::create(outboundTypeToText()));
     }
 
     // Set re-detect

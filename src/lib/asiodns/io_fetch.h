@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,7 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
-#include <coroutine.h>
+#include <boost/asio/coroutine.hpp>
 
 #include <boost/system/error_code.hpp>
 #include <asiolink/io_address.h>
@@ -33,7 +33,7 @@ struct IOFetchData;
 ///
 /// \param E Endpoint type to use.
 
-class IOFetch : public coroutine {
+class IOFetch : public boost::asio::coroutine {
 public:
     /// \brief Protocol to use on the fetch
     enum Protocol {

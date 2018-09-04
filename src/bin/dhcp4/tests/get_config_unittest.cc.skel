@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,15 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
+#include <testutils/user_context_utils.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
+#include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/ctrl_dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
 #include <dhcp4/tests/get_config_unittest.h>
-#include <dhcp4/dhcp4_srv.h>
-#include <dhcp4/json_config_parser.h>
-#include <dhcp4/simple_parser4.h>
 
 #include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
@@ -30,6 +32,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::test;
 
 namespace {
 
@@ -101,7 +104,7 @@ static_assert(max_config_counter == sizeof(UNPARSED_CONFIGS) / sizeof(char*),
 void
 outputFormatted(const std::string& config) {
     // pretty print it
-    ConstElementPtr json = parseJSON(config);
+    ConstElementPtr json = extractComments(parseDHCP4(config));
     std::string prettier = prettyPrint(json, 4, 4);
     // get it as a line array
     std::list<std::string> lines;
@@ -121,7 +124,7 @@ outputFormatted(const std::string& config) {
     }
 }
 
-};
+}  // namespace
 
 namespace isc {
 namespace dhcp {
@@ -152,9 +155,9 @@ extractConfig(const std::string& config) {
     ++extract_count;
 }
 
-};
-};
-};
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 namespace {
 
@@ -166,7 +169,7 @@ public:
         // Open port 0 means to not do anything at all. We don't want to
         // deal with sockets here, just check if configuration handling
         // is sane.
-        srv_.reset(new Dhcpv4Srv(0));
+        srv_.reset(new ControlledDhcpv4Srv(0));
         // Create fresh context.
         resetConfiguration();
     }
@@ -268,7 +271,7 @@ public:
         CfgMgr::instance().setFamily(AF_INET);
     }
 
-    boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
+    boost::scoped_ptr<ControlledDhcpv4Srv> srv_; ///< DHCP4 server under test
     int rcode_;                         ///< Return code from element parsing
     ConstElementPtr comment_;           ///< Reason for parse fail
 };
@@ -315,9 +318,17 @@ TEST_P(Dhcp4GetConfigTest, run) {
         ASSERT_NO_THROW(outputFormatted(dhcp->str()));
     } else {
         expected = UNPARSED_CONFIGS[config_counter];
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseDHCP4(expected, true));
-        EXPECT_TRUE(isEquivalent(dhcp, json));
+        // get the expected config using the dhcpv4 syntax parser
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseDHCP4(expected, true));
+        ElementPtr jsonj;
+        // get the expected config using the generic JSON syntax parser
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        // the generic JSON parser does not handle comments
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // check that unparsed and expected values match
+        EXPECT_TRUE(isEquivalent(dhcp, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(dhcp, 4, 4) + "\n";
         EXPECT_EQ(expected, current);
         if (expected != current) {
@@ -338,8 +349,18 @@ TEST_P(Dhcp4GetConfigTest, run) {
     EXPECT_TRUE(isEquivalent(unparsed, unparsed2));
 }
 
-/// Define the parameterized test loop
-INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
-                        ::testing::Range(static_cast<size_t>(0), max_config_counter));
-
+class IntToString {
+public:
+    std::string operator()(const testing::TestParamInfo<size_t>& n) {
+        std::ostringstream ss;
+        ss << static_cast<size_t>(n.param);
+        return (ss.str());
+    }
 };
+
+/// Define the parameterized test loop.
+INSTANTIATE_TEST_CASE_P(Dhcp4GetConfigTest, Dhcp4GetConfigTest,
+                        ::testing::Range(static_cast<size_t>(0),
+                                         max_config_counter),
+                        IntToString());
+}  // namespace

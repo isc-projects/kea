@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <agent/simple_parser.h>
 #include <cc/data.h>
@@ -93,6 +95,12 @@ AgentSimpleParser::parse(const CtrlAgentCfgContextPtr& ctx,
         for (auto cs = sockets_map.cbegin(); cs != sockets_map.cend(); ++cs) {
             ctx->setControlSocketInfo(cs->second, cs->first);
         }
+    }
+
+    // User context can be done at anytime.
+    ConstElementPtr user_context = config->get("user-context");
+    if (user_context) {
+        ctx->setContext(user_context);
     }
 
     // Finally, let's get the hook libs!

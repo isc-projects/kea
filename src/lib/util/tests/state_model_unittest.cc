@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,12 @@ public:
     ///@brief State which finishes off processing.
     static const int DONE_ST = SM_DERIVED_STATE_MIN + 4;
 
+    ///@brief State in which model is always paused.
+    static const int PAUSE_ALWAYS_ST = SM_DERIVED_STATE_MIN + 5;
+
+    ///@brief State in which model is paused at most once.
+    static const int PAUSE_ONCE_ST = SM_DERIVED_STATE_MIN + 6;
+
     // StateModelTest events
     ///@brief Event used to trigger initiation of asynchronous work.
     static const int WORK_START_EVT = SM_DERIVED_EVENT_MIN + 1;
@@ -55,6 +61,9 @@ public:
 
     ///@brief Event used to trigger an attempt to transition to bad state
     static const int SIMULATE_ERROR_EVT = SM_DERIVED_EVENT_MIN + 5;
+
+    ///@brief Event used to indicate that state machine is unpaused.
+    static const int UNPAUSED_EVT = SM_DERIVED_EVENT_MIN + 6;
 
     /// @brief Constructor
     ///
@@ -159,6 +168,11 @@ public:
         }
     }
 
+    /// @brief State handler for PAUSE_ALWAYS_ST and PAUSE_ONCE_ST.
+    void pauseHandler() {
+        postNextEvent(NOP_EVT);
+    }
+
     /// @brief Construct the event dictionary.
     virtual void defineEvents() {
         // Invoke the base call implementation first.
@@ -170,6 +184,7 @@ public:
         defineEvent(ALL_DONE_EVT, "ALL_DONE_EVT");
         defineEvent(FORCE_UNDEFINED_ST_EVT, "FORCE_UNDEFINED_ST_EVT");
         defineEvent(SIMULATE_ERROR_EVT, "SIMULATE_ERROR_EVT");
+        defineEvent(UNPAUSED_EVT, "UNPAUSED_EVT");
     }
 
     /// @brief Verify the event dictionary.
@@ -183,6 +198,7 @@ public:
         getEvent(ALL_DONE_EVT);
         getEvent(FORCE_UNDEFINED_ST_EVT);
         getEvent(SIMULATE_ERROR_EVT);
+        getEvent(UNPAUSED_EVT);
     }
 
     /// @brief Construct the state dictionary.
@@ -202,6 +218,14 @@ public:
 
         defineState(DONE_ST, "DONE_ST",
             boost::bind(&StateModelTest::doneWorkHandler, this));
+
+        defineState(PAUSE_ALWAYS_ST, "PAUSE_ALWAYS_ST",
+            boost::bind(&StateModelTest::pauseHandler, this),
+                    STATE_PAUSE_ALWAYS);
+
+        defineState(PAUSE_ONCE_ST, "PAUSE_ONCE_ST",
+            boost::bind(&StateModelTest::pauseHandler, this),
+                    STATE_PAUSE_ONCE);
     }
 
     /// @brief Verify the state dictionary.
@@ -214,6 +238,8 @@ public:
         getState(READY_ST);
         getState(DO_WORK_ST);
         getState(DONE_ST);
+        getState(PAUSE_ALWAYS_ST);
+        getState(PAUSE_ONCE_ST);
     }
 
     /// @brief  Manually construct the event and state dictionaries.
@@ -279,6 +305,8 @@ const int StateModelTest::DONE_ST;
 const int StateModelTest::WORK_START_EVT;
 const int StateModelTest::WORK_DONE_EVT;
 const int StateModelTest::ALL_DONE_EVT;
+const int StateModelTest::PAUSE_ALWAYS_ST;
+const int StateModelTest::PAUSE_ONCE_ST;
 
 /// @brief Checks the fundamentals of defining and retrieving events.
 TEST_F(StateModelTest, eventDefinition) {
@@ -828,6 +856,63 @@ TEST_F(StateModelTest, stateModelTest) {
 
     // Verify that work completed flag is true.
     EXPECT_TRUE(getWorkCompleted());
+}
+
+// This test verifies the pausing and un-pausing capabilities of the state
+// model.
+TEST_F(StateModelTest, stateModelPause) {
+    // Verify that status methods are correct: model is new.
+    EXPECT_TRUE(isModelNew());
+    EXPECT_FALSE(isModelRunning());
+    EXPECT_FALSE(isModelWaiting());
+    EXPECT_FALSE(isModelDone());
+    EXPECT_FALSE(isModelPaused());
+
+    // Verify that the failure explanation is empty and work is not done.
+    EXPECT_TRUE(getFailureExplanation().empty());
+    EXPECT_FALSE(getWorkCompleted());
+
+    // Transition straight to the state in which the model should always
+    // pause.
+    ASSERT_NO_THROW(startModel(PAUSE_ALWAYS_ST));
+
+    // Verify it was successful and that the model is paused.
+    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_TRUE(isModelPaused());
+
+    // Run the model again. It should still be paused.
+    ASSERT_NO_THROW(runModel(NOP_EVT));
+    EXPECT_TRUE(isModelPaused());
+
+    // Unpause the model and transition to the state in which the model
+    // should be paused at most once.
+    unpauseModel();
+    transition(PAUSE_ONCE_ST, NOP_EVT);
+    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_TRUE(isModelPaused());
+
+    // The model should still be paused until explicitly unpaused.
+    ASSERT_NO_THROW(runModel(NOP_EVT));
+    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_TRUE(isModelPaused());
+
+    unpauseModel();
+
+    // Transition back to the first state. The model should pause again.
+    transition(PAUSE_ALWAYS_ST, NOP_EVT);
+    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_TRUE(isModelPaused());
+
+    ASSERT_NO_THROW(runModel(NOP_EVT));
+    EXPECT_EQ(PAUSE_ALWAYS_ST, getCurrState());
+    EXPECT_TRUE(isModelPaused());
+
+    // Unpause the model and transition to the state in which the model
+    // should pause only once. This time it should not pause.
+    unpauseModel();
+    transition(PAUSE_ONCE_ST, NOP_EVT);
+    EXPECT_EQ(PAUSE_ONCE_ST, getCurrState());
+    EXPECT_FALSE(isModelPaused());
 }
 
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -92,12 +92,15 @@ public:
     /// create HTTP response from the HTTP request received.
     /// @param callback Callback invoked when new connection is accepted.
     /// @param request_timeout Configured timeout for a HTTP request.
+    /// @param idle_timeout Timeout after which persistent HTTP connection is
+    /// closed by the server.
     HttpConnection(asiolink::IOService& io_service,
                    HttpAcceptor& acceptor,
                    HttpConnectionPool& connection_pool,
                    const HttpResponseCreatorPtr& response_creator,
                    const HttpAcceptorCallback& callback,
-                   const long request_timeout);
+                   const long request_timeout,
+                   const long idle_timeout);
 
     /// @brief Destructor.
     ///
@@ -166,11 +169,27 @@ private:
     void socketWriteCallback(boost::system::error_code ec,
                              size_t length);
 
+    /// @brief Reinitializes request processing state after sending a response.
+    ///
+    /// This method is only called for persistent connections, when the response
+    /// to a previous command has been sent. It initializes the state machine to
+    /// be able to process the next request. It also sets the persistent connection
+    /// idle timer to monitor the connection timeout.
+    void reinitProcessingState();
+
+    /// @brief Reset timer for detecting request timeouts.
+    void setupRequestTimer();
+
+    /// @brief Reset timer for detecing idle timeout in persistent connections.
+    void setupIdleTimer();
+
     /// @brief Callback invoked when the HTTP Request Timeout occurs.
     ///
     /// This callback creates HTTP response with Request Timeout error code
     /// and sends it to the client.
     void requestTimeoutCallback();
+
+    void idleTimeoutCallback();
 
     /// @brief Stops current connection.
     void stopThisConnection();
@@ -183,6 +202,10 @@ private:
 
     /// @brief Configured Request Timeout in milliseconds.
     long request_timeout_;
+
+    /// @brief Timeout after which the persistent HTTP connection is closed
+    /// by the server.
+    long idle_timeout_;
 
     /// @brief Socket used by this connection.
     asiolink::TCPSocket<SocketCallback> socket_;
@@ -207,7 +230,7 @@ private:
     HttpAcceptorCallback acceptor_callback_;
 
     /// @brief Buffer for received data.
-    std::array<char, 4096> buf_;
+    std::array<char, 32768> buf_;
 
     /// @brief Buffer used for outbound data.
     std::string output_buf_;

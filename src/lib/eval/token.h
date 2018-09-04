@@ -694,6 +694,37 @@ public:
     void evaluate(Pkt& pkt, ValueStack& values);
 };
 
+/// @brief Token that represents an alternative
+///
+/// For example in the sub-expression "ifelse(cond, iftrue, iffalse)"
+/// the boolean "cond" expression is evaluated, if it is true then
+/// the "iftrue" value is returned else the "iffalse" value is returned.
+/// Please note that "iftrue" and "iffalse" must be plain string (vs. boolean)
+/// expressions and they are always evaluated. If you want a similar
+/// operator on boolean expressions it can be built from "and", "or" and
+/// "not" boolean operators.
+class TokenIfElse : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenIfElse() { }
+
+    /// @brief Alternative.
+    ///
+    /// Evaluation does not use packet information, but rather consumes the
+    /// last three results. It does a simple string comparison on the
+    /// condition (third value on the stack) which is required to be
+    /// either "true" or "false", and leaves the second and first
+    /// value if the condition is "true" or "false".
+    ///
+    /// @throw EvalBadStack if there are less than 3 values on stack
+    /// @throw EvalTypeError if the third value (the condition) is not
+    ///        either "true" or "false"
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (two items are removed)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
 /// @brief Token that represents logical negation operator
 ///
 /// For example in the expression "not(option[vendor-class].text == 'MSF')"
@@ -767,6 +798,40 @@ public:
     /// @param values - stack of values (2 arguments will be popped, 1 result
     ///        will be pushed)
     void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that represents client class membership
+///
+/// For example "not member('foo')" is the complement of class foo
+class TokenMember : public Token {
+public:
+    /// @brief Constructor
+    ///
+    /// @param client_class client class name
+    TokenMember(const std::string& client_class)
+        :client_class_(client_class){
+    }
+
+    /// @brief Token evaluation (check if client_class_ was added to
+    /// packet client classes)
+    ///
+    /// @param pkt the class name will be check from this packet's client classes
+    /// @param values true (if found) or false (if not found) will be pushed here
+    void evaluate(Pkt& pkt, ValueStack& values);
+
+    /// @brief Returns client class name
+    ///
+    /// This method is used in testing to determine if the parser had
+    /// instantiated TokenMember with correct parameters.
+    ///
+    /// @return client class name the token expects to check membership.
+    const ClientClass& getClientClass() const {
+        return (client_class_);
+    }
+
+protected:
+    /// @brief The client class name
+    ClientClass client_class_;
 };
 
 /// @brief Token that represents vendor options in DHCPv4 and DHCPv6.

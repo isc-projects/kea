@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,18 +63,26 @@ protected:
         ASSERT_TRUE(parsed_expr);
 
         // Build a packet that will fail evaluation.
-        boost::shared_ptr<PktType> pkt(new PktType(family == AF_INET ?
-                                                   DHCPDISCOVER : DHCPV6_SOLICIT,
-                                                   123));
+        uint8_t message_type;
+        if (family == AF_INET) {
+            message_type = DHCPDISCOVER;
+        } else {
+            message_type = DHCPV6_SOLICIT;
+        }
+        boost::shared_ptr<PktType> pkt(new PktType(message_type, 123));
         EXPECT_FALSE(evaluateBool(*parsed_expr, *pkt));
 
         // Now add the option so it will pass. Use a standard option carrying a
         // single string value, i.e. hostname for DHCPv4 and bootfile url for
         // DHCPv6.
         Option::Universe universe(family == AF_INET ? Option::V4 : Option::V6);
-        OptionPtr opt(new OptionString(universe, family == AF_INET ?
-                                       DHO_HOST_NAME : D6O_BOOTFILE_URL,
-                                       option_string));
+        uint16_t option_type;
+        if (family == AF_INET) {
+            option_type = DHO_HOST_NAME;
+        } else {
+            option_type = D6O_BOOTFILE_URL;
+        }
+        OptionPtr opt(new OptionString(universe, option_type, option_string));
         pkt->addOption(opt);
         EXPECT_TRUE(evaluateBool(*parsed_expr, *pkt));
     }
@@ -109,10 +117,10 @@ protected:
         parser.parse(dictionary, config_element, family);
 
         // If we didn't throw, then return the first and only class
-        ClientClassDefMapPtr classes = dictionary->getClasses();
-        ClientClassDefMap::iterator it = classes->begin();
-        if (it != classes->end()) {
-            return  (*it).second;
+        ClientClassDefListPtr classes = dictionary->getClasses();
+        ClientClassDefList::const_iterator it = classes->cbegin();
+        if (it != classes->cend()) {
+            return (*it);
         }
 
         // Return NULL if for some reason the class doesn't exist.
@@ -480,6 +488,21 @@ TEST_F(ClientClassDefParserTest, invalidExpression) {
                  DhcpConfigError);
 }
 
+// Verifies that a class with invalid option-def, fails to parse.
+TEST_F(ClientClassDefParserTest, invalidOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"one\", \n"
+        "    \"option-def\": [ \n"
+        "      { \"bogus\": \"bad\" } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
+                 DhcpConfigError);
+}
+
 // Verifies that a class with invalid option-data, fails to parse.
 TEST_F(ClientClassDefParserTest, invalidOptionData) {
     std::string cfg_text =
@@ -585,7 +608,112 @@ TEST_F(ClientClassDefParserTest, noFixedFields) {
     EXPECT_EQ(IOAddress("0.0.0.0"), cclass->getNextServer());
     EXPECT_EQ(0, cclass->getSname().size());
     EXPECT_EQ(0, cclass->getFilename().size());
+
+    // Nor option definitions
+    CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg->getAll(DHCP4_OPTION_SPACE)->empty());
 }
+
+// Test verifies option-def for a bad option fails to parse.
+TEST_F(ClientClassDefParserTest, badOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"foo\", \n"
+        "           \"code\": 222, \n"
+        "           \"type\": \"uint32\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_THROW(cclass = parseClientClassDef(cfg_text, AF_INET),
+                 DhcpConfigError);
+}
+
+// Test verifies option-def works for private options (224-254).
+TEST_F(ClientClassDefParserTest, privateOptionDef) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"foo\", \n"
+        "           \"code\": 232, \n"
+        "           \"type\": \"uint32\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg);
+    EXPECT_TRUE(cfg->get(DHCP4_OPTION_SPACE, 232));
+    EXPECT_FALSE(cfg->get(DHCP6_OPTION_SPACE, 232));
+    EXPECT_FALSE(cfg->get(DHCP4_OPTION_SPACE, 233));
+}
+
+// Test verifies option-def works for option 43.
+TEST_F(ClientClassDefParserTest, option43Def) {
+    std::string cfg_text =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"test\": \"option[60].text == 'MICROSOFT'\", \n"
+        "    \"option-def\": [ \n"
+        "        { \n"
+        "           \"name\": \"vendor-encapsulated-options\", \n"
+        "           \"code\": 43, \n"
+        "           \"space\": \"dhcp4\", \n"
+        "           \"type\": \"empty\", \n"
+        "           \"encapsulate\": \"vsi\" \n"
+        "        } \n"
+        "      ], \n"
+        "    \"option-data\": [ \n"
+        "      { \n"
+        "         \"name\": \"vendor-encapsulated-options\" \n"
+        "      }, \n"
+        "      { \n"
+        "         \"code\": 1, \n"
+        "         \"space\": \"vsi\", \n"
+        "         \"csv-format\": false, \n"
+        "         \"data\": \"C0000200\" \n"
+        "      } \n"
+        "    ] \n"
+        "} \n";
+
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = parseClientClassDef(cfg_text, AF_INET));
+
+    // We should find our class.
+    ASSERT_TRUE(cclass);
+
+    // And the option definition.
+    CfgOptionDefPtr cfg_def = cclass->getCfgOptionDef();
+    ASSERT_TRUE(cfg_def);
+    EXPECT_TRUE(cfg_def->get(DHCP4_OPTION_SPACE, 43));
+
+    // Verify the option data.
+    OptionDescriptor od = cclass->getCfgOption()->get(DHCP4_OPTION_SPACE, 43);
+    ASSERT_TRUE(od.option_);
+    EXPECT_EQ(43, od.option_->getType());
+    const OptionCollection& oc = od.option_->getOptions();
+    ASSERT_EQ(1, oc.size());
+    OptionPtr opt = od.option_->getOption(1);
+    ASSERT_TRUE(opt);
+    EXPECT_EQ(1, opt->getType());
+    ASSERT_EQ(4, opt->getData().size());
+    const uint8_t expected[4] = { 0xc0, 0x00, 0x02, 0x00 };
+    EXPECT_EQ(0, std::memcmp(expected, &opt->getData()[0], 4));
+}
+
 
 // Test verifies that it is possible to define next-server field and it
 // is actually set in the class properly.
@@ -640,9 +768,21 @@ TEST_F(ClientClassDefParserTest, nextServerBogus) {
         "        } \n"
         "      ] \n"
         "} \n";
+    std::string bogus_broadcast =
+        "{ \n"
+        "    \"name\": \"MICROSOFT\", \n"
+        "    \"next-server\": \"255.255.255.255\",\n"
+        "    \"option-data\": [ \n"
+        "        { \n"
+        "           \"name\": \"domain-name-servers\", \n"
+        "           \"data\": \"192.0.2.1, 192.0.2.2\" \n"
+        "        } \n"
+        "      ] \n"
+        "} \n";
 
     EXPECT_THROW(parseClientClassDef(bogus_v6, AF_INET), DhcpConfigError);
     EXPECT_THROW(parseClientClassDef(bogus_junk, AF_INET), DhcpConfigError);
+    EXPECT_THROW(parseClientClassDef(bogus_broadcast, AF_INET), DhcpConfigError);
 }
 
 // Test verifies that it is possible to define server-hostname field and it
@@ -745,5 +885,156 @@ TEST_F(ClientClassDefParserTest, filenameBogus) {
     EXPECT_THROW(parseClientClassDef(cfg_too_long, AF_INET), DhcpConfigError);
 }
 
+// Verifies that backward and built-in dependencies will parse.
+TEST_F(ClientClassDefListParserTest, dependentList) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('VENDOR_CLASS_foo')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"two\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"three\", \n"
+        "       \"test\": \"member('two')\" \n"
+        "   } \n"
+        "] \n";
+
+    // Parsing the list should succeed.
+    ClientClassDictionaryPtr dictionary;
+    ASSERT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET));
+    ASSERT_TRUE(dictionary);
+
+    // We should have three classes in the dictionary.
+    EXPECT_EQ(3, dictionary->getClasses()->size());
+
+    // Make sure we can find all three.
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = dictionary->findClass("one"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("one", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("two"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("two", cclass->getName());
+
+    ASSERT_NO_THROW(cclass = dictionary->findClass("three"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("three", cclass->getName());
+}
+
+// Verifies that not defined dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentNotDefined) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that forward dependencies will not parse.
+TEST_F(ClientClassDefListParserTest, dependentForwardError) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_THROW(parseClientClassDefList(cfg_text, AF_INET6), DhcpConfigError);
+}
+
+// Verifies that backward dependencies will parse.
+TEST_F(ClientClassDefListParserTest, dependentBackward) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"foo\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"one\", \n"
+        "       \"test\": \"member('foo')\" \n"
+        "   } \n"
+        "] \n";
+
+    EXPECT_NO_THROW(parseClientClassDefList(cfg_text, AF_INET6));
+}
+
+// Verifies that the depend on known flag is correctly handled.
+TEST_F(ClientClassDefListParserTest, dependOnKnown) {
+    std::string cfg_text =
+        "[ \n"
+        "   { \n"
+        "       \"name\": \"alpha\", \n"
+        "       \"test\": \"member('ALL')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"beta\", \n"
+        "       \"test\": \"member('alpha')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"gamma\", \n"
+        "       \"test\": \"member('KNOWN') and member('alpha')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"delta\", \n"
+        "       \"test\": \"member('beta') and member('gamma')\" \n"
+        "   }, \n"
+        "   { \n"
+        "       \"name\": \"zeta\", \n"
+        "       \"test\": \"not member('UNKNOWN') and member('alpha')\" \n"
+        "   } \n"
+        "] \n";
+
+    // Parsing the list should succeed.
+    ClientClassDictionaryPtr dictionary;
+    EXPECT_NO_THROW(dictionary = parseClientClassDefList(cfg_text, AF_INET6));
+    ASSERT_TRUE(dictionary);
+
+    // We should have five classes in the dictionary.
+    EXPECT_EQ(5, dictionary->getClasses()->size());
+
+    // Check alpha.
+    ClientClassDefPtr cclass;
+    ASSERT_NO_THROW(cclass = dictionary->findClass("alpha"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("alpha", cclass->getName());
+    EXPECT_FALSE(cclass->getDependOnKnown());
+
+    // Check beta.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("beta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("beta", cclass->getName());
+    EXPECT_FALSE(cclass->getDependOnKnown());
+
+    // Check gamma which directly depends on KNOWN.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("gamma"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("gamma", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+
+    // Check delta which indirectly depends on KNOWN.
+    ASSERT_NO_THROW(cclass = dictionary->findClass("delta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("delta", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+
+    // Check that zeta which directly depends on UNKNOWN.
+    // (and yes I know that I skipped epsilon)
+    ASSERT_NO_THROW(cclass = dictionary->findClass("zeta"));
+    ASSERT_TRUE(cclass);
+    EXPECT_EQ("zeta", cclass->getName());
+    EXPECT_TRUE(cclass->getDependOnKnown());
+}
 
 } // end of anonymous namespace

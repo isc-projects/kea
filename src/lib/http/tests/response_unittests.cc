@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -36,14 +36,15 @@ public:
         // it returns the fixed value of the Date header, which is
         // very useful in unit tests.
         TestHttpResponse response(HttpVersion(1, 0), status_code);
-        response.addHeader("Content-Type", "text/html");
+        response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+        ASSERT_NO_THROW(response.finalize());
         std::ostringstream response_string;
         response_string << "HTTP/1.0 " << static_cast<uint16_t>(status_code)
-            << " " << status_message << "\r\n";
+            << " " << status_message;
         EXPECT_EQ(response_string.str(), response.toBriefString());
 
         response_string
-            << "Content-Length: 0\r\n"
+            << "\r\nContent-Length: 0\r\n"
             << "Content-Type: text/html\r\n"
             << "Date: " << response.getDateHeaderValue() << "\r\n\r\n";
         EXPECT_EQ(response_string.str(), response.toString());
@@ -61,9 +62,10 @@ TEST_F(HttpResponseTest, responseOK) {
 
     // Create the message and add some headers.
     TestHttpResponse response(HttpVersion(1, 0), HttpStatusCode::OK);
-    response.addHeader("Content-Type", "text/html");
-    response.addHeader("Host", "kea.example.org");
-    response.setBody(sample_body);
+    response.context()->headers_.push_back(HttpHeaderContext("Content-Type", "text/html"));
+    response.context()->headers_.push_back(HttpHeaderContext("Host", "kea.example.org"));
+    response.context()->body_ = sample_body;
+    ASSERT_NO_THROW(response.finalize());
 
     // Create a string holding expected response. Note that the Date
     // is a fixed value returned by the customized TestHttpResponse

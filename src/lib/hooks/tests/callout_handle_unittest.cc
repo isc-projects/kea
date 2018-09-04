@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
@@ -314,6 +316,65 @@ TEST_F(CalloutHandleTest, StatusField) {
 
     handle.setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
     EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle.getStatus());
+}
+
+// Tests that ScopedCalloutHandleState object resets CalloutHandle state
+// during construction and destruction.
+TEST_F(CalloutHandleTest, scopedState) {
+    // Create pointer to the handle to be wrapped.
+    CalloutHandlePtr handle(new CalloutHandle(getCalloutManager()));
+
+    // Set two arguments and the non-default status.
+    int one = 1;
+    int two = 2;
+    int three = 3;
+    handle->setArgument("one", one);
+    handle->setArgument("two", two);
+    handle->setContext("three", three);
+    handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+
+    int value = 0;
+    EXPECT_NO_THROW(handle->getArgument("one", value));
+    EXPECT_NO_THROW(handle->getArgument("two", value));
+    EXPECT_NO_THROW(handle->getContext("three", value));
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, handle->getStatus());
+
+    {
+        // Wrap the callout handle with the scoped state object, which should
+        // reset the state of the handle.
+        ScopedCalloutHandleState scoped_state(handle);
+
+        // When state is reset, all arguments should be removed and the
+        // default status should be set.
+        EXPECT_THROW(handle->getArgument("one", value), NoSuchArgument);
+        EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
+
+        // Context should be intact.
+        ASSERT_NO_THROW(handle->getContext("three", value));
+        EXPECT_EQ(three, value);
+
+        // Set the arguments and status again prior to the destruction of
+        // the wrapper.
+        handle->setArgument("one", one);
+        handle->setArgument("two", two);
+        handle->setStatus(CalloutHandle::NEXT_STEP_DROP);
+
+        EXPECT_NO_THROW(handle->getArgument("one", value));
+        EXPECT_NO_THROW(handle->getArgument("two", value));
+        EXPECT_EQ(CalloutHandle::NEXT_STEP_DROP, handle->getStatus());
+    }
+
+    // Arguments should be gone again and the status should be set to
+    // a default value.
+    EXPECT_THROW(handle->getArgument("one", value), NoSuchArgument);
+    EXPECT_THROW(handle->getArgument("two", value), NoSuchArgument);
+    EXPECT_EQ(CalloutHandle::NEXT_STEP_CONTINUE, handle->getStatus());
+
+    // Context should be intact.
+    ASSERT_NO_THROW(handle->getContext("three", value));
+    EXPECT_EQ(three, value);
 }
 
 // Further tests of the "skip" flag and tests of getting the name of the

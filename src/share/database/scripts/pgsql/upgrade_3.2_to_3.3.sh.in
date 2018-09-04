@@ -1,0 +1,40 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`pgsql_version "$@"`
+
+if [ "$VERSION" != "3.2" ]; then
+    printf "This script upgrades 3.2 to 3.3. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+
+START TRANSACTION;
+
+-- Change subnet ID columns type to BIGINT to match lease4/6 tables
+ALTER TABLE hosts ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE hosts ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+ALTER TABLE dhcp4_options ALTER COLUMN dhcp4_subnet_id TYPE BIGINT;
+ALTER TABLE dhcp6_options ALTER COLUMN dhcp6_subnet_id TYPE BIGINT;
+
+-- Set 3.3 schema version.
+UPDATE schema_version
+    SET version = '3', minor = '3';
+
+-- Schema 3.3 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
+EOF
+
+exit $RESULT

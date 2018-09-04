@@ -166,7 +166,9 @@ CfgOptionDef::toElement() const {
              def != defs->end(); ++def) {
             // Get and fill the map for this definition
             ElementPtr map = Element::createMap();
-            // First set space from parent iterator
+            // Set user context
+            (*def)->contextToElement(map);
+            // Set space from parent iterator
             map->set("space", Element::create(*name));
             // Set required items: name, code and type
             map->set("name", Element::create((*def)->getName()));
@@ -203,7 +205,6 @@ CfgOptionDef::toElement() const {
     }
     return (result);
 }
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

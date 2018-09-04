@@ -1,13 +1,16 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2017;" >
-]>
+<!--
+ - Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<chapter id="kea-ctrl-agent">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-ctrl-agent">
   <title>Kea Control Agent</title>
 
-  <section id="agent-overview">
+  <section xml:id="agent-overview">
     <title>Overview</title>
     <para>Kea Control Agent (CA) is a daemon, first included in Kea 1.2, which
     exposes a RESTful control interface for managing Kea servers. The daemon
@@ -18,12 +21,12 @@
     included in the command from the controlling client. The details of the
     supported commands as well as their structures are provided in
     <xref linkend="ctrl-channel"/>.</para>
-    <para>Hook libraries can be attached to the CA to provide support for
+    <para>Hook libraries can be loaded by the CA to provide support for
     additional commands or custom behavior of existing commands. Such hook
     libraries must implement callouts for 'control_command_receive' hook point.
     Details about creating new hook libraries and supported hook points can be
     found in
-    <ulink url="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</ulink>.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
     </para>
 
     <para>
@@ -54,7 +57,7 @@
     </para>
   </section>
 
-  <section id="agent-configuration">
+  <section xml:id="agent-configuration">
     <title>Configuration</title>
     <para>The following example demonstrates the basic CA configuration.</para>
     <para>
@@ -66,12 +69,14 @@
 
         "control-sockets": {
             "dhcp4": {
+                "comment": "main server",
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             },
             "dhcp6": {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4"
+                "socket-name": "/path/to/the/unix/socket-v4",
+                "user-context": { "version": 3 }
             }
         },
 
@@ -146,7 +151,23 @@
     </warning>
 
     <para>
-      Hooks libraries can be attached to the Control Agent just like to
+      User contexts can store arbitrary data as long as it is valid JSON
+      syntax and its top level element is a map (i.e. the data must be
+      enclosed in curly brackets). Some hook libraries may expect specific
+      formatting, though.  Please consult specific hook library
+      documentation for details.
+    </para>
+
+    <para>
+      User contexts can be specified on either global scope, control
+      socket and loggers. One other useful usage is the ability to
+      store comments or descriptions: the parser translates a
+      "comment" entry into a user-context with the entry, this allows
+      to attach a comment inside the configuration itself.
+    </para>
+
+    <para>
+      Hooks libraries can be loaded by the Control Agent just like to
       DHCPv4 and DHCPv6 servers. It currently supports one hook point
       'control_command_receive' which makes it possible to delegate
       processing of some commands to the hooks library. The
@@ -162,7 +183,7 @@
     </para>
   </section>
 
-  <section id="agent-secure-connection">
+  <section xml:id="agent-secure-connection">
     <title>Secure Connections</title>
     <para>
       Control Agent doesn't natively support secure HTTP connections like
@@ -267,9 +288,14 @@ http {
     organization which apply to this setup.</simpara>
   </note>
 
+    <para>When you use an HTTP client without TLS support as <command>
+    kea-shell</command> you can use an HTTP/HTTPS translator such as stunnel
+    in client mode. A sample configuration is provided in the
+    <filename>doc/examples/https/shell/</filename> directory</para>
+
   </section>
 
-  <section id="agent-limitations">
+  <section xml:id="agent-limitations">
     <title>Control Agent Limitations</title>
     <para>
       Control Agent is a new component, first released in Kea 1.2. In
@@ -286,18 +312,18 @@ http {
     </para>
   </section>
 
-  <section id="agent-launch">
+  <section xml:id="agent-launch">
     <title>Starting Control Agent</title>
     <para>
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
 <screen>
-$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea.conf
+$ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 </screen>
     </para>
   </section>
 
-  <section id="agent-clients">
+  <section xml:id="agent-clients">
     <title>Connecting to the Control Agent</title>
     <para>For an example of tool that can take advantage of the
     RESTful API, see <xref linkend="kea-shell"/>.</para>

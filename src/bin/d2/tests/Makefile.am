@@ -18,8 +18,7 @@ check-local:
 	done
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
-AM_CPPFLAGS += -I$(top_builddir)/src/bin # for generated spec_config.h header
-AM_CPPFLAGS += -I$(top_srcdir)/src/bin
+AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/d2/tests\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
@@ -27,7 +26,7 @@ AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/ddns\"
 
 CLEANFILES = $(builddir)/interfaces.txt $(builddir)/logger_lockfile
 
-DISTCLEANFILES = d2_process_tests.sh
+DISTCLEANFILES = d2_process_tests.sh test_data_files_config.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -85,6 +84,18 @@ d2_unittests_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+d2_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+d2_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+d2_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+d2_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

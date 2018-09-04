@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -134,7 +134,9 @@ void Iface::setMac(const uint8_t* mac, size_t len) {
                   << MAX_MAC_LEN);
     }
     mac_len_ = len;
-    memcpy(mac_, mac, len);
+    if (len > 0) {
+        memcpy(mac_, mac, len);
+    }
 }
 
 bool Iface::delAddress(const isc::asiolink::IOAddress& addr) {
@@ -170,7 +172,8 @@ IfaceMgr::IfaceMgr()
      control_buf_(new char[control_buf_len_]),
      packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6()),
-     test_mode_(false)
+     test_mode_(false),
+     allow_loopback_(false)
 {
 
     try {
@@ -463,7 +466,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             // that the interface configuration is valid and that the interface
             // is not a loopback interface. In both cases, we want to report
             // that the socket will not be opened.
-            if (iface->flag_loopback_) {
+            // Relax the check when the loopback interface was explicitely
+            // allowed
+            if (iface->flag_loopback_ && !allow_loopback_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "must not open socket on the loopback"
                                " interface " << iface->getName());
@@ -568,7 +573,9 @@ IfaceMgr::openSockets6(const uint16_t port,
             // that the interface configuration is valid and that the interface
             // is not a loopback interface. In both cases, we want to report
             // that the socket will not be opened.
-            if (iface->flag_loopback_) {
+            // Relax the check when the loopback interface was explicitely
+            // allowed
+            if (iface->flag_loopback_ && !allow_loopback_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "must not open socket on the loopback"
                                " interface " << iface->getName());

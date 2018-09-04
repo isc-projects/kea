@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,6 +20,7 @@
 #include <iostream>
 #include <vector>
 #include <set>
+#include <list>
 
 #include <time.h>
 
@@ -269,7 +270,7 @@ public:
     ///
     /// @param sname value to be set
     /// @param sname_len length of the sname buffer (up to MAX_SNAME_LEN)
-    void setSname(const uint8_t* sname, size_t sname_len = MAX_SNAME_LEN);
+    void setSname(const uint8_t* sname, size_t sname_len);
 
     /// @brief Returns file field
     ///
@@ -285,7 +286,7 @@ public:
     /// @param file value to be set
     /// @param file_len length of the file buffer (up to MAX_FILE_LEN)
     void
-    setFile(const uint8_t* file, size_t file_len = MAX_FILE_LEN);
+    setFile(const uint8_t* file, size_t file_len);
 
     /// @brief Sets hardware address.
     ///
@@ -363,6 +364,19 @@ public:
         return (local_hwaddr_);
     }
 
+    /// @brief Returns a reference to option codes which unpacking
+    /// will be deferred.
+    ///
+    /// Only options 43 and 224-254 are subject of deferred
+    /// unpacking: when the packet unpacking is performed, each time
+    /// such an option is found, it is unpacked as an unknown option
+    /// and the code added in this list.
+    ///
+    /// @return List of codes of options which unpacking is deferred.
+    std::list<uint16_t>& getDeferredOptions() {
+        return (deferred_options_);
+    }
+
     /// @brief Checks if a DHCPv4 message has been relayed.
     ///
     /// This function returns a boolean value which indicates whether a DHCPv4
@@ -375,7 +389,7 @@ public:
     /// (true) or non-relayed (false).
     bool isRelayed() const;
 
-    /// @brief Checks if a DHCPv4 message has beeb transported over DHCPv6
+    /// @brief Checks if a DHCPv4 message has been transported over DHCPv6
     ///
     /// @return Boolean value which indicates whether the message is
     /// transported over DHCPv6 (true) or native DHCPv4 (false)
@@ -477,8 +491,11 @@ protected:
         return(HWAddrPtr());
     }
 
-    /// local HW address (dst if receiving packet, src if sending packet)
+    /// @brief local HW address (dst if receiving packet, src if sending packet)
     HWAddrPtr local_hwaddr_;
+
+    // @brief List of deferred option codes
+    std::list<uint16_t> deferred_options_;
 
     /// @brief message operation code
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,9 @@
 #include <dhcpsrv/d2_client_mgr.h>
 #include <testutils/test_to_element.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
+#include <boost/algorithm/string.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
@@ -18,6 +20,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::test;
+using namespace isc::data;
 using namespace isc;
 
 namespace {
@@ -81,6 +84,8 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                                      RCM_WHEN_PRESENT;
     std::string generated_prefix = "the_prefix";
     std::string qualifying_suffix = "the.suffix.";
+    std::string hostname_char_set = "[^A-Z]";
+    std::string hostname_char_replacement = "*";
 
     // Verify that we can construct a valid, enabled instance.
     ASSERT_NO_THROW(d2_client_config.reset(new
@@ -97,9 +102,15 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                           override_client_update,
                                                           replace_client_name_mode,
                                                           generated_prefix,
-                                                          qualifying_suffix)));
-
+                                                          qualifying_suffix,
+                                                          hostname_char_set,
+                                                          hostname_char_replacement)));
     ASSERT_TRUE(d2_client_config);
+
+    // Add user context
+    std::string user_context = "{ \"comment\": \"bar\", \"foo\": 1 }";
+    EXPECT_FALSE(d2_client_config->getContext());
+    d2_client_config->setContext(Element::fromJSON(user_context));
 
     // Verify that the accessors return the expected values.
     EXPECT_EQ(d2_client_config->getEnableUpdates(), enable_updates);
@@ -119,12 +130,20 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
     EXPECT_EQ(d2_client_config->getGeneratedPrefix(), generated_prefix);
     EXPECT_EQ(d2_client_config->getQualifyingSuffix(), qualifying_suffix);
 
+    EXPECT_EQ(d2_client_config->getHostnameCharSet(), hostname_char_set);
+    EXPECT_EQ(d2_client_config->getHostnameCharReplacement(), hostname_char_replacement);
+    EXPECT_TRUE(d2_client_config->getHostnameSanitizer());
+
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ(d2_client_config->getContext()->str(), user_context);
+
     // Verify that toText called by << operator doesn't bomb.
     ASSERT_NO_THROW(std::cout << "toText test:" << std::endl <<
                     *d2_client_config << std::endl);
 
     // Verify what toElement returns.
     std::string expected = "{\n"
+        "\"comment\": \"bar\",\n"
         "\"enable-updates\": true,\n"
         "\"server-ip\": \"127.0.0.1\",\n"
         "\"server-port\": 477,\n"
@@ -138,7 +157,10 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
         "\"override-client-update\": true,\n"
         "\"replace-client-name\": \"when-present\",\n"
         "\"generated-prefix\": \"the_prefix\",\n"
-        "\"qualifying-suffix\": \"the.suffix.\"\n"
+        "\"qualifying-suffix\": \"the.suffix.\",\n"
+        "\"hostname-char-set\": \"[^A-Z]\",\n"
+        "\"hostname-char-replacement\": \"*\",\n"
+        "\"user-context\": { \"foo\": 1 }\n"
         "}\n";
     runToElementTest<D2ClientConfig>(expected, *d2_client_config);
 
@@ -158,7 +180,9 @@ TEST(D2ClientConfigTest, constructorsAndAccessors) {
                                                        override_client_update,
                                                        replace_client_name_mode,
                                                        generated_prefix,
-                                                       qualifying_suffix)),
+                                                       qualifying_suffix,
+                                                       hostname_char_set,
+                                                       hostname_char_replacement)),
                  D2ClientError);
 
     /// @todo if additional validation is added to ctor, this test needs to
@@ -178,7 +202,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(ref_config);
 
     // Check a configuration that is identical to reference configuration.
@@ -186,7 +210,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_TRUE(*ref_config == *test_config);
     EXPECT_FALSE(*ref_config != *test_config);
@@ -196,7 +220,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -206,7 +230,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     test_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -216,7 +240,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 333, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -226,7 +250,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, test_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -236,7 +260,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 333, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -246,7 +270,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 2048,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -256,7 +280,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     false, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -266,7 +290,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, false, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -276,7 +300,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, false, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -286,7 +310,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_NEVER,
-                    "pre-fix", "suf-fix")));
+                    "pre-fix", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -296,7 +320,7 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "bogus", "suf-fix")));
+                    "bogus", "suf-fix", "[^A-Z]", "*")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -306,7 +330,27 @@ TEST(D2ClientConfigTest, equalityOperator) {
                     ref_address, 477, ref_address, 478, 1024,
                     dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                     true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                    "pre-fix", "bogus")));
+                    "pre-fix", "bogus", "[^A-Z]", "*")));
+    ASSERT_TRUE(test_config);
+    EXPECT_FALSE(*ref_config == *test_config);
+    EXPECT_TRUE(*ref_config != *test_config);
+
+    // Check a configuration that differs only by hostname_char_set
+    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
+                    ref_address, 477, ref_address, 478, 1024,
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
+                    "pre-fix", "suf-fix", "[abc]", "*")));
+    ASSERT_TRUE(test_config);
+    EXPECT_FALSE(*ref_config == *test_config);
+    EXPECT_TRUE(*ref_config != *test_config);
+
+    // Check a configuration that differs only by hostname_char_replacment
+    ASSERT_NO_THROW(test_config.reset(new D2ClientConfig(true,
+                    ref_address, 477, ref_address, 478, 1024,
+                    dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                    true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
+                    "pre-fix", "suf-fix", "[^A-Z]", "x")));
     ASSERT_TRUE(test_config);
     EXPECT_FALSE(*ref_config == *test_config);
     EXPECT_TRUE(*ref_config != *test_config);
@@ -351,7 +395,7 @@ TEST(D2ClientMgr, validConfig) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));
@@ -370,6 +414,42 @@ TEST(D2ClientMgr, validConfig) {
     EXPECT_NE(*original_config, *updated_config);
 }
 
+/// @brief Checks passing the D2ClientMgr a valid D2 client configuration
+/// using IPv6 service.
+TEST(D2ClientMgr, ipv6Config) {
+    D2ClientMgrPtr d2_client_mgr;
+
+    // Construct the manager and fetch its initial configuration.
+    ASSERT_NO_THROW(d2_client_mgr.reset(new D2ClientMgr()));
+    D2ClientConfigPtr original_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(original_config);
+
+    // Create a new, enabled config.
+    D2ClientConfigPtr new_cfg;
+    ASSERT_NO_THROW(new_cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("::1"), 477,
+                                  isc::asiolink::IOAddress("::1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  true, true, true, D2ClientConfig::RCM_WHEN_PRESENT,
+                                  "pre-fix", "suf-fix", "", "")));
+
+    // Verify that we can assign a new, non-empty configuration.
+    ASSERT_NO_THROW(d2_client_mgr->setD2ClientConfig(new_cfg));
+
+    // Verify that we can fetch the newly assigned configuration.
+    D2ClientConfigPtr updated_config = d2_client_mgr->getD2ClientConfig();
+    ASSERT_TRUE(updated_config);
+    EXPECT_TRUE(updated_config->getEnableUpdates());
+
+    // Make sure convenience method agrees with the updated configuration.
+    EXPECT_TRUE(d2_client_mgr->ddnsEnabled());
+
+    // Make sure the configuration we fetched is the one we assigned,
+    // and not the original configuration.
+    EXPECT_EQ(*new_cfg, *updated_config);
+    EXPECT_NE(*original_config, *updated_config);
+}
 
 /// @brief Tests that analyzeFqdn detects invalid combination of both the
 /// client S and N flags set to true.
@@ -395,7 +475,7 @@ TEST(D2ClientMgr, analyzeFqdnInvalidCombination) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
 
@@ -419,7 +499,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledNoOverrides) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_FALSE(cfg->getOverrideClientUpdate());
@@ -463,7 +543,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideNoUpdate) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, true, false, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_TRUE(cfg->getOverrideNoUpdate());
@@ -506,7 +586,7 @@ TEST(D2ClientMgr, analyzeFqdnEnabledOverrideClientUpdate) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_FALSE(cfg->getOverrideNoUpdate());
@@ -550,7 +630,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV4) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, true, false, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_TRUE(cfg->getOverrideNoUpdate());
@@ -651,7 +731,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify that the qualifying suffix gets appended with trailing dot added.
@@ -667,7 +747,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     partial_name = "somehost";
     qualified_name = mgr.qualifyName(partial_name, false); //false means no dot
@@ -681,7 +761,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", ""))); //empty suffix
+                                  "prefix", "", "", ""))); //empty suffix
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     partial_name = "somehost";
     qualified_name = mgr.qualifyName(partial_name, false); //false means no dot
@@ -694,7 +774,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "hasdot.com.")));
+                                  "prefix", "hasdot.com.", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify that the qualifying suffix gets appended without dot added.
@@ -713,7 +793,7 @@ TEST(D2ClientMgr, qualifyName) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "")));
+                                  "prefix", "", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify that a name with a trailing dot does not get an extraneous
@@ -751,7 +831,7 @@ TEST(D2ClientMgr, generateFqdn) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, true, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
 
     // Verify that it works with an IPv4 address.
@@ -785,7 +865,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
@@ -828,7 +908,7 @@ TEST(D2ClientMgr, adjustDomainNameV4) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
@@ -878,7 +958,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_NEVER,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
 
@@ -918,7 +998,7 @@ TEST(D2ClientMgr, adjustDomainNameV6) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, false, false, D2ClientConfig::RCM_WHEN_PRESENT,
-                                  "prefix", "suffix.com")));
+                                  "prefix", "suffix.com", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, cfg->getReplaceClientNameMode());
 
@@ -968,7 +1048,7 @@ TEST(D2ClientMgr, adjustFqdnFlagsV6) {
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
                                   false, true, false, D2ClientConfig::RCM_NEVER,
-                                  "pre-fix", "suf-fix")));
+                                  "pre-fix", "suf-fix", "", "")));
     ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
     ASSERT_TRUE(mgr.ddnsEnabled());
     ASSERT_TRUE(cfg->getOverrideNoUpdate());
@@ -1047,6 +1127,169 @@ TEST(D2ClientMgr, updateDirectionsV6) {
     EXPECT_TRUE(do_reverse);
 
     // Response S=1, N=1 isn't possible.
+}
+
+/// @brief Tests v4 FQDN name sanitizing
+TEST(D2ClientMgr, sanitizeFqdnV4) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    // replace-client-name is false, client passes in empty fqdn
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
+                                  "prefix", "suffix.com", "[^A-Za-z0-9-]", "x")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
+
+    struct Scenario {
+        std::string description_;
+        std::string client_name_;
+        Option4ClientFqdn::DomainNameType name_type_;
+        std::string expected_name_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+        "full FQDN, name unchanged",
+        "One.123.example.com.",
+        Option4ClientFqdn::FULL,
+        "One.123.example.com."
+        },
+        {
+        "partial FQDN, name unchanged, but qualified",
+        "One.123",
+        Option4ClientFqdn::PARTIAL,
+        "One.123.suffix.com."
+        },
+        {
+        "full FQDN, scrubbed",
+        "O#n^e.123.ex&a*mple.com.",
+        Option4ClientFqdn::FULL,
+        "Oxnxe.123.exxaxmple.com."
+        },
+        {
+        "partial FQDN, scrubbed and qualified",
+        "One.1+2|3",
+        Option4ClientFqdn::PARTIAL,
+        "One.1x2x3.suffix.com."
+        },
+        {
+        "full FQDN with characters that get escaped",
+        "O n e.123.exa(m)ple.com.",
+        Option4ClientFqdn::FULL,
+        "Oxnxe.123.exaxmxple.com."
+        },
+        {
+        "full FQDN with escape sequences",
+        "O\032n\032e.123.example.com.",
+        Option4ClientFqdn::FULL,
+        "Oxnxe.123.example.com."
+        }
+    };
+
+    Option4ClientFqdnPtr request;
+    Option4ClientFqdnPtr response;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+            request.reset(new Option4ClientFqdn(0, Option4ClientFqdn::RCODE_CLIENT(),
+                                                (*scenario).client_name_,
+                                                (*scenario).name_type_));
+
+            response.reset(new Option4ClientFqdn(*request));
+            mgr.adjustDomainName<Option4ClientFqdn>(*request, *response);
+            EXPECT_EQ((*scenario).expected_name_, response->getDomainName());
+            EXPECT_EQ(Option4ClientFqdn::FULL, response->getDomainNameType());
+        }
+    }
+}
+
+/// @brief Tests v6 FQDN name sanitizing
+/// @todo This test currently verifies that Option6ClientFqdn::DomainName
+/// downcases strings used to construct it.  For some reason, currently
+/// uknown, Option4ClientFqdn preserves the case, while Option6ClientFqdn
+/// downcases it (see setDomainName() in both classes.  See Trac #5700.
+TEST(D2ClientMgr, sanitizeFqdnV6) {
+    D2ClientMgr mgr;
+
+    // Create enabled configuration.
+    // replace-client-name is false, client passes in empty fqdn
+    D2ClientConfigPtr cfg;
+    ASSERT_NO_THROW(cfg.reset(new D2ClientConfig(true,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 477,
+                                  isc::asiolink::IOAddress("127.0.0.1"), 478,
+                                  1024,
+                                  dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
+                                  false, false, false, D2ClientConfig::RCM_NEVER,
+                                  "prefix", "suffix.com", "[^A-Za-z0-9-]", "x")));
+    ASSERT_NO_THROW(mgr.setD2ClientConfig(cfg));
+    ASSERT_EQ(D2ClientConfig::RCM_NEVER, cfg->getReplaceClientNameMode());
+
+    struct Scenario {
+        std::string description_;
+        std::string client_name_;
+        Option6ClientFqdn::DomainNameType name_type_;
+        std::string expected_name_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "full FQDN, name unchanged",
+            "One.123.example.com.",
+            Option6ClientFqdn::FULL,
+            "one.123.example.com."
+        },
+        {
+            "partial FQDN, name unchanged, but qualified",
+            "One.123",
+            Option6ClientFqdn::PARTIAL,
+            "one.123.suffix.com."
+        },
+        {
+            "full FQDN, scrubbed",
+            "O#n^e.123.ex&a*mple.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.exxaxmple.com."
+        },
+        {
+            "partial FQDN, scrubbed and qualified",
+            "One.1+2|3",
+            Option6ClientFqdn::PARTIAL,
+            "one.1x2x3.suffix.com."
+        },
+        {
+            "full FQDN with characters that get escaped",
+            "O n e.123.exa(m)ple.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.exaxmxple.com."
+        },
+        {
+            "full FQDN with escape sequences",
+            "O\032n\032e.123.example.com.",
+            Option6ClientFqdn::FULL,
+            "oxnxe.123.example.com."
+        }
+    };
+
+    Option6ClientFqdnPtr request;
+    Option6ClientFqdnPtr response;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+            request.reset(new Option6ClientFqdn(0, (*scenario).client_name_,
+                                                (*scenario).name_type_));
+
+            response.reset(new Option6ClientFqdn(*request));
+            mgr.adjustDomainName<Option6ClientFqdn>(*request, *response);
+            EXPECT_EQ((*scenario).expected_name_, response->getDomainName());
+            EXPECT_EQ(Option6ClientFqdn::FULL, response->getDomainNameType());
+        }
+    }
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -255,8 +255,21 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     cmsg->cmsg_len = CMSG_LEN(sizeof(struct in_pktinfo));
     struct in_pktinfo* pktinfo =(struct in_pktinfo *)CMSG_DATA(cmsg);
     memset(pktinfo, 0, sizeof(struct in_pktinfo));
-    pktinfo->ipi_ifindex = pkt->getIndex();
-    pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr().toUint32()); // set the source IP address
+
+    // In some cases the index of the outbound interface is not set. This
+    // is a matter of configuration. When the server is configured to
+    // determine the outbound interface based on routing information,
+    // the index is left unset (negative).
+    if (pkt->indexSet()) {
+        pktinfo->ipi_ifindex = pkt->getIndex();
+    }
+
+    // When the DHCP server is using routing to determine the outbound
+    // interface, the local address is also left unset.
+    if (!pkt->getLocalAddr().isV4Zero()) {
+        pktinfo->ipi_spec_dst.s_addr = htonl(pkt->getLocalAddr().toUint32());
+    }
+
     m.msg_controllen = CMSG_SPACE(sizeof(struct in_pktinfo));
 #endif
 

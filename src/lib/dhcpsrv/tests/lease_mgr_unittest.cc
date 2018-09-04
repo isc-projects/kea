@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +22,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -129,6 +130,52 @@ public:
         return (Lease4Ptr());
     }
 
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID) const {
+        return (Lease4Collection());
+    }
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const {
+        return (Lease4Collection());
+    }
+
+    /// @brief Returns range of IPv4 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv4 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv4 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& /* lower_bound_address */,
+               const LeasePageSize& /* page_size */) const {
+        return (Lease4Collection());
+    }
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// @param addr address of the searched lease
@@ -162,6 +209,59 @@ public:
         return (leases6_);
     }
 
+    /// @brief Returns collection of lease for matching DUID
+    ///
+    /// @param duid ignored
+    /// @return whatever is set in leases6_ field
+    virtual Lease6Collection getLeases6(const DUID&) const {
+        return (leases6_);
+    }
+
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID) const {
+        return (Lease6Collection());
+    }
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const {
+        return (Lease6Collection());
+    }
+
+    /// @brief Returns range of IPv6 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv6 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv6 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& /* lower_bound_address */,
+               const LeasePageSize& /* page_size */) const {
+        return (Lease6Collection());
+    };
 
     /// @brief Returns expired DHCPv6 leases.
     ///
@@ -336,10 +436,49 @@ TEST_F(LeaseMgrTest, getLease6) {
                  MultipleRecords);
 }
 
+// Verify LeaseStatsQuery default construction
+TEST (LeaseStatsQueryTest, defaultCtor) {
+    LeaseStatsQueryPtr qry;
+
+    // Valid construction, verifiy member values.
+    ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery()));
+    ASSERT_EQ(0, qry->getFirstSubnetID());
+    ASSERT_EQ(0, qry->getLastSubnetID());
+    ASSERT_EQ(LeaseStatsQuery::ALL_SUBNETS, qry->getSelectMode());
+}
+
+// Verify LeaseStatsQuery single-subnet construction
+TEST (LeaseStatsQueryTest, singleSubnetCtor) {
+    LeaseStatsQueryPtr qry;
+
+    // Invalid values for subnet_id
+    ASSERT_THROW(qry.reset(new LeaseStatsQuery(0)), BadValue);
+
+    // Valid values should work and set mode accordingly.
+    ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery(77)));
+    ASSERT_EQ(77, qry->getFirstSubnetID());
+    ASSERT_EQ(0, qry->getLastSubnetID());
+    ASSERT_EQ(LeaseStatsQuery::SINGLE_SUBNET, qry->getSelectMode());
+}
+
+// Verify LeaseStatsQuery subnet-range construction
+TEST (LeaseStatsQueryTest, subnetRangeCtor) {
+    LeaseStatsQueryPtr qry;
+
+    // Either ID set to 0, or a backward range should throw
+    ASSERT_THROW(qry.reset(new LeaseStatsQuery(0,1)), BadValue);
+    ASSERT_THROW(qry.reset(new LeaseStatsQuery(1,0)), BadValue);
+    ASSERT_THROW(qry.reset(new LeaseStatsQuery(2,1)), BadValue);
+
+    // Valid values should work and set mode accordingly.
+    ASSERT_NO_THROW(qry.reset(new LeaseStatsQuery(1,2)));
+    ASSERT_EQ(1, qry->getFirstSubnetID());
+    ASSERT_EQ(2, qry->getLastSubnetID());
+    ASSERT_EQ(LeaseStatsQuery::SUBNET_RANGE, qry->getSelectMode());
+}
+
 // There's no point in calling any other methods in LeaseMgr, as they
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
-
-
 
 }; // end of anonymous namespace

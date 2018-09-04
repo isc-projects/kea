@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 # define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp6_parser.yy" // lalr1.cc:377
+#line 17 "dhcp6_parser.yy" // lalr1.cc:379
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp6_parser.h" // lalr1.cc:377
+#line 56 "dhcp6_parser.h" // lalr1.cc:379
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER6_DEBUG */
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp6_parser.yy" // lalr1.cc:379
 namespace isc { namespace dhcp {
-#line 141 "dhcp6_parser.h" // lalr1.cc:377
+#line 141 "dhcp6_parser.h" // lalr1.cc:379
 
 
 
@@ -360,143 +360,159 @@ namespace isc { namespace dhcp {
         TOKEN_RE_DETECT = 268,
         TOKEN_LEASE_DATABASE = 269,
         TOKEN_HOSTS_DATABASE = 270,
-        TOKEN_TYPE = 271,
-        TOKEN_MEMFILE = 272,
-        TOKEN_MYSQL = 273,
-        TOKEN_POSTGRESQL = 274,
-        TOKEN_CQL = 275,
-        TOKEN_USER = 276,
-        TOKEN_PASSWORD = 277,
-        TOKEN_HOST = 278,
-        TOKEN_PORT = 279,
-        TOKEN_PERSIST = 280,
-        TOKEN_LFC_INTERVAL = 281,
-        TOKEN_READONLY = 282,
-        TOKEN_CONNECT_TIMEOUT = 283,
-        TOKEN_CONTACT_POINTS = 284,
-        TOKEN_KEYSPACE = 285,
-        TOKEN_PREFERRED_LIFETIME = 286,
-        TOKEN_VALID_LIFETIME = 287,
-        TOKEN_RENEW_TIMER = 288,
-        TOKEN_REBIND_TIMER = 289,
-        TOKEN_DECLINE_PROBATION_PERIOD = 290,
-        TOKEN_SUBNET6 = 291,
-        TOKEN_OPTION_DEF = 292,
-        TOKEN_OPTION_DATA = 293,
-        TOKEN_NAME = 294,
-        TOKEN_DATA = 295,
-        TOKEN_CODE = 296,
-        TOKEN_SPACE = 297,
-        TOKEN_CSV_FORMAT = 298,
-        TOKEN_ALWAYS_SEND = 299,
-        TOKEN_RECORD_TYPES = 300,
-        TOKEN_ENCAPSULATE = 301,
-        TOKEN_ARRAY = 302,
-        TOKEN_POOLS = 303,
-        TOKEN_POOL = 304,
-        TOKEN_PD_POOLS = 305,
-        TOKEN_PREFIX = 306,
-        TOKEN_PREFIX_LEN = 307,
-        TOKEN_EXCLUDED_PREFIX = 308,
-        TOKEN_EXCLUDED_PREFIX_LEN = 309,
-        TOKEN_DELEGATED_LEN = 310,
-        TOKEN_USER_CONTEXT = 311,
-        TOKEN_SUBNET = 312,
-        TOKEN_INTERFACE = 313,
-        TOKEN_INTERFACE_ID = 314,
-        TOKEN_ID = 315,
-        TOKEN_RAPID_COMMIT = 316,
-        TOKEN_RESERVATION_MODE = 317,
-        TOKEN_DISABLED = 318,
-        TOKEN_OUT_OF_POOL = 319,
-        TOKEN_ALL = 320,
-        TOKEN_MAC_SOURCES = 321,
-        TOKEN_RELAY_SUPPLIED_OPTIONS = 322,
-        TOKEN_HOST_RESERVATION_IDENTIFIERS = 323,
-        TOKEN_CLIENT_CLASSES = 324,
-        TOKEN_TEST = 325,
-        TOKEN_CLIENT_CLASS = 326,
-        TOKEN_RESERVATIONS = 327,
-        TOKEN_IP_ADDRESSES = 328,
-        TOKEN_PREFIXES = 329,
-        TOKEN_DUID = 330,
-        TOKEN_HW_ADDRESS = 331,
-        TOKEN_HOSTNAME = 332,
-        TOKEN_FLEX_ID = 333,
-        TOKEN_RELAY = 334,
-        TOKEN_IP_ADDRESS = 335,
-        TOKEN_HOOKS_LIBRARIES = 336,
-        TOKEN_LIBRARY = 337,
-        TOKEN_PARAMETERS = 338,
-        TOKEN_EXPIRED_LEASES_PROCESSING = 339,
-        TOKEN_RECLAIM_TIMER_WAIT_TIME = 340,
-        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 341,
-        TOKEN_HOLD_RECLAIMED_TIME = 342,
-        TOKEN_MAX_RECLAIM_LEASES = 343,
-        TOKEN_MAX_RECLAIM_TIME = 344,
-        TOKEN_UNWARNED_RECLAIM_CYCLES = 345,
-        TOKEN_SERVER_ID = 346,
-        TOKEN_LLT = 347,
-        TOKEN_EN = 348,
-        TOKEN_LL = 349,
-        TOKEN_IDENTIFIER = 350,
-        TOKEN_HTYPE = 351,
-        TOKEN_TIME = 352,
-        TOKEN_ENTERPRISE_ID = 353,
-        TOKEN_DHCP4O6_PORT = 354,
-        TOKEN_CONTROL_SOCKET = 355,
-        TOKEN_SOCKET_TYPE = 356,
-        TOKEN_SOCKET_NAME = 357,
-        TOKEN_DHCP_DDNS = 358,
-        TOKEN_ENABLE_UPDATES = 359,
-        TOKEN_QUALIFYING_SUFFIX = 360,
-        TOKEN_SERVER_IP = 361,
-        TOKEN_SERVER_PORT = 362,
-        TOKEN_SENDER_IP = 363,
-        TOKEN_SENDER_PORT = 364,
-        TOKEN_MAX_QUEUE_SIZE = 365,
-        TOKEN_NCR_PROTOCOL = 366,
-        TOKEN_NCR_FORMAT = 367,
-        TOKEN_ALWAYS_INCLUDE_FQDN = 368,
-        TOKEN_OVERRIDE_NO_UPDATE = 369,
-        TOKEN_OVERRIDE_CLIENT_UPDATE = 370,
-        TOKEN_REPLACE_CLIENT_NAME = 371,
-        TOKEN_GENERATED_PREFIX = 372,
-        TOKEN_UDP = 373,
-        TOKEN_TCP = 374,
-        TOKEN_JSON = 375,
-        TOKEN_WHEN_PRESENT = 376,
-        TOKEN_NEVER = 377,
-        TOKEN_ALWAYS = 378,
-        TOKEN_WHEN_NOT_PRESENT = 379,
-        TOKEN_LOGGING = 380,
-        TOKEN_LOGGERS = 381,
-        TOKEN_OUTPUT_OPTIONS = 382,
-        TOKEN_OUTPUT = 383,
-        TOKEN_DEBUGLEVEL = 384,
-        TOKEN_SEVERITY = 385,
-        TOKEN_FLUSH = 386,
-        TOKEN_MAXSIZE = 387,
-        TOKEN_MAXVER = 388,
-        TOKEN_DHCP4 = 389,
-        TOKEN_DHCPDDNS = 390,
-        TOKEN_CONTROL_AGENT = 391,
-        TOKEN_TOPLEVEL_JSON = 392,
-        TOKEN_TOPLEVEL_DHCP6 = 393,
-        TOKEN_SUB_DHCP6 = 394,
-        TOKEN_SUB_INTERFACES6 = 395,
-        TOKEN_SUB_SUBNET6 = 396,
-        TOKEN_SUB_POOL6 = 397,
-        TOKEN_SUB_PD_POOL = 398,
-        TOKEN_SUB_RESERVATION = 399,
-        TOKEN_SUB_OPTION_DEF = 400,
-        TOKEN_SUB_OPTION_DATA = 401,
-        TOKEN_SUB_HOOKS_LIBRARY = 402,
-        TOKEN_SUB_DHCP_DDNS = 403,
-        TOKEN_STRING = 404,
-        TOKEN_INTEGER = 405,
-        TOKEN_FLOAT = 406,
-        TOKEN_BOOLEAN = 407
+        TOKEN_HOSTS_DATABASES = 271,
+        TOKEN_TYPE = 272,
+        TOKEN_MEMFILE = 273,
+        TOKEN_MYSQL = 274,
+        TOKEN_POSTGRESQL = 275,
+        TOKEN_CQL = 276,
+        TOKEN_USER = 277,
+        TOKEN_PASSWORD = 278,
+        TOKEN_HOST = 279,
+        TOKEN_PORT = 280,
+        TOKEN_PERSIST = 281,
+        TOKEN_LFC_INTERVAL = 282,
+        TOKEN_READONLY = 283,
+        TOKEN_CONNECT_TIMEOUT = 284,
+        TOKEN_CONTACT_POINTS = 285,
+        TOKEN_MAX_RECONNECT_TRIES = 286,
+        TOKEN_RECONNECT_WAIT_TIME = 287,
+        TOKEN_KEYSPACE = 288,
+        TOKEN_REQUEST_TIMEOUT = 289,
+        TOKEN_TCP_KEEPALIVE = 290,
+        TOKEN_TCP_NODELAY = 291,
+        TOKEN_PREFERRED_LIFETIME = 292,
+        TOKEN_VALID_LIFETIME = 293,
+        TOKEN_RENEW_TIMER = 294,
+        TOKEN_REBIND_TIMER = 295,
+        TOKEN_DECLINE_PROBATION_PERIOD = 296,
+        TOKEN_SUBNET6 = 297,
+        TOKEN_OPTION_DEF = 298,
+        TOKEN_OPTION_DATA = 299,
+        TOKEN_NAME = 300,
+        TOKEN_DATA = 301,
+        TOKEN_CODE = 302,
+        TOKEN_SPACE = 303,
+        TOKEN_CSV_FORMAT = 304,
+        TOKEN_ALWAYS_SEND = 305,
+        TOKEN_RECORD_TYPES = 306,
+        TOKEN_ENCAPSULATE = 307,
+        TOKEN_ARRAY = 308,
+        TOKEN_POOLS = 309,
+        TOKEN_POOL = 310,
+        TOKEN_PD_POOLS = 311,
+        TOKEN_PREFIX = 312,
+        TOKEN_PREFIX_LEN = 313,
+        TOKEN_EXCLUDED_PREFIX = 314,
+        TOKEN_EXCLUDED_PREFIX_LEN = 315,
+        TOKEN_DELEGATED_LEN = 316,
+        TOKEN_USER_CONTEXT = 317,
+        TOKEN_COMMENT = 318,
+        TOKEN_SUBNET = 319,
+        TOKEN_INTERFACE = 320,
+        TOKEN_INTERFACE_ID = 321,
+        TOKEN_ID = 322,
+        TOKEN_RAPID_COMMIT = 323,
+        TOKEN_RESERVATION_MODE = 324,
+        TOKEN_DISABLED = 325,
+        TOKEN_OUT_OF_POOL = 326,
+        TOKEN_ALL = 327,
+        TOKEN_SHARED_NETWORKS = 328,
+        TOKEN_MAC_SOURCES = 329,
+        TOKEN_RELAY_SUPPLIED_OPTIONS = 330,
+        TOKEN_HOST_RESERVATION_IDENTIFIERS = 331,
+        TOKEN_SANITY_CHECKS = 332,
+        TOKEN_LEASE_CHECKS = 333,
+        TOKEN_CLIENT_CLASSES = 334,
+        TOKEN_REQUIRE_CLIENT_CLASSES = 335,
+        TOKEN_TEST = 336,
+        TOKEN_ONLY_IF_REQUIRED = 337,
+        TOKEN_CLIENT_CLASS = 338,
+        TOKEN_RESERVATIONS = 339,
+        TOKEN_IP_ADDRESSES = 340,
+        TOKEN_PREFIXES = 341,
+        TOKEN_DUID = 342,
+        TOKEN_HW_ADDRESS = 343,
+        TOKEN_HOSTNAME = 344,
+        TOKEN_FLEX_ID = 345,
+        TOKEN_RELAY = 346,
+        TOKEN_IP_ADDRESS = 347,
+        TOKEN_HOOKS_LIBRARIES = 348,
+        TOKEN_LIBRARY = 349,
+        TOKEN_PARAMETERS = 350,
+        TOKEN_EXPIRED_LEASES_PROCESSING = 351,
+        TOKEN_RECLAIM_TIMER_WAIT_TIME = 352,
+        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 353,
+        TOKEN_HOLD_RECLAIMED_TIME = 354,
+        TOKEN_MAX_RECLAIM_LEASES = 355,
+        TOKEN_MAX_RECLAIM_TIME = 356,
+        TOKEN_UNWARNED_RECLAIM_CYCLES = 357,
+        TOKEN_SERVER_ID = 358,
+        TOKEN_LLT = 359,
+        TOKEN_EN = 360,
+        TOKEN_LL = 361,
+        TOKEN_IDENTIFIER = 362,
+        TOKEN_HTYPE = 363,
+        TOKEN_TIME = 364,
+        TOKEN_ENTERPRISE_ID = 365,
+        TOKEN_DHCP4O6_PORT = 366,
+        TOKEN_CONTROL_SOCKET = 367,
+        TOKEN_SOCKET_TYPE = 368,
+        TOKEN_SOCKET_NAME = 369,
+        TOKEN_DHCP_DDNS = 370,
+        TOKEN_ENABLE_UPDATES = 371,
+        TOKEN_QUALIFYING_SUFFIX = 372,
+        TOKEN_SERVER_IP = 373,
+        TOKEN_SERVER_PORT = 374,
+        TOKEN_SENDER_IP = 375,
+        TOKEN_SENDER_PORT = 376,
+        TOKEN_MAX_QUEUE_SIZE = 377,
+        TOKEN_NCR_PROTOCOL = 378,
+        TOKEN_NCR_FORMAT = 379,
+        TOKEN_ALWAYS_INCLUDE_FQDN = 380,
+        TOKEN_OVERRIDE_NO_UPDATE = 381,
+        TOKEN_OVERRIDE_CLIENT_UPDATE = 382,
+        TOKEN_REPLACE_CLIENT_NAME = 383,
+        TOKEN_GENERATED_PREFIX = 384,
+        TOKEN_UDP = 385,
+        TOKEN_TCP = 386,
+        TOKEN_JSON = 387,
+        TOKEN_WHEN_PRESENT = 388,
+        TOKEN_NEVER = 389,
+        TOKEN_ALWAYS = 390,
+        TOKEN_WHEN_NOT_PRESENT = 391,
+        TOKEN_HOSTNAME_CHAR_SET = 392,
+        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 393,
+        TOKEN_LOGGING = 394,
+        TOKEN_LOGGERS = 395,
+        TOKEN_OUTPUT_OPTIONS = 396,
+        TOKEN_OUTPUT = 397,
+        TOKEN_DEBUGLEVEL = 398,
+        TOKEN_SEVERITY = 399,
+        TOKEN_FLUSH = 400,
+        TOKEN_MAXSIZE = 401,
+        TOKEN_MAXVER = 402,
+        TOKEN_DHCP4 = 403,
+        TOKEN_DHCPDDNS = 404,
+        TOKEN_CONTROL_AGENT = 405,
+        TOKEN_TOPLEVEL_JSON = 406,
+        TOKEN_TOPLEVEL_DHCP6 = 407,
+        TOKEN_SUB_DHCP6 = 408,
+        TOKEN_SUB_INTERFACES6 = 409,
+        TOKEN_SUB_SUBNET6 = 410,
+        TOKEN_SUB_POOL6 = 411,
+        TOKEN_SUB_PD_POOL = 412,
+        TOKEN_SUB_RESERVATION = 413,
+        TOKEN_SUB_OPTION_DEFS = 414,
+        TOKEN_SUB_OPTION_DEF = 415,
+        TOKEN_SUB_OPTION_DATA = 416,
+        TOKEN_SUB_HOOKS_LIBRARY = 417,
+        TOKEN_SUB_DHCP_DDNS = 418,
+        TOKEN_SUB_LOGGING = 419,
+        TOKEN_STRING = 420,
+        TOKEN_INTEGER = 421,
+        TOKEN_FLOAT = 422,
+        TOKEN_BOOLEAN = 423
       };
     };
 
@@ -669,6 +685,10 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_HOSTS_DATABASES (const location_type& l);
+
+    static inline
+    symbol_type
     make_TYPE (const location_type& l);
 
     static inline
@@ -725,7 +745,27 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_MAX_RECONNECT_TRIES (const location_type& l);
+
+    static inline
+    symbol_type
+    make_RECONNECT_WAIT_TIME (const location_type& l);
+
+    static inline
+    symbol_type
     make_KEYSPACE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_REQUEST_TIMEOUT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TCP_KEEPALIVE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_TCP_NODELAY (const location_type& l);
 
     static inline
     symbol_type
@@ -833,6 +873,10 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_COMMENT (const location_type& l);
+
+    static inline
+    symbol_type
     make_SUBNET (const location_type& l);
 
     static inline
@@ -869,6 +913,10 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_SHARED_NETWORKS (const location_type& l);
+
+    static inline
+    symbol_type
     make_MAC_SOURCES (const location_type& l);
 
     static inline
@@ -881,11 +929,27 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_SANITY_CHECKS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_LEASE_CHECKS (const location_type& l);
+
+    static inline
+    symbol_type
     make_CLIENT_CLASSES (const location_type& l);
 
     static inline
     symbol_type
+    make_REQUIRE_CLIENT_CLASSES (const location_type& l);
+
+    static inline
+    symbol_type
     make_TEST (const location_type& l);
+
+    static inline
+    symbol_type
+    make_ONLY_IF_REQUIRED (const location_type& l);
 
     static inline
     symbol_type
@@ -1105,6 +1169,14 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_HOSTNAME_CHAR_SET (const location_type& l);
+
+    static inline
+    symbol_type
+    make_HOSTNAME_CHAR_REPLACEMENT (const location_type& l);
+
+    static inline
+    symbol_type
     make_LOGGING (const location_type& l);
 
     static inline
@@ -1185,6 +1257,10 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
+    make_SUB_OPTION_DEFS (const location_type& l);
+
+    static inline
+    symbol_type
     make_SUB_OPTION_DEF (const location_type& l);
 
     static inline
@@ -1198,6 +1274,10 @@ namespace isc { namespace dhcp {
     static inline
     symbol_type
     make_SUB_DHCP_DDNS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUB_LOGGING (const location_type& l);
 
     static inline
     symbol_type
@@ -1386,6 +1466,8 @@ namespace isc { namespace dhcp {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
+      /// Copy construct.
+      stack_symbol_type (const stack_symbol_type& that);
       /// Steal the contents from \a sym to build this.
       stack_symbol_type (state_type s, symbol_type& sym);
       /// Assignment, needed by push_back.
@@ -1414,18 +1496,18 @@ namespace isc { namespace dhcp {
     void yypush_ (const char* m, state_type s, symbol_type& sym);
 
     /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned int n = 1);
+    void yypop_ (unsigned n = 1);
 
     /// Constants.
     enum
     {
       yyeof_ = 0,
-      yylast_ = 804,     ///< Last index in yytable_.
-      yynnts_ = 335,  ///< Number of nonterminal symbols.
-      yyfinal_ = 26, ///< Termination state number.
+      yylast_ = 987,     ///< Last index in yytable_.
+      yynnts_ = 377,  ///< Number of nonterminal symbols.
+      yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 153  ///< Number of tokens.
+      yyntokens_ = 169  ///< Number of tokens.
     };
 
 
@@ -1482,14 +1564,16 @@ namespace isc { namespace dhcp {
      115,   116,   117,   118,   119,   120,   121,   122,   123,   124,
      125,   126,   127,   128,   129,   130,   131,   132,   133,   134,
      135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
-     145,   146,   147,   148,   149,   150,   151,   152
+     145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
+     155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
+     165,   166,   167,   168
     };
-    const unsigned int user_token_number_max_ = 407;
+    const unsigned user_token_number_max_ = 423;
     const token_number_type undef_token_ = 2;
 
-    if (static_cast<int>(t) <= yyeof_)
+    if (static_cast<int> (t) <= yyeof_)
       return yyeof_;
-    else if (static_cast<unsigned int> (t) <= user_token_number_max_)
+    else if (static_cast<unsigned> (t) <= user_token_number_max_)
       return translate_table[t];
     else
       return undef_token_;
@@ -1503,43 +1587,41 @@ namespace isc { namespace dhcp {
 
   // basic_symbol.
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol ()
     : value ()
   {}
 
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
     : Base (other)
     , value ()
     , location (other.location)
   {
-      switch (other.type_get ())
+    switch (other.type_get ())
     {
-      case 167: // value
-      case 171: // map_value
-      case 215: // db_type
-      case 291: // hr_mode
-      case 412: // duid_type
-      case 445: // ncr_protocol_value
-      case 453: // replace_client_name_value
+      case 185: // value
+      case 189: // map_value
+      case 239: // db_type
+      case 328: // hr_mode
+      case 464: // duid_type
+      case 497: // ncr_protocol_value
+      case 505: // replace_client_name_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 152: // "boolean"
+      case 168: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 151: // "floating point"
+      case 167: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 150: // "integer"
+      case 166: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 149: // "constant string"
+      case 165: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1549,40 +1631,38 @@ namespace isc { namespace dhcp {
 
   }
 
-
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
     : Base (t)
     , value ()
     , location (l)
   {
     (void) v;
-      switch (this->type_get ())
+    switch (this->type_get ())
     {
-      case 167: // value
-      case 171: // map_value
-      case 215: // db_type
-      case 291: // hr_mode
-      case 412: // duid_type
-      case 445: // ncr_protocol_value
-      case 453: // replace_client_name_value
+      case 185: // value
+      case 189: // map_value
+      case 239: // db_type
+      case 328: // hr_mode
+      case 464: // duid_type
+      case 497: // ncr_protocol_value
+      case 505: // replace_client_name_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 152: // "boolean"
+      case 168: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 151: // "floating point"
+      case 167: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 150: // "integer"
+      case 166: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 149: // "constant string"
+      case 165: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1638,14 +1718,12 @@ namespace isc { namespace dhcp {
 
 
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::~basic_symbol ()
   {
     clear ();
   }
 
   template <typename Base>
-  inline
   void
   Dhcp6Parser::basic_symbol<Base>::clear ()
   {
@@ -1660,31 +1738,31 @@ namespace isc { namespace dhcp {
     }
 
     // Type destructor.
-    switch (yytype)
+  switch (yytype)
     {
-      case 167: // value
-      case 171: // map_value
-      case 215: // db_type
-      case 291: // hr_mode
-      case 412: // duid_type
-      case 445: // ncr_protocol_value
-      case 453: // replace_client_name_value
+      case 185: // value
+      case 189: // map_value
+      case 239: // db_type
+      case 328: // hr_mode
+      case 464: // duid_type
+      case 497: // ncr_protocol_value
+      case 505: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 152: // "boolean"
+      case 168: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 151: // "floating point"
+      case 167: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 150: // "integer"
+      case 166: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 149: // "constant string"
+      case 165: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1696,7 +1774,6 @@ namespace isc { namespace dhcp {
   }
 
   template <typename Base>
-  inline
   bool
   Dhcp6Parser::basic_symbol<Base>::empty () const
   {
@@ -1704,36 +1781,35 @@ namespace isc { namespace dhcp {
   }
 
   template <typename Base>
-  inline
   void
   Dhcp6Parser::basic_symbol<Base>::move (basic_symbol& s)
   {
-    super_type::move(s);
-      switch (this->type_get ())
+    super_type::move (s);
+    switch (this->type_get ())
     {
-      case 167: // value
-      case 171: // map_value
-      case 215: // db_type
-      case 291: // hr_mode
-      case 412: // duid_type
-      case 445: // ncr_protocol_value
-      case 453: // replace_client_name_value
+      case 185: // value
+      case 189: // map_value
+      case 239: // db_type
+      case 328: // hr_mode
+      case 464: // duid_type
+      case 497: // ncr_protocol_value
+      case 505: // replace_client_name_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 152: // "boolean"
+      case 168: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 151: // "floating point"
+      case 167: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 150: // "integer"
+      case 166: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 149: // "constant string"
+      case 165: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1807,7 +1883,8 @@ namespace isc { namespace dhcp {
      375,   376,   377,   378,   379,   380,   381,   382,   383,   384,
      385,   386,   387,   388,   389,   390,   391,   392,   393,   394,
      395,   396,   397,   398,   399,   400,   401,   402,   403,   404,
-     405,   406,   407
+     405,   406,   407,   408,   409,   410,   411,   412,   413,   414,
+     415,   416,   417,   418,   419,   420,   421,   422,   423
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1897,6 +1974,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_HOSTS_DATABASES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTS_DATABASES, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_TYPE (const location_type& l)
   {
     return symbol_type (token::TOKEN_TYPE, l);
@@ -1981,9 +2064,39 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_MAX_RECONNECT_TRIES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECONNECT_TRIES, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_RECONNECT_WAIT_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RECONNECT_WAIT_TIME, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_KEYSPACE (const location_type& l)
   {
     return symbol_type (token::TOKEN_KEYSPACE, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_REQUEST_TIMEOUT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REQUEST_TIMEOUT, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_TCP_KEEPALIVE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TCP_KEEPALIVE, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_TCP_NODELAY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TCP_NODELAY, l);
   }
 
   Dhcp6Parser::symbol_type
@@ -2143,6 +2256,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_COMMENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_COMMENT, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_SUBNET (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUBNET, l);
@@ -2197,6 +2316,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_SHARED_NETWORKS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SHARED_NETWORKS, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_MAC_SOURCES (const location_type& l)
   {
     return symbol_type (token::TOKEN_MAC_SOURCES, l);
@@ -2215,15 +2340,39 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_SANITY_CHECKS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SANITY_CHECKS, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_LEASE_CHECKS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LEASE_CHECKS, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_CLIENT_CLASSES (const location_type& l)
   {
     return symbol_type (token::TOKEN_CLIENT_CLASSES, l);
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_REQUIRE_CLIENT_CLASSES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_TEST (const location_type& l)
   {
     return symbol_type (token::TOKEN_TEST, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_ONLY_IF_REQUIRED (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, l);
   }
 
   Dhcp6Parser::symbol_type
@@ -2551,6 +2700,18 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_HOSTNAME_CHAR_SET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_SET, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_HOSTNAME_CHAR_REPLACEMENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_REPLACEMENT, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_LOGGING (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGING, l);
@@ -2671,6 +2832,12 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_SUB_OPTION_DEFS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEFS, l);
+  }
+
+  Dhcp6Parser::symbol_type
   Dhcp6Parser::make_SUB_OPTION_DEF (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_OPTION_DEF, l);
@@ -2692,6 +2859,12 @@ namespace isc { namespace dhcp {
   Dhcp6Parser::make_SUB_DHCP_DDNS (const location_type& l)
   {
     return symbol_type (token::TOKEN_SUB_DHCP_DDNS, l);
+  }
+
+  Dhcp6Parser::symbol_type
+  Dhcp6Parser::make_SUB_LOGGING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_LOGGING, l);
   }
 
   Dhcp6Parser::symbol_type
@@ -2719,9 +2892,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp6_parser.yy" // lalr1.cc:379
 } } // isc::dhcp
-#line 2725 "dhcp6_parser.h" // lalr1.cc:377
+#line 2898 "dhcp6_parser.h" // lalr1.cc:379
 
 
 

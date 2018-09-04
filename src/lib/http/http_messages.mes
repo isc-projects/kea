@@ -1,10 +1,67 @@
-# Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::http
+
+% HTTP_BAD_CLIENT_REQUEST_RECEIVED bad request received from %1: %2
+This debug message is issued when an HTTP client sends malformed request to
+the server. This includes HTTP requests using unexpected content types,
+including malformed JSON etc. The first argument specifies an address of
+the remote endpoint which sent the request. The second argument provides
+a detailed error message.
+
+% HTTP_BAD_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about bad request received from %1:\n%2
+This debug message is issued when an HTTP client sends malformed request to
+the server. It includes detailed information about the received request
+rejected by the server. The first argument specifies an address of
+the remote endpoint which sent the request. The second argument provides
+a request in the textual format. The request is truncated by the logger
+if it is too large to be printed.
+
+% HTTP_BAD_SERVER_RESPONSE_RECEIVED bad response received when communicating with %1: %2
+This debug message is issued when an HTTP client fails to receive a response
+from the server or when this response is malformed. The first argument
+specifies the server URL. The second argument provides a detailed error
+message.
+
+% HTTP_BAD_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about bad response received from %1:\n%2
+This debug message is issued when an HTTP client receives malformed response
+from the server. The first argument specifies an URL of the server. The
+second argument provides a response in the textual format. The request is
+truncated by the logger if it is too large to be printed.
+
+% HTTP_CLIENT_REQUEST_RECEIVED received HTTP request from %1
+This debug message is issued when the server finished receiving a HTTP
+request from the remote endpoint. The address of the remote endpoint is
+specified as an argument.
+
+% HTTP_CLIENT_REQUEST_RECEIVED_DETAILS detailed information about well formed request received from %1:\n%2
+This debug message is issued when the HTTP server receives a well formed
+request. It includes detailed information about the received request. The
+first argument specifies an address of the remote endpoint which sent the
+request. The second argument provides the request in the textual format.
+The request is truncated by the logger if it is too large to be printed.
+
+% HTTP_CLIENT_REQUEST_SEND sending HTTP request %1 to %2
+This debug message is issued when the client is starting to send a HTTP
+request to a server. The first argument holds basic information
+about the request (HTTP version number and status code). The second
+argument specifies a URL of the server.
+
+% HTTP_CLIENT_REQUEST_SEND_DETAILS detailed information about request sent to %1:\n%2
+This debug message is issued right before the client sends an HTTP request
+to the server. It includes detailed information about the request. The
+first argument specifies an URL of the server to which the request is
+being sent. The second argument provides the request in the textual form.
+The request is truncated by the logger if it is too large to be printed.
+
+% HTTP_CLIENT_REQUEST_TIMEOUT_OCCURRED HTTP request timeout occurred when communicating with %1
+This debug message is issued when the HTTP request timeout has occurred and
+the server is going to send a response with Http Request timeout status
+code.
 
 % HTTP_CONNECTION_STOP stopping HTTP connection from %1
 This debug message is issued when one of the HTTP connections is stopped.
@@ -22,10 +79,9 @@ of the request. The first argument specifies the amount of received data.
 The second argument specifies an address of the remote endpoint which
 produced the data.
 
-% HTTP_REQUEST_RECEIVED received HTTP request from %1
-This debug message is issued when the server finished receiving a HTTP
-request from the remote endpoint. The address of the remote endpoint is
-specified as an argument.
+% HTTP_IDLE_CONNECTION_TIMEOUT_OCCURRED closing persistent connection with %1 as a result of a timeout
+This debug message is issued when the persistent HTTP connection is being
+closed as a result of being idle.
 
 % HTTP_REQUEST_RECEIVE_START start receiving request from %1 with timeout %2
 This debug message is issued when the server starts receiving new request
@@ -33,13 +89,28 @@ over the established connection. The first argument specifies the address
 of the remote endpoint. The second argument specifies request timeout in
 seconds.
 
-% HTTP_REQUEST_TIMEOUT_OCCURRED HTTP request timeout occurred when communicating with %1
-This debug message is issued when the HTTP request timeout has occurred and
-the server is going to send a response with Http Request timeout status
-code.
+% HTTP_SERVER_RESPONSE_RECEIVED received HTTP response from %1
+This debug message is issued when the client finished receiving an HTTP
+response from the server. The URL of the server is specified as an argument.
 
-% HTTP_RESPONSE_SEND sending HTTP response %1 to %2
+% HTTP_SERVER_RESPONSE_RECEIVED_DETAILS detailed information about well formed response received from %1:\n%2
+This debug message is issued when the HTTP client receives a well formed
+response from the server. It includes detailed information about the
+received response. The first argument specifies a URL of the server which
+sent the response. The second argument provides the response in the textual
+format. The response is truncated by the logger if it is too large to
+be printed.
+
+% HTTP_SERVER_RESPONSE_SEND sending HTTP response %1 to %2
 This debug message is issued when the server is starting to send a HTTP
 response to a remote endpoint. The first argument holds basic information
 about the response (HTTP version number and status code). The second
 argument specifies an address of the remote endpoint.
+
+% HTTP_SERVER_RESPONSE_SEND_DETAILS detailed information about response sent to %1:\n%2
+This debug message is issued right before the server sends a HTTP response
+to the client. It includes detailed information about the response. The
+first argument specifies an address of the remote endpoint to which the
+response is being sent. The second argument provides a response in the
+textual form. The response is truncated by the logger if it is too large
+to be printed.

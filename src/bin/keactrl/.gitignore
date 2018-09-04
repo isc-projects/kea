@@ -1,4 +1,7 @@
 /keactrl
-/kea.conf
+/kea-dhcp4.conf
+/kea-dhcp6.conf
+/kea-dhcp-ddns.conf
+/kea-ctrl-agent.conf
 /keactrl.conf
 /keactrl.8

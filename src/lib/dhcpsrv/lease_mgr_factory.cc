@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@
 #include <sstream>
 #include <utility>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {
@@ -101,7 +102,7 @@ LeaseMgrFactory::destroy() {
     getLeaseMgrPtr().reset();
 }
 
-bool 
+bool
 LeaseMgrFactory::haveInstance() {
     return (getLeaseMgrPtr().get());
 }
@@ -114,7 +115,6 @@ LeaseMgrFactory::instance() {
     }
     return (*lmptr);
 }
-
 
 }; // namespace dhcp
 }; // namespace isc

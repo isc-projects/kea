@@ -1,8 +1,5 @@
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-               "http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd"
-               [<!ENTITY mdash "&#8212;">]>
 <!--
- - Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,21 +8,20 @@
 
 <refentry>
 
-    <refentryinfo>
+    <info>
       <productname>ISC Kea</productname>
-      <date>Sep. 28, 2016</date>
-      <edition>1.1.0</edition>
+      <date>June 15, 2018</date>
+      <edition>1.4.0</edition>
       <author>
+        <personname/>
         <contrib>The Kea software has been written by a number of
         engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
         Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
         Wlodek Wencel and Shawn Routhier.  That list is roughly in the
         chronological order in which the authors made their first
         contribution. For a complete list of authors and
-        contributors, see AUTHORS file.</contrib>
-        <orgname>Internet Systems Consortium, Inc.</orgname>
-      </author>
-    </refentryinfo>
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+    </info>
 
     <refmeta>
         <refentrytitle>perfdhcp</refentrytitle>
@@ -40,48 +36,50 @@
 
     <docinfo>
         <copyright>
-            <year>2016</year>
+            <year>2016-2018</year>
             <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
         </copyright>
     </docinfo>
 
     <refsynopsisdiv>
-        <cmdsynopsis>
+        <cmdsynopsis sepchar=" ">
             <command>perfdhcp</command>
-            <arg><option>-1</option></arg>
-            <arg><option>-4|-6</option></arg>
-            <arg><option>-A <replaceable class="parameter">encapsulation-level</replaceable></option></arg>
-            <arg><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
-            <arg><option>-b <replaceable class="parameter">base</replaceable></option></arg>
-            <arg><option>-B</option></arg>
-            <arg><option>-c</option></arg>
-            <arg><option>-d <replaceable class="parameter">drop-time</replaceable></option></arg>
-            <arg><option>-D <replaceable class="parameter">max-drop</replaceable></option></arg>
-            <arg><option>-e <replaceable class="parameter">lease-type</replaceable></option></arg>
-            <arg><option>-E <replaceable class="parameter">time-offset</replaceable></option></arg>
-            <arg><option>-f <replaceable class="parameter">renew-rate</replaceable></option></arg>
-            <arg><option>-F <replaceable class="parameter">release-rate</replaceable></option></arg>
-            <arg><option>-h</option></arg>
-            <arg><option>-i</option></arg>
-            <arg><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
-            <arg><option>-l <replaceable class="parameter">local-address|interface</replaceable></option></arg>
-            <arg><option>-L <replaceable class="parameter">local-port</replaceable></option></arg>
-            <arg><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></arg>
-            <arg><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
-            <arg><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
-            <arg><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
-            <arg><option>-P <replaceable class="parameter">preload</replaceable></option></arg>
-            <arg><option>-r <replaceable class="parameter">rate</replaceable></option></arg>
-            <arg><option>-R <replaceable class="parameter">num-clients</replaceable></option></arg>
-            <arg><option>-s <replaceable class="parameter">seed</replaceable></option></arg>
-            <arg><option>-S <replaceable class="parameter">srvid-offset</replaceable></option></arg>
-            <arg><option>-t <replaceable class="parameter">report</replaceable></option></arg>
-            <arg><option>-T <replaceable class="parameter">template-file</replaceable></option></arg>
-            <arg><option>-v</option></arg>
-            <arg><option>-W <replaceable class="parameter">wrapped</replaceable></option></arg>
-            <arg><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></arg>
-            <arg><option>-X <replaceable class="parameter">xid-offset</replaceable></option></arg>
-            <arg>server</arg>
+            <arg choice="opt" rep="norepeat"><option>-1</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-4|-6</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-A <replaceable class="parameter">encapsulation-level</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">base</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-B</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-c</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-d <replaceable class="parameter">drop-time</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-D <replaceable class="parameter">max-drop</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-e <replaceable class="parameter">lease-type</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">time-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">renew-rate</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-F <replaceable class="parameter">release-rate</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-h</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-i</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-l <replaceable class="parameter">local-address|interface</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">local-port</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">code,hexstring</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-P <replaceable class="parameter">preload</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-r <replaceable class="parameter">rate</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-R <replaceable class="parameter">num-clients</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-s <replaceable class="parameter">seed</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-S <replaceable class="parameter">srvid-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">report</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-T <replaceable class="parameter">template-file</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+            <arg choice="opt" rep="norepeat"><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-w <replaceable class="parameter">wrapped</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-x <replaceable class="parameter">diagnostic-selector</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-X <replaceable class="parameter">xid-offset</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat">server</arg>
         </cmdsynopsis>
     </refsynopsisdiv>
 
@@ -267,8 +265,7 @@
                 <listitem>
                     <para>
                         The base MAC or DUID used to simulate
-                        different clients. The <replaceable
-                        class="parameter">basetype</replaceable> may be "mac"
+                        different clients. The <replaceable class="parameter">basetype</replaceable> may be "mac"
                         or "duid". (The keyword "ether" may alternatively
                         used for MAC.)  The <option>-b</option> option can be
                         specified multiple times. The MAC address must consist
@@ -339,8 +336,7 @@
                 <para>
                     Rate at which DHCPv4 or DHCPv6 renew requests are sent
                     to a server. This value is only valid when used in conjunction
-                    with the exchange rate (given by <option>-r <replaceable
-                    class="parameter">rate</replaceable></option>).
+                    with the exchange rate (given by <option>-r <replaceable class="parameter">rate</replaceable></option>).
                     Furthermore the sum of this value and the release-rate
                     (given by <option>-F <replaceable class="parameter">
                     rate</replaceable></option>) must be equal to or less than
@@ -421,13 +417,33 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-o <replaceable class="parameter">code,hexstring</replaceable></option></term>
+                <listitem>
+                    <para>
+                      This forces perfdhcp to insert specified extra option (or
+                      options if used several times) into packets being
+                      transmitted. The code specifies option code and the
+                      hexstring is a hexadecimal string that defines the content
+                      of the option. Care should be taken as perfdhcp does not
+                      offer any kind of logic behind those options. They're
+                      simply inserted into packets being sent as is. Be careful
+                      not to insert options that are already inserted. For
+                      example, to insert client class identifier (option code
+                      60) with a string 'docsis', you can use -o
+                      60,646f63736973. The <option>-o</option> may be used
+                      multiple times. It is necessary to specify protocol family
+                      (either <option>-4</option> or <option>-6</option>) before
+                      using <option>-o</option>.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-P <replaceable class="parameter">preload</replaceable></option></term>
                 <listitem>
                     <para>
-                        Initiate <replaceable
-                        class="parameter">preload</replaceable>
-                        exchanges back to back at startup.  <replaceable
-                        class="parameter">preload</replaceable> must be 0
+                        Initiate <replaceable class="parameter">preload</replaceable>
+                        exchanges back to back at startup.  <replaceable class="parameter">preload</replaceable> must be 0
                         (the default) or a positive integer.
                     </para>
                 </listitem>
@@ -437,8 +453,7 @@
                 <term><option>-r <replaceable class="parameter">rate</replaceable></option></term>
                 <listitem>
                     <para>
-                        Initiate <replaceable
-                        class="parameter">rate</replaceable> DORA/SARR (or
+                        Initiate <replaceable class="parameter">rate</replaceable> DORA/SARR (or
                         if <option>-i</option> is given, DO/SA) exchanges
                         per second.  A periodic report is generated showing
                         the number of exchanges which were not completed,
@@ -455,8 +470,7 @@
                     <para>
                         Specify how many different clients are used. With
                         a value of 1 (the default), all requests seem
-                        to come from the same client. <replaceable
-                        class="parameter">num-clients</replaceable> must be
+                        to come from the same client. <replaceable class="parameter">num-clients</replaceable> must be
                         a positive number.
                     </para>
                 </listitem>
@@ -467,8 +481,7 @@
                 <listitem>
                     <para>
                         Specify the seed for randomization, making runs of
-                        <command>perfdhcp</command> repeatable. <replaceable
-                        class="parameter">seed</replaceable> is 0 or a positive
+                        <command>perfdhcp</command> repeatable. <replaceable class="parameter">seed</replaceable> is 0 or a positive
                         integer. The value 0 means that a seed is not used;
                         this is the default.
                     </para>
@@ -497,6 +510,19 @@
             </varlistentry>
 
             <varlistentry>
+                <term><option>-W <replaceable class="parameter">exit-wait-time</replaceable></option></term>
+                <listitem>
+                  <para>
+                    Specifies exit-wait-time parameter, that makes perfdhcp wait
+                    for exit-wait-time us after an exit condition has been met
+                    to receive all packets without sending any new
+                    packets. Expressed in microseconds. If not specified, 0 is
+                    used (i.e. exit immediately after exit conditions are met).
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
                 <term><option>-w <replaceable class="parameter">wrapped</replaceable></option></term>
                 <listitem>
                     <para>
@@ -511,8 +537,7 @@
                 <listitem>
                     <para>
                         Include extended diagnostics
-                        in the output.  <replaceable
-                        class="parameter">diagnostic-selector</replaceable>
+                        in the output.  <replaceable class="parameter">diagnostic-selector</replaceable>
                         is a string of single-keywords specifying the
                         operations for which verbose output is desired.
                         The selector key letters are:
@@ -612,11 +637,9 @@
                             Rate at which IPv6 RELEASE requests are
                             sent to a server. This value is only valid
                             when used in conjunction with the exchange
-                            rate (given by <option>-r <replaceable
-                            class="parameter">rate</replaceable></option>).
+                            rate (given by <option>-r <replaceable class="parameter">rate</replaceable></option>).
                             Furthermore the sum of this value and the
-                            renew-rate (given by <option>-f <replaceable
-                            class="parameter">rate</replaceable></option>)
+                            renew-rate (given by <option>-f <replaceable class="parameter">rate</replaceable></option>)
                             must be equal to or less than the exchange rate.
                         </para>
                     </listitem>
@@ -677,8 +700,7 @@
                 <listitem>
                     <para>
                         Offset of the last octet to
-                        randomize in the template.  <replaceable
-                        class="parameter">random-offset</replaceable> must be
+                        randomize in the template.  <replaceable class="parameter">random-offset</replaceable> must be
                         an integer greater than 3.  The <option>-T</option>
                         switch must be given to use this option.
                     </para>
@@ -690,8 +712,7 @@
                 <listitem>
                     <para>
                         Offset of the server-ID option in the
-                        (second/request) template.  <replaceable
-                        class="parameter">srvid-offset</replaceable> must
+                        (second/request) template.  <replaceable class="parameter">srvid-offset</replaceable> must
                         be a positive integer, and the switch can only be
                         used when the template option (<option>-T</option>)
                         is also given.
@@ -715,11 +736,6 @@
 
         <refsect2>
             <title>Options Controlling a Test</title>
-            <para>
-                The following options may only be used in conjunction with
-                <option>-r</option> and control both the length of the test
-                and the frequency of reports.
-            </para>
 
             <variablelist>
 
@@ -727,16 +743,18 @@
                     <term><option>-D <replaceable class="parameter">max-drop</replaceable></option></term>
                     <listitem>
                         <para>
-                            Abort the test if more than <replaceable
-                            class="parameter">max-drop</replaceable>
-                            requests have been dropped.  Use <option>-D
+                            Abort the test immediately if <replaceable
+                            class="parameter">max-drop</replaceable> requests
+                            have been dropped.  Use <option>-D
                             0</option> to abort if even a single
-                            request has been dropped.  If <replaceable
+                            request has been dropped. <replaceable
+                            class="parameter">max-drop</replaceable> must be a
+                            positive integer. If <replaceable
                             class="parameter">max-drop</replaceable> includes
-                            the suffix '%', it specifies a maximum percentage
-                            of requests that may be dropped before abort.
-                            In this case, testing of the threshold begins after
-                            10 requests have been expected to be received.
+                            the suffix '%', it specifies a maximum percentage of
+                            requests that may be dropped before abort. In this
+                            case, testing of the threshold begins after 10
+                            requests have been expected to be received.
                         </para>
                     </listitem>
                 </varlistentry>
@@ -745,8 +763,7 @@
                     <term><option>-n <replaceable class="parameter">num-requests</replaceable></option></term>
                     <listitem>
                         <para>
-                            Initiate <replaceable
-                            class="parameter">num-request</replaceable>
+                            Initiate <replaceable class="parameter">num-request</replaceable>
                             transactions.  No report is generated until all
                             transactions have been initiated/waited-for,
                             after which a report is generated and the
@@ -759,8 +776,7 @@
                     <term><option>-p <replaceable class="parameter">test-period</replaceable></option></term>
                     <listitem>
                         <para>
-                            Send requests for <replaceable
-                            class="parameter">test-period</replaceable>,
+                            Send requests for <replaceable class="parameter">test-period</replaceable>,
                             which is specified in the same manner as
                             <option>-d</option>.  This can be used as an
                             alternative to <option>-n</option>, or both
@@ -940,6 +956,11 @@
 
       <citerefentry>
         <refentrytitle>kea-admin</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

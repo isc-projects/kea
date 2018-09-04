@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,7 +17,11 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
+
+#ifdef HAVE_MYSQL
+#include <mysql/testutils/mysql_schema.h>
+#endif
+
 #include <log/logger_support.h>
 #include <util/stopwatch.h>
 
@@ -36,6 +40,11 @@ using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
+
+#ifdef HAVE_MYSQL
+using namespace isc::db::test;
+#endif
+
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
@@ -78,7 +87,7 @@ public:
     /// @param timeout_ms Amount of time after which the method returns.
     void runTimersWithTimeout(const IOServicePtr& io_service, const long timeout_ms) {
         IntervalTimer timer(*io_service);
-        timer.setup([this, &io_service]() {
+        timer.setup([&io_service]() {
             io_service->stop();
         }, timeout_ms, IntervalTimer::ONE_SHOT);
         io_service->run();
@@ -628,7 +637,7 @@ TEST_F(JSONFileBackendTest, defaultLeaseDbBackend) {
 
 // Starting tests which require MySQL backend availability. Those tests
 // will not be executed if Kea has been compiled without the
-// --with-dhcp-mysql.
+// --with-mysql.
 #ifdef HAVE_MYSQL
 
 /// @brief Test fixture class for the tests utilizing MySQL database

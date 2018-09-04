@@ -45,4 +45,3 @@ config.h.in~
 /logger_lockfile
 /report.info
 
-/ext/gtest/

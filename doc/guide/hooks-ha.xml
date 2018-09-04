@@ -1,0 +1,1399 @@
+<!--
+ - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+    <section xml:id="high-availability-library">
+      <title>ha: High Availability</title>
+      <para>
+        This section describes the High Availability hooks library, which can be
+        loaded on a pair of DHCPv4 or DHCPv6 servers to increase reliability of
+        the DHCP service in case of outage of one of the servers. This library
+        used to be only available to ISC customers, but is now part of
+        the open source Kea, available to all users.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+      </para>
+      <para>
+        High Availability (HA) of the DHCP service is provided by running multiple
+        cooperating server instances. If any of these instances becomes
+        unavailable for whatever reason (DHCP software crash, Control Agent
+        software crash, power outage, hardware failure), a surviving
+        server instance can continue providing the reliable service to the clients. Many
+        DHCP servers implementations include "DHCP Failover" protocol, which most
+        significant features are: communication between the servers, partner
+        failure detection and leases synchronization between the servers.
+        However, the DHCPv4 failover standardization process was never completed
+        at IETF. The DHCPv6 failover standard (RFC 8156) was published, but it
+        is complex, difficult to use, has significant operational constraints
+        and is different than its v4 counterpart.
+        Although it may be useful for some users to use a "standard" failover
+        protocol, it seems that most of the Kea users are simply interested in
+        a working solution which guarantees high availability of the DHCP
+        service. Therefore, Kea HA hook library derives major concepts from the
+        DHCP Failover protocol but uses its own solutions for communication,
+        configuration and its own state machine, which greatly simplifies its
+        implementation and generally better fits into Kea. Also, it provides the
+        same features in both DHCPv4 and DHCPv6. This document purposely
+        uses the term "High Availability" rather than "Failover" to emphasize that
+        it is not the Failover protocol implementation.
+      </para>
+      <para>
+        The following sections describe the configuration and operation of the Kea
+        HA hook library.
+      </para>
+
+      <section>
+        <title>Supported Configurations</title>
+        <para>The Kea HA hook library supports two configurations also known as HA
+        modes: load balancing and hot standby. In the load balancing mode, there
+        are two servers responding to the DHCP requests. The load balancing function
+        is implemented as described in RFC3074, with each server responding to
+        1/2 of received DHCP queries. When one of the servers allocates a lease
+        for a client, it notifies the partner server over the control channel
+        (RESTful API), so as the partner can save the lease information in its
+        own database. If the communication with the partner is unsuccessful,
+        the DHCP query is dropped and the response is not returned to the DHCP
+        client. If the lease update is successful, the response is returned to
+        the DHCP client by the server which has allocated the lease. By
+        exchanging the lease updates, both servers get a copy of all leases
+        allocated by the entire HA setup and any of the servers can be switched
+        to handle the entire DHCP traffic if its partner becomes unavailable.</para>
+
+        <para>In the load balancing configuration, one of the servers must be
+        designated as "primary" and the other server is designated as "secondary".
+        Functionally, there is no difference between the two during the normal
+        operation. This distniction is required when the two servers are
+        started at (nearly) the same time and have to synchronize their
+        lease databases. The primary server synchronizes the database first.
+        The secondary server waits for the primary server to complete the
+        lease database synchronization before it starts the synchronization.
+        </para>
+
+        <para>In the hot standby configuration one of the servers is designated as
+        "primary" and the second server is designated as "secondary". During the
+        normal operation, the primary server is the only one that responds to
+        the DHCP requests. The secodary server receives lease updates from the
+        primary over the control channel. However, it does not respond to any
+        DHCP queries as long as the primary is running or, more accurately,
+        until the secondary considers the primary to be offline. When the
+        secondary server detects the failure of the primary, it starts
+        responding to all DHCP queries.
+        </para>
+
+        <para>In the configurations described above, the primary, secondary and
+        standby are referred to as "active" servers, because they receive
+        lease updates and can automatically react to the partner's failures by
+        responding to the DHCP queries which would normally be handled by the
+        partner. The HA hook library supports another server type (role) -
+        backup server. The use of the backup servers is optional. They can be used
+        in both load balancing and hot standby setup, in addition to the active
+        servers. There is no limit on the number of backup servers in the HA
+        setup. However, the presence of the backup servers increases latency
+        of the DHCP responses, because not only do active servers send lease
+        updates to each other, but also to the backup servers.
+        </para>
+      </section>
+
+      <section>
+        <title>Clocks on Active Servers</title>
+        <para>Synchronized clocks are essential for the HA setup to operate
+        reliably. The servers share lease information via lease updates and
+        during synchronization of the databases. The lease information includes
+        the time when the lease has been allocated and when it expires. Some
+        clock skew between the servers participating the HA setup would usually
+        exist. This is acceptable as long as the clock skew is relatively low,
+        comparing to the lease lifetimes. However, if the clock skew becomes too
+        high, the different notions of time for the lease expiration by different
+        servers may cause the HA system to malfuction. For example, one server
+        may consider a valid lease to be expired. As a consequence, the lease
+        reclamation process may remove a name associated with this lease from
+        the DNS, even though the lease may later get renewed by a client.</para>
+
+        <para>Each active server monitors the clock skew by comparing its current
+        time with the time returned by its partner in response to the heartbeat
+        command. This gives a good approximation of the clock skew, although it
+        doesn't take into account the time between sending the response by the
+        partner and receiving this response by the server which sent the
+        heartbeat command. If the clock skew exceeds 30 seconds, a warning log
+        message is issued. The administrator may correct this problem by
+        synchronizing the clocks (e.g. using NTP). The servers should notice
+        the clock skew correction and stop issuing the warning</para>
+
+        <para>If the clock skew is not corrected and it exceeds 60 seconds, the
+        HA service on each of the servers is terminated, i.e. the state
+        machine enters the <command>terminated</command> state. The servers
+        will continue to respond to the DHCP clients (as in the load-balancing
+        or hot-standby mode), but will neither exchange lease updates nor
+        heartbeats and their lease databases will diverge. In this case, the
+        administrator should synchronize the clocks and restart the servers.
+        </para>
+      </section>
+
+      <section xml:id="ha-server-states">
+        <title>Server States</title>
+        <para>The DHCP server operating within an HA setup runs a state machine
+        and the state of the server can be retrieved by its peers using the
+        <command>ha-heartbeat</command> command sent over the RESTful API. If
+        the partner server doesn't respond to the <command>ha-heartbeat</command>
+        command longer than configured amount of time, the communication is
+        considered interrupted and the server may (depending on the configuration)
+        use additional measures (desribed further in this document) to verify if
+        the partner is still operating. If it finds that the partner is not
+        operating, the server transitions to the <command>partner-down</command>
+        state to handle the entire DHCP traffic directed to the system.</para>
+
+        <para>In this case, the surviving server continues to send the
+        <command>ha-heartbeat</command> command to detect when the partner wakes
+        up. The partner synchronizes the lease database and when it is finally
+        ready to operate, the surviving server returns to the normal operation,
+        i.e. <command>load-balancing</command> or <command>hot-standby</command>
+        state.</para>
+
+        <para>The following is the list of all possible states into which the
+        servers may transition:
+
+        <itemizedlist mark="bullet">
+          <listitem><para><command>backup</command> - normal operation of the
+          backup server. In this state it receives lease updates from the active
+          servers.</para></listitem>
+
+          <listitem><para><command>hot-standby</command> - normal operation of
+          the active server running in the hot standby mode. Both primary and
+          standby server are in this state during their normal operation.
+          The primary server is responding to the DHCP queries and sends lease updates
+          to the standby server and to the backup servers, if any backup servers
+          are present.</para></listitem>
+
+          <listitem><para><command>load-balancing</command> - normal operation
+          of the active server running in the load balancing mode. Both primary
+          and secondary server are in this state during their normal operation.
+          Both servers are responding to the DHCP queries and send lease updates
+          to each other and to the backup servers, if any backup servers are
+          present.</para></listitem>
+
+          <listitem><para><command>partner-down</command> - an active server
+          transitions to this state after detecting that its partner (another
+          active server) is offline. The server doesn't transition to this state
+          if any of the backup servers is unavailable. In the <command>
+          partner-down</command> state the server responds to all DHCP queries,
+          so also those queries which are normally handled by the active server
+          which is now unavailable.</para></listitem>
+
+          <listitem><para><command>ready</command> - an active server transitions
+          to this state after synchronizing its lease database with an active
+          partner. This state is to indicate to the partner (likely being in the
+          <command>partner-down</command> state that it may return to the
+          normal operation. When it does, the server being in the <command>
+          ready</command> state will also start normal operation.</para>
+          </listitem>
+
+          <listitem><para><command>syncing</command> - an active server
+          transitions to this state to fetch leases from the active partner
+          and update the local lease database. When it this state, it
+          issues the <command>dhcp-disable</command> to disable the DHCP
+          service of the partner from which the leases are fetched. The DHCP
+          servie is disabled for the maximum time of 60 seconds, after which
+          it is automatically enabled, in case the syncing partner has died
+          again failing to re-enable the service. If the synchronization is
+          completed the syncing server issues the <command>dhcp-enable
+          </command> to re-enable the DHCP service of the partner. The
+          syncing operation is synchronous. The server is waiting for an
+          answer from the partner and is not doing anything else while the
+          leases synchronization takes place. A server which is configured
+          to not synchronize its database with the partner, i.e. when the
+          <command>sync-leases</command> configuration parameter is set to
+          <command>false</command>, will never transition to this state.
+          Instead, it will transition directly from the
+          <command>waiting</command> to <command>ready</command> state.
+          </para></listitem>
+
+          <listitem><para><command>terminated</command> - an active server
+          transitions to this state when the High Availability  hooks library
+          is unable to further provide reliable service and a manual
+          intervention of the administrator is required to correct the problem.
+          It is envisaged that various issues with the HA setup may cause the
+          server to transition to this state in the future. As of Kea 1.4.0
+          release, the only issue causing the HA service to terminate is
+          unacceptably high clock skew between the active servers, i.e. if the
+          clocks on respective servers are more than 60 seconds apart.
+          While in this state, the server will continue responding to the
+          DHCP clients based on the HA mode selected (load balancing or
+          hot standby), but the lease updates won't be exchanged and the
+          heartbeats won't be sent. Once a server has entered the
+          "terminated" state it will remain in this state until it is
+          restarted. The administrator must correct the issue which caused
+          this situation prior to restarting the server (e.g. synchronize clocks).
+          Otherwise, the server will return to the "terminated" state as
+          soon as it finds that the clock skew is still too high.
+          </para></listitem>
+
+          <listitem><para><command>waiting</command> - each started server
+          instance enters this state. The backup server will transition
+          directly from this state to the <command>backup</command> state.
+          An active server will send heartbeat to its partner to check its
+          state. If the partner appears to be unavailable the server will
+          transition to the <command>partner-down</command>, otherwise it
+          will transition to the <command>syncing</command> or
+          <command>ready</command> state (depending on the setting of the
+          <command>sync-leases</command> configuration parameter). If
+          both servers appear to be in the <command>waiting</command>
+          state (concurrent startup) the primary server will transition to
+          the next state first. The secondary or standby server will remain
+          in the <command>waiting</command> state until the primary
+          transitions to the <command>ready</command> state.</para></listitem>.
+        </itemizedlist></para>
+
+        <note>
+          <para>Currently, restarting the HA service being in the
+          <command>terminated</command> state requires restarting the
+          DHCP server or reloading its configuration. In the future, we will
+          provide a command to restart the HA service.</para>
+        </note>
+
+        <para>Whether the server responds to the DHCP queries and which
+        queries it responds to is a matter of the server's state, if no
+        administrative action is performed to configure the server
+        otherwise. The following table provides the default behavior for
+        various states.</para>
+
+        <para>The <command>DHCP Server Scopes</command> denotes what group
+        of received DHCP queries the server responds to in the given state.
+        The in-depth explanation what the scopes are can be found below.
+        </para>
+
+        <para>
+          <table frame="all" xml:id="ha-default-states-behavior">
+            <title>Default behavior of the server in various HA states</title>
+            <tgroup cols="4">
+              <colspec colname="state"/>
+              <colspec colname="server type" align="center"/>
+              <colspec colname="dhcp-service" align="center"/>
+              <colspec colname="dhcp-service-scopes" align="center"/>
+              <thead>
+                <row>
+                  <entry>State</entry>
+                  <entry>Server Type</entry>
+                  <entry>DHCP Service</entry>
+                  <entry>DHCP Service Scopes</entry>
+                </row>
+              </thead>
+              <tbody>
+                <row>
+                  <entry>backup</entry>
+                  <entry>backup server</entry>
+                  <entry>disabled</entry>
+                  <entry>none</entry>
+                </row>
+                <row>
+                  <entry>hot-standby</entry>
+                  <entry>primary or standby (hot standby mode)</entry>
+                  <entry>enabled</entry>
+                  <entry><command>HA_server1</command> if primary, none otherwise</entry>
+                </row>
+                <row>
+                  <entry>load-balancing</entry>
+                  <entry>primary or secondary (load balancing mode)</entry>
+                  <entry>enabled</entry>
+                  <entry><command>HA_server1</command> or <command>HA_server2</command></entry>
+                </row>
+                <row>
+                  <entry>partner-down</entry>
+                  <entry>active server</entry>
+                  <entry>enabled</entry>
+                  <entry>all scopes</entry>
+                </row>
+                <row>
+                  <entry>ready</entry>
+                  <entry>active server</entry>
+                  <entry>disabled</entry>
+                  <entry>none</entry>
+                </row>
+                <row>
+                  <entry>syncing</entry>
+                  <entry>active server</entry>
+                  <entry>disabled</entry>
+                  <entry>none</entry>
+                </row>
+                <row>
+                  <entry>terminated</entry>
+                  <entry>active server</entry>
+                  <entry>enabled</entry>
+                  <entry>same as in the load-balancing or hot-standby state</entry>
+                </row>
+                <row>
+                  <entry>waiting</entry>
+                  <entry>any server</entry>
+                  <entry>disabled</entry>
+                  <entry>none</entry>
+                </row>
+              </tbody>
+            </tgroup>
+          </table>
+        </para>
+
+        <para>The DHCP service scopes require some explanation. The HA
+        configuration must specify a unique name for each server within
+        the HA setup. This document uses the following convention within
+        provided examples: <command>server1</command> for a primary server,
+        <command>server2</command> for the secondary or standby server and
+        <command>server3</command> for the backup server. In the real life
+        any names can be used as long as they remain unique.</para>
+
+        <para>In the load balancing mode there are two scopes named after
+        the active servers: <command>HA_server1</command> and <command>
+        HA_server2</command>. The DHCP queries load balanced to the
+        <command>server1</command> belong to the <command>HA_server1</command>
+        scope and the queries load balanced to the <command>server2</command>
+        belong to the <command>HA_server2</command> scope. If any of the
+        servers is in the <command>partner-down</command> state, it is
+        responsible for serving both scopes.</para>
+
+        <para>In the hot standby mode, there is only one scope <command>
+        HA_server1</command> because only the <command>server1</command>
+        is responding to the DHCP queries. If that server becomes unavailable,
+        the <command>server2</command> becomes responsible for this scope.
+        </para>
+
+        <para>The backup servers do not have their own scopes. In some
+        cases they can be used to respond to the queries belonging to
+        the scopes of the active servers. Also, a server which is neither
+        in the partner-down state nor in the normal operation serves
+        no scopes.</para>
+
+        <para>The scope names can be used to associate pools, subnets
+        and networks with certain servers, so as only these servers
+        can allocate addresses or prefixes from those pools, subnets
+        or network. This is done via the client classification mechanism
+        (see below).</para>
+      </section>
+
+      <section xml:id="ha-scope-transition">
+        <title>Scope Transition in Partner Down Case</title>
+        <para>When one of the servers finds that its partner is unavailble,
+        it will start serving clients from its own scope and the scope of the
+        partner which is considered unavailable. This is straight forward
+        for the new clients, i.e. sending DHCPDISCOVER (DHCPv4) or Solicit
+        (DHCPv6), because those requests are not sent to any particular server.
+        The available server will respond to all such queries when it is
+        in the <command>partner-down</command> state.</para>
+
+        <para>When the client is renewing a lease, it will send its
+        DHCPREQUEST (DHCPv4) or Renew (DHCPv6) message directly to the
+        server which has allocated the lease being renewed. Because this
+        server is unavailable, the client will not get any response. In
+        that case, the client continues to use its lease and re-tries to
+        renew until the rebind timer (T2) elapses. The client will now enter
+        the rebinding phase, in which it will send DHCPREQUEST (DHCPv4) or
+        Rebind (DHCPv6) message to any available server. The surviving
+        server will receive the rebinding request and will (typically)
+        extend the lifetime of the lease. The client will continue to
+        contact that new server to renew its lease as appropriate.</para>
+
+        <para>When the other server becomes available, both active servers
+        will eventually transition to the <command>load-balancing</command>
+        or <command>hot-standby</command> state, in which they will be
+        responsible for their own scopes. Some clients belonging to the
+        scope of the started server will be trying to renew their leases
+        via the surviving server. This server will not respond to them
+        anymore and the client will eventually transition back to the
+        right server via rebinding mechanism again.</para>
+      </section>
+
+      <section xml:id="ha-load-balancing-config">
+        <title>Load Balancing Configuration</title>
+        <para>The following is the configuration snippet which enables
+        high availability on the primary server within the load balancing
+        configuration. The same configuration should be applied on the
+        secondary and the backup server, with the only difference that
+        the <command>this-server-name</command> should be set to
+        <command>server2</command> and <command>server3</command>
+        on those servers respectively.
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "heartbeat-delay": 10000,
+                    "max-response-delay": 10000,
+                    "max-ack-delay": 5000,
+                    "max-unacked-clients": 5,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server3",
+                            "url": "http://192.168.56.99:8080/",
+                            "role": "backup",
+                            "auto-failover": false
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.3.100 - 192.0.3.150",
+                    "client-class": "HA_server1"
+                },
+                {
+                    "pool": "192.0.3.200 - 192.0.3.250",
+                    "client-class": "HA_server2"
+                }
+            ],
+
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "192.0.3.1"
+                }
+            ],
+
+            "relay": { "ip-address": "10.1.2.3" }
+        }
+    ],
+
+    ...
+
+}
+
+}
+</screen>
+        </para>
+
+        <para>Two hook libraries must be loaded to enable HA:
+        <filename>libdhcp_lease_cmds.so</filename> and
+        <filename>libdhcp_ha.so</filename>. The latter provides the
+        implemenation of the HA feature. The former enables control
+        commands required by HA to fetch and manipulate leases on the
+        remote servers. In the example provided above, it is assumed that
+        Kea libraries are installed in the <filename>/usr/lib</filename>
+        directory. If Kea is not installed in the /usr directory, the
+        hook libraries locations must be updated accordingly.
+        </para>
+
+        <para>The HA configuration is specified within the scope of the
+        <filename>libdhcp_ha.so</filename>. Note that the top level
+        parameter <command>high-availability</command> is a list, even
+        though it currently contains only one entry. In the future this
+        configuration is likely to be extended to contain more entries,
+        if the particular server can participate in more than one
+        HA relationships.</para>
+
+        <para>The following are the global parameters which control the server's
+        behavior with respect to HA:
+        <itemizedlist mark="bullet">
+          <listitem><para><command>this-server-name</command> - is a unique
+          identifier of the server within this HA setup. It must match with one
+          of the servers specified within <command>peers</command> list.
+          </para></listitem>
+
+          <listitem><para><command>mode</command> - specifies a HA mode
+          of operation. Currently supported modes are <command>load-balancing
+          </command> and <command>hot-standby</command>.</para></listitem>
+
+          <listitem><para><command>heartbeat-delay</command> - specifies
+          a duration in milliseconds between the last heartbeat (or other command sent
+          to the partner) and sending the next heartbeat. The heartbeats are sent
+          periodically to gather the status of the partner and to verify whether
+          the partner is still operating. The default value of this parameter is
+          10000 ms.</para></listitem>
+
+          <listitem><para><command>max-response-delay</command> - specifies a
+          duration in milliseconds since the last successful communication with the
+          partner, after which the server assumes that the communication with
+          the partner is interrupted. This duration should be greater than
+          the <command>heartbeat-delay</command>. Usually it is a greater than
+          the duration of multiple <command>heartbeat-delay</command> values.
+          When the server detects that the communication is interrupted, it
+          may transition to the <command>partner-down</command> state (when
+          <command>max-unacked-clients</command> is 0) or trigger failure
+          detection procedure using the values of the two parameters below.
+          The default value of this parameter is 60000.
+          </para></listitem>
+
+          <listitem><para><command>max-ack-delay</command> - is one of
+          the parameters controlling partner failure detection. When the
+          communication with the partner is interrupted, the server examines values
+          of the <command>secs</command> field (DHCPv4) or <command>Elapsed Time
+          </command> option (DHCPv6) which denote how long the DHCP client has been
+          trying to communicate with the DHCP server. This parameter specifies the
+          maximum time in milliseconds for the client to try to communicate with the
+          DHCP server, after which this server assumes that the client failed to
+          communicate with the DHCP server (is "unacked"). The default value of
+          this parameter is 10000.</para></listitem>
+
+          <listitem><para><command>max-unacked-clients</command> - specifies
+          how many "unacked" clients are allowed (see <command>max-ack-delay</command>)
+          before this server assumes that the partner is offline and transitions
+          to the <command>partner-down</command> state. The special value of 0
+          is allowed for this parameter which disables failure detection
+          mechanism. In this case, the server which can't communicate with the
+          partner over the control channel assumes that the partner server is
+          down and transitions to the <command>partner-down</command> state
+          immediately. The default value of this parameter is 10.</para>
+          </listitem>
+
+        </itemizedlist>
+        </para>
+
+        <para>
+          The values of <command>max-ack-delay</command> and
+          <command>max-unacked-clients</command> must be selected carefully, taking
+          into account specifics of the network in which DHCP servers are
+          operating. Note that the server in question may not respond to some
+          of the DHCP clients because these clients are not to be serviced
+          by this server (per administrative policy). The server may also
+          drop malformed queries from the clients. Therefore, selecting too
+          low value for the <command>max-unacked-clients</command> may
+          result in transitioning to the <command>partner-down</command>
+          state even though the partner is still operating. On the other
+          hand, selecting too high value may result in never transitioning
+          to the <command>partner-down</command> state if the DHCP
+          traffic in the network is very low (e.g. night time), because the
+          number of distinct clients trying to communicate with the server
+          could be lower than <command>max-unacked-clients</command>.
+        </para>
+
+        <para>In some cases it may be useful to disable the failure detection
+        mechanism altogether, if the servers are located very close to each
+        other and the network partitioning is unlikely, i.e. failure to
+        respond to heartbeats is only possible when the partner is offline.
+        In such cases, set the <command>max-unacked-clients</command> to 0.
+        </para>
+
+        <para>The <command>peers</command> parameter contains a list of servers
+        within this HA setup. In this configuration it must contain at least
+        one primary and one secondary server. It may also contain unlimited
+        number of backup servers. In this example there is one backup server
+        which receives lease updates from the active servers.</para>
+
+        <para>There are the following parameters specified for each of the
+        peers within this list:
+
+        <itemizedlist mark="bullet">
+          <listitem><para><command>name</command> - specifies unique name for
+          the server.</para></listitem>
+
+          <listitem><para><command>url</command> - specifies URL to be used to
+          contact this server over the control channel. Other servers use this
+          URL to send control commands to that server.</para></listitem>
+
+          <listitem><para><command>role</command> - denotes the role of the
+          server in the HA setup. The following roles are supported in the
+          load balancing configuration: <command>primary</command>,
+          <command>secondary</command> and <command>backup</command>.
+          There must be exactly one primary and one secondary server in the
+          load balancing setup.</para></listitem>
+
+          <listitem><para><command>auto-failover</command> - a boolean value
+          which denotes whether the server detecting a partner's failure should
+          automatically start serving partner's clients. The default value of
+          this parameter is true.</para></listitem>
+
+        </itemizedlist>
+        </para>
+
+        <para>In our example configuration, both active servers can allocate
+        leases from the subnet "192.0.3.0/24". This subnet contains two
+        address pools: "192.0.3.100 - 192.0.3.150" and "192.0.3.200 - 192.0.3.250",
+        which are associated with HA servers scopes using client classification.
+        When the <command>server1</command> processes a DHCP query it will use
+        the first pool for the lease allocation. Conversely, when the
+        <command>server2</command> is processing the DHCP query it will use the
+        second pool. When any of the servers is in the <command>partner-down
+        </command> state, it can serve leases from both pools and it will
+        select the pool which is appropriate for the received query. In
+        other words, if the query would normally be processed by the
+        <command>server2</command>, but this server is not available, the
+        <command>server1</command> will allocate the lease from the pool of
+        "192.0.3.200 - 192.0.3.250".
+        </para>
+
+      </section> <!-- end of ha-load-balancing-config -->
+
+      <section xml:id="ha-load-balancing-advanced-config">
+        <title>Load Balancing with Advanced Classification</title>
+        <para>In the previous section we have provided an example which demonstrated
+        the load balancing configuration with the client classification limited
+        to the use of <command>HA_server1</command> and <command>HA_server2</command>
+        classes, which are dynamically assigned to the received DHCP queries.
+        In many cases it will be required to use HA in deployments which already
+        use some client classification.
+        </para>
+        <para>
+          Suppose there is a system which classifies devices into two groups:
+          phones and laptops, based on some classification criteria specified in
+          Kea configuration file. Both types of devices are allocated leases
+          from different address pools. Introducing HA in the load balancing mode
+          is expected to result in further split of each of those pools, so as
+          each of the servers can allocate leases for some part of the phones
+          and part of the laptops. This requires that each of the existing pools
+          should be split between the <command>HA_server1</command> and
+          <command>HA_server2</command>, so we end up with the following classes:
+
+          <itemizedlist>
+            <listitem><simpara>phones_server1</simpara></listitem>
+            <listitem><simpara>laptops_server1</simpara></listitem>
+            <listitem><simpara>phones_server2</simpara></listitem>
+            <listitem><simpara>laptops_server2</simpara></listitem>
+          </itemizedlist>
+        </para>
+
+        <para>The corresponding server configuration using advanced classification
+        (and <command>member</command> expression) is provided below. For brevity
+        the HA hook library configuration has been removed from this example.
+<screen>
+{
+"Dhcp4": {
+
+    "client-classes": [
+        {
+            "name": "phones",
+            "test": "substring(option[60].hex,0,6) == 'Aastra'",
+        },
+        {
+            "name": "laptops",
+            "test": "not member('phones')"
+        },
+        {
+            "name": "phones_server1",
+            "test": "member('phones') and member('HA_server1')"
+        },
+        {
+            "name": "phones_server2",
+            "test": "member('phones') and member('HA_server2')"
+        },
+        {
+            "name": "laptops_server1",
+            "test": "member('laptops') and member('HA_server1')"
+        },
+        {
+            "name": "laptops_server2",
+            "test": "member('laptops') and member('HA_server2')"
+        }
+    ],
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+
+                    ...
+
+                } ]
+            }
+        }
+    ],
+
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.3.100 - 192.0.3.125",
+                    "client-class": "phones_server1"
+                },
+                {
+                    "pool": "192.0.3.126 - 192.0.3.150",
+                    "client-class": "laptops_server1"
+                },
+                {
+                    "pool": "192.0.3.200 - 192.0.3.225",
+                    "client-class": "phones_server2"
+                },
+                {
+                    "pool": "192.0.3.226 - 192.0.3.250",
+                    "client-class": "laptops_server2"
+                }
+            ],
+
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "192.0.3.1"
+                }
+            ],
+
+            "relay": { "ip-address": "10.1.2.3" }
+        }
+    ],
+
+    ...
+
+}
+
+}
+</screen>
+        </para>
+
+        <para>The configuration provided above splits the address range into
+        four pools. Two pools are dedicated to server1 and two are dedicated for
+        server2. Each server can assign leases to both phones and laptops.
+        Both groups of devices are assigned addresses from different pools.
+        The <command>HA_server1</command> and <command>HA_server2</command>
+        are builtin classes (see <xref linkend="classification-using-vendor"/>)
+        and they don't need to be declared. They are assigned dynamically by
+        the HA hook library as a result of load balancing algorithm. The
+        <command>phones_*</command> and <command>laptop_*</command> evaluate to
+        "true" when the query belongs to a given combination of other classes,
+        e.g. <command>HA_server1</command> and <command>phones</command>.
+        The pool will be selected accordingly as a result of such evaluation.
+        </para>
+
+        <para>Consult <xref linkend="classify"/> for details on how to use
+        <command>member</command> expression and about class dependencies.</para>
+
+      </section> <!-- end of ha-load-balancing-advanced-config -->
+
+      <section xml:id="ha-hot-standby-config">
+        <title>Hot Standby Configuration</title>
+        <para>The following is the example configuration of the primary server
+        in the hot standby configuration:
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "hot-standby",
+                    "heartbeat-delay": 10000,
+                    "max-response-delay": 10000,
+                    "max-ack-delay": 5000,
+                    "max-unacked-clients": 5,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "standby",
+                            "auto-failover": true
+                        },
+                        {
+                            "name": "server3",
+                            "url": "http://192.168.56.99:8080/",
+                            "role": "backup",
+                            "auto-failover": false
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    "subnet4": [
+        {
+            "subnet": "192.0.3.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.3.100 - 192.0.3.250",
+                    "client-class": "HA_server1"
+                }
+            ],
+
+            "option-data": [
+                {
+                    "name": "routers",
+                    "data": "192.0.3.1"
+                }
+            ],
+
+            "relay": { "ip-address": "10.1.2.3" }
+        }
+    ],
+
+    ...
+
+}
+
+}
+</screen>
+        </para>
+
+        <para>This configuration is very similar to the load balancing
+        configuration described <xref linkend="ha-load-balancing-config"/>,
+        with a few notable differences.</para>
+
+        <para>The <command>mode</command> is now set to <command>hot-standby</command>,
+        in which only one server is responding to the DHCP clients.
+        If the primary server is online, the primary server is responding to
+        all DHCP queries. The <command>standby</command> server takes over the
+        entire DHCP traffic when it discovers that the primary is unavailable.
+        </para>
+
+        <para>In this mode, the non-primary active server is called
+        <command>standby</command> and that's what the role of the second
+        active server is set to.</para>
+
+        <para>Finally, because there is always one server responding to the
+        DHCP queries, there is only one scope <command>HA_server1</command>
+        in use within pools definitions. In fact, the <command>client-class</command>
+        parameter could be removed from this configuration without harm,
+        because there are no conflicts in lease allocations by different
+        servers as they do not allocate leases concurrently. The
+        <command>client-class</command> is left in this example mostly for
+        demonstration purposes, to highlight the differences between the
+        hot standby and load balancing mode of operation.</para>
+      </section> <!-- end of ha-hot-standby-config -->
+
+      <section xml:id="ha-sharing-lease-info">
+        <title>Lease Information Sharing</title>
+        <para>The HA enabled server informs its active partner about allocated
+        or renewed leases by sending appropriate control commands. The partner
+        updates the lease information in its own database. When the server starts
+        up for the first time or recovers after a failure it synchronizes its
+        lease database with the partner. These two mechanisms  guarantee
+        consistency of the lease information between the servers and allow for
+        designating one of the servers to handle the entire DHCP traffic in
+        case the other server becomes unavailable.</para>
+
+        <para>In some cases, though, it is desired to disable lease updates
+        and/or database synchronization between the active servers if the
+        exchange of information about the allocated leases is performed
+        using some other mechanism. Kea supports various types of databases
+        to be used as a storage for leases, e.g. MySQL, Postgres, Cassandra.
+        Those databases include builtin solutions for data replication which
+        are often used by Kea users to provide redundancy.</para>
+
+        <para>The HA hook library supports such scenarios by allowing to
+        disable lease updates over the control channel and/or lease database
+        synchronization, leaving the server to rely on the database replication
+        mechanism. This is controlled by the two boolean parameters:
+        <command>send-lease-updates</command> and <command>sync-leases</command>,
+        which values default to true:
+
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "send-lease-updates": false,
+                    "sync-leases": false,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>
+          In the most typical use case, both parameters are set to the same
+          value, i.e. both are <command>false</command> if the database
+          replication is in use, or both are <command>true</command> otherwise.
+          Introducing two separate parameters to control lease updates and
+          lease database synchronization is aimed at possible special use
+          cases, e.g. synchronization is performed by copying a lease file
+          (therefore the <command>sync-leases</command> is set to
+          <command>false</command>), but lease updates should be conducted
+          as usual (<command>send-lease-updates</command> set to
+          <command>true</command>). It should be noted that Kea doesn't
+          natively support such use case, but users may develop their own
+          scripts and tools around Kea to provide such mechanisms. The HA
+          hooks library configuration is designed to maximize the administration
+          flexibility.
+        </para>
+
+      </section>
+
+      <section xml:id="ha-syncing-timeouts">
+        <title>Discussion about Timeouts</title>
+        <para>In deployments with large number of clients connected to the
+        network, lease database synchronization after the server failure
+        may be a time consuming operation. The synchronizing server needs
+        to gather all leases from the partner which yields a large response
+        over the RESTful interface. The time required for generating the
+        response and sending it to the synchronizing server may take from
+        several seconds to tens of seconds. The default timeout value for
+        such communication is set to 60 seconds. However, the server
+        administrator may need to extend this timeout if necessary. The
+        following configuration snippet demonstrates how to extend this
+        timeout to 90 seconds with the <command>sync-timeout</command>
+        parameter:
+<screen>
+{
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "sync-timeout": 90000,
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ]
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>
+          It is important to note that extending this value may sometimes
+          be insufficient to prevent issues with timeouts during
+          lease database synchronization. The control commands travel via
+          Control Agent, which also monitors incoming (with synchronizing
+          server) and outgoing (with DHCP server) connections for timeouts.
+          The DHCP server also monitors the connection from the Control
+          Agent for timeouts. Those timeouts can't be currently modified
+          via configuration. Extending these timeouts is only possible by
+          modifing them in the Kea code and recompiling the server. The
+          relevant constants are located in the Kea sources:
+          <filename>src/lib/config/timeouts.h</filename>.
+        </para>
+      </section>
+
+      <section xml:id="ha-pause-state-machine">
+        <title>Pausing HA State Machine</title>
+        <para>The high availability state machine includes many different
+        states described in detail in <xref linkend="ha-server-states"/>.
+        The server enters each state when certain conditions are met, most
+        often taking into account the partner server's state. In some states
+        the server performs specific actions, e.g. synchronization of the
+        lease database in the <command>syncing</command> state or responding
+        to DHCP queries according to the configured mode of operation in the
+        <command>load-balancing</command> and <command>hot-standby</command>
+        states.
+        </para>
+        <para>
+          By default, transitions between the states are performed
+          automatically and the server administrator has no direct control
+          when the transitions take place and, in most cases, the
+          administrator doesn't need such control. In some situations,
+          however, the administrator may want to "pause" the HA state
+          machine in a selected state to perform some additional administrative
+          actions before the server transitions to the next state.
+        </para>
+
+        <para>Consider a server failure which results in a loss of the entire
+        lease database. Typically, the server will rebuild its lease database
+        when it enters the <command>syncing</command> state by querying
+        the partner server for leases, but it is possible that the
+        partner was also experiencing a failure and lacks lease information.
+        In this case, it may be required to reconstruct lease databases on
+        both servers from some external source, e.g. a backup server. If the
+        lease database is going to be reconstructed via RESTful API, the
+        servers should be started in the initial, i.e. <command>waiting</command>
+        state and remain in this state while leases are being added. In
+        particular, the servers should not attempt to synchronize their lease
+        databases nor start serving DHCP clients.
+        </para>
+
+        <para>The HA hooks library provides configuration parameters and a
+        command to control when the HA state machine should be paused and
+        resumed. The following configuration will cause the HA state machine
+        to pause in the <command>waiting</command> state after server startup.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": {
+                        "states":  [
+                            {
+                                "state": "waiting",
+                                "pause": "once"
+                            }
+                        ]
+                    }
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>The <command>pause</command> parameter value <command>once</command>
+        denotes that the state machine should be paused upon the first transition
+        to the <command>waiting</command> state. Later transitions to this state
+        won't cause the state machine to pause. Two other supported values of the
+        <command>pause</command> parameter are: <command>always</command> and
+        <command>never</command>. The latter is the default value for each state,
+        which instructs the server to never pause the state machine.
+        </para>
+
+        <para>In order to "unpause" the state machine the <command>ha-continue</command>
+        command must be sent to the paused server. This command does not take
+        any arguments. See <xref linkend="ha-control-commands"/> for details
+        about commands specific for HA hooks library.
+        </para>
+
+        <para>It is possible to configure the state machine to pause in more than
+        one state. Consider the following configuration.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": {
+                        "states": [
+                            {
+                                "state": "ready",
+                                "pause": "always"
+                            },
+                            {
+                                "state": "partner-down",
+                                "pause": "once"
+                            }
+                        ]
+                    }
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>This configuration instructs the server to pause the state
+        machine every time it transitions to the <command>ready</command> state
+        and upon the first transition to the <command>partner-down</command>
+        state.</para>
+
+        <para>Refer to the <xref linkend="ha-server-states"/> for a complete of
+        list of server states. The state machine can be paused in any of the
+        supported states, however it is not practical for the
+        <command>backup</command> and <command>terminated</command> states because
+        the server never transitions out of these states anyway.
+        </para>
+
+        <note><para>In the <command>syncing</command> state the server is paused
+        before it makes an attempt to synchronize lease database with a partner.
+        In order to pause the state machine after lease database synchronization,
+        use the <command>ready</command> state instead.
+        </para></note>
+
+        <note><para>The state of the HA state machine depends on the state of the
+        cooperating server. Therefore, it must be taken into account that
+        pausing the state machine of one server may affect the operation of the
+        partner server. For example: if the primary server is paused in the
+        <command>waiting</command> state the partner server will also remain in
+        the <command>waiting</command> state until the state machine of the
+        primary server is resumed and that server transitions to the
+        <command>ready</command> state.</para></note>
+      </section>
+
+      <section xml:id="ha-ctrl-agent-config">
+        <title>Control Agent Configuration</title>
+        <para>The <xref linkend="kea-ctrl-agent"/> describes in detail the
+        Kea deamon which provides RESTful interface to control Kea servers.
+        The same functionality is used by High Availability hook library to
+        establish communication between the HA peers. Therefore, the HA
+        library requires that Control Agent is started for each DHCP
+        instance within HA setup. If the Control Agent is not started
+        the peers will not be able to communicate with the particular DHCP
+        server (even if the DHCP server itself is online) and may eventually
+        consider this server to be offline.
+        </para>
+
+        <para>The following is the example configuration for the CA running
+        on the same machine as the primary server. This configuration is
+        valid for both load balancing and hot standby cases presented in
+        previous sections.
+
+<screen>
+{
+"Control-agent": {
+    "http-host": "192.168.56.33",
+    "http-port": 8080,
+
+    "control-sockets": {
+        "dhcp4": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea-dhcp4-ctrl.sock"
+        },
+        "dhcp6": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+        }
+    }
+}
+}
+</screen>
+        </para>
+      </section> <!-- end of ha-ctrl-agent-config -->
+
+      <section xml:id="ha-control-commands">
+        <title>Control Commands for High Availability</title>
+        <para>Even though the HA hook library is designed to automatically
+        resolve issues with DHCP service interruptions by redirecting the
+        DHCP traffic to a surviving server and synchronizing the lease
+        database when required, it may be useful for the administrator to
+        have control over the server behavior. In particular, it may be
+        useful be able to trigger lease database synchronization on demand.
+        It may also be useful to manually set the HA scopes that are being
+        served.</para>
+
+        <para>Note that the backup server can sometimes be used to handle
+        the DHCP traffic in case if both active servers are down. The backup
+        servers do not perform failover function automatically. Hence, in
+        order to use the backup server to respond to the DHCP queries,
+        the server administrator must enable this function manually.
+        </para>
+
+        <para>The following sections describe commands supported by the
+        HA hook library which are available for the administrator.
+        </para>
+
+        <section xml:id="ha-sync-command">
+          <title>ha-sync command</title>
+          <para>The <command>ha-sync</command> is issued to instruct the
+          server to synchronize its local lease database with the
+          selected peer. The server fetches all leases from the peer and
+          updates those locally stored leases which are older comparing to
+          those fetched. It also creates new leases when any of those
+          fetched do not exist in the local database. All leases that
+          are not returned by the peer but are in the local database are
+          preserved. The database synchronization is unidirectional, i.e.
+          only the database on the server to which the command has been
+          sent is updated. In order to synchronize the peer's database a
+          separate <command>ha-sync</command> has to be issued to that
+          peer.</para>
+
+          <para>The database synchronization may be triggered for
+          both active and backup server type. The <command>ha-sync</command>
+          has the following structure (DHCPv4 server case):
+<screen>
+{
+    "command": "ha-sync",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "server-name": "server2",
+        "max-period": 60
+    }
+}
+</screen>
+          </para>
+
+          <para>
+            When the server receives this command it first disables the
+            DHCP service of the server from which it will be fetching leases,
+            i.e. sends <command>dhcp-disable</command> command to that server.
+            The <command>max-period</command> parameter specifies the maximum
+            duration (in seconds) for which the DHCP service should be disabled.
+            If the DHCP service is successfully disabled, the synchronizing
+            server will fetch leases from the remote server by issuing the
+            <command>lease4-get-all</command> command. When the lease database
+            synchronization is complete, the synchronizing server sends the
+            <command>dhcp-enable</command> to the peer to re-enable its
+            DHCP service.
+          </para>
+
+          <para>The <command>max-period</command> value should be sufficiently
+          long to guarantee that it doesn't elapse before the synchronization
+          is completed. Otherwise, the DHCP server will automatically enable
+          its DHCP function while the synchronization is still in progress.
+          If the DHCP server subsequently allocates any leases during the
+          synchronization, those new (or updated) leases will not be fetched
+          by the synchronizing server leading to database inconsistencies.
+          </para>
+        </section> <!-- ha-sync-command -->
+
+        <section xml:id="ha-scopes-command">
+          <title>ha-scopes command</title>
+          <para>This command allows for modifying the HA scopes that the
+          server is serving. Consult <xref linkend="ha-load-balancing-config"/>
+          and <xref linkend="ha-hot-standby-config"/> to learn what scopes
+          are available for different HA modes of operation. The
+          <command>ha-scopes</command> command has the following structure
+          (DHCPv4 server case):
+<screen>
+{
+    "command": "ha-scopes",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "scopes": [ "HA_server1", "HA_server2" ]
+    }
+}
+</screen>
+          </para>
+
+          <para>This command configures the server to handle traffic from
+          both <command>HA_server1</command> and <command>HA_server2</command>
+          scopes. In order to disable all scopes specify an empty list:
+
+<screen>
+{
+    "command": "ha-scopes",
+    "service": [ "dhcp4 "],
+    "arguments": {
+        "scopes": [ ]
+    }
+}
+</screen>
+          </para>
+        </section> <!-- ha-scopes-command -->
+
+        <section xml:id="ha-continue-command">
+        <title>ha-continue command</title>
+        <para>This command is used to resume the operation of the paused HA
+        state machine as described in the <xref linkend="ha-pause-state-machine"/>.
+        It takes no arguments, so the command structure is as simple as:
+<screen>
+{
+    "command": "ha-continue"
+}
+</screen>
+      </para>
+        </section> <!-- ha-continue-command -->
+
+      </section> <!-- ha-control-commands -->
+
+    </section> <!-- end of high-availability-library -->

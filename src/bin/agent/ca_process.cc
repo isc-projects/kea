@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,20 +13,15 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
+#include <config/timeouts.h>
 #include <boost/pointer_cast.hpp>
 
 using namespace isc::asiolink;
+using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
 
-// Temporarily hardcoded configuration.
-/// @todo: remove once 5134 is merged.
-namespace {
-
-const long REQUEST_TIMEOUT = 10000;
-
-}
 
 namespace isc {
 namespace agent {
@@ -151,10 +146,11 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
 
             // Create http listener. It will open up a TCP socket and be
             // prepared to accept incoming connection.
-            HttpListenerPtr http_listener(new HttpListener(*getIoService(),
-                                                           server_address,
-                                                           server_port, rcf,
-                                                           REQUEST_TIMEOUT));
+            HttpListenerPtr http_listener
+                (new HttpListener(*getIoService(), server_address,
+                                  server_port, rcf,
+                                  HttpListener::RequestTimeout(TIMEOUT_AGENT_RECEIVE_COMMAND),
+                                  HttpListener::IdleTimeout(TIMEOUT_AGENT_IDLE_CONNECTION_TIMEOUT)));
 
             // Instruct the http listener to actually open socket, install
             // callback and start listening.

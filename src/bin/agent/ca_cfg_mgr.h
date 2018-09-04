@@ -191,14 +191,6 @@ protected:
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);
 
-    /// @brief This is no longer used.
-    ///
-    /// @throw NotImplemented
-    /// @return nothing, always throws
-    virtual isc::dhcp::ParserPtr
-    createConfigParser(const std::string&,
-                       const isc::data::Element::Position& pos);
-
     /// @brief Creates a new, blank CtrlAgentCfgContext context.
     ///
     ///

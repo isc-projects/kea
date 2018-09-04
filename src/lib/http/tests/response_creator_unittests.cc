@@ -54,6 +54,7 @@ private:
                                  request->context()->http_version_minor_);
         // This will generate the response holding JSON content.
         ResponsePtr response(new Response(http_version, status_code));
+        response->finalize();
         return (response);
     }
 
@@ -67,6 +68,7 @@ private:
         // We don't need content to test our class.
         ResponsePtr response(new Response(request->getHttpVersion(),
                                           HttpStatusCode::OK));
+        response->finalize();
         return (response);
     }
 };

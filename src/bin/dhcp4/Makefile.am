@@ -20,11 +20,11 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES  = *.gcno *.gcda spec_config.h dhcp4_messages.h dhcp4_messages.cc s-messages
+CLEANFILES  = *.gcno *.gcda dhcp4_messages.h dhcp4_messages.cc s-messages
 
 man_MANS = kea-dhcp4.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp4.xml dhcp4.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp4.xml
 EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy
 
@@ -42,16 +42,13 @@ $(man_MANS):
 
 endif
 
-spec_config.h: spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
 dhcp4_messages.h dhcp4_messages.cc: s-messages
 
 s-messages: dhcp4_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
 	touch $@
 
-BUILT_SOURCES = spec_config.h dhcp4_messages.h dhcp4_messages.cc
+BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 
 # convenience archive
 
@@ -82,6 +79,18 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
@@ -105,7 +114,6 @@ kea_dhcp4_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp4dir = $(pkgdatadir)
-kea_dhcp4_DATA = dhcp4.spec
 
 if GENERATE_PARSER
 

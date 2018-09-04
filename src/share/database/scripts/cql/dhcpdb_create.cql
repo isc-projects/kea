@@ -1,4 +1,5 @@
--- Copyright (C) 2015 - 2016 Deutsche Telekom AG.
+-- Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -44,7 +45,7 @@
 -- -----------------------------------------------------
 -- Table `lease4`
 -- -----------------------------------------------------
-CREATE TABLE lease4 (
+CREATE TABLE IF NOT EXISTS lease4 (
     address int,
     hwaddr blob,
     client_id blob,
@@ -55,15 +56,15 @@ CREATE TABLE lease4 (
     fqdn_rev boolean,
     hostname varchar,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease4 table
-CREATE INDEX lease4index1 ON lease4 (client_id);
-CREATE INDEX lease4index2 ON lease4 (subnet_id);
-CREATE INDEX lease4index3 ON lease4 (hwaddr);
-CREATE INDEX lease4index4 ON lease4 (expire);
-CREATE INDEX lease4index5 ON lease4 (state);
+CREATE INDEX IF NOT EXISTS lease4index1 ON lease4 (client_id);
+CREATE INDEX IF NOT EXISTS lease4index2 ON lease4 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease4index3 ON lease4 (hwaddr);
+CREATE INDEX IF NOT EXISTS lease4index4 ON lease4 (expire);
+CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 
 -- Holds the IPv6 leases.
 -- N.B. The use of a VARCHAR for the address is temporary for development:
@@ -71,15 +72,15 @@ CREATE INDEX lease4index5 ON lease4 (state);
 -- -----------------------------------------------------
 -- Table `lease6`
 -- -----------------------------------------------------
-CREATE TABLE lease6 (
+CREATE TABLE IF NOT EXISTS lease6 (
     address varchar,
-    duid blob,
     valid_lifetime bigint,
     expire bigint,
     subnet_id int,
     pref_lifetime bigint,
-    lease_type int,
+    duid blob,
     iaid int,
+    lease_type int,
     prefix_len int,
     fqdn_fwd boolean,
     fqdn_rev boolean,
@@ -88,16 +89,16 @@ CREATE TABLE lease6 (
     hwtype int,
     hwaddr_source int,
     state int,
-    PRIMARY KEY (address)
+    PRIMARY KEY ((address))
 );
 
 -- Create search indexes for lease6 table
-CREATE INDEX lease6index1 ON lease6 (lease_type);
-CREATE INDEX lease6index2 ON lease6 (duid);
-CREATE INDEX lease6index3 ON lease6 (iaid);
-CREATE INDEX lease6index4 ON lease6 (subnet_id);
-CREATE INDEX lease6index5 ON lease6 (expire);
-CREATE INDEX lease6index6 ON lease6 (state);
+CREATE INDEX IF NOT EXISTS lease6index1 ON lease6 (duid);
+CREATE INDEX IF NOT EXISTS lease6index2 ON lease6 (iaid);
+CREATE INDEX IF NOT EXISTS lease6index3 ON lease6 (lease_type);
+CREATE INDEX IF NOT EXISTS lease6index4 ON lease6 (subnet_id);
+CREATE INDEX IF NOT EXISTS lease6index5 ON lease6 (expire);
+CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 
 -- ... and a definition of lease6 types.  This table is a convenience for
 -- users of the database - if they want to view the lease table and use the
@@ -107,10 +108,10 @@ CREATE INDEX lease6index6 ON lease6 (state);
 -- -----------------------------------------------------
 -- Table `lease6_types`
 -- -----------------------------------------------------
-CREATE TABLE lease6_types (
+CREATE TABLE IF NOT EXISTS lease6_types (
     lease_type int,                             -- Lease type code.
     name varchar,                               -- Name of the lease type
-    PRIMARY KEY (lease_type)
+    PRIMARY KEY ((lease_type))
 );
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
 INSERT INTO lease6_types (lease_type, name) VALUES (1, 'IA_TA');   -- Temporary v6 addresses
@@ -125,11 +126,13 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- -----------------------------------------------------
 -- Table `lease_hwaddr_source`
 -- -----------------------------------------------------
-CREATE TABLE lease_hwaddr_source (
+CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
     hwaddr_source int,
     name varchar,
-    PRIMARY KEY (hwaddr_source)
+    PRIMARY KEY ((hwaddr_source))
 );
+
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 -- Hardware address obtained from raw sockets
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (1, 'HWADDR_SOURCE_RAW');
@@ -152,16 +155,18 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
+
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
 -- -----------------------------------------------------
 -- Table `lease_state`
 -- -----------------------------------------------------
-CREATE TABLE lease_state (
+CREATE TABLE IF NOT EXISTS lease_state (
     state int,
     name varchar,
-    PRIMARY KEY (state)
+    PRIMARY KEY ((state))
 );
 
 -- Insert currently defined state names.
@@ -176,12 +181,123 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- -----------------------------------------------------
 -- Table `schema_version`
 -- -----------------------------------------------------
-CREATE TABLE schema_version (
+CREATE TABLE IF NOT EXISTS schema_version (
     version int,
     minor int,
-    PRIMARY KEY (version)
+    PRIMARY KEY ((version))
 );
 
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
 
--- This line concludes database initalization to version 1.0.
+-- This line concludes database initialization to version 1.0.
+
+-- This line starts database upgrade to version 2.0
+
+-- -----------------------------------------------------
+-- Table `host_reservations`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS host_reservations (
+    id bigint,
+    host_identifier blob,
+    host_identifier_type int,
+    host_ipv4_subnet_id int,
+    host_ipv6_subnet_id int,
+    host_ipv4_address int,
+    host_ipv4_next_server int,
+    host_ipv4_server_hostname text,
+    host_ipv4_boot_file_name text,
+    hostname text,
+    user_context text,
+    host_ipv4_client_classes text,
+    host_ipv6_client_classes text,
+    -- reservation
+    reserved_ipv6_prefix_address text,
+    reserved_ipv6_prefix_length int,
+    reserved_ipv6_prefix_address_type int,
+    iaid int,
+    -- option
+    option_universe int,
+    option_code int,
+    option_value blob,
+    option_formatted_value text,
+    option_space text,
+    option_is_persistent boolean,
+    option_client_class text,
+    option_subnet_id int,
+    option_user_context text,
+    option_scope_id int,
+    PRIMARY KEY ((id))
+);
+
+CREATE INDEX IF NOT EXISTS host_reservationsindex1 ON host_reservations (host_identifier);
+CREATE INDEX IF NOT EXISTS host_reservationsindex2 ON host_reservations (host_identifier_type);
+CREATE INDEX IF NOT EXISTS host_reservationsindex3 ON host_reservations (host_ipv4_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex4 ON host_reservations (host_ipv6_subnet_id);
+CREATE INDEX IF NOT EXISTS host_reservationsindex5 ON host_reservations (host_ipv4_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex6 ON host_reservations (reserved_ipv6_prefix_address);
+CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserved_ipv6_prefix_length);
+
+-- -----------------------------------------------------
+-- Table `host_identifier_type`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS host_identifier_type (
+    type int,
+    name varchar,
+    PRIMARY KEY ((type))
+);
+
+-- Insert currently defined type names.
+INSERT INTO host_identifier_type (type, name) VALUES (0, 'hw-address');
+INSERT INTO host_identifier_type (type, name) VALUES (1, 'duid');
+INSERT INTO host_identifier_type (type, name) VALUES (2, 'circuit-id');
+INSERT INTO host_identifier_type (type, name) VALUES (3, 'client-id');
+INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
+
+-- -----------------------------------------------------
+-- Table `dhcp_option_scope`
+-- -----------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS dhcp_option_scope (
+  scope_id int,
+  scope_name varchar,
+  PRIMARY KEY ((scope_id))
+);
+
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (0, 'global');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (1, 'subnet');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (2, 'client-class');
+INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (3, 'host');
+
+DELETE FROM schema_version WHERE version=1;
+INSERT INTO schema_version (version, minor) VALUES(2, 0);
+
+-- This line concludes database upgrade to version 2.0
+
+-- This line starts database upgrade to version 3.0
+
+-- Add a column holding leases for user context.
+ALTER TABLE lease4 ADD user_context text;
+ALTER TABLE lease6 ADD user_context text;
+
+-- -----------------------------------------------------
+-- Table `logs` (logs table is used by forensic logging hook library)
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS logs (
+    timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp
+    address varchar,    -- address or prefix
+    log text,           -- the log itself
+    PRIMARY KEY ((timeuuid))
+);
+
+-- Create search index for logs table
+CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
+
+-- This line adds auth_key column into host reservation table
+ALTER TABLE host_reservations ADD auth_key text;
+
+-- Cql requires primary keys in the WHERE here.
+DELETE FROM schema_version WHERE version=2;
+INSERT INTO schema_version (version, minor) VALUES(3, 0);
+
+-- This line concludes database upgrade to version 3.0

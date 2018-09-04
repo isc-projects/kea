@@ -9,6 +9,7 @@
 
 #include <dhcp/duid.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <boost/shared_ptr.hpp>
 #include <stdint.h>
 #include <vector>
@@ -26,7 +27,7 @@ namespace dhcp {
 /// generate. It also allows for overriding entire default DUID or parts of
 /// it via configuration file. This class holds the DUID configuration
 /// specified in the server configuration file.
-class CfgDUID : public isc::data::CfgToElement {
+class CfgDUID : public UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.

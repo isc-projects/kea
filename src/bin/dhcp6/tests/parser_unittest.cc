@@ -1,13 +1,16 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <gtest/gtest.h>
 #include <cc/data.h>
 #include <dhcp6/parser_context.h>
 #include <testutils/io_utils.h>
+#include <testutils/user_context_utils.h>
 
 using namespace isc::data;
 using namespace std;
@@ -203,6 +206,26 @@ TEST(ParserTest, multilineComments) {
     testParser(txt, Parser6Context::PARSER_DHCP6, false);
 }
 
+// Tests if embedded comments are handled correctly.
+TEST(ParserTest, embbededComments) {
+    string txt= "{ \"Dhcp6\": { \"interfaces-config\": {"
+                "  \"interfaces\": [ \"*\" ]"
+                "},\n"
+                "\"comment\": \"a comment\",\n"
+                "\"preferred-lifetime\": 3000,\n"
+                "\"rebind-timer\": 2000,\n"
+                "\"renew-timer\": 1000, \n"
+                "\"subnet6\": [ { "
+                "    \"user-context\": { \"comment\": \"indirect\" },"
+                "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+                "    \"subnet\": \"2001:db8:1::/48\", "
+                "    \"interface\": \"eth0\""
+                " } ],"
+                "\"user-context\": { \"compatible\": true },"
+                "\"valid-lifetime\": 4000 } }";
+    testParser(txt, Parser6Context::PARSER_DHCP6, false);
+}
+
 /// @brief Loads specified example config file
 ///
 /// This test loads specified example file twice: first, using the legacy
@@ -212,6 +235,7 @@ TEST(ParserTest, multilineComments) {
 ///
 /// @param fname name of the file to be loaded
 void testFile(const std::string& fname) {
+    ElementPtr json;
     ElementPtr reference_json;
     ConstElementPtr test_json;
 
@@ -219,7 +243,8 @@ void testFile(const std::string& fname) {
 
     cout << "Parsing file " << fname << "(" << decommented << ")" << endl;
 
-    EXPECT_NO_THROW(reference_json = Element::fromJSONFile(decommented, true));
+    EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
+    reference_json = moveComments(json);
 
     // remove the temporary file
     EXPECT_NO_THROW(::remove(decommented.c_str()));
@@ -246,17 +271,23 @@ TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("advanced.json");
     configs.push_back("backends.json");
+    configs.push_back("cassandra.json");
     configs.push_back("classify.json");
+    configs.push_back("classify2.json");
+    configs.push_back("comments.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
     configs.push_back("hooks.json");
+    configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
     configs.push_back("multiple-options.json");
     configs.push_back("mysql-reservations.json");
     configs.push_back("pgsql-reservations.json");
     configs.push_back("reservations.json");
     configs.push_back("several-subnets.json");
+    configs.push_back("shared-network.json");
     configs.push_back("simple.json");
+    configs.push_back("softwire46.json");
     configs.push_back("stateless.json");
     configs.push_back("with-ddns.json");
 
@@ -506,6 +537,52 @@ TEST(ParserTest, errors) {
               Parser6Context::PARSER_DHCP6,
               "<string>:2.2-21: got unexpected keyword "
               "\"preferred_lifetime\" in Dhcp6 map.");
+
+    // missing parameter
+    testError("{ \"name\": \"foo\",\n"
+              "  \"code\": 123 }\n",
+              Parser6Context::PARSER_OPTION_DEF,
+              "missing parameter 'type' (<string>:1:1) "
+              "[option-def map between <string>:1:1 and <string>:2:15]");
+
+    // user context and embedded comments
+    testError("{ \"Dhcp6\":{\n"
+              "  \"comment\": true,\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:2.14-17: syntax error, unexpected boolean, "
+              "expecting constant string");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": \"a comment\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:2.19-29: syntax error, unexpected constant string, "
+              "expecting {");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"comment\": \"another one\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:3)");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": { \"version\": 1 },\n"
+              "  \"user-context\": { \"one\": \"only\" },\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-16: duplicate user-context entries "
+              "(previous at <string>:2:19)");
+
+    testError("{ \"Dhcp6\":{\n"
+              "  \"user-context\": { \"comment\": \"indirect\" },\n"
+              "  \"comment\": \"a comment\",\n"
+              "  \"preferred-lifetime\": 600 }}\n",
+              Parser6Context::PARSER_DHCP6,
+              "<string>:3.3-11: duplicate user-context/comment entries "
+              "(previous at <string>:2:19)");
 }
 
 // Check unicode escapes

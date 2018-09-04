@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,6 +54,7 @@ getSupportedParams4(const bool identifiers_only = false) {
         params_set.insert("server-hostname");
         params_set.insert("boot-file-name");
         params_set.insert("client-classes");
+        params_set.insert("user-context");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -87,6 +88,7 @@ getSupportedParams6(const bool identifiers_only = false) {
         params_set.insert("prefixes");
         params_set.insert("option-data");
         params_set.insert("client-classes");
+        params_set.insert("user-context");
     }
     return (identifiers_only ? identifiers_set : params_set);
 }
@@ -108,6 +110,7 @@ HostReservationParser::parseInternal(const SubnetID&,
     std::string identifier;
     std::string identifier_name;
     std::string hostname;
+    ConstElementPtr user_context;
     HostPtr host;
 
     try {
@@ -131,7 +134,8 @@ HostReservationParser::parseInternal(const SubnetID&,
 
             } else if (element.first == "hostname") {
                 hostname = element.second->stringValue();
-
+            } else if (element.first == "user-context") {
+                user_context = element.second;
             }
         }
 
@@ -154,9 +158,13 @@ HostReservationParser::parseInternal(const SubnetID&,
         }
 
         // Create a host object from the basic parameters we already parsed.
-        host.reset(new Host(identifier, identifier_name, SubnetID(0),
-                             SubnetID(0), IOAddress("0.0.0.0"), hostname));
+        host.reset(new Host(identifier, identifier_name, SUBNET_ID_UNUSED,
+                            SUBNET_ID_UNUSED, IOAddress("0.0.0.0"), hostname));
 
+        // Add user context
+        if (user_context) {
+            host->setContext(user_context);
+        }
     } catch (const std::exception& ex) {
         // Append line number where the error occurred.
         isc_throw(DhcpConfigError, ex.what() << " ("

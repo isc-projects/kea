@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,64 @@ namespace isc {
 namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
+
+ptime late_exit_target_time_ = ptime(not_a_date_time);
+
+bool
+TestControl::hasLateExitCommenced() const {
+    return !late_exit_target_time_.is_not_a_date_time();
+}
+
+bool
+TestControl::waitToExit() const {
+    static ptime exit_time = ptime(not_a_date_time);
+    CommandOptions& options = CommandOptions::instance();
+    uint32_t wait_time = options.getExitWaitTime();
+
+    // If we care and not all packets are in yet
+    if (wait_time && !haveAllPacketsBeenReceived()) {
+        const ptime now = microsec_clock::universal_time();
+
+        // Init the end time if it hasn't started yet
+        if (exit_time.is_not_a_date_time()) {
+            exit_time = now + time_duration(microseconds(wait_time));
+        }
+
+        // If we're not at end time yet, return true
+        return (now < exit_time);
+    }
+
+    // No need to wait, return false;
+    return (false);
+}
+
+bool
+TestControl::haveAllPacketsBeenReceived() const {
+    const CommandOptions& options = CommandOptions::instance();
+    const uint8_t& ipversion = options.getIpVersion();
+    const std::vector<int>& num_request = options.getNumRequests();
+    const size_t& num_request_size = num_request.size();
+
+    if (num_request_size == 0) {
+        return false;
+    }
+
+    uint32_t responses = 0;
+    uint32_t requests = num_request[0];
+    if (num_request_size >= 2) {
+        requests += num_request[1];
+    }
+
+    if (ipversion == 4) {
+        responses = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
+                    stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA);
+    } else {
+        responses = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) +
+                    stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR);
+    }
+
+    return (responses == requests);
+}
 
 TestControl::TestControlSocket::TestControlSocket(const int socket) :
     SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
@@ -196,7 +254,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "reached test-period." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     bool max_requests = false;
@@ -232,7 +292,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached max requests limit." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
@@ -268,7 +330,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum drops number." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
 
     // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
@@ -313,7 +377,9 @@ TestControl::checkExitConditions() const {
         if (testDiags('e')) {
             std::cout << "Reached maximum percentage of drops." << std::endl;
         }
-        return (true);
+        if (!waitToExit()) {
+            return true;
+        }
     }
     return (false);
 }
@@ -1485,8 +1551,10 @@ TestControl::run() {
             break;
         }
 
-        // Initiate new DHCP packet exchanges.
-        sendPackets(socket, packets_due);
+        if (!hasLateExitCommenced()) {
+            // Initiate new DHCP packet exchanges.
+            sendPackets(socket, packets_due);
+        }
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
@@ -1638,6 +1706,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
     // Set client identifier
     pkt4->addOption(generateClientId(pkt4->getHWAddr()));
 
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
+
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
     if (!preload) {
@@ -1716,6 +1787,10 @@ TestControl::sendRequestFromAck(const TestControlSocket& socket) {
     // Create message of the specified type.
     Pkt4Ptr msg = createRequestFromAck(ack);
     setDefaults4(socket, msg);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(msg);
+
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
@@ -1749,6 +1824,10 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
     // Prepare the message of the specified type.
     Pkt6Ptr msg = createMessageFromReply(msg_type, reply);
     setDefaults6(socket, msg);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(msg);
+
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
@@ -1805,6 +1884,9 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     // Set client's and server's ports as well as server's address,
     // and local (relay) address.
     setDefaults4(socket, pkt4);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
 
     // Set hardware address
     pkt4->setHWAddr(offer_pkt4->getHWAddr());
@@ -1921,6 +2003,10 @@ TestControl::sendRequest4(const TestControlSocket& socket,
     pkt4->addOption(opt_requested_ip);
 
     setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt4);
+
     // Prepare on-wire data.
     pkt4->rawPack();
     IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
@@ -1976,6 +2062,10 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 
     // Set default packet data.
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Prepare on-wire data.
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
@@ -2080,6 +2170,10 @@ TestControl::sendRequest6(const TestControlSocket& socket,
     pkt6->addOption(opt_clientid);
     // Set default packet data.
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Prepare on wire data.
     pkt6->rawPack();
     // Send packet.
@@ -2137,6 +2231,10 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     }
 
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
@@ -2182,6 +2280,10 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
     // Prepare on-wire data.
     pkt6->rawPack();
     setDefaults6(socket, pkt6);
+
+    // Add any extra options that user may have specified.
+    addExtraOpts(pkt6);
+
     // Send solicit packet.
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
@@ -2256,6 +2358,26 @@ TestControl::setDefaults6(const TestControlSocket& socket,
     }
 }
 
+void
+TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
+    // All all extra options that the user may have specified
+    CommandOptions& options = CommandOptions::instance();
+    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    for (auto entry : extra_opts) {
+        pkt->addOption(entry.second);
+    }
+}
+
+void
+TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
+    // All all extra options that the user may have specified
+    CommandOptions& options = CommandOptions::instance();
+    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    for (auto entry : extra_opts) {
+        pkt->addOption(entry.second);
+    }
+}
+
 bool
 TestControl::testDiags(const char diag) const {
     std::string diags(CommandOptions::instance().getDiags());
@@ -2265,5 +2387,5 @@ TestControl::testDiags(const char diag) const {
     return (false);
 }
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc

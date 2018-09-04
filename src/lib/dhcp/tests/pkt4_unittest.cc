@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,9 +13,12 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option4_addrlst.h>
+#include <dhcp/option_vendor.h>
 #include <dhcp/pkt4.h>
 #include <exceptions/exceptions.h>
 #include <util/buffer.h>
+#include <util/encode/hex.h>
+#include <pkt_captures.h>
 
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
@@ -760,7 +763,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     baddatalen.resize(orig.size() - 5);
     baddatalen[full_len_index] = 10;
     Pkt4Ptr bad_data_len_pkt(new Pkt4(&baddatalen[0], baddatalen.size()));
-    EXPECT_THROW(bad_data_len_pkt->unpack(), InvalidOptionValue);
+    EXPECT_THROW(bad_data_len_pkt->unpack(), SkipRemainingOptionsError);
 
     // A suboption must have a length byte
     vector<uint8_t> nolength = orig;
@@ -768,7 +771,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     nolength[full_len_index] = 11;
     nolength[data_len_index] = 6;
     Pkt4Ptr no_length_pkt(new Pkt4(&nolength[0], nolength.size()));
-    EXPECT_THROW(no_length_pkt->unpack(), InvalidOptionValue);
+    EXPECT_THROW(no_length_pkt->unpack(), SkipRemainingOptionsError);
 
     // Truncated data is not accepted either
     vector<uint8_t> shorty = orig;
@@ -776,7 +779,7 @@ TEST_F(Pkt4Test, unpackVendorMalformed) {
     shorty[full_len_index] = 14;
     shorty[data_len_index] = 9;
     Pkt4Ptr too_short_pkt(new Pkt4(&shorty[0], shorty.size()));
-    EXPECT_THROW(too_short_pkt->unpack(), InvalidOptionValue);
+    EXPECT_THROW(too_short_pkt->unpack(), SkipRemainingOptionsError);
 }
 
 // This test verifies methods that are used for manipulating meta fields
@@ -916,13 +919,13 @@ TEST_F(Pkt4Test, clientClasses) {
     // Default values (do not belong to any class)
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    EXPECT_TRUE(pkt.classes_.empty());
+    EXPECT_TRUE(pkt.getClasses().empty());
 
     // Add to the first class
     pkt.addClass(DOCSIS3_CLASS_EROUTER);
     EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    ASSERT_FALSE(pkt.classes_.empty());
+    ASSERT_FALSE(pkt.getClasses().empty());
 
     // Add to a second class
     pkt.addClass(DOCSIS3_CLASS_MODEM);
@@ -936,6 +939,34 @@ TEST_F(Pkt4Test, clientClasses) {
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
+}
+
+// Tests whether a packet can be marked to evaluate later a class and
+// after check if a given class is in the collection
+TEST_F(Pkt4Test, deferredClientClasses) {
+    Pkt4 pkt(DHCPOFFER, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_TRUE(pkt.getClasses(true).empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
+    EXPECT_EQ(1, pkt.getClasses(true).size());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM, true);
+    EXPECT_EQ(2, pkt.getClasses(true).size());
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
+    EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
 }
 
 // Tests whether MAC can be obtained and that MAC sources are not
@@ -1129,6 +1160,38 @@ TEST_F(Pkt4Test, getType) {
     // The method has to return something that is not NULL,
     // even if the packet doesn't have Message Type option.
     EXPECT_TRUE(pkt.getName());
+}
+
+// Verifies that when the VIVSO option 125 has length that is too
+// short (i.e. less than sizeof(uint8_t), unpack throws a
+// SkipRemainingOptionsError exception
+TEST_F(Pkt4Test, truncatedVendorLength) {
+
+    // Build a good discover packet
+    Pkt4Ptr pkt = test::PktCaptures::discoverWithValidVIVSO();
+
+    // Unpacking should not throw
+    ASSERT_NO_THROW(pkt->unpack());
+    ASSERT_EQ(DHCPDISCOVER, pkt->getType());
+
+    // VIVSO option should be there
+    OptionPtr x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_TRUE(x);
+    ASSERT_EQ(DHO_VIVSO_SUBOPTIONS, x->getType());
+    OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
+    ASSERT_TRUE(vivso);
+    EXPECT_EQ(133+2, vivso->len()); // data + opt code + len
+
+    // Build a bad discover packet
+    pkt = test::PktCaptures::discoverWithTruncatedVIVSO();
+
+    // Unpack should throw Skip exception
+    ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
+    ASSERT_EQ(DHCPDISCOVER, pkt->getType());
+
+    // VIVSO option should not be there
+    x = pkt->getOption(DHO_VIVSO_SUBOPTIONS);
+    ASSERT_FALSE(x);
 }
 
 } // end of anonymous namespace

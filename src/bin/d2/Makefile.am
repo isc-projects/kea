@@ -23,7 +23,7 @@ CLEANFILES  = *.gcno *.gcda d2_messages.h d2_messages.cc s-messages
 
 man_MANS = kea-dhcp-ddns.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml dhcp-ddns.spec d2.dox
+EXTRA_DIST = $(man_MANS) kea-dhcp-ddns.xml d2.dox
 EXTRA_DIST += d2_parser.yy
 
 EXTRA_DIST += images/abstract_app_classes.svg images/add_state_model.svg
@@ -96,6 +96,18 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
@@ -119,7 +131,6 @@ kea_dhcp_ddns_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
-kea_dhcp_ddns_DATA = dhcp-ddns.spec
 
 if GENERATE_PARSER
 

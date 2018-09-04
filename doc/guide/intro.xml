@@ -1,12 +1,18 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-<!ENTITY % version SYSTEM "version.ent">
-%version;
+<!--
+ - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
 ]>
 
-  <chapter id="intro">
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="intro">
     <title>Introduction</title>
     <para>
       Kea is the next generation of DHCP software developed by ISC.
@@ -22,7 +28,7 @@
     </para>
 
     <para>
-      This guide covers Kea version &__VERSION__;.
+      This guide covers Kea version &keaversion;.
     </para>
 
     <section>
@@ -30,16 +36,15 @@
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
 	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.1.0 builds have been tested on (in no
+	    other platforms: Kea 1.4.0 builds have been tested on (in no
         particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
-        Ubuntu 12.04, Ubuntu 14.04, Ubuntu 16.04, Fedora Linux 19,
-        Fedora 20, Fedora 22, CentOS Linux 7, NetBSD 6, FreeBSD 10.3,
-        OpenBSD 5.7, OpenBSD 6.0, OS X 10.10, OS X 10.11.
+        Ubuntu 14.04, Ubuntu 16.04, Fedora 25, Fedore 26, Fedora 27,
+        CentOS Linux 7, FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11, Debian 9
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
 
-    <section id="required-software">
+    <section xml:id="required-software">
       <title>Required Software at Run-time</title>
 
       <para>
@@ -57,9 +62,9 @@
             <simpara>
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
-        crypto library for C++ (<ulink url="http://botan.randombit.net/"/>),
-        version 1.8 or later. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<ulink url="http://www.openssl.org/"/>),
+        crypto library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
+        version 1.9 or later. As an alternative to Botan, Kea can use the
+        OpenSSL crypto library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
         version 1.0.1 or later.
             </simpara>
         </listitem>
@@ -67,7 +72,7 @@
         <listitem>
             <simpara>
         Kea uses the log4cplus C++ logging library
-        (<ulink url="http://log4cplus.sourceforge.net/"/>).
+        (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://log4cplus.sourceforge.net/">http://log4cplus.sourceforge.net/</uri>).
         It requires log4cplus version 1.0.3 or later.
             </simpara>
         </listitem>
@@ -98,7 +103,7 @@
       </itemizedlist>
     </section>
 
-    <section id="kea_software">
+    <section xml:id="kea_software">
       <title>Kea Software</title>
       <para>
         Kea is modular.  Part of this modularity is
@@ -113,7 +118,7 @@
 
           <listitem>
             <simpara>
-              <command>keactrl</command> &mdash;
+              <command>keactrl</command> —
               Tool to start, stop, reconfigure, and report status
               for the Kea servers.
             </simpara>
@@ -121,7 +126,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp4</command> &mdash;
+              <command>kea-dhcp4</command> —
               The DHCPv4 server process.
               This process responds to DHCPv4 queries from clients.
             </simpara>
@@ -129,7 +134,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp6</command> &mdash;
+              <command>kea-dhcp6</command> —
               The DHCPv6 server process.
               This process responds to DHCPv6 queries from clients.
             </simpara>
@@ -137,7 +142,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-dhcp-ddns</command> &mdash;
+              <command>kea-dhcp-ddns</command> —
               The DHCP Dynamic DNS process.
               This process acts as an intermediary between the DHCP servers
               and DNS servers. It receives name update requests from the DHCP
@@ -147,7 +152,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-admin</command> &mdash;
+              <command>kea-admin</command> —
               A useful tool for database backend maintenance (creating a new
               database, checking versions, upgrading etc.)
             </simpara>
@@ -155,7 +160,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-lfc</command> &mdash;
+              <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
               While it can be run standalone, it is normally run as and when 
@@ -165,7 +170,23 @@
 
           <listitem>
             <simpara>
-              <command>perfdhcp</command> &mdash;
+              <command>kea-ctrl-agent</command> —
+              Kea Control Agent (CA) is a daemon exposes a RESTful control
+              interface for managing Kea servers.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-shell</command> —
+              Simple text client that uses REST interface to connect to Kea
+              Control Agent.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>perfdhcp</command> —
               A DHCP benchmarking tool which simulates multiple clients to
               test both DHCPv4 and DHCPv6 server performance.
             </simpara>

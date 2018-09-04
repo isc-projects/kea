@@ -6,6 +6,8 @@
 
 /// @brief Defines the logger used by the @c isc::dhcp::HostMgr
 
+#include <config.h>
+
 #include "dhcpsrv/hosts_log.h"
 
 namespace isc {

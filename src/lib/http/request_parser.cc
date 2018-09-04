@@ -1,12 +1,13 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <http/request_parser.h>
 #include <boost/bind.hpp>
-#include <cctype>
 #include <iostream>
 
 using namespace isc::util;
@@ -35,18 +36,10 @@ const int HttpRequestParser::HEADER_VALUE_ST;
 const int HttpRequestParser::EXPECTING_NEW_LINE2_ST;
 const int HttpRequestParser::EXPECTING_NEW_LINE3_ST;
 const int HttpRequestParser::HTTP_BODY_ST;
-const int HttpRequestParser::HTTP_PARSE_OK_ST;
-const int HttpRequestParser::HTTP_PARSE_FAILED_ST;
-
-const int HttpRequestParser::DATA_READ_OK_EVT;
-const int HttpRequestParser::NEED_MORE_DATA_EVT;
-const int HttpRequestParser::MORE_DATA_PROVIDED_EVT;
-const int HttpRequestParser::HTTP_PARSE_OK_EVT;
-const int HttpRequestParser::HTTP_PARSE_FAILED_EVT;
 
 HttpRequestParser::HttpRequestParser(HttpRequest& request)
-    : StateModel(), buffer_(), request_(request),
-      context_(request_.context()), error_message_() {
+    : HttpMessageParserBase(request), request_(request),
+      context_(request_.context()) {
 }
 
 void
@@ -62,74 +55,9 @@ HttpRequestParser::initModel() {
 }
 
 void
-HttpRequestParser::poll() {
-    try {
-        // Run the parser until it runs out of input data or until
-        // parsing completes.
-        do {
-            getState(getCurrState())->run();
-
-        } while (!isModelDone() && (getNextEvent() != NOP_EVT) &&
-                 (getNextEvent() != NEED_MORE_DATA_EVT));
-    } catch (const std::exception& ex) {
-        abortModel(ex.what());
-    }
-}
-
-bool
-HttpRequestParser::needData() const {
-    return ((getNextEvent() == NEED_MORE_DATA_EVT) ||
-            (getNextEvent() == START_EVT));
-}
-
-bool
-HttpRequestParser::httpParseOk() const {
-    return ((getNextEvent() == END_EVT) &&
-            (getLastEvent() == HTTP_PARSE_OK_EVT));
-}
-
-void
-HttpRequestParser::postBuffer(const void* buf, const size_t buf_size) {
-    if (buf_size > 0) {
-        // The next event is NEED_MORE_DATA_EVT when the parser wants to
-        // signal that more data is needed. This method is called to supply
-        // more data and thus it should change the next event to
-        // MORE_DATA_PROVIDED_EVT.
-        if (getNextEvent() == NEED_MORE_DATA_EVT) {
-            transition(getCurrState(), MORE_DATA_PROVIDED_EVT);
-        }
-        buffer_.insert(buffer_.end(), static_cast<const char*>(buf),
-                       static_cast<const char*>(buf) + buf_size);
-    }
-}
-
-void
-HttpRequestParser::defineEvents() {
-    StateModel::defineEvents();
-
-    // Define HTTP parser specific events.
-    defineEvent(DATA_READ_OK_EVT, "DATA_READ_OK_EVT");
-    defineEvent(NEED_MORE_DATA_EVT, "NEED_MORE_DATA_EVT");
-    defineEvent(MORE_DATA_PROVIDED_EVT, "MORE_DATA_PROVIDED_EVT");
-    defineEvent(HTTP_PARSE_OK_EVT, "HTTP_PARSE_OK_EVT");
-    defineEvent(HTTP_PARSE_FAILED_EVT, "HTTP_PARSE_FAILED_EVT");
-}
-
-void
-HttpRequestParser::verifyEvents() {
-    StateModel::verifyEvents();
-
-    getEvent(DATA_READ_OK_EVT);
-    getEvent(NEED_MORE_DATA_EVT);
-    getEvent(MORE_DATA_PROVIDED_EVT);
-    getEvent(HTTP_PARSE_OK_EVT);
-    getEvent(HTTP_PARSE_FAILED_EVT);
-}
-
-void
 HttpRequestParser::defineStates() {
     // Call parent class implementation first.
-    StateModel::defineStates();
+    HttpMessageParserBase::defineStates();
 
     // Define HTTP parser specific states.
     defineState(RECEIVE_START_ST, "RECEIVE_START_ST",
@@ -210,89 +138,7 @@ HttpRequestParser::defineStates() {
 
     defineState(HTTP_BODY_ST, "HTTP_BODY_ST",
                 boost::bind(&HttpRequestParser::bodyHandler, this));
-
-    defineState(HTTP_PARSE_OK_ST, "HTTP_PARSE_OK_ST",
-                boost::bind(&HttpRequestParser::parseEndedHandler, this));
-
-    defineState(HTTP_PARSE_FAILED_ST, "HTTP_PARSE_FAILED_ST",
-                boost::bind(&HttpRequestParser::parseEndedHandler, this));
 }
-
-void
-HttpRequestParser::parseFailure(const std::string& error_msg) {
-    error_message_ = error_msg + " : " + getContextStr();
-    transition(HTTP_PARSE_FAILED_ST, HTTP_PARSE_FAILED_EVT);
-}
-
-void
-HttpRequestParser::onModelFailure(const std::string& explanation) {
-    if (error_message_.empty()) {
-        error_message_ = explanation;
-    }
-}
-
-char
-HttpRequestParser::getNextFromBuffer() {
-    unsigned int ev = getNextEvent();
-    char c = '\0';
-    // The caller should always provide additional data when the
-    // NEED_MORE_DATA_EVT occurs. If the next event is still
-    // NEED_MORE_DATA_EVT it indicates that the caller hasn't provided
-    // the data.
-    if (ev == NEED_MORE_DATA_EVT) {
-        isc_throw(HttpRequestParserError,
-                  "HTTP request parser requires new data to progress, but no data"
-                  " have been provided. The transaction is aborted to avoid"
-                  " a deadlock. This is a Kea HTTP server logic error!");
-
-    } else {
-        // Try to pop next character from the buffer.
-        const bool data_exist = popNextFromBuffer(c);
-        if (!data_exist) {
-            // There is no more data so it is really not possible that we're
-            // at MORE_DATA_PROVIDED_EVT.
-            if (ev == MORE_DATA_PROVIDED_EVT) {
-                isc_throw(HttpRequestParserError,
-                          "HTTP server state indicates that new data have been"
-                          " provided to be parsed, but the transaction buffer"
-                          " contains no new data. This is a Kea HTTP server logic"
-                          " error!");
-
-            } else {
-                // If there is no more data we should set NEED_MORE_DATA_EVT
-                // event to indicate that new data should be provided.
-                transition(getCurrState(), NEED_MORE_DATA_EVT);
-            }
-        }
-    }
-    return (c);
-}
-
-void
-HttpRequestParser::invalidEventError(const std::string& handler_name,
-                                     const unsigned int event) {
-    isc_throw(HttpRequestParserError, handler_name << ": "
-              << " invalid event " << getEventLabel(static_cast<int>(event)));
-}
-
-void
-HttpRequestParser::stateWithReadHandler(const std::string& handler_name,
-                                        boost::function<void(const char c)>
-                                        after_read_logic) {
-    char c = getNextFromBuffer();
-    // Do nothing if we reached the end of buffer.
-    if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        switch(getNextEvent()) {
-        case DATA_READ_OK_EVT:
-        case MORE_DATA_PROVIDED_EVT:
-            after_read_logic(c);
-            break;
-        default:
-            invalidEventError(handler_name, getNextEvent());
-        }
-    }
-}
-
 
 void
 HttpRequestParser::receiveStartHandler() {
@@ -599,78 +445,6 @@ HttpRequestParser::bodyHandler() {
         }
     });
 }
-
-
-void
-HttpRequestParser::parseEndedHandler() {
-    switch(getNextEvent()) {
-    case HTTP_PARSE_OK_EVT:
-        request_.finalize();
-        transition(END_ST, END_EVT);
-        break;
-    case HTTP_PARSE_FAILED_EVT:
-        abortModel("HTTP request parsing failed");
-        break;
-
-    default:
-        invalidEventError("parseEndedHandler", getNextEvent());
-    }
-}
-
-bool
-HttpRequestParser::popNextFromBuffer(char& next) {
-    // If there are any characters in the buffer, pop next.
-    if (!buffer_.empty()) {
-        next = buffer_.front();
-        buffer_.pop_front();
-        return (true);
-    }
-    return (false);
-}
-
-
-bool
-HttpRequestParser::isChar(const char c) const {
-    // was (c >= 0) && (c <= 127)
-    return (c >= 0);
-}
-
-bool
-HttpRequestParser::isCtl(const char c) const {
-    return (((c >= 0) && (c <= 31)) || (c == 127));
-}
-
-bool
-HttpRequestParser::isSpecial(const char c) const {
-    switch (c) {
-    case '(':
-    case ')':
-    case '<':
-    case '>':
-    case '@':
-    case ',':
-    case ';':
-    case ':':
-    case '\\':
-    case '"':
-    case '/':
-    case '[':
-    case ']':
-    case '?':
-    case '=':
-    case '{':
-    case '}':
-    case ' ':
-    case '\t':
-        return true;
-
-    default:
-        ;
-    }
-
-    return false;
-}
-
 
 } // namespace http
 } // namespace isc

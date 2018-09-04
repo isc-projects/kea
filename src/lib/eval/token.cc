@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <eval/token.h>
 #include <eval/eval_log.h>
 #include <eval/eval_context.h>
@@ -592,6 +594,42 @@ TokenConcat::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 }
 
 void
+TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+
+    if (values.size() < 3) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "3 values for ifelse, got " << values.size());
+    }
+
+    string iffalse = values.top();
+    values.pop();
+    string iftrue = values.top();
+    values.pop();
+    string cond = values.top();
+    values.pop();
+    bool val = toBool(cond);
+
+    if (val) {
+        values.push(iftrue);
+    } else {
+        values.push(iffalse);
+    }
+
+    // Log what we popped and pushed
+    if (val) {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IFELSE_TRUE)
+            .arg('\'' + cond + '\'')
+            .arg(toHex(iffalse))
+            .arg(toHex(iftrue));
+    } else {
+        LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_IFELSE_FALSE)
+            .arg('\'' +cond + '\'')
+            .arg(toHex(iftrue))
+            .arg(toHex(iffalse));
+    }
+}
+
+void
 TokenNot::evaluate(Pkt& /*pkt*/, ValueStack& values) {
 
     if (values.size() == 0) {
@@ -667,6 +705,20 @@ TokenOr::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_OR)
         .arg('\'' + op1 + '\'')
         .arg('\'' + op2 + '\'')
+        .arg('\'' + values.top() + '\'');
+}
+
+void
+TokenMember::evaluate(Pkt& pkt, ValueStack& values) {
+    if (pkt.inClass(client_class_)) {
+        values.push("true");
+    } else {
+        values.push("false");
+    }
+
+    // Log what we pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_MEMBER)
+        .arg(client_class_)
         .arg('\'' + values.top() + '\'');
 }
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -73,6 +73,9 @@ public:
         /// This will parse the input as host-reservation.
         PARSER_HOST_RESERVATION,
 
+        /// This will parse the input option definitions (for tests).
+        PARSER_OPTION_DEFS,
+
         /// This will parse the input as option definition.
         PARSER_OPTION_DEF,
 
@@ -83,7 +86,10 @@ public:
         PARSER_HOOKS_LIBRARY,
 
         /// This will parse the input as dhcp-ddns.
-        PARSER_DHCP_DDNS
+        PARSER_DHCP_DDNS,
+
+        /// This will parse the content of Logging.
+        PARSER_LOGGING
     } ParserType;
 
     /// @brief Default constructor.
@@ -176,6 +182,19 @@ public:
     /// @return Position in format accepted by Element
     isc::data::Element::Position loc2pos(isc::dhcp::location& loc);
 
+    /// @brief Check if a required parameter is present
+    ///
+    /// Check if a required parameter is present in the map at the top
+    /// of the stack and raise an error when it is not.
+    ///
+    /// @param name name of the parameter to check
+    /// @param open_loc location of the opening curly bracket
+    /// @param close_loc ocation of the closing curly bracket
+    /// @throw Dhcp4ParseError
+    void require(const std::string& name,
+                 isc::data::Element::Position open_loc,
+                 isc::data::Element::Position close_loc);
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.
@@ -195,13 +214,19 @@ public:
         /// Used while parsing Dhcp4/interfaces structures.
         INTERFACES_CONFIG,
 
+        /// Sanity checks.
+        SANITY_CHECKS,
+
         /// Used while parsing Dhcp4/interfaces/dhcp-socket-type structures.
         DHCP_SOCKET_TYPE,
+
+        /// Used while parsing Dhcp4/interfaces/outbound-interface structures.
+        OUTBOUND_INTERFACE,
 
         /// Used while parsing Dhcp4/lease-database structures.
         LEASE_DATABASE,
 
-        /// Used while parsing Dhcp4/hosts-database structures.
+        /// Used while parsing Dhcp4/hosts-database[s] structures.
         HOSTS_DATABASE,
 
         /// Used while parsing Dhcp4/*-database/type.
@@ -215,6 +240,9 @@ public:
 
         /// Used while parsing Dhcp4/Subnet4 structures.
         SUBNET4,
+
+        /// Used while parsing shared-networks structures.
+        SHARED_NETWORK,
 
         /// Used while parsing Dhcp4/Subnet4/reservation-mode.
         RESERVATION_MODE,
@@ -247,9 +275,6 @@ public:
 
         /// Used while parsing Dhcp4/subnet4relay structures.
         RELAY,
-
-        /// Used while parsing Dhcp4/client-classes structures.
-        CLIENT_CLASS,
 
         /// Used while parsing Logging/loggers structures.
         LOGGERS,

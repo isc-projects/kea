@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,21 +39,6 @@ buffer holding the DHCPv4 message. The arguments specify the source and
 destination IPv4 addresses as well as the interface over which the buffer has
 been received.
 
-% DHCP4_BUFFER_WAIT waiting for next DHCPv4 packet with timeout %1 ms
-This debug message is issued when the server enters the state when it
-waits for new packets. The argument specifies the timeout for the server
-to wait for the packet. When this time elapses the server will pass
-through its main loop to perform handling of any pending signals
-and timers. After that, it will enter the wait state again.
-
-% DHCP4_BUFFER_WAIT_INTERRUPTED interrupted wait for the next packet due to timeout, signal or external socket callback (timeout value is %1)
-This debug message is issued when the server interrupts waiting
-for reception of the next DHCPv6 message due to timeout, signal
-or reception of the data over socket other than used for DHCPv4
-message transmission. The server will now handle signals
-received and ready timers before waiting for next packets again.
-The argument specifies the timeout value in milliseconds.
-
 % DHCP4_BUFFER_WAIT_SIGNAL signal received while waiting for next packet, next waiting signal is %1
 This debug message is issued when the server was waiting for the
 packet, but the wait has been interrupted by the signal received
@@ -74,6 +59,14 @@ which cannot be found in the configuration. Either a hook written
 before the classification was added to Kea is used, or class naming is
 inconsistent.
 
+% DHCP4_CLASS_UNDEFINED required class %1 has no definition
+This debug message informs that a class is listed for required evaluation but
+has no definition.
+
+% DHCP4_CLASS_UNTESTABLE required class %1 has no test expression
+This debug message informs that a class was listed for required evaluation but
+its definition does not include a test expression to evaluate.
+
 % DHCP4_CLIENTID_IGNORED_FOR_LEASES %1: not using client identifier for lease allocation for subnet %2
 This debug message is issued when the server is processing the DHCPv4 message
 for which client identifier will not be used when allocating new lease or
@@ -81,12 +74,10 @@ renewing existing lease. The server is explicitly configured to not use
 client identifier to lookup existing leases for the client and will not
 record client identifier in the lease database. This mode of operation
 is useful when clients don't use stable client identifiers, e.g. multi
-stage booting. Note that the client identifier may be used for other
-operations than lease allocation, e.g. identifying host reservations
-for the client using client identifier. The first argument includes the
-client and transaction identification information. The second argument
-specifies the identifier of the subnet where the client is connected
-and for which this mode of operation is configured on the server.
+stage booting. The first argument includes the client and transaction
+identification information. The second argument specifies the identifier
+of the subnet where the client is connected and for which this mode of
+operation is configured on the server.
 
 % DHCP4_CLIENT_FQDN_DATA %1: Client sent FQDN option: %2
 This debug message includes the detailed information extracted from the
@@ -157,6 +148,33 @@ change is committed by the administrator.
 A debug message indicating that the DHCPv4 server has received an
 updated configuration from the Kea configuration system.
 
+% DHCP4_DB_RECONNECT_ATTEMPT_FAILED database reconnect failed: %1
+An error message indicating that an attempt to reconnect to the lease and/or
+host data bases has failed.  This occurs after connectivity to either one
+has been lost and an automatic attempt to reconnect has failed.
+
+% DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
+An informational message indicating that the server is scheduling the next
+attempt to reconnect to its lease and/or host databases.  This occurs when the
+server has lost databse connectivity and is attempting to reconnect
+automatically.
+
+% DHCP4_DB_RECONNECT_DISABLED database reconnect is disabled: max-reconnect-tries %1, reconnect-wait-time %2
+This is an informational message indicating that connectivity to either the
+lease or host database or both and that automatic reconnect is not enabled.
+
+% DHCP4_DB_RECONNECT_NO_DB_CTL unexpected error in database reconnect
+This is an error message indicating a programmatic error that should not
+occur. It will prohibit the server from attempting to reconnect to its
+databases if connectivy is lost, and the server will exit. This error
+should be reported.
+
+% DHCP4_DB_RECONNECT_RETRIES_EXHAUSTED maximum number of database reconnect attempts: %1, has been exhausted without success, server is shutting down!
+This error indicates that the server is shutting down after failing to reconnect to
+the lease and/or host database(s) after making the maximum configured number
+of reconnect attempts.  Loss of connectivity is typically a network or database
+server issue.
+
 % DHCP4_DDNS_REQUEST_SEND_FAILED failed sending a request to kea-dhcp-ddns, error: %1,  ncr: %2
 This error message indicates that DHCP4 server attempted to send a DDNS
 update request to the DHCP-DDNS server.  This is most likely a configuration or
@@ -193,11 +211,15 @@ a client's error or a server's purged database.
 % DHCP4_DHCP4O6_BAD_PACKET received malformed DHCPv4o6 packet: %1
 A malformed DHCPv4o6 packet was received.
 
-% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 on interface %5 encapsulating %6: %7 (type %8)
+% DHCP4_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv4 server (type %1) for %2 on interface %3
+This debug message is printed when the server is receiving a DHCPv4o6
+from the DHCPv4 server over inter-process communication.
+
+% DHCP4_DHCP4O6_PACKET_SEND %1: trying to send packet %2 (type %3) to %4 port %5 on interface %6 encapsulating %7: %8 (type %9)
 The arguments specify the client identification information (HW address
 and client identifier), DHCPv6 message name and type, source IPv6
-address and interface name, DHCPv4 client identification, message
-name and type.
+address and port, and interface name, DHCPv4 client identification,
+message name and type.
 
 % DHCP4_DHCP4O6_PACKET_SEND_FAIL %1: failed to send DHCPv4o6 packet: %2
 This error is output if the IPv4 DHCP server fails to send an
@@ -255,17 +277,25 @@ A "libreload" command was issued to reload the hooks libraries but for
 some reason the reload failed.  Other error messages issued from the
 hooks framework will indicate the nature of the problem.
 
-% DHCP4_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 was dropped because a callout set the skip flag
+% DHCP4_HOOK_BUFFER_RCVD_DROP received buffer from %1 to %2 over interface %3 was dropped because a callout set the drop flag
 This debug message is printed when a callout installed on buffer4_receive
-hook point set the skip flag. For this particular hook point, the
+hook point set the drop flag. For this particular hook point, the
 setting of the flag by a callout instructs the server to drop the packet.
 The arguments specify the source and destination IPv4 address as well as
 the name of the interface over which the buffer has been received.
 
-% DHCP4_HOOK_BUFFER_SEND_SKIP %1: prepared response is dropped because a callout set the skip flag.
+% DHCP4_HOOK_BUFFER_RCVD_SKIP received buffer from %1 to %2 over interface %3 is not parsed because a callout set the next step to SKIP.
+This debug message is printed when a callout installed on
+buffer4_receive hook point set the next step to SKIP. For this particular hook
+point, this value set by a callout instructs the server to
+not parse the buffer because it was already parsed by the hook. The
+arguments specify the source and destination IPv4 address as well as
+the name of the interface over which the buffer has been received.
+
+% DHCP4_HOOK_BUFFER_SEND_SKIP %1: prepared response is dropped because a callout set the next step to SKIP.
 This debug message is printed when a callout installed on buffer4_send
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to drop the packet.
+hook point set the next step to SKIP. For this particular hook point, the
+SKIP value set by a callout instructs the server to drop the packet.
 Server completed all the processing (e.g. may have assigned, updated
 or released leases), but the response will not be send to the client.
 
@@ -276,27 +306,41 @@ for decline4 hook point and one of the callouts set next step status to DROP.
 The server will now abort processing of the packet as if it was never
 received. The lease will continue to be assigned to this client.
 
-% DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the skip flag.
+% DHCP4_HOOK_LEASE4_RELEASE_SKIP %1: lease was not released because a callout set the next step to SKIP
 This debug message is printed when a callout installed on lease4_release
-hook point set the skip flag. For this particular hook point, the
-setting of the flag by a callout instructs the server to not release
-a lease.
+hook point set the next step status to SKIP. For this particular hook point, the
+value set by a callout instructs the server to not release a lease.
 
-% DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the skip flag.
+% DHCP4_HOOK_LEASES4_COMMITTED_DROP %1: packet is dropped, because a callout set the next step to DROP
+This debug message is printed when a callout installed on the leases4_committed
+hook point sets the next step to DROP.
+
+% DHCP4_HOOK_LEASES4_COMMITTED_PARK %1: packet is parked, because a callout set the next step to PARK
+This debug message is printed when a callout installed on the lease4_committed
+hook point sets the next step to PARK.
+
+% DHCP4_HOOK_PACKET_RCVD_SKIP %1: packet is dropped, because a callout set the next step to SKIP
 This debug message is printed when a callout installed on the pkt4_receive
-hook point sets the skip flag. For this particular hook point, the
-setting of the flag instructs the server to drop the packet.
+hook point sets the next step to SKIP. For this particular hook point, the
+value setting of the flag instructs the server to drop the packet.
 
-% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set skip flag.
+% DHCP4_HOOK_PACKET_SEND_SKIP %1: prepared response is not sent, because a callout set the next stp to SKIP
 This debug message is printed when a callout installed on the pkt4_send
-hook point sets the skip flag. For this particular hook point, the setting
-of the flag instructs the server to drop the packet. This means that
+hook point sets the next step to SKIP. For this particular hook point, this
+setting instructs the server to drop the packet. This means that
 the client will not get any response, even though the server processed
 client's request and acted on it (e.g. possibly allocated a lease).
 
-% DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set skip flag.
+% DHCP4_HOOK_SUBNET4_SELECT_DROP %1: packet was dropped, because a callout set the next step to 'drop'
 This debug message is printed when a callout installed on the
-subnet4_select hook point sets the skip flag. For this particular hook
+subnet4_select hook point sets the next step to 'drop' value. For this particular hook
+point, the setting to that value instructs the server to drop the received
+packet. The argument specifies the client and transaction identification
+information.
+
+% DHCP4_HOOK_SUBNET4_SELECT_SKIP %1: no subnet was selected, because a callout set the next skip flag
+This debug message is printed when a callout installed on the
+subnet4_select hook point sets the next step to SKIP value. For this particular hook
 point, the setting of the flag instructs the server not to choose a
 subnet, an action that severely limits further processing; the server
 will be only able to offer global options - no addresses will be assigned.
@@ -334,14 +378,6 @@ lease in response to client's DHCPREQUEST message. The lease information will
 be sent to the client in the DHCPACK message. The first argument contains the
 client and the transaction identification information. The second argument
 contains the allocated IPv4 address.
-
-% DHCP4_NAME_GEN_UPDATE_FAIL %1: failed to update the lease after generating name %2 for a client: %3
-This message indicates the failure when trying to update the lease and/or
-options in the server's response with the hostname generated by the server
-from the acquired IPv4 address. The message argument indicates the reason
-for the failure. The first argument includes the client and the transaction
-identification information. The second argument specifies the hostname.
-The third argument contains the error details.
 
 % DHCP4_NCR_CREATE %1: DDNS updates enabled, therefore sending name change requests
 This debug message is issued when the server is starting to send
@@ -429,6 +465,17 @@ will not send a response but will instead ignore the packet. The first
 argument contains the client and transaction identification information.
 The second argument includes the details of the error.
 
+% DHCP4_PACKET_DROP_0008 %1: DHCP service is globally disabled
+This debug message is issued when a packet is dropped because the DHCP service
+has been temporarily disabled. This affects all received DHCP packets. The
+service may be enabled by the "dhcp-enable" control command or automatically
+after a specified amount of time since receiving "dhcp-disable" command.
+
+% DHCP4_PACKET_DROP_0009 %1: Option 53 missing (no DHCP message type), is this a BOOTP packet?
+This debug message is issued when a packet is dropped because it did contain
+option 53 and thus has no DHCP message type. The most likely explanation is
+that it was BOOTP packet.
+
 % DHCP4_PACKET_NAK_0001 %1: failed to select a subnet for incoming packet, src %2, type %3
 This error message is output when a packet was received from a subnet
 for which the DHCPv4 server has not been configured. The most probable
@@ -461,6 +508,11 @@ reason. The first argument contains the client and the transaction
 identification information. The second argument contains the IPv4 address
 in the ciaddr field. The third argument contains the IPv4 address in the
 requested-ip-address option (if present).
+
+% DHCP4_PACKET_OPTIONS_SKIPPED An error upacking an option, caused subsequent options to be skipped: %1
+A debug message issued when an option failed to unpack correctly, making it
+impossible to unpack the remaining options in the packet.  The server will
+server will still attempt to service the packet.
 
 % DHCP4_PACKET_PACK %1: preparing on-wire format of the packet to be sent
 This debug message is issued when the server starts preparing the on-wire
@@ -545,6 +597,13 @@ the DHCPv4 server failed to create a parser to decode the contents
 of the named configuration element, or the creation succeeded but the
 parsing actions and committal of changes failed.  The reason for the
 failure is given in the message.
+
+% DHCP4_POST_ALLOCATION_NAME_UPDATE_FAIL %1: failed to update hostname %2 in a lease after address allocation: %3
+This message indicates the failure when trying to update the lease and/or
+options in the server's response with the hostname generated by the server
+or reserved for the client belonging to a shared network. The latter is
+the case when the server dynamically switches to another subnet (than
+initially selected for allocation) from the same shared network.
 
 % DHCP4_QUERY_DATA %1, packet details: %2
 A debug message printing the details of the received packet. The first
@@ -681,6 +740,14 @@ the client. The first argument includes the client and the
 transaction identification information. The second arguments
 includes the subnet details.
 
+% DHCP4_SUBNET_DYNAMICALLY_CHANGED %1: changed selected subnet %2 to subnet %3 from shared network %4 for client assignments
+This debug message indicates that the server is using another subnet
+than initially selected for client assignments. This newly selected
+subnet belongs to the same shared network as the original subnet.
+Some reasons why the new subnet was selected include: address pool
+exhaustion in the original subnet or the fact that the new subnet
+includes some static reservations for this client.
+
 % DHCP4_SUBNET_SELECTED %1: the subnet with ID %2 was selected for client assignments
 This is a debug message noting the selection of a subnet to be used for
 address and option assignment. Subnet selection is one of the early
@@ -696,7 +763,10 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
+<<<<<<< HEAD
+=======
 
-% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 on interface %3
+% DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv6 server over inter-process communication.
+>>>>>>> trac5404

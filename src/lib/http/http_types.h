@@ -44,6 +44,30 @@ struct HttpVersion {
     bool operator!=(const HttpVersion& rhs) const {
         return (!operator==(rhs));
     }
+
+    /// @name Methods returning @c HttpVersion object encapsulating typical
+    /// HTTP version numbers.
+    //@{
+
+    /// @brief HTTP version 1.0.
+    static const HttpVersion& HTTP_10() {
+        static HttpVersion ver(1, 0);
+        return (ver);
+    };
+
+    /// @brief HTTP version 1.1.
+    static const HttpVersion& HTTP_11() {
+        static HttpVersion ver(1, 1);
+        return (ver);
+    }
+
+    /// @brief HTTP version 2.0.
+    static const HttpVersion& HTTP_20() {
+        static HttpVersion ver(2, 0);
+        return (ver);
+    }
+
+    //@}
 };
 
 } // end of namespace isc::http

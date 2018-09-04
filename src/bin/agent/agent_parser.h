@@ -218,7 +218,7 @@ namespace isc { namespace agent {
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsibility.
+    /// should not be the variant's responsability.
     /// Swapping between built and (possibly) non-built is done with
     /// variant::move ().
     template <typename T>
@@ -304,6 +304,7 @@ namespace isc { namespace agent {
     union union_type
     {
       // value
+      // map_value
       // socket_type_value
       char dummy1[sizeof(ElementPtr)];
 
@@ -351,36 +352,38 @@ namespace isc { namespace agent {
         TOKEN_CONTROL_AGENT = 265,
         TOKEN_HTTP_HOST = 266,
         TOKEN_HTTP_PORT = 267,
-        TOKEN_CONTROL_SOCKETS = 268,
-        TOKEN_DHCP4_SERVER = 269,
-        TOKEN_DHCP6_SERVER = 270,
-        TOKEN_D2_SERVER = 271,
-        TOKEN_SOCKET_NAME = 272,
-        TOKEN_SOCKET_TYPE = 273,
-        TOKEN_UNIX = 274,
-        TOKEN_HOOKS_LIBRARIES = 275,
-        TOKEN_LIBRARY = 276,
-        TOKEN_PARAMETERS = 277,
-        TOKEN_LOGGING = 278,
-        TOKEN_LOGGERS = 279,
-        TOKEN_NAME = 280,
-        TOKEN_OUTPUT_OPTIONS = 281,
-        TOKEN_OUTPUT = 282,
-        TOKEN_DEBUGLEVEL = 283,
-        TOKEN_SEVERITY = 284,
-        TOKEN_FLUSH = 285,
-        TOKEN_MAXSIZE = 286,
-        TOKEN_MAXVER = 287,
-        TOKEN_DHCP4 = 288,
-        TOKEN_DHCP6 = 289,
-        TOKEN_DHCPDDNS = 290,
-        TOKEN_START_JSON = 291,
-        TOKEN_START_AGENT = 292,
-        TOKEN_START_SUB_AGENT = 293,
-        TOKEN_STRING = 294,
-        TOKEN_INTEGER = 295,
-        TOKEN_FLOAT = 296,
-        TOKEN_BOOLEAN = 297
+        TOKEN_USER_CONTEXT = 268,
+        TOKEN_COMMENT = 269,
+        TOKEN_CONTROL_SOCKETS = 270,
+        TOKEN_DHCP4_SERVER = 271,
+        TOKEN_DHCP6_SERVER = 272,
+        TOKEN_D2_SERVER = 273,
+        TOKEN_SOCKET_NAME = 274,
+        TOKEN_SOCKET_TYPE = 275,
+        TOKEN_UNIX = 276,
+        TOKEN_HOOKS_LIBRARIES = 277,
+        TOKEN_LIBRARY = 278,
+        TOKEN_PARAMETERS = 279,
+        TOKEN_LOGGING = 280,
+        TOKEN_LOGGERS = 281,
+        TOKEN_NAME = 282,
+        TOKEN_OUTPUT_OPTIONS = 283,
+        TOKEN_OUTPUT = 284,
+        TOKEN_DEBUGLEVEL = 285,
+        TOKEN_SEVERITY = 286,
+        TOKEN_FLUSH = 287,
+        TOKEN_MAXSIZE = 288,
+        TOKEN_MAXVER = 289,
+        TOKEN_DHCP4 = 290,
+        TOKEN_DHCP6 = 291,
+        TOKEN_DHCPDDNS = 292,
+        TOKEN_START_JSON = 293,
+        TOKEN_START_AGENT = 294,
+        TOKEN_START_SUB_AGENT = 295,
+        TOKEN_STRING = 296,
+        TOKEN_INTEGER = 297,
+        TOKEN_FLOAT = 298,
+        TOKEN_BOOLEAN = 299
       };
     };
 
@@ -538,6 +541,14 @@ namespace isc { namespace agent {
     static inline
     symbol_type
     make_HTTP_PORT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_USER_CONTEXT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_COMMENT (const location_type& l);
 
     static inline
     symbol_type
@@ -864,12 +875,12 @@ namespace isc { namespace agent {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 172,     ///< Last index in yytable_.
-      yynnts_ = 92,  ///< Number of nonterminal symbols.
+      yylast_ = 190,     ///< Last index in yytable_.
+      yynnts_ = 97,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 43  ///< Number of tokens.
+      yyntokens_ = 45  ///< Number of tokens.
     };
 
 
@@ -915,9 +926,9 @@ namespace isc { namespace agent {
        5,     6,     7,     8,     9,    10,    11,    12,    13,    14,
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
-      35,    36,    37,    38,    39,    40,    41,    42
+      35,    36,    37,    38,    39,    40,    41,    42,    43,    44
     };
-    const unsigned int user_token_number_max_ = 297;
+    const unsigned int user_token_number_max_ = 299;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -950,24 +961,25 @@ namespace isc { namespace agent {
   {
       switch (other.type_get ())
     {
-      case 51: // value
-      case 100: // socket_type_value
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 42: // "boolean"
+      case 44: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 41: // "floating point"
+      case 43: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 40: // "integer"
+      case 42: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 39: // "constant string"
+      case 41: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -988,24 +1000,25 @@ namespace isc { namespace agent {
     (void) v;
       switch (this->type_get ())
     {
-      case 51: // value
-      case 100: // socket_type_value
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 42: // "boolean"
+      case 44: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 41: // "floating point"
+      case 43: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 40: // "integer"
+      case 42: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 39: // "constant string"
+      case 41: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1085,24 +1098,25 @@ namespace isc { namespace agent {
     // Type destructor.
     switch (yytype)
     {
-      case 51: // value
-      case 100: // socket_type_value
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 42: // "boolean"
+      case 44: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 41: // "floating point"
+      case 43: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 40: // "integer"
+      case 42: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 39: // "constant string"
+      case 41: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1129,24 +1143,25 @@ namespace isc { namespace agent {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 51: // value
-      case 100: // socket_type_value
+      case 53: // value
+      case 56: // map_value
+      case 107: // socket_type_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 42: // "boolean"
+      case 44: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 41: // "floating point"
+      case 43: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 40: // "integer"
+      case 42: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 39: // "constant string"
+      case 41: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1209,7 +1224,7 @@ namespace isc { namespace agent {
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297
+     295,   296,   297,   298,   299
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1278,6 +1293,18 @@ namespace isc { namespace agent {
   AgentParser::make_HTTP_PORT (const location_type& l)
   {
     return symbol_type (token::TOKEN_HTTP_PORT, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_USER_CONTEXT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_USER_CONTEXT, l);
+  }
+
+  AgentParser::symbol_type
+  AgentParser::make_COMMENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_COMMENT, l);
   }
 
   AgentParser::symbol_type
@@ -1463,7 +1490,7 @@ namespace isc { namespace agent {
 
 #line 14 "agent_parser.yy" // lalr1.cc:377
 } } // isc::agent
-#line 1467 "agent_parser.h" // lalr1.cc:377
+#line 1494 "agent_parser.h" // lalr1.cc:377
 
 
 

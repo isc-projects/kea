@@ -1,10 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<chapter id="classify">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="classify">
   <title>Client Classification</title>
 
   <section>
@@ -29,62 +32,138 @@
       </para>
 
       <para>
-      It is envisaged that client classification will be used for changing the
-      behavior of almost any part of the DHCP message processing, including the assignment of
-      leases from different pools, the assignment of different options (or different values of
-      the same options) etc. In the current release of the software however, there are
-      only three mechanisms that take
-      advantage of client classification: subnet selection, assignment of different
-      options and, for DHCPv4 cable modems, the setting of specific options for use with
-      the TFTP server address and the boot file field.
+      Conversely, different clients can be grouped into a client class to get a
+      common option.
       </para>
 
       <para>
-      The process of doing classification is conducted in three steps:
+      An incoming packet can be associated with a client class in
+      serveral ways:
+      <itemizedlist>
+      <listitem><para>
+      Implicitly, using a vendor class option or another builtin condition.
+      </para></listitem>
+      <listitem><para>
+      Using an expression which evaluates to true.
+      </para></listitem>
+      <listitem><para>
+      Using static host reservations, a shared network, a subnet, etc.
+      </para></listitem>
+      <listitem><para>
+      Using a hook.
+      </para></listitem>
+      </itemizedlist>
+      </para>
+
+      <para>
+      It is envisaged that client classification will be used for
+      changing the behavior of almost any part of the DHCP message
+      processing. In the current release of the software however,
+      there are only five mechanisms that take advantage of
+      client classification: subnet selection, pool selection,
+      definition of DHCPv4 private (codes 224-254) and code 43
+      options, assignment of different options and, for DHCPv4 cable
+      modems, the setting of specific options for use with the TFTP
+      server address and the boot file field.
+      </para>
+
+      <para>
+      The process of doing classification is conducted in several steps:
       <orderedlist>
       <listitem><para>
-      Assess an incoming packet and assign it to zero or more classes.
+      The ALL class is associated with the incoming packet.
       </para></listitem>
       <listitem><para>
-      Choose a subnet, possibly based on the class information.
+      Vendor class options are processed.
       </para></listitem>
       <listitem><para>
-      Assign options, again possibly based on the class information.
+      Classes with matching expressions and not marked for later ("on
+      request" or depending on the KNOWN/UNKNOWN builtin classes)
+      evaluation are processed in the order they are defined in the
+      configuration: the boolean expression is evaluated and when it
+      returns true ("match") the incoming packet is associated to the
+      class.
+      </para></listitem>
+      <listitem><para>
+      If a private or code 43 DHCPv4 option is received, decoding it
+      following its client class or global (or for option 43 last
+      resort) definition.
+      </para></listitem>
+      <listitem><para>
+      Choose a subnet, possibly based on the class information when
+      some subnets are guarded. More precisely: when choosing a subnet,
+      the server will iterate over all of the subnets that are
+      feasible given the information found in the packet (client
+      address, relay address etc). It will use the first subnet it
+      finds that either doesn't have a class associated with it or
+      that has a class which matches one of the packet's classes.
+      </para></listitem>
+      <listitem><para>
+      Host reservations are looked for. If an identifier from the
+      incoming packet matches a host reservation in the subnet or
+      shared network, the packet is associated with the KNOWN class
+      and all classes of the host reservation. If a reservation is not
+      found, the packet is assigned to UNKNOWN class.
+      </para></listitem>
+      <listitem><para>
+      Classes with matching expressions using directly or indirectly
+      the KNOWN/UNKNOWN builtin classes and not marked for later ("on
+      request") evaluation are processed in the order they are defined
+      in the configuration: the boolean expression is evaluated and
+      when it returns true ("match") the incoming packet is associated
+      to the class. The determination whether there is a reservation
+      for a given client is made after a subnet is selected. As such, it
+      is not possible to use KNOWN/UNKNOWN classes to select a shared
+      network or a subnet.
+      </para></listitem>
+      <listitem><para>
+      If needed, addresses and prefixes from pools are assigned,
+      possibly based on the class information when some pools are
+      reserved to class members.
+      </para></listitem>
+      <listitem><para>
+      Evaluate classes marked as "required" in the order in which they
+      are listed as required: first shared network, then the subnet
+      and to finally pools assigned resources belong too.
+      </para></listitem>
+      <listitem><para>
+      Assign options, again possibly based on the class information
+      in order classes were associated with the incoming packet.
+      For DHCPv4 private and code 43 options this includes class local
+      option definitions.
       </para></listitem>
       </orderedlist>
       </para>
 
+      <note>
       <para>
-      When determining which options to include in the response the server will examine
-      the union of options from all of the assigned classes. In the case two or more
-      classes include the same option, the value from the first class examined will
-      be used.  When choosing a subnet, the server will iterate over all of the
-      subnets that are feasible given the information found in the packet (client address,
-      relay address etc). It will use the first subnet it finds that either doesn't
-      have a class associated with it or that has a class which matches one of
-      the packet's classes. In the future the processing order of the
-      various classes may be specified but for now it is being left unspecified and
-      may change in future releases.
+      Beginning with Kea 1.4.0 release,  client classes follow the order
+      in which they are specified in the configuration
+      (vs. alphabetical order in previous releases). Required classes
+      follow the order in which they are required.
+      </para>
+      </note>
+
+      <para>
+      When determining which options to include in the response, the
+      server will examine the union of options from all of the
+      assigned classes. In case when two or more classes include the
+      same option, the value from the first class examined will be
+      used, and classes are examined in the order they were associated
+      so ALL is always the first class and matching required classes
+      are last.
       </para>
 
       <para>
-      As an example, imagine that an incoming packet matches two classes.
-      Class "foo" defines values for an NTP server
-      (option 42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while class
-      "bar" defines values for an NTP server and a POP3 server (option 70 in DHCPv4).
-      The server will examine the three options NTP, SMTP and POP3 and return any
-      of them that the client requested.  As the NTP server was defined twice the
-      server will choose only one of the values for the reply: the class from which the
-      value is obtained is unspecified.
-      </para>
-
-      <para>
-      There are two methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options. Information from these
-      options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows you to specify an expression
-      that is evaluated for each packet. If the result is true, the packet is
-      a member of the class.
+      As an example, imagine that an incoming packet matches two
+      classes.  Class "foo" defines values for an NTP server (option
+      42 in DHCPv4) and an SMTP server (option 69 in DHCPv4) while
+      class "bar" defines values for an NTP server and a POP3 server
+      (option 70 in DHCPv4).  The server will examine the three
+      options NTP, SMTP and POP3 and return any of them that the
+      client requested.  As the NTP server was defined twice the
+      server will choose only one of the values for the reply: the
+      class from which the value is obtained is unspecified.
       </para>
 
       <note>
@@ -95,47 +174,67 @@
       </note>
   </section>
 
-  <section id="classification-using-host-reservations">
-    <title>Using Static Host Reservations In Classification</title>
-    <para>Classes can be statically assigned to the clients using techniques described
-    in <xref linkend="reservation4-client-classes"/> and
-    <xref linkend="reservation6-client-classes"/>.
-    </para>
-  </section>
-
-  <section id="classification-using-vendor">
-    <title>Using Vendor Class Information In Classification</title>
+  <section xml:id="classification-using-vendor">
+    <title>Builtin Client Classes</title>
       <para>
-      The server checks whether an incoming DHCPv4 packet includes
-      the vendor class identifier option (60) or an incoming DHCPv6 packet
-      includes the vendor class option (16). If it does, the content of that
-      option is prepended with &quot;VENDOR_CLASS_&quot; and the result is interpreted
-      as a class. For example, modern cable modems will send this option with
-      value &quot;docsis3.0&quot; and so the packet will belong to
-      class &quot;VENDOR_CLASS_docsis3.0&quot;.
+      Some classes are builtin so do not need to be defined. The main
+      example uses Vendor Class information: The server checks whether
+      an incoming DHCPv4 packet includes the vendor class identifier
+      option (60) or an incoming DHCPv6 packet includes the vendor
+      class option (16). If it does, the content of that option is
+      prepended with &quot;VENDOR_CLASS_&quot; and the result is
+      interpreted as a class. For example, modern cable modems will
+      send this option with value &quot;docsis3.0&quot; and so the
+      packet will belong to class &quot;VENDOR_CLASS_docsis3.0&quot;.
       </para>
+
+      <para>The &quot;HA_&quot; prefix is used by the High Availability
+      hooks library to designate certain servers to process DHCP packets
+      as a result of load balancing. The class name is constructed by
+      prepending the &quot;HA_&quot; prefix to the name of the server
+      which should process the DHCP packet. This server will use appropriate
+      pool or subnet to allocate IP addresses (and/or prefixes) from, based on
+      the assigned client classes. The details can be found in
+      <xref linkend="high-availability-library"/>.</para>
+
+      <para>Other examples are: the  ALL class which all incoming packets
+      belong to, and the KNOWN class assigned when host reservations exist
+      for the particular client. By convention, builtin classes' names
+      begin with all capital letters.
+      </para>
+
+      <para>Currently recognized builtin class names are ALL, KNOWN
+      and UNKNOWN, and prefixes VENDOR_CLASS_, HA_, AFTER_ and
+      EXTERNAL_. The AFTER_ prefix is a provision for a not yet
+      written hook, the EXTERNAL_ prefix can be freely used: builtin
+      classes are implicitly defined so never raise warnings if they
+      do not appear in the configuration.
+      </para>
+
   </section>
 
-  <section id="classification-using-expressions">
+  <section xml:id="classification-using-expressions">
     <title>Using Expressions In Classification</title>
       <para>
-      The expression portion of classification contains operators and values.
-      All values are currently strings and operators take a string or strings and
-      return another string. When all the operations have completed
-      the result should be a value of &quot;true&quot; or &quot;false&quot;.
-      The packet belongs to
-      the class (and the class name is added to the list of classes) if the result
-      is &quot;true&quot;. Expressions are written in standard format and can be nested.
+      The expression portion of classification contains operators and
+      values.  All values are currently strings and operators take a
+      string or strings and return another string. When all the
+      operations have completed the result should be a value of
+      &quot;true&quot; or &quot;false&quot;.  The packet belongs to
+      the class (and the class name is added to the list of classes)
+      if the result is &quot;true&quot;. Expressions are written in
+      standard format and can be nested.
       </para>
 
       <para>
-      Expressions are pre-processed during the parsing of the configuration file
-      and converted to an internal representation. This allows certain types of
-      errors to be caught and logged during parsing.  Examples of these errors
-      include an incorrect number or types of arguments to an operator.  The
-      evaluation code will also check for this class of error and generally
-      throw an exception, though this should not occur in a normally functioning
-      system.
+      Expressions are pre-processed during the parsing of the
+      configuration file and converted to an internal
+      representation. This allows certain types of errors to be caught
+      and logged during parsing.  Examples of these errors include an
+      incorrect number or types of arguments to an operator.  The
+      evaluation code will also check for this class of error and
+      generally throw an exception, though this should not occur in a
+      normally functioning system.
       </para>
 
       <para>
@@ -152,12 +251,21 @@
       </para>
 
       <para>
-        <table frame="all" id="classification-values-list">
+      Dependencies between classes are checked too: for instance
+      forward dependencies are rejected when the configuration is
+      parsed: an expression can only depend on already defined classes
+      (including builtin classes) and which are evaluated in a
+      previous or the same evaluation phase. This does not apply to
+      the KNOWN or UNKNOWN classes.
+      </para>
+
+      <para>
+        <table frame="all" xml:id="classification-values-list">
           <title>List of Classification Values</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='example' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="example"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -192,7 +300,7 @@
               <entry>'123'</entry>
               <entry>A 32 bit unsigned integer value</entry>
             </row>
-            <row></row>
+            <row/>
             <row>
               <entry>Binary content of the option</entry>
               <entry>option[123].hex</entry>
@@ -215,6 +323,27 @@
               <entry>'true'</entry>
               <entry>If the option with given code is present in the
               packet "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Client class membership</entry>
+              <entry>member('foobar')</entry>
+              <entry>'true'</entry>
+              <entry>If the packet belongs to the given client class
+              "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Known client</entry>
+              <entry>known</entry>
+              <entry>member('KNOWN')</entry>
+              <entry>If there is a host reservation for the client
+              "true" else "false"</entry>
+            </row>
+            <row>
+              <entry>Unknown client</entry>
+              <entry>unknown</entry>
+              <entry>not member('KNOWN')</entry>
+              <entry>If there is a host reservation for the client
+              "false" else "true"</entry>
             </row>
             <row>
               <entry>DHCPv4 relay agent sub-option</entry>
@@ -430,9 +559,9 @@
       <itemizedlist>
 
       <listitem><para>
-      Hexadecimal strings are converted into a string as expected.  The starting &quot;0X&quot; or
-      &quot;0x&quot; is removed and if the string is an odd number of characters a
-      &quot;0&quot; is prepended to it.
+      Hexadecimal strings are converted into a string as expected.  The starting "0X" or
+      "0x" is removed and if the string is an odd number of characters a
+      "0" is prepended to it.
       </para></listitem>
 
       <listitem><para>
@@ -463,6 +592,22 @@
       <listitem><para>
       "option[code].exists" checks if an option with the code "code" is present
       in the incoming packet. It can be used with empty options.
+      </para></listitem>
+
+      <listitem><para>
+      "member('foobar')" checks if the packet belongs to the client
+      class "foobar". To avoid dependency loops the configuration file
+      parser checks if client classes were already defined or are
+      built-in, i.e., beginning by &quot;VENDOR_CLASS_&quot;,
+      &quot;AFTER__&quot; (for the to come "after" hook) and
+      &quot;EXTERNAL_&quot; or equal to &quot;ALL&quot;, &quot;KNOWN&quot;,
+      &quot;UNKNOWN&quot;etc.
+      </para>
+      <para>"known" and "unknown" are short hands for "member('KNOWN')" and
+      "not member('KNOWN')". Note the evaluation of any expression using
+      directly or indirectly the &quot;KNOWN&quot; class is deferred
+      after the host reservation lookup (i.e. when the &quot;KNOWN&quot;
+      or &quot;UNKNOWN&quot; partition is determined).
       </para></listitem>
 
       <listitem><para>
@@ -513,14 +658,14 @@
       <listitem><para>
       Vendor option means Vendor-Identifying Vendor-specific Information
       option in DHCPv4 (code 125, see
-      <ulink url="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</ulink>) and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</link>) and
       Vendor-specific Information Option in DHCPv6 (code 17, defined in
-      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
-      RFC 3315</ulink>). Vendor class option means Vendor-Identifying Vendor
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
+      RFC 3315</link>). Vendor class option means Vendor-Identifying Vendor
       Class Option in DHCPv4 (code 124, see
-      <ulink url="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</ulink>) in DHCPv4 and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</link>) in DHCPv4 and
       Class Option in DHCPv6 (code 16, see
-      <ulink url="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</ulink>).
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</link>).
       Vendor options may
       have sub-options that are referenced by their codes. Vendor class
       options do not have sub-options, but rather data chunks, which are
@@ -538,8 +683,8 @@
       accessed using option[60] expression.</para></listitem>
 
       <listitem><para>
-      <ulink url="http://tools.ietf.org/html/rfc3925">RFC3925</ulink> and
-      <ulink url="http://tools.ietf.org/html/rfc3315">RFC3315</ulink>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925">RFC3925</link> and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC3315</link>
       allow for multiple instances of vendor options
       to appear in a single message. The client classification code currently
       examines the first instance if more than one appear. For vendor.enterprise
@@ -551,12 +696,12 @@
       </itemizedlist>
 
       <para>
-        <table frame="all" id="classification-expressions-list">
+        <table frame="all" xml:id="classification-expressions-list">
           <title>List of Classification Expressions</title>
-          <tgroup cols='3'>
-          <colspec colname='name' />
-          <colspec colname='example' />
-          <colspec colname='description' />
+          <tgroup cols="3">
+          <colspec colname="name"/>
+          <colspec colname="example"/>
+          <colspec colname="description"/>
           <thead>
             <row>
               <entry>Name</entry>
@@ -572,6 +717,7 @@
 <row><entry>Substring</entry><entry>substring('foobar',0,3)</entry><entry>Return the requested substring</entry></row>
 <row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
 concatenation of the strings</entry></row>
+<row><entry>Ifelse</entry><entry>ifelse('foo' == 'bar','us','them')</entry><entry>Return the branch value according to the condition</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -617,6 +763,15 @@ concatenation of the strings</entry></row>
         concat('foo', 'bar') == 'foobar'
           </screen>
        </section>
+       <section>
+         <title>Ifelse</title>
+         The ifelse function "ifelse(cond, iftrue, ifelse)" returns the
+         "iftrue" or "ifelse" branch value following the boolean
+         condition "cond". For instance:
+           <screen>
+         ifelse(option[230].exists, option[230].hex, 'none')
+           </screen>
+        </section>
     </section>
 
   <note>
@@ -624,16 +779,17 @@ concatenation of the strings</entry></row>
     The expression for each class is executed on each packet received.
     If the expressions are overly complex, the time taken to execute
     them may impact the performance of the server. If you need
-    complex or time consuming expressions you should write a <link
-    linkend='hooks-libraries'>hook</link> to perform the necessary work.
+    complex or time consuming expressions you should write a <link linkend="hooks-libraries">hook</link> to perform the necessary work.
   </para> </note>
 
-  <section id="classification-configuring">
+  <section xml:id="classification-configuring">
     <title>Configuring Classes</title>
       <para>
-      A class contains three items: a name, a test expression and option data.
+      A class contains five items: a name, a test expression, option data,
+      option definition and only-if-required flag.
       The name must exist and must be unique amongst all classes. The test
-      expression and option data are optional.
+      expression, option data and definition, and only-if-required flag are
+      optional.
       </para>
 
       <para>
@@ -648,9 +804,37 @@ concatenation of the strings</entry></row>
       </para>
 
       <para>
+      The option definition is for DHCPv4 option 43 (<xref
+      linkend="dhcp4-vendor-opts"/> and DHCPv4 private options
+      (<xref linkend="dhcp4-private-opts"/>).
+      </para>
+
+      <para>
+      Usually the test expression is evaluated before subnet selection
+      but in some cases it is useful to evaluate it later when the
+      subnet, shared-network or pools are known but output option
+      processing not yet done. The only-if-required flag, false by default,
+      allows to perform the evaluation of the test expression only
+      when it was required, i.e. in a require-client-classes list of the
+      selected subnet, shared-network or pool.
+      </para>
+
+      <para>
+      The require-client-classes list which is valid for shared-network,
+      subnet and pool scope specifies the classes which are evaluated
+      in the second pass before output option processing.
+      The list is built in the reversed precedence order of option
+      data, i.e. an option data in a subnet takes precedence on one
+      in a shared-network but required class in a subnet is added
+      after one in a shared-network.
+      The mechanism is related to the only-if-required flag but it is
+      not mandatory that the flag was set to true.
+      </para>
+
+      <para>
       In the following example the class named &quot;Client_foo&quot; is defined.
       It is comprised of all clients whose client ids (option 61) start with the
-      string &quot;foo&quot;. Members of this class will be given 192.0.2.1 and
+      string "foo". Members of this class will be given 192.0.2.1 and
       192.0.2.2 as their domain name servers.
 
         <screen>
@@ -677,7 +861,7 @@ concatenation of the strings</entry></row>
 
       <para>
       This example shows a client class being defined for use by the DHCPv6 server.
-      In it the class named &quot;Client_enterprise&quot; is defined.  It is comprised
+      In it the class named "Client_enterprise" is defined.  It is comprised
       of all clients who's client identifiers start with the given hex string (which
       would indicate a DUID based on an enterprise id of 0xAABBCCDD). Members of this
       class will be given an 2001:db8:0::1 and 2001:db8:2::1 as their domain name servers.
@@ -704,7 +888,15 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
-  <section id="classification-subnets">
+  <section id="classification-using-host-reservations">
+    <title>Using Static Host Reservations In Classification</title>
+    <para>Classes can be statically assigned to the clients using techniques described
+    in <xref linkend="reservation4-client-classes"/> and
+    <xref linkend="reservation6-client-classes"/>.
+    </para>
+  </section>
+
+  <section xml:id="classification-subnets">
     <title>Configuring Subnets With Class Information</title>
       <para>
         In certain cases it beneficial to restrict access to certain subnets
@@ -784,6 +976,95 @@ concatenation of the strings</entry></row>
       </para>
   </section>
 
+ <section id="classification-pools">
+   <title>Configuring Pools With Class Information</title>
+     <para>
+       Similar to subnets in certain cases access to certain address or
+       prefix pools must be restricted to only clients that belong to a
+       given class, using the "client-class" when defining the pool.
+     </para>
+
+     <para>
+       Let's assume that the server is connected to a network segment that uses
+       the 192.0.2.0/24 prefix. The Administrator of that network has decided
+       that addresses from range 192.0.2.10 to 192.0.2.20 are going to be
+       managed by the DHCP4 server. Only clients belonging to client class
+       Client_foo are allowed to use this pool. Such a
+       configuration can be achieved in the following way:
+       <screen>
+"Dhcp4": {
+    "client-classes": [
+        {
+            "name": "Client_foo",
+            "test": "substring(option[61].hex,0,3) == 'foo'",
+            "option-data": [
+                {
+                    "name": "domain-name-servers",
+                    "code": 6,
+                    "space": "dhcp4",
+                    "csv-format": true,
+                    "data": "192.0.2.1, 192.0.2.2"
+                }
+            ]
+        },
+        ...
+    ],<userinput>
+    "subnet4": [
+        {
+            "subnet": "192.0.2.0/24",
+            "pools": [
+                {
+                    "pool": "192.0.2.10 - 192.0.2.20",
+                    "client-class": "Client_foo"
+                }
+            ]
+        },
+        ...
+    ],</userinput>,
+
+}</screen>
+      </para>
+
+     <para>
+       The following example shows restricting access to an address pool.
+       This configuration will restrict use of the addresses 2001:db8:1::1
+       to 2001:db8:1::FFFF to members of the "Client_enterprise" class.
+       <screen>
+"Dhcp6": {
+    "client-classes": [
+        {
+            "name": "Client_enterprise_",
+            "test": "substring(option[1].hex,0,6) == 0x0002AABBCCDD'",
+            "option-data": [
+                {
+                    "name": "dns-servers",
+                    "code": 23,
+                    "space": "dhcp6",
+                    "csv-format": true,
+                    "data": "2001:db8:0::1, 2001:db8:2::1"
+                }
+            ]
+        },
+        ...
+    ],
+    "subnet6": [
+        {
+            "subnet": "2001:db8:1::/64",
+            <userinput>
+            "pools": [
+                {
+                    "pool": "2001:db8:1::-2001:db8:1::ffff",
+                    "client-class": "Client_foo"
+                }
+            ]</userinput>
+        },
+        ...
+    ],
+    ...
+}</screen>
+      </para>
+  </section>
+
   <section>
     <title>Using Classes</title>
       <para>
@@ -794,7 +1075,7 @@ concatenation of the strings</entry></row>
 
       <para>
       When supplying options, options defined as part of the class definition
-      are considered &quot;class globals&quot;.  They will override any global options that
+      are considered "class globals".  They will override any global options that
       may be defined and in turn will be overridden by any options defined for an
       individual subnet.
       </para>
@@ -831,7 +1112,7 @@ concatenation of the strings</entry></row>
      <para>
      In order to understand the logging statements one must understand a
      bit about how expressions are evaluated, for a more complete description
-     refer to the design document at <ulink url="http://kea.isc.org/wiki/KeaDesigns"/>.
+     refer to the design document at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/KeaDesigns">http://kea.isc.org/wiki/KeaDesigns</uri>.
      In brief there are two structures used during the evaluation of an expression:
      a list of tokens which represent the expressions and a value stack which
      represents the values being manipulated.

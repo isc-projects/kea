@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
@@ -223,6 +224,27 @@ private:
     commandConfigTestHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
+    /// @brief A handler for processing 'dhcp-disable' command.
+    ///
+    /// @param command command name (ignored).
+    /// @param args aguments for the command. It must be a map and
+    /// it may include optional 'max-period' parameter.
+    ///
+    /// @return result of the command.
+    isc::data::ConstElementPtr
+    commandDhcpDisableHandler(const std::string& command,
+                              isc::data::ConstElementPtr args);
+
+    /// @brief A handler for processing 'dhcp-enable' command.
+    ///
+    /// @param command command name (ignored)
+    /// @param args arguments for the command (ignored).
+    ///
+    /// @return result of the command.
+    isc::data::ConstElementPtr
+    commandDhcpEnableHandler(const std::string& command,
+                             isc::data::ConstElementPtr args);
+
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -296,6 +318,43 @@ private:
     /// deleted.
     void deleteExpiredReclaimedLeases(const uint32_t secs);
 
+    /// @brief Attempts to reconnect the server to the DB backend managers
+    ///
+    /// This is a self-rescheduling function that attempts to reconnect to the
+    /// server's DB backends after connectivity to one or more have been
+    /// lost.  Upon entry it will attempt to reconnect via @ref CfgDdbAccess::
+    /// createManagers.  If this is succesful, DHCP servicing is re-enabled and
+    /// server returns to normal operation.
+    ///
+    /// If reconnection fails and the maximum number of retries has not been
+    /// exhausted, it will schedule a call to itself to occur at the
+    /// configured retry interval. DHCP service remains disabled.
+    ///
+    /// If the maximum number of retries has been exhausted an error is logged
+    /// and the server shuts down.
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters
+    ///
+    void dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
+
+    /// @brief Callback DB backends should invoke upon loss of connectivity
+    ///
+    /// This function is invoked by DB backends when they detect a loss of
+    /// connectivity.  The parameter, db_reconnect_ctl, conveys the configured
+    /// maximum number of reconnect retries as well as the interval to wait
+    /// between retry attempts.
+    ///
+    /// If either value is zero, reconnect is presumed to be disabled and
+    /// the function will returns false.  This instructs the DB backend
+    /// layer (the caller) to treat the connectivity loss as fatal.
+    ///
+    /// Otherwise, the function saves db_reconnect_ctl and invokes
+    /// dbReconnect to initiate the reconnect process.
+    ///
+    /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
+    /// configured reconnect parameters
+    bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
+
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
@@ -310,7 +369,6 @@ private:
     /// Shared pointer to the instance of timer @c TimerMgr is held here to
     /// make sure that the @c TimerMgr outlives instance of this class.
     TimerMgrPtr timer_mgr_;
-
 };
 
 }; // namespace isc::dhcp

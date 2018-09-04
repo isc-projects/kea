@@ -1,8 +1,10 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
@@ -16,9 +18,10 @@
 #include <fstream>
 #include <limits>
 
-EvalContext::EvalContext(const Option::Universe& option_universe)
-  : trace_scanning_(false), trace_parsing_(false),
-    option_universe_(option_universe)
+EvalContext::EvalContext(const Option::Universe& option_universe,
+                         CheckDefined check_defined)
+    : trace_scanning_(false), trace_parsing_(false),
+      option_universe_(option_universe), check_defined_(check_defined)
 {
 }
 
@@ -27,14 +30,25 @@ EvalContext::~EvalContext()
 }
 
 bool
+EvalContext::acceptAll(const ClientClass&) {
+    return (true);
+}
+
+bool
 EvalContext::parseString(const std::string& str, ParserType type)
 {
     file_ = "<string>";
     string_ = str;
     scanStringBegin(type);
-    isc::eval::EvalParser parser(*this);
-    parser.set_debug_level(trace_parsing_);
-    int res = parser.parse();
+    int res = -1;
+    try {
+        isc::eval::EvalParser parser(*this);
+        parser.set_debug_level(trace_parsing_);
+        res = parser.parse();
+    } catch (...) {
+        scanStringEnd();
+        throw;
+    }
     scanStringEnd();
     return (res == 0);
 }
@@ -87,6 +101,10 @@ EvalContext::convertOptionName(const std::string& option_name,
                                                            option_name);
     if (!option_def) {
         option_def = LibDHCP::getRuntimeOptionDef(global_space, option_name);
+    }
+
+    if (!option_def) {
+        option_def = LibDHCP::getLastResortOptionDef(global_space, option_name);
     }
 
     if (!option_def) {
@@ -177,6 +195,11 @@ EvalContext::fromUint32(const uint32_t integer) {
     tmp[3] = integer & 0xff;
 
     return (tmp);
+}
+
+bool
+EvalContext::isClientClassDefined(const ClientClass& client_class) {
+    return (check_defined_(client_class));
 }
 
 void

@@ -159,16 +159,20 @@ LoggingInfo::toSpec() const {
 ElementPtr
 LoggingInfo::toElement() const {
     ElementPtr result = Element::createMap();
+    // Set user context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
-    // Set output_options
-    ElementPtr options = Element::createList();
-    for (std::vector<LoggingDestination>::const_iterator dest =
-             destinations_.cbegin();
-         dest != destinations_.cend(); ++dest) {
-        options->add(dest->toElement());
+    // Set output_options if not empty
+    if (!destinations_.empty()) {
+        ElementPtr options = Element::createList();
+        for (std::vector<LoggingDestination>::const_iterator dest =
+                 destinations_.cbegin();
+             dest != destinations_.cend(); ++dest) {
+            options->add(dest->toElement());
+        }
+        result->set("output_options", options);
     }
-    result->set("output_options", options);
     // Set severity
     std::string severity;
     switch (severity_) {

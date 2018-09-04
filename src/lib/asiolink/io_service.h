@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,7 +11,12 @@
 
 namespace boost {
 namespace asio {
+#if BOOST_VERSION < 106600
     class io_service;
+#else
+    class io_context;
+    typedef io_context io_service;
+#endif
 }
 }
 

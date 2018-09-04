@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -410,14 +410,14 @@ TEST_F(Pkt6Test, unpackVendorMalformed) {
     shorth.resize(orig.size() - 4);
     shorth[len_index] = 12;
     Pkt6Ptr too_short_header_pkt(new Pkt6(&shorth[0], shorth.size()));
-    EXPECT_THROW(too_short_header_pkt->unpack(), OutOfRange);
+    EXPECT_THROW(too_short_header_pkt->unpack(), SkipRemainingOptionsError);
 
     // Truncated option data is not accepted
     vector<uint8_t> shorto = orig;
     shorto.resize(orig.size() - 2);
     shorto[len_index] = 16;
     Pkt6Ptr too_short_option_pkt(new Pkt6(&shorto[0], shorto.size()));
-    EXPECT_THROW(too_short_option_pkt->unpack(), OutOfRange);
+    EXPECT_THROW(too_short_option_pkt->unpack(), SkipRemainingOptionsError);
 }
 
 // This test verifies that options can be added (addOption()), retrieved
@@ -1089,13 +1089,13 @@ TEST_F(Pkt6Test, clientClasses) {
     // Default values (do not belong to any class)
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    EXPECT_TRUE(pkt.classes_.empty());
+    EXPECT_TRUE(pkt.getClasses().empty());
 
     // Add to the first class
     pkt.addClass(DOCSIS3_CLASS_EROUTER);
     EXPECT_TRUE(pkt.inClass(DOCSIS3_CLASS_EROUTER));
     EXPECT_FALSE(pkt.inClass(DOCSIS3_CLASS_MODEM));
-    ASSERT_FALSE(pkt.classes_.empty());
+    ASSERT_FALSE(pkt.getClasses().empty());
 
     // Add to a second class
     pkt.addClass(DOCSIS3_CLASS_MODEM);
@@ -1109,6 +1109,34 @@ TEST_F(Pkt6Test, clientClasses) {
 
     // Check that the packet belongs to 'foo'
     EXPECT_TRUE(pkt.inClass("foo"));
+}
+
+// Tests whether a packet can be marked to evaluate later a class and
+// after check if a given class is in the collection
+TEST_F(Pkt6Test, deferredClientClasses) {
+    Pkt6 pkt(DHCPV6_ADVERTISE, 1234);
+
+    // Default values (do not belong to any class)
+    EXPECT_TRUE(pkt.getClasses(true).empty());
+
+    // Add to the first class
+    pkt.addClass(DOCSIS3_CLASS_EROUTER, true);
+    EXPECT_EQ(1, pkt.getClasses(true).size());
+
+    // Add to a second class
+    pkt.addClass(DOCSIS3_CLASS_MODEM, true);
+    EXPECT_EQ(2, pkt.getClasses(true).size());
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_EROUTER));
+    EXPECT_TRUE(pkt.getClasses(true).contains(DOCSIS3_CLASS_MODEM));
+    EXPECT_FALSE(pkt.getClasses(true).contains("foo"));
+
+    // Check that it's ok to add to the same class repeatedly
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+    EXPECT_NO_THROW(pkt.addClass("foo", true));
+
+    // Check that the packet belongs to 'foo'
+    EXPECT_TRUE(pkt.getClasses(true).contains("foo"));
 }
 
 // Tests whether MAC can be obtained and that MAC sources are not
@@ -1692,6 +1720,38 @@ TEST_F(Pkt6Test, getLabelEmptyClientId) {
     // Add empty client identifier option.
     pkt.addOption(OptionPtr(new Option(Option::V6, D6O_CLIENTID)));
     EXPECT_EQ("duid=[no info], tid=0x2312", pkt.getLabel());
+}
+
+// Verifies that when the VIVSO, 17, has length that is too
+// short (i.e. less than sizeof(uint8_t), unpack throws a
+// SkipRemainingOptionsError exception
+TEST_F(Pkt6Test, truncatedVendorLength) {
+
+    // Build a good Solicit packet
+    Pkt6Ptr pkt = test::PktCaptures::captureSolicitWithVIVSO();
+
+    // Unpacking should not throw
+    ASSERT_NO_THROW(pkt->unpack());
+    ASSERT_EQ(DHCPV6_SOLICIT, pkt->getType());
+
+    // VIVSO option should be there
+    OptionPtr x = pkt->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(x);
+    ASSERT_EQ(D6O_VENDOR_OPTS, x->getType());
+    OptionVendorPtr vivso = boost::dynamic_pointer_cast<OptionVendor>(x);
+    ASSERT_TRUE(vivso);
+    EXPECT_EQ(8, vivso->len()); // data + opt code + len
+
+    // Build a bad Solicit packet
+    pkt = test::PktCaptures::captureSolicitWithTruncatedVIVSO();
+
+    // Unpack should throw Skip exception
+    ASSERT_THROW(pkt->unpack(), SkipRemainingOptionsError);
+    ASSERT_EQ(DHCPV6_SOLICIT, pkt->getType());
+
+    // VIVSO option should not be there
+    x = pkt->getOption(D6O_VENDOR_OPTS);
+    ASSERT_FALSE(x);
 }
 
 }

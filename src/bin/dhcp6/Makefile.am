@@ -20,11 +20,11 @@ if USE_STATIC_LINK
 AM_LDFLAGS = -static
 endif
 
-CLEANFILES = spec_config.h dhcp6_messages.h dhcp6_messages.cc s-messages
+CLEANFILES = dhcp6_messages.h dhcp6_messages.cc s-messages
 
 man_MANS = kea-dhcp6.8
 DISTCLEANFILES = $(man_MANS)
-EXTRA_DIST = $(man_MANS) kea-dhcp6.xml dhcp6.spec
+EXTRA_DIST = $(man_MANS) kea-dhcp6.xml
 EXTRA_DIST += dhcp6.dox dhcp6_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp6_parser.yy
 
@@ -43,16 +43,13 @@ $(man_MANS):
 
 endif
 
-spec_config.h: spec_config.h.pre
-	$(SED) -e "s|@@LOCALSTATEDIR@@|$(localstatedir)|" spec_config.h.pre >$@
-
 dhcp6_messages.h dhcp6_messages.cc: s-messages
 
 s-messages: dhcp6_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp6/dhcp6_messages.mes
 	touch $@
 
-BUILT_SOURCES = spec_config.h dhcp6_messages.h dhcp6_messages.cc
+BUILT_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 
 # convenience archive
 
@@ -82,6 +79,19 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
@@ -105,7 +115,6 @@ kea_dhcp6_LDFLAGS += $(CQL_LIBS)
 endif
 
 kea_dhcp6dir = $(pkgdatadir)
-kea_dhcp6_DATA = dhcp6.spec
 
 if GENERATE_PARSER
 

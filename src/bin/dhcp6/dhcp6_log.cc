@@ -7,6 +7,8 @@
 /// @file dhcp6_log.cc
 /// Contains the loggers used by the DHCPv6 server component.
 
+#include <config.h>
+
 #include <dhcp6/dhcp6_log.h>
 
 namespace isc {

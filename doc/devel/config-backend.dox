@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,10 +110,7 @@ The following are some details of the JSON backend framework.
    (such as the logging initialization code) very easy to share among Kea4, Kea6 and
    DHCP-DDNS.<br/><br/>
 -# The .spec files used in BIND 10 by the control program to validate commands
-   have been retained. They will be kept and maintained even though no use of
-   them is currently planned. At some future time syntax validation may be implemented,
-   although it is out of scope for Kea 0.9 (and probably
-   for 1.0 as well, as it is a pretty big task).<br/><br/>
+   have been removed in 1.4.<br/><br/>
 -# A shell script has been added (as src/bin/keactrl/keactrl) to
    start, stop and reconfigure the daemons. Its only
    job is to pass the configuration file to each daemon and remember its PID file, so

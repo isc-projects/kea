@@ -1,8 +1,10 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <vector>
 #include <string>
@@ -750,4 +752,17 @@ TEST_F(NameTest, LeftShiftOperator) {
     oss << example_name;
     EXPECT_EQ(example_name.toText(), oss.str());
 }
+
+// The following verifies that toRawText() returns a string
+// actual characters in place of escape sequences.  We do not
+// bother with an exhaustive set of tests here as this is
+// not a primary use case.
+TEST_F(NameTest, toRawText) {
+    Name n("a bc.$exa(m)ple.@org");
+    EXPECT_EQ("a bc.$exa(m)ple.@org", n.toRawText(true));
+    EXPECT_EQ("a bc.$exa(m)ple.@org.", n.toRawText(false));
+    // Verify default value of omit parameter is false.
+    EXPECT_EQ("a bc.$exa(m)ple.@org.", n.toRawText());
+}
+
 }

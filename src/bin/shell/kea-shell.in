@@ -60,6 +60,9 @@ def shell_body():
     parser.add_argument('--port', type=int, default=8000,
                         help='TCP port of the CA to connect to '
                         '(default: 8000)')
+    parser.add_argument('--path', type=str, default='',
+                        help='Path of the URL to connect to '
+                        '(default: "")')
     parser.add_argument('--timeout', type=int, default='10',
                         help='Timeout (in seconds) when attempting to '
                         'connect to CA (default: 10)')
@@ -84,6 +87,7 @@ def shell_body():
     params.service = cmd_args.service
     params.http_host = cmd_args.host
     params.http_port = cmd_args.port
+    params.path += cmd_args.path
     params.timeout = cmd_args.timeout
     params.version = VERSION
 

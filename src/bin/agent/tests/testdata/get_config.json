@@ -3,9 +3,13 @@
         "control-sockets": {
             "d2": {
                 "socket-name": "/path/to/the/unix/socket-d2",
-                "socket-type": "unix"
+                "socket-type": "unix",
+                "user-context": {
+                    "in-use": false
+                }
             },
             "dhcp4": {
+                "comment": "socket to DHCP4 server",
                 "socket-name": "/path/to/the/unix/socket-v4",
                 "socket-type": "unix"
             },

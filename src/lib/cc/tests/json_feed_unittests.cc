@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,6 +169,22 @@ TEST_F(JSONFeedTest, noOpeningBrace) {
 TEST_F(JSONFeedTest, noOpeningSquareBracket) {
     std::string json = "\"x\", \"y\" ]";
     testInvalidRead(json);
+}
+
+// This test verifies that a string is correctly handled
+TEST_F(JSONFeedTest, string) {
+    std::string json = "{ \"braces\": \"}}}}\" }";
+    ElementPtr expected = Element::createMap();
+    expected->set("braces", Element::create("}}}}"));
+    testRead(json, expected);
+}
+
+// This test verifies that a string with escapes is correctly handled
+TEST_F(JSONFeedTest, escape) {
+    std::string json = "{ \"escapes\": \"\\n\\t\\\"\\\\\" }";
+    ElementPtr expected = Element::createMap();
+    expected->set("escapes", Element::create("\n\t\"\\"));
+    testRead(json, expected);
 }
 
 } // end of anonymous namespace.

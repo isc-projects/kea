@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,8 +14,10 @@
 
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -48,11 +50,9 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig : public isc::data::CfgToElement {
+class D2ClientConfig : public UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
-    /// @todo For now these are hard-coded as configuration layer cannot
-    /// readily provide them (see Trac #3358).
     static const char* DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
     static const char* DFT_V4_SENDER_IP;
@@ -66,6 +66,8 @@ public:
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
     static const char* DFT_REPLACE_CLIENT_NAME_MODE;
     static const char* DFT_GENERATED_PREFIX;
+    static const char* DFT_HOSTNAME_CHAR_SET;
+    static const char* DFT_HOSTNAME_CHAR_REPLACEMENT;
 
     /// @brief Defines the client name replacement modes.
     enum ReplaceClientNameMode  {
@@ -97,6 +99,10 @@ public:
     /// supplied by the client with a generated name.
     /// @param generated_prefix Prefix to use when generating domain-names.
     /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
+    /// @param hostname_char_set regular expression string which describes invalid
+    /// characters to be scrubbed from client host names 
+    /// @param hostname_char_replacement string of zero or more characters to
+    /// replace invalid chars when sanitizing client host names
     ///
     /// @c enable_updates is mandatory, @c qualifying_suffix is mandatory
     /// when updates are enabled, other parameters are optional.
@@ -115,7 +121,10 @@ public:
                    const bool override_client_update,
                    const ReplaceClientNameMode replace_client_name_mode,
                    const std::string& generated_prefix,
-                   const std::string& qualifying_suffix);
+                   const std::string& qualifying_suffix,
+                   const std::string& hostname_char_set,
+                   const std::string& hostname_char_replacement);
+
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -192,6 +201,22 @@ public:
     /// @brief Return the suffix to use to qualify partial domain-names.
     const std::string& getQualifyingSuffix() const {
         return(qualifying_suffix_);
+    }
+
+    /// @brief Return the char set regexp used to sanitize client hostnames.
+    const std::string& getHostnameCharSet() const {
+        return(hostname_char_set_);
+    }
+
+    /// @brief Return the invalid char replacement used to sanitize client hostnames.
+    const std::string& getHostnameCharReplacement() const {
+        return(hostname_char_replacement_);
+    }
+
+    /// @brief Return pointer to compiled regular expression string sanitizer
+    /// Will be empty if hostname-char-set is empty.
+    util::str::StringSanitizerPtr getHostnameSanitizer() const {
+        return(hostname_sanitizer_);
     }
 
     /// @brief Compares two D2ClientConfigs for equality
@@ -290,6 +315,17 @@ private:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     std::string qualifying_suffix_;
+
+    /// @brief Regular expression describing invalid characters for client hostnames.
+    /// If empty, host name scrubbing is not done.
+    std::string hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    std::string hostname_char_replacement_;
+
+    /// @brief Pointer to compiled regular expression string sanitizer
+    util::str::StringSanitizerPtr hostname_sanitizer_;
 };
 
 std::ostream&

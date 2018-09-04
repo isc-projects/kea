@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_service.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <config/timeouts.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
@@ -86,12 +87,10 @@ public:
 
     /// Expose internal methods for the sake of testing
     using Dhcpv4Srv::receivePacket;
+    using Dhcpv4Srv::network_state_;
 };
 
-/// @brief Default control connection timeout.
-const size_t DEFAULT_CONNECTION_TIMEOUT = 10;
-
-/// @brief Fixture class intended for testin control channel in the DHCPv4Srv
+/// @brief Fixture class intended for testing control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
 
@@ -121,7 +120,7 @@ public:
 
         CommandMgr::instance().closeCommandSocket();
         CommandMgr::instance().deregisterAll();
-        CommandMgr::instance().setConnectionTimeout(DEFAULT_CONNECTION_TIMEOUT);
+        CommandMgr::instance().setConnectionTimeout(TIMEOUT_DHCP_SERVER_RECEIVE_COMMAND);
 
         server_.reset();
     };
@@ -370,13 +369,10 @@ public:
     /// can catch out of order delivery.
     static ConstElementPtr longResponseHandler(const std::string&,
                                                const ConstElementPtr&) {
-        // By seeding the generator with the constant value we will always
-        // get the same sequence of generated strings.
-        std::srand(1);
         ElementPtr arguments = Element::createList();
-        for (unsigned i = 0; i < 40000; ++i) {
+        for (unsigned i = 0; i < 80000; ++i) {
             std::ostringstream s;
-            s << std::setw(10) << std::rand();
+            s << std::setw(5) << i;
             arguments->add(Element::create(s.str()));
         }
         return (createAnswer(0, arguments));
@@ -1154,6 +1150,74 @@ TEST_F(CtrlChannelDhcpv4SrvTest, configReloadValid) {
     ::remove("test8.json");
 }
 
+// This test verifies if it is possible to disable DHCP service via command.
+TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisable) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"dhcp-disable\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+}
+
+// This test verifies that it is possible to disable DHCP service for a short
+// period of time, after which the service is automatically enabled.
+TEST_F(CtrlChannelDhcpv4SrvTest, dhcpDisableTemporarily) {
+    createUnixChannelServer();
+    std::string response;
+
+    // Send a command to disable DHCP service for 3 seconds.
+    sendUnixCommand("{"
+                    "    \"command\": \"dhcp-disable\","
+                    "    \"arguments\": {"
+                    "        \"max-period\": 3"
+                    "    }"
+                    "}", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    // The service should be disabled.
+    EXPECT_FALSE(server_->network_state_->isServiceEnabled());
+    // And the timer should be scheduled which counts the time to automatic
+    // enabling of the service.
+    EXPECT_TRUE(server_->network_state_->isDelayedEnableAll());
+}
+
+// This test verifies if it is possible to enable DHCP service via command.
+TEST_F(CtrlChannelDhcpv4SrvTest, dhcpEnable) {
+    createUnixChannelServer();
+    std::string response;
+
+    sendUnixCommand("{ \"command\": \"dhcp-enable\" }", response);
+    ConstElementPtr rsp;
+
+    // The response should be a valid JSON.
+    EXPECT_NO_THROW(rsp = Element::fromJSON(response));
+    ASSERT_TRUE(rsp);
+
+    int status;
+    ConstElementPtr cfg = parseAnswer(status, rsp);
+    EXPECT_EQ(CONTROL_RESULT_SUCCESS, status);
+
+    EXPECT_TRUE(server_->network_state_->isServiceEnabled());
+}
+
 /// Verify that concurrent connections over the control channel can be
 ///  established.
 /// @todo Future Kea 1.3 tickets will modify the behavior of the CommandMgr
@@ -1328,7 +1392,7 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
         while (response.tellp() < long_response_size) {
             std::string partial;
             const unsigned int timeout = 5;
-            ASSERT_TRUE(client->getResponse(partial, 5));
+            ASSERT_TRUE(client->getResponse(partial, timeout));
             response << partial;
         }
 
@@ -1348,13 +1412,13 @@ TEST_F(CtrlChannelDhcpv4SrvTest, longResponse) {
 }
 
 // This test verifies that the server signals timeout if the transmission
-// takes too long.
-TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeout) {
+// takes too long, after receiving a partial command.
+TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutPartialCommand) {
     createUnixChannelServer();
 
     // Set connection timeout to 2s to prevent long waiting time for the
     // timeout during this test.
-    const unsigned short timeout = 2;
+    const unsigned short timeout = 2000;
     CommandMgr::instance().setConnectionTimeout(timeout);
 
     // Server's response will be assigned to this variable.
@@ -1396,10 +1460,57 @@ TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeout) {
     th.join();
 
     // Check that the server has signalled a timeout.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"Connection over control channel"
-              " timed out\" }", response);
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Connection over control channel timed out, "
+              "discarded partial command of 19 bytes\" }" , response);
 }
 
+// This test verifies that the server signals timeout if the transmission
+// takes too long, having received no data from the client.
+TEST_F(CtrlChannelDhcpv4SrvTest, connectionTimeoutNoData) {
+    createUnixChannelServer();
 
+    // Set connection timeout to 2s to prevent long waiting time for the
+    // timeout during this test.
+    const unsigned short timeout = 2000;
+    CommandMgr::instance().setConnectionTimeout(timeout);
+
+    // Server's response will be assigned to this variable.
+    std::string response;
+
+    // It is useful to create a thread and run the server and the client
+    // at the same time and independently.
+    std::thread th([this, &response]() {
+
+        // IO service will be stopped automatically when this object goes
+        // out of scope and is destroyed. This is useful because we use
+        // asserts which may break the thread in various exit points.
+        IOServiceWork work(getIOService());
+
+        // Create the client and connect it to the server.
+        boost::scoped_ptr<UnixControlClient> client(new UnixControlClient());
+        ASSERT_TRUE(client);
+        ASSERT_TRUE(client->connectToServer(socket_path_));
+
+        // Let's wait up to 15s for the server's response. The response
+        // should arrive sooner assuming that the timeout mechanism for
+        // the server is working properly.
+        const unsigned int timeout = 15;
+        ASSERT_TRUE(client->getResponse(response, timeout));
+
+        // Explicitly close the client's connection.
+        client->disconnectFromServer();
+    });
+
+    // Run the server until stopped.
+    getIOService()->run();
+
+    // Wait for the thread to return.
+    th.join();
+
+    // Check that the server has signalled a timeout.
+    EXPECT_EQ("{ \"result\": 1, \"text\": "
+              "\"Connection over control channel timed out\" }", response);
+}
 
 } // End of anonymous namespace

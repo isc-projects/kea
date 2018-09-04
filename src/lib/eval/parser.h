@@ -218,7 +218,7 @@ namespace isc { namespace eval {
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsibility.
+    /// should not be the variant's responsability.
     /// Swapping between built and (possibly) non-built is done with
     /// variant::move ().
     template <typename T>
@@ -366,46 +366,48 @@ namespace isc { namespace eval {
         TOKEN_OPTION = 264,
         TOKEN_RELAY4 = 265,
         TOKEN_RELAY6 = 266,
-        TOKEN_PEERADDR = 267,
-        TOKEN_LINKADDR = 268,
-        TOKEN_LBRACKET = 269,
-        TOKEN_RBRACKET = 270,
-        TOKEN_DOT = 271,
-        TOKEN_TEXT = 272,
-        TOKEN_HEX = 273,
-        TOKEN_EXISTS = 274,
-        TOKEN_PKT = 275,
-        TOKEN_IFACE = 276,
-        TOKEN_SRC = 277,
-        TOKEN_DST = 278,
-        TOKEN_LEN = 279,
-        TOKEN_PKT4 = 280,
-        TOKEN_CHADDR = 281,
-        TOKEN_HLEN = 282,
-        TOKEN_HTYPE = 283,
-        TOKEN_CIADDR = 284,
-        TOKEN_GIADDR = 285,
-        TOKEN_YIADDR = 286,
-        TOKEN_SIADDR = 287,
-        TOKEN_SUBSTRING = 288,
-        TOKEN_ALL = 289,
-        TOKEN_COMA = 290,
-        TOKEN_CONCAT = 291,
-        TOKEN_PKT6 = 292,
-        TOKEN_MSGTYPE = 293,
-        TOKEN_TRANSID = 294,
-        TOKEN_VENDOR_CLASS = 295,
-        TOKEN_VENDOR = 296,
-        TOKEN_ANY = 297,
-        TOKEN_DATA = 298,
-        TOKEN_ENTERPRISE = 299,
-        TOKEN_TOPLEVEL_BOOL = 300,
-        TOKEN_TOPLEVEL_STRING = 301,
-        TOKEN_STRING = 302,
-        TOKEN_INTEGER = 303,
-        TOKEN_HEXSTRING = 304,
-        TOKEN_OPTION_NAME = 305,
-        TOKEN_IP_ADDRESS = 306
+        TOKEN_MEMBER = 267,
+        TOKEN_PEERADDR = 268,
+        TOKEN_LINKADDR = 269,
+        TOKEN_LBRACKET = 270,
+        TOKEN_RBRACKET = 271,
+        TOKEN_DOT = 272,
+        TOKEN_TEXT = 273,
+        TOKEN_HEX = 274,
+        TOKEN_EXISTS = 275,
+        TOKEN_PKT = 276,
+        TOKEN_IFACE = 277,
+        TOKEN_SRC = 278,
+        TOKEN_DST = 279,
+        TOKEN_LEN = 280,
+        TOKEN_PKT4 = 281,
+        TOKEN_CHADDR = 282,
+        TOKEN_HLEN = 283,
+        TOKEN_HTYPE = 284,
+        TOKEN_CIADDR = 285,
+        TOKEN_GIADDR = 286,
+        TOKEN_YIADDR = 287,
+        TOKEN_SIADDR = 288,
+        TOKEN_SUBSTRING = 289,
+        TOKEN_ALL = 290,
+        TOKEN_COMA = 291,
+        TOKEN_CONCAT = 292,
+        TOKEN_IFELSE = 293,
+        TOKEN_PKT6 = 294,
+        TOKEN_MSGTYPE = 295,
+        TOKEN_TRANSID = 296,
+        TOKEN_VENDOR_CLASS = 297,
+        TOKEN_VENDOR = 298,
+        TOKEN_ANY = 299,
+        TOKEN_DATA = 300,
+        TOKEN_ENTERPRISE = 301,
+        TOKEN_TOPLEVEL_BOOL = 302,
+        TOKEN_TOPLEVEL_STRING = 303,
+        TOKEN_STRING = 304,
+        TOKEN_INTEGER = 305,
+        TOKEN_HEXSTRING = 306,
+        TOKEN_OPTION_NAME = 307,
+        TOKEN_IP_ADDRESS = 308
       };
     };
 
@@ -570,6 +572,10 @@ namespace isc { namespace eval {
 
     static inline
     symbol_type
+    make_MEMBER (const location_type& l);
+
+    static inline
+    symbol_type
     make_PEERADDR (const location_type& l);
 
     static inline
@@ -667,6 +673,10 @@ namespace isc { namespace eval {
     static inline
     symbol_type
     make_CONCAT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_IFELSE (const location_type& l);
 
     static inline
     symbol_type
@@ -933,12 +943,12 @@ namespace isc { namespace eval {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 190,     ///< Last index in yytable_.
+      yylast_ = 192,     ///< Last index in yytable_.
       yynnts_ = 16,  ///< Number of nonterminal symbols.
-      yyfinal_ = 30, ///< Termination state number.
+      yyfinal_ = 32, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 52  ///< Number of tokens.
+      yyntokens_ = 54  ///< Number of tokens.
     };
 
 
@@ -985,9 +995,9 @@ namespace isc { namespace eval {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49,    50,    51
+      45,    46,    47,    48,    49,    50,    51,    52,    53
     };
-    const unsigned int user_token_number_max_ = 306;
+    const unsigned int user_token_number_max_ = 308;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int>(t) <= yyeof_)
@@ -1020,44 +1030,44 @@ namespace isc { namespace eval {
   {
       switch (other.type_get ())
     {
-      case 59: // option_repr_type
+      case 61: // option_repr_type
         value.copy< TokenOption::RepresentationType > (other.value);
         break;
 
-      case 63: // pkt4_field
+      case 65: // pkt4_field
         value.copy< TokenPkt4::FieldType > (other.value);
         break;
 
-      case 64: // pkt6_field
+      case 66: // pkt6_field
         value.copy< TokenPkt6::FieldType > (other.value);
         break;
 
-      case 61: // pkt_metadata
+      case 63: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (other.value);
         break;
 
-      case 65: // relay6_field
+      case 67: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (other.value);
         break;
 
-      case 60: // nest_level
+      case 62: // nest_level
         value.copy< int8_t > (other.value);
         break;
 
-      case 47: // "constant string"
-      case 48: // "integer"
-      case 49: // "constant hexstring"
-      case 50: // "option name"
-      case 51: // "ip address"
+      case 49: // "constant string"
+      case 50: // "integer"
+      case 51: // "constant hexstring"
+      case 52: // "option name"
+      case 53: // "ip address"
         value.copy< std::string > (other.value);
         break;
 
-      case 58: // option_code
+      case 60: // option_code
         value.copy< uint16_t > (other.value);
         break;
 
-      case 57: // integer_expr
-      case 62: // enterprise_id
+      case 59: // integer_expr
+      case 64: // enterprise_id
         value.copy< uint32_t > (other.value);
         break;
 
@@ -1078,44 +1088,44 @@ namespace isc { namespace eval {
     (void) v;
       switch (this->type_get ())
     {
-      case 59: // option_repr_type
+      case 61: // option_repr_type
         value.copy< TokenOption::RepresentationType > (v);
         break;
 
-      case 63: // pkt4_field
+      case 65: // pkt4_field
         value.copy< TokenPkt4::FieldType > (v);
         break;
 
-      case 64: // pkt6_field
+      case 66: // pkt6_field
         value.copy< TokenPkt6::FieldType > (v);
         break;
 
-      case 61: // pkt_metadata
+      case 63: // pkt_metadata
         value.copy< TokenPkt::MetadataType > (v);
         break;
 
-      case 65: // relay6_field
+      case 67: // relay6_field
         value.copy< TokenRelay6Field::FieldType > (v);
         break;
 
-      case 60: // nest_level
+      case 62: // nest_level
         value.copy< int8_t > (v);
         break;
 
-      case 47: // "constant string"
-      case 48: // "integer"
-      case 49: // "constant hexstring"
-      case 50: // "option name"
-      case 51: // "ip address"
+      case 49: // "constant string"
+      case 50: // "integer"
+      case 51: // "constant hexstring"
+      case 52: // "option name"
+      case 53: // "ip address"
         value.copy< std::string > (v);
         break;
 
-      case 58: // option_code
+      case 60: // option_code
         value.copy< uint16_t > (v);
         break;
 
-      case 57: // integer_expr
-      case 62: // enterprise_id
+      case 59: // integer_expr
+      case 64: // enterprise_id
         value.copy< uint32_t > (v);
         break;
 
@@ -1223,44 +1233,44 @@ namespace isc { namespace eval {
     // Type destructor.
     switch (yytype)
     {
-      case 59: // option_repr_type
+      case 61: // option_repr_type
         value.template destroy< TokenOption::RepresentationType > ();
         break;
 
-      case 63: // pkt4_field
+      case 65: // pkt4_field
         value.template destroy< TokenPkt4::FieldType > ();
         break;
 
-      case 64: // pkt6_field
+      case 66: // pkt6_field
         value.template destroy< TokenPkt6::FieldType > ();
         break;
 
-      case 61: // pkt_metadata
+      case 63: // pkt_metadata
         value.template destroy< TokenPkt::MetadataType > ();
         break;
 
-      case 65: // relay6_field
+      case 67: // relay6_field
         value.template destroy< TokenRelay6Field::FieldType > ();
         break;
 
-      case 60: // nest_level
+      case 62: // nest_level
         value.template destroy< int8_t > ();
         break;
 
-      case 47: // "constant string"
-      case 48: // "integer"
-      case 49: // "constant hexstring"
-      case 50: // "option name"
-      case 51: // "ip address"
+      case 49: // "constant string"
+      case 50: // "integer"
+      case 51: // "constant hexstring"
+      case 52: // "option name"
+      case 53: // "ip address"
         value.template destroy< std::string > ();
         break;
 
-      case 58: // option_code
+      case 60: // option_code
         value.template destroy< uint16_t > ();
         break;
 
-      case 57: // integer_expr
-      case 62: // enterprise_id
+      case 59: // integer_expr
+      case 64: // enterprise_id
         value.template destroy< uint32_t > ();
         break;
 
@@ -1287,44 +1297,44 @@ namespace isc { namespace eval {
     super_type::move(s);
       switch (this->type_get ())
     {
-      case 59: // option_repr_type
+      case 61: // option_repr_type
         value.move< TokenOption::RepresentationType > (s.value);
         break;
 
-      case 63: // pkt4_field
+      case 65: // pkt4_field
         value.move< TokenPkt4::FieldType > (s.value);
         break;
 
-      case 64: // pkt6_field
+      case 66: // pkt6_field
         value.move< TokenPkt6::FieldType > (s.value);
         break;
 
-      case 61: // pkt_metadata
+      case 63: // pkt_metadata
         value.move< TokenPkt::MetadataType > (s.value);
         break;
 
-      case 65: // relay6_field
+      case 67: // relay6_field
         value.move< TokenRelay6Field::FieldType > (s.value);
         break;
 
-      case 60: // nest_level
+      case 62: // nest_level
         value.move< int8_t > (s.value);
         break;
 
-      case 47: // "constant string"
-      case 48: // "integer"
-      case 49: // "constant hexstring"
-      case 50: // "option name"
-      case 51: // "ip address"
+      case 49: // "constant string"
+      case 50: // "integer"
+      case 51: // "constant hexstring"
+      case 52: // "option name"
+      case 53: // "ip address"
         value.move< std::string > (s.value);
         break;
 
-      case 58: // option_code
+      case 60: // option_code
         value.move< uint16_t > (s.value);
         break;
 
-      case 57: // integer_expr
-      case 62: // enterprise_id
+      case 59: // integer_expr
+      case 64: // enterprise_id
         value.move< uint32_t > (s.value);
         break;
 
@@ -1388,7 +1398,7 @@ namespace isc { namespace eval {
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
      295,   296,   297,   298,   299,   300,   301,   302,   303,   304,
-     305,   306
+     305,   306,   307,   308
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1451,6 +1461,12 @@ namespace isc { namespace eval {
   EvalParser::make_RELAY6 (const location_type& l)
   {
     return symbol_type (token::TOKEN_RELAY6, l);
+  }
+
+  EvalParser::symbol_type
+  EvalParser::make_MEMBER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MEMBER, l);
   }
 
   EvalParser::symbol_type
@@ -1604,6 +1620,12 @@ namespace isc { namespace eval {
   }
 
   EvalParser::symbol_type
+  EvalParser::make_IFELSE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_IFELSE, l);
+  }
+
+  EvalParser::symbol_type
   EvalParser::make_PKT6 (const location_type& l)
   {
     return symbol_type (token::TOKEN_PKT6, l);
@@ -1696,7 +1718,7 @@ namespace isc { namespace eval {
 
 #line 14 "parser.yy" // lalr1.cc:377
 } } // isc::eval
-#line 1700 "parser.h" // lalr1.cc:377
+#line 1722 "parser.h" // lalr1.cc:377
 
 
 

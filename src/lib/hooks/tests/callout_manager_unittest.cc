@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <exceptions/exceptions.h>
 #include <hooks/callout_handle.h>
@@ -916,6 +918,26 @@ TEST_F(CalloutManagerTest, LibraryHandleRegisterCommandHandler) {
     EXPECT_THROW(getCalloutManager()->callCommandHandlers("command-four", handle),
                  NoSuchHook);
 }
+
+// This test checks if the CalloutManager can adjust its own hook_vector_ size.
+TEST_F(CalloutManagerTest, VectorSize) {
+
+    size_t s = getCalloutManager()->getHookLibsVectorSize();
+
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+
+    EXPECT_NO_THROW(hooks.registerHook("a_new_one"));
+
+    // Now load a callout. Name of the hook point the new callout is installed
+    // on doesn't matter. CM should do sanity checks and adjust anyway.
+    getCalloutManager()->getPostLibraryHandle().registerCallout("alpha",
+                                                                callout_four);
+
+    // The vector size should have been increased by one, because there's
+    // one new hook point now.
+    EXPECT_EQ(s + 1, getCalloutManager()->getHookLibsVectorSize());
+}
+
 
 // The setting of the hook index is checked in the handles_unittest
 // set of tests, as access restrictions mean it is not easily tested

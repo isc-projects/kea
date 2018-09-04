@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -320,6 +320,46 @@ TEST(OptionVendorClass, unpack6EmptyTuple) {
     EXPECT_TRUE(vendor_class->getTuple(0).getText().empty());
 }
 
+// This test checks that the DHCPv4 option without opaque data is
+// correctly parsed.
+TEST(OptionVendorClass, unpack4NoTuple) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0, 0, 0x4, 0xD2                     // enterprise id 1234
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V4,
+                                                                  buf.begin(),
+                                                                  buf.end()));
+    );
+    EXPECT_EQ(DHO_VIVCO_SUBOPTIONS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    EXPECT_EQ(0, vendor_class->getTuplesNum());
+}
+
+// This test checks that the DHCPv6 option without opaque data is
+// correctly parsed.
+TEST(OptionVendorClass, unpack6NoTuple) {
+    // Prepare data to decode.
+    const uint8_t buf_data[] = {
+        0, 0, 0x4, 0xD2   // enterprise id 1234
+    };
+    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
+
+    OptionVendorClassPtr vendor_class;
+    ASSERT_NO_THROW(
+        vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V6,
+                                                                  buf.begin(),
+                                                                  buf.end()));
+    );
+    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
+    EXPECT_EQ(1234, vendor_class->getVendorId());
+    EXPECT_EQ(0, vendor_class->getTuplesNum());
+}
+
 // This test checks that exception is thrown when parsing truncated DHCPv4
 // V-I Vendor Class option.
 TEST(OptionVendorClass, unpack4Truncated) {
@@ -351,47 +391,6 @@ TEST(OptionVendorClass, unpack6Truncated) {
 
     EXPECT_THROW(OptionVendorClass (Option::V6, buf.begin(), buf.end()),
                  isc::dhcp::OpaqueDataTupleError);
-}
-
-// This test checks that exception is thrown when parsing DHCPv4 V-I Vendor
-// Class option which doesn't have opaque data length. This test is different
-// from the corresponding test for v6 in that, the v4 test expects that
-// exception is thrown when parsing DHCPv4 option without data-len field
-// (has no tuples), whereas for DHCPv6 option it is perfectly ok that
-// option has no tuples (see class constructor).
-TEST(OptionVendorClass, unpack4NoTuple) {
-    // Prepare data to decode.
-    const uint8_t buf_data[] = {
-        0, 0, 0x4, 0xD2  // enterprise id 1234
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
-
-    ASSERT_THROW(OptionVendorClass (Option::V4, buf.begin(), buf.end()),
-                 isc::OutOfRange);
-}
-
-// This test checks that the DHCPv6 Vendor Class option containing no opaque
-// data is parsed correctly. This test is different from the corresponding
-// test for v4 in that, the v6 test checks that the option parsing succeeds
-// when option has no opaque data tuples, whereas the v4 test expects that
-// parsing fails for DHCPv4 option which doesn't have opaque-data (see
-// class constructor).
-TEST(OptionVendorClass, unpack6NoTuple) {
-    // Prepare data to decode.
-    const uint8_t buf_data[] = {
-        0, 0, 0x4, 0xD2  // enterprise id 1234
-    };
-    OptionBuffer buf(buf_data, buf_data + sizeof(buf_data));
-
-    OptionVendorClassPtr vendor_class;
-    ASSERT_NO_THROW(
-        vendor_class = OptionVendorClassPtr(new OptionVendorClass(Option::V6,
-                                                                  buf.begin(),
-                                                                  buf.end()));
-    );
-    EXPECT_EQ(D6O_VENDOR_CLASS, vendor_class->getType());
-    EXPECT_EQ(1234, vendor_class->getVendorId());
-    EXPECT_EQ(0, vendor_class->getTuplesNum());
 }
 
 // Verifies correctness of the text representation of the DHCPv4 option.

@@ -24,6 +24,7 @@ libkea_dhcp___la_SOURCES += opaque_data_tuple.cc opaque_data_tuple.h
 libkea_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libkea_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
+libkea_dhcp___la_SOURCES += option6_auth.cc option6_auth.h
 libkea_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libkea_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
@@ -69,10 +70,15 @@ libkea_dhcp___la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcp___la_LIBADD   = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
+libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_dhcp___la_LIBADD  += $(BOOST_LIBS)
 libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
-libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 5:0:0
+libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 8:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox
@@ -81,47 +87,56 @@ EXTRA_DIST  = README libdhcp++.dox
 # written libraries may need access to all libdhcp++ headers.
 libkea_dhcp___includedir = $(pkgincludedir)/dhcp
 libkea_dhcp___include_HEADERS = \
-    classify.h \
-    dhcp4.h \
-    dhcp6.h \
-    docsis3_option_defs.h \
-    duid.h \
-    duid_factory.h \
-    hwaddr.h \
-    iface_mgr.h \
-    iface_mgr_error_handler.h \
-    libdhcp++.h \
-    opaque_data_tuple.h \
-    option4_addrlst.h \
-    option4_client_fqdn.h \
-    option6_addrlst.h \
-    option6_client_fqdn.h \
-    option6_ia.h \
-    option6_iaaddr.h \
-    option6_iaprefix.h \
-    option6_pdexclude.h \
-    option6_status_code.h \
-    option.h \
-    option_custom.h \
-    option_data_types.h \
-    option_definition.h \
-    option_int.h \
-    option_int_array.h \
-    option_opaque_data_tuples.h \
-    option_space.h \
-    option_space_container.h \
-    option_string.h \
-    option_vendor.h \
-    option_vendor_class.h \
-    pkt.h \
-    pkt4.h \
-    pkt4o6.h \
-    pkt6.h \
-    pkt_filter.h \
-    pkt_filter6.h \
-    pkt_filter_bpf.h \
-    pkt_filter_inet.h \
-    pkt_filter_inet6.h \
-    pkt_filter_lpf.h \
-    protocol_util.h \
-    std_option_defs.h
+	classify.h \
+	dhcp4.h \
+	dhcp6.h \
+	docsis3_option_defs.h \
+	duid.h \
+	duid_factory.h \
+	hwaddr.h \
+	iface_mgr.h \
+	iface_mgr_error_handler.h \
+	libdhcp++.h \
+	opaque_data_tuple.h \
+	option.h \
+	option4_addrlst.h \
+	option4_client_fqdn.h \
+	option6_addrlst.h \
+	option6_auth.h \
+	option6_client_fqdn.h \
+	option6_ia.h \
+	option6_iaaddr.h \
+	option6_iaprefix.h \
+	option6_pdexclude.h \
+	option6_status_code.h \
+	option_custom.h \
+	option_data_types.h \
+	option_definition.h \
+	option_int.h \
+	option_int_array.h \
+	option_opaque_data_tuples.h \
+	option_space.h \
+	option_space_container.h \
+	option_string.h \
+	option_vendor.h \
+	option_vendor_class.h \
+	pkt.h \
+	pkt4.h \
+	pkt4o6.h \
+	pkt6.h \
+	pkt_filter.h \
+	pkt_filter6.h \
+	pkt_filter_inet.h \
+	pkt_filter_inet6.h \
+	protocol_util.h \
+	std_option_defs.h
+
+if OS_LINUX
+libkea_dhcp___include_HEADERS += \
+	pkt_filter_lpf.h
+endif
+
+if OS_BSD
+libkea_dhcp___include_HEADERS += \
+	pkt_filter_bpf.h
+endif

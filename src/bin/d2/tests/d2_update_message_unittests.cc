@@ -25,21 +25,20 @@ using namespace isc::dns::rdata;
 using namespace isc::util;
 
 namespace {
-
-// @brief Test fixture class for testing D2UpdateMessage object.
+ /// @brief Test fixture class for testing D2UpdateMessage object
 class D2UpdateMessageTest : public ::testing::Test {
 public:
-    // @brief Constructor.
+    /// @brief Constructor
     //
     // Does nothing.
     D2UpdateMessageTest() { }
 
-    // @brief Destructor.
+    /// @brief Destructor
     //
     // Does nothing.
     ~D2UpdateMessageTest() { };
 
-    // @brief Return string representation of the name encoded in wire format.
+    /// @brief Returns string representation of the name encoded in wire format.
     //
     // This function reads the number of bytes specified in the second
     // argument from the buffer. It doesn't check if buffer has sufficient

@@ -1954,6 +1954,45 @@ TEST_F(TokenTest, concat) {
     EXPECT_TRUE(checkFile());
 }
 
+// This test checks if a token representing an ifelse is able
+// to select the branch following the condition.
+TEST_F(TokenTest, ifElse) {
+    ASSERT_NO_THROW(t_.reset(new TokenIfElse()));
+
+    // Ifelse requires three values on the stack, try
+    // with 0, 1 and 2 all should throw an exception
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    values_.push("bar");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // The condition must be a boolean
+    values_.push("bar");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalTypeError);
+
+    // Check if what it returns
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenIfElse()));
+    values_.push("true");
+    values_.push("foo");
+    values_.push("bar");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("foo", values_.top());
+
+    clearStack();
+    ASSERT_NO_THROW(t_.reset(new TokenIfElse()));
+    values_.push("false");
+    values_.push("foo");
+    values_.push("bar");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("bar", values_.top());
+}
+
 // This test checks if a token representing a not is able to
 // negate a boolean value (with incorrectly built stack).
 TEST_F(TokenTest, operatorNotInvalid) {
@@ -2152,6 +2191,36 @@ TEST_F(TokenTest, operatorOrTrue) {
     addString("EVAL_DEBUG_OR Popping 'false' and 'true' pushing 'true'");
     addString("EVAL_DEBUG_OR Popping 'true' and 'true' pushing 'true'");
     EXPECT_TRUE(checkFile());
+}
+
+// This test verifies client class membership
+TEST_F(TokenTest, member) {
+
+    ASSERT_NO_THROW(t_.reset(new TokenMember("foo")));
+
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // the packet has no classes so false was left on the stack
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+
+    // Add bar and retry
+    pkt4_->addClass("bar");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // the packet has a class but it is not foo
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("false", values_.top());
+    values_.pop();
+
+    // Add foo and retry
+    pkt4_->addClass("foo");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // Now the packet is in the foo class
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("true", values_.top());
 }
 
 // This test verifies if expression vendor[4491].exists works properly in DHCPv4.

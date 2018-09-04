@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define ALLOC_ENGINE_H
 
 #include <asiolink/io_address.h>
+#include <dhcp/classify.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcp/pkt4.h>
@@ -78,13 +79,18 @@ protected:
         /// than pickResource(), because nobody would immediately know what the
         /// resource means in this context.
         ///
+        /// Pools which are not allowed for client classes are skipped.
+        ///
         /// @param subnet next address will be returned from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID
         /// @param hint client's hint
         ///
         /// @return the next address
         virtual isc::asiolink::IOAddress
-        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet,
+                    const ClientClasses& client_classes,
+                    const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint) = 0;
 
         /// @brief Default constructor.
@@ -125,11 +131,13 @@ protected:
         /// @brief returns the next address from pools in a subnet
         ///
         /// @param subnet next address will be returned from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID (ignored)
         /// @param hint client's hint (ignored)
         /// @return the next address
         virtual isc::asiolink::IOAddress
             pickAddress(const SubnetPtr& subnet,
+                        const ClientClasses& client_classes,
                         const DuidPtr& duid,
                         const isc::asiolink::IOAddress& hint);
     protected:
@@ -147,6 +155,20 @@ protected:
         static isc::asiolink::IOAddress
         increasePrefix(const isc::asiolink::IOAddress& prefix,
                        const uint8_t prefix_len);
+
+        /// @brief Returns the next address or prefix
+        ///
+        /// This method works for IPv4 addresses, IPv6 addresses and
+        /// IPv6 prefixes.
+        ///
+        /// @param address address or prefix to be increased
+        /// @param prefix true when the previous argument is a prefix
+        /// @param prefix_len length of the prefix
+        /// @return result address or prefix
+        static isc::asiolink::IOAddress
+        increaseAddress(const isc::asiolink::IOAddress& address,
+                        bool prefix, const uint8_t prefix_len);
+
     };
 
     /// @brief Address/prefix allocator that gets an address based on a hash
@@ -164,12 +186,15 @@ protected:
         /// @todo: Implement this method
         ///
         /// @param subnet an address will be picked from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID
         /// @param hint a hint (last address that was picked)
         /// @return selected address
-        virtual isc::asiolink::IOAddress pickAddress(const SubnetPtr& subnet,
-                                                     const DuidPtr& duid,
-                                                     const isc::asiolink::IOAddress& hint);
+        virtual isc::asiolink::IOAddress
+            pickAddress(const SubnetPtr& subnet,
+                        const ClientClasses& client_classes,
+                        const DuidPtr& duid,
+                        const isc::asiolink::IOAddress& hint);
     };
 
     /// @brief Random allocator that picks address randomly
@@ -187,11 +212,14 @@ protected:
         /// @todo: Implement this method
         ///
         /// @param subnet an address will be picked from pool of that subnet
+        /// @param client_classes list of classes client belongs to
         /// @param duid Client's DUID (ignored)
         /// @param hint the last address that was picked (ignored)
         /// @return a random address from the pool
         virtual isc::asiolink::IOAddress
-        pickAddress(const SubnetPtr& subnet, const DuidPtr& duid,
+        pickAddress(const SubnetPtr& subnet,
+                    const ClientClasses& client_classes,
+                    const DuidPtr& duid,
                     const isc::asiolink::IOAddress& hint);
     };
 
@@ -305,6 +333,11 @@ public:
         /// @brief Subnet selected for the client by the server.
         Subnet6Ptr subnet_;
 
+        /// @brief Subnet from which host reservations should be retrieved.
+        ///
+        /// It can be NULL, in which case @c subnet_ value is used.
+        Subnet6Ptr host_subnet_;
+
         /// @brief Client identifier
         DuidPtr duid_;
 
@@ -315,10 +348,12 @@ public:
         /// received by the server.
         IdentifierList host_identifiers_;
 
-        /// @brief A pointer to the object identifying host reservations.
+        /// @brief Holds a map of hosts belonging to the client within different
+        /// subnets.
         ///
-        /// May be NULL if there are no reservations.
-        ConstHostPtr host_;
+        /// Multiple hosts may appear when the client belongs to a shared
+        /// network.
+        std::map<SubnetID, ConstHostPtr> hosts_;
 
         /// @brief A boolean value which indicates that server takes
         ///        responsibility for the forward DNS Update for this lease
@@ -341,6 +376,9 @@ public:
 
         /// @brief Holds addresses and prefixes allocated for all IAs.
         ResourceContainer allocated_resources_;
+
+        /// @brief A collection of newly allocated leases.
+        Lease6Collection new_leases_;
 
         //@}
 
@@ -441,6 +479,28 @@ public:
             ias_.push_back(IAContext());
         };
 
+        /// @brief Returns host from the most preferred subnet.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr currentHost() const;
+
+        /// @brief Returns global host reservation if there is one
+        ///
+        /// If the current subnet's reservation mode is global and
+        /// there is a global host (i.e. reservation belonging to
+        /// the global subnet), return it.  Otherwise return an
+        /// empty pointer.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr globalHost() const;
+
+        /// @brief Determines if a global reservation exists
+        ///
+        /// @return true if there current subnet's reservation mode is
+        /// global and there is global host containing the given
+        /// lease reservation, false otherwise
+        bool hasGlobalReservation(const IPv6Resrv& resv) const;
+
         /// @brief Default constructor.
         ClientContext6();
 
@@ -481,7 +541,7 @@ public:
     /// it into LeaseMgr (if this allocation is not fake, i.e. this is not a
     /// response to SOLICIT).
     ///
-    /// This method uses host reservation if ctx.host_ is set. The easy way to
+    /// This method uses host reservation if ctx.hosts_ is set. The easy way to
     /// set it is to call @ref findReservationDecl.
     /// The host reservation is convenient, but incurs performance penalty,
     /// so it can be tweaked on a per subnet basis. There are three possible modes:
@@ -550,8 +610,8 @@ public:
     ///        collection as old leases.<br/>
     /// @ref ClientContext6::hwaddr_ Hardware address (optional, may be null if
     ///        not available)<br/>
-    /// @ref ClientContext6::host_ Host reservation. allocateLeases6 will set
-    ///        this field, if appropriate reservation is found.
+    /// @ref ClientContext6::hosts_ Host reservations. allocateLeases6 will set
+    ///        this field, if appropriate reservations are found.
     ///
     /// @return Allocated IPv6 leases (may be empty if allocation failed)
     Lease6Collection
@@ -704,26 +764,31 @@ public:
     /// @param ctx Client context that contains all necessary information.
     static void findReservation(ClientContext6& ctx);
 
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that
+    /// matches per the configured list of host identifiers, or an empty
+    /// pointer if no matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext6& ctx);
+
+    /// @brief Creates an IPv6Resrv instance from a Lease6
+    ///
+    /// @param lease Reference to the Lease6
+    /// @return The newly formed IPv6Resrv instance
+    static IPv6Resrv makeIPv6Resrv(const Lease6& lease) {
+        if (lease.type_ == Lease::TYPE_NA) {
+            return (IPv6Resrv(IPv6Resrv::TYPE_NA, lease.addr_,
+                              (lease.prefixlen_ ? lease.prefixlen_ : 128)));
+        }
+
+        return (IPv6Resrv(IPv6Resrv::TYPE_PD, lease.addr_, lease.prefixlen_));
+    }
+
 private:
-
-    /// @brief Type of the function used by @ref findReservationInternal to
-    /// retrieve reservations by subnet identifier and host identifier.
-    typedef boost::function<ConstHostPtr(const SubnetID&,
-                                         const Host::IdentifierType&,
-                                         const uint8_t*, const size_t)> HostGetFunc;
-
-    /// @brief Common function for searching host reservations.
-    ///
-    /// This is a common function called by variants of @ref findReservation
-    /// functions.
-    ///
-    /// @param ctx Reference to a @ref ClientContext6 or @ref ClientContext4.
-    /// @param host_get Pointer to the @ref HostMgr functions to be used
-    /// to retrieve reservation by subnet identifier and host identifier.
-    /// @tparam ContextType Either @ref ClientContext6 or @ref ClientContext4.
-    template<typename ContextType>
-    static void findReservationInternal(ContextType& ctx,
-                                        const HostGetFunc& host_get);
 
     /// @brief creates a lease and inserts it in LeaseMgr if necessary
     ///
@@ -737,6 +802,7 @@ private:
     ///        available
     /// @param prefix_len length of the prefix (for PD only)
     ///        should be 128 for other lease types
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// The following fields of the ctx structure are used:
     /// @ref ClientContext6::subnet_ subnet the lease is allocated from
@@ -760,7 +826,8 @@ private:
     ///         became unavailable)
     Lease6Ptr createLease6(ClientContext6& ctx,
                            const isc::asiolink::IOAddress& addr,
-                           const uint8_t prefix_len);
+                           const uint8_t prefix_len,
+                           hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates a normal, in-pool, unreserved lease from the pool.
     ///
@@ -775,27 +842,58 @@ private:
 
     /// @brief Creates new leases based on reservations.
     ///
-    /// This method allocates new leases, based on host reservation. Existing
-    /// leases are specified in existing_leases parameter. A new lease is not created,
-    /// if there is a lease for specified address on existing_leases list or there is
-    /// a lease used by someone else.
+    /// This method allcoates new leases,  based on host reservations.
+    /// Existing leases are specified in the existing_leases parameter.
+    /// It first calls @c allocateGlobalReservedLeases6 to accomodate
+    /// subnets using global reservations.  If that method allocates
+    /// addresses, we return, otherwise we continue and check for non-global
+    /// reservations.  A new lease is not created, if there is a lease for
+    /// specified address on existing_leases list or there is a lease used by
+    /// someone else.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases leases that are already associated with the client
     void
     allocateReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
 
+    /// @brief Creates new leases based on global reservations.
+    ///
+    /// This method is used by @allocateReservedLeases6, to allocate new leases based
+    /// on global reservation if one exists and global reservations are enabled for
+    /// the selected subnet. It differs from it's caller by looking only at the global
+    /// reservation and therefore has no need to iterate over the selected subnet or it's
+    /// siblings looking for host reservations.  Like it's caller, existing leases are
+    /// specified in existing_leases parameter. A new lease is not created, if there is
+    /// a lease for specified address on existing_leases list or there is a lease used by
+    /// someone else.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases leases that are already associated with the client
+    bool
+    allocateGlobalReservedLeases6(ClientContext6& ctx, Lease6Collection& existing_leases);
+
     /// @brief Removes leases that are reserved for someone else.
     ///
     /// Goes through the list specified in existing_leases and removes those that
-    /// are reserved by someone else. The removed leases are added to the
-    /// ctx.removed_leases_ collection.
+    /// are reserved by someone else or do not belong to an allowed pool.
+    /// The removed leases are added to the ctx.removed_leases_ collection.
     ///
     /// @param ctx client context that contains all details (subnet, client-id, etc.)
     /// @param existing_leases [in/out] leases that should be checked
     void
     removeNonmatchingReservedLeases6(ClientContext6& ctx,
                                      Lease6Collection& existing_leases);
+
+    /// @brief Removes leases that are reserved for someone else.
+    ///
+    /// Simplified version of removeNonmatchingReservedLeases6 to be
+    /// used when host reservations are disabled.
+    ///
+    /// @param ctx client context that contains all details (subnet, client-id, etc.)
+    /// @param existing_leases [in/out] leases that should be checked
+    void
+    removeNonmatchingReservedNoHostLeases6(ClientContext6& ctx,
+                                           Lease6Collection& existing_leases);
 
     /// @brief Removed leases that are not reserved for this client
     ///
@@ -824,6 +922,7 @@ private:
     /// @param ctx client context that contains all details.
     /// @param prefix_len prefix length (for PD leases)
     ///        Should be 128 for other lease types
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// The following parameters are used from the ctx structure:
     /// @ref ClientContext6::subnet_ subnet the lease is allocated from
@@ -844,9 +943,11 @@ private:
     ///
     /// @return refreshed lease
     /// @throw BadValue if trying to recycle lease that is still valid
-    Lease6Ptr reuseExpiredLease(Lease6Ptr& expired,
-                                ClientContext6& ctx,
-                                uint8_t prefix_len);
+    Lease6Ptr
+    reuseExpiredLease(Lease6Ptr& expired,
+                      ClientContext6& ctx,
+                      uint8_t prefix_len,
+                      hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Updates FQDN and Client's Last Transmission Time
     /// for a collection of leases.
@@ -1031,7 +1132,7 @@ public:
     /// that the big advantage of using the context structure to pass
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
-    struct ClientContext4 {
+    struct ClientContext4 : public boost::noncopyable {
         /// @brief Subnet selected for the client by the server.
         Subnet4Ptr subnet_;
 
@@ -1072,8 +1173,15 @@ public:
         /// @brief A pointer to an old lease that the client had before update.
         Lease4Ptr old_lease_;
 
-        /// @brief A pointer to the object identifying host reservations.
-        ConstHostPtr host_;
+        /// @brief A pointer to a newly allocated lease.
+        Lease4Ptr new_lease_;
+
+        /// @brief Holds a map of hosts belonging to the client within different
+        /// subnets.
+        ///
+        /// Multiple hosts may appear when the client belongs to a shared
+        /// network.
+        std::map<SubnetID, ConstHostPtr> hosts_;
 
         /// @brief A pointer to the object representing a lease in conflict.
         ///
@@ -1101,6 +1209,11 @@ public:
                                const std::vector<uint8_t>& identifier) {
             host_identifiers_.push_back(IdentifierPair(id_type, identifier));
         }
+
+        /// @brief Returns host for currently selected subnet.
+        ///
+        /// @return Pointer to the host object.
+        ConstHostPtr currentHost() const;
 
         /// @brief Default constructor.
         ClientContext4();
@@ -1228,8 +1341,6 @@ public:
     /// - @ref ClientContext4::fake_allocation_ Is this real i.e. REQUEST (false)
     ///      or just picking an address for DISCOVER that is not really
     ///      allocated (true)
-    /// - @ref ClientContext4::host_ Pointer to the object representing the
-    //       static reservations (host reservations) for the client.
     /// - @ref ClientContext4::callout_handle_ A callout handle (used in hooks).
     ///      A lease callouts will be executed if this parameter is passed.
     /// - @ref ClientContext4::old_lease_ [out] Holds the pointer to a previous
@@ -1248,6 +1359,17 @@ public:
     ///
     /// @param ctx Client context holding various information about the client.
     static void findReservation(ClientContext4& ctx);
+
+    /// @brief Attempts to find the host reservation for the client.
+    ///
+    /// This method attempts to find a "global" host reservation matching the
+    /// client identifier.  It will return the first global reservation that matches
+    /// per the configured list of host identifiers, or an empty pointer if no
+    /// matches are found.
+    ///
+    /// @param ctx Client context holding various information about the client.
+    /// @return Pointer to the reservation found, or an empty pointer.
+    static ConstHostPtr findGlobalReservation(ClientContext4& ctx);
 
 private:
 
@@ -1330,6 +1452,7 @@ private:
     ///
     /// @param ctx client context that contains additional parameters.
     /// @param addr An address that was selected and is confirmed to be available
+    /// @param [out] callout_status callout returned by the lease6_select
     ///
     /// In particular, the following fields from Client context are used:
     /// - @ref ClientContext4::subnet_ Subnet the lease is allocated from
@@ -1350,7 +1473,8 @@ private:
     /// @return allocated lease (or NULL in the unlikely case of the lease just
     ///        become unavailable)
     Lease4Ptr createLease4(const ClientContext4& ctx,
-                           const isc::asiolink::IOAddress& addr);
+                           const isc::asiolink::IOAddress& addr,
+                           hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Renews a DHCPv4 lease.
     ///
@@ -1377,11 +1501,14 @@ private:
     /// @param expired An old, expired lease.
     /// @param ctx Message processing context. It holds various information
     /// extracted from the client's message and required to allocate a lease.
+    /// @param [out] callout_status callout returned by the lease4_select
     ///
     /// @return Updated lease instance.
     /// @throw BadValue if trying to reuse a lease which is still valid or
     /// when the provided parameters are invalid.
-    Lease4Ptr reuseExpiredLease4(Lease4Ptr& expired, ClientContext4& ctx);
+    Lease4Ptr
+    reuseExpiredLease4(Lease4Ptr& expired, ClientContext4& ctx,
+                       hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates the lease by replacing an existing lease.
     ///
@@ -1394,11 +1521,14 @@ private:
     /// allocated.
     /// @param ctx Client context holding the data extracted from the
     /// client's message.
+    /// @param [out] callout_status callout returned by the lease4_select
     ///
     /// @return A pointer to the allocated lease or NULL if the allocation
     /// was not successful.
-    Lease4Ptr allocateOrReuseLease4(const asiolink::IOAddress& address,
-                                    ClientContext4& ctx);
+    Lease4Ptr
+    allocateOrReuseLease4(const asiolink::IOAddress& address,
+                          ClientContext4& ctx,
+                          hooks::CalloutHandle::CalloutNextStep& callout_status);
 
     /// @brief Allocates the lease from the dynamic pool.
     ///
@@ -1473,7 +1603,6 @@ private:
     /// @brief Number of consecutive DHCPv6 leases' reclamations after
     /// which there are still expired leases in the database.
     uint16_t incomplete_v6_reclamations_;
-
 };
 
 /// @brief A pointer to the @c AllocEngine object.

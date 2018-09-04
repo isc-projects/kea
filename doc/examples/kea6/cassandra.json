@@ -21,7 +21,31 @@
       "type": "cql",
       "keyspace": "keatest",
       "contact-points": "192.0.2.1,192.0.2.2,192.0.2.3",
-      "port": 9042
+      "port": 9042,
+
+      // Cassandra supports many additonal parameters that are typically
+      // not needed, but may be used to tweak your deployment.
+
+      // This parameter governs how long Kea waits before attempting
+      // to reconnect. Expressed in milliseconds. The default is 2000 [ms].
+      "reconnect-wait-time": 2000,
+
+      // This parameter sets the timeout for connecting to a node. Expressed
+      // in milliseconds. The default is 5000 [ms].
+      "connect-timeout": 5000,
+
+      // This parameter sets the timeout for waiting for a response
+      // from a node. Expressed in milliseconds. The default is 12000 [ms].
+      "request-timeout": 12000,
+
+      // This parameter governs the TCP keep-alive mechanism. Expressed
+      // in seconds of delay. The default is disabled. In this example it is
+      // set to 20 minutes.
+      "tcp-keepalive": 1200,
+
+      // This parameter enables/disables Nagle's algorithm on connections.
+      // The default is true.
+      "tcp-nodelay": true
   },
 
 // Addresses will be assigned with preferred and valid lifetimes

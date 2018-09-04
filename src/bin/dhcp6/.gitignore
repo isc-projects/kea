@@ -2,7 +2,5 @@
 /kea-dhcp6.8
 /dhcp6_messages.cc
 /dhcp6_messages.h
-/spec_config.h
-/spec_config.h.pre
 /s-messages
 /dhcp6_parser.report

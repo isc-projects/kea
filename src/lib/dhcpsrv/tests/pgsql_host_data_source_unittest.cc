@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,13 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/pgsql_connection.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/testutils/pgsql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -26,26 +28,27 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::data;
 using namespace std;
 
 namespace {
 
 class PgSqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    PgSqlHostDataSourceTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyPgSQLSchema();
         createPgSQLSchema();
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validPgSQLConnectionString());
+            HostMgr::create();
+            HostMgr::addBackend(validPgSQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -55,23 +58,34 @@ public:
             throw;
         }
 
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will
-    /// close the database.  Then reopen it and delete everything created by
-    /// the test.
-    virtual ~PgSqlHostDataSourceTest() {
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
         try {
             hdsptr_->rollback();
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delAllBackends();
         hdsptr_.reset();
         destroyPgSQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    PgSqlHostDataSourceTest() {
+        initializeTest();
+    }
+
+    /// @brief Destructor
+    ///
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
+    virtual ~PgSqlHostDataSourceTest() {
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -79,12 +93,12 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases
-    /// share the same database.
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
+    /// the same database.
     void reopen(Universe) {
-        HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validPgSQLConnectionString());
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        HostMgr::create();
+        HostMgr::addBackend(validPgSQLConnectionString());
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief returns number of rows in a table
@@ -111,20 +125,21 @@ public:
         }
 
         int numrows = PQntuples(r);
+
         return (numrows);
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv4 options currently stored in DB.
     virtual int countDBOptions4() {
         return (countRowsInTable("dhcp4_options"));
     }
 
-    /// @brief Returns number of IPv4 options in the DB table.
+    /// @brief Returns number of IPv6 options currently stored in DB.
     virtual int countDBOptions6() {
         return (countRowsInTable("dhcp6_options"));
     }
 
-    /// @brief Returns number of IPv6 reservations in the DB table.
+    /// @brief Returns number of IPv6 reservations currently stored in DB.
     virtual int countDBReservations6() {
         return (countRowsInTable("ipv6_reservations"));
     }
@@ -144,12 +159,12 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
     createPgSQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validPgSQLConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(validPgSQLConnectionString()));
+        HostMgr::delBackend("postgresql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -157,14 +172,13 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
-        HostDataSourceFactory::create(connection_string);
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("postgresql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -172,42 +186,42 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
-    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
+    EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
 
     // Check for missing parameters
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         PGSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
@@ -215,6 +229,37 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     destroyPgSQLSchema();
 }
 
+/// @brief Flag used to detect calls to db_lost_callback function
+bool callback_called = false;
+
+/// @brief Callback function used in open database testing
+bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
+    return (callback_called = true);
+}
+
+/// @brief Make sure open failures do NOT invoke db lost callback
+/// The db lost callback should only be invoked after succesfully
+/// opening the DB and then subsequently losing it. Failing to
+/// open should be handled directly by the application layer.
+/// There is simply no good way to break the connection in a
+/// unit test environment.  So testing the callback invocation
+/// in a unit test is next to impossible. That has to be done
+/// as a system test.
+TEST(PgSqlHostDataSource, NoCallbackOnOpenFail) {
+    // Schema needs to be created for the test to work.
+    destroyPgSQLSchema();
+    createPgSQLSchema();
+
+    callback_called = false;
+    DatabaseConnection::db_lost_callback = db_lost_callback;
+    HostMgr::create();
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
+        PGSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
+                 DbOpenError);
+
+    EXPECT_FALSE(callback_called);
+    destroyPgSQLSchema();
+}
 
 // This test verifies that database backend can operate in Read-Only mode.
 TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
@@ -225,6 +270,30 @@ TEST_F(PgSqlHostDataSourceTest, testReadOnlyDatabase) {
 // address. Host uses hw address as identifier.
 TEST_F(PgSqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(PgSqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(PgSqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
+}
+
+// Verifies that IPv4 host reservation with options can have a max value
+// for  dhcp4_subnet id
+TEST_F(PgSqlHostDataSourceTest, maxSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a max value
+// for  dhcp6_subnet id
+TEST_F(PgSqlHostDataSourceTest, maxSubnetId6) {
+    testMaxSubnetId6();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
@@ -290,10 +359,16 @@ TEST_F(PgSqlHostDataSourceTest, hostnameFQDN100) {
     testHostname("foo.example.org", 100);
 }
 
-// Test verifies if a host without any hostname specified can be stored and
-// later retrieved.
+// Test verifies if a host without any hostname specified can be stored and later
+// retrieved.
 TEST_F(PgSqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
+}
+
+// Test verifies if a host with user context can be stored and later retrieved.
+TEST_F(PgSqlHostDataSourceTest, usercontext) {
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testUserContext(Element::fromJSON(comment));
 }
 
 // Test verifies if the hardware or client-id query can match hardware address.
@@ -448,13 +523,15 @@ TEST_F(PgSqlHostDataSourceTest, addDuplicate4) {
 // This test verifies that DHCPv4 options can be inserted in a binary format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, optionsReservations4) {
-    testOptionsReservations4(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a binary format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, optionsReservations6) {
-    testOptionsReservations6(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
@@ -466,13 +543,15 @@ TEST_F(PgSqlHostDataSourceTest, optionsReservations46) {
 // This test verifies that DHCPv4 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations4) {
-    testOptionsReservations4(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a textual format
 /// and retrieved from the PostgreSQL host database.
 TEST_F(PgSqlHostDataSourceTest, formattedOptionsReservations6) {
-    testOptionsReservations6(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
@@ -506,7 +585,8 @@ TEST_F(PgSqlHostDataSourceTest, testAddRollback) {
                  << " drop command failed :" << PQerrorMessage(conn);
 
     // Create a host with a reservation.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1",
+                                        Host::IDENT_HWADDR, false, "randomKey");
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -562,4 +642,15 @@ TEST_F(PgSqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
 }
 
-}; // Of anonymous namespace
+// Tests that multiple reservations without IPv4 addresses can be
+// specified within a subnet.
+TEST_F(PgSqlHostDataSourceTest, testMultipleHostsNoAddress4) {
+    testMultipleHostsNoAddress4();
+}
+
+// Tests that multiple hosts can be specified within an IPv6 subnet.
+TEST_F(PgSqlHostDataSourceTest, testMultipleHosts6) {
+    testMultipleHosts6();
+}
+
+}  // namespace

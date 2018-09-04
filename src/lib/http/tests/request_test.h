@@ -67,10 +67,7 @@ public:
     template<typename ValueType>
     void addHeaderToContext(const std::string& header_name,
                             const ValueType& header_value) {
-        request_.context()->headers_.push_back(HttpHeaderContext());
-        request_.context()->headers_.back().name_ = header_name;
-        request_.context()->headers_.back().value_ =
-            boost::lexical_cast<std::string>(header_value);
+        request_.context()->headers_.push_back(HttpHeaderContext(header_name, header_value));
     }
 
     /// @brief Instance of the @ref HttpRequest or its derivation.

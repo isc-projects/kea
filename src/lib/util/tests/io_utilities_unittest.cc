@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,8 @@
 ///
 /// Tests the functionality of the asiolink utilities code by comparing them
 /// with the equivalent methods in isc::dns::[Input/Output]Buffer.
+
+#include <config.h>
 
 #include <cstddef>
 
@@ -129,4 +131,30 @@ TEST(asioutil, writeUint32OutOfRange) {
     uint32_t i32 = 28;
     uint8_t data[3];
     EXPECT_THROW(writeUint32(i32, data, sizeof(data)), isc::OutOfRange);
+}
+
+// Tests whether uint64 can be read from a buffer properly.
+TEST(asioutil, readUint64) {
+
+    uint8_t buf[8];
+    for (int offset = 0; offset < sizeof(buf); offset++) {
+        buf[offset] = offset+1;
+    }
+
+    // Let's do some simple sanity checks first.
+    EXPECT_THROW(readUint64(NULL, 0), isc::OutOfRange);
+    EXPECT_THROW(readUint64(buf, 7), isc::OutOfRange);
+
+    // Now check if a real value could be read.
+    const uint64_t exp_val = 0x0102030405060708ul;
+    uint64_t val;
+
+    EXPECT_NO_THROW(val = readUint64(buf, 8));
+    EXPECT_EQ(val, exp_val);
+
+    // Now check if there are no buffer overflows.
+    memset(buf, 0xff, 8);
+
+    EXPECT_NO_THROW(val = readUint64(buf, 8));
+    EXPECT_EQ(0xfffffffffffffffful, val);
 }

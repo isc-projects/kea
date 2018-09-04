@@ -7,7 +7,6 @@
 #include <config.h>
 #include <asiolink/io_service.h>
 #include <process/d_log.h>
-#include <process/spec_config.h>
 #include <process/testutils/d_test_stubs.h>
 #include <cc/command_interpreter.h>
 
@@ -103,13 +102,6 @@ DStubController::instance() {
 DStubController::DStubController()
     : DControllerBase(stub_app_name_, stub_bin_name_),
       processed_signals_(), record_signal_only_(false), use_alternate_parser_(false) {
-
-    if (getenv("KEA_FROM_BUILD")) {
-        setSpecFileName(std::string(getenv("KEA_FROM_BUILD")) +
-            "/src/bin/d2/dhcp-ddns.spec");
-    } else {
-        setSpecFileName(D2_SPECFILE_LOCATION);
-    }
 }
 
 bool

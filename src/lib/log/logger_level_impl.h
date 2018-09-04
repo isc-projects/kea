@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,7 +107,11 @@ typedef log4cplus::tstring LogLevelString;
     /// \param level Extended logging level
     ///
     /// \return Equivalent string.
+#if LOG4CPLUS_VERSION < LOG4CPLUS_MAKE_VERSION(2, 0, 0)
     static LogLevelString logLevelToString(log4cplus::LogLevel level);
+#else
+    static const LogLevelString& logLevelToString(log4cplus::LogLevel level);
+#endif
 
     /// \brief Initialize extended logging levels
     ///

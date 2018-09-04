@@ -14,51 +14,66 @@
 { "Dhcp6":
 
 {
-  // Kea is told to listen on ethX network interface only.
-  "interfaces-config": {
-    "interfaces": [ "ethX" ],
+    // Kea is told to listen on ethX network interface only.
+    "interfaces-config": {
+        "interfaces": [ "ethX" ],
 
         // This makes interfaces to be re-detected at each (re-)configuration.
         // By default it is true.
         "re-detect": true
-  },
+    },
 
-  // We need to specify the the database used to store leases. As of
-  // September 2016, four database backends are supported: MySQL,
-  // PostgreSQL, Cassandra, and the in-memory database, Memfile.
-  // We will use memfile  because it doesn't require any prior set up.
-  "lease-database": {
-      "type": "memfile",
-      "lfc-interval": 3600
-  },
+    // We need to specify the the database used to store leases. As of
+    // September 2016, four database backends are supported: MySQL,
+    // PostgreSQL, Cassandra, and the in-memory database, Memfile.
+    // We will use memfile  because it doesn't require any prior set up.
+    "lease-database": {
+        "type": "memfile",
+        "lfc-interval": 3600
+    },
 
-// Kea 0.9.1 introduced MAC/hardware addresses support in DHCPv6. There is
-// no single reliable method of getting MAC address information in DHCPv6.
-// Kea supports several methods. Depending on your network set up, some
-// methods may be more preferable than others, hence the configuration
-// parameter. 'mac-sources' is a list of methods. Allowed parameters are:
-// any, raw, duid, ipv6-link-local, client-link-addr-option, rfc6939 (which
-// is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
-// alias for remote-id, subscriber-id, rfc4580 (which is an alias for
-// subscriber-id) and docsis.
-//
-// Note that the order matters. Methods are attempted one by one in the order
-// specified until hardware address is obtained. If you don't care which method
-// is used, using 'any' is marginally faster than enumerating them all.
-//
-// If mac-sources are not specified, a default value of 'any' is used.
-  "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
+     "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        "lease-checks": "fix-del"
+    },
 
-// RFC6422 defines a mechanism called relay-supplied options option. The relay
-// agent may insert certain options that the server will echo back to the
-// client, if certain criteria are met. One condition is that the option must
-// be RSOO-enabled (i.e. allowed to be echoed back). IANA maintains a list
-// of those options here:
-// http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied
-// However, it is possible to allow the server to echo back additional options.
-// This entry marks options 110, 120 and 130 as RSOO-enabled.
-   "relay-supplied-options": [ "110", "120", "130" ],
+    // Kea 0.9.1 introduced MAC/hardware addresses support in DHCPv6. There is
+    // no single reliable method of getting MAC address information in DHCPv6.
+    // Kea supports several methods. Depending on your network set up, some
+    // methods may be more preferable than others, hence the configuration
+    // parameter. 'mac-sources' is a list of methods. Allowed parameters are:
+    // any, raw, duid, ipv6-link-local, client-link-addr-option, rfc6939 (which
+    // is an alias for client-link-addr-option), remote-id, rfc4649 (which is an
+    // alias for remote-id, subscriber-id, rfc4580 (which is an alias for
+    // subscriber-id) and docsis.
+    //
+    // Note that the order matters. Methods are attempted one by one in the
+    // order specified until hardware address is obtained. If you don't care
+    // which method is used, using 'any' is marginally faster than enumerating
+    // them all.
+    //
+    // If mac-sources are not specified, a default value of 'any' is used.
+    "mac-sources": [ "client-link-addr-option", "duid", "ipv6-link-local" ],
 
+    // RFC6422 defines a mechanism called relay-supplied options option. The
+    // relay agent may insert certain options that the server will echo back to
+    // the client, if certain criteria are met. One condition is that the option
+    // must be RSOO-enabled (i.e. allowed to be echoed back). IANA maintains a
+    // list of those options here:
+    // http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied
+    // However, it is possible to allow the server to echo back additional
+    // options.  This entry marks options 110, 120 and 130 as RSOO-enabled.
+    "relay-supplied-options": [ "110", "120", "130" ],
 
     // This defines a control socket. If defined, Kea will open a UNIX socket
     // and will listen for incoming commands. See section 15 of the Kea User's
@@ -68,48 +83,79 @@
         "socket-name": "/tmp/kea6-ctrl-socket"
     },
 
-// Addresses will be assigned with preferred and valid lifetimes
-// being 3000 and 4000, respectively. Client is told to start
-// renewing after 1000 seconds. If the server does not respond
-// after 2000 seconds since the lease was granted, client is supposed
-// to start REBIND procedure (emergency renewal that allows switching
-// to a different server).
-  "preferred-lifetime": 3000,
-  "valid-lifetime": 4000,
-  "renew-timer": 1000,
-  "rebind-timer": 2000,
+    // Addresses will be assigned with preferred and valid lifetimes
+    // being 3000 and 4000, respectively. Client is told to start
+    // renewing after 1000 seconds. If the server does not respond
+    // after 2000 seconds since the lease was granted, client is supposed
+    // to start REBIND procedure (emergency renewal that allows switching
+    // to a different server).
+    "preferred-lifetime": 3000,
+    "valid-lifetime": 4000,
+    "renew-timer": 1000,
+    "rebind-timer": 2000,
 
-// The following list defines subnets. Each subnet consists of at
-// least subnet and pool entries.
-  "subnet6": [
+    // The following list defines subnets. Each subnet consists of at
+    // least subnet and pool entries. Note the user-context being
+    // used throughout the definitions. This is something that is not
+    // being used by Kea, it's simply parsed and stored in appropriate
+    // structures. You can put anything you want in the user-context
+    // as long as it is a valid JSON and it starts with a map (i.e.
+    // is enclosed by curly brackets).
+    // A comment entry is translated into a user-context with a
+    // "comment" property so you can include comments inside the
+    // configuration itself.
+    "subnet6": [
     {
-      "pools": [ { "pool": "2001:db8:1::/80" } ],
+        "pools": [
+            {
+                "pool": "2001:db8:1::/80",
 
-// This defines PD (prefix delegation) pools. In this case
-// we have only one pool. That consists of /64 prefixes
-// being delegated out of large /48 pool. Each delegated
-// prefix will contain an excluded-prefix option.
-      "pd-pools": [
-      {
-          "prefix": "2001:db8:abcd::",
-          "prefix-len": 48,
-          "delegated-len": 64,
-          "excluded-prefix": "2001:db8:abcd:1234::",
-          "excluded-prefix-len": 62
-      }
-      ],
-      "subnet": "2001:db8:1::/64",
-      "interface": "ethX",
+                // This is user context specified for this particular
+                // pool. You can use it to describe the pool in some way.
+                // Just keep in mind that the structure will not be used
+                // by Kea itself. It will be made available to hooks if
+                // they want to use it.
+                "user-context": { "department": "engineering" }
+            }],
 
-      // Sometimes the relay may use an odd IPv6 address that's not matching
-      // the subnet. This is discouraged, but there are valid cases when it
-      // makes sense. One case is when the relay has only link-local address
-      // and another is when there is a shared subnet scenario.
-      "relay": {
-          "ip-address": "3000::1"
-      }
+        // Here's the user-context for the whole subnet.
+        "user-context": { "comment": "Floor one, west wing" },
+        // Equivalent using smart parser
+        // "comment": "Floor one, west wing",
+
+        // This defines PD (prefix delegation) pools. In this case
+        // we have only one pool. That consists of /64 prefixes
+        // being delegated out of large /48 pool. Each delegated
+        // prefix will contain an excluded-prefix option.
+        "pd-pools": [
+        {
+            "prefix": "2001:db8:abcd::",
+            "prefix-len": 48,
+            "delegated-len": 64,
+            "excluded-prefix": "2001:db8:abcd:1234::",
+            "excluded-prefix-len": 62,
+
+            // Another user-context for this PD pool. Again, you can put
+            // anything you want in there as long as it's valid JSON and
+            // starts with a map.
+            "user-context": {
+                "purpose": "For CPE devices"
+            }
+        }
+        ], // end of pools
+
+        "subnet": "2001:db8:1::/64",
+        "interface": "ethX",
+
+        // Sometimes the relay may use an odd IPv6 address that's not matching
+        // the subnet. This is discouraged, but there are valid cases when it
+        // makes sense. One case is when the relay has only link-local address
+        // and another is when there is a shared subnet scenario.
+        "relay": {
+            "ip-address": "3000::1"
+        }
     }
-  ]
+    ]
 },
 
 // The following configures logging. It assumes that messages with at

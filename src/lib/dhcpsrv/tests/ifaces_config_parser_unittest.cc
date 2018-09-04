@@ -98,6 +98,34 @@ TEST_F(IfacesConfigParserTest, interfaces) {
     EXPECT_TRUE(test_config.socketOpen("eth1", AF_INET));
 }
 
+
+// This test checks that the parsed structure can be converted back to Element
+// tree.
+TEST_F(IfacesConfigParserTest, toElement) {
+    // Creates fake interfaces with fake addresses.
+    IfaceMgrTestConfig test_config(true);
+
+    // Configuration with one interface.
+    std::string config =
+        "{ \"user-context\": { \"foo\": \"bar\" }, "
+        "  \"interfaces\": [ \"eth0\" ], "
+        "  \"dhcp-socket-type\": \"udp\","
+        "  \"outbound-interface\": \"use-routing\", "
+        "  \"re-detect\": false }";
+
+    ElementPtr config_element = Element::fromJSON(config);
+
+    // Parse the configuration.
+    IfacesConfigParser parser(AF_INET);
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+    ASSERT_TRUE(cfg_iface);
+    ASSERT_NO_THROW(parser.parse(cfg_iface, config_element));
+
+    // Check it can be unparsed.
+    runToElementTest<CfgIface>(config, *cfg_iface);
+}
+
+
 // This test verifies that it is possible to select the raw socket
 // use in the configuration for interfaces.
 TEST_F(IfacesConfigParserTest, socketTypeRaw) {
@@ -175,6 +203,46 @@ TEST_F(IfacesConfigParserTest, socketTypeInvalid) {
         " \"re-detect\": false }";
     config_element = Element::fromJSON(config);
     ASSERT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
+}
+
+// Tests that outbound-interface is parsed properly.
+TEST_F(IfacesConfigParserTest, outboundInterface) {
+    // For DHCPv4 we accept 'use-routing' or 'same-as-inbound'.
+    IfacesConfigParser parser4(AF_INET);
+
+    // For DHCPv6 we don't accept this at all.
+    IfacesConfigParser parser6(AF_INET6);
+
+    CfgIfacePtr cfg_iface = CfgMgr::instance().getStagingCfg()->getCfgIface();
+
+    // The default should be to use the same as client's query packet.
+    EXPECT_EQ(CfgIface::SAME_AS_INBOUND, cfg_iface->getOutboundIface());
+
+    // Value 1: use-routing
+    std::string config = "{ \"interfaces\": [ ],"
+        "\"outbound-interface\": \"use-routing\","
+        " \"re-detect\": false }";
+    ElementPtr config_element = Element::fromJSON(config);
+    ASSERT_NO_THROW(parser4.parse(cfg_iface, config_element));
+    EXPECT_EQ(CfgIface::USE_ROUTING, cfg_iface->getOutboundIface());
+    EXPECT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
+
+    // Value 2: same-as-inbound
+    config = "{ \"interfaces\": [ ],"
+        "\"outbound-interface\": \"same-as-inbound\","
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    ASSERT_NO_THROW(parser4.parse(cfg_iface, config_element));
+    EXPECT_EQ(CfgIface::SAME_AS_INBOUND, cfg_iface->getOutboundIface());
+    EXPECT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
+
+    // Other values are not supported.
+    config = "{ \"interfaces\": [ ],"
+        "\"outbound-interface\": \"default\","
+        " \"re-detect\": false }";
+    config_element = Element::fromJSON(config);
+    EXPECT_THROW(parser4.parse(cfg_iface, config_element), DhcpConfigError);
+    EXPECT_THROW(parser6.parse(cfg_iface, config_element), DhcpConfigError);
 }
 
 } // end of anonymous namespace

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <boost/noncopyable.hpp>
 
+#include <dhcp/option.h>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -247,6 +248,11 @@ public:
     /// \return local port number.
     int getLocalPort() const { return local_port_; }
 
+    /// @brief Returns the time in microseconds to delay the program by.
+    ///
+    /// @return the time in microseconds to delay the program by.
+    int getExitWaitTime() const { return exit_wait_time_; }
+
     /// \brief Checks if seed provided.
     ///
     /// \return true if seed was provided.
@@ -331,6 +337,11 @@ public:
     ///
     /// \return wrapped command (start/stop).
     std::string getWrapped() const { return wrapped_; }
+
+    /// @brief Returns extra options to be inserted.
+    ///
+    /// @return container with options
+    const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
     /// \brief Returns server name.
     ///
@@ -488,113 +499,156 @@ private:
     /// IP protocol version to be used, expected values are:
     /// 4 for IPv4 and 6 for IPv6, default value 0 means "not set"
     uint8_t ipversion_;
+
     /// Packet exchange mode (e.g. DORA/SARR)
     ExchangeMode exchange_mode_;
+
     /// Lease Type to be obtained: address only, IPv6 prefix only.
     LeaseType lease_type_;
+
     /// Rate in exchange per second
     int rate_;
+
     /// A rate at which DHCPv6 Renew messages are sent.
     int renew_rate_;
+
     /// A rate at which DHCPv6 Release messages are sent.
     int release_rate_;
-    /// Delay between generation of two consecutive
-    /// performance reports
+
+    /// Delay between generation of two consecutive performance reports
     int report_delay_;
+
     /// Number of simulated clients (aka randomization range).
     uint32_t clients_num_;
+
     /// MAC address template used to generate unique MAC
     /// addresses for simulated clients.
     std::vector<uint8_t> mac_template_;
+
     /// DUID template used to generate unique DUIDs for
     /// simulated clients
     std::vector<uint8_t> duid_template_;
+
     /// Collection of base values specified with -b<value>
     /// options. Supported "bases" are mac=<mac> and duid=<duid>
     std::vector<std::string> base_;
+
+    /// Number of microseconds by which you should delay the exit
+    int exit_wait_time_;
+
     /// Number of 2 or 4-way exchanges to perform.
     std::vector<int> num_request_;
+
     /// Test period in seconds
     int period_;
+
     /// Indicates number of -d<value> parameters specified by user.
     /// If this value goes above 2, command line parsing fails.
     uint8_t drop_time_set_;
+
     /// Time to elapse before request is lost. The first value of
     /// two-element vector refers to DO/SA exchanges,
     /// second value refers to RA/RR. Default values are { 1, 1 }
     std::vector<double> drop_time_;
+
     /// Maximum number of drops request before aborting test.
     /// First value of two-element vector specifies maximum
     /// number of drops for DO/SA exchange, second value
     /// specifies maximum number of drops for RA/RR.
     std::vector<int> max_drop_;
+
     /// Maximal percentage of lost requests before aborting test.
     /// First value of two-element vector specifies percentage for
     /// DO/SA exchanges, second value for RA/RR.
     std::vector<double> max_pdrop_;
+
     /// Local address or interface specified with -l<value> option.
     std::string localname_;
+
     /// Indicates that specified value with -l<value> is
     /// rather interface (not address)
     bool is_interface_;
+
     /// Number of preload packets. Preload packets are used to
     /// initiate communication with server before doing performance
     /// measurements.
     int preload_;
+
     /// Number of exchanges sent before next pause.
     int aggressivity_;
+
     /// Local port number (host endian)
     int local_port_;
+
     /// Randomization seed.
     uint32_t seed_;
+
     /// Indicates that randomization seed was provided.
     bool seeded_;
+
     /// Indicates that we use broadcast address.
     bool broadcast_;
+
     /// Indicates that we do rapid commit option.
     bool rapid_commit_;
+
     /// Indicates that we take server id from first received packet.
     bool use_first_;
+
     /// Packet template file names. These files store template packets
     /// that are used for initiating exchanges. Template packets
     /// read from files are later tuned with variable data.
     std::vector<std::string> template_file_;
+
     /// Location of a file containing a list of MAC addresses, one per line.
     /// This can be used if you don't want to generate MAC address from a
     /// base MAC address, but rather provide the file with a list of MAC
     /// addresses to be randomly picked. Note that in DHCPv6 those MAC
     /// addresses will be used to generate DUID-LL.
     std::string mac_list_file_;
+
     /// List of MAC addresses loaded from a file.
     std::vector<std::vector<uint8_t> > mac_list_;
+
     /// Offset of transaction id in template files. First vector
     /// element points to offset for DISCOVER/SOLICIT messages,
     /// second element points to transaction id offset for
     /// REQUEST messages
     std::vector<int> xid_offset_;
+
     /// Random value offset in templates. Random value offset
     /// points to last octet of DUID. Up to 4 last octets of
     /// DUID are randomized to simulate different clients.
     std::vector<int> rnd_offset_;
+
     /// Offset of elapsed time option in template packet.
     int elp_offset_;
+
     /// Offset of server id option in template packet.
     int sid_offset_;
+
     /// Offset of requested ip data in template packet
     int rip_offset_;
+
     /// String representing diagnostic selectors specified
     /// by user with -x<value>.
     std::string diags_;
+
     /// Command to be executed at the beginning/end of the test.
     /// This command is expected to expose start and stop argument.
     std::string wrapped_;
+
     /// Server name specified as last argument of command line.
     std::string server_name_;
+
     /// Indicates how many DHCPv6 relay agents are simulated.
     uint8_t v6_relay_encapsulation_level_;
+
+    /// @brief Extra options to be sent in each packet.
+    isc::dhcp::OptionCollection extra_opts_;
 };
 
-} // namespace perfdhcp
-} // namespace isc
+}  // namespace perfdhcp
+}  // namespace isc
 
 #endif // COMMAND_OPTIONS_H

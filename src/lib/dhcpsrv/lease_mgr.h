@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,13 +9,12 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/db_exceptions.h>
-#include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -34,32 +33,25 @@
 /// They are essential components of the interface to any database backend.
 /// Each concrete database backend (e.g. MySQL) will define a class derived
 /// from LeaseMgr class.
-///
-/// Failover considerations:
-/// There are no intermediate plans to implement DHCPv4 failover
-/// (draft-ietf-dhc-failover-12.txt). Currently (Oct. 2012) the DHCPv6 failover
-/// is being defined in DHC WG in IETF (draft-ietf-dhcpv6-failover-requirements,
-/// draft-ietf-dhcpv6-failover-design), but the work is not advanced enough
-/// for implementation plans yet. v4 failover requires additional parameters
-/// to be kept with a lease. It is likely that v6 failover will require similar
-/// fields. Such implementation will require database schema extension.
-/// We have designed a way to expand/upgrade schemas during upgrades: a database
-/// schema is versioned and sanity checks about required version will be done
-/// upon start and/or upgrade. With this mechanism in place, we can add new
-/// fields to the database. In particular we can use that capability to
-/// introduce failover related fields.
-///
-/// However, there is another approach that can be reliably used to provide
-/// failover, even without the actual failover protocol implemented. As the
-/// first backend will use MySQL, we will be able to use Multi-Master capability
-/// offered by MySQL and use two separate Kea instances connecting to the
-/// same database.
-///
-/// Nevertheless, we hope to have failover protocol eventually implemented in
-/// the Kea.
-
 namespace isc {
 namespace dhcp {
+
+/// @brief Pair containing major and minor versions
+typedef std::pair<uint32_t, uint32_t> VersionPair;
+
+/// @brief Wraps value holding size of the page with leases.
+class LeasePageSize {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// @param page_size page size value.
+    /// @throw OutOfRange if page size is 0 or greater than uint32_t numeric
+    /// limit.
+    explicit LeasePageSize(const size_t page_size);
+
+    const size_t page_size_; ///< Holds page size.
+};
 
 /// @brief Contains a single row of lease statistical data
 ///
@@ -98,6 +90,26 @@ struct LeaseStatsRow {
           lease_state_(lease_state), state_count_(state_count) {
     }
 
+    /// @brief Less-than operator
+    bool operator< (const LeaseStatsRow &rhs) const {
+        if (subnet_id_ < rhs.subnet_id_) {
+            return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ < rhs.lease_type_) {
+                return (true);
+        }
+
+        if (subnet_id_ == rhs.subnet_id_ &&
+            lease_type_ == rhs.lease_type_ &&
+            lease_state_ < rhs.lease_state_) {
+                return (true);
+        }
+
+        return (false);
+    }
+
     /// @brief The subnet ID to which this data applies
     SubnetID subnet_id_;
     /// @brief The lease_type to which the count applies
@@ -111,12 +123,38 @@ struct LeaseStatsRow {
 /// @brief Base class for fulfilling a statistical lease data query
 ///
 /// LeaseMgr derivations implement this class such that it provides
-/// upto date statistical lease data organized as rows of LeaseStatsRow
+/// up to date statistical lease data organized as rows of LeaseStatsRow
 /// instances. The rows must be accessible in ascending order by subnet id.
 class LeaseStatsQuery {
 public:
+    /// @brief Defines the types of selection criteria supported
+    typedef enum {
+        ALL_SUBNETS,
+        SINGLE_SUBNET,
+        SUBNET_RANGE
+    } SelectMode;
+
     /// @brief Default constructor
-    LeaseStatsQuery() {};
+    /// The query created will return statistics for all subnets
+    LeaseStatsQuery();
+
+    /// @brief Constructor to query for a single subnet's stats
+    ///
+    /// The query created will return statistics for a single subnet
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @throw BadValue if sunbet_id given is 0.
+    LeaseStatsQuery(const SubnetID& subnet_id);
+
+    /// @brief Constructor to query for the stats for a range of subnets
+    ///
+    /// The query created will return statistics for the inclusive range of
+    /// subnets described by first and last sunbet IDs.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @throw BadValue if either value given is 0 or if last <= first.
+    LeaseStatsQuery(const SubnetID& first_subnet_id, const SubnetID& last_subnet_id);
 
     /// @brief virtual destructor
     virtual ~LeaseStatsQuery() {};
@@ -135,10 +173,41 @@ public:
     /// @return True if a row was fetched, false if there are no
     /// more rows.
     virtual bool getNextRow(LeaseStatsRow& row);
+
+    /// @brief Returns the value of first subnet ID specified (or zero)
+    SubnetID getFirstSubnetID() const {
+        return (first_subnet_id_);
+    };
+
+    /// @brief Returns the value of last subnet ID specified (or zero)
+    SubnetID getLastSubnetID() const {
+        return (last_subnet_id_);
+    };
+
+    /// @brief Returns the selection criteria mode
+    /// The value returned is based upon the constructor variant used
+    /// and it indicates which query variant will be executed.
+    SelectMode getSelectMode() const {
+        return (select_mode_);
+    };
+
+protected:
+    /// @brief First (or only) subnet_id in the selection criteria
+    SubnetID first_subnet_id_;
+
+    /// @brief Last subnet_id in the selection criteria when a range is given
+    SubnetID last_subnet_id_;
+
+private:
+    /// @brief Indicates the type of selection criteria specified
+    SelectMode select_mode_;
 };
 
-/// @brief Defines a pointer to an LeaseStatsQuery.
+/// @brief Defines a pointer to a LeaseStatsQuery.
 typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
+
+/// @brief Defines a pointer to a LeaseStatsRow.
+typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
 /// @brief Abstract Lease Manager
 ///
@@ -167,18 +236,28 @@ public:
 
     /// @brief Adds an IPv4 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
-    virtual bool addLease(const isc::dhcp::Lease4Ptr& lease) = 0;
+    ///         with the same address was already there or failed sanity checks)
+    virtual bool addLease(const Lease4Ptr& lease) = 0;
 
     /// @brief Adds an IPv6 lease.
     ///
+    /// The lease may be modified due to sanity checks setting (see
+    /// LeaseSanityChecks in CfgConsistency) before being inserted. For
+    /// performance reasons, the sanity checks do not make a copy, but rather
+    /// modify lease in place if needed.
+    ///
     /// @param lease lease to be added
     ///
     /// @result true if the lease was added, false if not (because a lease
-    ///         with the same address was already there).
+    ///         with the same address was already there or failed sanity checks)
     virtual bool addLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
@@ -258,6 +337,46 @@ public:
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const = 0;
 
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const = 0;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection getLeases4() const = 0;
+
+    /// @brief Returns range of IPv4 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv4 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv4 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const = 0;
+
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
     /// For a given address, we assume that there will be only one lease.
@@ -326,19 +445,51 @@ public:
     Lease6Ptr getLease6(Lease::Type type, const DUID& duid,
                         uint32_t iaid, SubnetID subnet_id) const;
 
-    /// @brief Returns a collection of expired DHCPv6 leases.
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
-    /// This method returns at most @c max_leases expired leases. The leases
-    /// returned haven't been reclaimed, i.e. the database query must exclude
-    /// reclaimed leases from the results returned.
+    /// @param subnet_id subnet identifier.
     ///
-    /// @param [out] expired_leases A container to which expired leases returned
-    /// by the database backend are added.
-    /// @param max_leases A maximum number of leases to be returned. If this
-    /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
-                                   const size_t max_leases) const = 0;
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const = 0;
 
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6() const = 0;
+
+    /// @brief Returns collection of leases for matching DUID
+    ///
+    /// @return Lease collection 
+    /// (may be empty if no IPv6 lease found for the DUID).
+    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
+
+    /// @brief Returns range of IPv6 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv6 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv6 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const = 0;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -351,6 +502,19 @@ public:
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases4(Lease4Collection& expired_leases,
+                                   const size_t max_leases) const = 0;
+
+    /// @brief Returns a collection of expired DHCPv6 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
                                    const size_t max_leases) const = 0;
 
     /// @brief Updates IPv4 lease.
@@ -367,10 +531,13 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
+    /// @param addr Address of the lease to be deleted. This can be an IPv4
+    ///             address or an IPv6 address.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::db::DbOperationError An operation on the open database has
+    ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
@@ -412,15 +579,41 @@ public:
     /// adding to the appropriate global statistic.
     void recountLeaseStats4();
 
-    /// @brief Virtual method which creates and runs the IPv4 lease stats query
+    /// @brief Creates and runs the IPv4 lease stats query for all subnets
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv4 lease statistical data.  Each row of the
-    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    /// populated with up to date IPv4 lease statistical data for all subnets.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery4();
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for a single
+    /// subnet.  Each row of the result set is an LeaseStatRow.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv4 lease statistical data for an inclusive
+    /// range of subnets. Each row of the result set is an LeaseStatRow which
+    /// ordered ascending by subnet ID.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Recalculates per-subnet and global stats for IPv6 leases
     ///
@@ -443,15 +636,41 @@ public:
     /// per subnet and adding to the appropriate global statistic.
     void recountLeaseStats6();
 
-    /// @brief Virtual method which creates and runs the IPv6 lease stats query
+    /// @brief Creates and runs the IPv6 lease stats query for all subnets
     ///
     /// LeaseMgr derivations implement this method such that it creates and
     /// returns an instance of an LeaseStatsQuery whose result set has been
-    /// populated with upto date IPv6 lease statistical data.  Each row of the
-    /// result set is an LeaseStatRow which ordered ascending by subnet ID.
+    /// populated with up to date IPv6 lease statistical data for all subnets.
+    /// Each row of the result set is an LeaseStatRow which ordered ascending
+    /// by subnet ID.
     ///
     /// @return A populated LeaseStatsQuery
     virtual LeaseStatsQueryPtr startLeaseStatsQuery6();
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for a single
+    /// subnet.  Each row of the result set is an LeaseStatRow.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id);
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// LeaseMgr derivations implement this method such that it creates and
+    /// returns an instance of an LeaseStatsQuery whose result set has been
+    /// populated with up to date IPv6 lease statistical data for an inclusive
+    /// range of subnets. Each row of the result set is an LeaseStatRow which
+    /// ordered ascending by subnet ID.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id);
 
     /// @brief Virtual method which removes specified leases.
     ///
@@ -507,7 +726,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual std::pair<uint32_t, uint32_t> getVersion() const = 0;
+    virtual VersionPair getVersion() const = 0;
 
     /// @brief Commit Transactions
     ///
@@ -520,9 +739,10 @@ public:
     /// Rolls back all pending database operations.  On databases that don't
     /// support transactions, this is a no-op.
     virtual void rollback() = 0;
+
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // LEASE_MGR_H

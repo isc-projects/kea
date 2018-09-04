@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -64,172 +64,6 @@ public:
         CfgMgr::instance().clear();
     }
 };
-
-
-/// @brief Check BooleanParser basic functionality.
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Rejects a non-boolean element.
-/// 3. Builds with a valid true value.
-/// 4. Bbuils with a valid false value.
-/// 5. Updates storage upon commit.
-TEST_F(DhcpParserTest, booleanParserTest) {
-
-    const std::string name = "boolParm";
-
-    // Verify that parser does not allow empty for storage.
-    BooleanStoragePtr bs;
-    EXPECT_THROW(BooleanParser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    BooleanStoragePtr storage(new BooleanStorage());
-    BooleanParser parser(name, storage);
-
-    // Verify that parser with rejects a non-boolean element.
-    ElementPtr wrong_element = Element::create("I am a string");
-    EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
-
-    // Verify that parser will build with a valid true value.
-    bool test_value = true;
-    ElementPtr element = Element::create(test_value);
-    ASSERT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    bool actual_value = !test_value;
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser will build with a valid false value.
-    test_value = false;
-    element->setValue(test_value);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    actual_value = !test_value;
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-}
-
-/// @brief Check StringParser basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Builds with a nont string value.
-/// 3. Builds with a string value.
-/// 4. Updates storage upon commit.
-TEST_F(DhcpParserTest, stringParserTest) {
-
-    const std::string name = "strParm";
-
-    // Verify that parser does not allow empty for storage.
-    StringStoragePtr bs;
-    EXPECT_THROW(StringParser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    StringStoragePtr storage(new StringStorage());
-    StringParser parser(name, storage);
-
-    // Verify that parser with accepts a non-string element.
-    ElementPtr element = Element::create(9999);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    std::string actual_value;
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("9999", actual_value);
-
-    // Verify that parser will build with a string value.
-    const std::string test_value = "test value";
-    element = Element::create(test_value);
-    ASSERT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser with accepts a boolean true element.
-    element = Element::create(true);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("true", actual_value);
-
-    // Verify that parser with accepts a boolean true element.
-    element = Element::create(false);
-    EXPECT_NO_THROW(parser.build(element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ("false", actual_value);
-}
-
-/// @brief Check Uint32Parser basic functionality
-///
-/// Verifies that the parser:
-/// 1. Does not allow empty for storage.
-/// 2. Rejects a non-integer element.
-/// 3. Rejects a negative value.
-/// 4. Rejects too large a value.
-/// 5. Builds with value of zero.
-/// 6. Builds with a value greater than zero.
-/// 7. Updates storage upon commit.
-TEST_F(DhcpParserTest, uint32ParserTest) {
-
-    const std::string name = "intParm";
-
-    // Verify that parser does not allow empty for storage.
-    Uint32StoragePtr bs;
-    EXPECT_THROW(Uint32Parser(name, bs), isc::dhcp::DhcpConfigError);
-
-    // Construct parser for testing.
-    Uint32StoragePtr storage(new Uint32Storage());
-    Uint32Parser parser(name, storage);
-
-    // Verify that parser with rejects a non-integer element.
-    ElementPtr wrong_element = Element::create("I am a string");
-    EXPECT_THROW(parser.build(wrong_element), isc::BadValue);
-
-    // Verify that parser with rejects a negative value.
-    ElementPtr int_element = Element::create(-1);
-    EXPECT_THROW(parser.build(int_element), isc::BadValue);
-
-    // Verify that parser with rejects too large a value provided we are on
-    // 64-bit platform.
-    if (sizeof(long) > sizeof(uint32_t)) {
-        long max = (long)(std::numeric_limits<uint32_t>::max()) + 1;
-        int_element->setValue(max);
-        EXPECT_THROW(parser.build(int_element), isc::BadValue);
-    }
-
-    // Verify that parser will build with value of zero.
-    int test_value = 0;
-    int_element->setValue((long)test_value);
-    ASSERT_NO_THROW(parser.build(int_element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    uint32_t actual_value = 0;
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-
-    // Verify that parser will build with a valid positive value.
-    test_value = 77;
-    int_element->setValue((long)test_value);
-    ASSERT_NO_THROW(parser.build(int_element));
-
-    // Verify that commit updates storage.
-    parser.commit();
-    EXPECT_NO_THROW((actual_value = storage->getParam(name)));
-    EXPECT_EQ(test_value, actual_value);
-}
 
 /// Verifies the code that parses mac sources and adds them to CfgMgr
 TEST_F(DhcpParserTest, MacSources) {
@@ -843,6 +677,24 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of option definitions using invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-def\": [ {"
+        "      \"name\": \"foo\","
+        "      \"code\": 100000,"
+        "      \"type\": \"ipv6-address\","
+        "      \"space\": \"-1\""
+        "  } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
 /// @brief Check basic parsing of options.
 ///
 /// Note that this tests basic operation of the OptionDataListParser and
@@ -925,6 +777,40 @@ TEST_F(ParseConfigTest, minimalOptionDataTest) {
     opt_data->set("code", Element::create(100));
     CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
     cfg.runCfgOptionsTest(family_, expected);
+}
+
+/// @brief Check parsing of unknown options fails.
+TEST_F(ParseConfigTest, unknownOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"name\": \"foo\","
+        "    \"data\": \"01\","
+        "    \"space\": \"bar\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
+}
+
+/// @brief Check parsing of options with invalid space fails.
+TEST_F(ParseConfigTest, badSpaceOptionDataTest) {
+
+    // Configuration string.
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"code\": 100,"
+        "    \"data\": \"01\","
+        "    \"space\": \"-1\""
+        " } ]"
+        "}";
+
+    // Verify that the configuration string does not parse.
+    int rcode = parseConfiguration(config, true);
+    ASSERT_NE(0, rcode);
 }
 
 /// @brief Check parsing of options with escape characters.
@@ -1049,6 +935,56 @@ TEST_F(ParseConfigTest, optionDataCSVFormatWithOptionDef) {
 
     CfgOptionsTest cfg2(CfgMgr::instance().getStagingCfg());
     cfg2.runCfgOptionsTest(family_, config);
+}
+
+// This test verifies that definitions of standard encapsulated
+// options can be used.
+TEST_F(ParseConfigTest, encapsulatedOptionData) {
+    std::string config =
+        "{ \"option-data\": [ {"
+        "    \"space\": \"s46-cont-mape-options\","
+        "    \"name\": \"s46-rule\","
+        "    \"data\": \"1, 0, 24, 192.0.2.0, 2001:db8:1::/64\""
+        " } ]"
+        "}";
+
+    // Make sure that we're using correct universe.
+    family_ = AF_INET6;
+    int rcode = 0;
+    ASSERT_NO_THROW(rcode = parseConfiguration(config));
+    ASSERT_EQ(0, rcode);
+
+    // Verify that the option data is correct.
+    OptionCustomPtr s46_rule = boost::dynamic_pointer_cast<OptionCustom>
+        (getOptionPtr(MAPE_V6_OPTION_SPACE, D6O_S46_RULE));
+    ASSERT_TRUE(s46_rule);
+
+    uint8_t flags;
+    uint8_t ea_len;
+    uint8_t prefix4_len;
+    IOAddress ipv4_prefix(IOAddress::IPV4_ZERO_ADDRESS());
+    PrefixTuple ipv6_prefix(PrefixLen(0), IOAddress::IPV6_ZERO_ADDRESS());;
+
+    ASSERT_NO_THROW({
+        flags = s46_rule->readInteger<uint8_t>(0);
+        ea_len = s46_rule->readInteger<uint8_t>(1);
+        prefix4_len = s46_rule->readInteger<uint8_t>(2);
+        ipv4_prefix = s46_rule->readAddress(3);
+        ipv6_prefix = s46_rule->readPrefix(4);
+    });
+
+    EXPECT_EQ(1, flags);
+    EXPECT_EQ(0, ea_len);
+    EXPECT_EQ(24, prefix4_len);
+    EXPECT_EQ("192.0.2.0", ipv4_prefix.toText());
+    EXPECT_EQ(64, ipv6_prefix.first.asUnsigned());
+    EXPECT_EQ("2001:db8:1::", ipv6_prefix.second.toText());
+
+    ElementPtr expected = Element::fromJSON(config);
+    ElementPtr opt_data = expected->get("option-data")->getNonConst(0);
+    opt_data->set("code", Element::create(D6O_S46_RULE));
+    CfgOptionsTest cfg(CfgMgr::instance().getStagingCfg());
+    cfg.runCfgOptionsTest(family_, expected);
 }
 
 // This test checks behavior of the configuration parser for option data
@@ -1343,9 +1279,16 @@ TEST_F(ParseConfigTest, emptyOptionData) {
 
 // This test verifies an option data without suboptions is supported
 TEST_F(ParseConfigTest, optionDataNoSubOption) {
-    // Configuration string.
+    // Configuration string. A global definition for option 43 is needed.
     const std::string config =
-        "{ \"option-data\": [ {"
+        "{ \"option-def\": [ {"
+        " \"name\": \"vendor-encapsulated-options\","
+        " \"code\": 43,"
+        " \"type\": \"empty\","
+        " \"space\": \"dhcp4\","
+        " \"encapsulate\": \"vendor-encapsulated-options\""
+        " } ],"
+        " \"option-data\": [ {"
         "    \"name\": \"vendor-encapsulated-options\""
         " } ]"
         "}";
@@ -1926,7 +1869,10 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
-        "     \"qualifying-suffix\" : \"test.suffix.\" "
+        "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
 
@@ -1952,6 +1898,8 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("test.prefix", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("test.suffix.", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
 
     // Verify that the configuration object unparses.
     ConstElementPtr expected;
@@ -1978,7 +1926,10 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"override-client-update\" : false, "
         "     \"replace-client-name\" : \"never\", "
         "     \"generated-prefix\" : \"\", "
-        "     \"qualifying-suffix\" : \"\" "
+        "     \"qualifying-suffix\" : \"\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
+        "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
 
@@ -2003,6 +1954,8 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
     EXPECT_EQ("", d2_client_config->getGeneratedPrefix());
     EXPECT_EQ("", d2_client_config->getQualifyingSuffix());
+    ASSERT_TRUE(d2_client_config->getContext());
+    EXPECT_EQ("{ \"foo\": \"bar\" }", d2_client_config->getContext()->str());
 
     ASSERT_NO_THROW(expected = Element::fromJSON(config_str2)->get("dhcp-ddns"));
     ASSERT_TRUE(expected);
@@ -2271,14 +2224,13 @@ TEST_F(ParseConfigTest, validRelayInfo4) {
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
-    // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("0.0.0.0")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V4);
 
-    // Subnet4 parser will pass 0.0.0.0 to the RelayInfoParser
     EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("192.0.2.1", result->addr_.toText());
+    EXPECT_TRUE(result->containsAddress(IOAddress("192.0.2.1")));
 }
 
 /// @brief Checks that a bogus relay info structure for IPv4 is rejected.
@@ -2304,8 +2256,8 @@ TEST_F(ParseConfigTest, bogusRelayInfo4) {
         "    }";
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
-    // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(IOAddress::IPV4_ZERO_ADDRESS()));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V4);
 
@@ -2329,13 +2281,13 @@ TEST_F(ParseConfigTest, validRelayInfo6) {
         "    }";
     ElementPtr json = Element::fromJSON(config_str);
 
-    // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V6);
-    // Subnet4 parser will pass :: to the RelayInfoParser
+
     EXPECT_NO_THROW(parser.parse(result, json));
-    EXPECT_EQ("2001:db8::1", result->addr_.toText());
+    EXPECT_TRUE(result->containsAddress(IOAddress("2001:db8::1")));
 }
 
 /// @brief Checks that a valid relay info structure for IPv6 can be handled
@@ -2361,8 +2313,8 @@ TEST_F(ParseConfigTest, bogusRelayInfo6) {
         "    }";
     ElementPtr json_bogus3 = Element::fromJSON(config_str_bogus3);
 
-    // We need to set the default ip-address to something.
-    Subnet::RelayInfoPtr result(new Subnet::RelayInfo(asiolink::IOAddress("::")));
+    // Create an "empty" RelayInfo to hold the parsed result.
+    Network::RelayInfoPtr result(new Network::RelayInfo());
 
     RelayInfoParser parser(Option::V6);
 

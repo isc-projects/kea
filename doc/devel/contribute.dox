@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -101,7 +101,7 @@ hasn't been written yet.
 
 See @ref unitTests for instructions on how to run unit-tests. If you
 happen to touch any database related code, make sure you compile
-your code with @c --with-dhcp-mysql, @c --with-dhcp-pgsql and/or
+your code with @c --with-mysql, @c --with-pgsql and/or
 @c --with-cql as needed. For example, if you change something
 substantial, make sure the other compilation options still work.
 
@@ -122,7 +122,7 @@ documentation, use \c --enable-generate-docs. If you are modifying DHCP
 code, you are likely to be interested in enabling a non-default database
 backends for DHCP. Note that if the backend is not enabled,
 the database-specific unit-tests are skipped. To enable the MySQL backend,
-use the switch \c --with-dhcp-mysql; for PostgreSQL, use \c --with-dhcp-pgsql.
+use the switch \c --with-mysql; for PostgreSQL, use \c --with-pgsql.
 A complete list of all switches can be obtained with the command:
 
 @code

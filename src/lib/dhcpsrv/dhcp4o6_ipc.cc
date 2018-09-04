@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcp/option6_addrlst.h>
 #include <dhcp/option_custom.h>
+#include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/dhcp4o6_ipc.h>
@@ -151,7 +152,7 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
             option_vendor.reset();
         }
     }
-         
+
     // Vendor option must exist.
     if (!option_vendor) {
         LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
@@ -191,14 +192,27 @@ Pkt6Ptr Dhcp4o6IpcBase::receive() {
                   "or has incorrect type)");
     }
 
+    // Get the option holding source port.
+    OptionUint16Ptr sport = boost::dynamic_pointer_cast<
+        OptionUint16>(option_vendor->getOption(ISC_V6_4O6_SRC_PORT));
+    if (!sport) {
+        LOG_WARN(dhcpsrv_logger, DHCPSRV_DHCP4O6_RECEIVED_BAD_PACKET)
+            .arg("no source port suboption");
+        isc_throw(Dhcp4o6IpcError,
+                  "malformed packet (source port suboption missing "
+                  "or has incorrect type)");
+    }
+
     // Update the packet.
     pkt->setRemoteAddr(srcs->readAddress());
+    pkt->setRemotePort(sport->getValue());
     pkt->setIface(iface->getName());
     pkt->setIndex(iface->getIndex());
 
     // Remove options that have been added by the IPC sender.
     static_cast<void>(option_vendor->delOption(ISC_V6_4O6_INTERFACE));
     static_cast<void>(option_vendor->delOption(ISC_V6_4O6_SRC_ADDRESS));
+    static_cast<void>(option_vendor->delOption(ISC_V6_4O6_SRC_PORT));
 
     // If there are no more options, the IPC sender has probably created the
     // vendor option, in which case we should remove it here.
@@ -243,6 +257,9 @@ void Dhcp4o6IpcBase::send(const Pkt6Ptr& pkt) {
     option_vendor->addOption(Option6AddrLstPtr(new Option6AddrLst(
                                                        ISC_V6_4O6_SRC_ADDRESS,
                                                        pkt->getRemoteAddr())));
+    option_vendor->addOption(OptionUint16Ptr(new OptionUint16(Option::V6,
+                                                       ISC_V6_4O6_SRC_PORT,
+                                                       pkt->getRemotePort())));
     // Get packet content
     OutputBuffer& buf = pkt->getBuffer();
     buf.clear();

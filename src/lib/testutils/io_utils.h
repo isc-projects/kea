@@ -32,7 +32,7 @@ std::string readFile(const std::string& file_path);
 /// token locations should remain unaffected. This is rather naive
 /// implementation, but it's probably sufficient for testing. It won't be able
 /// to pick any trickier cases, like # or // appearing in strings, nested C++
-/// comments etc.
+/// comments etc at the exception of // in URLs.
 ///
 /// @param input_file file to be stripped of comments
 /// @return filename of a new file that has comments stripped from it

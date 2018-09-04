@@ -47,13 +47,13 @@ public:
         switch (sizeof(T)) {
         case 4:
             buf.push_back((value >> 24) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 3:
             buf.push_back((value >> 16) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 2:
             buf.push_back((value >> 8) & 0xFF);
-            /* falls into */
+            /* falls through */
         case 1:
             buf.push_back(value & 0xFF);
             break;

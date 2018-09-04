@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,20 @@ public:
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr captureRelayedDiscover2();
 
+    /// @brief returns captured DISCOVER that contains a valid VIVSO option
+    ///
+    /// See method code for a detailed explanation.
+    ///
+    /// @return relayed DISCOVER
+    static isc::dhcp::Pkt4Ptr discoverWithValidVIVSO();
+
+    /// @brief returns captured DISCOVER that contains a truncated VIVSO option
+    ///
+    /// See method code for a detailed explanation.
+    ///
+    /// @return relayed DISCOVER
+    static isc::dhcp::Pkt4Ptr discoverWithTruncatedVIVSO();
+
     // see pkt_captures6.cc for descriptions
     // The descriptions are too large and too closely related to the
     // code, so it is kept in .cc rather than traditionally in .h
@@ -42,6 +56,8 @@ public:
     static isc::dhcp::Pkt6Ptr captureeRouterRelayedSolicit();
     static isc::dhcp::Pkt6Ptr captureCableLabsShortVendorClass();
     static isc::dhcp::Pkt6Ptr captureRelayed2xRSOO();
+    static isc::dhcp::Pkt6Ptr captureSolicitWithVIVSO();
+    static isc::dhcp::Pkt6Ptr captureSolicitWithTruncatedVIVSO();
 
 protected:
     /// @brief Auxiliary method that sets Pkt6 fields

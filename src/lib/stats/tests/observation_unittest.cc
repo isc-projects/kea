@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,9 +139,9 @@ TEST_F(ObservationTest, timers) {
     ptime before = microsec_clock::local_time();
     b.setValue(123.0); // Set it to a random value and record the time.
 
-    // Allow a bit of imprecision. This test allows 50ms. That should be ok,
+    // Allow a bit of imprecision. This test allows 500ms. That should be ok,
     // when running on virtual machines.
-    ptime after = before + millisec::time_duration(0,0,0,50);
+    ptime after = before + milliseconds(500);
 
     // Now wait some time. We want to confirm that the timestamp recorded is the
     // time the observation took place, not current time.

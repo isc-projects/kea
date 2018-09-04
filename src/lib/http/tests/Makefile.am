@@ -22,16 +22,20 @@ TESTS += libhttp_unittests
 
 libhttp_unittests_SOURCES  = connection_pool_unittests.cc
 libhttp_unittests_SOURCES += date_time_unittests.cc
-libhttp_unittests_SOURCES += listener_unittests.cc
+libhttp_unittests_SOURCES += http_header_unittests.cc
+libhttp_unittests_SOURCES += post_request_unittests.cc
 libhttp_unittests_SOURCES += post_request_json_unittests.cc
 libhttp_unittests_SOURCES += request_parser_unittests.cc
 libhttp_unittests_SOURCES += request_test.h
 libhttp_unittests_SOURCES += response_creator_unittests.cc
+libhttp_unittests_SOURCES += response_parser_unittests.cc
 libhttp_unittests_SOURCES += response_test.h
 libhttp_unittests_SOURCES += request_unittests.cc
 libhttp_unittests_SOURCES += response_unittests.cc
 libhttp_unittests_SOURCES += response_json_unittests.cc
 libhttp_unittests_SOURCES += run_unittests.cc
+libhttp_unittests_SOURCES += server_client_unittests.cc
+libhttp_unittests_SOURCES += url_unittests.cc
 
 libhttp_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libhttp_unittests_CXXFLAGS = $(AM_CXXFLAGS)

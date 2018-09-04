@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the config lib
 
+#include <config.h>
+
 #include "config/config_log.h"
 
 namespace isc {

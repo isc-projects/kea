@@ -1,0 +1,176 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// The purpose of this example is to showcase how clients can be classified
+// with advanced features.
+
+{ "Dhcp4": {
+
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+      "interfaces": [ "ethX" ]
+  },
+
+// Let's use the simplest backend: memfile and use some reasonable values
+// for timers. They are of no concern for the classification demonstration.
+  "lease-database": { "type": "memfile" },
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+  "valid-lifetime": 4000,
+
+// This list defines several classes that incoming packets can be assigned to.
+// One packet can belong to zero or more classes.
+  "client-classes": [
+
+// This class is required by the second subnet and is evaluated only
+// if it is required. The test expression returns true.
+// Note it is not possible to depend on VoIP class because it is not yet
+// defined.
+  {
+      "name": "second_subnet",
+      "only-if-required": true,
+      "test": "member('ALL')",
+      "option-data": [{
+          "name": "domain-name-servers",
+          "data": "127.0.0.1"
+      }]
+  },
+
+// Let's classify all incoming DISCOVER (message type 1) to a separate
+// class.
+  {
+      "name": "discovers",
+      "test": "pkt4.msgtype == 1"
+  },
+
+// Clients are supposed to set the transaction-id field to a random value.
+// Clients that send it with 0 are most likely broken. Let's mark them
+// as such.
+  {
+      "name": "broken",
+      "test": "pkt4.transid == 0"
+  },
+
+// Let's pick VoIP phones. Those that send their class identifiers
+// as Aastra, should belong to VoIP class. For a list of all options,
+// see www.iana.org/assignments/bootp-dhcp-parameters/.
+// In this particular class, we want to set specific values
+// of certain DHCPv4 fields. If the incoming packet matches the
+// test, those fields will be set in outgoing responses.
+// The option 43 is defined to encapsulate suboption in the aastra space.
+  {
+      "name": "VoIP",
+      "test": "substring(option[60].hex,0,6) == 'Aastra'",
+      "next-server": "192.0.2.254",
+      "server-hostname": "hal9000",
+      "boot-file-name": "/dev/null",
+      "option-def": [ {
+          "name": "vendor-encapsulated-options",
+          "code": 43,
+          "type": "empty",
+          "encapsulate": "aastra" } ]
+  },
+
+// Both a VoIP phone (by evaluation or host reservation) and has a host
+// reservation.
+  {
+      "name": "VoIP_host",
+      "test": "member('VoIP') and member('KNOWN')",
+      "server-hostname": "hal9001"
+  }
+
+  ],
+
+// The following list defines subnets. For some subnets we defined
+// a class that is allowed in that subnet. If not specified,
+// everyone is allowed. When a class is specified, only packets belonging
+// to that class are allowed for that subnet.
+  "subnet4": [
+    {
+// This one is for VoIP devices only.
+        "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+        "subnet": "192.0.2.0/24",
+        "client-class": "VoIP",
+        "interface": "ethX"
+    },
+// This one doesn't have any client-class specified, so everyone
+// is allowed in. The normal subnet selection rules still apply,
+// though. There is also a static class reservation for a client
+// using MAC address 1a:1b:1c:1d:1e:1f. This client will always
+// be assigned to this class.
+    {
+        "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
+        "subnet": "192.0.3.0/24",
+        "reservations": [
+        {
+            "hw-address": "1a:1b:1c:1d:1e:1f",
+            "client-classes": [ "VoIP" ]
+        } ],
+        "interface": "ethX",
+        "require-client-classes": [ "second_subnet" ]
+    },
+
+// The following list defines a subnet with pools. For some pools
+// we defined a class that is allowed in that pool. If not specified
+// everyone is allowed. When a class is specified, only packets belonging
+// to that class are allowed for that pool.
+     {
+        "pools": [
+           {
+// This one is for VoIP devices only.
+              "pool":  "192.0.4.1 - 192.0.4.200",
+              "client-class": "VoIP"
+           },
+// This one doesn't have any client-class specified, so everyone
+// is allowed in.
+           {
+               "pool":  "192.0.5.1 - 192.0.5.200"
+           } ],
+           "subnet": "192.0.4.0/23",
+           "interface": "ethY"
+        },
+// This subnet is divided in two pools for unknown and known
+// (i.e. which have a reservation) clients. The built-in KNOWN and
+// UNKNOWN classes are set or not at host reservation lookup (KNOWN if
+// this returns something, UNKNOWN if this finds nothing) and client
+//classes depending on it are evaluated.
+// This happens after subnet selection and before address allocation
+//from pools.
+        {
+           "pools": [
+                {
+                   "pool": "192.0.8.100 - 192.0.8.200",
+                   "client-class": "UNKNOWN"
+                },
+                {
+                   "pool": "192.0.9.100 - 192.0.9.200",
+                   "client-class": "KNOWN"
+                }
+            ],
+            "subnet": "192.0.8.0/23",
+            "reservations": [
+                {  "hw-address": "00:00:00:11:22:33", "hostname": "h1" },
+                {  "hw-address": "00:00:00:44:55:66", "hostname": "h4" },
+                {  "hw-address": "00:00:00:77:88:99", "hostname": "h7" },
+                {  "hw-address": "00:00:00:aa:bb:cc", "hostname": "ha" }
+            ]
+        }
+  ]
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}

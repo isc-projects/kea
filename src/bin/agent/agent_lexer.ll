@@ -1,10 +1,14 @@
-/* Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
    file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 %{ /* -*- C++ -*- */
+
+/* Generated files do not make clang static analyser so happy */
+#ifndef __clang_analyzer__
+
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
@@ -193,6 +197,28 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return AgentParser::make_HTTP_PORT(driver.loc_);
     default:
         return AgentParser::make_STRING("http-port", driver.loc_);
+    }
+}
+
+\"user-context\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+    case ParserContext::SERVER:
+    case ParserContext::LOGGERS:
+        return AgentParser::make_USER_CONTEXT(driver.loc_);
+    default:
+        return AgentParser::make_STRING("user-context", driver.loc_);
+    }
+}
+
+\"comment\" {
+    switch(driver.ctx_) {
+    case ParserContext::AGENT:
+    case ParserContext::SERVER:
+    case ParserContext::LOGGERS:
+        return AgentParser::make_COMMENT(driver.loc_);
+    default:
+        return AgentParser::make_STRING("comment", driver.loc_);
     }
 }
 
@@ -419,6 +445,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         case '"':
             /* impossible condition */
             driver.error(driver.loc_, "Bad quote in \"" + raw + "\"");
+            break;
         case '\\':
             ++pos;
             if (pos >= len) {
@@ -695,3 +722,4 @@ class Dummy {
     void dummy() { yy_fatal_error("Fix me: how to disable its definition?"); }
 };
 }
+#endif /* !__clang_analyzer__ */

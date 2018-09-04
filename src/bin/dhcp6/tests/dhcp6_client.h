@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -305,6 +305,12 @@ public:
     /// way, just stores it.
     void doInfRequest();
 
+    /// @brief Sends Release to the server.
+    ///
+    /// This function simulates sending the Release message to the server
+    /// and receiving server's response.
+    void doRelease();
+
     /// @brief Removes the stateful configuration obtained from the server.
     ///
     /// It removes all leases held by the client.
@@ -319,7 +325,11 @@ public:
     /// lease has been later updated (e.g. as a result of Rebind) as it is
     /// expected that the fresh lease has cltt set to "now" (not to the time
     /// in the past).
-    void fastFwdTime(const uint32_t secs);
+    ///
+    /// @param secs Number of seconds by which the time should be moved.
+    /// @param update_server Indicates if the leases should be updated on the
+    /// server.
+    void fastFwdTime(const uint32_t secs, const bool update_server = false);
 
     /// @brief Returns DUID option used by the client.
     OptionPtr getClientId() const;
@@ -503,7 +513,7 @@ public:
     }
 
     /// @brief Returns the server that the client is communicating with.
-    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv> getServer() const {
+    boost::shared_ptr<isc::dhcp::test::NakedDhcpv6Srv>& getServer() {
         return (srv_);
     }
 
@@ -633,6 +643,11 @@ public:
         relay_link_addr_ = link_addr;
     }
 
+    /// @brief Sets interface id value to be inserted into relay agent option.
+    ///
+    /// @param interface_id Value of the interface id as string.
+    void useInterfaceId(const std::string& interface_id);
+
     /// @brief Controls whether the client should send a client-id or not
     /// @param send should the client-id be sent?
     void useClientId(const bool send) {
@@ -734,6 +749,32 @@ public:
     ///
     /// @param opt additional option to be sent
     void addExtraOption(const OptionPtr& opt);
+
+    /// @brief Configures the client to not send any extra options.
+    void clearExtraOptions();
+
+    /// @brief Add a client class.
+    ///
+    /// @param client_class name of the class to be added.
+    void addClass(const ClientClass& client_class);
+
+    /// @brief Configures the client to not add client classes.
+    void clearClasses();
+
+    /// @brief Debugging method the prints currently held configuration
+    ///
+    /// @todo: This is mostly useful when debugging tests. This method
+    /// is incomplete. Please extend it when needed.
+    void printConfiguration() const;
+
+    /// @brief Receives a response from the server.
+    ///
+    /// This method is useful to receive response from the server after
+    /// parking a packet. In this case, the packet is not received as a
+    /// result of initial exchange, e.g. @c doRequest. The test can call
+    /// this method to complete the transaction when it expects that the
+    /// packet has been unparked.
+    void receiveResponse();
 
 private:
 
@@ -900,6 +941,12 @@ private:
 
     /// @brief FQDN requested by the client.
     Option6ClientFqdnPtr fqdn_;
+
+    /// @brief Interface id.
+    OptionPtr interface_id_;
+
+    /// @brief Extra classes to add to the query.
+    ClientClasses classes_;
 };
 
 } // end of namespace isc::dhcp::test

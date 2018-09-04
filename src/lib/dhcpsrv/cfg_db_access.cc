@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/cfg_db_access.h>
+#include <dhcpsrv/db_type.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -33,9 +34,23 @@ CfgDbAccess::getLeaseDbAccessString() const {
 
 std::string
 CfgDbAccess::getHostDbAccessString() const {
-    return (getAccessString(host_db_access_));
+    if (host_db_access_.empty()) {
+        return ("");
+    } else {
+        return (getAccessString(host_db_access_.front()));
+    }
 }
 
+std::list<std::string>
+CfgDbAccess::getHostDbAccessStringList() const {
+    std::list<std::string> ret;
+    for (const std::string& dbaccess : host_db_access_) {
+        if (!dbaccess.empty()) {
+            ret.push_back(getAccessString(dbaccess));
+        }
+    }
+    return (ret);
+}
 
 void
 CfgDbAccess::createManagers() const {
@@ -44,10 +59,14 @@ CfgDbAccess::createManagers() const {
     LeaseMgrFactory::create(getLeaseDbAccessString());
 
     // Recreate host data source.
-    HostDataSourceFactory::destroy();
-    if (!host_db_access_.empty()) {
-        HostMgr::create(getHostDbAccessString());
+    HostMgr::create();
+    std::list<std::string> host_db_access_list = getHostDbAccessStringList();
+    for (std::string& hds : host_db_access_list) {
+        HostMgr::addBackend(hds);
     }
+
+    // Check for a host cache.
+    HostMgr::checkCacheBackend(true);
 }
 
 std::string 
@@ -108,7 +127,7 @@ CfgDbAccess::toElementDbAccessString(const std::string& dbaccess) {
                        (keyword == "password") ||
                        (keyword == "host") ||
                        (keyword == "name") ||
-                       (keyword == "contact_points") ||
+                       (keyword == "contact-points") ||
                        (keyword == "keyspace")) {
                 result->set(keyword, Element::create(value));
             } else {

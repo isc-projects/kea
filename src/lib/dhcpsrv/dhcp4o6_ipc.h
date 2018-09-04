@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -54,10 +54,10 @@ public:
 /// the original DHCPv4 query message sent by the client. This
 /// information is known by the DHCPv6 server and needs to be conveyed
 /// to the DHCPv4 server. The IPC conveys it in the
-/// @c ISC_V6_4O6_INTERFACE and @c ISC_V6_4O6_SRC_ADDRESS options
-/// within the Vendor Specific Information option, with ISC
-/// enterprise id. These options are added by the IPC sender and removed
-/// by the IPC receiver.
+/// @c ISC_V6_4O6_INTERFACE, @c ISC_V6_4O6_SRC_ADDRESS and @c
+/// ISC_V6_4O6_SRC_PORT options within the Vendor Specific Information
+/// option, with ISC enterprise id. These options are added by the IPC
+/// sender and removed by the IPC receiver.
 class Dhcp4o6IpcBase : public boost::noncopyable {
 public:
 
@@ -105,11 +105,11 @@ public:
 
     /// @brief Send message over IPC.
     ///
-    /// The IPC uses @c ISC_V6_4O6_INTERFACE and @c ISC_V6_4O6_SRC_ADDRESS
-    /// options conveyed within the Vendor Specific Information option, with
-    /// ISC enterprise id, to communicate the client remote address and the
-    /// interface on which the DHCPv4 query was received. These options will
-    /// be removed by the receiver.
+    /// The IPC uses @c ISC_V6_4O6_INTERFACE, @c ISC_V6_4O6_SRC_ADDRESS
+    /// and @c ISC_V6_4O6_SRC_PORT options conveyed within the Vendor
+    /// Specific Information option, with ISC enterprise id, to communicate
+    /// the client remote address and the interface on which the DHCPv4 query
+    /// was received. These options will be removed by the receiver.
     ///
     /// @param pkt Pointer to a DHCPv6 message with interface and remote
     /// address.

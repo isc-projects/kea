@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,9 @@
 #include <asiolink/io_address.h>
 #include <gtest/gtest.h>
 #include <sstream>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 using namespace std;
 using namespace isc::asiolink;
@@ -51,6 +54,14 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second) {
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
+    if (first->getContext()) {
+        EXPECT_TRUE(second->getContext());
+        if (second->getContext()) {
+            EXPECT_EQ(first->getContext()->str(), second->getContext()->str());
+        }
+    } else {
+        EXPECT_FALSE(second->getContext());
+    }
 }
 
 void
@@ -74,6 +85,38 @@ detailCompareLease(const Lease6Ptr& first, const Lease6Ptr& second) {
     EXPECT_EQ(first->fqdn_fwd_, second->fqdn_fwd_);
     EXPECT_EQ(first->fqdn_rev_, second->fqdn_rev_);
     EXPECT_EQ(first->hostname_, second->hostname_);
+    if (first->getContext()) {
+        EXPECT_TRUE(second->getContext());
+        if (second->getContext()) {
+            EXPECT_EQ(first->getContext()->str(), second->getContext()->str());
+        }
+    } else {
+        EXPECT_FALSE(second->getContext());
+    }
+}
+
+int findLastSocketFd() {
+    int max_fd_number = getdtablesize();
+    int last_socket = -1;
+    struct stat stats;
+
+    // Iterate over the open fds
+    for (int fd = 0; fd <= max_fd_number; fd++ ) {
+        errno = 0;
+        fstat(fd, &stats);
+
+        if (errno == EBADF ) {
+            // Skip any that aren't open
+            continue;
+        }
+
+        // it's a socket, remember it
+        if (S_ISSOCK(stats.st_mode)) {
+            last_socket = fd;
+        }
+    }
+
+    return (last_socket);
 }
 
 }; // namespace test

@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/callout_handle.h>
 #include <hooks/callout_manager.h>
@@ -70,6 +72,11 @@ CalloutHandle::getArgumentNames() const {
     }
 
     return (names);
+}
+
+ParkingLotHandlePtr
+CalloutHandle::getParkingLotHandlePtr() const {
+    return (boost::make_shared<ParkingLotHandle>(server_hooks_.getParkingLotPtr(manager_->getHookIndex())));
 }
 
 // Return the library handle allowing the callout to access the CalloutManager
@@ -151,5 +158,27 @@ CalloutHandle::getHookName() const {
     return (hook);
 }
 
-} // namespace util
+ScopedCalloutHandleState::
+ScopedCalloutHandleState(const CalloutHandlePtr& callout_handle)
+    : callout_handle_(callout_handle) {
+    if (!callout_handle_) {
+        isc_throw(BadValue, "callout_handle argument must not be null");
+    }
+
+    resetState();
+}
+
+ScopedCalloutHandleState::~ScopedCalloutHandleState() {
+    resetState();
+}
+
+void
+ScopedCalloutHandleState::resetState() {
+    // No need to check if the handle is null because the constructor
+    // already checked that.
+    callout_handle_->deleteAllArguments();
+    callout_handle_->setStatus(CalloutHandle::NEXT_STEP_CONTINUE);
+}
+
+} // namespace hooks
 } // namespace isc

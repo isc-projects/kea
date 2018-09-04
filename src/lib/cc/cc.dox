@@ -19,12 +19,12 @@ partially rewrite the parser code. The design for this effort is documented
 here: http://kea.isc.org/wiki/SimpleParser It discusses the original issues
 and the proposed architecture.
 
-There are several aspects of this new approach. The base class for all parsers
-is @ref isc::data::SimpleParser. It simplifies the parsers based on
-@ref isc::dhcp::DhcpConfigParser by rejecting the
-concept of build/commit phases. Instead, there should be a single method
-called parse that takes ConstElementPtr as a single parameter (that's the
-JSON structures to be parsed) and returns the config structure to be used
+There are several aspects of this new approach. The base class for all
+parsers is @ref isc::data::SimpleParser. It simplifies the parsers
+based on DhcpConfigParser by rejecting the concept of build/commit
+phases.  Instead, there should be a single method called parse that
+takes ConstElementPtr as a single parameter (that's the JSON
+structures to be parsed) and returns the config structure to be used
 in CfgMgr. An example of such a method can be the following:
 
 @code

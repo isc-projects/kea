@@ -1,4 +1,4 @@
--- Copyright (C) 2016 Internet Systems Consortium.
+-- Copyright (C) 2016-2018 Internet Systems Consortium.
 --
 -- This Source Code Form is subject to the terms of the Mozilla Public
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,9 @@
 
 TRUNCATE TABLE lease4;
 TRUNCATE TABLE lease6;
-TRUNCATE TABLE hosts;
-TRUNCATE TABLE dhcp4_options;
-TRUNCATE TABLE dhcp6_options;
+TRUNCATE TABLE lease6_types;
+TRUNCATE TABLE lease_hwaddr_source;
+TRUNCATE TABLE lease_state;
+TRUNCATE TABLE schema_version;
+TRUNCATE TABLE host_reservations;
+TRUNCATE TABLE logs;

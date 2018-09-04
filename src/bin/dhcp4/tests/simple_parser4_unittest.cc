@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -95,12 +95,14 @@ TEST_F(SimpleParser4Test, globalDefaults4) {
     EXPECT_NO_THROW(num = SimpleParser4::setAllDefaults(empty));
 
 
-    // We expect at least 3 parameters to be inserted.
-    EXPECT_TRUE(num >= 3);
+    // We expect at least 1 parameter to be inserted.
+    EXPECT_TRUE(num >= 1);
 
     checkIntegerValue(empty, "valid-lifetime", 7200);
-    checkIntegerValue(empty, "rebind-timer", 1800);
-    checkIntegerValue(empty, "renew-timer", 900);
+
+    // Timers are optional and by default are not present
+    EXPECT_FALSE(empty->contains("rebind-timer"));
+    EXPECT_FALSE(empty->contains("renew-timer"));
 
     // Make sure that preferred-lifetime is not set for v4 (it's v6 only
     // parameter)

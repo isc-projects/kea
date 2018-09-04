@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,10 @@
 #ifndef CLASSIFY_H
 #define CLASSIFY_H
 
-#include <set>
 #include <string>
+#include <iterator>
+#include <list>
+#include <unordered_set>
 
 /// @file   classify.h
 ///
@@ -36,34 +38,67 @@ namespace dhcp {
 
     /// @brief Container for storing client class names
     ///
-    /// Depending on how you look at it, this is either a little more than just
-    /// a set of strings or a client classifier that performs access control.
-    /// For now, it is a simple access list that may contain zero or more
-    /// class names. It is expected to grow in complexity once support for
-    /// client classes becomes more feature rich.
-    ///
-    /// Note: This class is derived from std::set which may not have Doxygen
-    /// documentation. See  http://www.cplusplus.com/reference/set/set/.
-    class ClientClasses : public std::set<ClientClass> {
+    /// Both a list to iterate on it in insert order and unordered
+    /// set of names for existence.
+    class ClientClasses {
     public:
 
+        /// @brief Type of iterators
+        typedef std::list<ClientClass>::const_iterator const_iterator;
+
         /// @brief Default constructor.
-        ClientClasses() : std::set<ClientClass>() {
+        ClientClasses() : list_(), set_() {
         }
 
         /// @brief Constructor from comma separated values.
         ///
         /// @param class_names A string containing a client classes separated
         /// with commas. The class names are trimmed before insertion to the set.
-        ClientClasses(const std::string& class_names);
+        ClientClasses(const ClientClass& class_names);
+
+        /// @brief Insert an element.
+        ///
+        /// @param class_name The name of the class to insert
+        void insert(const ClientClass& class_name) {
+            list_.push_back(class_name);
+            set_.insert(class_name);
+        }
+
+        /// @brief Check if classes is empty.
+        bool empty() const {
+            return (list_.empty());
+        }
+
+        /// @brief Returns the number of classes.
+        ///
+        /// @note; in C++ 11 list size complexity is constant so
+        /// there is no advantage to use the set part.
+        size_t size() const {
+            return (list_.size());
+        }
+
+        /// @brief Iterator to the first element.
+        const_iterator cbegin() const {
+            return (list_.cbegin());
+        }
+
+        /// @brief Iterator to the past the end element.
+        const_iterator cend() const {
+            return (list_.cend());
+        }
 
         /// @brief returns if class x belongs to the defined classes
         ///
         /// @param x client class to be checked
         /// @return true if x belongs to the classes
-        bool
-        contains(const ClientClass& x) const {
-            return (find(x) != end());
+        bool contains(const ClientClass& x) const {
+            return (set_.count(x) != 0);
+        }
+
+        /// @brief Clears containers.
+        void clear() {
+            list_.clear();
+            set_.clear();
         }
 
         /// @brief Returns all class names as text
@@ -72,6 +107,13 @@ namespace dhcp {
         /// default separator comprises comma sign followed by space
         /// character.
         std::string toText(const std::string& separator = ", ") const;
+
+    private:
+        /// @brief List/ordered part
+        std::list<ClientClass> list_;
+
+        /// @brief Set/unordered part
+        std::unordered_set<ClientClass> set_;
     };
 
 };

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -75,7 +75,11 @@ public:
 
     /// \brief Return file descriptor of underlying socket
     virtual int getNative() const {
+#if BOOST_VERSION < 106600
         return (socket_.native());
+#else
+        return (socket_.native_handle());
+#endif
     }
 
     /// \brief Return protocol of socket
@@ -87,6 +91,48 @@ public:
     ///
     /// Indicates that the opening of a TCP socket is asynchronous.
     virtual bool isOpenSynchronous() const {
+        return (false);
+    }
+
+    /// \brief Checks if the connection is usable.
+    ///
+    /// The connection is usable if the socket is open and the peer has not
+    /// closed its connection.
+    ///
+    /// \return true if the connection is usable.
+    bool isUsable() const {
+        // If the socket is open it doesn't mean that it is still usable. The connection
+        // could have been closed on the other end. We have to check if we can still
+        // use this socket.
+        if (socket_.is_open()) {
+            // Remember the current non blocking setting.
+            const bool non_blocking_orig = socket_.non_blocking();
+            // Set the socket to non blocking mode. We're going to test if the socket
+            // returns would_block status on the attempt to read from it.
+            socket_.non_blocking(true);
+
+            boost::system::error_code ec;
+            char data[2];
+
+            // Use receive with message peek flag to avoid removing the data awaiting
+            // to be read.
+            socket_.receive(boost::asio::buffer(data, sizeof(data)),
+                            boost::asio::socket_base::message_peek,
+                            ec);
+
+            // Revert the original non_blocking flag on the socket.
+            socket_.non_blocking(non_blocking_orig);
+
+            // If the connection is alive we'd typically get would_block status code.
+            // If there are any data that haven't been read we may also get success
+            // status. We're guessing that try_again may also be returned by some
+            // implementations in some situations. Any other error code indicates a
+            // problem with the connection so we assume that the connection has been
+            // closed.
+            return (!ec || (ec.value() == boost::asio::error::try_again) ||
+                    (ec.value() == boost::asio::error::would_block));
+        }
+
         return (false);
     }
 
@@ -227,7 +273,11 @@ TCPSocket<C>::~TCPSocket()
 
 template <typename C> void
 TCPSocket<C>::open(const IOEndpoint* endpoint, C& callback) {
-
+    // If socket is open on this end but has been closed by the peer,
+    // we need to reconnect.
+    if (socket_.is_open() && !isUsable()) {
+        close();
+    }
     // Ignore opens on already-open socket.  Don't throw a failure because
     // of uncertainties as to what precedes whan when using asynchronous I/O.
     // At also allows us a treat a passed-in socket as a self-managed socket.

@@ -1,4 +1,4 @@
-# Copyright (C) 2016 Internet Systems Consortium.
+# Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,3 +23,12 @@ DROP PROCEDURE IF EXISTS lease4DumpHeader;
 DROP PROCEDURE IF EXISTS lease4DumpData;
 DROP PROCEDURE IF EXISTS lease6DumpHeader;
 DROP PROCEDURE IF EXISTS lease6DumpData;
+DROP TRIGGER IF EXISTS lease4_stat_insert;
+DROP TRIGGER IF EXISTS lease4_stat_update;
+DROP TRIGGER IF EXISTS lease4_stat_delete;
+DROP TABLE IF EXISTS lease4_stat;
+DROP TRIGGER IF EXISTS lease6_stat_insert;
+DROP TRIGGER IF EXISTS lease6_stat_update;
+DROP TRIGGER IF EXISTS lease6_stat_delete;
+DROP TABLE IF EXISTS lease6_stat;
+DROP TABLE IF EXISTS logs;

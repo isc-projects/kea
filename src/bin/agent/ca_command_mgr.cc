@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <agent/ca_cfg_mgr.h>
 #include <agent/ca_command_mgr.h>
@@ -16,8 +18,10 @@
 #include <cc/data.h>
 #include <cc/json_feed.h>
 #include <config/client_connection.h>
+#include <config/timeouts.h>
 #include <boost/pointer_cast.hpp>
 #include <iterator>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -26,14 +30,6 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::hooks;
 using namespace isc::process;
-
-namespace {
-
-/// @brief Client side connection timeout.
-/// @todo Make it configurable.
-const long CONNECTION_TIMEOUT = 5000;
-
-}
 
 namespace isc {
 namespace agent {
@@ -92,7 +88,52 @@ CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
     // process the command with hooks libraries (if available) or by one of the
     // CA's native handlers.
     if (services->empty()) {
-        return (HookedCommandMgr::handleCommand(cmd_name, params, original_cmd));
+
+        // It is frequent user error to not include the 'service' parameter in
+        // the commands that should be forwarded to Kea servers. If the command
+        // lacks this parameter the CA will try to process it and often fail
+        // because it is not supported by the CA. In the future we may want to
+        // make this parameter mandatory. For now, we're going to improve the
+        // situation by clearly explaining to the controlling client that the
+        // command is not supported by the CA, but it is possible that he may
+        // achieve what he wants by providing the 'service' parameter.
+
+        // Our interface is very restrictive so we walk around this by const
+        // casting the returned pointer. It is certainly easier to do than
+        // changing the whole data interface.
+        ElementPtr answer = boost::const_pointer_cast<Element>
+            (HookedCommandMgr::handleCommand(cmd_name, params, original_cmd));
+
+        try {
+            // Check what error code was returned by the handler.
+            int rcode = 0;
+            ConstElementPtr text = parseAnswer(rcode, answer);
+
+            // There is a dedicated error code for unsupported command case.
+            if (rcode == CONTROL_RESULT_COMMAND_UNSUPPORTED) {
+
+                // Append the explanatory text to the text reported by the handler.
+                // Smart, eh?
+                std::ostringstream s;
+                s << text->stringValue();
+                s << " You did not include \"service\" parameter in the command,"
+                    " which indicates that Kea Control Agent should process this"
+                " command rather than forward it to one or more DHCP servers. If you"
+                    " aimed to send this command to one of the DHCP servers you"
+                    " should include the \"service\" parameter in your request, e.g."
+                    " \"service\": [ \"dhcp4\" ] to forward the command to the DHCPv4"
+                    " server, or \"service\": [ \"dhcp4\", \"dhcp6\" ] to forward it to"
+                    " both DHCPv4 and DHCPv6 servers etc.";
+
+                answer->set(CONTROL_TEXT, Element::create(s.str()));
+            }
+
+        } catch (...) {
+            // Exceptions are not really possible assuming that the BaseCommandMgr
+            // creates the response correctly.
+        }
+
+        return (answer);
     }
 
     ElementPtr answer_list = Element::createList();
@@ -193,7 +234,7 @@ CtrlAgentCommandMgr::forwardCommand(const std::string& service,
                    // Got the IO service so stop IO service. This causes to
                    // stop IO service when all handlers have been invoked.
                    io_service->stopWork();
-               }, ClientConnection::Timeout(CONNECTION_TIMEOUT));
+               }, ClientConnection::Timeout(TIMEOUT_AGENT_FORWARD_COMMAND));
     io_service->run();
 
     if (received_ec) {

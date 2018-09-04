@@ -1,8 +1,10 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <cc/data.h>
 #include <cc/json_feed.h>
@@ -18,6 +20,8 @@ const int JSONFeed::RECEIVE_START_ST;
 const int JSONFeed::WHITESPACE_BEFORE_JSON_ST;
 const int JSONFeed::JSON_START_ST;
 const int JSONFeed::INNER_JSON_ST;
+const int JSONFeed::STRING_JSON_ST;
+const int JSONFeed::ESCAPE_JSON_ST;
 const int JSONFeed::JSON_END_ST;
 const int JSONFeed::FEED_OK_ST;
 const int JSONFeed::FEED_FAILED_ST;
@@ -135,6 +139,10 @@ JSONFeed::defineStates() {
                 boost::bind(&JSONFeed::whiteSpaceBeforeJSONHandler, this));
     defineState(INNER_JSON_ST, "INNER_JSON_ST",
                 boost::bind(&JSONFeed::innerJSONHandler, this));
+    defineState(STRING_JSON_ST, "STRING_JSON_ST",
+                boost::bind(&JSONFeed::stringJSONHandler, this));
+    defineState(ESCAPE_JSON_ST, "ESCAPE_JSON_ST",
+                boost::bind(&JSONFeed::escapeJSONHandler, this));
     defineState(JSON_END_ST, "JSON_END_ST",
                 boost::bind(&JSONFeed::endJSONHandler, this));
 }
@@ -210,7 +218,7 @@ void
 JSONFeed::receiveStartHandler() {
     char c = getNextFromBuffer();
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
-        switch(getNextEvent()) {
+        switch (getNextEvent()) {
         case START_EVT:
             switch (c) {
             case '\t':
@@ -227,9 +235,13 @@ JSONFeed::receiveStartHandler() {
                 transition(INNER_JSON_ST, DATA_READ_OK_EVT);
                 return;
 
+            // Cannot start by a string
+            case '"':
             default:
                 feedFailure("invalid first character " + std::string(1, c));
+                break;
             }
+            break;
 
         default:
             invalidEventError("receiveStartHandler", getNextEvent());
@@ -256,6 +268,8 @@ JSONFeed::whiteSpaceBeforeJSONHandler() {
             transition(INNER_JSON_ST, DATA_READ_OK_EVT);
             break;
 
+        // Cannot start by a string
+        case '"':
         default:
             feedFailure("invalid character " + std::string(1, c));
         }
@@ -285,9 +299,44 @@ JSONFeed::innerJSONHandler() {
             }
             break;
 
+        case '"':
+            transition(STRING_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
         default:
             transition(getCurrState(), DATA_READ_OK_EVT);
         }
+    }
+}
+
+void
+JSONFeed::stringJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        output_.push_back(c);
+
+        switch(c) {
+        case '"':
+            transition(INNER_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        case '\\':
+            transition(ESCAPE_JSON_ST, DATA_READ_OK_EVT);
+            break;
+
+        default:
+            transition(getCurrState(), DATA_READ_OK_EVT);
+        }
+    }
+}
+
+void
+JSONFeed::escapeJSONHandler() {
+    char c = getNextFromBuffer();
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        output_.push_back(c);
+
+        transition(STRING_JSON_ST, DATA_READ_OK_EVT);
     }
 }
 

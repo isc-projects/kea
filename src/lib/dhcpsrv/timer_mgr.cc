@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -113,6 +113,13 @@ public:
     /// This method must be explicitly called prior to termination of the
     /// process.
     void unregisterTimers();
+
+    /// @brief Checks if the timer with a specified name has been registered.
+    ///
+    /// @param timer_name Name of the timer.
+    /// @return true if the timer with the specified name has been registered,
+    /// false otherwise.
+    bool isTimerRegistered(const std::string& timer_name);
 
     /// @brief Returns the number of registered timers.
     size_t timersCount() const;
@@ -233,6 +240,11 @@ TimerMgrImpl::unregisterTimers() {
     }
 }
 
+bool
+TimerMgrImpl::isTimerRegistered(const std::string& timer_name) {
+    return (registered_timers_.find(timer_name) != registered_timers_.end());
+}
+
 size_t
 TimerMgrImpl::timersCount() const {
     return (registered_timers_.size());
@@ -314,7 +326,7 @@ TimerMgr::TimerMgr()
 }
 
 TimerMgr::~TimerMgr() {
-    unregisterTimers();
+    impl_->unregisterTimers();
     delete impl_;
 }
 
@@ -349,6 +361,11 @@ TimerMgr::unregisterTimers() {
               DHCPSRV_TIMERMGR_UNREGISTER_ALL_TIMERS);
 
     impl_->unregisterTimers();
+}
+
+bool
+TimerMgr::isTimerRegistered(const std::string& timer_name) {
+    return (impl_->isTimerRegistered(timer_name));
 }
 
 size_t

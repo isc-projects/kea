@@ -1,0 +1,204 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+ @page benchmarks Benchmarks: Measuring performance
+
+@section benchmarksOverview
+
+Kea 1.4 added support for benchmarks. We are using
+<a href="https://github.com/google/benchmark">Google Benchmark</a>
+framework. See their webpage for overview and details.
+
+To compile benchmarks, configure Kea with appropriate flag:
+
+@code
+$ ./configure --with-benchmark
+$ make
+@endcode
+
+The benchmarks are built in @b src/lib/dhcpsrv/benchmarks directory.
+Note that the benchmarks are backend-specific, so please make sure you
+enable the backends you want to measure (See --with-mysql,
+--with-pgsql, --with-cql parameters for configure). Once the
+benchmark is built, you can run specific benchmarks. Make sure you
+have the environment ready for use, i.e. the actual database backend
+is set up, the DB or keyspace is created. The setup is the same as for
+running unit-tests. DB name or keyspace should be keatest, and
+username keatest, password keatest should give you full write access
+to the database. Any data present in the DB before the tests will be
+removed.
+
+To get a list of available benchmarks, use the following command:
+
+@code
+$ cd src/lib/dhcpsrv/benchmarks
+$ ./run-benchmarks --benchmark_list_tests
+@endcode
+
+The list is dependandant on the configuration flags and availability of
+various backends. For example, to run specific benchmark you may
+specify its name. Wildcards are supported:
+
+@code
+# This will run one specific benchmark
+$ ./run-benchmarks --benchmark_filter=MemfileLeaseMgrBenchmark/insertLeases4/512
+
+# This will run all benchmarks related to Cassandra:
+$ ./run-benchmarks --benchmark_filter=CqlHostDataSourceBenchmark
+
+@endcode
+
+It takes a long time to run some benchmarks, so please make sure you run only
+those you are interested in. For example, this is the output of all memfile
+benchmarks:
+
+@code
+$ ./run-benchmarks --benchmark_filter=MemfileLeaseMgrBenchmark
+Run on (8 X 3800 MHz CPU s)
+2018-01-23 21:00:19
+***WARNING*** CPU scaling is enabled, the benchmark real time measurements may be noisy and will incur extra overhead.
+***WARNING*** Library was built as DEBUG. Timings may be affected.
+-------------------------------------------------------------------------------------------------------------
+Benchmark                                                                      Time           CPU Iterations
+-------------------------------------------------------------------------------------------------------------
+MemfileLeaseMgrBenchmark/insertLeases4/512                                 10716 us      10716 us         48
+MemfileLeaseMgrBenchmark/insertLeases4/4096                                90593 us      90590 us          8
+MemfileLeaseMgrBenchmark/insertLeases4/32768                              758551 us     758524 us          1
+MemfileLeaseMgrBenchmark/insertLeases4/65533                             1553195 us    1553136 us          1
+MemfileLeaseMgrBenchmark/updateLeases4/512                                  8379 us       8379 us         84
+MemfileLeaseMgrBenchmark/updateLeases4/4096                                67506 us      67504 us         10
+MemfileLeaseMgrBenchmark/updateLeases4/32768                              546041 us     546024 us          1
+MemfileLeaseMgrBenchmark/updateLeases4/65533                             1098839 us    1098799 us          1
+MemfileLeaseMgrBenchmark/getLease4_address/512                              2772 us       2772 us        253
+MemfileLeaseMgrBenchmark/getLease4_address/4096                            23407 us      23406 us         30
+MemfileLeaseMgrBenchmark/getLease4_address/32768                          179624 us     179619 us          4
+MemfileLeaseMgrBenchmark/getLease4_address/65533                          393543 us     393531 us          2
+MemfileLeaseMgrBenchmark/getLease4_hwaddr/512                               3899 us       3898 us        181
+MemfileLeaseMgrBenchmark/getLease4_hwaddr/4096                             51317 us      51316 us         12
+MemfileLeaseMgrBenchmark/getLease4_hwaddr/32768                          3269266 us    3269150 us          1
+MemfileLeaseMgrBenchmark/getLease4_hwaddr/65533                         13225744 us   13225237 us          1
+MemfileLeaseMgrBenchmark/getLease4_hwaddr_subnetid/512                      3501 us       3501 us        201
+MemfileLeaseMgrBenchmark/getLease4_hwaddr_subnetid/4096                    30573 us      30571 us         23
+MemfileLeaseMgrBenchmark/getLease4_hwaddr_subnetid/32768                  245307 us     245295 us          3
+MemfileLeaseMgrBenchmark/getLease4_hwaddr_subnetid/65533                  521296 us     521274 us          1
+MemfileLeaseMgrBenchmark/getLease4_clientid/512                             3999 us       3999 us        175
+MemfileLeaseMgrBenchmark/getLease4_clientid/4096                           75467 us      75464 us          9
+MemfileLeaseMgrBenchmark/getLease4_clientid/32768                        6375617 us    6375402 us          1
+MemfileLeaseMgrBenchmark/getLease4_clientid/65533                       26109513 us   26108636 us          1
+MemfileLeaseMgrBenchmark/getLease4_clientid_subnetid/512                    3532 us       3532 us        198
+MemfileLeaseMgrBenchmark/getLease4_clientid_subnetid/4096                  30279 us      30277 us         24
+MemfileLeaseMgrBenchmark/getLease4_clientid_subnetid/32768                244085 us     244072 us          3
+MemfileLeaseMgrBenchmark/getLease4_clientid_subnetid/65533                509971 us     509948 us          1
+MemfileLeaseMgrBenchmark/getExpiredLeases4/512                               837 us        837 us        841
+MemfileLeaseMgrBenchmark/getExpiredLeases4/4096                            72253 us      72251 us          8
+MemfileLeaseMgrBenchmark/getExpiredLeases4/32768                         5837125 us    5836712 us          1
+MemfileLeaseMgrBenchmark/getExpiredLeases4/65533                        42295069 us   42292723 us          1
+MemfileLeaseMgrBenchmark/insertLeases6/512                                  5638 us       5638 us        121
+MemfileLeaseMgrBenchmark/insertLeases6/4096                                46669 us      46667 us         15
+MemfileLeaseMgrBenchmark/insertLeases6/32768                              423543 us     423527 us          2
+MemfileLeaseMgrBenchmark/insertLeases6/65533                              806061 us     806031 us          1
+MemfileLeaseMgrBenchmark/updateLeases6/512                                  2796 us       2796 us        231
+MemfileLeaseMgrBenchmark/updateLeases6/4096                                22683 us      22681 us         31
+MemfileLeaseMgrBenchmark/updateLeases6/32768                              190410 us     190403 us          4
+MemfileLeaseMgrBenchmark/updateLeases6/65533                              382458 us     382441 us          2
+MemfileLeaseMgrBenchmark/getLease6_type_address/512                         2824 us       2824 us        246
+MemfileLeaseMgrBenchmark/getLease6_type_address/4096                       23483 us      23482 us         30
+MemfileLeaseMgrBenchmark/getLease6_type_address/32768                     198815 us     198800 us          4
+MemfileLeaseMgrBenchmark/getLease6_type_address/65533                     369424 us     369408 us          2
+MemfileLeaseMgrBenchmark/getLease6_type_duid_iaid/512                       3859 us       3858 us        183
+MemfileLeaseMgrBenchmark/getLease6_type_duid_iaid/4096                     32180 us      32178 us         23
+MemfileLeaseMgrBenchmark/getLease6_type_duid_iaid/32768                   252381 us     252372 us          3
+MemfileLeaseMgrBenchmark/getLease6_type_duid_iaid/65533                   508467 us     508449 us          2
+MemfileLeaseMgrBenchmark/getLease6_type_type_duid_iaid_subnetid/512         4085 us       4085 us        170
+MemfileLeaseMgrBenchmark/getLease6_type_type_duid_iaid_subnetid/4096       32983 us      32981 us         21
+MemfileLeaseMgrBenchmark/getLease6_type_type_duid_iaid_subnetid/32768     257658 us     257648 us          3
+MemfileLeaseMgrBenchmark/getLease6_type_type_duid_iaid_subnetid/65533     514603 us     514583 us          1
+MemfileLeaseMgrBenchmark/getExpiredLeases6/512                               728 us        728 us        991
+MemfileLeaseMgrBenchmark/getExpiredLeases6/4096                            66537 us      66535 us         11
+MemfileLeaseMgrBenchmark/getExpiredLeases6/32768                         4645828 us    4645641 us          1
+MemfileLeaseMgrBenchmark/getExpiredLeases6/65533                        23793972 us   23793017 us          1
+@endcode
+
+The results are to be interpreted as follows:
+
+@code
+Benchmark                                                                      Time           CPU Iterations
+-------------------------------------------------------------------------------------------------------------
+MemfileLeaseMgrBenchmark/insertLeases4/512                                 10716 us      10716 us         4
+@endcode
+
+- MemfileLeaseMgrBenchmark - This is a benchmark for memfile lease manager
+- insertLeases4 - this benchmark tests performance of repeated lease insertion for many leases
+- 512 - this is the number of leases that were inserted
+- 10716 us - This is the average time it takes to insert 512 leases. us stands for microseconds, so that's
+  a bit over 10 milliseconds.
+- 4 - Benchmark decided to repeat the number of iterations 4 times.
+
+@section benchmarksCode Internal code organization
+
+Benchmarks used isc::dhcp::bench namespace.
+
+Source code for the benchmarks reside in src/lib/dhcpsrv/benchmarks directory,
+although due to similarity with unit tests, some code from testutils is reused.
+Similar to unit-tests for lease managers and host data sources, there are
+generic classes that handle a given manager. See
+@ref isc::dhcp::bench::GenericHostDataSourceBenchmark and
+@ref isc::dhcp::bench::GenericLeaseMgrBenchmark. These classes provide a unified
+implementation for specific benchmarks, like IPv4 lease insertion. There is a
+number of basic operations that are expected to be implemented in each backend.
+Please look for methods that start with bench* prefix in the generic classes.
+
+@section benchmarkControlFlow Explaining control flow in benchmarks
+
+@todo: We should explain how the benchmarks are actually run, what does the state
+parameter passed actually represent, why the setup code needs to be reentrant etc.
+
+@section benchmarkNew Adding new benchmarks
+
+The following is a loose description of all the steps necessary for implementing
+a new benchmark.
+
+-# Assuming the benchmark could in principle be run on several backends (all
+benchmarks should, otherwise the major benefit of comparing different backends
+would disappear), there should be a method in the base class (either
+@ref isc::dhcp::bench::GenericHostDataSourceBenchmark or
+@ref isc::dhcp::bench::GenericLeaseMgrBenchmark). See 
+@ref isc::dhcp::bench::GenericLeaseMgrBenchmark::benchUpdateLeases4 as an example.
+
+-# You need to define a benchmark suing BENCHMARK_DEFINE_F macro. This should be
+done in the backend specific file. For example:
+  @code
+  // Defines a benchmark that measures IPv4 leases update.
+  BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, updateLeases4)(benchmark::State& state) {
+      const size_t lease_count = state.range(0);
+      while (state.KeepRunning()) {
+          ReentrantSetUpWithInserts4(state, lease_count);
+          benchUpdateLeases4();
+      }
+  }
+  @endcode
+
+-# You need to define boundary parameters for the benchmark that was defined
+in step 2. For example:
+  @code
+  /// A benchmark that measures IPv4 leases update.
+  BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, updateLeases4)
+      ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+  @endcode
+  This macro defines a range. For this particular example, MIN_LEASE_COUNT is 256
+  and MAX_LEASE_COUNT is 65533. Google benchmark will pick several values in that
+  range (512, 4096, 32768 and 65533). As a result, the following new benchmarks
+  will become available:
+  @code
+  MemfileLeaseMgrBenchmark/updateLeases4/512
+  MemfileLeaseMgrBenchmark/updateLeases4/4096
+  MemfileLeaseMgrBenchmark/updateLeases4/32768
+  MemfileLeaseMgrBenchmark/updateLeases4/65533
+  @endcode
+  Those can be run from the command line using --benchmark_filter switch.
+
+*/

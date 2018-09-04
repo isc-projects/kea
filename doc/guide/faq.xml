@@ -1,10 +1,13 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE book PUBLIC "-//OASIS//DTD DocBook XML V4.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.2/docbookx.dtd" [
-<!ENTITY mdash  "&#x2014;" >
-]>
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-<chapter id="faq">
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="faq">
   <title>Frequently Asked Questions</title>
 
   <para>This chapter contains a number of frequently asked questions and
@@ -17,19 +20,19 @@
     at least 2 years. If you have something short term, please consider putting
     it in the known issues list. -->
 
-  <section id="faq-generic">
+  <section xml:id="faq-generic">
     <title>General Frequently Asked Questions</title>
 
-    <section id="q1-generic">
+    <section xml:id="q1-generic">
       <title>Where did the Kea name came from?</title>
 
       <para>Kea is the name of a high mountain parrot living in New Zealand.
-      See this <ulink url="https://lists.isc.org/pipermail/kea-users/2014-October/000032.html" />
+      See this <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://lists.isc.org/pipermail/kea-users/2014-October/000032.html">https://lists.isc.org/pipermail/kea-users/2014-October/000032.html</uri>
       for an extended answer.</para>
 
     </section>
 
-    <section id="q2-generic">
+    <section xml:id="q2-generic">
       <title>Feature X is not supported yet. When/if will it be available?</title>
 
       <para>Kea is developed by a small team of engineers. Our resources are
@@ -62,7 +65,7 @@
       significant new features, like support for a new database type. Before
       considering writing and submitting a patch, make sure you read
       the Contributor's Guide in the
-      <ulink url="http://git.kea.isc.org/~tester/kea/doxygen/">Kea Developer's Guide</ulink>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen/">Kea Developer's Guide</link>.
       </para>
 
       <para>Kea is developed by ISC, which is a non-profit organization.
@@ -79,8 +82,8 @@
       violates a RFC, we may have a problem with that. Nevertheless, please
       talk to us and we may be able to find a solution.</para>
 
-      <para>Finally, Kea has a <ulink url="http://kea.isc.org/roadmap">public
-      roadmap</ulink>, with releases happening several times each year. We tend
+      <para>Finally, Kea has a <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/roadmap">public
+      roadmap</link>, with releases happening several times each year. We tend
       to not modify plans for the current milestone, unless there are very good
       reasons to do so. Therefore "I'd like a feature X in 6 months" is much
       better received than "I'd like a feature X now".</para>
@@ -88,7 +91,7 @@
 
   </section>
 
-  <section id="faq-dhcp4">
+  <section xml:id="faq-dhcp4">
     <title>Frequently Asked Questions about DHCPv4</title>
 
     <section iq="q1-dhcp4">
@@ -103,7 +106,7 @@
 
       <para>If you do not want the server to use raw sockets, it is possible to
       configure the Kea DHCPv4 server to use UDP sockets instead. See <command>dhcp-socket-type</command>
-      described in <xref linkend="dhcp4-interface-configuration" />. However,
+      described in <xref linkend="dhcp4-interface-configuration"/>. However,
       using UDP sockets has certain limitations. In particular, they may not allow
       for sending responses directly to clients without IPv4 addresses assigned.
       That's ok, if all your traffic is coming through relay agents.</para>
@@ -111,7 +114,7 @@
 
   </section> <!-- end of DHCPv4 FAQ section -->
 
-  <section id="faq-dhcp6">
+  <section xml:id="faq-dhcp6">
     <title>Frequently Asked Questions about DHCPv6</title>
 
     <section iq="q1-dhcp6">

@@ -1,8 +1,10 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -18,7 +20,8 @@ namespace dhcp {
 ClientClassDef::ClientClassDef(const std::string& name,
                                const ExpressionPtr& match_expr,
                                const CfgOptionPtr& cfg_option)
-    : name_(name), match_expr_(match_expr), cfg_option_(cfg_option),
+    : name_(name), match_expr_(match_expr), required_(false),
+      depend_on_known_(false), cfg_option_(cfg_option),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     // Name can't be blank
@@ -36,8 +39,8 @@ ClientClassDef::ClientClassDef(const std::string& name,
 }
 
 ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
-    : name_(rhs.name_), match_expr_(ExpressionPtr()),
-      cfg_option_(new CfgOption()),
+    : name_(rhs.name_), match_expr_(ExpressionPtr()), required_(false),
+      depend_on_known_(false), cfg_option_(new CfgOption()),
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()) {
 
     if (rhs.match_expr_) {
@@ -45,10 +48,16 @@ ClientClassDef::ClientClassDef(const ClientClassDef& rhs)
         *match_expr_ = *(rhs.match_expr_);
     }
 
+    if (rhs.cfg_option_def_) {
+        rhs.cfg_option_def_->copyTo(*cfg_option_def_);
+    }
+
     if (rhs.cfg_option_) {
         rhs.cfg_option_->copyTo(*cfg_option_);
     }
 
+    required_ = rhs.required_;
+    depend_on_known_ = rhs.depend_on_known_;
     next_server_ = rhs.next_server_;
     sname_ = rhs.sname_;
     filename_ = rhs.filename_;
@@ -87,6 +96,36 @@ ClientClassDef::setTest(const std::string& test) {
     test_ = test;
 }
 
+bool
+ClientClassDef::getRequired() const {
+    return (required_);
+}
+
+void
+ClientClassDef::setRequired(bool required) {
+    required_ = required;
+}
+
+bool
+ClientClassDef::getDependOnKnown() const {
+    return (depend_on_known_);
+}
+
+void
+ClientClassDef::setDependOnKnown(bool depend_on_known) {
+    depend_on_known_ = depend_on_known;
+}
+
+const CfgOptionDefPtr&
+ClientClassDef::getCfgOptionDef() const {
+    return (cfg_option_def_);
+}
+
+void
+ClientClassDef::setCfgOptionDef(const CfgOptionDefPtr& cfg_option_def) {
+    cfg_option_def_ = cfg_option_def;
+}
+
 const CfgOptionPtr&
 ClientClassDef::getCfgOption() const {
     return (cfg_option_);
@@ -106,6 +145,11 @@ ClientClassDef::equals(const ClientClassDef& other) const {
         ((!cfg_option_ && !other.cfg_option_) ||
         (cfg_option_ && other.cfg_option_ &&
          (*cfg_option_ == *other.cfg_option_))) &&
+        ((!cfg_option_def_ && !other.cfg_option_def_) ||
+        (cfg_option_def_ && other.cfg_option_def_ &&
+         (*cfg_option_def_ == *other.cfg_option_def_))) &&
+            (required_ == other.required_) &&
+            (depend_on_known_ == other.depend_on_known_) &&
             (next_server_ == other.next_server_) &&
             (sname_ == other.sname_) &&
             (filename_ == other.filename_));
@@ -115,11 +159,21 @@ ElementPtr
 ClientClassDef:: toElement() const {
     uint16_t family = CfgMgr::instance().getFamily();
     ElementPtr result = Element::createMap();
+    // Set user-context
+    contextToElement(result);
     // Set name
     result->set("name", Element::create(name_));
     // Set original match expression (empty string won't parse)
     if (!test_.empty()) {
         result->set("test", Element::create(test_));
+    }
+    // Set only-if-required
+    if (required_) {
+        result->set("only-if-required", Element::create(required_));
+    }
+    // Set option-def (used only by DHCPv4)
+    if (cfg_option_def_ && (family == AF_INET)) {
+        result->set("option-def", cfg_option_def_->toElement());
     }
     // Set option-data
     result->set("option-data", cfg_option_->toElement());
@@ -144,13 +198,13 @@ std::ostream& operator<<(std::ostream& os, const ClientClassDef& x) {
 //********** ClientClassDictionary ******************//
 
 ClientClassDictionary::ClientClassDictionary()
-    : classes_(new ClientClassDefMap()) {
+    : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
 }
 
 ClientClassDictionary::ClientClassDictionary(const ClientClassDictionary& rhs)
-    : classes_(new ClientClassDefMap()) {
-    BOOST_FOREACH(ClientClassMapPair cclass, *(rhs.classes_)) {
-        ClientClassDefPtr copy(new ClientClassDef(*(cclass.second)));
+    : map_(new ClientClassDefMap()), list_(new ClientClassDefList()) {
+    BOOST_FOREACH(ClientClassDefPtr cclass, *(rhs.list_)) {
+        ClientClassDefPtr copy(new ClientClassDef(*cclass));
         addClass(copy);
     }
 }
@@ -162,12 +216,20 @@ void
 ClientClassDictionary::addClass(const std::string& name,
                                 const ExpressionPtr& match_expr,
                                 const std::string& test,
+                                bool required,
+                                bool depend_on_known,
                                 const CfgOptionPtr& cfg_option,
+                                CfgOptionDefPtr cfg_option_def,
+                                ConstElementPtr user_context,
                                 asiolink::IOAddress next_server,
                                 const std::string& sname,
                                 const std::string& filename) {
     ClientClassDefPtr cclass(new ClientClassDef(name, match_expr, cfg_option));
     cclass->setTest(test);
+    cclass->setRequired(required);
+    cclass->setDependOnKnown(depend_on_known);
+    cclass->setCfgOptionDef(cfg_option_def);
+    cclass->setContext(user_context),
     cclass->setNextServer(next_server);
     cclass->setSname(sname);
     cclass->setFilename(filename);
@@ -186,13 +248,14 @@ ClientClassDictionary::addClass(ClientClassDefPtr& class_def) {
                   << class_def->getName() << " has already been defined");
     }
 
-    (*classes_)[class_def->getName()] = class_def;
+    list_->push_back(class_def);
+    (*map_)[class_def->getName()] = class_def;
 }
 
 ClientClassDefPtr
 ClientClassDictionary::findClass(const std::string& name) const {
-    ClientClassDefMap::iterator it = classes_->find(name);
-    if (it != classes_->end()) {
+    ClientClassDefMap::iterator it = map_->find(name);
+    if (it != map_->end()) {
         return (*it).second;
     }
 
@@ -201,26 +264,33 @@ ClientClassDictionary::findClass(const std::string& name) const {
 
 void
 ClientClassDictionary::removeClass(const std::string& name) {
-    classes_->erase(name);
+    for (ClientClassDefList::iterator this_class = list_->begin();
+         this_class != list_->end(); ++this_class) {
+        if ((*this_class)->getName() == name) {
+            list_->erase(this_class);
+            break;
+        }
+    }
+    map_->erase(name);
 }
 
-const ClientClassDefMapPtr&
+const ClientClassDefListPtr&
 ClientClassDictionary::getClasses() const {
-    return (classes_);
+    return (list_);
 }
 
 bool
 ClientClassDictionary::equals(const ClientClassDictionary& other) const {
-    if (classes_->size() != other.classes_->size()) {
+    if (list_->size() != other.list_->size()) {
         return (false);
     }
 
-    ClientClassDefMap::iterator this_class = classes_->begin();
-    ClientClassDefMap::iterator other_class = other.classes_->begin();
-    while (this_class != classes_->end() &&
-           other_class != other.classes_->end()) {
-        if (!(*this_class).second || !(*other_class).second ||
-            (*(*this_class).second) != (*(*other_class).second)) {
+    ClientClassDefList::const_iterator this_class = list_->cbegin();
+    ClientClassDefList::const_iterator other_class = other.list_->cbegin();
+    while (this_class != list_->cend() &&
+           other_class != other.list_->cend()) {
+        if (!*this_class || !*other_class ||
+            **this_class != **other_class) {
                 return false;
         }
 
@@ -235,11 +305,71 @@ ElementPtr
 ClientClassDictionary::toElement() const {
     ElementPtr result = Element::createList();
     // Iterate on the map
-    for (ClientClassDefMap::iterator this_class = classes_->begin();
-         this_class != classes_->end(); ++this_class) {
-        result->add(this_class->second->toElement());
+    for (ClientClassDefList::const_iterator this_class = list_->begin();
+         this_class != list_->cend(); ++this_class) {
+        result->add((*this_class)->toElement());
     }
     return (result);
+}
+
+std::list<std::string>
+builtinNames = {
+    "ALL", "KNOWN", "UNKNOWN"
+};
+
+std::list<std::string>
+builtinPrefixes = {
+    "VENDOR_CLASS_", "HA_", "AFTER_", "EXTERNAL_"
+};
+
+bool
+isClientClassBuiltIn(const ClientClass& client_class) {
+    for (std::list<std::string>::const_iterator bn = builtinNames.cbegin();
+         bn != builtinNames.cend(); ++bn) {
+        if (client_class == *bn) {
+            return true;
+        }
+    }
+
+    for (std::list<std::string>::const_iterator bt = builtinPrefixes.cbegin();
+         bt != builtinPrefixes.cend(); ++bt) {
+        if (client_class.size() <= bt->size()) {
+            continue;
+        }
+        auto mis = std::mismatch(bt->cbegin(), bt->cend(), client_class.cbegin());
+        if (mis.first == bt->cend()) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool
+isClientClassDefined(ClientClassDictionaryPtr& class_dictionary,
+                     bool& depend_on_known,
+                     const ClientClass& client_class) {
+    // First check built-in classes
+    if (isClientClassBuiltIn(client_class)) {
+        // Check direct dependency on [UN]KNOWN
+        if ((client_class == "KNOWN") || (client_class == "UNKNOWN")) {
+            depend_on_known = true;
+        }
+        return (true);
+    }
+
+    // Second check already defined, i.e. in the dictionary
+    ClientClassDefPtr def = class_dictionary->findClass(client_class);
+    if (def) {
+        // Check indirect dependency on [UN]KNOWN
+        if (def->getDependOnKnown()) {
+            depend_on_known = true;
+        }
+        return (true);
+    }
+
+    // Not defined...
+    return (false);
 }
 
 } // namespace isc::dhcp

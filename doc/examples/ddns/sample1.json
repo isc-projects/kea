@@ -18,6 +18,18 @@
     "port": 53001,
     "dns-server-timeout" : 1000,
 
+// One extra feature that requires some explanation is
+// user-context. This is a structure that you can define at global scope,
+// in ddns domain, dns server, tsig key and others. It is parsed by
+// Kea, but not used directly.  It is intended to keep anything you
+// may want to put there - comments, extra designations, floor or
+// department names etc.
+// A comment entry is translated into a user-context with a "comment"
+// property so you can include comments inside the configuration itself.
+
+    "user-context": { "version": 1 },
+
+
 //
 // ----------------- Forward DDNS  ------------------
 //
@@ -36,6 +48,7 @@
         [
 //           DdnsDomain for zone "four.example.com."
             {
+                "comment": "DdnsDomain example",
                 "name": "four.example.com.",
                 "key-name": "d2.md5.key",
                 "dns-servers":

@@ -1,6 +1,8 @@
-// Copyright (C) 2015 - 2017 Deutsche Telekom AG.
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
-// Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
+// Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
+//          Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,15 +19,13 @@
 #ifndef CQL_LEASE_MGR_H
 #define CQL_LEASE_MGR_H
 
-#include <cassandra.h>
-
+#include <cql/cql_connection.h>
+#include <cql/cql_exchange.h>
 #include <dhcp/hwaddr.h>
-#include <dhcpsrv/cql_connection.h>
-#include <dhcpsrv/cql_exchange.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
-#include <boost/utility.hpp>
 
 #include <string>
 #include <utility>
@@ -34,14 +34,9 @@
 namespace isc {
 namespace dhcp {
 
-class CqlVersionExchange;
-class CqlLeaseExchange;
-class CqlLease4Exchange;
-class CqlLease6Exchange;
-
 /// @brief Cassandra Lease Manager
 ///
-/// This class provides the \ref isc::dhcp::LeaseMgr interface to the Cassandra
+/// This class provides the @ref isc::dhcp::LeaseMgr interface to the Cassandra
 /// database. Use of this backend implies that a CQL database is available
 /// and that the Kea schema has been created within it.
 class CqlLeaseMgr : public LeaseMgr {
@@ -49,26 +44,30 @@ public:
     /// @brief Constructor
     ///
     /// Uses the following keywords in the parameters passed to it to
-    /// connect to the database:
-    /// - name - Name of the database to which to connect (mandatory)
-    /// - host - Host to which to connect (optional, defaults to "localhost")
-    /// - user - Username under which to connect (optional)
-    /// - password - Password for "user" on the database (optional)
-    ///
-    /// If the database is successfully opened, the version number in the
-    /// schema_version table will be checked against hard-coded value in
-    /// the implementation file.
+    /// connect to the Cassandra cluster (if omitted, defaults specified in
+    /// parentheses):
+    /// - name - Name of the keyspace to to connect to ("keatest")
+    /// - contact-points - IP addresses to connect ("127.0.0.1")
+    /// - user - Username under which to connect (empty)
+    /// - password - Password for "user" on the database (empty)
+    /// - port - TCP port (9042)
+    /// - reconnect-wait-time (2000)
+    /// - connect-timeout (5000)
+    /// - request-timeout (12000)
+    /// - tcp-keepalive (no)
+    /// - tcp-nodelay (no)
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
-    /// @param parameters A data structure relating keywords and values
+    /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database or the schema
+    /// version is invalid.
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~CqlLeaseMgr();
@@ -83,9 +82,9 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease4Ptr& lease);
+    virtual bool addLease(const Lease4Ptr& lease) override;
 
     /// @brief Adds an IPv6 lease
     ///
@@ -94,9 +93,13 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool addLease(const Lease6Ptr& lease);
+    virtual bool addLease(const Lease6Ptr& lease) override;
+
+    /// @brief Basic lease access methods. Obtain leases from the database using
+    ///     various criteria.
+    /// @{
 
     /// @brief Returns an IPv4 lease for specified IPv4 address
     ///
@@ -111,9 +114,10 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
+    virtual Lease4Ptr
+    getLease4(const isc::asiolink::IOAddress& addr) const override;
 
     /// @brief Returns existing IPv4 leases for specified hardware address.
     ///
@@ -126,25 +130,26 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
+    virtual Lease4Collection
+    getLease4(const isc::dhcp::HWAddr& hwaddr) const override;
 
     /// @brief Returns existing IPv4 leases for specified hardware address
     ///        and a subnet
     ///
     /// There can be at most one lease for a given HW address in a single
-    /// pool, so this method with either return a single lease or NULL.
+    /// subnet, so this method with either return a single lease or NULL.
     ///
     /// @param hwaddr hardware address of the client
     /// @param subnet_id identifier of the subnet that lease must belong to
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
-                                SubnetID subnet_id) const;
+                                SubnetID subnet_id) const override;
 
     /// @brief Returns existing IPv4 leases for specified client-id
     ///
@@ -157,21 +162,24 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease4Collection getLease4(const ClientId& clientid) const;
+    virtual Lease4Collection getLease4(const ClientId& clientid) const override;
 
     /// @brief Returns IPv4 lease for the specified client identifier, HW
     /// address and subnet identifier.
     ///
     /// @param client_id A client identifier.
-    /// @param hwaddr Hardware address.
+    /// @param hwaddr hardware address.
     /// @param subnet_id A subnet identifier.
     ///
     /// @return A pointer to the lease or NULL if the lease is not found.
+    ///
+    /// @throw isc::NotImplemented On every call as this method is currently
+    /// not implemented for the CQL backend.
     virtual Lease4Ptr getLease4(const ClientId& client_id,
                                 const HWAddr& hwaddr,
-                                SubnetID subnet_id) const;
+                                SubnetID subnet_id) const override;
 
     /// @brief Returns existing IPv4 lease for specified client-id
     ///
@@ -183,10 +191,54 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
-                                SubnetID subnet_id) const;
+                                SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv4 leases for the particular subnet identifier.
+    ///
+    /// @param subnet_id subnet identifier.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
+    virtual Lease4Collection getLeases4(SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv4 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
+    virtual Lease4Collection getLeases4() const override;
+
+    /// @brief Returns range of IPv4 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv4 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv4 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv4 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Lease collection (may be empty if no IPv4 lease found).
+    virtual Lease4Collection
+    getLeases4(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const override;
 
     /// @brief Returns existing IPv6 lease for a given IPv6 address.
     ///
@@ -201,10 +253,11 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Ptr getLease6(Lease::Type type,
-                                const isc::asiolink::IOAddress& addr) const;
+    virtual Lease6Ptr
+    getLease6(Lease::Type type,
+              const isc::asiolink::IOAddress& addr) const override;
 
     /// @brief Returns existing IPv6 leases for a given DUID+IA combination
     ///
@@ -221,10 +274,11 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual Lease6Collection
-    getLeases6(Lease::Type type, const DUID& duid, uint32_t iaid) const;
+    virtual Lease6Collection getLeases6(Lease::Type type,
+                                        const DUID& duid,
+                                        uint32_t iaid) const override;
 
     /// @brief Returns existing IPv6 lease for a given DUID+IA combination
     ///
@@ -237,24 +291,69 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type,
                                         const DUID& duid,
                                         uint32_t iaid,
-                                        SubnetID subnet_id) const;
-    /// @brief Returns a collection of expired DHCPv6 leases.
+                                        SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv6 leases for the particular subnet identifier.
     ///
-    /// This method returns at most @c max_leases expired leases. The leases
-    /// returned haven't been reclaimed, i.e. the database query must exclude
-    /// reclaimed leases from the results returned.
+    /// @param subnet_id subnet identifier.
     ///
-    /// @param [out] expired_leases A container to which expired leases returned
-    /// by the database backend are added.
-    /// @param max_leases A maximum number of leases to be returned. If this
-    /// value is set to 0, all expired (but not reclaimed) leases are returned.
-    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
-                                   const size_t max_leases) const;
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
+    virtual Lease6Collection getLeases6(SubnetID subnet_id) const override;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    /// @throw NotImplemented because this method is currently not implemented for
+    /// this backend.
+    virtual Lease6Collection getLeases6() const override;
+
+    /// @brief Returns all IPv6 leases.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    virtual Lease6Collection getLeases6(const DUID& duid) const override;
+    
+    /// @brief Returns range of IPv6 leases using paging.
+    ///
+    /// This method implements paged browsing of the lease database. The first
+    /// parameter specifies a page size. The second parameter is optional and
+    /// specifies the starting address of the range. This address is excluded
+    /// from the returned range. The IPv6 zero address (default) denotes that
+    /// the first page should be returned. There is no guarantee about the
+    /// order of returned leases.
+    ///
+    /// The typical usage of this method is as follows:
+    /// - Get the first page of leases by specifying IPv6 zero address as the
+    ///   beginning of the range.
+    /// - Last address of the returned range should be used as a starting
+    ///   address for the next page in the subsequent call.
+    /// - If the number of leases returned is lower than the page size, it
+    ///   indicates that the last page has been retrieved.
+    /// - If there are no leases returned it indicates that the previous page
+    ///   was the last page.
+    ///
+    /// @param lower_bound_address IPv6 address used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @warning This method is currently not implemented. Cassandra doesn't
+    /// support conversions from text to inet. Therefore, we're unable to
+    /// compare the IPv6 addresses to find the desired range. A solution for
+    /// this might be to store the IPv6 address as INET type rather than
+    /// text, but this is currently low priority.
+    ///
+    /// @return Lease collection (may be empty if no IPv6 lease found).
+    ///
+    /// @throw isc::NotImplemented
+    virtual Lease6Collection
+    getLeases6(const asiolink::IOAddress& lower_bound_address,
+               const LeasePageSize& page_size) const override;
 
     /// @brief Returns a collection of expired DHCPv4 leases.
     ///
@@ -267,7 +366,21 @@ public:
     /// @param max_leases A maximum number of leases to be returned. If this
     /// value is set to 0, all expired (but not reclaimed) leases are returned.
     virtual void getExpiredLeases4(Lease4Collection& expired_leases,
-                                   const size_t max_leases) const;
+                                   const size_t max_leases) const override;
+
+    /// @brief Returns a collection of expired DHCPv6 leases.
+    ///
+    /// This method returns at most @c max_leases expired leases. The leases
+    /// returned haven't been reclaimed, i.e. the database query must exclude
+    /// reclaimed leases from the results returned.
+    ///
+    /// @param [out] expired_leases A container to which expired leases returned
+    /// by the database backend are added.
+    /// @param max_leases A maximum number of leases to be returned. If this
+    /// value is set to 0, all expired (but not reclaimed) leases are returned.
+    virtual void getExpiredLeases6(Lease6Collection& expired_leases,
+                                   const size_t max_leases) const override;
+    /// @}
 
     /// @brief Updates IPv4 lease.
     ///
@@ -278,9 +391,9 @@ public:
     ///
     /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual void updateLease4(const Lease4Ptr& lease4);
+    virtual void updateLease4(const Lease4Ptr& lease4) override;
 
     /// @brief Updates IPv6 lease.
     ///
@@ -290,10 +403,10 @@ public:
     /// @param lease6 The lease to be updated.
     ///
     /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
-    ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual void updateLease6(const Lease6Ptr& lease6);
+    virtual void updateLease6(const Lease6Ptr& lease6) override;
 
     /// @brief Deletes a lease.
     ///
@@ -302,28 +415,92 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) override;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///
-    /// @param secs Number of seconds since expiration of leases before
+    /// @param secs number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases4(const uint32_t secs);
+    virtual uint64_t
+    deleteExpiredReclaimedLeases4(const uint32_t secs) override;
 
     /// @brief Deletes all expired and reclaimed DHCPv6 leases.
     ///
-    /// @param secs Number of seconds since expiration of leases before
+    /// @param secs number of seconds since expiration of leases before
     /// they can be removed. Leases which have expired later than this
     /// time will not be deleted.
     ///
     /// @return Number of leases deleted.
-    virtual uint64_t deleteExpiredReclaimedLeases6(const uint32_t secs);
+    virtual uint64_t
+    deleteExpiredReclaimedLeases6(const uint32_t secs) override;
 
+    /// @brief Creates and runs the IPv4 lease stats query
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the ALL_LEASE_STATS4 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery4() override;
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery4(const SubnetID& subnet_id) override;
+
+    /// @brief Creates and runs the IPv4 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery4 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery4(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id) override;
+    /// @brief Creates and runs the IPv6 lease stats query
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery and then
+    /// invokes its start method, which fetches its statistical data
+    /// result set by executing the ALL_LEASE_STATS6 query.
+    /// The query object is then returned.
+    ///
+    /// @return The populated query as a pointer to an LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startLeaseStatsQuery6() override;
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery6 for a single subnet
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param subnet_id id of the subnet for which stats are desired
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetLeaseStatsQuery6(const SubnetID& subnet_id) override;
+
+    /// @brief Creates and runs the IPv6 lease stats query for a single subnet
+    ///
+    /// It creates an instance of a CqlLeaseStatsQuery6 for a subnet range
+    /// query and then invokes its start method in which the query constructs its
+    /// statistical data result set.  The query object is then returned.
+    ///
+    /// @param first_subnet_id first subnet in the range of subnets
+    /// @param last_subnet_id last subnet in the range of subnets
+    /// @return A populated LeaseStatsQuery
+    virtual LeaseStatsQueryPtr startSubnetRangeLeaseStatsQuery6(const SubnetID& first_subnet_id,
+                                                                const SubnetID& last_subnet_id) override;
     /// @brief Removes specified IPv4 leases.
     ///
     /// This rather dangerous method is able to remove all leases from specified
@@ -333,7 +510,7 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases4(const SubnetID& subnet_id);
+    virtual size_t wipeLeases4(const SubnetID& subnet_id) override;
 
     /// @brief Removed specified IPv6 leases.
     ///
@@ -344,279 +521,49 @@ public:
     ///
     /// @param subnet_id identifier of the subnet
     /// @return number of leases removed.
-    virtual size_t wipeLeases6(const SubnetID& subnet_id);
+    virtual size_t wipeLeases6(const SubnetID& subnet_id) override;
 
     /// @brief Return backend type
     ///
     /// @return Type of the backend.
-    virtual std::string getType() const {
+    virtual std::string getType() const override {
         return (std::string("cql"));
     }
 
     /// @brief Returns name of the database.
     ///
     /// @return database name
-    virtual std::string getName() const;
+    virtual std::string getName() const override;
 
     /// @brief Returns description of the backend.
     ///
     /// This description may be multiline text that describes the backend.
     ///
     /// @return Description of the backend.
-    virtual std::string getDescription() const;
+    virtual std::string getDescription() const override;
 
     /// @brief Returns backend version.
     ///
     /// @return Version number as a pair of unsigned integers. "first" is the
     ///         major version number, "second" the minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual std::pair<unsigned int, unsigned int> getVersion() const;
+    virtual VersionPair getVersion() const override;
 
     /// @brief Commit Transactions
     ///
     /// This is a no-op for Cassandra.
-    virtual void commit();
+    virtual void commit() override;
 
     /// @brief Rollback Transactions
     ///
     /// This is a no-op for Cassandra.
-    virtual void rollback();
-
-    /// @brief Statement Tags
-    ///
-    /// The contents of the enum are indexes into the list of compiled CQL
-    /// statements
-    enum StatementIndex {
-        DELETE_LEASE4,                // Delete from lease4 by address
-        DELETE_LEASE4_STATE_EXPIRED,  // Delete expired lease4s in certain
-                                      // state
-        DELETE_LEASE6,                // Delete from lease6 by address
-        DELETE_LEASE6_STATE_EXPIRED,  // Delete expired lease6s in certain
-                                      // state
-        GET_LEASE4_ADDR,              // Get lease4 by address
-        GET_LEASE4_CLIENTID,          // Get lease4 by client ID
-        GET_LEASE4_CLIENTID_SUBID,    // Get lease4 by client ID & subnet ID
-        GET_LEASE4_HWADDR,            // Get lease4 by HW address
-        GET_LEASE4_HWADDR_SUBID,      // Get lease4 by HW address & subnet ID
-        GET_LEASE4_EXPIRE,            // Get expired lease4
-        GET_LEASE6_ADDR,              // Get lease6 by address
-        GET_LEASE6_DUID_IAID,         // Get lease6 by DUID and IAID
-        GET_LEASE6_DUID_IAID_SUBID,   // Get lease6 by DUID, IAID and subnet
-                                      // ID
-        GET_LEASE6_EXPIRE,            // Get expired lease6
-        GET_VERSION,                  // Obtain version number
-        INSERT_LEASE4,                // Add entry to lease4 table
-        INSERT_LEASE6,                // Add entry to lease6 table
-        UPDATE_LEASE4,                // Update a Lease4 entry
-        UPDATE_LEASE6,                // Update a Lease6 entry
-        NUM_STATEMENTS                // Number of statements
-    };
+    virtual void rollback() override;
 
 private:
-    /// @brief Add Lease Common Code
-    ///
-    /// This method performs the common actions for both flavours (V4 and V6)
-    /// of the addLease method. It binds the contents of the lease object to
-    /// the prepared statement and adds it to the database.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array that has been created for the type
-    ///        of lease in question.
-    /// @param exchange Exchange object to use
-    ///
-    /// @return true if the lease was added, false if it was not added because
-    ///         a lease with that address already exists in the database.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    bool addLeaseCommon(StatementIndex stindex,
-                        CqlDataArray& data,
-                        CqlLeaseExchange& exchange);
-
-    /// @brief Get Lease Collection Common Code
-    ///
-    /// This method performs the common actions for obtaining multiple leases
-    /// from the database.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array containing the where clause input parameters
-    /// @param exchange Exchange object to use
-    /// @param result Returned collection of Leases Note that any leases in
-    ///        the collection when this method is called are not erased: the
-    ///        new data is appended to the end.
-    /// @param single If true, only a single data item is to be retrieved.
-    ///        If more than one is present, a MultipleRecords exception will
-    ///        be thrown.
-    ///
-    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
-    ///        from the database where only one was expected.
-    template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex,
-                            CqlDataArray& data_array,
-                            Exchange& exchange,
-                            LeaseCollection& result,
-                            bool single = false) const;
-
-    /// @brief Gets Lease4 Collection
-    ///
-    /// Gets a collection of Lease4 objects. This is just an interface to
-    /// the get lease collection common code.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array containing the where clause input parameters
-    /// @param result LeaseCollection object returned. Note that any leases in
-    ///        the collection when this method is called are not erased: the
-    ///        new data is appended to the end.
-    ///
-    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
-    ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex,
-                            CqlDataArray& data,
-                            Lease4Collection& result) const {
-        getLeaseCollection(stindex, data, exchange4_, result);
-    }
-
-    /// @brief Get Lease6 Collection
-    ///
-    /// Gets a collection of Lease6 objects. This is just an interface to
-    /// the get lease collection common code.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array containing input parameters for the query
-    /// @param result LeaseCollection object returned. Note that any existing
-    ///        data in the collection is erased first.
-    ///
-    /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
-    ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex,
-                            CqlDataArray& data,
-                            Lease6Collection& result) const {
-        getLeaseCollection(stindex, data, exchange6_, result);
-    }
-
-    /// @brief Get Lease4 Common Code
-    ///
-    /// This method performs the common actions for the various getLease4()
-    /// methods. It acts as an interface to the getLeaseCollection() method,
-    /// but retrieving only a single lease.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array containing input parameters for the query
-    /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex,
-                  CqlDataArray& data,
-                  Lease4Ptr& result) const;
-
-    /// @brief Get Lease6 Common Code
-    ///
-    /// This method performs the common actions for the various getLease4()
-    /// methods. It acts as an interface to the getLeaseCollection() method,
-    /// but retrieving only a single lease.
-    ///
-    /// @param stindex Index of statement being executed
-    /// @param data array containing input parameters for the query
-    /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex,
-                  CqlDataArray& data,
-                  Lease6Ptr& result) const;
-
-    /// @brief Get expired leases common code.
-    ///
-    /// This method retrieves expired and not reclaimed leases from the
-    /// lease database. The returned leases are ordered by the expiration
-    /// time. The maximum number of leases to be returned is specified
-    /// as an argument.
-    ///
-    /// @param [out] expired_leases Reference to the container where the
-    ///        retrieved leases are put.
-    /// @param max_leases Maximum number of leases to be returned.
-    /// @param statement_index One of the @c GET_LEASE4_EXPIRE or
-    ///        @c GET_LEASE6_EXPIRE.
-    ///
-    /// @tparam One of the @c Lease4Collection or @c Lease6Collection.
-    template <typename LeaseCollection>
-    void getExpiredLeasesCommon(LeaseCollection& expired_leases,
-                                const size_t max_leases,
-                                StatementIndex statement_index) const;
-
-    /// @brief Update lease common code
-    ///
-    /// Holds the common code for updating a lease. It binds the parameters
-    /// to the prepared statement, executes it, then checks how many rows
-    /// were affected.
-    ///
-    /// @param stindex Index of prepared statement to be executed
-    /// @param data array containing lease values and where clause
-    /// parameters for the update.
-    /// @param lease Pointer to the lease object whose record is being updated.
-    ///
-    /// @throw NoSuchLease Could not update a lease because no lease matches
-    ///        the address given.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    void updateLeaseCommon(StatementIndex stindex,
-                           CqlDataArray& data,
-                           CqlLeaseExchange& exchange);
-
-    /// @brief Delete lease common code
-    ///
-    /// Holds the common code for deleting a lease. It binds the parameters
-    /// to the prepared statement, executes the statement and checks to
-    /// see how many rows were deleted.
-    ///
-    /// @param stindex Index of prepared statement to be executed
-    /// @param data array containing lease values and where clause
-    /// parameters for the delete
-    ///
-    /// @return Number of deleted leases.
-    ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
-    ///        failed.
-    bool deleteLeaseCommon(StatementIndex stindex,
-                           CqlDataArray& data,
-                           CqlLeaseExchange& exchange);
-
-    /// @brief Delete expired-reclaimed leases.
-    ///
-    /// @param secs Number of seconds since expiration of leases before
-    /// they can be removed. Leases which have expired later than this
-    /// time will not be deleted.
-    /// @param statement_index One of the @c DELETE_LEASE4_STATE_EXPIRED or
-    ///        @c DELETE_LEASE6_STATE_EXPIRED.
-    ///
-    /// @return Number of leases deleted.
-    uint64_t deleteExpiredReclaimedLeasesCommon(const uint32_t secs,
-                                                StatementIndex statement_index);
-
-    /// @brief CQL queries used by CQL backend
-    static CqlTaggedStatement tagged_statements_[];
-
     /// @brief Database connection object
-    mutable CqlConnection dbconn_;
-
-    /// @{
-    /// The exchange objects are used for transfer of data to/from the database.
-    /// They are pointed-to objects as the contents may change in "const" calls,
-    /// while the rest of this object does not. (At alternative would be to
-    /// declare them as "mutable".)
-    /// @brief Exchange object for IPv4
-    boost::scoped_ptr<CqlLease4Exchange> exchange4_;
-    /// @brief Exchange object for IPv6
-    boost::scoped_ptr<CqlLease6Exchange> exchange6_;
-    /// @brief Exchange object for version
-    boost::scoped_ptr<CqlVersionExchange> versionExchange_;
-    /// @}
+    mutable db::CqlConnection dbconn_;
 };
 
 }  // namespace dhcp

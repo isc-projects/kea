@@ -5,8 +5,11 @@
 # prefix holds the location where the Kea is installed.
 prefix=@prefix@
 
-# Location of Kea configuration file.
-kea_config_file=@sysconfdir@/@PACKAGE@/kea.conf
+# Location of Kea configuration files.
+kea_dhcp4_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp4.conf
+kea_dhcp6_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp6.conf
+kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
+kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
 
 # Location of Kea binaries.
 exec_prefix=@exec_prefix@

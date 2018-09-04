@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -35,12 +35,28 @@ typedef LabeledValuePtr EventPtr;
 /// @brief Defines a pointer to an instance method for handling a state.
 typedef boost::function<void()> StateHandler;
 
+/// @brief State machine pausing modes.
+///
+/// Supported modes are:
+/// - always pause in the given state,
+/// - never pause in the given state,
+/// - pause upon first transition to the given state.
+enum StatePausing {
+    STATE_PAUSE_ALWAYS,
+    STATE_PAUSE_NEVER,
+    STATE_PAUSE_ONCE
+};
+
 /// @brief Defines a State within the State Model.
 ///
 /// This class provides the means to define a state within a set or dictionary
 /// of states, and assign the state an handler method to execute the state's
 /// actions.  It derives from LabeledValue which allows a set of states to be
 /// keyed by integer constants.
+///
+/// Because a state model can be paused in selected states, this class also
+/// provides the means for specifying a pausing mode and for checking whether
+/// the state model should be paused when entering this state.
 class State : public LabeledValue {
 public:
     /// @brief Constructor
@@ -49,6 +65,8 @@ public:
     /// @param label is the text label to assign to the state
     /// @param handler is the bound instance method which handles the state's
     /// action.
+    /// @param state_pausing pausing mode selected for the given state. The
+    /// default value is @c STATE_PAUSE_NEVER.
     ///
     /// A typical invocation might look this:
     ///
@@ -58,7 +76,8 @@ public:
     /// @endcode
     ///
     /// @throw StateModelError if label is null or blank.
-    State(const int value, const std::string& label, StateHandler handler);
+    State(const int value, const std::string& label, StateHandler handler,
+          const StatePausing& state_pausing = STATE_PAUSE_NEVER);
 
     /// @brief Destructor
     virtual ~State();
@@ -66,9 +85,25 @@ public:
     /// @brief Invokes the State's handler.
     void run();
 
+    /// @brief Indicates if the state model should pause upon entering
+    /// this state.
+    ///
+    /// It modifies the @c was_paused_ flag if the state model should
+    /// pause. That way, it keeps track of visits in this particular state,
+    /// making it possible to pause only upon the first transition to the
+    /// state when @c STATE_PAUSE_ONCE mode is used.
+    bool shouldPause();
+
 private:
     /// @brief Bound instance method pointer to the state's handler method.
     StateHandler handler_;
+
+    /// @brief Specifies selected pausing mode for a state.
+    StatePausing pausing_;
+
+    /// @brief Indicates if the state machine was already paused in this
+    /// state.
+    bool was_paused_;
 };
 
 /// @brief Defines a shared pointer to a State.
@@ -92,10 +127,12 @@ public:
     /// @param value is the numeric value of the state
     /// @param label is the text label to assign to the state
     /// @param handler is the bound instance method which handles the state's
+    /// @param state_pausing state pausing mode for the given state.
     ///
     /// @throw StateModelError if the value is already defined in the set, or
     /// if the label is null or blank.
-    void add(const int value, const std::string& label, StateHandler handler);
+    void add(const int value, const std::string& label, StateHandler handler,
+             const StatePausing& state_pausing);
 
     /// @brief Fetches a state for the given value.
     ///
@@ -223,6 +260,14 @@ public:
 /// which transitions the model to END_ST with END_EVT.  Bringing the model to
 /// an abnormal end is done via the abortModel method, which transitions the
 /// model to END_ST with FAILED_EVT.
+///
+/// The model can be paused in the selected states. The states in which the
+/// state model should pause (always or only once) are determined within the
+/// @c StateModel::defineStates method. The state handlers can check whether
+/// the state machine is paused or not by calling @c StateModel::isModelPaused
+/// and act accordingy. Typically, the state handler would simply post the
+/// @c NOP_EVT when it finds that the state model is paused. The model
+/// remains paused until @c StateModel::unpauseModel is called.
 class StateModel {
 public:
 
@@ -289,10 +334,14 @@ public:
     /// model is expected to account for any possible errors so any that
     /// escape are treated as unrecoverable.
     ///
+    /// @note This method is made virtual for the unit tests which require
+    /// customizations allowing for more control over the state model
+    /// execution.
+    ///
     /// @param event is the next event to process
     ///
     /// This method is guaranteed not to throw.
-    void runModel(unsigned int event);
+    virtual void runModel(unsigned int event);
 
     /// @brief Conducts a normal transition to the end of the model.
     ///
@@ -302,6 +351,9 @@ public:
     /// out of a particular state is to the end of the model, that state's
     /// handler should call endModel.
     void endModel();
+
+    /// @brief Unpauses state model.
+    void unpauseModel();
 
     /// @brief An empty state handler.
     ///
@@ -417,11 +469,14 @@ protected:
     /// exceptions.
     /// @param handler is the bound instance method which implements the state's
     /// actions.
+    /// @param state_pausing pausing mode selected for the given state. The
+    /// default value is @c STATE_PAUSE_NEVER.
     ///
     /// @throw StateModelError if the model has already been started, if
     /// the value is already defined, or if the label is empty.
     void defineState(unsigned int value, const std::string& label,
-                     StateHandler handler);
+                     StateHandler handler,
+                     const StatePausing& state_pausing = STATE_PAUSE_NEVER);
 
     /// @brief Fetches the state referred to by value.
     ///
@@ -589,6 +644,11 @@ public:
     /// @return Boolean true if the model has reached the END_ST.
     bool isModelDone() const;
 
+    /// @brief Returns whether or not the model is paused.
+    ///
+    /// @return Boolean true if the model is paused, false otherwise.
+    bool isModelPaused() const;
+
     /// @brief Returns whether or not the model failed.
     ///
     /// @return Boolean true if the model has reached the END_ST and the last
@@ -658,6 +718,9 @@ private:
 
     /// @brief Indicates if state exit logic should be executed.
     bool on_exit_flag_;
+
+    /// @brief Indicates if the state model is paused.
+    bool paused_;
 };
 
 /// @brief Defines a pointer to a StateModel.

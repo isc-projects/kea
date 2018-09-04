@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -839,7 +839,7 @@
 #----- D2.forward-ddns.dhcp-ddns.name tests
 ,{
 "description" : "D2.forward-ddns.dhcp-ddns, empty domain",
-"syntax-error" : "<string>:1.42: syntax error, unexpected }, expecting key-name or dns-servers or name or constant string",
+"syntax-error" : "<string>:1.42: syntax error, unexpected }",
 "data" :
     {
     "forward-ddns" :
@@ -1233,7 +1233,7 @@
 #----- D2.reverse-ddns.dhcp-ddns.name tests
 ,{
 "description" : "D2.reverse-ddns.dhcp-ddns, no name",
-"syntax-error" : "<string>:1.64: syntax error, unexpected }, expecting key-name or dns-servers or name or constant string",
+"syntax-error" : "<string>:1.64: syntax error, unexpected }",
 "data" :
     {
     "forward-ddns" : {},

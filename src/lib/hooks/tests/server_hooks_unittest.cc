@@ -1,8 +1,10 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
 
 #include <hooks/server_hooks.h>
 
@@ -215,6 +217,16 @@ TEST(ServerHooksTest, HookToCommandName) {
     EXPECT_TRUE(ServerHooks::hookToCommandName("$").empty());
     // If no dollar, it is not a hook name. Return empty string.
     EXPECT_TRUE(ServerHooks::hookToCommandName("abc").empty());
+}
+
+TEST(ServerHooksTest, getParkingLots) {
+    ServerHooks& hooks = ServerHooks::getServerHooks();
+    hooks.reset();
+    int alpha_hook = hooks.registerHook("alpha");
+
+    ASSERT_TRUE(hooks.getParkingLotsPtr());
+    ASSERT_TRUE(hooks.getParkingLotPtr(alpha_hook));
+    ASSERT_TRUE(hooks.getParkingLotPtr("alpha"));
 }
 
 } // Anonymous namespace

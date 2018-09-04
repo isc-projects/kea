@@ -32,6 +32,7 @@ CLEANFILES = *.gcno *.gcda hooks_messages.h hooks_messages.cc s-messages
 lib_LTLIBRARIES = libkea-hooks.la
 libkea_hooks_la_SOURCES  =
 libkea_hooks_la_SOURCES += callout_handle.cc callout_handle.h
+libkea_hooks_la_SOURCES += callout_handle_associate.cc callout_handle_associate.h
 libkea_hooks_la_SOURCES += callout_manager.cc callout_manager.h
 libkea_hooks_la_SOURCES += hooks.h
 libkea_hooks_la_SOURCES += hooks_log.cc hooks_log.h
@@ -42,6 +43,7 @@ libkea_hooks_la_SOURCES += libinfo.cc libinfo.h
 libkea_hooks_la_SOURCES += library_handle.cc library_handle.h
 libkea_hooks_la_SOURCES += library_manager.cc library_manager.h
 libkea_hooks_la_SOURCES += library_manager_collection.cc library_manager_collection.h
+libkea_hooks_la_SOURCES += parking_lots.h
 libkea_hooks_la_SOURCES += pointer_converter.h
 libkea_hooks_la_SOURCES += server_hooks.cc server_hooks.h
 
@@ -49,23 +51,33 @@ nodist_libkea_hooks_la_SOURCES = hooks_messages.cc hooks_messages.h
 
 libkea_hooks_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_hooks_la_CPPFLAGS = $(AM_CPPFLAGS)
-libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 3:0:0
+libkea_hooks_la_LDFLAGS  = $(AM_LDFLAGS) -no-undefined -version-info 7:0:0
 libkea_hooks_la_LIBADD  =
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_hooks_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+libkea_hooks_la_LIBADD += $(BOOST_LIBS)
 libkea_hooks_la_LIBADD += $(LOG4CPLUS_LIBS)
 
-# Specify the headers for copying into the installation directory tree. User-
-# written libraries only need the definitions from the headers for the
-# CalloutHandle and LibraryHandle objects. CalloutManager may be required by
-# users testing statically linked KEA binaries.
+# Specify the headers for copying into the installation directory tree.
 libkea_hooks_includedir = $(pkgincludedir)/hooks
 libkea_hooks_include_HEADERS = \
-    callout_handle.h \
-    callout_manager.h \
-    library_handle.h \
-    hooks.h \
-    server_hooks.h
+	callout_handle.h \
+	callout_handle_associate.h \
+	callout_manager.h \
+	hooks.h \
+	hooks_config.h \
+	hooks_log.h \
+	hooks_manager.h \
+	hooks_parser.h \
+	libinfo.h \
+	library_handle.h \
+	library_manager.h \
+	library_manager_collection.h \
+	parking_lots.h \
+	pointer_converter.h \
+	server_hooks.h
+
+

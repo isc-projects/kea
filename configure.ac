@@ -1,13 +1,13 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.59])
+AC_PREREQ([2.69])
 
 # For released versions, this is in x.y.z format.
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.2.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.4.0-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -27,6 +27,7 @@ AC_CONFIG_HEADERS([config.h])
 AC_CONFIG_MACRO_DIR([m4macros])
 
 AC_CANONICAL_HOST
+AC_CANONICAL_BUILD
 
 # Checks for programs.
 AC_PROG_CXX
@@ -58,6 +59,21 @@ if test "$sep" = "__NONE__"; then
 fi
 AC_SUBST(SEP)
 
+# If cross compiling assume the message compiler executable was
+# magically already in place...
+if test "$cross_compiling" = "yes"; then
+        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
+	if test -x "${srcdir}/src/lib/log/compiler/message"; then
+		AC_MSG_RESULT(yes)
+	else
+		AC_MSG_RESULT(no)
+		AC_MSG_WARN("you must install a message compiler in:")
+		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
+		AC_MSG_WARN("compiled for build ($build).")
+	fi
+fi
+AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
@@ -72,13 +88,27 @@ AC_ARG_ENABLE([debug],
 AM_CONDITIONAL([DEBUG_ENABLED], [test x$debug_enabled = xyes])
 AM_COND_IF([DEBUG_ENABLED], [AC_DEFINE([ENABLE_DEBUG], [1], [Enable low-performing debugging facilities?])])
 
-PREMIUM_DIR=
-if test -d "${srcdir}/premium"; then
-   PREMIUM_DIR=premium
-   AC_CONFIG_SUBDIRS([premium])
-fi
+# Include premium configuration
+INCLUDED_HOOKS=
 
+PREMIUM_DIR=
+DISTCHECK_PREMIUM_CONFIGURE_FLAG=
+AC_DEFUN([AX_PREMIUM],[])
+# m4_sinclude includes the file if it exists at autoreconf time
+m4_sinclude(premium/config.m4)
 AC_SUBST(PREMIUM_DIR)
+AC_SUBST(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
+AX_PREMIUM
+
+# Include contrib configuration
+# (currently only a provision copied from premium support)
+CONTRIB_DIR=
+DISTCHECK_CONTRIB_CONFIGURE_FLAG=
+AC_DEFUN([AX_CONTRIB],[])
+m4_sinclude(contrib/config.m4)
+AC_SUBST(CONTRIB_DIR)
+AC_SUBST(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
+AX_CONTRIB
 
 # Libtool configuration
 #
@@ -123,15 +153,15 @@ AX_ISC_CPP11
 # Check for std::is_base_of support
 AC_MSG_CHECKING([for std::is_base_of])
 AC_COMPILE_IFELSE(
-	[AC_LANG_PROGRAM(
-		[#include <type_traits>
-		 class A {};
-		 class B : A {};]
-		[static_assert(std::is_base_of<A, B>::value, "");])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_IS_BASE_OF], [1],
-	 [Define to 1 if std::is_base_of is available])],
-	[AC_MSG_RESULT(no)])
+    [AC_LANG_PROGRAM(
+        [#include <type_traits>
+        class A {};
+        class B : A {};]
+        [static_assert(std::is_base_of<A, B>::value, "");])],
+    [AC_MSG_RESULT(yes)
+    AC_DEFINE([HAVE_IS_BASE_OF], [1],
+    [Define to 1 if std::is_base_of is available])],
+    [AC_MSG_RESULT(no)])
 
 dnl Determine if we are using GNU sed
 GNU_SED=no
@@ -223,7 +253,7 @@ fi
 AC_SUBST(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 CPPP="$CPP"
 # gcc 5 preprocessor requires -P for checking its output
-if test "$CXX_DUMP_VERSION" \> "5"; then
+if expr "$CXX_DUMP_VERSION" \> "5" > /dev/null; then
        CPPP="$CPP -P"
 fi
 
@@ -398,7 +428,6 @@ case "$host" in
         ;;
 esac
 
-
 # Kea-shell is written in python. It can work with python 2.7 or any 3.x.
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
 # it with. We require python only if kea-shell was enabled. It is disabled
@@ -407,6 +436,7 @@ AC_ARG_ENABLE(shell, [AC_HELP_STRING([--enable-shell],
   [enable kea-shell, a text management client for Control Agent [default=no]])],
   enable_shell=$enableval, enable_shell=no)
 
+DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=
 PKGPYTHONDIR=
 m4_define_default([_AM_PYTHON_INTERPRETER_LIST],
  [python3 python3.9 python3.8 python3.7 python3.6 python3.5 python3.4 dnl
@@ -427,12 +457,14 @@ if test "x$enable_shell" != xno ; then
     eval PKGPYTHONDIR="\"$OLD\""
   done
   prefix="$saved_prefix"
+  DISTCHECK_KEA_SHELL_CONFIGURE_FLAG="--enable-shell"
 else
   PYTHON=no
 fi
 
 # Export to makefiles the info whether we have shell enabled or not
 AM_CONDITIONAL(KEA_SHELL, test x$enable_shell != xno)
+AC_SUBST(DISTCHECK_KEA_SHELL_CONFIGURE_FLAG)
 AC_SUBST(PKGPYTHONDIR)
 
 # produce PIC unless we disable shared libraries. need this for python bindings.
@@ -539,6 +571,20 @@ AC_TRY_COMPILE([
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
         AC_MSG_RESULT(no))
 
+AC_MSG_CHECKING(for usuable C++11 regex)
+AC_TRY_RUN([
+#include <regex>
+#include <iostream>
+int main() {
+  const std::regex regex(".*");
+  const std::string string = "This should match!";
+  const auto result = std::regex_search(string, regex);
+  return result ? EXIT_SUCCESS : EXIT_FAILURE;
+}],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])],
+        AC_MSG_RESULT(no))
+
 enable_gtest="no"
 GTEST_INCLUDES=
 
@@ -588,422 +634,59 @@ if test "$lcov" != "no"; then
 fi
 AC_SUBST(USE_LCOV)
 
-# Simplified, non-caching AC_CHECK_PROG
-# Searches $PATH for the existence of argument 2,
-# and sets the full path to the variable in argument 1.
-# if not found, and a third argument is given, the value
-# is set to that. If not, the value is untouched.
-# Does not take absolute paths into account at this point,
-# and also works for single files only (arguments are not
-# stripped like in AC_CHECK_PROG)
-AC_DEFUN([ACX_CHECK_PROG_NONCACHE], [
-    RESULT=""
-    IFS_SAVED="$IFS"
-    IFS=${PATH_SEPARATOR}
-    for cur_path in ${PATH} ; do
-      if test -e "${cur_path}/$2" ; then
-          RESULT="${cur_path}/$2"
-      fi
-    done
-    if test "$RESULT" = "" ; then
-        :
-        m4_ifvaln([$3], [$1=$3])
-    else
-        $1=$RESULT
-    fi
-    IFS="$IFS_SAVED"
-])
+enable_benchmark="no"
+BENCHMARK_INCLUDES=
 
-# Avoid checking Botan if OpenSSL is wanted
-AC_ARG_WITH([openssl],
-            [AS_HELP_STRING([--with-openssl[[=PATH]]], [Enables OpenSSL,
-            location can be specified optionally])],
-            [use_openssl="$withval"],
-            [use_openssl="auto"])
+AC_ARG_WITH([benchmark-source],
+            [AS_HELP_STRING([--with-benchmark-source=PATH],
+                            [location of the benchmark source])],
+            [enable_benchmark="yes" ; BENCHMARK_SOURCE="$withval"])
 
-# Botan helper test function
-# Tries to compile a botan program, given the output of the given
-# config tool
-# Arguments:
-# - name of tool (checked for path), must support --libs and --cflags
-# - fixed argument(s) for tool
-# - action if successful
-AC_DEFUN([ACX_TRY_BOTAN_TOOL], [
-    TOOL=$1
-    TOOL_ARG=$2
-    BOTAN_TOOL=""
-    ACX_CHECK_PROG_NONCACHE([BOTAN_TOOL], [${TOOL}])
-    AC_MSG_CHECKING([usability of ${TOOL} ${TOOL_ARG}])
-    if test "$BOTAN_TOOL" != "" ; then
-        if test -x ${BOTAN_TOOL}; then
-            CRYPTO_LIBS=`$BOTAN_TOOL $TOOL_ARG --libs`
-            LIBS_SAVED=${LIBS}
-            LIBS="$LIBS $CRYPTO_LIBS"
-            CRYPTO_INCLUDES=`$BOTAN_TOOL $TOOL_ARG --cflags`
-            CPPFLAGS_SAVED=${CPPFLAGS}
-            CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
-            #AC_MSG_RESULT([found])
-            AC_LINK_IFELSE(
-                [AC_LANG_PROGRAM([#include <botan/botan.h>
-                                  #include <botan/init.h>
-                                  #include <botan/hash.h>
-                                 ],
-                                 [using namespace Botan;
-                                  LibraryInitializer::initialize();
-                                  HashFunction *h = get_hash("MD5");
-                                 ])],
-                [ AC_MSG_RESULT([ok])
-                  $3
-                ],
-                [ AC_MSG_RESULT([not usable]) ]
-            )
-            LIBS=${LIBS_SAVED}
-            CPPFLAGS=${CPPFLAGS_SAVED}
-        else
-            AC_MSG_RESULT([not executable])
-        fi
-    else
-        AC_MSG_RESULT([not found])
-    fi
-    BOTAN_TOOL=""
-    AC_SUBST(BOTAN_TOOL)
-    ]
-)
+AC_ARG_WITH([benchmark],
+            [AS_HELP_STRING([--with-benchmark=PATH],
+                            [specify a path to benchmark header files (PATH/include) and library (PATH/lib)])],
+        [benchmark_path="$withval"; enable_benchmark="yes"], [benchmark_path="no"])
 
-# Check for Botan
-#
-# Unless --with-botan-config is given, we first try to find these config
-# scripts ourselves. Unfortunately, on some systems, these scripts do not
-# provide the correct implementation, so for each script found, we try
-# a compilation test (ACX_TRY_BOTAN_TOOL). If none are found, or none of
-# them work, we see if pkg-config is available. If so, we try the several
-# potential pkg-config .pc files. Again, on some systems, these can return
-# incorrect information as well, so the try-compile test is repeated for
-# each.
-#
-# If a working config script or pkgconfig file is found, we then munge its
-# output for use in our Makefiles, and to make sure it works, another header
-# and compilation test is done (this should also check whether we can compile
-# against botan should neither -config scripts nor pkgconfig data exist).
-#
-botan_config="yes"
-if test "${use_openssl}" != "auto" -a "${use_openssl}" != "no" ; then
-   botan_config="no"
-fi
-AC_ARG_WITH([botan-config],
-  AC_HELP_STRING([--with-botan-config=PATH],
-    [specify the path to the botan-config script]),
-    [botan_config="$withval"])
-distcheck_botan="--with-botan-config=$botan_config"
-if test "${botan_config}" = "no" ; then
-    if test "${use_openssl}" = "no" ; then
-       AC_MSG_ERROR([Need Botan or OpenSSL for libcryptolink])
-    fi
-elif test "${botan_config}" != "yes" ; then
-    if test -x "${botan_config}" ; then
-        if test -d "${botan_config}" ; then
-            AC_MSG_ERROR([${botan_config} is a directory])
-        else
-            BOTAN_CONFIG="${botan_config}"
-        fi
-    else
-        AC_MSG_ERROR([--with-botan-config should point to a botan-config program and not a directory (${botan_config})])
-    fi
-else
-    BOTAN_CONFIG=""
-    # first try several possible names of the config script
-    # (botan-config-1.8 is there just in case, the official name change
-    # came later)
-    BOTAN_CONFIG_VERSIONS="botan-config-1.10 botan-config-1.9 botan-config-1.8 botan-config"
-    for botan_config in $BOTAN_CONFIG_VERSIONS; do
-        ACX_TRY_BOTAN_TOOL([$botan_config],,
-                           [ BOTAN_CONFIG="$botan_config"  ]
-                          )
-        if test "$BOTAN_CONFIG" != "" ; then
-            break
-        fi
-    done
-    if test "$BOTAN_CONFIG" = "" ; then
-        AC_PATH_PROG([PKG_CONFIG], [pkg-config])
-        if test "$PKG_CONFIG" != "" ; then
-            # Ok so no script found, see if pkg-config knows of it.
-            # Unfortunately, the botan.pc files also have their minor version
-            # in their name, so we need to try them one by one
-            BOTAN_VERSIONS="botan-2 botan-1.11 botan-1.10 botan-1.9 botan-1.8"
-            for version in $BOTAN_VERSIONS; do
-                ACX_TRY_BOTAN_TOOL([pkg-config], ["$version --silence-errors"],
-                                   [ BOTAN_CONFIG="$PKG_CONFIG $version" ]
-                                  )
-            if test "$BOTAN_CONFIG" != "" ; then
-                break
-            fi
-            done
-        fi
-    fi
-fi
+# Sets up for use of botan unless openssl is specified
+# sets variables CRYPTO_*
+AX_CRYPTO
 
-if test "x${BOTAN_CONFIG}" != "x"
-then
-    CRYPTO_LIBS=`${BOTAN_CONFIG} --libs`
-    CRYPTO_INCLUDES=`${BOTAN_CONFIG} --cflags`
-
-    # We expect botan-config --libs to contain -L<path_to_libbotan>, but
-    # this is not always the case.  As a heuristics workaround we add
-    # -L`botan-config --prefix/lib` in this case (if not present already).
-    # Same for CRYPTO_INCLUDES (but using include instead of lib) below.
-    if [ ${BOTAN_CONFIG} --prefix >/dev/null 2>&1 ] ; then
-        echo ${CRYPTO_LIBS} | grep -- -L > /dev/null || \
-            CRYPTO_LIBS="-L`${BOTAN_CONFIG} --prefix`/lib ${CRYPTO_LIBS}"
-        echo ${CRYPTO_INCLUDES} | grep -- -I > /dev/null || \
-            CRYPTO_INCLUDES="-I`${BOTAN_CONFIG} --prefix`/include ${CRYPTO_INCLUDES}"
-    fi
-fi
-
-if test "x${CRYPTO_LIBS}" != "x"
-then
-   dnl Determine the Botan version
-   AC_MSG_CHECKING([Botan version])
-   cat > conftest.cpp << EOF
-#include <botan/version.h>
-AUTOCONF_BOTAN_VERSION=BOTAN_VERSION_MAJOR . BOTAN_VERSION_MINOR . BOTAN_VERSION_PATCH
-EOF
-
-   CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_BOTAN_VERSION=' | $SED -e 's/^AUTOCONF_BOTAN_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
-   if test -z "$CRYPTO_VERSION"; then
-      CRYPTO_VERSION="unknown"
-   fi
-   $RM -f conftest.cpp
-   AC_MSG_RESULT([$CRYPTO_VERSION])
-
-   # botan-config script (and the way we call pkg-config) returns -L and -l
-   # as one string, but we need them in separate values
-   CRYPTO_LDFLAGS=
-   for flag in ${CRYPTO_LIBS}; do
-       CRYPTO_LDFLAGS="${CRYPTO_LDFLAGS} `echo $flag | ${SED} -ne '/^\(\-L\)/p'`"
-       CRYPTO_LIBS="${CRYPTO_LIBS} `echo $flag | ${SED} -ne '/^\(\-l\)/p'`"
-   done
-
-   # See crypto_rpath for some info on why we do this
-   if test "x$ISC_RPATH_FLAG" != "x"; then
-       CRYPTO_RPATH=
-       for flag in ${CRYPTO_LIBS}; do
-               CRYPTO_RPATH="${CRYPTO_RPATH} `echo $flag | ${SED} -ne "s/^\(\-L\)/${ISC_RPATH_FLAG}/p"`"
-       done
-   # According to the libtool manual, it should be sufficient if we
-   # specify the "-R libdir" in our wrapper library of botan (no other
-   # programs will need libbotan directly); "libdir" should be added to
-   # the program's binary image.  But we've seen in our build environments
-   # that (some versions of?) libtool doesn't propagate -R as documented,
-   # and it caused a linker error at run time.  To work around this, we
-   # also add the rpath to the global LDFLAGS.
-       LDFLAGS="$CRYPTO_RPATH $LDFLAGS"
-   fi
-
-   # Even though chances are high we already performed a real compilation check
-   # in the search for the right (pkg)config data, we try again here, to
-   # be sure.
-   CPPFLAGS_SAVED=$CPPFLAGS
-   CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
-   LIBS_SAVED="$LIBS"
-   LIBS="$LIBS $CRYPTO_LIBS"
-
-   # ac_header_preproc is an autoconf symbol (undocumented but stable) that
-   # is set if the pre-processor phase passes. Thus by adding a custom
-   # failure handler we can detect the difference between a header not existing
-   # (or not even passing the pre-processor phase) and a header file resulting
-   # in compilation failures.
-   AC_CHECK_HEADERS([botan/botan.h],,[
-        CRYPTO_INCLUDES=""
-        CRYPTO_LIBS=""
-        CRYPTO_LDFLAGS=""
-        CRYPTO_RPATH=""
-        if test "x$ac_header_preproc" = "xyes"; then
-                AC_MSG_RESULT([
-botan/botan.h was found but is unusable. The most common cause of this problem
-is attempting to use an updated C++ compiler with older C++ libraries, such as
-the version of Botan that comes with your distribution. If you have updated
-your C++ compiler we highly recommend that you use support libraries such as
-Boost and Botan that were compiled with the same compiler version.])
-        else
-                AC_MSG_RESULT([Missing required header files.])
-        fi]
-   )
-   CPPFLAGS=$CPPFLAGS_SAVED
-   LIBS=$LIBS_SAVED
-fi
-
-if test "x${CRYPTO_LIBS}" != "x"
-then
-   CPPFLAGS_SAVED=$CPPFLAGS
-   CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
-   LIBS_SAVED="$LIBS"
-   LIBS="$LIBS $CRYPTO_LIBS"
-   AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <botan/botan.h>
-                          #include <botan/init.h>
-                          #include <botan/hash.h>
-                         ],
-                         [using namespace Botan;
-                          LibraryInitializer::initialize();
-                          HashFunction *h = get_hash("MD5");
-                         ])],
-        [AC_MSG_RESULT([checking for Botan library... yes])],
-        [AC_MSG_RESULT([checking for Botan library... no])
-         CRYPTO_INCLUDES=""
-         CRYPTO_LIBS=""
-         CRYPTO_LDFLAGS=""
-         CRYPTO_RPATH=""
-         AC_MSG_RESULT([Needs Botan library 1.8 or higher. On some systems,
-         the botan package has a few missing dependencies (libbz2 and
-         libgmp), if libbotan has been installed and you see this message,
-         try upgrading to a higher version of botan or installing libbz2
-         and libgmp.])]
-   )
-   CPPFLAGS=$CPPFLAGS_SAVED
-   LIBS=$LIBS_SAVED
-fi
-
-if test "x${CRYPTO_LIBS}" != "x"
-then
-   CRYPTO_NAME="Botan"
-   DISABLED_CRYPTO="OpenSSL"
-   CRYPTO_PACKAGE="botan-1.8"
-   CRYPTO_CFLAGS=""
-   DISTCHECK_CRYPTO_CONFIGURE_FLAG="$distcheck_botan"
-   AC_DEFINE_UNQUOTED([WITH_BOTAN], [], [Compile with Botan crypto])
-else
-   CRYPTO_NAME="OpenSSL"
-   DISABLED_CRYPTO="Botan"
-   CRYPTO_PACKAGE="openssl-1.0.2"
-   AC_DEFINE_UNQUOTED([WITH_OPENSSL], [], [Compile with OpenSSL crypto])
-   AC_MSG_CHECKING(for OpenSSL library)
-   # from bind9
-
-   if test "${use_openssl}" = "auto" ; then
-      use_openssl="yes"
-   fi
-   if test "${use_openssl}" = "yes" ; then
-      for d in /usr /usr/local /usr/local/ssl /usr/pkg /usr/sfw; do
-          if test -f $d/include/openssl/opensslv.h; then
-             use_openssl=$d; break
-          fi
-      done
-   fi
-   if test "${use_openssl}" = "yes" ; then
-      AC_MSG_ERROR([OpenSSL auto detection failed])
-   fi
-   if ! test -f "${use_openssl}"/include/openssl/opensslv.h ; then
-      AC_MSG_ERROR([OpenSSL not found at ${use_openssl}])
-   fi
-   AC_MSG_RESULT(yes)
-   if test "${use_openssl}" = "/usr" ; then
-      CRYPTO_CFLAGS=""
-      CRYPTO_INCLUDES=""
-      CRYPTO_LIBS="-lcrypto"
-      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl"
-   else
-      CRYPTO_CFLAGS=""
-      CRYPTO_INCLUDES="-I${use_openssl}/include"
-      DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
-      case $host in
-          *-solaris*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -R${use_openssl}/lib -lcrypto"
-              ;;
-          *-hp-hpux*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -Wl,+b: -lcrypto"
-              ;;
-          *-apple-darwin*)
-              if test -f "${use_openssl}/lib/libcrypto.dylib" ; then
-                 CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
-              else
-                 CRYPTO_LIBS="${use_openssl}/lib/libcrypto.a"
-              fi
-              ;;
-          *)
-              CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
-              ;;
-      esac
-    fi
-    dnl Determine the OpenSSL version
-    # Officially we support >= 1.0.1, 0.9.8 should fail the HMAC API,
-    # 1.0.0 could work but is not recommended.
-    AC_MSG_CHECKING([OpenSSL version])
-    cat > conftest.cpp << EOF
-#include <openssl/opensslv.h>
-AUTOCONF_OPENSSL_VERSION=OPENSSL_VERSION_TEXT
-EOF
-
-    CRYPTO_VERSION=`$CPPP $CPPFLAGS $CRYPTO_INCLUDES conftest.cpp | grep '^AUTOCONF_OPENSSL_VERSION=' | $SED -e 's/^AUTOCONF_OPENSSL_VERSION=//' -e 's/"//g' 2> /dev/null`
-    if test -z "$CRYPTO_VERSION" ; then
-       CRYPTO_VERSION="unknown"
-    fi
-    $RM -f conftest.cpp
-    AC_MSG_RESULT([$CRYPTO_VERSION])
-    #CRYPTO_LDFLAGS="-ldl"
-    CRYPTO_LDFLAGS=""
-    CRYPTO_RPATH=""
-    dnl Check availability of SHA-2
-    AC_MSG_CHECKING([support of SHA-2])
-    LIBS_SAVED=${LIBS}
-    LIBS="$LIBS $CRYPTO_LIBS"
-    CPPFLAGS_SAVED=${CPPFLAGS}
-    CPPFLAGS="$CRYPTO_INCLUDES $CPPFLAGS"
-    AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <openssl/evp.h>],
-                         [const EVP_MD* h224 = EVP_sha224();
-                          const EVP_MD* h256 = EVP_sha256();
-                          const EVP_MD* h384 = EVP_sha384();
-                          const EVP_MD* h512 = EVP_sha512();
-                          ])],
-        [AC_MSG_RESULT([yes])],
-        [AC_MSG_ERROR([missing EVP entry for SHA-2])])
-    dnl Check HMAC API
-    AC_MSG_CHECKING([HMAC functions returning ints])
-    AC_LINK_IFELSE(
-         [AC_LANG_PROGRAM([#include <openssl/opensslv.h>
-                           #include <openssl/hmac.h>],
-                          [#if OPENSSL_VERSION_NUMBER < 0x10100000L
-                           HMAC_CTX ctx, tmp;
-                           int n = HMAC_Init(&ctx, NULL, 0, NULL);
-                           n += HMAC_Update(&ctx, NULL, 0);
-                           n += HMAC_CTX_copy(&tmp, &ctx);
-                           n += HMAC_Final(&tmp, NULL, NULL);
-                           #endif
-                           ])],
-         [AC_MSG_RESULT([yes])],
-         [AC_MSG_ERROR([HMAC functions return void: please use OpenSSL version 1.0.1 or later])])
-    LIBS=${LIBS_SAVED}
-    CPPFLAGS=${CPPFLAGS_SAVED}
-fi
-
-AM_CONDITIONAL(HAVE_BOTAN, test "$CRYPTO_NAME" = "Botan")
-AM_CONDITIONAL(HAVE_OPENSSL, test "$CRYPTO_NAME" = "OpenSSL")
-AC_SUBST(CRYPTO_INCLUDES)
-AC_SUBST(CRYPTO_CFLAGS)
-AC_SUBST(CRYPTO_LIBS)
-AC_SUBST(CRYPTO_LDFLAGS)
-AC_SUBST(CRYPTO_PACKAGE)
-AC_SUBST(CRYPTO_RPATH)
-AC_SUBST(DISTCHECK_CRYPTO_CONFIGURE_FLAG)
+# List of directories, where tools like mysql_config or pgsql_config will be
+# searched for
+defaultdirs="/usr /usr/local /usr/pkg /opt /opt/local"
 
 # Check for MySql.  The path to the mysql_config program is given with
 # the --with-mysql-config (default to /usr/bin/mysql-config).  By default,
 # the software is not built with MySQL support enabled.
 mysql_config="no"
-AC_ARG_WITH([dhcp-mysql],
-  AC_HELP_STRING([--with-dhcp-mysql=PATH],
+AC_ARG_WITH([mysql],
+  AC_HELP_STRING([--with-mysql=PATH],
     [path to the MySQL 'mysql_config' script (MySQL is used for the DHCP database)]),
     [mysql_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-mysql],,
+    [mysql_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-mysql has been deprecated, please use --with-mysql])
+fi
+
 if test "${mysql_config}" = "yes" ; then
-    MYSQL_CONFIG="/usr/bin/mysql_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/mysql_config; then
+            MYSQL_CONFIG="$d/bin/mysql_config"
+            break
+        fi
+    done
 elif test "${mysql_config}" != "no" ; then
     MYSQL_CONFIG="${withval}"
 fi
 
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-mysql should point to a mysql_config program])
+        AC_MSG_ERROR([--with-mysql should point to a mysql_config program])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
@@ -1044,20 +727,34 @@ AC_CHECK_HEADERS(sys/filio.h,,,)
 AM_CONDITIONAL(HAVE_MYSQL, test "$MYSQL_CONFIG" != "")
 
 pg_config="no"
-AC_ARG_WITH([dhcp-pgsql],
-  AC_HELP_STRING([--with-dhcp-pgsql=PATH],
+AC_ARG_WITH([pgsql],
+  AC_HELP_STRING([--with-pgsql=PATH],
     [path to the PostgreSQL 'pg_config' script]),
     [pg_config="$withval"])
 
+deprec_msg="no"
+AC_ARG_WITH([dhcp-pgsql],,
+    [pg_config="$withval";deprec_msg="yes"])
+
+if test "${deprec_msg}" = "yes" ; then
+    AC_MSG_WARN([--with-dhcp-pgsql has been deprecated, please use --with-pgsql])
+fi
+
 if test "${pg_config}" = "yes" ; then
-    PG_CONFIG="/usr/bin/pg_config"
+    for d in $defaultdirs
+    do
+        if test -f $d/bin/pg_config; then
+            PG_CONFIG="$d/bin/pg_config"
+            break
+        fi
+    done
 elif test "${pg_config}" != "no" ; then
     PG_CONFIG="${withval}"
 fi
 
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
-        AC_MSG_ERROR([--with-dhcp-pgsql should point to a pg_config program])
+        AC_MSG_ERROR([--with-pgsql should point to a pg_config program])
     fi
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
@@ -1100,27 +797,41 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_PGSQL, test "$PG_CONFIG" != "")
 
+# allow building kea programs with static link to cassandra cpp-driver.
+AC_ARG_ENABLE([cql-static-lib],
+AS_HELP_STRING([--enable-cql-static-lib],
+    [build programs with cassandra cpp driver static library [[default=no]]]),
+    [enable_cql_static_lib=yes], [enable_cql_static_lib=no])
+AM_CONDITIONAL(USE_CQL_STATIC_LIB, test "$enable_cql_static_lib" = yes)
+#AC_DEFINE USE_CQL_STATIC_LIB? (unused)
+
+cql_lib="cassandra"
+if test "${enable_cql_static_lib}" = "yes" ; then
+    cql_lib="${cql_lib}_static"
+fi
+
 cql_config="no"
 AC_ARG_WITH([cql],
   AC_HELP_STRING([--with-cql=PATH],
-    [path to the Cassandra CQL 'cql_config' script]),
+    [path to pkg-config or the Cassandra CQL 'cql_config' script]),
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    CQL_CONFIG="/usr/bin/cql_config"
+    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+    CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
 fi
 
 if test "$CQL_CONFIG" != "" ; then
     if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-cql should point to a cql_config program])
+        AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
     fi
 
-    CQL_INCLUDEDIR=`$CQL_CONFIG --includedir`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cppflags` -I$CQL_INCLUDEDIR"
-    CQL_LIBS="-L`$CQL_CONFIG --libdir` -lcassandra_static -luv"
-    CQL_VERSION=`$CQL_CONFIG --version`
+    CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
+    CQL_CPPFLAGS="$CQL_INCLUDEDIR `$CQL_CONFIG --cflags-only-other $cql_lib`"
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
+    CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
     AC_SUBST(CQL_LIBS)
@@ -1150,7 +861,92 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
+sysrepo_config="no"
+AC_ARG_WITH([sysrepo],
+  AC_HELP_STRING([--with-sysrepo=PATH],
+    [path to the Sysrepo 'sysrepo_config' script]),
+    [sysrepo_config="$withval"])
+
+if test "${sysrepo_config}" = "yes" ; then
+    SYSREPO_CONFIG="$PKG_CONFIG"
+elif test "${sysrepo_config}" != "no" ; then
+    SYSREPO_CONFIG="${sysrepo_config}"
+fi
+
+if test "$SYSREPO_CONFIG" != "" ; then
+    if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
+        AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
+    fi
+
+    # Let's get the configuration environment for pure Sysrepo (written in C) first
+    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
+    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
+    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
+    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+
+    # Now get the environment for C++ bindings for Sysrepo.
+    SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
+    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp`"
+    SYSREPOCPP_LIBS="`$SYSREPO_CONFIG --libs libSysrepo-cpp`"
+    SYSREPOCPP_VERSION=`$SYSREPO_CONFIG --modversion libSysrepo-cpp`
+
+    # If include paths are equal, there's no need to include both. But if they're different,
+    # we need both.
+    if test "${SYSREPO_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
+       SYSREPO_INCLUDEDIR="${SYSREPO_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
+    fi
+
+    if test "${SYSREPO_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
+       SYSREPO_CPPFLAGS="${SYSREPO_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
+    fi
+
+    if test "${SYSREPO_LIBS}" != "${SYSREPOCPP_LIBS}"; then
+       SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
+    fi
+
+    AC_SUBST(SYSREPO_CPPFLAGS)
+    AC_SUBST(SYSREPO_LIBS)
+
+    # Check that a simple program using Sysrepo functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
+    LIBS="$SYSREPO_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([extern "C" {
+                              #include <sysrepo.h>
+                              }],
+                              [sr_conn_ctx_t *connection = NULL;
+                              sr_session_ctx_t *session = NULL;
+                              sr_connect("configure_test", SR_CONN_DEFAULT, &connection);
+                              sr_disconnect(connection);])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... yes])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... no])
+             AC_MSG_ERROR([Needs Sysrepo library])]
+    )
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.h>],
+                              [Connection("conn-name");])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
+             AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.])]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that Sysrepo is present in the config.h file
+    AC_DEFINE([HAVE_SYSREPO], [1], [SYSREPO is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_SYSREPO, test "$SYSREPO_CONFIG" != "")
+
 # Check for log4cplus
+DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
 log4cplus_path="yes"
 AC_ARG_WITH([log4cplus],
   AC_HELP_STRING([--with-log4cplus=PATH],
@@ -1159,12 +955,12 @@ AC_ARG_WITH([log4cplus],
 if test "${log4cplus_path}" = "no" ; then
     AC_MSG_ERROR([Need log4cplus])
 elif test "${log4cplus_path}" != "yes" ; then
+  DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus=${log4cplus_path}"
   LOG4CPLUS_INCLUDES="-I${log4cplus_path}/include"
   LOG4CPLUS_LIBS="-L${log4cplus_path}/lib"
 else
 # If not specified, try some common paths.
-        log4cplusdirs="/usr /usr/local /usr/pkg /opt /opt/local"
-        for d in $log4cplusdirs
+        for d in $defaultdirs
         do
                 if test -f $d/include/log4cplus/logger.h; then
                         LOG4CPLUS_INCLUDES="-I$d/include"
@@ -1172,10 +968,12 @@ else
                         break
                 fi
         done
+	DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
 fi
 
 LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
 
+AC_SUBST(DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG)
 AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
 
@@ -1270,9 +1068,9 @@ if test "x$enable_gtest" = "xyes" ; then
                 AC_MSG_ERROR([no gtest source but it was selected])
             fi
         else
-	    if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
-		GTEST_SOURCE=$GTEST_SOURCE/googletest
-	    fi
+            if test ! -d $GTEST_SOURCE/src -a -d $GTEST_SOURCE/googletest; then
+                GTEST_SOURCE=$GTEST_SOURCE/googletest
+            fi
             AC_CHECK_FILES([$GTEST_SOURCE/src/gtest-all.cc]
                 [$GTEST_SOURCE/src/gtest_main.cc],
                 [have_gtest_source=yes],
@@ -1282,7 +1080,7 @@ if test "x$enable_gtest" = "xyes" ; then
         GTEST_LDADD="\$(top_builddir)/ext/gtest/libgtest.a"
         DISTCHECK_GTEST_CONFIGURE_FLAG="--with-gtest-source=$GTEST_SOURCE"
         GTEST_INCLUDES="-I$GTEST_SOURCE -I$GTEST_SOURCE/include"
-	GTEST_VERSION="`basename $GTEST_SOURCE`"
+        GTEST_VERSION="`basename $GTEST_SOURCE`"
     fi
 
     if test "$gtest_path" != "no" ; then
@@ -1339,6 +1137,91 @@ AC_SUBST(GTEST_LDADD)
 AC_SUBST(GTEST_SOURCE)
 
 #
+# Check availability of benchmark.
+#
+BENCHMARK_CPPFLAGS=
+BENCHMARK_LDFLAGS=
+BENCHMARK_LDADD=
+DISTCHECK_BENCHMARK_CONFIGURE_FLAG=
+BENCHMARK_VERSION="unknown"
+
+if test "x$enable_benchmark" = "xyes" ; then
+
+    DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark=$benchmark_path"
+
+    if test -n "$with_benchmark_source" ; then
+
+        if test "x$BENCHMARK_SOURCE" = "xyes" ; then
+
+            AC_MSG_CHECKING([for benchmark source])
+            # If not specified, try some common paths.
+            BENCHMARK_SOURCE=
+            for d in /usr/src/benchmark /usr/local /usr/pkg /opt /opt/local ; do
+                if test -f $d/src/benchmark.cc; then
+                    BENCHMARK_SOURCE=$d
+                    AC_MSG_RESULT([$BENCHMARK_SOURCE])
+                    break
+                fi
+            done
+            if test -z $BENCHMARK_SOURCE ; then
+                AC_MSG_ERROR([no benchmark source but it was selected])
+            fi
+        else
+            if test ! -d $BENCHMARK_SOURCE/src; then
+                BENCHMARK_SOURCE=$BENCHMARK_SOURCE/benchmark
+            fi
+            AC_CHECK_FILES([$BENCHMARK_SOURCE/src/benchmark.cc],
+                [have_benchmark_source=yes],
+                [AC_MSG_ERROR([no benchmark source at $BENCHMARK_SOURCE])])
+        fi
+        have_benchmark_source=yes
+        BENCHMARK_CPPFLAGS=`cat \${BENCHMARK_SOURCE}/build/src/CMakeFiles/benchmark.dir/flags.make | grep CXX_DEFINES | cut -d "=" -f 2`
+        BENCHMARK_LDADD="\$(BENCHMARK_SOURCE)/build/src/libbenchmark.a"
+        DISTCHECK_BENCHMARK_CONFIGURE_FLAG="--with-benchmark-source=$BENCHMARK_SOURCE"
+        BENCHMARK_INCLUDES="-I$BENCHMARK_SOURCE \
+                            -I$BENCHMARK_SOURCE/src \
+                            -I$BENCHMARK_SOURCE/include \
+                            -I$BENCHMARK_SOURCE/include/benchmark"
+        BENCHMARK_VERSION="$(basename $BENCHMARK_SOURCE)"
+    fi
+
+    if test "$benchmark_path" != "no" ; then
+        if test "$benchmark_path" != "yes"; then
+            BENCHMARK_PATHS=$benchmark_path
+        fi
+        if test -z "${BENCHMARK_PATHS}" ; then
+            BENCHMARK_PATHS="/usr /usr/local"
+        fi
+        BENCHMARK_FOUND="false"
+        for dir in ${BENCHMARK_PATHS}; do
+            if test -f "$dir/include/benchmark/benchmark.h"; then
+                if ! test -f "$dir/lib/libbenchmark.a"; then
+                    AC_MSG_WARN([Found Google Benchmark include but not the library in $dir.])
+                    continue
+                fi
+                BENCHMARK_INCLUDES="-I$dir/include"
+                BENCHMARK_LDFLAGS="-L$dir/lib"
+                BENCHMARK_LDADD="$dir/lib/libbenchmark.a "
+                BENCHMARK_FOUND="true"
+                break
+            fi
+        done
+        if test "${BENCHMARK_FOUND}" != "true"; then
+            AC_MSG_ERROR([Cannot find benchmark in: $BENCHMARK_PATHS])
+        fi
+
+    fi
+fi
+AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
+AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
+AC_SUBST(DISTCHECK_BENCHMARK_CONFIGURE_FLAG)
+AC_SUBST(BENCHMARK_CPPFLAGS)
+AC_SUBST(BENCHMARK_INCLUDES)
+AC_SUBST(BENCHMARK_LDFLAGS)
+AC_SUBST(BENCHMARK_LDADD)
+AC_SUBST(BENCHMARK_SOURCE)
+
+#
 # Some Googletest versions bug with C++11 compilers
 #
 if test $enable_gtest != "no"; then
@@ -1347,15 +1230,15 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/shared_ptr.hpp>
-	    #include <gtest/gtest.h>
-	    void foo() {
-	        boost::shared_ptr<int> bar;
-		ASSERT_TRUE(bar);
+            [#include <boost/shared_ptr.hpp>
+            #include <gtest/gtest.h>
+            void foo() {
+                boost::shared_ptr<int> bar;
+                ASSERT_TRUE(bar);
             }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)],
-    	[AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
+            [return 0;])],
+        [AC_MSG_RESULT(yes)],
+        [AC_MSG_ERROR([XXX_TRUE() Google Test macros won't compile; the most likely reason is that a later version of Google Test is required])])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
@@ -1366,35 +1249,33 @@ if test $enable_gtest != "no"; then
    CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES $GTEST_INCLUDES"
    AC_COMPILE_IFELSE(
        [AC_LANG_PROGRAM(
-           [#include <boost/algorithm/string.hpp>
-	    #include <gtest/gtest.h>
-	    #include <string>
-	    #include <vector>
-	    std::string nodiff(std::string text) {
-	        std::vector<std::string> lines;
-		boost::split(lines, text, boost::is_any_of("\n"));
-		using namespace testing::internal;
-		return (edit_distance::CreateUnifiedDiff(lines, lines));
-	    }],
-	    [return 0;])],
-	[AC_MSG_RESULT(yes)
-	 AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
-	 [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
-	[AC_MSG_RESULT(no)])
+            [#include <boost/algorithm/string.hpp>
+            #include <gtest/gtest.h>
+            #include <string>
+            #include <vector>
+            std::string nodiff(std::string text) {
+                std::vector<std::string> lines;
+                boost::split(lines, text, boost::is_any_of("\n"));
+                using namespace testing::internal;
+                return (edit_distance::CreateUnifiedDiff(lines, lines));
+            }],
+            [return 0;])],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE([HAVE_CREATE_UNIFIED_DIFF], [1],
+        [Define to 1 if gtest defines edit_distance::CreateUnifiedDiff])],
+        [AC_MSG_RESULT(no)])
     CPPFLAGS=$CPPFLAGS_SAVED
 fi
 
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
-# Use our 'coroutine' header from ext
-CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
-#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
 # Disable threads: they seems to break things on some systems
-CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
+# As now we use threads in boost ASIO this is commented out...
+# CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_THREADS=1"
 
 # We tried to stay header only
 if test "x${BOOST_LIBS}" = "x"; then
@@ -1405,7 +1286,7 @@ if test "x${BOOST_LIBS}" = "x"; then
 fi
 
 # Check for functions that are not available on all platforms
-AC_CHECK_FUNCS([pselect])
+AC_CHECK_FUNCS([pselect srandomdev])
 
 # /dev/poll issue: ASIO uses /dev/poll by default if it's available (generally
 # the case with Solaris).  Unfortunately its /dev/poll specific code would
@@ -1419,7 +1300,7 @@ AC_CHECK_FUNCS([pselect])
 # code will be updated by the time we really need it.
 AC_CHECK_HEADERS(sys/devpoll.h, ac_cv_have_devpoll=yes, ac_cv_have_devpoll=no)
 if test "X$ac_cv_have_devpoll" = "Xyes" -a "X$GXX" = "Xyes"; then
-	CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
+    CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_DISABLE_DEV_POLL=1"
 fi
 
 #
@@ -1572,12 +1453,9 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  dns++.pc
                  doc/Makefile
-                 doc/design/Makefile
-                 doc/design/datasrc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
                  ext/Makefile
-                 ext/coroutine/Makefile
                  ext/gtest/Makefile
                  m4macros/Makefile
                  src/Makefile
@@ -1600,14 +1478,12 @@ AC_CONFIG_FILES([Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
                  src/bin/dhcp4/Makefile
-                 src/bin/dhcp4/spec_config.h.pre
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/marker_file.h
                  src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
                  src/bin/dhcp6/Makefile
-                 src/bin/dhcp6/spec_config.h.pre
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/marker_file.h
@@ -1620,6 +1496,9 @@ AC_CONFIG_FILES([Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
                  src/bin/lfc/Makefile
                  src/bin/lfc/tests/Makefile
+                 src/bin/netconf/Makefile
+                 src/bin/netconf/tests/Makefile
+                 src/bin/netconf/tests/netconf_tests.sh
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
@@ -1630,11 +1509,15 @@ AC_CONFIG_FILES([Makefile
                  src/bin/shell/tests/shell_unittest.py
                  src/hooks/Makefile
                  src/hooks/dhcp/Makefile
+                 src/hooks/dhcp/high_availability/Makefile
+                 src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
+                 src/hooks/dhcp/stat_cmds/Makefile
+                 src/hooks/dhcp/stat_cmds/tests/Makefile
                  src/lib/Makefile
                  src/lib/asiodns/Makefile
                  src/lib/asiodns/tests/Makefile
@@ -1651,11 +1534,15 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/testdata/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
+                 src/lib/database/Makefile
+                 src/lib/database/tests/Makefile
+                 src/lib/database/testutils/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile
                  src/lib/dhcp_ddns/tests/Makefile
                  src/lib/dhcpsrv/Makefile
+                 src/lib/dhcpsrv/benchmarks/Makefile
                  src/lib/dhcpsrv/tests/Makefile
                  src/lib/dhcpsrv/tests/test_libraries.h
                  src/lib/dhcpsrv/testutils/Makefile
@@ -1686,8 +1573,15 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
+                 src/lib/mysql/Makefile
+                 src/lib/mysql/testutils/Makefile
+                 src/lib/pgsql/Makefile
+                 src/lib/pgsql/tests/Makefile
+                 src/lib/pgsql/testutils/Makefile
+                 src/lib/cql/Makefile
+                 src/lib/cql/tests/Makefile
+                 src/lib/cql/testutils/Makefile
                  src/lib/process/Makefile
-                 src/lib/process/spec_config.h.pre
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
                  src/lib/stats/Makefile
@@ -1707,6 +1601,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
                  src/share/database/scripts/cql/Makefile
+                 src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
+                 src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
@@ -1714,10 +1610,17 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_4.0_to_4.1.sh
                  src/share/database/scripts/mysql/upgrade_4.1_to_5.0.sh
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
+                 src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
+                 src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
+                 src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/pgsql/upgrade_3.0_to_3.1.sh
+                 src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
+                 src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
+                 src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
+                 src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1732,6 +1635,7 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/bin/shell/tests/shell_process_tests.sh
            chmod +x src/bin/shell/tests/shell_unittest.py
            chmod +x src/lib/dns/gen-rdatacode.py
+           chmod +x src/lib/log/tests/buffer_logger_test.sh
            chmod +x src/lib/log/tests/console_test.sh
            chmod +x src/lib/log/tests/destination_test.sh
            chmod +x src/lib/log/tests/init_logger_test.sh
@@ -1742,21 +1646,6 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
 ])
-
-AM_CONDITIONAL(PREMIUM, test -d "$srcdir/premium/src")
-
-AC_MSG_CHECKING([if premium package is available])
-if test -d "$srcdir/premium/src"; then
-
-    # Define it in the config.h, so C++ code could use it.
-    AC_DEFINE([PREMIUM], [1], [Kea-premium package found])
-
-    # Export it here, so code in configure could use it.
-    PREMIUM=1
-    AC_MSG_RESULT(yes)
-else
-    AC_MSG_RESULT(no)
-fi
 
 AC_OUTPUT
 
@@ -1774,19 +1663,21 @@ cat > config.report << END
     -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 Package:
-  Name:            ${PACKAGE_NAME}
-  Version:         ${PACKAGE_VERSION}
-  Extended version:${EXTENDED_VERSION}
-  OS Family:       ${OS_TYPE}
-  Using GNU sed:   ${GNU_SED}
+  Name:              ${PACKAGE_NAME}
+  Version:           ${PACKAGE_VERSION}
+  Extended version:  ${EXTENDED_VERSION}
+  OS Family:         ${OS_TYPE}
+
+  Hooks directory:   ${prefix}/lib/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
-  Premium package: yes
+  Premium hooks:     yes
+  Included Hooks:   ${INCLUDED_HOOKS}
 END
 else
 cat >> config.report << END
-  Premium package: no
+  Premium hooks:     no
 END
 fi
 cat >> config.report << END
@@ -1847,9 +1738,9 @@ ${CRYPTO_NAME}:
 ${DISABLED_CRYPTO}: no
 
 Log4cplus:
-  LOG4CPLUS_VERSION: ${LOG4CPLUS_VERSION}
+  LOG4CPLUS_VERSION:  ${LOG4CPLUS_VERSION}
   LOG4CPLUS_INCLUDES: ${LOG4CPLUS_INCLUDES}
-  LOG4CPLUS_LIBS:  ${LOG4CPLUS_LIBS}
+  LOG4CPLUS_LIBS:     ${LOG4CPLUS_LIBS}
 
 Flex/bison:
   FLEX:  ${LEX}
@@ -1894,9 +1785,9 @@ if test "$CQL_CPPFLAGS" != "" ; then
 cat >> config.report << END
 
 Cassandra CQL:
-  CQL_VERSION:   ${CQL_VERSION}
-  CQL_CPPFLAGS:  ${CQL_CPPFLAGS}
-  CQL_LIBS:      ${CQL_LIBS}
+  CQL_VERSION:     ${CQL_VERSION}
+  CQL_CPPFLAGS:    ${CQL_CPPFLAGS}
+  CQL_LIBS:        ${CQL_LIBS}
 END
 else
 cat >> config.report << END
@@ -1906,29 +1797,80 @@ Cassandra CQL:
 END
 fi
 
+if test "$SYSREPO_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+Sysrepo:
+  SYSREPO_VERSION:     ${SYSREPO_VERSION}
+  SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
+  SYSREPO_LIBS:        ${SYSREPO_LIBS}
+END
+else
+cat >> config.report << END
+
+Sysrepo:
+  no
+END
+fi
+
 if test "$enable_gtest" != "no"; then
 cat >> config.report << END
 
-GTest:
+Google Test:
   GTEST_VERSION:   ${GTEST_VERSION}
   GTEST_INCLUDES:  ${GTEST_INCLUDES}
   GTEST_LDFLAGS:   ${GTEST_LDFLAGS}
   GTEST_LDADD:     ${GTEST_LDADD}
   GTEST_SOURCE:    ${GTEST_SOURCE}
 END
+else
+cat >> config.report << END
+
+Google Test:
+  no
+END
+fi
+
+if test "$enable_benchmark" != "no"; then
+cat >> config.report << END
+
+Google Benchmark:
+  BENCHMARK_VERSION:   ${BENCHMARK_VERSION}
+  BENCHMARK_CPPFLAGS:  ${BENCHMARK_CPPFLAGS}
+  BENCHMARK_INCLUDES:  ${BENCHMARK_INCLUDES}
+  BENCHMARK_LDFLAGS:   ${BENCHMARK_LDFLAGS}
+  BENCHMARK_LDADD:     ${BENCHMARK_LDADD}
+  BENCHMARK_SOURCE:    ${BENCHMARK_SOURCE}
+END
+else
+cat >> config.report << END
+
+Google Benchmark:
+  no
+END
+fi
+
+if test "$FREERADIUS_INCLUDE" != ""; then
+cat >> config.report << END
+
+FreeRADIUS client:
+  FREERADIUS_INCLUDE:    ${FREERADIUS_INCLUDE}
+  FREERADIUS_LIB:        ${FREERADIUS_LIB}
+  FREERADIUS_DICTIONARY: ${FREERADIUS_DICTIONARY}
+END
 fi
 
 cat >> config.report << END
 
 Developer:
-  Enable Debugging: $debug_enabled
-  Google Tests: $enable_gtest
-  Valgrind: $found_valgrind
-  C++ Code Coverage: $USE_LCOV
-  Logger checks: $enable_logger_checks
+  Enable Debugging:       $debug_enabled
+  Google Tests:           $enable_gtest
+  Valgrind:               $found_valgrind
+  C++ Code Coverage:      $USE_LCOV
+  Logger checks:          $enable_logger_checks
   Generate Documentation: $enable_generate_docs
-  Parser Generation: $enable_generate_parser
-  Kea-shell: $enable_shell
+  Parser Generation:      $enable_generate_parser
+  Kea-shell:              $enable_shell
 
 END
 

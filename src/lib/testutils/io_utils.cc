@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <exceptions/exceptions.h>
 #include <testutils/io_utils.h>
 #include <gtest/gtest.h>
@@ -69,8 +71,11 @@ std::string decommentJSONfile(const std::string& input_file) {
         }
 
         // Second, let's get rid of the // comments
+        // at the beginning or after a control character.
         size_t dblslash_pos = line.find("//");
-        if (dblslash_pos != string::npos) {
+        if ((dblslash_pos != string::npos) &&
+            ((dblslash_pos == 0) ||
+             ((unsigned) line[dblslash_pos - 1] <= 32))) {
             line = line.substr(0, dblslash_pos);
         }
 

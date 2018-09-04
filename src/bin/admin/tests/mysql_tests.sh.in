@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,38 @@ db_name="keatest"
 
 # Set location of the kea-admin.
 keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+
+# Convenience function for running an SQL statement
+# param hdr - text message to prepend to any error
+# param qry - SQL statement to run
+# param exp_valu - optional expected value.  This can be used IF the SQL statement
+# generates a single value, such as a SELECT which returns one column for one row.
+# Examples:
+#
+#   qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0);"
+#   run_statement "#2" "$qry"
+#
+#   qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+#   run_statement "#3" "$qry" 1
+run_statement() {
+    hdr="$1";shift;
+    qry="$1";shift;
+    exp_value="$1";
+
+    # Execute the statment
+    value=`mysql_execute "${qry}"`
+    ERRCODE=$?
+
+    # Execution should succeed
+    assert_eq 0 $ERRCODE "$hdr: SQL=[$qry] failed: (expected status code %d, returned %d)"
+
+    # If there's an expected value, test it
+    if [ "x$exp_value" != "x" ]
+    then
+        assert_str_eq "$exp_value" "$value" "$hdr: SQL=[$qry] wrong: (expected value %s, returned %s)"
+    fi
+}
+
 
 # Wipe all tables from the DB:
 mysql_wipe() {
@@ -133,7 +165,7 @@ EOF
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
+    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
@@ -178,6 +210,39 @@ EOF
     test_finish 0
 }
 
+# Upgrades an existing schema to a target newer version
+# param target_version - desired schema version as "major.minor"
+mysql_upgrade_schema_to_version() {
+    target_version=$1
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${db_scripts_dir}/mysql ]; then
+        log_error "Invalid scripts directory: ${db_scripts_dir}/mysql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${db_scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${db_scripts_dir}/mysql?"
+        exit 1
+    fi
+
+    for script in ${db_scripts_dir}/mysql/upgrade*.sh
+    do
+        if [ $version = "$target_version" ]
+        then
+            break;
+        fi
+
+        echo "Processing $script file..."
+        sh ${script} --host=${db_host} --user=${db_user} --password=${db_password} ${db_name}
+        version=`mysql_version`
+    done
+
+    echo "Schema upgraded to $version"
+}
+
 mysql_upgrade_test() {
 
     test_start "mysql.host_reservation-upgrade"
@@ -189,11 +254,11 @@ mysql_upgrade_test() {
     mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
 
     # Sanity check - verify that it reports version 1.0.
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir) 
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 5.1
+    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -295,6 +360,7 @@ EOF
     count=`echo $text | grep -ic "order by l\.address"`
     assert_eq 1 $count "lease6DumpData doesn't have order by clause. (returned count %d, expected %d)"
 
+    #table: host_identifier_type (upgrade 4.1 -> 5.0)
     # verify that host_identifier_type table exists.
     qry="select count(*) from host_identifier_type";
     count=`mysql_execute "${qry}"`
@@ -310,6 +376,7 @@ EOF
     assert_eq 0 $ERRCODE "show create table hosts failed. (expected status code %d, returned %d)"
     assert_eq 1 "$count" "show create table hosts did not return correct number of fk_host_identifier_type instances. (expected %d, returned %d)"
 
+    #table: dhcp_option_scope (upgrade 4.1 -> 5.0)
     # verify that dhcp_option_scope table exists.
     qry="select count(*) from dhcp_option_scope";
     count=`mysql_execute "${qry}"`
@@ -317,23 +384,26 @@ EOF
     assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
     assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
 
+    #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0)
     # verify that dhcp4_options table includes scope_id
     qry="select scope_id from dhcp4_options";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select scope_id from dhcp4_options failed. (expected status code %d, returned %d)"
 
+    #table: scope_id columns to dhcp6_options (upgrade 4.1 -> 5.0)
     # verify that dhcp6_options table includes scope_id
     qry="select scope_id from dhcp6_options";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select scope_id from dhcp6_options failed. (expected status code %d, returned %d)"
 
+    #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
-    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name failed. (expected status code %d, returned %d)"
+    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key failed. (expected status code %d, returned %d)"
 
     # verify that dhcp4_subnet_id is unsigned
     qry="show columns from hosts like 'dhcp4_subnet_id'"
@@ -351,9 +421,58 @@ EOF
     count=`echo $text | grep -ic unsigned`
     assert_eq 1 $count "dhcp6_subnet_id is not of unsigned type. (expected count %d, returned %d)"
 
-    # Verify upgraded schema reports version 5.1
+    #host_identifier_type should have rows for types 3 and 4 (upgrade 5.0 -> 5.1)
+    qry="select count(*) from host_identifier_type";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select from host_identifier_type failed. (expected status code %d, returned %d)"
+    assert_eq 5 "$count" "host_identifier_type does not contain correct number of entries. (expected count %d, returned %d)"
+
+    #table: user_context columns to hosts, dhcp4_options and dhcp6_options (upgrade 5.2 -> 6.0)
+    # verify that hosts table includes user_context
+    qry="select user_context from hosts";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from hosts failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp4_options table includes user_context
+    qry="select user_context from dhcp4_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from dhcp4_options failed. (expected status code %d, returned %d)"
+
+    # verify that dhcp6_options table includes user_context
+    qry="select user_context from dhcp6_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from dhcp6_options failed. (expected status code %d, returned %d)"
+
+    # lease4/6_stats changes are tested separately
+
+    #table: user_context to lease4 and lease6 (upgrade 6.0 -> 7.0)
+    # verify that lease4 table includes user_context
+    qry="select user_context from lease4";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease4 failed. (expected status code %d, returned %d)"
+
+    # verify that lease6 table includes user_context
+    qry="select user_context from lease6";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease6 failed. (expected status code %d, returned %d)"
+
+    #table: logs (upgrade 6.0 -> 7.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT timestamp, address, log FROM logs;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
+
+    # Verify upgraded schema reports version 7.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "5.1" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+
 
     # Let's wipe the whole database
     mysql_wipe
@@ -394,9 +513,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0);\
-insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1);\
-insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2);"
+insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0,NULL);\
+insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1,NULL);\
+insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -454,9 +573,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0);\
-insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1);\
-insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2);"
+insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
+insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -481,6 +600,274 @@ insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'thre
     test_finish 0
 }
 
+# Verifies lease4_stat trigger operations on
+# an new, empty database.  It inserts, updates, and
+# deletes various leases, checking lease4_stat
+# values along the way.
+mysql_lease4_stat_test() {
+    test_start "mysql.lease4_stat_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initialize the database
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+
+    # Verify lease4 stat table is present
+    qry="select count(subnet_id) from lease4_stat";
+    run_statement "#1" "$qry" 0
+
+    # Insert lease4
+    qry="insert into lease4 (address, subnet_id, state) values (111,1,0);"
+    run_statement "#2" "$qry"
+
+    # Assigned state count should be 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0";
+    run_statement "#3" "$qry" 1
+
+    # Set lease state to declined
+    qry="update lease4 set state = 1 where address = 111;"
+    run_statement "#4" "$qry"
+
+    # Leases state count for assigned should be 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 0";
+    run_statement "#5" "$qry" 0
+
+    # Leases state count for declined should be 1
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1";
+    run_statement "#6" "$qry" 1
+
+    # Delete the lease
+    qry="delete from lease4 where address = 111;"
+    run_statement "#7" "$qry"
+
+    # Leases state count for declined should be 0
+    qry="select leases from lease4_stat where subnet_id = 1 and state = 1";
+    run_statement "#8" "$qry" 0
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that lease6_stat triggers operate correctly
+# for using a given address and lease_type.  It will
+# insert a lease, update it, and delete checking the
+# lease stat counts along the way.  It assumes the
+# database has been created but is empty.
+# param addr - address to use to add to subnet 1
+# param ltype - type of lease to create
+mysql_lease6_stat_per_type() {
+    addr=$1;shift;
+    ltype=$1;
+
+    # insert a lease6 for addr and ltype, state assigned
+    qry="insert into lease6 (address, lease_type, subnet_id, state) values ($addr,$ltype,1,0);"
+    run_statement "#2" "$qry"
+
+    # assigned stat should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and state = 0";
+    run_statement "#3" "$qry" 1
+
+    # update the lease, changing state to declined
+    qry="update lease6 set state = 1 where address = $addr;"
+    run_statement "#4" "$qry"
+
+    # leases stat for assigned state should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
+    run_statement "#5" "$qry" 0
+
+    # leases count for declined state should be 1
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 1";
+    run_statement "#6" "$qry" 1
+
+    # delete the lease
+    qry="delete from lease6 where address = $addr;"
+    run_statement "#7" "$qry"
+
+    # leases count for declined state should be 0
+    qry="select leases from lease6_stat where subnet_id = 1 and lease_type = $ltype and  state = 0";
+    run_statement "#6" "$qry" 0
+}
+
+# Verifies that lease6_stat triggers operation correctly
+# for both NA and PD lease types, mysql_lease6_stat_per_type()
+mysql_lease6_stat_test() {
+
+    test_start "mysql.lease6_stat_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # Ok, now let's initialize the database
+    ${keaadmin} lease-init mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    assert_eq 0 $ERRCODE "kea-admin lease-init mysql returned non-zero status code %d, expected %d"
+
+    # verify lease6 stat table is present
+    qry="select count(subnet_id) from lease6_stat"
+    run_statement "#1" "$qry"
+
+    # Test for address 111, NA lease type
+    mysql_lease6_stat_per_type "111" "0"
+
+    # Test for address 222, PD lease type
+    mysql_lease6_stat_per_type "222" "1"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    test_finish 0
+}
+
+# Verifies that you can upgrade from earlier version and
+# lease<4/6>_stat tables will be populated based on existing
+# leases and that the stat triggers work properly.
+mysql_lease_stat_upgrade_test() {
+    test_start "my_sql_lease_stat_upgrade_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which prepopulate the lease stat
+    # tables.
+    #
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Now upgrade to schema 4.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 4.0
+
+    # Now we need insert some leases to "migrate" for both v4 and v6
+    qry=\
+"insert into lease4 (address, subnet_id, state) values (111,10,0);\
+ insert into lease4 (address, subnet_id, state) values (222,10,0);\
+ insert into lease4 (address, subnet_id, state) values (333,10,1);\
+ insert into lease4 (address, subnet_id, state) values (444,10,2);\
+ insert into lease4 (address, subnet_id, state) values (555,77,0);"
+    run_statement "insert v4 leases" "$qry"
+
+    qry=\
+"insert into lease6 (address, lease_type, subnet_id, state) values (111,0,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (222,0,40,1);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (333,1,40,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (444,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (555,1,50,0);\
+ insert into lease6 (address, lease_type, subnet_id, state) values (666,1,40,2);"
+    run_statement "insert v6 leases" "$qry"
+
+    # Ok, we have a 4.0 database with leases. Let's upgrade it to 6.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    #
+    # First we'll verify lease4_stats are correct after migration.
+    #
+
+    # Assigned leases for subnet 10 should be 2
+    qry="select leases from lease4_stat where subnet_id = 10 and state = 0"
+    run_statement "#4.1" "$qry" 2
+
+    # Assigned leases for subnet 77 should be 1
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.2" "$qry" 1
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#4.3" "$qry" 0
+
+    #
+    # Now we'll verify v4 trigger operation for insert,update, and delete
+    #
+
+    # Insert a new lease subnet 77
+    qry="insert into lease4 (address, subnet_id, state) values (777,77,0);"
+    run_statement "#4.4" "$qry"
+
+    # Assigned count for subnet 77 should be 2
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.5" "$qry" 2
+
+    # Update the state of the new lease to declined
+    qry="update lease4 set state = 1 where address = 777;"
+    run_statement "#4.6" "$qry"
+
+    # Assigned count for subnet 77 should be 1 again
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 0"
+    run_statement "#4.7" "$qry" 1
+
+    # Declined count for subnet 77 should be 1
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
+    run_statement "#4.8" "$qry" 1
+
+    # Delete the lease.
+    qry="delete from lease4 where address = 777;"
+    run_statement "#4.9" "$qry"
+
+    # Declined count for subnet 77 should be 0
+    qry="select leases from lease4_stat where subnet_id = 77 and state = 1"
+    run_statement "#4.10" "$qry" 0
+
+    #
+    # Next we'll verify lease6_stats are correct after migration.
+    #
+
+    # Assigned leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 0"
+    run_statement "#6.1" "$qry" 1
+
+    # Assigned (PD) leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 1 and state = 0"
+    run_statement "#6.2" "$qry" 1
+
+    # Declined leases for subnet 40 should be 1
+    qry="select leases from lease6_stat where subnet_id = 40 and lease_type = 0 and state = 1"
+    run_statement "#6.3" "$qry" 1
+
+    # Assigned (PD) leases for subnet 50 should be 2
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.4" "$qry" 2
+
+    # Should be no records for EXPIRED
+    qry="select count(subnet_id) from lease4_stat where state = 2"
+    run_statement "#6.5" "$qry" 0
+
+    #
+    # Finally we'll verify v6 trigger operation for insert,update, and delete
+    #
+
+    # Insert a new lease subnet 50
+    qry="insert into lease6 (address, subnet_id, lease_type, state) values (777,50,1,0);"
+    run_statement "#6.5" "$qry"
+
+    # Assigned count for subnet 50 should be 3
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.6" "$qry" 3
+
+    # Update the state of the new lease to expired
+    qry="update lease6 set state = 2 where address = 777;"
+    run_statement "#6.7" "$qry"
+
+    # Assigned count for subnet 50 should be 2 again
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.8" "$qry" 2
+
+    # Delete another PD lease.
+    qry="delete from lease6 where address = 555;"
+    run_statement "#6.9" "$qry"
+
+    # Assigned leases for subnet 50 should be 1
+    qry="select leases from lease6_stat where subnet_id = 50 and lease_type = 1 and state = 0"
+    run_statement "#6.10" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+}
 
 mysql_lease_init_test
 mysql_host_reservation_init_test
@@ -488,3 +875,6 @@ mysql_lease_version_test
 mysql_upgrade_test
 mysql_lease4_dump_test
 mysql_lease6_dump_test
+mysql_lease4_stat_test
+mysql_lease6_stat_test
+mysql_lease_stat_upgrade_test

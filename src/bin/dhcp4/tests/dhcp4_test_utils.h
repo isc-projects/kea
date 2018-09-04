@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
+#include <dhcpsrv/alloc_engine.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/lease_mgr_factory.h>
@@ -170,6 +171,31 @@ public:
     virtual ~NakedDhcpv4Srv() {
     }
 
+    /// @brief Runs processing DHCPREQUEST.
+    ///
+    /// @param request a message received from client
+    /// @return DHCPACK or DHCPNAK message
+    Pkt4Ptr processRequest(Pkt4Ptr& request) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        return (processRequest(request, context));
+    }
+
+    /// @brief Runs processing DHCPRELEASE.
+    ///
+    /// @param release message received from client
+    void processRelease(Pkt4Ptr& release) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        processRelease(release, context);
+    }
+
+    /// @brief Runs processing DHCPDECLINE
+    ///
+    /// @param decline message received from client
+    void processDecline(Pkt4Ptr& decline) {
+        AllocEngine::ClientContext4Ptr context(new AllocEngine::ClientContext4());
+        processDecline(decline, context);
+    }
+
     /// @brief Dummy server identifier option used by various tests.
     OptionPtr server_id_;
 
@@ -196,6 +222,7 @@ public:
     using Dhcpv4Srv::sanityCheck;
     using Dhcpv4Srv::srvidToString;
     using Dhcpv4Srv::classifyPacket;
+    using Dhcpv4Srv::deferredUnpack;
     using Dhcpv4Srv::accept;
     using Dhcpv4Srv::acceptMessageType;
     using Dhcpv4Srv::selectSubnet;
@@ -326,7 +353,7 @@ public:
     /// present (false)
     /// @param t2_present check that t2 must be present (true) or must not be
     /// present (false)
-    void checkAddressParams(const Pkt4Ptr& rsp, const SubnetPtr subnet,
+    void checkAddressParams(const Pkt4Ptr& rsp, const Subnet4Ptr subnet,
                             bool t1_present = false,
                             bool t2_present = false);
 
@@ -536,11 +563,11 @@ parseDHCP4(const std::string& in, bool verbose = false)
 /// @param verbose display the exception message when it fails
 /// @return ElementPtr structure representing parsed JSON
 inline isc::data::ElementPtr
-parseOPTION_DEF(const std::string& in, bool verbose = false)
+parseOPTION_DEFS(const std::string& in, bool verbose = false)
 {
     try {
         isc::dhcp::Parser4Context ctx;
-        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEF));
+        return (ctx.parseString(in, isc::dhcp::Parser4Context::PARSER_OPTION_DEFS));
     }
     catch (const std::exception& ex) {
         if (verbose) {

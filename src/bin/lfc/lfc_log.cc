@@ -6,6 +6,8 @@
 
 /// Defines the logger used by the top-level component of kea-lfc.
 
+#include <config.h>
+
 #include <lfc/lfc_log.h>
 
 namespace isc {

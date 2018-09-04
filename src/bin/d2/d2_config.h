@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,7 @@
 #include <cc/data.h>
 #include <cc/simple_parser.h>
 #include <cc/cfg_to_element.h>
+#include <cc/user_context.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dns/tsig.h>
 #include <exceptions/exceptions.h>
@@ -256,7 +257,7 @@ typedef boost::shared_ptr<D2Params> D2ParamsPtr;
 /// instance of the actual key (@ref isc::dns::TSIGKey) that can be used
 /// by the IO layer for signing and verifying messages.
 ///
-class TSIGKeyInfo : public isc::data::CfgToElement {
+class TSIGKeyInfo : public isc::dhcp::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
     //@{
@@ -411,7 +412,7 @@ typedef boost::shared_ptr<TSIGKeyInfoMap> TSIGKeyInfoMapPtr;
 /// belongs to a list of servers supporting DNS for a given domain. It will
 /// be used to establish communications with the server to carry out DNS
 /// updates.
-class DnsServerInfo : public isc::data::CfgToElement {
+class DnsServerInfo : public isc::dhcp::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief defines DNS standard port value
     static const uint32_t STANDARD_DNS_PORT = 53;
@@ -521,7 +522,7 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// @todo Currently the name entry for a domain is just an std::string. It
 /// may be worthwhile to change this to a dns::Name for purposes of better
 /// validation and matching capabilities.
-class DdnsDomain : public isc::data::CfgToElement {
+class DdnsDomain : public isc::dhcp::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -742,7 +743,7 @@ typedef boost::shared_ptr<DScalarContext> DScalarContextPtr;
 ///
 /// This class parses the configuration element "tsig-key"
 /// and creates an instance of a TSIGKeyInfo.
-class TSIGKeyInfoParser : public  data::SimpleParser {
+class TSIGKeyInfoParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given "tsig-key" element.
     ///
@@ -781,7 +782,7 @@ public:
 ///
 /// This class parses the configuration element "dns-server"
 /// and creates an instance of a DnsServerInfo.
-class DnsServerInfoParser : public  data::SimpleParser {
+class DnsServerInfoParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given  "dns-server" element.
     ///

@@ -1,10 +1,17 @@
-# Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 $NAMESPACE isc::config
+
+% COMMAND_ACCEPTOR_START Starting to accept connections via unix domain socket bound to %1
+This informational message is issued when the Kea server starts an acceptor
+via which it is going to accept new control connections. The acceptor is
+bound to the endpoint associated with the filename provided as an argument.
+If starting the acceptor fails, subsequent error messages will provide a
+reason for failure.
 
 % COMMAND_DEREGISTERED Command %1 deregistered
 This debug message indicates that the daemon stopped supporting specified
@@ -48,9 +55,10 @@ This error indicates that the server detected incoming connection and executed
 accept system call on said socket, but this call returned an error. Additional
 information may be provided by the system as second parameter.
 
-% COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST Closed command socket %1 by foreign host
+% COMMAND_SOCKET_CLOSED_BY_FOREIGN_HOST Closed command socket %1 by foreign host, %2
 This is an information message indicating that the command connection has been
-closed by a command control client.
+closed by a command control client, and whether or not any partially read data
+was discarded.
 
 % COMMAND_SOCKET_CONNECTION_CANCEL_FAIL Failed to cancel read operation on socket %1: %2
 This error message is issued to indicate an error to cancel asynchronous read
@@ -59,7 +67,7 @@ when the timeout occurs during communication with a client. The error message
 includes details about the reason for failure.
 
 % COMMAND_SOCKET_CONNECTION_CLOSED Closed socket %1 for existing command connection
-This is an informational message that the socket created for handling
+This is a debug message indicating that the socket created for handling
 client's connection is closed. This usually means that the client disconnected,
 but may also mean a timeout.
 
@@ -69,7 +77,7 @@ command connection and/or removing it from the connections pool. The
 detailed error is provided as an argument.
 
 % COMMAND_SOCKET_CONNECTION_OPENED Opened socket %1 for incoming command connection
-This is an informational message that a new incoming command connection was
+This is a debug message indicating that a new incoming command connection was
 detected and a dedicated socket was opened for that connection.
 
 % COMMAND_SOCKET_CONNECTION_SHUTDOWN_FAIL Encountered error %1 while trying to gracefully shutdown socket
@@ -96,3 +104,21 @@ over command socket identifier by the specified file descriptor.
 % COMMAND_SOCKET_WRITE_FAIL Error while writing to command socket %1 : %2
 This error message indicates that an error was encountered while
 attempting to send a response to the command socket.
+
+% COMMAND_WATCH_SOCKET_CLEAR_ERROR watch socket failed to clear: %1
+This error message is issued when the command manager was unable to reset
+the ready status after completing a send. This is a programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.
+
+% COMMAND_WATCH_SOCKET_CLOSE_ERROR watch socket failed to close: %1
+This error message is issued when command manager attempted to close the
+socket used for indicating the ready status for send operations. This
+should not have any negative impact on the operation of the command
+manager as it happens when the connection is being terminated.
+
+% COMMAND_WATCH_SOCKET_MARK_READY_ERROR watch socket failed to mark ready: %1
+This error message is issued when the command manager was unable to set
+ready status after scheduling asynchronous send. This is programmatic error
+that should be reported. The command manager may or may not continue
+to operate correctly.

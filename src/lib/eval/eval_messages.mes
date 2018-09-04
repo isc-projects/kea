@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -34,12 +34,30 @@ the value stack.  The strings are displayed in hex.
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  The string is displayed in hex.
 
+# For use with TokenIfElse
+
+% EVAL_DEBUG_IFELSE_FALSE Popping %1 (false) and %2, leaving %3
+This debug message indicates that the condition is false so
+the iftrue branch value is removed and the ifelse branch value
+is left on the value stack.
+
+% EVAL_DEBUG_IFELSE_TRUE Popping %1 (true) and %2, leaving %3
+This debug message indicates that the condition is true so
+the ifelse branch value is removed and the iftrue branch value
+is left on the value stack.
+
 # For use with TokenIpAddress
 
 % EVAL_DEBUG_IPADDRESS Pushing IPAddress %1
 This debug message indicates that the given binary string is being pushed
 onto the value stack.  This represents either an IPv4 or IPv6 address.
 The string is displayed in hex.
+
+# For use with TokenMember
+
+% EVAL_DEBUG_MEMBER Checking membership of '%1', pushing result %2
+This debug message indicates that the membership of the packet for
+the client class was checked.
 
 # For use with TokenNot
 

@@ -15,10 +15,11 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 4:0:0
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 6:1:0
 
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += asio_wrapper.h
+libkea_asiolink_la_SOURCES += addr_utilities.cc addr_utilities.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
 libkea_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libkea_asiolink_la_SOURCES += io_acceptor.h
@@ -44,19 +45,26 @@ libkea_asiolink_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_asiolink_la_LIBADD  = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_asiolink_la_LIBADD += $(BOOST_LIBS)
 
-# IOAddress is sometimes used in user-library code
+# Specify the headers for copying into the installation directory tree.
 libkea_asiolink_includedir = $(pkgincludedir)/asiolink
 libkea_asiolink_include_HEADERS = \
-    asiolink.h \
-    asio_wrapper.h \
+	addr_utilities.h \
+	asio_wrapper.h \
+	asiolink.h \
+	dummy_io_cb.h \
 	interval_timer.h \
-    io_address.h \
+	io_acceptor.h \
+	io_address.h \
 	io_asio_socket.h \
 	io_endpoint.h \
 	io_error.h \
 	io_service.h \
 	io_socket.h \
+	tcp_acceptor.h \
 	tcp_endpoint.h \
-    tcp_socket.h \
+	tcp_socket.h \
 	udp_endpoint.h \
-    udp_socket.h
+	udp_socket.h \
+	unix_domain_socket.h \
+	unix_domain_socket_acceptor.h \
+	unix_domain_socket_endpoint.h

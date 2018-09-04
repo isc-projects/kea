@@ -1,16 +1,19 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/dhcp6.h>
+#include <dhcp/option_custom.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/addr_utilities.h>
 #include <stats/stats_mgr.h>
+#include <boost/foreach.hpp>
 #include <string.h>
 #include <sstream>
 
@@ -66,6 +69,32 @@ CfgSubnets6::getByPrefix(const std::string& subnet_text) const {
     return ((subnet_it != index.cend()) ? (*subnet_it) : ConstSubnet6Ptr());
 }
 
+SubnetSelector
+CfgSubnets6::initSelector(const Pkt6Ptr& query) {
+    // Initialize subnet selector with the values used to select the subnet.
+    SubnetSelector selector;
+    selector.iface_name_ = query->getIface();
+    selector.remote_address_ = query->getRemoteAddr();
+    selector.first_relay_linkaddr_ = IOAddress("::");
+    selector.client_classes_ = query->classes_;
+
+    // Initialize fields specific to relayed messages.
+    if (!query->relay_info_.empty()) {
+        BOOST_REVERSE_FOREACH(Pkt6::RelayInfo relay, query->relay_info_) {
+            if (!relay.linkaddr_.isV6Zero() &&
+                !relay.linkaddr_.isV6LinkLocal()) {
+                selector.first_relay_linkaddr_ = relay.linkaddr_;
+                break;
+            }
+        }
+        selector.interface_id_ =
+            query->getAnyRelayOption(D6O_INTERFACE_ID,
+                                     Pkt6::RELAY_GET_FIRST);
+    }
+
+    return (selector);
+}
+
 Subnet6Ptr
 CfgSubnets6::selectSubnet(const SubnetSelector& selector) const {
     Subnet6Ptr subnet;
@@ -116,16 +145,17 @@ CfgSubnets6::selectSubnet(const asiolink::IOAddress& address,
         for (Subnet6Collection::const_iterator subnet = subnets_.begin();
              subnet != subnets_.end(); ++subnet) {
 
-            // If the specified address matches the relay address, return this
+            // If the specified address matches a relay address, return this
             // subnet.
             if (is_relay_address &&
-                ((*subnet)->getRelayInfo().addr_ == address) &&
+                ((*subnet)->hasRelayAddress(address)) &&
                 (*subnet)->clientSupported(client_classes)) {
                 LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,
                           DHCPSRV_CFGMGR_SUBNET6_RELAY)
                     .arg((*subnet)->toText()).arg(address.toText());
                 return (*subnet);
             }
+
         }
     }
 

@@ -386,6 +386,125 @@ TEST_F(Dhcp4SrvD2Test, queueMaxError) {
     ASSERT_FALSE(mgr.amSending());
 }
 
+// Tests invalid config with TCP protocol
+TEST_F(Dhcp4SrvD2Test, badTCP) {
+    std::string config =
+        "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"127.0.0.1\", "
+        "     \"server-port\" : 53001, "
+        "     \"sender-ip\" : \"0.0.0.0\", "
+        "     \"sender-port\" : 0, "
+        "     \"max-queue-size\" : 1024, "
+        "     \"ncr-protocol\" : \"TCP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    EXPECT_EQ(1, rcode);
+}
+
+// Tests invalid config with bad sender family
+TEST_F(Dhcp4SrvD2Test, badFamily) {
+    std::string config =
+        "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"127.0.0.1\", "
+        "     \"server-port\" : 53001, "
+        "     \"sender-ip\" : \"::\", "
+        "     \"sender-port\" : 0, "
+        "     \"max-queue-size\" : 1024, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    EXPECT_EQ(1, rcode);
+}
+
+// Tests invalid config with server == sender
+TEST_F(Dhcp4SrvD2Test, senderEqServer) {
+    std::string config =
+        "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\" } ],"
+        " \"dhcp-ddns\" : {"
+        "     \"enable-updates\" : true, "
+        "     \"server-ip\" : \"127.0.0.1\", "
+        "     \"server-port\" : 53001, "
+        "     \"sender-ip\" : \"127.0.0.1\", "
+        "     \"sender-port\" : 53001, "
+        "     \"max-queue-size\" : 1024, "
+        "     \"ncr-protocol\" : \"UDP\", "
+        "     \"ncr-format\" : \"JSON\", "
+        "     \"always-include-fqdn\" : true, "
+        "     \"override-no-update\" : true, "
+        "     \"override-client-update\" : true, "
+        "     \"replace-client-name\" : \"when-present\", "
+        "     \"generated-prefix\" : \"test.prefix\", "
+        "     \"qualifying-suffix\" : \"test.suffix.\" },"
+        "\"valid-lifetime\": 4000 }";
+
+    ElementPtr json = Element::fromJSON(config);
+    ConstElementPtr status;
+
+    CfgMgr::instance().clear();
+
+    EXPECT_NO_THROW(status = configureDhcp4Server(srv_, json));
+    ASSERT_TRUE(status);
+    int rcode;
+    ConstElementPtr comment = config::parseAnswer(rcode, status);
+    EXPECT_EQ(1, rcode);
+}
 
 } // namespace test
 } // namespace dhcp

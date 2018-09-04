@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,11 +10,13 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/tests/generic_host_data_source_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
+#include <dhcpsrv/testutils/host_data_source_utils.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -26,26 +28,27 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
+using namespace isc::data;
 using namespace std;
 
 namespace {
 
 class MySqlHostDataSourceTest : public GenericHostDataSourceTest {
 public:
-    /// @brief Constructor
-    ///
-    /// Deletes everything from the database and opens it.
-    MySqlHostDataSourceTest() {
-
+    /// @brief Clears the database and opens connection to it.
+    void initializeTest() {
         // Ensure schema is the correct one.
         destroyMySQLSchema();
         createMySQLSchema();
 
         // Connect to the database
         try {
-            HostDataSourceFactory::create(validMySQLConnectionString());
+            HostMgr::create();
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             std::cerr << "*** ERROR: unable to open database. The test\n"
                          "*** environment is broken and must be fixed before\n"
@@ -55,22 +58,34 @@ public:
             throw;
         }
 
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
-    /// @brief Destructor
-    ///
-    /// Rolls back all pending transactions.  The deletion of myhdsptr_ will close
-    /// the database.  Then reopen it and delete everything created by the test.
-    virtual ~MySqlHostDataSourceTest() {
+    /// @brief Destroys the HDS and the schema.
+    void destroyTest() {
         try {
             hdsptr_->rollback();
         } catch (...) {
             // Rollback may fail if backend is in read only mode. That's ok.
         }
-        HostDataSourceFactory::destroy();
+        HostMgr::delAllBackends();
         hdsptr_.reset();
         destroyMySQLSchema();
+    }
+
+    /// @brief Constructor
+    ///
+    /// Deletes everything from the database and opens it.
+    MySqlHostDataSourceTest() {
+        initializeTest();
+    }
+
+    /// @brief Destructor
+    ///
+    /// Rolls back all pending transactions.  The deletion of hdsptr_ will close
+    /// the database.  Then reopen it and delete everything created by the test.
+    virtual ~MySqlHostDataSourceTest() {
+        destroyTest();
     }
 
     /// @brief Reopen the database
@@ -81,9 +96,9 @@ public:
     /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
     /// the same database.
     void reopen(Universe) {
-        HostDataSourceFactory::destroy();
-        HostDataSourceFactory::create(validMySQLConnectionString());
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        HostMgr::create();
+        HostMgr::addBackend(validMySQLConnectionString());
+        hdsptr_ = HostMgr::instance().getHostDataSource();
     }
 
     /// @brief returns number of rows in a table
@@ -100,8 +115,10 @@ public:
         params["name"] = "keatest";
         params["user"] = "keatest";
         params["password"] = "keatest";
+
         MySqlConnection conn(params);
         conn.openDatabase();
+
         int status = mysql_query(conn.mysql_, query.c_str());
         if (status !=0) {
             isc_throw(DbOperationError, "Query failed: " << mysql_error(conn.mysql_));
@@ -119,7 +136,7 @@ public:
         return (countRowsInTable("dhcp4_options"));
     }
 
-    /// @brief Returns number of IPv4 options currently stored in DB.
+    /// @brief Returns number of IPv6 options currently stored in DB.
     virtual int countDBOptions6() {
         return (countRowsInTable("dhcp6_options"));
     }
@@ -144,12 +161,12 @@ TEST(MySqlHostDataSource, OpenDatabase) {
     destroyMySQLSchema();
     createMySQLSchema();
 
-    // Check that lease manager open the database opens correctly and tidy up.
+    // Check that host manager open the database opens correctly and tidy up.
     //  If it fails, print the error message.
     try {
-        HostDataSourceFactory::create(validMySQLConnectionString());
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(validMySQLConnectionString()));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -157,14 +174,14 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that lease manager open the database opens correctly with a longer
+    // Check that host manager open the database opens correctly with a longer
     // timeout.  If it fails, print the error message.
     try {
         string connection_string = validMySQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
-        HostDataSourceFactory::create(connection_string);
-        EXPECT_NO_THROW((void) HostDataSourceFactory::getHostDataSourcePtr());
-        HostDataSourceFactory::destroy();
+        HostMgr::create();
+        EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
+        HostMgr::delBackend("mysql");
     } catch (const isc::Exception& ex) {
         FAIL() << "*** ERROR: unable to open database, reason:\n"
                << "    " << ex.what() << "\n"
@@ -172,53 +189,51 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the lease manager when
+    // Check that attempting to get an instance of the host manager when
     // none is set throws an exception.
-    EXPECT_FALSE(HostDataSourceFactory::getHostDataSourcePtr());
+    EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
     // Check that wrong specification of backend throws an exception.
-    // (This is really a check on LeaseMgrFactory, but is convenient to
+    // (This is really a check on HostDataSourceFactory, but is convenient to
     // perform here.)
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         NULL, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         InvalidParameter);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         INVALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         InvalidType);
 
     // Check that invalid login data causes an exception.
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, INVALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, INVALID_HOST, VALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, INVALID_PASSWORD)),
         DbOpenError);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_1)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD, INVALID_TIMEOUT_2)),
         DbInvalidTimeout);
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, VALID_NAME, VALID_HOST, VALID_USER, VALID_PASSWORD,
         VALID_TIMEOUT, INVALID_READONLY_DB)), DbInvalidReadOnly);
 
     // Check for missing parameters
-    EXPECT_THROW(HostDataSourceFactory::create(connectionString(
+    EXPECT_THROW(HostMgr::addBackend(connectionString(
         MYSQL_VALID_TYPE, NULL, VALID_HOST, INVALID_USER, VALID_PASSWORD)),
         NoDatabaseName);
 
     // Tidy up after the test
     destroyMySQLSchema();
 }
-
-
 
 /// @brief Check conversion functions
 ///
@@ -261,6 +276,7 @@ TEST(MySqlConnection, checkTimeConversion) {
     EXPECT_EQ(cltt, converted_cltt);
 }
 
+// This test verifies that database backend can operate in Read-Only mode.
 TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
     testReadOnlyDatabase(MYSQL_VALID_TYPE);
 }
@@ -269,6 +285,30 @@ TEST_F(MySqlHostDataSourceTest, testReadOnlyDatabase) {
 // address. Host uses hw address as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(MySqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
+}
+
+// Verifies that IPv4 host reservation with options can have a max value
+// for  dhcp4_subnet id
+TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a max value
+// for  dhcp6_subnet id
+TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
+    testMaxSubnetId6();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
@@ -338,6 +378,12 @@ TEST_F(MySqlHostDataSourceTest, hostnameFQDN100) {
 // retrieved.
 TEST_F(MySqlHostDataSourceTest, noHostname) {
     testHostname("", 1);
+}
+
+// Test verifies if a host with user context can be stored and later retrieved.
+TEST_F(MySqlHostDataSourceTest, usercontext) {
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testUserContext(Element::fromJSON(comment));
 }
 
 // Test verifies if the hardware or client-id query can match hardware address.
@@ -492,13 +538,15 @@ TEST_F(MySqlHostDataSourceTest, addDuplicate4) {
 // This test verifies that DHCPv4 options can be inserted in a binary format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, optionsReservations4) {
-    testOptionsReservations4(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a binary format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, optionsReservations6) {
-    testOptionsReservations6(false);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(false, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
@@ -510,13 +558,15 @@ TEST_F(MySqlHostDataSourceTest, optionsReservations46) {
 // This test verifies that DHCPv4 options can be inserted in a textual format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations4) {
-    testOptionsReservations4(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations4(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv6 options can be inserted in a textual format
 /// and retrieved from the MySQL host database.
 TEST_F(MySqlHostDataSourceTest, formattedOptionsReservations6) {
-    testOptionsReservations6(true);
+    string comment = "{ \"comment\": \"a host reservation\" }";
+    testOptionsReservations6(true, Element::fromJSON(comment));
 }
 
 // This test verifies that DHCPv4 and DHCPv6 options can be inserted in a
@@ -544,12 +594,13 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     params["password"] = "keatest";
     MySqlConnection conn(params);
     ASSERT_NO_THROW(conn.openDatabase());
+
     int status = mysql_query(conn.mysql_,
                              "DROP TABLE IF EXISTS ipv6_reservations");
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.
-    HostPtr host = initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
@@ -605,4 +656,15 @@ TEST_F(MySqlHostDataSourceTest, deleteById6Options) {
     testDeleteById6Options();
 }
 
-}; // Of anonymous namespace
+// Tests that multiple reservations without IPv4 addresses can be
+// specified within a subnet.
+TEST_F(MySqlHostDataSourceTest, testMultipleHostsNoAddress4) {
+    testMultipleHostsNoAddress4();
+}
+
+// Tests that multiple hosts can be specified within an IPv6 subnet.
+TEST_F(MySqlHostDataSourceTest, testMultipleHosts6) {
+    testMultipleHosts6();
+}
+
+}  // namespace

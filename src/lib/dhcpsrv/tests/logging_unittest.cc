@@ -6,7 +6,6 @@
 
 #include <config.h>
 #include <cc/data.h>
-#include <config/module_spec.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/logging.h>
 #include <exceptions/exceptions.h>
@@ -75,12 +74,6 @@ class LoggingTest : public ::testing::Test {
 const char* LoggingTest::TEST_LOG_NAME = "kea.test.log";
 const int LoggingTest::TEST_MAX_SIZE = 204800;  // Smallest without disabling rotation 
 const int LoggingTest::TEST_MAX_VERS = 2;       // More than the default of 1
-
-// Tests that the spec file is valid.
-TEST_F(LoggingTest, basicSpec) {
-    std::string specfile = std::string(LOGGING_SPEC_FILE);
-    ASSERT_NO_THROW(isc::config::moduleSpecFromFile(specfile));
-}
 
 // Checks that the constructor is able to process specified storage properly.
 TEST_F(LoggingTest, constructor) {

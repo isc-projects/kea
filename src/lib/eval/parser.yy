@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,7 @@ using namespace isc::eval;
   OPTION "option"
   RELAY4 "relay4"
   RELAY6 "relay6"
+  MEMBER "member"
   PEERADDR "peeraddr"
   LINKADDR "linkaddr"
   LBRACKET "["
@@ -72,6 +73,7 @@ using namespace isc::eval;
   ALL "all"
   COMA ","
   CONCAT "concat"
+  IFELSE "ifelse"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -211,6 +213,21 @@ bool_expr : "(" bool_expr ")"
                   TokenPtr exist(new TokenVendor(ctx.getUniverse(), $3, TokenOption::EXISTS, $8));
                   ctx.expression.push_back(exist);
                }
+          | MEMBER "(" STRING ")"
+              {
+                  // Expression member('foo')
+                  //
+                  // This token will check if the packet is a member of
+                  // the specified client class.
+                  // To avoid loops at evaluation only already defined and
+                  // built-in classes are allowed.
+                  std::string cc = $3;
+                  if (!ctx.isClientClassDefined(cc)) {
+                      error(@3, "Not defined client class '" + cc + "'");
+                  }
+                  TokenPtr member(new TokenMember(cc));
+                  ctx.expression.push_back(member);
+              }
           ;
 
 string_expr : STRING
@@ -326,6 +343,11 @@ string_expr : STRING
                   {
                       TokenPtr conc(new TokenConcat());
                       ctx.expression.push_back(conc);
+                  }
+            | IFELSE "(" bool_expr "," string_expr "," string_expr ")"
+                  {
+                      TokenPtr cond(new TokenIfElse());
+                      ctx.expression.push_back(cond);
                   }
             | VENDOR "." ENTERPRISE
                 {

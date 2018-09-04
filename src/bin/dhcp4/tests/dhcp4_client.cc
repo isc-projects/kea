@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -239,6 +239,14 @@ Dhcp4Client::appendExtraOptions() {
 }
 
 void
+Dhcp4Client::appendClasses() {
+    for (ClientClasses::const_iterator cclass = classes_.cbegin();
+         cclass != classes_.cend(); ++cclass) {
+        context_.query_->addClass(*cclass);
+    }
+}
+
+void
 Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
     context_.query_ = createMsg(DHCPDISCOVER);
     // Request options if any.
@@ -255,6 +263,7 @@ Dhcp4Client::doDiscover(const boost::shared_ptr<IOAddress>& requested_addr) {
         context_.query_->setCiaddr(ciaddr_.get());
     }
     appendExtraOptions();
+    appendClasses();
 
     // Send the message to the server.
     sendMsg(context_.query_);
@@ -277,6 +286,8 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
     appendPRL();
     // Any other options to be sent by a client.
     appendExtraOptions();
+    // Add classes.
+    appendClasses();
     // The client sending a DHCPINFORM message has an IP address obtained
     // by some other means, e.g. static configuration. The lease which we
     // are using here is most likely set by the createLease method.
@@ -300,6 +311,9 @@ Dhcp4Client::doInform(const bool set_ciaddr) {
 
 void
 Dhcp4Client::doRelease() {
+    // There is no response for Release message.
+    context_.response_.reset();
+
     if (config_.lease_.addr_.isV4Zero()) {
         isc_throw(Dhcp4ClientError, "failed to send the release"
                   " message because client doesn't have a lease");
@@ -393,9 +407,20 @@ Dhcp4Client::doRequest() {
     appendClientId();
     // Any other options to be sent by a client.
     appendExtraOptions();
+    // Add classes.
+    appendClasses();
     // Send the message to the server.
     sendMsg(context_.query_);
     // Expect response.
+    context_.response_ = receiveOneMsg();
+    // If the server has responded, store the configuration received.
+    if (context_.response_) {
+        applyConfiguration();
+    }
+}
+
+void
+Dhcp4Client::receiveResponse() {
     context_.response_ = receiveOneMsg();
     // If the server has responded, store the configuration received.
     if (context_.response_) {
@@ -515,8 +540,21 @@ Dhcp4Client::sendMsg(const Pkt4Ptr& msg) {
     msg_copy->setRemoteAddr(msg->getLocalAddr());
     msg_copy->setLocalAddr(dest_addr_);
     msg_copy->setIface(iface_name_);
+    // Copy classes
+    const ClientClasses& classes = msg->getClasses();
+    for (ClientClasses::const_iterator cclass = classes.cbegin();
+         cclass != classes.cend(); ++cclass) {
+        msg_copy->addClass(*cclass);
+    }
     srv_->fakeReceive(msg_copy);
-    srv_->run();
+
+    try {
+        // Invoke run_one instead of run, because we want to avoid triggering
+        // IO service.
+        srv_->run_one();
+    } catch (...) {
+        // Suppress errors, as the DHCPv4 server does.
+    }
 }
 
 void
@@ -531,6 +569,13 @@ Dhcp4Client::setHWAddress(const std::string& hwaddr_str) {
 void
 Dhcp4Client::addExtraOption(const OptionPtr& opt) {
     extra_options_.insert(std::make_pair(opt->getType(), opt));
+}
+
+void
+Dhcp4Client::addClass(const ClientClass& client_class) {
+    if (!classes_.contains(client_class)) {
+        classes_.insert(client_class);
+    }
 }
 
 } // end of namespace isc::dhcp::test

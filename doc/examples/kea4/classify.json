@@ -55,12 +55,18 @@
 // In this particular class, we want to set specific values
 // of certain DHCPv4 fields. If the incoming packet matches the
 // test, those fields will be set in outgoing responses.
+// The option 43 is defined to encapsulate suboption in the aastra space.
   {
       "name": "VoIP",
       "test": "substring(option[60].hex,0,6) == 'Aastra'",
       "next-server": "192.0.2.254",
       "server-hostname": "hal9000",
-      "boot-file-name": "/dev/null"
+      "boot-file-name": "/dev/null",
+      "option-def": [ {
+          "name": "vendor-encapsulated-options",
+          "code": 43,
+          "type": "empty",
+          "encapsulate": "aastra" } ]
   }
 
   ],
@@ -70,18 +76,19 @@
 // everyone is allowed. When a class is specified, only packets belonging
 // to that class are allowed for that subnet.
   "subnet4": [
+    // This one is for VoIP devices only.
     {
-// This one is for VoIP devices only.
         "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
         "subnet": "192.0.2.0/24",
         "client-class": "VoIP",
         "interface": "ethX"
     },
-// This one doesn't have any client-class specified, so everyone
-// is allowed in. The normal subnet selection rules still apply,
-// though. There is also a static class reservation for a client
-// using MAC address 1a:1b:1c:1d:1e:1f. This client will always
-// be assigned to this class.
+
+    // This one doesn't have any client-class specified, so everyone
+    // is allowed in. The normal subnet selection rules still apply,
+    // though. There is also a static class reservation for a client
+    // using MAC address 1a:1b:1c:1d:1e:1f. This client will always
+    // be assigned to this class.
     {
         "pools": [ { "pool":  "192.0.3.1 - 192.0.3.200" } ],
         "subnet": "192.0.3.0/24",
@@ -91,6 +98,28 @@
             "client-classes": [ "VoIP" ]
         } ],
         "interface": "ethX"
+    },
+
+    // The following list defines a subnet with pools. For some pools
+    // we defined a class that is allowed in that pool. If not specified
+    // everyone is allowed. When a class is specified, only packets belonging
+    // to that class are allowed for that pool.
+    {
+        "pools": [
+           // This one is for VoIP devices only.
+           {
+              "pool":  "192.0.4.1 - 192.0.4.200",
+              "client-class": "VoIP"
+           },
+
+           // This one doesn't have any client-class specified,
+           // so everyone is allowed in.
+           {
+               "pool":  "192.0.5.1 - 192.0.5.200"
+           } ],
+
+        "subnet": "192.0.4.0/23",
+        "interface": "ethY"
     }
   ]
 },

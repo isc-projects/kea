@@ -270,7 +270,7 @@ HWAddrPtr Dhcpv4SrvTest::generateHWAddr(size_t size /*= 6*/) {
 }
 
 void Dhcpv4SrvTest::checkAddressParams(const Pkt4Ptr& rsp,
-                                       const SubnetPtr subnet,
+                                       const Subnet4Ptr subnet,
                                        bool t1_present,
                                        bool t2_present) {
 
@@ -605,7 +605,15 @@ void
 Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
                          const bool commit) {
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseJSON(config));
+    try {
+        json = parseJSON(config);
+    } catch (const std::exception& ex){
+        // Fatal falure on parsing error
+        FAIL() << "parsing failure:"
+                << "config:" << config << std::endl
+                << "error: " << ex.what();
+    }
+
     ConstElementPtr status;
 
     // Disable the re-detect flag
@@ -616,7 +624,7 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
+    ASSERT_EQ(0, rcode) << comment->stringValue();
 
     // Use specified lease database backend.
     ASSERT_NO_THROW( {
@@ -632,7 +640,11 @@ Dhcpv4SrvTest::configure(const std::string& config, NakedDhcpv4Srv& srv,
 
 Dhcpv4Exchange
 Dhcpv4SrvTest::createExchange(const Pkt4Ptr& query) {
-    return (Dhcpv4Exchange(srv_.alloc_engine_, query, srv_.selectSubnet(query)));
+    bool drop = false;
+    Dhcpv4Exchange ex(srv_.alloc_engine_, query,
+                      srv_.selectSubnet(query, drop));
+    EXPECT_FALSE(drop);
+    return (ex);
 }
 
 void

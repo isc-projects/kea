@@ -1,0 +1,246 @@
+#!/bin/sh
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+VERSION=`pgsql_version "$@"`
+
+if [ "$VERSION" != "3.3" ]; then
+    printf "This script upgrades 3.3 to 4.0. Reported version is $VERSION. Skipping upgrade.\n"
+    exit 0
+fi
+
+psql "$@" >/dev/null <<EOF
+
+START TRANSACTION;
+
+-- Add a column holding hosts for user context.
+ALTER TABLE hosts ADD COLUMN user_context TEXT;
+
+-- Add a column holding DHCP options for user context.
+ALTER TABLE dhcp4_options ADD COLUMN user_context TEXT;
+ALTER TABLE dhcp6_options ADD COLUMN user_context TEXT;
+
+-- Create index for searching leases by subnet identifier.
+CREATE INDEX lease4_by_subnet_id ON lease4 (subnet_id);
+
+-- Create for searching leases by subnet identifier and lease type.
+CREATE INDEX lease6_by_subnet_id_lease_type ON lease6 (subnet_id, lease_type);
+
+-- The index by iaid_subnet_id_duid is not the best choice because there are
+-- cases when we don't specify subnet identifier while searching leases. The
+-- index will be universal if the subnet_id is the right most column in the
+-- index.
+DROP INDEX lease6_by_iaid_subnet_id_duid;
+CREATE INDEX lease6_by_duid_iaid_subnet_id ON lease6 (duid, iaid, subnet_id);
+
+-- Create v4 lease statistics table
+CREATE TABLE lease4_stat (
+    subnet_id BIGINT NOT NULL,
+    state INT8 NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, state)
+);
+
+--
+-- Create v4 insert trigger procedure
+CREATE FUNCTION proc_stat_lease4_insert () RETURNS trigger AS \$stat_lease4_insert\$
+BEGIN
+    IF NEW.state < 2 THEN
+        UPDATE lease4_stat
+            SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+        IF NOT FOUND THEN
+            INSERT INTO lease4_stat VALUES (new.subnet_id, new.state, 1);
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease4_insert\$ LANGUAGE plpgsql;
+
+-- Create v4 insert trigger procedure
+CREATE TRIGGER stat_lease4_insert
+AFTER INSERT ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_insert();
+
+--
+-- Create v4 update trigger procedure
+CREATE FUNCTION proc_stat_lease4_update () RETURNS trigger AS \$stat_lease4_update\$
+BEGIN
+    IF OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease4_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease4_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease4_stat VALUES (NEW.subnet_id, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease4_update\$ LANGUAGE plpgsql;
+
+-- Create v4 update trigger
+CREATE TRIGGER stat_lease4_update
+AFTER UPDATE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_update();
+
+--
+-- Create the v4 delete trigger procedure
+CREATE FUNCTION proc_stat_lease4_delete () RETURNS trigger AS \$stat_lease4_delete\$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease4_stat SET leases = leases - 1
+        WHERE subnet_id = OLD.subnet_id AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease4_delete\$ LANGUAGE plpgsql;
+
+-- Create the v4 delete trigger
+CREATE TRIGGER stat_lease4_delete
+AFTER DELETE ON lease4
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease4_delete();
+
+-- Create v6 lease statistics table
+CREATE TABLE lease6_stat (
+    subnet_id BIGINT NOT NULL,
+    lease_type SMALLINT NOT NULL,
+    state INT8 NOT NULL,
+    leases BIGINT,
+    PRIMARY KEY (subnet_id, lease_type, state)
+);
+
+--
+-- Create v6 insert trigger procedure
+CREATE FUNCTION proc_stat_lease6_insert () RETURNS trigger AS \$stat_lease6_insert\$
+BEGIN
+    IF NEW.state < 2 THEN
+        UPDATE lease6_stat
+        SET leases = leases + 1
+        WHERE
+        subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+        AND state = NEW.state;
+
+        IF NOT FOUND THEN
+            INSERT INTO lease6_stat
+            VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease6_insert\$ LANGUAGE plpgsql;
+
+-- Create v6 insert trigger procedure
+CREATE TRIGGER stat_lease6_insert
+AFTER INSERT ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_insert();
+
+--
+-- Create v6 update trigger procedure
+CREATE FUNCTION proc_stat_lease6_update () RETURNS trigger AS \$stat_lease6_update\$
+BEGIN
+    IF OLD.state != NEW.state THEN
+        IF OLD.state < 2 THEN
+            -- Decrement the old state count if record exists
+            UPDATE lease6_stat SET leases = leases - 1
+            WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+            AND state = OLD.state;
+        END IF;
+
+        IF NEW.state < 2 THEN
+            -- Increment the new state count if record exists
+            UPDATE lease6_stat SET leases = leases + 1
+            WHERE subnet_id = NEW.subnet_id AND lease_type = NEW.lease_type
+            AND state = NEW.state;
+
+            -- Insert new state record if it does not exist
+            IF NOT FOUND THEN
+                INSERT INTO lease6_stat VALUES (NEW.subnet_id, NEW.lease_type, NEW.state, 1);
+            END IF;
+        END IF;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease6_update\$ LANGUAGE plpgsql;
+
+-- Create v6 update trigger
+CREATE TRIGGER stat_lease6_update
+AFTER UPDATE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_update();
+
+--
+-- Create the v6 delete trigger procedure
+CREATE FUNCTION proc_stat_lease6_delete() RETURNS trigger AS \$stat_lease6_delete\$
+BEGIN
+    IF OLD.state < 2 THEN
+        -- Decrement the state count if record exists
+        UPDATE lease6_stat SET leases = leases - 1
+        WHERE subnet_id = OLD.subnet_id AND lease_type = OLD.lease_type
+        AND OLD.state = state;
+    END IF;
+
+    -- Return is ignored since this is an after insert
+    RETURN NULL;
+END;
+\$stat_lease6_delete\$ LANGUAGE plpgsql;
+
+-- Create the v6 delete trigger
+CREATE TRIGGER stat_lease6_delete
+AFTER DELETE ON lease6
+    FOR EACH ROW EXECUTE PROCEDURE proc_stat_lease6_delete();
+
+-- Populate lease4_stat table based on existing leases
+-- We only care about assigned and declined states
+INSERT INTO lease4_stat (subnet_id, state, leases)
+    SELECT subnet_id, state, count(state)
+    FROM lease4 WHERE state < 2
+    GROUP BY subnet_id, state ORDER BY subnet_id;
+
+-- Populate lease6_stat table based on existing leases
+-- We only care about assigned and declined states
+INSERT INTO lease6_stat (subnet_id, lease_type, state, leases)
+    SELECT subnet_id, lease_type, state, count(state)
+    FROM lease6 WHERE state < 2
+    GROUP BY subnet_id, lease_type, state
+    ORDER BY subnet_id;
+
+-- Set 4.0 schema version.
+UPDATE schema_version
+    SET version = '4', minor = '0';
+
+-- Schema 4.0 specification ends here.
+
+-- Commit the script transaction
+COMMIT;
+
+EOF
+
+exit $RESULT
+

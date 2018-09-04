@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,7 @@
 namespace {
 const char* const LOAD_MARKER_FILE = "@abs_builddir@/load_marker.txt";
 const char* const UNLOAD_MARKER_FILE = "@abs_builddir@/unload_marker.txt";
+const char* const SRV_CONFIG_MARKER_FILE = "@abs_builddir@/srv_config_marker_file.txt";
 }
 
 namespace isc {

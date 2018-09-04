@@ -22,6 +22,7 @@
 using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -94,6 +95,7 @@ TEST_F(CfgDUIDTest, defaults) {
     EXPECT_EQ(0, cfg_duid.getTime());
     EXPECT_EQ(0, cfg_duid.getEnterpriseId());
     EXPECT_TRUE(cfg_duid.persist());
+    EXPECT_FALSE(cfg_duid.getContext());
 
     std::string expected = "{ \"type\": \"LLT\",\n"
         "\"identifier\": \"\",\n"
@@ -114,6 +116,8 @@ TEST_F(CfgDUIDTest, setValues) {
     ASSERT_NO_THROW(cfg_duid.setTime(32100));
     ASSERT_NO_THROW(cfg_duid.setEnterpriseId(10));
     ASSERT_NO_THROW(cfg_duid.setPersist(false));
+    std::string user_context = "{ \"comment\": \"bar\", \"foo\": 1 }";
+    ASSERT_NO_THROW(cfg_duid.setContext(Element::fromJSON(user_context)));
 
     // Check that values have been set correctly.
     EXPECT_EQ(DUID::DUID_EN, cfg_duid.getType());
@@ -122,13 +126,19 @@ TEST_F(CfgDUIDTest, setValues) {
     EXPECT_EQ(32100, cfg_duid.getTime());
     EXPECT_EQ(10, cfg_duid.getEnterpriseId());
     EXPECT_FALSE(cfg_duid.persist());
+    ASSERT_TRUE(cfg_duid.getContext());
+    EXPECT_EQ(user_context, cfg_duid.getContext()->str());
 
-    std::string expected = "{ \"type\": \"EN\",\n"
+    std::string expected = "{\n"
+        " \"comment\": \"bar\",\n"
+        " \"type\": \"EN\",\n"
         " \"identifier\": \"ABCDEF\",\n"
         " \"htype\": 100,\n"
         " \"time\": 32100,\n"
         " \"enterprise-id\": 10,\n"
-        " \"persist\": false }";
+        " \"persist\": false,\n"
+        " \"user-context\": { \"foo\": 1 }\n"
+        "}";
     runToElementTest<CfgDUID>(expected, cfg_duid);
 }
 

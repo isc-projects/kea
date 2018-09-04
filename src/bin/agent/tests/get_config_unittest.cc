@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
+#include <testutils/user_context_utils.h>
 #include <process/testutils/d_test_stubs.h>
 #include <agent/ca_cfg_mgr.h>
 #include <agent/parser_context.h>
@@ -26,6 +27,7 @@ using namespace isc::agent;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::test;
 
 namespace {
 
@@ -255,15 +257,24 @@ TEST_F(CtrlAgentGetCfgTest, simple) {
         prettyPrint(unparsed, std::cerr, 0, 4);
         std::cerr << "\n";
     } else {
-        ConstElementPtr json;
-        ASSERT_NO_THROW(json = parseAGENT(expected, true));
+        // get the expected config using the agent syntax parser
+        ElementPtr jsond;
+        ASSERT_NO_THROW(jsond = parseAGENT(expected, true));
+        // get the expected config using the generic JSON syntax parser
+        ElementPtr jsonj;
+        ASSERT_NO_THROW(jsonj = parseJSON(expected));
+        // the generic JSON parser does not handle comments
+        EXPECT_TRUE(isEquivalent(jsond, moveComments(jsonj)));
+        // replace the path by its actual value
         ConstElementPtr ca;
-        ASSERT_NO_THROW(ca = json->get("Control-agent"));
+        ASSERT_NO_THROW(ca = jsonj->get("Control-agent"));
         ASSERT_TRUE(ca);
         pathReplacer(ca);
-        EXPECT_TRUE(isEquivalent(unparsed, json));
+        // check that unparsed and updated expected values match
+        EXPECT_TRUE(isEquivalent(unparsed, jsonj));
+        // check on pretty prints too
         std::string current = prettyPrint(unparsed, 0, 4);
-        std::string expected2 = prettyPrint(json, 0, 4);
+        std::string expected2 = prettyPrint(jsonj, 0, 4);
         EXPECT_EQ(expected2, current);
         if (expected2 != current) {
             expected = current + "\n";

@@ -34,7 +34,7 @@ libkea_dhcp_ddns_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcp_ddns_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcp_ddns_la_LDFLAGS  = $(AM_LDFLAGS)
 libkea_dhcp_ddns_la_LDFLAGS += $(CRYPTO_LDFLAGS)
-libkea_dhcp_ddns_la_LDFLAGS += -no-undefined -version-info 1:2:0
+libkea_dhcp_ddns_la_LDFLAGS += -no-undefined -version-info 1:3:0
 
 libkea_dhcp_ddns_la_LIBADD  =
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
@@ -43,15 +43,17 @@ libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.l
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcp_ddns_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_dhcp_ddns_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS)
+libkea_dhcp_ddns_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 # Specify the headers for copying into the installation directory tree.
 libkea_dhcp_ddns_includedir = $(pkgincludedir)/dhcp_ddns
 libkea_dhcp_ddns_include_HEADERS = \
-   ncr_io.h \
-   ncr_msg.h \
-   ncr_udp.h
+	dhcp_ddns_log.h \
+	ncr_io.h \
+	ncr_msg.h \
+	ncr_udp.h

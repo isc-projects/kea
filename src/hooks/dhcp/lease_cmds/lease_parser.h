@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,7 +29,8 @@ namespace lease_cmds {
 ///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
-///     "state": 0
+///     "state": 0,
+///     "user-context": { \"version\": 1 }
 /// }
 class Lease4Parser : public isc::data::SimpleParser {
 public:
@@ -40,11 +41,14 @@ public:
     ///
     /// @param cfg Currently running config (used for sanity checks and defaults)
     /// @param lease_info structure to be parsed
+    /// @param [out] force_create indicates if the lease should be created when it
+    /// doesn't exist.
     /// @return A pointer to Lease4
     /// @throw BadValue if any of the parameters is invalid
     /// @throw DhcpConfigError if mandatory parameter is missing
     virtual isc::dhcp::Lease4Ptr parse(isc::dhcp::ConstSrvConfigPtr& cfg,
-                                       const isc::data::ConstElementPtr& lease_info);
+                                       const isc::data::ConstElementPtr& lease_info,
+                                       bool& force_create);
 
     /// @brief virtual dtor (does nothing)
     virtual ~Lease4Parser() {}
@@ -64,7 +68,8 @@ public:
 ///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
-///     "state": 0
+///     "state": 0,
+///     "user-context": { \"version\": 1 }
 /// }
 
 /// It expects the input data to use the following format:
@@ -76,11 +81,14 @@ public:
     ///
     /// @param cfg Currently running config (used for sanity checks and defaults)
     /// @param lease_info structure to be parsed
+    /// @param [out] force_create indicates if the lease should be created when it
+    /// doesn't exist.
     /// @return A pointer to Lease4
     /// @throw BadValue if any of the parameters is invalid
     /// @throw DhcpConfigError if mandatory parameter is missing
     virtual isc::dhcp::Lease6Ptr parse(isc::dhcp::ConstSrvConfigPtr& cfg,
-                                       const isc::data::ConstElementPtr& lease_info);
+                                       const isc::data::ConstElementPtr& lease_info,
+                                       bool& force_create);
 
     /// @brief virtual dtor (does nothing)
     virtual ~Lease6Parser() {}

@@ -4,6 +4,7 @@
         "forward-ddns": {
             "ddns-domains": [
                 {
+                    "comment": "DdnsDomain example",
                     "dns-servers": [
                         {
                             "hostname": "",
@@ -69,6 +70,9 @@
                 "name": "d2.sha512.key",
                 "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
             }
-        ]
+        ],
+        "user-context": {
+            "version": 1
+        }
     }
 }

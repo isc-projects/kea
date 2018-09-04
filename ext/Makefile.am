@@ -1,4 +1,4 @@
-SUBDIRS = coroutine
+SUBDIRS = .
 
 if HAVE_GTEST_SOURCE
 SUBDIRS += gtest

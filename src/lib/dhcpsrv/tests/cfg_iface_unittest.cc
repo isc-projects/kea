@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::test;
+using namespace isc::data;
 
 namespace {
 
@@ -183,6 +184,67 @@ TEST_F(CfgIfaceTest, multipleAddressesSameInterfaceV4) {
     EXPECT_TRUE(socketOpen("eth1", "192.0.2.5"));
 }
 
+// This test checks that it is possible to specify the loopback interface.
+TEST_F(CfgIfaceTest, explicitLoopbackV4) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+
+    // Use UDP sockets
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+
+    // Open sockets on specified interfaces and addresses.
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+
+    // Close all sockets and make sure they are really closed.
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", "127.0.0.1"));
+
+    // Reset configuration.
+    cfg.reset();
+
+    // Retry with wirdcard
+    ASSERT_NO_THROW(cfg.use(AF_INET, "*"));
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+    // It is now allowed to use loopback, even with wildcard.
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", "127.0.0.1"));
+
+    // Retry without UDP sockets (lo can be only used with udp sockets)
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+    // No loopback socket
+    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
+
+    // Retry with a second interface
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth0"));
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo"));
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+    // The logic used to require lo to be the only interface. That constraint
+    // was removed.
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
+    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
+
+    // Finally with interfaces and addresses
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use(AF_INET, "eth0/10.0.0.1"));
+    ASSERT_NO_THROW(cfg.use(AF_INET, "lo/127.0.0.1"));
+    ASSERT_NO_THROW(cfg.useSocketType(AF_INET, CfgIface::SOCKET_UDP));
+    cfg.openSockets(AF_INET, DHCP4_SERVER_PORT);
+    // Only loopback is no longer a constraint
+    EXPECT_TRUE(socketOpen("lo", "127.0.0.1"));
+    cfg.closeSockets();
+    EXPECT_FALSE(socketOpen("lo", "127.0.0.1"));
+}
+
 // This test checks that the interface names can be explicitly selected
 // by their names and IPv6 sockets are opened on these interfaces.
 TEST_F(CfgIfaceTest, explicitNamesV6) {
@@ -298,6 +360,57 @@ TEST_F(CfgIfaceTest, invalidValues) {
     ASSERT_THROW(cfg.use(AF_INET6, "*"), DuplicateIfaceName);
 }
 
+// This test checks that it is possible to specify the loopback interface.
+// Note that without a link-local address an unicast address is required.
+TEST_F(CfgIfaceTest, explicitLoopbackV6) {
+    CfgIface cfg;
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
+
+    // Open sockets on specified interfaces and addresses.
+    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
+
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+
+    // Close all sockets and make sure they are really closed.
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
+
+    // Reset configuration.
+    cfg.reset();
+
+    // Retry with wirdcard
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "*"));
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
+    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
+
+    // Retry with a second interface
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0"));
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
+    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
+
+    // Finally with interfaces and addresses
+    cfg.reset();
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "eth0/2001:db8:1::1"));
+    ASSERT_NO_THROW(cfg.use(AF_INET6, "lo/::1"));
+    cfg.openSockets(AF_INET6, DHCP6_SERVER_PORT);
+    // The logic used to require lo to be used only on its own, not with a
+    // wildcard. That constraint was removed.
+    EXPECT_TRUE(socketOpen("lo", AF_INET6));
+    cfg.closeSockets();
+    ASSERT_FALSE(socketOpen("lo", AF_INET6));
+}
+
 // Test that the equality and inequality operators work fine for CfgIface.
 TEST_F(CfgIfaceTest, equality) {
     CfgIface cfg1;
@@ -368,11 +481,15 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg4.use(AF_INET, "*"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth0"));
     EXPECT_NO_THROW(cfg4.use(AF_INET, "eth1/192.0.2.3"));
+    std::string comment = "{ \"comment\": \"foo\", \"bar\": 1 }";
+    EXPECT_NO_THROW(cfg4.setContext(Element::fromJSON(comment)));
     
     // Check unparse
     std::string expected =
-        "{ \"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
-        "\"re-detect\": false }";
+        "{ \"comment\": \"foo\", "
+        "\"interfaces\": [ \"*\", \"eth0\", \"eth1/192.0.2.3\" ], "
+        "\"re-detect\": false, "
+        "\"user-context\": { \"bar\": 1 } }";
     runToElementTest<CfgIface>(expected, cfg4);
 
     // Now check IPv6
@@ -380,10 +497,14 @@ TEST_F(CfgIfaceTest, unparse) {
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "*"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth1"));
     EXPECT_NO_THROW(cfg6.use(AF_INET6, "eth0/2001:db8:1::1"));
+    comment = "{ \"comment\": \"bar\", \"foo\": 2 }";
+    EXPECT_NO_THROW(cfg6.setContext(Element::fromJSON(comment)));
 
     expected =
-        "{ \"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
-        "\"re-detect\": false }";
+        "{ \"comment\": \"bar\", "
+        "\"interfaces\": [ \"*\", \"eth1\", \"eth0/2001:db8:1::1\" ], "
+        "\"re-detect\": false, "
+        "\"user-context\": { \"foo\": 2 } }";
     runToElementTest<CfgIface>(expected, cfg6);
 }
 

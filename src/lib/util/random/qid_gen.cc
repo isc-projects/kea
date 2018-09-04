@@ -10,6 +10,8 @@
 // (and other parts where we need randomness, perhaps another thing
 // for a general libutil?)
 
+#include <config.h>
+
 #include <util/random/qid_gen.h>
 
 #include <sys/time.h>

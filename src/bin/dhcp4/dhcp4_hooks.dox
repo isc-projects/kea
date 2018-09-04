@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,8 +11,10 @@
  Kea features an API (the "Hooks" API) that allows user-written code to
  be integrated into Kea and called at specific points in its processing.
  An overview of the API and a tutorial for writing such code can be found in
- the @ref hooksdgDevelopersGuide.  Information for Kea maintainers can be
- found in the @ref hooksComponentDeveloperGuide.
+ the @ref hooksdgDevelopersGuide. It also includes information how hooks
+ framework can be used to implement additional control commands for the
+ DHCPv4 server. Information for Kea maintainers can be found in the
+ @ref hooksComponentDeveloperGuide.
 
  This manual is more specialized and is aimed at developers of hook
  code for the DHCPv4 server. It describes each hook point, what the callouts
@@ -44,6 +46,26 @@ packet processing, but the exact order depends on the actual processing. Hook po
 that are not specific to packet processing (e.g. lease expiration) will be added
 to the end of this list.
 
+ @subsection dhcp4HooksDhcpv4SrvConfigured dhcp4_srv_configured
+ - @b Arguments:
+   - name: @b io_context, type: isc::asiolink::IOServicePtr, direction: <b>in</b>
+   - name: @b network_state, type: isc::dhcp::NetworkStatePtr, direction: <b>in</b>
+   - name: @b json_config, type: isc::data::ConstElementPtr, direction: <b>in</b>
+   - name: @b server_config, type: isc::dhcp::SrvConfigPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has completed
+   its (re)configuration. The server provides received and parsed configuration
+   structures to the hook library. It also provides a pointer to the IOService
+   object which is used by the server to run asynchronous operations. The hooks
+   libraries can use this IOService object to schedule asynchronous tasks which
+   are triggered by the DHCP server's main loop. The hook library should hold the
+   provided pointer until the library is unloaded. The NetworkState object
+   provides access to the DHCP service state of the server and allows for
+   enabling and disabling the DHCP service from the hooks libraries.
+
+ - <b>Next step status</b>: Status codes retured by the callouts installed on
+   this hook point are ignored.
+
  @subsection dhcpv4HooksBuffer4Receive buffer4_receive
 
  - @b Arguments:
@@ -59,15 +81,15 @@ to the end of this list.
    are set yet. Callouts installed on this hook point can modify the data
     in the received buffer. The server will parse the buffer afterwards.
 
- - <b>Next step status</b>: If any callout sets the status to SKIP, the server will
+ - <b>Next step status</b>: If any callout sets the status to DROP, the server
+   will drop the packet and start processing the next one.
+   If any callout sets the status to SKIP, the server will
    skip the buffer parsing. In this case there is an expectation that
    the callout will parse the options carried in the buffer, create
    @c isc::dhcp::Option objects (or derived) and add them to the "query4"
    object using the @c isc::dhcp::Pkt4::addOption.
    Otherwise the server will find out that some mandatory options are
-   missing (e.g. DHCP Message Type) and will drop the message. If you
-   want to have the capability to drop a message, it is better to use
-   the skip flag in the "pkt4_receive" callout.
+   missing (e.g. DHCP Message Type) and will drop the message.
 
  @subsection dhcpv4HooksPkt4Receive pkt4_receive
 
@@ -85,7 +107,7 @@ to the end of this list.
    field has been already parsed and stored in other fields. Therefore,
    the modification in the data_ field has no effect.
 
- - <b>Next step status</b>: If any callout sets the status to SKIP, the server will
+ - <b>Next step status</b>: If any callout sets the status to SKIP or DROP, the server will
    drop the packet and start processing the next one.  The reason for the drop
    will be logged if logging is set to the appropriate debug level.
 
@@ -105,7 +127,9 @@ to the end of this list.
    not be modified.
 
  - <b>Next step status</b>: If any callout installed on the "subnet4_select" hook
-   sets the next step status to SKIP, the server will not select any subnet.
+   sets the next step status to DROP, the server cancels current processing,
+   drop the packet and start processing the next one.
+   If any callout sets the status to SKIP, the server will not select any subnet.
    Packet processing will continue, but will be severely limited.
 
 @subsection dhcpv4HooksHost4Identifier host4_identifier
@@ -184,7 +208,7 @@ to the end of this list.
    be released. It doesn't make sense to modify it at this time.
 
  - <b>Next step status</b>: If any callout installed on the "lease4_release" hook
-   sets the next step action to SKIP, the server will not delete the lease.
+   sets the next step action to SKIP or DROP, the server will not delete the lease.
    It will be kept in the database and will go through the regular expiration/reuse
    process.
 
@@ -204,12 +228,43 @@ to the end of this list.
    modify it at this time. All the information will be removed from the lease
    before it is updated in the database.
 
- - <b>Next step status</b>: If any callout installed on the "lease4_release" hook
-   sets the next step action to DROP, the server will not decline the lease.
+ - <b>Next step status</b>: If any callout installed on the "lease4_decline" hook
+   sets the next step action to SKIP or DROP, the server will not decline the lease.
    Care should be taken when setting this status.  The lease will be kept in
    the database as it is and the client will incorrectly assume that the server
    marked this lease as unavailable. If the client restarts its configuration,
    it will get the same (not declined) lease as a result.
+
+@subsection dhcpv4Leases4Committed leases4_committed
+
+ - @b Arguments:
+   - name: @b query4, type: isc::dhcp::Pkt4Ptr, direction: <b>in</b>
+   - name: @b leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+   - name: @b deleted_leases4, type: isc::dhcp::Leases4CollectionPtr, direction: <b>in</b>
+
+ - @b Description: this callout is executed when the server has applied all
+   lease changes as a result of DHCP message processing. This includes
+   writing new lease into the database, releasing an old lease for this
+   client or declining a lease. This callout is executed only for the
+   DHCP client messages which may cause lease changes, i.e. DHCPREQUEST,
+   DHCPRELEASE and DHCPDECLINE. This callout is not executed for DHCPDISCOVER
+   and DHCPINFORM. If the callouts are executed as a result of DHCPREQUEST
+   message, it is possible that both leases collections hold leases to be
+   handled. This is the case when the new lease allocation replaces an existing
+   lease for the client. The "deleted_leases4" object will hold a previous
+   lease instance and the "leases4" object will hold the new lease for this
+   client. The callouts should be prepared to handle such situation. When
+   the callout is executed as a result DHCPRELEASE, the callout will typically
+   receive only one lease (being released) in the "deleted_leases4" object.
+   Both leases collections are always provided to the callouts,
+   even though they may sometimes be empty.
+
+ - <b>Next step status</b>: If any callout installed on the "leases4_committed"
+   sets the next step action to DROP the server will drop the processed query.
+   If it sets the next step action to PARK, the server will park the processed
+   packet (hold packet processing) until the hook libraries explicitly unpark
+   the packet after they are done performing asynchronous operations.
+
 
 @subsection dhcpv4HooksPkt4Send pkt4_send
 
@@ -231,7 +286,7 @@ to the end of this list.
    cannot be modified.
 
  - <b>Next step action</b>: if any callout installed on the "pkt4_send" hook
-   sets the next step action to SKIP, the server will not construct the raw
+   sets the next step action to SKIP or DROP, the server will not construct the raw
    buffer. The expectation is that if the callout set skip flag, it is
    responsible for constructing raw form on its own. Otherwise the output
    packet will be sent with zero length.
@@ -252,7 +307,7 @@ to the end of this list.
    time, because they were already used to construct on-wire buffer. Their
    modification would have no effect.
 
- - <b>Next step status</b>: if any callout sets the next step action to SKIP,
+ - <b>Next step status</b>: if any callout sets the next step action to SKIP or DROP,
    the server will drop this response packet. However, the original request
    packet from a client was processed, so server's state most likely has changed
    (e.g. lease was allocated). Setting this flag merely stops the change
@@ -308,38 +363,22 @@ to the end of this list.
   expired leases will remain in the database and their recovery will
   be attempted during the next reclaim cycle.
 
-@subsection dhcpv4HooksControlCommandReceive control_command_receive
+@subsection dhcpv4HooksCommandProcessed command_processed
 
  - @b Arguments:
-   - name: @b command, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
+   - name: @b name, type: std::string, direction: <b>in</b>
+   - name: @b arguments type: isc::data::ConstElementPtr, direction: <b>in</b>
    - name: @b response, type: isc::data::ConstElementPtr, direction: <b>in/out</b>
 
- - @b Description: this callout is executed when DHCPv4 server receives a
-   control command over the command channel (typically unix domain socket).
-   The "command" argument is a pointer to the parsed JSON structure
-   including command name and command arguments. If the callout implements
-   the specified command, it handles the command and creates appropriate
-   response. The response should be returned in the "response" argument.
-   In most cases, the callout which handles the command will set the next
-   step action to SKIP, to prevent the server from trying to handle the
-   command on its own and overriding the response created by the callouts.
-   A notable exception is the 'list-commands' command for which the callouts
-   should not set the next step action to SKIP. The server has a special
-   code path for this command which combines the list of commands returned
-   by the callouts with the list of commands supported by the server. If
-   the callout sets the next step action to SKIP in this case, the server
-   will only return the list of commands supported by the hook library.
-   The callout can modify the command arguments to influence the command
-   processing by the Command Manager. For example, it may freely modify
-   the configuration received in 'config-set' before it is processed by
-   the server. The SKIP action is not set in this case.
+ - @b Description: this callout is executed after the DHCPv4 server receives
+   and processes a control command over the command channel (typically unix domain socket).
+   The "name" argument is the name of the command processed.
+   The "arguments" argument is a pointer to the parsed JSON structure
+   containing the command's input arguments.  The "response" argument
+   is the parsed JSON stucture containing the response generated by
+   the command processing.
 
- - <b>Next step status</b>: if any callout sets the next step action to SKIP,
-   the server will assume that the command has been handled by the callouts
-   and will expect that the response is provided in the "response" argument.
-   The server will not handle the command in this case but simply return the
-   response returned by the callout to the caller.
-
+ - <b>Next step status</b>: Not applicable, it's value will be ignored.
 
 @section dhcpv4HooksOptionsAccess Accessing DHCPv4 Options within a Packet
 When the server constructs a response message to a client it includes

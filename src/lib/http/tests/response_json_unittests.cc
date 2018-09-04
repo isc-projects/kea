@@ -61,6 +61,7 @@ public:
     void testGenericResponse(const HttpStatusCode& status_code,
                              const std::string& status_message) {
         TestHttpResponseJson response(HttpVersion(1, 0), status_code);
+        ASSERT_NO_THROW(response.finalize());
         std::ostringstream status_message_json;
         // Build the expected content.
         status_message_json << "{ \"result\": "
@@ -109,6 +110,7 @@ public:
 TEST_F(HttpResponseJsonTest, responseWithContent) {
     TestHttpResponseJson response(HttpVersion(1, 1), HttpStatusCode::OK);
     ASSERT_NO_THROW(response.setBodyAsJson(json_));
+    ASSERT_NO_THROW(response.finalize());
 
     std::ostringstream response_string;
     response_string <<

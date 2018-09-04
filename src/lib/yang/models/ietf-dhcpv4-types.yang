@@ -1,0 +1,64 @@
+module ietf-dhcpv4-types {
+  yang-version 1.1;
+  namespace "urn:ietf:params:xml:ns:yang:ietf-dhcpv4-types";
+  prefix "dhcpv4-types";
+
+  import ietf-inet-types {
+    prefix inet;
+  }
+  import ietf-yang-types {
+    prefix yang;
+  }
+
+  organization "DHC WG";
+  contact
+    "piotr.strzyzewski@polsl.pl";
+  description "This model defines a YANG data model that can be
+    used to define some commonly used DHCPv4 types";
+
+  revision 2018-07-14 {
+    description "Initial revision";
+    reference "";
+  }
+
+  /*
+  * Grouping
+  */
+  grouping vendor-infor {
+    description "Vendor information.";
+    container vendor-info {
+      description "";
+      leaf ent-num {
+        type uint32;
+        description "enterprise number";
+      }
+      leaf-list data {
+        type string;
+        description "specific vendor info";
+      }
+    }
+  }
+
+  grouping portset-para {
+    description "portset parameters";
+    container port-parameter {
+      description "port parameter";
+      leaf offset {
+        type uint8;
+        mandatory true;
+        description "offset in a port set";
+      }
+      leaf psid-len {
+        type uint8;
+        mandatory true;
+        description "length of a psid";
+      }
+      leaf psid {
+        type uint16;
+        mandatory true;
+        description "psid value";
+      }
+    }
+  }
+
+}
