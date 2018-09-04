@@ -21,11 +21,13 @@
 #include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
+
+#include <pgsql/testutils/pgsql_schema.h>
+
 #include <iostream>
 
+using namespace isc::db::test;
 using namespace isc::dhcp::bench;
-using namespace isc::dhcp::test;
 using namespace isc::dhcp;
 using namespace std;
 
@@ -34,7 +36,6 @@ namespace {
 /// @brief This is a fixture class used for benchmarking PostgreSQL host backend
 class PgSqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
 public:
-
     /// @brief Setup routine.
     ///
     /// It cleans up schema and recreates tables, then instantiates HostMgr
@@ -86,16 +87,6 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, updateHosts)(benchmark::State& 
 }
 
 /// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by getAll(hw-addr, duid) call.
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGetAllByHWAddrDuid();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAll)(benchmark::State& state) {
     const size_t host_count = state.range(0);
@@ -116,16 +107,6 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)(benchmark::State&
 }
 
 /// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by get4(subnet-id, hw-addr, duid) call.
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGet4BySubnetHWAddrDuid();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
 /// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
@@ -142,16 +123,6 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)(benchmark:
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
         benchGet4SubnetIdv4Resrv();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by get6(subnet-id, duid, hw-addr) call.
-BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGet6SubnetIdDuidHWAddr();
     }
 }
 
@@ -188,61 +159,55 @@ BENCHMARK_DEFINE_F(PgSqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& s
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts insertion.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, insertHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts update.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, updateHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by getAll(hw-addr, duid) call.
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAllByHWAddrDuid)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAll)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll(v4-reservation) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, getAllv4Resv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by get4(subnet-id, hw-addr, duid) call.
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(subnet-id, v4-reservation) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by get6(subnet-id, duid, hw-addr) call.
-BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, identifier-type, identifier) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, ip-address) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6SubnetIdAddr)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(ip-prefix, prefix-len) call.
 BENCHMARK_REGISTER_F(PgSqlHostDataSourceBenchmark, get6Prefix)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 }  // namespace
