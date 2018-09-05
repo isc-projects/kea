@@ -869,6 +869,89 @@ mysql_lease_stat_upgrade_test() {
     mysql_wipe
 }
 
+# Verifies that you can upgrade from an earlier version and
+# that unused subnet ID values in hosts and options tables are
+# converted to NULL.
+mysql_unused_subnet_id_test() {
+    test_start "mysql.unused_subnet_id_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert subnet id values
+    #
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Now upgrade to schema 6.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 6.0
+
+    # Now we need insert some hosts to "migrate" for both v4 and v6
+    qry=\
+"insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '0123456', 0, 0, 'both'); \
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '1123456', 4, 0, 'v4only');
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '2123456', 0, 6, 'v6only');\
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname) \
+   values (0, '3123456', 4, 6, 'neither');"
+
+    run_statement "insert hosts" "$qry"
+
+    # Now we need insert some options to "migrate" for both v4 and v6
+    qry=\
+"insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (1, 4, 0);\
+ insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (2, 0, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (1, 6, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (2, 0, 0);"
+
+    run_statement "insert options" "$qry"
+
+    # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    # Upgrade should succeed
+    assert_eq 0 $ERRCODE "upgrade failed"
+
+    # Two hosts should have null v4 subnet ids
+    qry="select count(host_id) from hosts where dhcp4_subnet_id is null;"
+    run_statement "#hosts.1" "$qry" 2
+
+    # Two hosts should have v4 subnet ids = 4
+    qry="select count(host_id) from hosts where dhcp4_subnet_id = 4;"
+    run_statement "#hosts.2" "$qry" 2
+
+    # Two hosts should have null v6 subnet ids
+    qry="select count(host_id) from hosts where dhcp6_subnet_id is null;"
+    run_statement "#hosts.3" "$qry" 2
+
+    # Two hosts should should have v6 subnet ids = 6
+    qry="select count(host_id) from hosts where dhcp6_subnet_id = 6;"
+    run_statement "#hosts.4" "$qry" 2
+
+    # One option should have null v4 subnet id
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id is null;"
+    run_statement "#options.1" "$qry" 1
+
+    # One option should have v4 subnet id = 4
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id = 4;"
+    run_statement "#options.2" "$qry" 1
+
+    # One option should have null v6 subnet id
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id is null;"
+    run_statement "#options.3" "$qry" 1
+
+    # One option should have v4 subnet id = 6
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id = 6;"
+    run_statement "#options.4" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+}
+
 mysql_lease_init_test
 mysql_host_reservation_init_test
 mysql_lease_version_test
@@ -878,3 +961,4 @@ mysql_lease6_dump_test
 mysql_lease4_stat_test
 mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
+mysql_unused_subnet_id_test
