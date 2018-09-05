@@ -19,11 +19,18 @@ module ietf-dhcpv4-server {
     prefix if;
   }
 
-  organization "DHC WG";
+  organization "ISC";
+
   contact
-    "piotr.strzyzewski@polsl.pl";
-  description "This model defines a YANG data model that can be
-      used to configure and manage a DHCPv4 server.";
+    "The Kea DHCPv4 model is now maitained by ISC, please send
+     your comments to the kea-dev@lists.isc.org mailing list.
+
+     The original author was Piotr Strzyżewski
+     piotr.strzyzewski@polsl.pl";
+
+  description
+      "This model defines a YANG data model that can be
+       used to configure and manage Kea DHCPv4 server.";
 
   revision 2018-07-14 {
     description "Initial revision; mostly based on DHCPv6 version";
@@ -64,7 +71,7 @@ module ietf-dhcpv4-server {
         description
          "This container contains basic attributes of a DHCPv4 server
          such as IPv4 address, server name and so on. Some optional
-         functions that can be provided by the server is also included.";
+         functions that can be provided by the server are also included.";
         leaf name {
           type string;
           description "server's name";
@@ -120,13 +127,13 @@ module ietf-dhcpv4-server {
       }
 
       container network-ranges {
-        description "This model supports a hierarchy
-          to achieve dynamic configuration. That is to say we could configure the
-          server at different levels through this model. The top level is a global
+        description "This model supports a hierarchy to achieve dynamic
+          configuration. This level represents IPv4 subnets. The top level is a global
           level which is defined as the container 'network-ranges'. The following
           levels are defined as sub-containers under it. The 'network-ranges'
-          contains the parameters (e.g. option-sets) that would be allocated to
-          all the clients served by this server.";
+          (which reprents pools within subnets) contains the parameters
+          (e.g. option-sets) that would be allocated to all the clients served by
+          this server.";
 
         leaf option-set-id {
           type leafref {
