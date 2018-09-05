@@ -14,20 +14,34 @@
 namespace isc {
 namespace cb {
 
+/// @brief Base class for server specific configuration backends.
 class BaseConfigBackend {
 public:
 
+    /// @brief Virtual destructor.
+    virtual ~BaseConfigBackend() { }
 
-    virtual ~BaseConfigBackend() {
-    }
-
+    /// @brief Returns backend type in the textual format.
     virtual std::string getType() const = 0;
 
+    /// @brief Returns backend host.
+    ///
+    /// This is used by the @c BaseConfigBackendPool to select backend
+    /// when @c BackendSelector is specified.
+    ///
+    /// @return host on which the database is located.
     virtual std::string getHost() const = 0;
 
+    /// @brief Returns backend port number.
+    ///
+    /// This is used by the @c BaseConfigBackendPool to select backend
+    /// when @c BackendSelector is specified.
+    ///
+    /// @return Port number on which database service is available.
     virtual uint16_t getPort() const = 0;
 };
 
+/// @brief Shared pointer to the @c BaseConfigBackend.
 typedef boost::shared_ptr<BaseConfigBackend> BaseConfigBackendPtr;
 
 } // end of namespace isc::cb
