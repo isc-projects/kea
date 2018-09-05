@@ -1,3 +1,10 @@
+1449.	[func]		tmark
+	Modified Kea 1.5.0 database upgrade scripts to convert
+	subnet ID values of 0, to either null (MySQL and Postgres)
+	or 0xFFFFFFFF (CQL), in existing host reservations. This
+	is done to accomodate support for global host reservations.
+	(Gitlab #15,!11, git 25b54fd9ced4c6d3a2c8ceff9cc7c866b56da2c1)
+
 1448.	[build]*	marcin
 	Created new Kea libraries: libkea-database, libkea-mysql,
 	libkea-pgsql and libkea-cql. Some database specific code was
