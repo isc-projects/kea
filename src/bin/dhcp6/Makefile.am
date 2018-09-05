@@ -133,6 +133,8 @@ parser: dhcp6_lexer.cc location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_pa
 location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h: dhcp6_parser.yy
 	$(YACC) --defines=dhcp6_parser.h --report=all --report-file=dhcp6_parser.report -o dhcp6_parser.cc dhcp6_parser.yy
 
+.NOTPARALLEL: location.hh position.hh stack.hh dhcp6_parser.cc dhcp6_parser.h
+
 dhcp6_lexer.cc: dhcp6_lexer.ll
 	$(LEX) --prefix parser6_ -o dhcp6_lexer.cc dhcp6_lexer.ll
 

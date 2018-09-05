@@ -94,6 +94,8 @@ parser: lexer.cc location.hh position.hh stack.hh parser.cc parser.h
 location.hh position.hh stack.hh parser.cc parser.h: parser.yy
 	$(YACC) --defines=parser.h -o parser.cc parser.yy
 
+.NOTPARALLEL: location.hh position.hh stack.hh parser.cc parser.h
+
 lexer.cc: lexer.ll
 	$(LEX) --prefix eval -o lexer.cc lexer.ll
 

@@ -132,6 +132,8 @@ parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_pa
 location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h: dhcp4_parser.yy
 	$(YACC) --defines=dhcp4_parser.h --report=all --report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
 
+.NOTPARALLEL: location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h
+
 dhcp4_lexer.cc: dhcp4_lexer.ll
 	$(LEX) --prefix parser4_ -o dhcp4_lexer.cc dhcp4_lexer.ll
 

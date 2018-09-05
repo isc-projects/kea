@@ -110,6 +110,8 @@ parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_pa
 location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
 	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
 
+.NOTPARALLEL: location.hh position.hh stack.hh agent_parser.cc agent_parser.h
+
 agent_lexer.cc: agent_lexer.ll
 	$(LEX) --prefix agent_ -o agent_lexer.cc agent_lexer.ll
 
