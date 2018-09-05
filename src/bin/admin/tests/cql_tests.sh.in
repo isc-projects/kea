@@ -289,7 +289,7 @@ cql_upgrade_schema_to_version() {
 
 # Verifies that you can upgrade from an earlier version and
 # that unused subnet ID values in hosts and options tables are
-# converted to -1 
+# converted to -1
 cql_unused_subnet_id_test() {
     test_start "cql.unused_subnet_id_test"
 
@@ -299,7 +299,7 @@ cql_unused_subnet_id_test() {
     # We need to create an older database with lease data so we can
     # verify the upgrade mechanisms which convert subnet id values
     #
-    # Initialize database to scheme 1.0.
+    # Initialize database to schema 1.0.
     cql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql
 
     # Now upgrade to schema 2.0, the version just before global HRs
@@ -342,7 +342,7 @@ cql_unused_subnet_id_test() {
  host_reservations where id in(1,2,3,4,5);"
 
     cql_execute "$qry" >$export_file
-    assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d" 
+    assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
     # Compare the dump output to reference file, they should be identical.
     cmp -s $export_file  $ref_file
     assert_eq 0 $? "export file does not match reference file, expected exit code %d, actual %d"

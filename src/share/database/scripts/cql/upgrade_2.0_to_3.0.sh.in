@@ -20,15 +20,17 @@ fi
 
 cqlargs=$@
 
+# Ensures the current schema version is 2.0. If not it exits.
 check_version() {
     version=$(cql_version $cqlargs)
 
     if [ "${version}" != "2.0" ]; then
         printf "This script upgrades 2.0 to 3.0. Reported version is %s. Skipping upgrade.\n" "${version}"
-        exit 0 
+        exit 0
     fi
 }
 
+# Peforms the schema changes from 2.0 to 3.0
 update_schema() {
     cqlsh $cqlargs <<EOF
 -- This line starts database upgrade to version 3.0
@@ -63,10 +65,11 @@ EOF
     if [ $? -ne 0 ]
     then
         echo Schema udpate FAILED!
-        exit -1 
-    fi 
+        exit -1
+    fi
 }
 
+# Function to delete temporary migration files
 clean_up() {
     # clean up the files
     if [ -e $export_file ]
@@ -80,6 +83,13 @@ clean_up() {
     fi
 }
 
+# Function to clean up and exit the script gracefull
+#
+# Called by migrate_host_data()
+#
+# Parameters:
+# status - integer value to pass to sh:exit
+# explanation - "quoted" text message to emit to stdout
 exit_now() {
     status=$1;shift
     explanation=$1
@@ -95,6 +105,20 @@ exit_now() {
     exit $status
 }
 
+# Function adds a column to the global, $update_cols if needed
+#
+# Called by migrate_host_data() to determine if the given column
+# value needs to be updated, and if so appends CQL update text
+# to a global string accumulator, $update_cols.
+#
+# The accumlator text is of the form:
+#
+#  "<column_name>=<column value>{,<column_name>=<column_value>,..}"
+#
+# Parameters:
+# val - current numerical value of the subnet ID column in question
+# col - column name of the column in question
+#
 check_column() {
    local val="$1";shift
    local col="$1"
@@ -102,17 +126,42 @@ check_column() {
    local new_id="-1"
    local comma=""
 
+   # If the current value equals the value to be replaced
+   # add it to the accumulator
    if [ "$val" = "$old_id" ]
    then
+        # If the accumulator isn't empty, we need a comma
         if [ ! -z "$update_cols" ]
         then
             comma=","
         fi
 
         update_cols="$update_cols$comma $col = $new_id"
-   fi 
+   fi
 }
 
+# This function converts subnet ID columns in of existing host_reservations
+# from 0 to 0xFFFFFFFF (SUBNET_ID_UNUSED). To do this it first creates an
+# excerpt from host_reservations containing one row for each reservation
+# with the following columns:
+#
+#  id (primary key)
+#  host_ipv4_subnet_id
+#  host_ipv6_subnet_id
+#  option_subnet_id
+#
+# The excerpt is captured in a temporary file, the "export" file.
+#
+# Next, it iterates over the export file emitting a CQL update statement
+# for each row that needs at least one of the columns updated. In other
+# words, if at least one of the subnet ID columns in a row is 0, an
+# update statement for that row will be emitted.  The update statements
+# are captured in a second temprory file, the "update" file.
+#
+# After exhausting the export file, the update file is submitted to
+# cqlsh for execution.
+#
+# No parameters.
 migrate_host_data() {
     export_file="$temp_file_dir/cql_export.csv"
     update_file="$temp_file_dir/cql_update.cql"
@@ -142,7 +191,7 @@ migrate_host_data() {
         let line_cnt++;
         update_cols=""
         xIFS="$IFS"
-        IFS=$'\r,' 
+        IFS=$'\r,'
         i=1
         # Parse the column values
         for val in $line
@@ -168,7 +217,7 @@ migrate_host_data() {
             let i++
         done
 
-        if [ $i -ne 5 ] 
+        if [ $i -ne 5 ]
         then
             # We're going to assume that since any error is fatal
             exit_now -1 "Line# $line_cnt, too few values, wrong or corrupt file"
@@ -187,7 +236,7 @@ migrate_host_data() {
     # If we didn't record any updates, then hey, we're good to go!
     if [ $update_cnt == 0 ]
     then
-        exit_now 0 "Completedly successfully: No updates were needed"
+        exit_now 0 "Completed successfully: No updates were needed"
     fi
 
     # We have at least one update in the update file, so submit it # to cqlsh.
