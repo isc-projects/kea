@@ -22,12 +22,17 @@ db_name="keatest"
 # Set location of the kea-admin.
 keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
 
+cql_wipe() {
+    # Wipe the database.
+    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
+    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+}
+
 cql_lease_init_test() {
     test_start "cql.init"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     # Create the database
     $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
@@ -63,8 +68,7 @@ cql_lease_init_test() {
     assert_eq 2 $? "kea-admin failed to deny lease-init, expected exit code: %d, actual: %d"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     test_finish 0
 }
@@ -73,8 +77,7 @@ cql_lease_version_test() {
     test_start "cql.version"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     # Create the database.
     $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
@@ -85,8 +88,7 @@ cql_lease_version_test() {
     assert_str_eq "3.0" $version "Expected kea-admin to return %s, returned value was %s"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     test_finish 0
 }
@@ -95,8 +97,7 @@ cql_upgrade_test() {
     test_start "cql.upgrade"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     # Initialize database to schema 1.0.
     cql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql
@@ -106,8 +107,7 @@ cql_upgrade_test() {
     assert_eq 0 $? "lease-upgrade failed, expected exit code: %d, actual: %d"
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     test_finish 0
 }
@@ -136,8 +136,7 @@ cql_lease4_dump_test() {
     fi
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     # Create the database
     $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
@@ -178,8 +177,7 @@ INSERT INTO lease4(address, hwaddr, client_id, valid_lifetime, expire, subnet_id
     rm $output_file
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     test_finish 0
 }
@@ -208,8 +206,7 @@ cql_lease6_dump_test() {
     fi
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     # Create the database.
     $keaadmin lease-init cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
@@ -251,11 +248,112 @@ INSERT INTO lease6(address, duid, valid_lifetime, expire, subnet_id,\
     rm $output_file
 
     # Wipe the database.
-    cql_execute_script $db_scripts_dir/cql/dhcpdb_drop.cql
-    assert_eq 0 $? "drop table query failed, exit code %d, expected %d"
+    cql_wipe
 
     test_finish 0
 }
+
+# Upgrades an existing schema to a target newer version
+# param target_version - desired schema version as "major.minor"
+cql_upgrade_schema_to_version() {
+    target_version=$1
+
+    # Check if the scripts directory exists at all.
+    if [ ! -d ${db_scripts_dir}/cql ]; then
+        log_error "Invalid scripts directory: ${db_scripts_dir}/mysql"
+        exit 1
+    fi
+
+    # Check if there are any files in it
+    num_files=$(find ${db_scripts_dir}/cql/upgrade*.sh -type f | wc -l)
+    if [ $num_files -eq 0 ]; then
+        log_error "No scripts in ${db_scripts_dir}/cql?"
+        exit 1
+    fi
+
+    version=`cql_version`
+    for script in ${db_scripts_dir}/cql/upgrade*.sh
+    do
+        if [ $version = "$target_version" ]
+        then
+            break;
+        fi
+
+        echo "Processing $script file..."
+        sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+        version=`cql_version`
+    done
+
+    echo "Schema upgraded to $version"
+}
+
+# Verifies that you can upgrade from an earlier version and
+# that unused subnet ID values in hosts and options tables are
+# converted to -1
+cql_unused_subnet_id_test() {
+    test_start "cql.unused_subnet_id_test"
+
+    # Let's wipe the whole database
+    cql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert subnet id values
+    #
+    # Initialize database to schema 1.0.
+    cql_execute_script @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.cql
+
+    # Now upgrade to schema 2.0, the version just before global HRs
+    cql_upgrade_schema_to_version 2.0
+
+    # Now we need insert some hosts to "migrate" for both v4 and v6
+    qry=\
+"insert into host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
+   values (1, 0, textAsBlob('0123456'), 0, 0, 0);\
+ insert into host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
+   values (2, 0, textAsBlob('1123456'), 4, 0, 4);\
+ insert into host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
+   values (3, 0, textAsBlob('2123456'), 0, 6, 6);\
+ insert into host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
+   values (4, 0, textAsBlob('3123456'), 4, 6, 0);\
+ insert into host_reservations (id, host_identifier_type, host_identifier, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id)\
+   values (5, 0, textAsBlob('3123456'), -1, 6, 6);"
+
+    cql_execute "$qry"
+    assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
+
+    # Ok, we have a 2.0 database with hosts and options. Let's upgrade it.
+    ${keaadmin} lease-upgrade cql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    # Upgrade should succeed
+    assert_eq 0 $ERRCODE "upgrade failed"
+
+    test_dir="@abs_top_srcdir@/src/bin/admin/tests"
+    ref_file="$test_dir/data/cql.subnet_id_test.reference.csv"
+
+    output_dir="@abs_top_builddir@/src/bin/admin/tests"
+    export_file="$output_dir/data/cql.subnet_id_test.csv"
+
+    # Fetch host_reservation data for comparison
+    echo "Exporting host_reservation data to $export_file ..."
+
+    qry=\
+"select id, host_ipv4_subnet_id, host_ipv6_subnet_id, option_subnet_id from\
+ host_reservations where id in(1,2,3,4,5);"
+
+    cql_execute "$qry" >$export_file
+    assert_eq 0 $? "insert hosts failed, expected exit code: %d, actual: %d"
+    # Compare the dump output to reference file, they should be identical.
+    cmp -s $export_file  $ref_file
+    assert_eq 0 $? "export file does not match reference file, expected exit code %d, actual %d"
+
+    # remove the output file.
+    rm $export_file
+
+    # Wipe the database.
+    cql_wipe
+}
+
 
 # Run tests.
 cql_lease_init_test
@@ -263,3 +361,4 @@ cql_lease_version_test
 cql_upgrade_test
 cql_lease4_dump_test
 cql_lease6_dump_test
+cql_unused_subnet_id_test

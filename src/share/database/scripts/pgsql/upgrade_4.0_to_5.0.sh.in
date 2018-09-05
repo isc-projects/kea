@@ -136,6 +136,12 @@ CREATE INDEX address_id ON logs (address);
 -- Create auth_key in hosts table for storing keys for DHCPv6 reconfigure.
 ALTER TABLE hosts ADD COLUMN auth_key  VARCHAR(16) DEFAULT NULL;
 
+-- Convert subnet-id values of 0  to NULL
+UPDATE hosts SET dhcp4_subnet_id = NULL WHERE dhcp4_subnet_id = 0;
+UPDATE dhcp4_options SET dhcp4_subnet_id = NULL WHERE dhcp4_subnet_id = 0;
+UPDATE hosts SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
+UPDATE dhcp6_options SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
+
 -- Set 5.0 schema version.
 UPDATE schema_version
     SET version = '5', minor = '0';
