@@ -83,7 +83,7 @@ clean_up() {
     fi
 }
 
-# Function to clean up and exit the script gracefull
+# Function to clean up and exit the script gracefully
 #
 # Called by migrate_host_data()
 #
