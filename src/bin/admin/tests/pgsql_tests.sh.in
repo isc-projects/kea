@@ -793,7 +793,7 @@ pgsql_lease_stat_upgrade_test() {
 
 # Verifies that you can upgrade from earlier version and
 # that unused subnet ID values in hosts and options tables are
-# converted to NULL. 
+# converted to NULL.
 pgsql_unused_subnet_id_test() {
     test_start "pgsql.unused_subnet_id_test"
 
@@ -816,7 +816,7 @@ pgsql_unused_subnet_id_test() {
 "insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
    values (0, '0123456', 0, 0, 'both'); \
  insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
-   values (0, '1123456', 4, 0, 'v4only');  
+   values (0, '1123456', 4, 0, 'v4only');
  insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
    values (0, '2123456', 0, 6, 'v6only');\
  insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname) \
