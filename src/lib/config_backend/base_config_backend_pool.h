@@ -216,7 +216,7 @@ private:
 /// type will expose a different API calls.
 ///
 /// This template class is a base class for all pools used by various servers.
-/// It implements mechanisms for managing multiple backends and for routing
+/// It implements mechanisms for managing multiple backends and for forwarding
 /// API calls to one or many database backends depending on the selections
 /// made via @c BackendSelector class.
 ///
@@ -250,17 +250,18 @@ protected:
 
     /// @brief Retrieve a single configuration property from the pool.
     ///
-    /// This is a common method for retrieving a single configuration property
+    /// This is common method for retrieving a single configuration property
     /// from the databases. The server specific backends call this method to
     /// retrieve a single object. For example, the DHCPv4 configuration backend
     /// pool may use this function to implement a @c getSubnet4 method:
     ///
     /// @code
     /// Subnet4Ptr getSubnet4(const SubnetID& subnet_id,
-    ///                       const BackendSelector& selector) const {
+    ///                       const BackendSelector& selector,
+    ///                       const ServerSelector& server_selector) const {
     ///     Subnet4Ptr subnet;
     ///     getPropertyPtrConst<Subnet4Ptr, const SubnetID&, ConfigBackendDHCPv4::getSubnet4>
-    ///         (subnet, subnet_id, selector);
+    ///         (&ConfigBackendDHCPv4::getSubnet4, selector, subnet, subnet_id);
     ///     return (subnet);
     /// }
     /// @endcode
@@ -268,7 +269,7 @@ protected:
     /// where @c ConfigBackendDHCPv4::getSubnet4 has the following signature:
     ///
     /// @code
-    /// Subnet4Ptr getSubnet4(const SubnetID& subnet_id) const;
+    /// Subnet4Ptr getSubnet4(const ServerSelector&, const SubnetID&) const;
     /// @endcode
     ///
     /// If the backend selector is set to "unspecified", this method will iterate
@@ -279,28 +280,30 @@ protected:
     /// rest of the backends are skipped.
     ///
     /// @tparam PropertyType Type of the object returned by the backend call.
-    /// @tparam InputType Type of the object used as input to the backend call.
-    /// @tparam MethodPointer Type of the pointer to the backend method to be
-    /// called.
+    /// @tparam InputType Type of the objects used as input to the backend call.
     ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param selector Backend selector.
+    /// @param server_selector Server selector.
     /// @param [out] property Reference to the shared pointer where retrieved
     /// property should be assigned.
-    /// @param input Value to be used as input to the backend call.
-    /// @param selector Backend selector. By default it is unspecified.
+    /// @param input Values to be used as input to the backend call.
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyType, typename InputType,
-             PropertyType (ConfigBackendType::*MethodPointer)(InputType) const>
-    void getPropertyPtrConst(PropertyType& property, InputType input,
-                             const BackendSelector& selector =
-                             BackendSelector::UNSPEC()) const {
+    template<typename PropertyType, typename... InputType>
+    void getPropertyPtrConst(PropertyType (ConfigBackendType::*MethodPointer)
+                             (const ServerSelector&, InputType...) const,
+                             const BackendSelector& selector,
+                             const ServerSelector& server_selector,
+                             PropertyType& property,
+                             InputType... input) const {
 
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
         if (selector.amUnspecified()) {
             for (auto backend : backends_) {
-                property = ((*backend).*MethodPointer)(input);
+                property = ((*backend).*MethodPointer)(server_selector, input...);
                 if (property) {
                     break;
                 }
@@ -311,7 +314,7 @@ protected:
             auto backends = selectBackends(selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
-                    property = ((*backend).*MethodPointer)(input);
+                    property = ((*backend).*MethodPointer)(server_selector, input...);
                     if (property) {
                         break;
                     }
@@ -333,20 +336,21 @@ protected:
     /// @c getSubnets6 method:
     ///
     /// @code
-    /// Subnet6Collection getModifiedSubnets6(const ptime& modification_time,
-    ///                                       const BackendSelector& selector) const {
+    /// Subnet6Collection getModifiedSubnets6(const BackendSelector& selector,
+    ///                                       const ServerSelector& server_selector,
+    ///                                       const ptime& modification_time) const {
     ///     Subnet6Collection subnets;
-    ///     getMultiplePropertiesConst<Subnet6Collection, const ptime&,
-    ///                                ConfigBackendDHCPv6::getSubnets6>
-    ///         (subnets, modification_time, selector);
-    ///     return (subnets); 
+    ///     getMultiplePropertiesConst<Subnet6Collection, const ptime&>
+    ///         (&ConfigBackendDHCPv6::getSubnets6, selector, subnets,
+    ///          modification_time);
+    ///     return (subnets);
     /// }
     /// @endcode
     ///
     /// where @c ConfigBackendDHCPv6::getSubnets6 has the following signature:
     ///
     /// @code
-    /// Subnet6Collection getSubnets6(const ptime& modification_time) const;
+    /// Subnet6Collection getSubnets6(const ServerSelector&, const ptime&) const;
     /// @endcode
     ///
     /// If the backend selector is set to "unspecified", this method will iterate
@@ -356,25 +360,26 @@ protected:
     ///
     /// @tparam PropertyCollectionType Type of the container into which the
     /// properties are stored.
-    /// @tparam InputType type of the object used as input to the backend call.
-    /// @tparam MethodPointer Type of the pointer to the backend method to be
-    /// called.
+    /// @tparam InputType Type of the objects used as input to the backend call.
     ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param selector Backend selector.
+    /// @param server_selector Server selector.
     /// @param [out] properties Reference to the collection of retrieved properties.
-    /// @param inputValue to be used as input to the backend call.
-    /// @param selector Backend selector. By default it is unspecified.
+    /// @param input Values to be used as input to the backend call.
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyCollectionType, typename InputType,
-             PropertyCollectionType (ConfigBackendType::*MethodPointer)(InputType) const>
-    void getMultiplePropertiesConst(PropertyCollectionType& properties,
-                                    InputType input,
-                                    const BackendSelector& selector =
-                                    BackendSelector::UNSPEC()) const {
+    template<typename PropertyCollectionType, typename... InputType>
+    void getMultiplePropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)
+                                    (const ServerSelector&, InputType...) const,
+                                    const BackendSelector& selector,
+                                    const ServerSelector& server_selector,
+                                    PropertyCollectionType& properties,
+                                    InputType... input) const {
         if (selector.amUnspecified()) {
             for (auto backend : backends_) {
-                properties = ((*backend).*MethodPointer)(input);
+                properties = ((*backend).*MethodPointer)(server_selector, input...);
                 if (!properties.empty()) {
                     break;
                 }
@@ -384,7 +389,7 @@ protected:
             auto backends = selectBackends(selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
-                    properties = ((*backend).*MethodPointer)(input);
+                    properties = ((*backend).*MethodPointer)(server_selector, input...);
                     if (!properties.empty()) {
                         break;
                     }
@@ -406,10 +411,11 @@ protected:
     /// @c getAllSubnets4 method:
     ///
     /// @code
-    /// Subnet4Collection getAllSubnets4(const BackendSelector& selector) const {
+    /// Subnet4Collection getAllSubnets4(const BackendSelector&, const ServerSelector&) const {
     ///     Subnet4Collection subnets;
-    ///     getAllPropertiesConst<Subnet6Collection, ConfigBackendDHCPv4::getAllSubnets4>
-    ///         (subnets, selector);
+    ///     getAllPropertiesConst<Subnet6Collection>
+    ///         (&ConfigBackendDHCPv4::getAllSubnets4, subnets, selector,
+    ///          server_selector);
     ///     return (subnets);
     /// }
     /// @endcode
@@ -417,7 +423,7 @@ protected:
     /// where @c ConfigBackendDHCPv4::getAllSubnets4 has the following signature:
     ///
     /// @code
-    /// Subnet4Collection getAllSubnets4() const;
+    /// Subnet4Collection getAllSubnets4(const ServerSelector&) const;
     /// @endcode
     ///
     /// If the backend selector is set to "unspecified", this method will iterate
@@ -427,22 +433,23 @@ protected:
     ///
     /// @tparam PropertyCollectionType Type of the container into which the
     /// properties are stored.
-    /// @tparam MethodPointer Type of the pointer to the backend method to be
-    /// called.
     ///
+    /// @param MethodPointer Pointer to the backend method to be called.
+    /// @param selector Backend selector.
+    /// @param server_selector Server selector.
     /// @param [out] properties Reference to the collection of retrieved properties.
-    /// @param selector Backend selector. By default it is unspecified.
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyCollectionType,
-             PropertyCollectionType (ConfigBackendType::*MethodPointer)() const>
-    void getAllPropertiesConst(PropertyCollectionType& properties,
-                               const BackendSelector& selector =
-                               BackendSelector::UNSPEC()) const {
+    template<typename PropertyCollectionType>
+    void getAllPropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)
+                               (const ServerSelector&) const,
+                               const BackendSelector& selector,
+                               const ServerSelector& server_selector,
+                               PropertyCollectionType& properties) const {
         if (selector.amUnspecified()) {
             for (auto backend : backends_) {
-                properties = ((*backend).*MethodPointer)();
+                properties = ((*backend).*MethodPointer)(server_selector);
                 if (!properties.empty()) {
                     break;
                 }
@@ -452,7 +459,7 @@ protected:
             auto backends = selectBackends(selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
-                    properties = ((*backend).*MethodPointer)();
+                    properties = ((*backend).*MethodPointer)(server_selector);
                     if (!properties.empty()) {
                         break;
                     }
@@ -476,10 +483,11 @@ protected:
     ///
     /// @code
     /// void createUpdateSubnet6(const Subnet6Ptr& subnet,
-    ///                          const BackendSelector& selector) {
-    ///     createUpdateDeleteProperty<const Subnet6Ptr&,
-    ///                                ConfigBackendDHCPv6::createUpdateSubnet6>
-    ///         (subnet, selector);
+    ///                          const BackendSelector& selector,
+    ///                          const ServerSelector& server_selector) {
+    ///     createUpdateDeleteProperty<const Subnet6Ptr&>
+    ///         (&ConfigBackendDHCPv6::createUpdateSubnet6, selector,
+    ///          server_selector, subnet, selector);
     /// }
     /// @endcode
     ///
@@ -487,29 +495,32 @@ protected:
     /// signature:
     ///
     /// @code
-    /// void createUpdateSubnet6(const Subnet6Ptr& subnet);
+    /// void createUpdateSubnet6(const ServerSelector&, const Subnet6Ptr&);
     /// @endcode
     ///
     /// The backend selector must point to exactly one backend. If more than one
     /// backend is selected, an exception is thrown. If no backend is selected
     /// an exception is thrown either.
     ///
-    /// @tparam InputType Type of the object being a new property to be added
-    /// or updated, or an identifier of the object to be deleted.
-    /// @tparam MethodPointer Type of the pointer to the backend method to be
-    /// called.
+    /// @tparam InputType Type of the objects being used as arguments of the
+    /// backend method, e.g. new property to be added, updated or deleted.
     ///
-    /// @param input Object being a new property to be added or updated, or an
-    /// identifier of the object to be deleted.
+    /// @param MethodPointer Pointer to the backend method to be called.
     /// @param selector Backend selector.
+    /// @param server_selector Server selector.
+    /// @param input Objects used as arguments to the backend method to be
+    /// called.
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
     /// @throw db::AmbiguousDatabase if multiple databases matching the selector
     /// were found.
-    template<typename InputType,
-             void (ConfigBackendType::*MethodPointer)(InputType)>
-    void createUpdateDeleteProperty(InputType input, const BackendSelector& selector) {
+    template<typename... InputType>
+    void createUpdateDeleteProperty(void (ConfigBackendType::*MethodPointer)
+                                    (const ServerSelector&, InputType...),
+                                    const BackendSelector& selector,
+                                    const ServerSelector& server_selector,
+                                    InputType... input) {
         auto backends = selectBackends(selector);
         if (backends.empty()) {
             isc_throw(db::NoSuchDatabase, "no database found for selector: "
@@ -520,7 +531,7 @@ protected:
                       "selector: " << selector.toText());
         }
 
-        (*(*(backends.begin())).*MethodPointer)(input);
+        (*(*(backends.begin())).*MethodPointer)(server_selector, input...);
     }
 
     /// @brief Selects existing backends matching the selector.

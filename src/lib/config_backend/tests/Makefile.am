@@ -22,6 +22,7 @@ TESTS += libcb_unittests
 libcb_unittests_SOURCES  = config_backend_mgr_unittest.cc
 libcb_unittests_SOURCES += config_backend_selector_unittest.cc
 libcb_unittests_SOURCES += run_unittests.cc
+libcb_unittests_SOURCES += server_selector_unittest.cc
 
 libcb_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libcb_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
