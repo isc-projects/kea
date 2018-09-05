@@ -12,7 +12,7 @@ libkea_cb_la_SOURCES += base_config_backend_pool.cc base_config_backend_pool.h
 
 
 libkea_cb_la_LIBADD  = $(top_builddir)/src/lib/database/libkea-database.la
-libkea_cb_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
+libkea_cb_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cb_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cb_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cb_la_LIBADD += $(BOOST_LIBS)
@@ -25,5 +25,9 @@ libkea_cb_la_LDFLAGS = -no-undefined -version-info 0:0:0
 CLEANFILES = *.gcno *.gcda
 
 # Specify the headers for copying into the installation directory tree.
-#libkea_cb_includedir = $(pkgincludedir)/config
-#libkea_cb_include_HEADERS = 
+libkea_cb_includedir = $(pkgincludedir)/config_backend
+libkea_cb_include_HEADERS = \
+	base_config_backend.h \
+	base_config_backend_mgr.h \
+	base_config_backend_pool.h
+

@@ -8,6 +8,7 @@
 #define BASE_CONFIG_BACKEND_H
 
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 #include <string>
 
 namespace isc {
