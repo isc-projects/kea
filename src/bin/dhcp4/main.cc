@@ -134,7 +134,7 @@ main(int argc, char* argv[]) {
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
-            CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+            Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
             Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
 
             // Check the syntax first.
@@ -181,7 +181,7 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+        Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
