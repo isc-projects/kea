@@ -8,6 +8,7 @@
 #include <asiolink/io_service.h>
 #include <process/d_log.h>
 #include <process/testutils/d_test_stubs.h>
+#include <process/daemon.h>
 #include <cc/command_interpreter.h>
 
 using namespace boost::asio;
@@ -74,6 +75,7 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) 
 }
 
 DStubProcess::~DStubProcess() {
+    Daemon::setVerbose(false);
 };
 
 //************************** DStubController *************************

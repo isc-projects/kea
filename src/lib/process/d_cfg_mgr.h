@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <process/config_base.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <functional>
@@ -60,7 +61,7 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase : public isc::data::UserContext, public isc::data::CfgToElement {
+class DCfgContextBase : public ConfigBase {
 public:
     /// @brief Indicator that a configuration parameter is optional.
     static const bool OPTIONAL = true;

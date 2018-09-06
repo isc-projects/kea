@@ -57,7 +57,6 @@ libkea_process_la_LDFLAGS += -no-undefined -version-info 2:1:0
 
 libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 
