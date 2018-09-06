@@ -5,10 +5,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <config_backend/base_config_backend.h>
+#include <database/server_selector.h>
 #include <gtest/gtest.h>
 
-using namespace isc::cb;
+using namespace isc::db;
 
 namespace {
 
