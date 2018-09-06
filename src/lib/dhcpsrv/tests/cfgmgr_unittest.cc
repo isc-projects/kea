@@ -281,7 +281,6 @@ public:
     }
 
     void clear() {
-        CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().setFamily(AF_INET);
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
@@ -494,18 +493,6 @@ TEST_F(CfgMgrTest, revert) {
     // of the current configuration will become 12.
     ASSERT_NO_THROW(cfg_mgr.revert(3));
     EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
-}
-
-// This test verifies that the verbosity can be set and obtained from the
-// configuration manager.
-TEST_F(CfgMgrTest, verbosity) {
-    ASSERT_FALSE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(true);
-    ASSERT_TRUE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(false);
-    EXPECT_FALSE(CfgMgr::instance().isVerbose());
 }
 
 // This test verifies that the address family can be set and obtained
