@@ -64,7 +64,15 @@ public:
 
 // Checks if default logging configuration is correct.
 TEST_F(LoggingInfoTest, defaults) {
+
+    // We now need to set the default logger explicitly.
+    // Otherwise leftovers from pervious tests that use DController
+    // would leave the default logger set to TestBin.
+    Daemon::setDefaultLoggerName("kea");
+
     LoggingInfo info_non_verbose;
+
+    // The DStubTest framework sets up the default binary name to TestBin
     EXPECT_EQ("kea", info_non_verbose.name_);
     EXPECT_EQ(isc::log::INFO, info_non_verbose.severity_);
     EXPECT_EQ(0, info_non_verbose.debuglevel_);

@@ -11,7 +11,7 @@
 #include <exceptions/exceptions.h>
 #include <log/logger_name.h>
 #include <log/logger_support.h>
-#include <process/cfg_base.h>
+#include <process/config_base.h>
 #include <util/filename.h>
 
 #include <boost/bind.hpp>
