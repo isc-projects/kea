@@ -6,12 +6,13 @@
 
 #include <config.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
 
-using namespace isc::dhcp;
+// using namespace isc::dhcp;
+using namespace isc::db;
 
 /// @brief Test fixture for exercising DbLostCallback invocation
 class DatabaseConnectionCallbackTest : public ::testing::Test {
