@@ -248,7 +248,7 @@ public:
                             const ServerSelector& server_selector =
                             ServerSelector::ALL()) const {
         int property;
-        getPropertyPtrConst<int, const std::string&, const int>
+        getPropertyPtrConst<int, const std::string&, int>
             (&TestConfigBackend::getProperty, selector, server_selector, property,
              property_name, property_value);
         return (property);

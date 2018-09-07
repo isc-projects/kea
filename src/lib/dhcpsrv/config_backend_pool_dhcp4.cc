@@ -96,7 +96,7 @@ ConfigBackendPoolDHCPv4::getOptionDef4(const BackendSelector& backend_selector,
                                        const uint16_t code,
                                        const std::string& space) const {
     OptionDefinitionPtr option_def;
-    getPropertyPtrConst<OptionDefinitionPtr, const uint16_t, const std::string&>
+    getPropertyPtrConst<OptionDefinitionPtr, uint16_t, const std::string&>
         (&ConfigBackendDHCPv4::getOptionDef4, backend_selector, server_selector,
          option_def, code, space);
     return (option_def);
@@ -227,7 +227,7 @@ ConfigBackendPoolDHCPv4::createUpdateGlobalParameter4(const BackendSelector& bac
                                                       const ServerSelector& server_selector,
                                                       const std::string& name,
                                                       const int64_t value) {
-    createUpdateDeleteProperty<const std::string&, const int64_t>
+    createUpdateDeleteProperty<const std::string&, int64_t>
         (&ConfigBackendDHCPv4::createUpdateGlobalParameter4, backend_selector,
          server_selector, name, value);
 }
@@ -278,7 +278,7 @@ ConfigBackendPoolDHCPv4::deleteOptionDef4(const BackendSelector& backend_selecto
                                           const ServerSelector& server_selector,
                                           const uint16_t code,
                                           const std::string& space) {
-    createUpdateDeleteProperty<const uint16_t, const std::string&>
+    createUpdateDeleteProperty<uint16_t, const std::string&>
         (&ConfigBackendDHCPv4::deleteOptionDef4, backend_selector,
          server_selector, code, space);
 }
@@ -295,7 +295,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
                                        const uint16_t code,
                                        const std::string& space) {
-    createUpdateDeleteProperty<const uint16_t, const std::string&>
+    createUpdateDeleteProperty<uint16_t, const std::string&>
         (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
          code, space);
 }
@@ -306,7 +306,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const SubnetID& subnet_id,
                                        const uint16_t code,
                                        const std::string& space) {
-    createUpdateDeleteProperty<const SubnetID&, const uint16_t, const std::string&>
+    createUpdateDeleteProperty<const SubnetID&, uint16_t, const std::string&>
         (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
          subnet_id, code, space);
 }
@@ -318,7 +318,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const asiolink::IOAddress& pool_end_address,
                                        const uint16_t code,
                                        const std::string& space) {
-    createUpdateDeleteProperty<const IOAddress&, const IOAddress&, const uint16_t,
+    createUpdateDeleteProperty<const IOAddress&, const IOAddress&, uint16_t,
                                const std::string&>
         (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
          pool_start_address, pool_end_address, code, space);
@@ -335,7 +335,7 @@ ConfigBackendPoolDHCPv4::deleteGlobalParameter4(const BackendSelector& backend_s
 
 void
 ConfigBackendPoolDHCPv4::deleteAllGlobalParameters4(const BackendSelector& backend_selector,
-                                                   const ServerSelector& server_selector) {
+                                                    const ServerSelector& server_selector) {
     createUpdateDeleteProperty<>
         (&ConfigBackendDHCPv4::deleteAllGlobalParameters4, backend_selector,
          server_selector);
