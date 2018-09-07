@@ -108,6 +108,8 @@ libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += client_class_def.cc client_class_def.h
+libkea_dhcpsrv_la_SOURCES += config_backend_dhcp4.h
+libkea_dhcpsrv_la_SOURCES += config_backend_pool_dhcp4.cc config_backend_pool_dhcp4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
@@ -211,6 +213,7 @@ if HAVE_CQL
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config_backend/libkea-cb.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
@@ -270,6 +273,8 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfg_subnets6.h \
 	cfgmgr.h \
 	client_class_def.h \
+	config_backend_dhcp4.h \
+	config_backend_pool_dhcp4.h \
 	csv_lease_file4.h \
 	csv_lease_file6.h \
 	dhcpsrv_exceptions.h \
