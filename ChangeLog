@@ -1,3 +1,8 @@
+1450.	[build]		tomek
+	Dependencies improved. libkea-process no longer requires libkea-dhcpsrv.
+	As a result, D2 and CA are no longer linked with libkea-dhcpsrv.
+	(Gitlab #25,!14, git cdb3a6f2d98a303b80433df7e0d5698c77897b7f)
+
 1449.	[func]		tmark
 	Modified Kea 1.5.0 database upgrade scripts to convert
 	subnet ID values of 0, to either null (MySQL and Postgres)
