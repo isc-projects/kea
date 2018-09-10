@@ -12,6 +12,9 @@ module kea-dhcpddns {
   import kea-types {
     prefix kea;
   }
+  import kea-logging {
+    prefix logging;
+  }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
@@ -76,8 +79,13 @@ module kea-dhcpddns {
     }
   }
 
-  grouping configuration {
-    description "Contains parameters for DHCP-DDNS server configuration.";
+  /*
+  * Data Nodes
+  */
+
+  container config {
+    description "Contains DHCP-DDNS server configuration.";
+    config true;
 
     leaf ip-address {
       type inet:ip-address;
@@ -158,5 +166,12 @@ module kea-dhcpddns {
       type kea:user-context;
       description "DHCP-DDNS server user context.";
     }
+  }
+
+  container logging {
+    description "Logging";
+    config true;
+
+    uses logging:configuration;
   }
 }

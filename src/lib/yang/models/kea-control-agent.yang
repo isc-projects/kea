@@ -12,11 +12,14 @@ module kea-control-agent {
   import kea-types {
     prefix kea;
   }
+  import kea-logging {
+    prefix logging;
+  }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
-    used to configure and manage a Kea control agent.";
+               used to configure and manage a Kea control agent.";
 
   revision 2018-08-20 {
     description "Initial revision";
@@ -24,11 +27,12 @@ module kea-control-agent {
   }
 
   /*
-  * Groupings
+  * Data Nodes
   */
 
-  grouping configuration {
-    description "Contains parameters for control agent configuration.";
+  container config {
+    description "Contains control agent configuration.";
+    config true;
 
     leaf http-host {
       type inet:ip-address;
@@ -59,13 +63,20 @@ module kea-control-agent {
           uses kea:control-socket;
         }
       }
-   }
+    }
 
-   uses kea:hooks-libraries;
+    uses kea:hooks-libraries;
 
-   leaf user-context {
-     type kea:user-context;
-     description "Control agent user context.";
-   }
- }
+    leaf user-context {
+      type kea:user-context;
+      description "Control agent user context.";
+    }
+  }
+
+  container logging {
+    description "Logging";
+    config true;
+
+    uses logging:configuration;
+  }
 }
