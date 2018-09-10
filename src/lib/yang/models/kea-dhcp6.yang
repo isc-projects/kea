@@ -40,6 +40,7 @@ module kea-dhcp6 {
       enum "disabled";
       enum "out-of-pool";
       enum "all";
+      enum "global";
     }
     description "Host reservation mode.";
   }
@@ -50,7 +51,7 @@ module kea-dhcp6 {
       enum "declined";
       enum "expired-reclaimed";
     }
-    description "Lease state.";
+    description "Defines state of the lease.";
   }
 
   /*
@@ -91,7 +92,7 @@ module kea-dhcp6 {
   grouping relay {
     leaf-list ip-addresses {
       type inet:ipv6-address;
-      description "IP addresses.";
+      description "IPv6 addresses.";
     }
   }
 
@@ -115,17 +116,18 @@ module kea-dhcp6 {
           leaf start-address {
             type inet:ipv6-address;
             mandatory true;
-            description "Pool start address.";
+            description "First IPv6 address in a pool.";
           }
           leaf end-address {
             type inet:ipv6-address;
             mandatory true;
-            description "Pool end address.";
+            description "Last IPv6 address in a pool.";
           }
           uses option-data-list;
           leaf client-class {
             type string;
-            description "Pool client class guard.";
+            description "Pool client class guard. (only clients belonging to this
+                         class will be allowed in this pool).";
           }
           leaf-list require-client-classes {
             type string;
@@ -133,7 +135,7 @@ module kea-dhcp6 {
           }
           leaf user-context {
             type kea:user-context;
-            description "Pool user context.";
+            description "Pool user context. Arbitrary JSON data can be stored here.";
           }       
         }
       }
@@ -143,7 +145,7 @@ module kea-dhcp6 {
           leaf prefix {
             type inet:ipv6-prefix;
             mandatory true;
-            description "Prefix pool prefix.";
+            description "IPv6 pool prefix.";
           }
           leaf delegated-len {
             type uint8;
@@ -152,7 +154,8 @@ module kea-dhcp6 {
           uses option-data-list;
           leaf client-class {
             type string;
-            description "Prefix pool client class guard.";
+            description "Prefix pool client class guard. (only clients belonging to this
+                         class will be allowed in this pool).";
           }
           leaf-list require-client-classes {
             type string;
@@ -164,18 +167,19 @@ module kea-dhcp6 {
           }
           leaf user-context {
             type kea:user-context;
-            description "Prefix pool user context.";
+            description "Prefix pool user context. Arbitrary JSON data can be stored here.";
           }       
         }
       }
       leaf subnet {
         type inet:ipv6-prefix;
         mandatory true;
-        description "Subnet prefix.";
+        description "IPv6 subnet prefix.";
       }
       leaf interface {
         type string;
-        description "Subnet interface.";
+        description "Name of the network interface this subnet is directly
+                     accessible with (optional).";
       }
       leaf interface-id {
         type string;
@@ -186,7 +190,8 @@ module kea-dhcp6 {
           range 1..max;
         }
         mandatory true;
-        description "Subnet ID.";
+        description "Subnet ID, a unique identifier used to locate or reference
+                     a subnet.";
       }
       leaf rapid-commit {
         type boolean;
@@ -195,14 +200,15 @@ module kea-dhcp6 {
       }
       leaf client-class {
         type string;
-        description "Subnet client class guard.";
+        description "Subnet client class guard (only clients belonging to this
+                     clas will be allowed in this subnet).";
       }
       leaf-list require-client-classes {
         type string;
         description "Subnet require client classes.";
       }
       container reservations {
-        description "Subnet host reservations.";
+        description "A container with host reservations specific to this IPv6 subnet.";
         list host {
           key "identifier-type identifier";
           leaf identifier-type {
@@ -215,7 +221,8 @@ module kea-dhcp6 {
           }
           leaf-list client-classes {
             type string;
-            description "Host client classes.";
+            description "Host client classes. (if host identifier matches, a client's
+                         packet will be added to the classes liste here.)";
           }
           leaf-list ip-addresses {
             type inet:ipv6-address;
@@ -241,7 +248,7 @@ module kea-dhcp6 {
         description "Subnet host reservation mode.";
       }
       container relay {
-        description "Relay.";
+        description "Optional information about relay agent.";
         uses relay;
       }
       leaf user-context {
@@ -276,7 +283,8 @@ module kea-dhcp6 {
     leaf persist {
       type boolean;
       default true;
-      description "Write lease to disk file.";
+      description "Write lease to disk file. This parameter applies only to
+                  memfile backend.";
     }
     leaf port {
       type uint16;
@@ -291,10 +299,13 @@ module kea-dhcp6 {
     leaf readonly {
       type boolean;
       default false;
-      description "Read-only database.";
+      description "If set to true, the database will be connected in read-only
+                   mode. This does not make sense for lease databases, only for
+                   host reservations and possibly for upcoming config backend.";
     }
     leaf connect-timeout {
       type uint32;
+      units "milliseconds";
       description "Database connection timeout.";
     }
     leaf contact-points {
@@ -313,10 +324,12 @@ module kea-dhcp6 {
     leaf reconnect-wait-time {
       type uint32;
       default 0;      
+      units "milliseconds";
       description "Waiting delay between two recovery attempts.";
     }
     leaf request-timeout {
       type uint32;
+      units "milliseconds";
       description "Timeout waiting for a response.";
     }
     leaf tcp-keepalive {
@@ -344,7 +357,7 @@ module kea-dhcp6 {
     }
     leaf test {
       type string;
-      description "Client class test expression.";
+      description "Defines an expression that evaluates every incoming packet.";
     }
     leaf only-if-required {
       type boolean;
@@ -366,17 +379,17 @@ module kea-dhcp6 {
         leaf name {
           type string;
           mandatory true;
-          description "Option definition name.";
+          description "Name of the new option being defined.";
         }
         leaf code {
           type uint16;
           mandatory true;
-          description "Option definition code.";
+          description "Option code to be used by the new option definition.";
         }
         leaf type {
           type string;
           mandatory true;
-          description "Option definition type.";
+          description "Type of the new option being defined (such as string or uint8).";
         }
         leaf record-types {
           type string;
@@ -385,11 +398,12 @@ module kea-dhcp6 {
         leaf space {
           type string;
           mandatory true;
-          description "Option definition space.";
+          description "Option space for the new option (typically dhcp6).";
         }
         leaf encapsulate {
           type string;
-          description "Option definition encapsulate.";
+          description "Defines option space this new option encapsulates.
+                       Usually empty.";
         }
         leaf array {
           type boolean;
@@ -430,16 +444,18 @@ module kea-dhcp6 {
         leaf csv-format {
           type boolean;
           default true;
-          description "Option CSV format flag.";
+          description "If true, the option is specified as comma separated values.
+                       If false, it is expected as a hex string.";
         }
         leaf always-send {
           type boolean;
           default false;
-          description "Option always send flag.";
+          description "Defines whether to always send the option, regardless if the
+                       client requested it or not.";
         }
         leaf user-context {
           type kea:user-context;
-          description "Option user context.";
+          description "Option user context. Arbitrary JSON data can be stored here.";
         }
       }   
     }
@@ -466,7 +482,7 @@ module kea-dhcp6 {
     }
 
     container shared-networks {
-      description "Shared networks.";
+      description "Defines a list of IPv6 shared networks.";
       list shared-network {
         key name;
         leaf name {
@@ -475,7 +491,7 @@ module kea-dhcp6 {
           description "Shared network name.";
         }
         container subnet6 {
-          description "Shared network subnet6 list.";
+          description "List of IPv6 subnets that belong to this shared network.";
           uses subnet6-list;
         }
         leaf interface {
@@ -490,7 +506,7 @@ module kea-dhcp6 {
         uses rebind-timer;
         uses option-data-list;
         container relay {
-          description "Relay.";
+          description "Optional information about relay agent.";
           uses relay;
         }
         leaf reservation-mode {
@@ -499,7 +515,8 @@ module kea-dhcp6 {
         }
         leaf client-class {
           type string;
-          description "Shared network client class guard.";
+          description "Shared network client class guard (only clients belonging
+                       to this class will be allowed in this shared network).";
         }
         leaf-list require-client-classes {
           type string;
@@ -520,10 +537,11 @@ module kea-dhcp6 {
     }
 
     container interfaces-config {
-      description "Interfaces configuration.";
+      description "Network interfaces configuration.";
       leaf-list interfaces {
         type string;
-        description "Interface name or name/address or *.";
+        description "Name of the interface (e.g. eth0) or name/address
+                     (e.g. eth0/2001:db8::1) or * (use all interfaces).";
       }
       leaf re-detect {
         type boolean;
@@ -704,7 +722,8 @@ module kea-dhcp6 {
           enum "TCP";
         }
         default "UDP";
-        description "Protocol to use for DHCP-DDNS.";
+        description "Protocol to use for DHCP-DDNS communication.
+                     Currently only UDP is supported.";
       }
       leaf ncr-format {
         type enumeration {
@@ -744,21 +763,22 @@ module kea-dhcp6 {
       }
       leaf hostname-char-set {
         type string;
-        description "Invalid character set in hostnames.";
+        description "A regex defining invalid characters. If detected, those
+                     will be replaced by hostname-char-replacement.";
       }
       leaf hostname-char-replacement {
         type string;
-        description "Replacement for invalid charaters.";
+        description "Replacement for invalid charaters. See hostname-char-set.";
       }
       leaf user-context {
         type kea:user-context;
-        description "DHCP-DDNS user context.";
+        description "DHCP-DDNS user context. Arbitrary JSON data can be stored here.";
       }
     }
 
     leaf user-context {
       type kea:user-context;
-      description "DHCPv6 server user context.";
+      description "DHCPv6 server user context. Arbitrary JSON data can be stored here.";
     }
 
     container sanity-checks {

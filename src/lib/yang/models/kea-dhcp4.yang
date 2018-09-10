@@ -183,7 +183,7 @@ module kea-dhcp4 {
           range 1..max;
         }
         mandatory true;
-        description "Subnet ID (a unique identifier used to locate or reference
+        description "Subnet ID, a unique identifier used to locate or reference
                      a subnet.";
       }
       leaf client-class {
@@ -211,7 +211,7 @@ module kea-dhcp4 {
           leaf-list client-classes {
             type string;
             description "Host client classes (if host identifier matches, a client's
-                         packet will be added to the classes liste here).";
+                         packet will be added to the classes liste here.)";
           }
           leaf ip-address {
             type inet:ipv4-address;
@@ -309,7 +309,8 @@ module kea-dhcp4 {
     }
     leaf connect-timeout {
       type uint32;
-      description "Database connection timeout, expressed in milliseconds.";
+      units "milliseconds";
+      description "Database connection timeout.";
     }
     leaf contact-points {
       type string;
@@ -329,12 +330,13 @@ module kea-dhcp4 {
     leaf reconnect-wait-time {
       type uint32;
       default 0;
-      description "Waiting delay between two recovery attempts, expressed in
-                   milliseconds.";
+      units "milliseconds";
+      description "Waiting delay between two recovery attempts.";
     }
     leaf request-timeout {
       type uint32;
-      description "Timeout waiting for a response, expressed in milliseconds.";
+      units "milliseconds";
+      description "Timeout waiting for a response.";
     }
     leaf tcp-keepalive {
       type uint32;
@@ -387,7 +389,7 @@ module kea-dhcp4 {
         leaf name {
           type string;
           mandatory true;
-          description "Name of the new option definition.";
+          description "Name of the new option being defined.";
         }
         leaf code {
           type uint8;
@@ -397,7 +399,7 @@ module kea-dhcp4 {
         leaf type {
           type string;
           mandatory true;
-          description "Type of the new option definition.";
+          description "Type of the new option being defined (such as string or uint8).";
         }
         leaf record-types {
           type string;
@@ -406,12 +408,12 @@ module kea-dhcp4 {
         leaf space {
           type string;
           mandatory true;
-          description "Option definition space (typically dhcp4).";
+          description "Option space for the new option (typically dhcp4).";
         }
         leaf encapsulate {
           type string;
           description "Defines option space this new option encapsulates.
-                       Usually is empty.";
+                       Usually empty.";
         }
         leaf array {
           type boolean;
@@ -452,12 +454,14 @@ module kea-dhcp4 {
         leaf csv-format {
           type boolean;
           default true;
-          description "Option CSV format flag.";
+          description "If true, the option is specified as comma separated values.
+                       If false, it is expected as a hex string.";
         }
         leaf always-send {
           type boolean;
           default false;
-          description "Option always send flag.";
+          description "Defines whether to always send the option, regardless if the
+                       client requested it or not.";
         }
         leaf user-context {
           type kea:user-context;
@@ -702,7 +706,7 @@ module kea-dhcp4 {
           enum "TCP";
         }
         default "UDP";
-        description "Protocol to use for DHCP-DDNS communication
+        description "Protocol to use for DHCP-DDNS communication.
                      Currently only UDP is supported.";
       }
       leaf ncr-format {
