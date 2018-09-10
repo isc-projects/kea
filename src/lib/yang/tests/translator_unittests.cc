@@ -18,6 +18,41 @@ using namespace isc::yang;
 
 namespace {
 
+const std::string TEST_MODULE="example-module";
+
+// This test verifies if there are test models installed and accessible.
+// To run those tests properly, the following models need to be installed:
+// - example-module
+// - test-module
+TEST(TranslatorBasicTest, testEnvironmentCheck) {
+    // Get a connection.
+    S_Connection conn(new Connection("translator unittests"));
+    // Get a session.
+    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    S_Yang_Schemas schemas = sess->list_schemas();
+
+    size_t schema_cnt = schemas->schema_cnt();
+    std::cout << "There are " << schema_cnt << " YANG schema(s) installed:" << endl;
+
+    bool found = false;
+    for (int i = 0; i < schema_cnt; i++) {
+        string name(schemas->schema(i)->module_name());
+        if (name == TEST_MODULE) {
+            found = true;
+        }
+        std::cout << "Schema " << i << ": " << name << endl;
+    }
+
+    EXPECT_TRUE(found) << "\nERROR: Module used in unit-tests " << TEST_MODULE
+                       << " is not installed. The environment is not suitable for\n"
+                       << "ERROR: running unit-tests. Please locate example-module.yang "
+                       << "and issue the following command:\n"
+                       << "ERROR: sysrepoctl --install --yang=example-module.yang\n"
+                       << "ERROR:\n"
+                       << "ERROR: Following tests will most likely fail.\n";
+}
+
 // Test constructor.
 TEST(TranslatorBasicTest, constructor) {
     // Get a connection.
