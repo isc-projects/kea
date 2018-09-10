@@ -12,11 +12,17 @@ module kea-dhcp4 {
   import kea-types {
     prefix kea;
   }
+  import kea-dhcp-types {
+    prefix dhcp;
+  }
+  import kea-logging {
+    prefix logging;
+  }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
-    used to configure and manage a Kea DHCPv4 server.";
+               used to configure and manage a Kea DHCPv4 server.";
 
   revision 2018-08-20 {
     description "Initial revision";
@@ -37,52 +43,9 @@ module kea-dhcp4 {
     description "Host identifier type.";
   }
 
-  typedef host-reservation-mode {
-    type enumeration {
-      enum "disabled";
-      enum "out-of-pool";
-      enum "all";
-      enum "global";
-    }
-    description "Host reservation mode.";
-  }
-
-  typedef lease-state {
-    type enumeration {
-      enum "default";
-      enum "declined";
-      enum "expired-reclaimed";
-    }
-    description "Defines state of the lease.";
-  }
-
   /*
   * Groupings
   */
-  grouping valid-lifetime {
-    leaf valid-lifetime {
-      type uint32;
-      units "seconds";
-      description "Valid lifetime.";
-    }
-  }
-
-  grouping renew-timer {
-    leaf renew-timer {
-      type uint32;
-      units "seconds";
-      description "Renew timer.";
-    }
-  }
-
-  grouping rebind-timer {
-    leaf rebind-timer {
-      type uint32;
-      units "seconds";
-      description "Rebind timer.";
-    }
-  }
-
   grouping match-client-id {
     leaf match-client-id {
       type boolean;
@@ -126,13 +89,14 @@ module kea-dhcp4 {
     list subnet4 {
       key id;
       ordered-by user;
-      uses valid-lifetime;
-      uses renew-timer;
-      uses rebind-timer;
+      uses dhcp:valid-lifetime;
+      uses dhcp:renew-timer;
+      uses dhcp:rebind-timer;
       uses option-data-list;
       container pools {
         list pool {
           key "start-address end-address";
+          ordered-by user;
           leaf prefix {
             type inet:ipv4-prefix;
             description "Defines a pool of dynamic IPv4 addresses to be managed
@@ -149,19 +113,9 @@ module kea-dhcp4 {
             description "Last IPv4 address in a pool.";
           }
           uses option-data-list;
-          leaf client-class {
-            type string;
-            description "Pool client class guard (only clients belonging to this
-                         class will be allowed in this pool).";
-          }
-          leaf-list require-client-classes {
-            type string;
-            description "Pool require client classes.";
-          }
-          leaf user-context {
-            type kea:user-context;
-            description "Pool user context. Arbitrary JSON data can be stored here.";
-          }
+          uses dhcp:pool-client-class;
+          uses dhcp:pool-require-client-classes;
+          uses dhcp:pool-user-context;
         }
       }
       leaf subnet {
@@ -169,72 +123,35 @@ module kea-dhcp4 {
         mandatory true;
         description "IPv4 subnet prefix.";
       }
-      leaf interface {
-        type string;
-        description "Name of the network interface this subnet is directly
-                     accessible with (optional).";
-      }
-      leaf interface-id {
-        type string;
-        description "Subnet interface-id option.";
-      }
-      leaf id {
-        type uint32 {
-          range 1..max;
-        }
-        mandatory true;
-        description "Subnet ID, a unique identifier used to locate or reference
-                     a subnet.";
-      }
-      leaf client-class {
-        type string;
-        description "Subnet client class guard (only clients belonging to this
-                     clas will be allowed in this subnet).";
-
-      }
-      leaf-list require-client-classes {
-        type string;
-        description "Subnet require client classes.";
-      }
+      uses dhcp:subnet-interface;
+      uses dhcp:subnet-interface-id;
+      uses dhcp:subnet-id;
+      uses dhcp:subnet-client-class;
+      uses dhcp:subnet-require-client-classes;
       container reservations {
-        description "A container with host reservations specific to this IPv4 subnet.";
+        description "A container with host reservations specific to
+                     this IPv4 subnet.";
         list host {
           key "identifier-type identifier";
           leaf identifier-type {
             type host-identifier-type;
             description "Host identifier type.";
           }
-          leaf identifier {
-            type string;
-            description "Host identifier.";
-          }
-          leaf-list client-classes {
-            type string;
-            description "Host client classes (if host identifier matches, a client's
-                         packet will be added to the classes liste here.)";
-          }
+          uses dhcp:host-identifier;
           leaf ip-address {
             type inet:ipv4-address;
             description "Host reserved IPv4 address.";
           }
-          leaf hostname {
-            type string;
-            description "Host DNS name.";
-          }
+          uses dhcp:host-hostname;
+          uses dhcp:host-client-classes;
           uses option-data-list;
           uses next-server;
           uses server-hostname;
           uses boot-file-name;
-          leaf user-context {
-            type kea:user-context;
-            description "Host user context. Arbitrary JSON data can be stored here.";
-          }
+          uses dhcp:host-user-context;
         }
       }
-      leaf reservation-mode {
-        type host-reservation-mode;
-        description "Subnet host reservation mode.";
-      }
+      uses dhcp:subnet-reservation-mode;
       container relay {
         description "Optional information about relay agent.";
         uses relay;
@@ -255,130 +172,20 @@ module kea-dhcp4 {
         type inet:ipv6-prefix;
         description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
       }
-      leaf user-context {
-        type kea:user-context;
-        description "Subnet user context. Arbitrary JSON data can be stored here.";
-      }
-    }
-  }
-
-  grouping database {
-    leaf database-type {
-      type string;
-      mandatory true;
-      description "Database type (e.g. mysql).";
-    }
-    leaf user {
-      type string;
-      description "Database user name.";
-    }
-    leaf password {
-      type string;
-      description "Database user password.";
-    }
-    leaf host {
-      type string;
-      description "Database host.";
-    }
-    leaf name {
-      type string;
-      description "Database name.";
-    }
-    leaf persist {
-      type boolean;
-      default true;
-      description "Write lease to disk file. This parameter applies only to
-                  memfile backend.";
-    }
-    leaf port {
-      type uint16;
-      description "Database port.";
-    }
-    leaf lfc-interval {
-      type uint32;
-      units "seconds";
-      default 3600;
-      description "Interval between two lease file cleanups.";
-    }
-    leaf readonly {
-      type boolean;
-      default false;
-      description "If set to true, the database will be connected in read-only
-                   mode. This does not make sense for lease databases, only for
-                   host reservations and possibly for upcoming config backend.";
-    }
-    leaf connect-timeout {
-      type uint32;
-      units "milliseconds";
-      description "Database connection timeout.";
-    }
-    leaf contact-points {
-      type string;
-      description "Cassandra database contact points, a coma separated list of
-                  IPv4 addresses.";
-    }
-    leaf keyspace {
-      type string;
-      description "Cassandra database keyspace (this is Cassandra's equivalent
-                   of a database name).";
-    }
-    leaf max-reconnect-tries {
-      type uint32;
-      default 0;
-      description "Maximum of recovery attempts before exit.";
-    }
-    leaf reconnect-wait-time {
-      type uint32;
-      default 0;
-      units "milliseconds";
-      description "Waiting delay between two recovery attempts.";
-    }
-    leaf request-timeout {
-      type uint32;
-      units "milliseconds";
-      description "Timeout waiting for a response.";
-    }
-    leaf tcp-keepalive {
-      type uint32;
-      units "seconds";
-      default 0;
-      description "TCP keepalive for the database connection.";
-    }
-    leaf tcp-nodelay {
-      type boolean;
-      default true;
-      description "TCP nodelay for the database connection.";
-    }
-    leaf user-context {
-      type kea:user-context;
-      description "Database user context. Arbitrary JSON data can be stored here.";
+      uses dhcp:subnet-user-context;
     }
   }
 
   grouping client-class {
-    leaf name {
-      type string;
-      mandatory true;
-      description "Name of the client class.";
-    }
-    leaf test {
-      type string;
-      description "Defines an expression that evaluates every incoming packet.";
-    }
-    leaf only-if-required {
-      type boolean;
-      default false;
-      description "Client class only if required flag.";
-    }
+    uses dhcp:class-name;
+    uses dhcp:class-test;
+    uses dhcp:class-only-if-required;
     uses option-def-list;
     uses option-data-list;
     uses next-server;
     uses server-hostname;
     uses boot-file-name;
-    leaf user-context {
-      type kea:user-context;
-      description "Client class user context. Arbitrary JSON data can be stored here.";
-    }
+    uses dhcp:class-user-context;
   }
 
   grouping option-def-list {
@@ -386,44 +193,22 @@ module kea-dhcp4 {
       description "List with custom option definitions.";
       list option-def {
         key "code space";
-        leaf name {
-          type string;
-          mandatory true;
-          description "Name of the new option being defined.";
-        }
         leaf code {
           type uint8;
           mandatory true;
           description "Option code to be used by the new option definition.";
-        }
-        leaf type {
-          type string;
-          mandatory true;
-          description "Type of the new option being defined (such as string or uint8).";
-        }
-        leaf record-types {
-          type string;
-          description "Option definition record types.";
         }
         leaf space {
           type string;
           mandatory true;
           description "Option space for the new option (typically dhcp4).";
         }
-        leaf encapsulate {
-          type string;
-          description "Defines option space this new option encapsulates.
-                       Usually empty.";
-        }
-        leaf array {
-          type boolean;
-          default false;
-          description "Option definition array flag.";
-        }
-        leaf user-context {
-          type kea:user-context;
-          description "Option definition user context.";
-        }
+        uses dhcp:option-def-name;
+        uses dhcp:option-def-type;
+        uses dhcp:option-def-record-types;
+        uses dhcp:option-def-encapsulate;
+        uses dhcp:option-def-array;
+        uses dhcp:option-def-user-context;
       }
     }
   }
@@ -433,14 +218,6 @@ module kea-dhcp4 {
       description "Option data list.";
       list option-data {
         key "code space";
-        leaf name {
-          type string;
-          description "Option name.";
-        }
-        leaf data {
-          type string;
-          description "Option data.";
-        }
         leaf code {
           type uint8;
           mandatory true;
@@ -451,39 +228,27 @@ module kea-dhcp4 {
           mandatory true;
           description "Option space.";
         }
-        leaf csv-format {
-          type boolean;
-          default true;
-          description "If true, the option is specified as comma separated values.
-                       If false, it is expected as a hex string.";
-        }
-        leaf always-send {
-          type boolean;
-          default false;
-          description "Defines whether to always send the option, regardless if the
-                       client requested it or not.";
-        }
-        leaf user-context {
-          type kea:user-context;
-          description "Option user context. Arbitrary JSON data can be stored here.";
-        }
+        uses dhcp:option-data-name;
+        uses dhcp:option-data-data;
+        uses dhcp:option-data-csv-format;
+        uses dhcp:option-data-always-send;
+        uses dhcp:option-data-user-context;
       }
     }
   }
 
-  grouping configuration {
-    description "Contains parameters for DHCPv4 server configuration.";
+  /*
+  * Data Nodes
+  */
 
-    uses valid-lifetime;
-    uses renew-timer;
-    uses rebind-timer;
+  container config {
+    description "Contains DHCPv4 server configuration.";
+    config true;
 
-    leaf decline-probation-period {
-      type uint32;
-      units "seconds";
-      default 86400;
-      description "Decline probabation period.";
-    }
+    uses dhcp:valid-lifetime;
+    uses dhcp:renew-timer;
+    uses dhcp:rebind-timer;
+    uses dhcp:decline-probation-period;
 
     container subnet4 {
       description "Global list of IPv4 subnets.";
@@ -494,22 +259,15 @@ module kea-dhcp4 {
       description "Defines a list of IPv4 shared networks.";
       list shared-network {
         key name;
-        leaf name {
-          type string;
-          mandatory true;
-          description "Shared network name.";
-        }
+        uses dhcp:network-name;
         container subnet4 {
-          description "List of IPv4 subnets that belong to this shared network.";
+          description "List of IPv4 subnets that belong to this shared
+                       network.";
           uses subnet4-list;
         }
-        leaf interface {
-          type string;
-          description "Specifies the network interface this shared network is
-                       directly accessible with. (optional)";
-        }
-        uses renew-timer;
-        uses rebind-timer;
+        uses dhcp:network-interface;
+        uses dhcp:renew-timer;
+        uses dhcp:rebind-timer;
         uses option-data-list;
         uses match-client-id;
         uses next-server;
@@ -519,25 +277,11 @@ module kea-dhcp4 {
           description "Optional information about relay agent.";
           uses relay;
         }
-        leaf reservation-mode {
-          type host-reservation-mode;
-          description "Shared network host reservation mode.";
-        }
-        leaf client-class {
-          type string;
-          description "Shared network client class guard (only clients belonging
-                       to this class will be allowed in this shared network).";
-        }
-        leaf-list require-client-classes {
-          type string;
-          description "Shared network require client classes.";
-        }
-        uses valid-lifetime;
-        leaf user-context {
-          type kea:user-context;
-          description "Shared network user context. Arbitrary JSON data can be
-                       stored here.";
-        }
+        uses dhcp:network-reservation-mode;
+        uses dhcp:network-client-class;
+        uses dhcp:network-require-client-classes;
+        uses dhcp:valid-lifetime;
+        uses dhcp:network-user-context;
       }
     }
 
@@ -564,7 +308,7 @@ module kea-dhcp4 {
         type enumeration {
           enum "same-as-inbound" {
             description "Send the response on the interface where the query
-              was received.";
+                         was received.";
           }
           enum "use-routing" {
             description "Use kernel routing.";
@@ -573,31 +317,11 @@ module kea-dhcp4 {
         default "same-as-inbound";
         description "Control the interface used to send a response.";
       }
-      leaf re-detect {
-        type boolean;
-        default false;
-        description "Re-detect interfaces at each reconfiguration.";
-      }
-      leaf user-context {
-        type kea:user-context;
-        description "Interfaces user context. Arbitrary JSON data can be stored
-                     here.";
-      }
+      uses dhcp:interfaces-re-detect;
+      uses dhcp:interfaces-user-context;
     }
 
-    container lease-database {
-      description "Lease database.";
-      presence "Enable lease database.";
-      uses database;
-    }
-
-    container hosts-databases {
-      description "Hosts databases.";
-      list hosts-database {
-        key database-type;
-        uses database;
-      }
-    }
+    uses dhcp:databases;
 
     leaf-list host-reservation-identifiers {
       type host-identifier-type;
@@ -616,202 +340,45 @@ module kea-dhcp4 {
     uses option-def-list;
     uses option-data-list;
     uses kea:hooks-libraries;
-
-    container expired-leases-processing {
-      description "Expired leases processing setup.";
-      leaf reclaim-timer-wait-time {
-        type uint32;
-        units "seconds";
-        default 10;
-        description "Interval between reclamation cycles.";
-      }
-      leaf flush-reclaimed-timer-wait-time {
-        type uint32;
-        units "seconds";
-        default 25;
-        description "Interval between reclaimed leases collection.";
-      }
-      leaf hold-reclaimed-time {
-        type uint32;
-        units "seconds";
-        default 3600;
-        description "Hold timer for re-assignment.";
-      }
-      leaf max-reclaim-leases {
-        type uint32;
-        default 100;
-        description "Maximum number of reclaimed leases per cycle.";
-      }
-      leaf max-reclaim-time {
-        type uint32;
-        units "milliseconds";
-        default 250;
-        description "Maximum duration of a reclamation cycle.";
-      }
-      leaf unwarned-reclaim-cycles {
-        type uint32;
-        default 5;
-        description "Maximum numbers of uncomplete cycles before warning.";
-      }
-    }
-
-    leaf dhcp4o6-port {
-      type uint16;
-      description "DHCPv4-over-DHCPv6 interserver port.";
-    }
-
-    container control-socket {
-      description "Control socket";
-      presence "Enable control socket.";
-      uses kea:control-socket;
-    }
-
-    container dhcp-ddns {
-      description "DHCP-DDNS client setup.";
-      leaf enable-updates {
-        type boolean;
-        default false;
-        description "Enable DHCP-DDNS updates.";
-      }
-      leaf qualifying-suffix {
-        type string;
-        description "DHCP-DDNS qualifying suffix.";
-      }
-      leaf server-ip {
-        type inet:ip-address;
-        default "127.0.0.1";
-        description "DHCP-DDNS server IP address.";
-      }
-      leaf server-port {
-        type uint16;
-        default 53001;
-        description "DHCP-DDNS server port.";
-      }
-      leaf sender-ip {
-        type inet:ip-address;
-        description "DHCP-DDNS sender IP address.";
-      }
-      leaf sender-port {
-        type uint16;
-        description "DHCP-DDNS sender port.";
-      }
-      leaf max-queue-size {
-        type uint32;
-        default 1024;
-        description "Maximum DHCP-DDNS queue size.";
-      }
-      leaf ncr-protocol {
-        type enumeration {
-          enum "UDP";
-          enum "TCP";
-        }
-        default "UDP";
-        description "Protocol to use for DHCP-DDNS communication.
-                     Currently only UDP is supported.";
-      }
-      leaf ncr-format {
-        type enumeration {
-          enum "JSON";
-        }
-        default "JSON";
-        description "Packet format to use for DHCP-DDNS.";
-      }
-      leaf always-include-fqdn {
-        type boolean;
-        description "???";
-      }
-      leaf override-no-update {
-        type boolean;
-        default false;
-        description "Ignore client request and send update.";
-      }
-      leaf override-client-update {
-        type boolean;
-        default false;
-        description "Ignore client delegation.";
-      }
-      leaf replace-client-name {
-        type enumeration {
-          enum "when-present";
-          enum "never";
-          enum "always";
-          enum "when-not-present";
-        }
-        default "never";
-        description "Replace the name provided by the client.";
-      }
-      leaf generated-prefix {
-        type string;
-        default "myhost";
-        description "DHCP-DDNS generated prefix.";
-      }
-      leaf hostname-char-set {
-        type string;
-        description "A regex defining invalid characters. If detected, those
-                     will be replaced by hostname-char-replacement.";
-      }
-      leaf hostname-char-replacement {
-        type string;
-        description "Replacement for invalid charaters. See hostname-char-set.";
-      }
-      leaf user-context {
-        type kea:user-context;
-        description "DHCP-DDNS user context. Arbitrary JSON data can be stored here.";
-      }
-    }
+    uses dhcp:expired-leases-processing;
+    uses dhcp:dhcp4o6-port;
+    uses dhcp:control-socket;
+    uses dhcp:dhcp-ddns;
 
     leaf echo-client-id {
       type boolean;
       default true;
-      description "Send client-id back when the client sent it. This is conformant
-                   with RFC6842, but some older, buggy clients have problems with it.";
+      description "Send client-id back when the client sent it. This
+                   is conformant with RFC6842, but some older, buggy
+                   clients have problems with it.";
     }
 
     uses match-client-id;
     uses next-server;
     uses server-hostname;
     uses boot-file-name;
-
-    leaf user-context {
-      type kea:user-context;
-      description "DHCPv4 server user context. Arbitrary JSON data can be stored here.";
-    }
-
-    container sanity-checks {
-      description "Sanity checks.";
-      leaf lease-checks {
-        type enumeration {
-          enum "none" {
-            description "No checks.";
-          }
-          enum "warn" {
-            description "When a check fails print a warning and accept the
-              lease.";
-          }
-          enum "fix" {
-            description "When a check fails try to fix it and accept the
-              lease.";
-          }
-          enum "fix-del" {
-            description "When a check fails try to fix it and reject the
-              lease if still bad.";
-          }
-          enum "del" {
-            description "When a check fails reject the lease.";
-          }
-        }
-        default "warn";
-        description "Lease checks: verify subnet-id consistency on memfile
-          loading.";
+    uses kea:user-context {
+      refine user-context {
+        description "DHCPv4 server user context. Arbitrary JSON data can
+                     be stored here.";
       }
     }
+    uses dhcp:sanity-checks;
+  }
+
+  container logging {
+    description "Logging";
+    config true;
+
+    uses logging:configuration;
   }
 
   /*
   * State data
   */
-  grouping state {
+  container state {
     description "State of Kea DHCPv4 server.";
+    config false;
 
     container leases {
       description "Kea DHCPv4 leases.";
@@ -831,11 +398,10 @@ module kea-dhcp4 {
           type binary;
           description "Lease client-id.";
         }
-        leaf valid-lifetime {
-          type uint32;
-          units "seconds";
-          mandatory true;
-          description "Lease valid lifetime.";
+        uses dhcp:valid-lifetime {
+          refine valid-lifetime {
+            mandatory true;
+          }
         }
         leaf cltt {
           type uint32;
@@ -864,7 +430,7 @@ module kea-dhcp4 {
           description "Lease hostname.";
         }
         leaf state {
-          type lease-state;
+          type dhcp:lease-state;
           default "default";
           description "Lease state.";
         }
@@ -905,42 +471,24 @@ module kea-dhcp4 {
       description "Kea DHCPv4 hosts.";
       list host {
         key "subnet-id identifier-type identifier";
-        leaf identifier {
-          type string;
-          mandatory true;
-          description "Host identifier.";
-        }
         leaf identifier-type {
           type host-identifier-type;
           mandatory true;
           description "Host identifier type.";
         }
-        leaf subnet-id {
-          type uint32;
-          mandatory true;
-          description "Host subnet ID.";
-        }
+        uses dhcp:host-identifier;
+        uses dhcp:host-subnet-id;
         leaf ip-address {
           type inet:ipv4-address;
           description "Host reserved IP address.";
         }
-        leaf hostname {
-          type string;
-          description "Host name.";
-        }
-        leaf-list client-classes {
-          type string;
-          description "Host client classes. (if host identifier matches, a client's
-                         packet will be added to the classes liste here)";
-        }
+        uses dhcp:host-hostname;
+        uses dhcp:host-client-classes;
         uses option-data-list;
         uses next-server;
         uses server-hostname;
         uses boot-file-name;
-        leaf user-context {
-          type kea:user-context;
-          description "Host user context. Arbitrary JSON data can be stored here.";
-        }
+        uses dhcp:host-user-context;
         leaf auth-key {
           type string;
           description "Host authentication key (unused in DHCPv4).";
