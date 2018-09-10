@@ -81,7 +81,7 @@ public:
     /// @brief Retrieves shared networks modified after specified time.
     ///
     /// @param selector Server selector.
-    /// @param Lower bound shared network modification time.
+    /// @param modification_time Lower bound shared network modification time.
     /// @return Collection of shared network or empty collection if
     /// no shared network found.
     virtual SharedNetwork4Collection
@@ -176,9 +176,11 @@ public:
     ///
     /// @param selector Server selector.
     /// @param subnet_id Identifier of a subnet to which option belongs.
+    /// @param option Option to be added or updated.
     virtual void
     createUpdateOption4(const db::ServerSelector& selector,
-                        const SubnetID& subnet_id, const OptionPtr& option) = 0;
+                        const SubnetID& subnet_id,
+                        const OptionPtr& option) = 0;
 
     /// @brief Creates or updates pool level option.
     ///
@@ -187,6 +189,7 @@ public:
     /// the option belongs.
     /// @param pool_end_address Upper bound address of the pool to which the
     /// option belongs.
+    /// @param option Option to be added or updated.
     virtual void
     createUpdateOption4(const db::ServerSelector& selector,
                         const asiolink::IOAddress& pool_start_address,
@@ -288,8 +291,10 @@ public:
     /// @param selector Server selector.
     /// @param pool_start_address Lower bound address of the pool to which
     /// deleted option belongs.
-    /// @param pool_end_start Upper bound address of the pool to which the
+    /// @param pool_end_address Upper bound address of the pool to which the
     /// deleted option belongs.
+    /// @param code Code of the deleted option.
+    /// @param space Option space of the deleted option.
     virtual void
     deleteOption4(const db::ServerSelector& selector,
                   const asiolink::IOAddress& pool_start_address,
