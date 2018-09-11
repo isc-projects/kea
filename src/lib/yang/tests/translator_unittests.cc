@@ -18,13 +18,15 @@ using namespace isc::yang;
 
 namespace {
 
-const std::string TEST_MODULE="example-module";
+const std::string TEST_MODULE="test-module";
 
-// This test verifies if there are test models installed and accessible.
-// To run those tests properly, the following models need to be installed:
-// - example-module
-// - test-module
-TEST(TranslatorBasicTest, testEnvironmentCheck) {
+
+/// @brief checks if specified schema is installed and available in sysrepo
+///
+/// @name name of the schema to be checked (without .yang)
+/// @verbose print installed schemas?
+/// @return true if installed, false otherwise.
+bool schemaInstalled(const std::string& name, bool verbose = false) {
     // Get a connection.
     S_Connection conn(new Connection("translator unittests"));
     // Get a session.
@@ -33,24 +35,37 @@ TEST(TranslatorBasicTest, testEnvironmentCheck) {
     S_Yang_Schemas schemas = sess->list_schemas();
 
     size_t schema_cnt = schemas->schema_cnt();
-    std::cout << "There are " << schema_cnt << " YANG schema(s) installed:" << endl;
+
+    if (verbose) {
+      cout << "There are " << schema_cnt << " YANG schema(s) installed:" << endl;
+    }
 
     bool found = false;
     for (int i = 0; i < schema_cnt; i++) {
-        string name(schemas->schema(i)->module_name());
-        if (name == TEST_MODULE) {
-            found = true;
-        }
-        std::cout << "Schema " << i << ": " << name << endl;
+	string installed_name(schemas->schema(i)->module_name());
+	if (installed_name == name) {
+	    found = true;
+	}
+
+	if (verbose) {
+	  std::cout << "Schema " << i << ": " << installed_name << endl;
+	}
     }
 
-    EXPECT_TRUE(found) << "\nERROR: Module used in unit-tests " << TEST_MODULE
-                       << " is not installed. The environment is not suitable for\n"
-                       << "ERROR: running unit-tests. Please locate example-module.yang "
-                       << "and issue the following command:\n"
-                       << "ERROR: sysrepoctl --install --yang=example-module.yang\n"
-                       << "ERROR:\n"
-                       << "ERROR: Following tests will most likely fail.\n";
+    return (found);
+}
+
+// This test verifies if the test schema is installed and accessible.
+TEST(TranslatorBasicTest, environmentCheck1) {
+
+  EXPECT_TRUE(schemaInstalled(TEST_MODULE))
+    << "\nERROR: Module used in unit-tests " << TEST_MODULE
+    << " is not installed. The environment is not suitable for\n"
+    << "ERROR: running unit-tests. Please locate " << TEST_MODULE <<".yang "
+    << "and issue the following command:\n"
+    << "ERROR: sysrepoctl --install --yang=" << TEST_MODULE << ".yang\n"
+    << "ERROR:\n"
+    << "ERROR: Following tests will most likely fail.\n";
 }
 
 // Test constructor.
@@ -185,11 +200,11 @@ TEST(TranslatorBasicTest, getItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/example-module:container/list";
+    string xpath = "/test-module:container/list";
     S_Val s_val;
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     ConstElementPtr elem;
-    EXPECT_NO_THROW(elem = t_obj->getItem("/example-module:container"));
+    EXPECT_NO_THROW(elem = t_obj->getItem("/test-module:container"));
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -358,13 +373,13 @@ TEST(TranslatorBasicTest, getItem) {
     // Check error.
     xpath = "null";
     try {
-        elem = t_obj->getItem(xpath);
-        ADD_FAILURE() << "expected exception";
+	elem = t_obj->getItem(xpath);
+	ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-        EXPECT_EQ("sysrepo error getting item at 'null': Invalid argument",
-                  string(ex.what()));
+	EXPECT_EQ("sysrepo error getting item at 'null': Invalid argument",
+		  string(ex.what()));
     } catch (const std::exception& ex) {
-        ADD_FAILURE() << "unexpected exception with: " << ex.what();
+	ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 }
 
@@ -465,7 +480,7 @@ TEST(TranslatorBasicTest, valueTo) {
     ASSERT_TRUE(s_val);
     EXPECT_EQ(str, string(s_val->data()->get_enum()));
     s_val.reset();
-    
+
     // Binary.
     elem = Element::create(string("foobar"));
     EXPECT_NO_THROW(s_val = TranslatorBasic::value(elem, SR_BINARY_T));
@@ -487,14 +502,14 @@ TEST(TranslatorBasicTest, setItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/example-module:container";
+    string xpath = "/test-module:container";
     ConstElementPtr elem = Element::createMap();
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_T), NotImplemented);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),
-                 NotImplemented);
+		 NotImplemented);
 
     // List.
-    xpath = "/example-module:container/list";
+    xpath = "/test-module:container/list";
     elem = Element::createList();
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_LIST_T));
     S_Val s_val;
@@ -647,28 +662,28 @@ TEST(TranslatorBasicTest, setItem) {
     xpath = "/test-module:main/no_such_string";
     elem = Element::create(string("str"));
     try {
-        t_obj->setItem(xpath, elem, SR_STRING_T);
-        ADD_FAILURE() << "expected exception";
+	t_obj->setItem(xpath, elem, SR_STRING_T);
+	ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-        string expected = "sysrepo error setting item '\"str\"' at '" +
-            xpath + "': Request contains unknown element";
-        EXPECT_EQ(expected, string(ex.what()));
+	string expected = "sysrepo error setting item '\"str\"' at '" +
+	    xpath + "': Request contains unknown element";
+	EXPECT_EQ(expected, string(ex.what()));
     } catch (const std::exception& ex) {
-        ADD_FAILURE() << "unexpected exception with: " << ex.what();
+	ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 
     // Bad type.
     xpath = "/test-module:main/string";
     elem = Element::create(true);
     try {
-        t_obj->setItem(xpath, elem, SR_BOOL_T);
-        ADD_FAILURE() << "expected exception";
+	t_obj->setItem(xpath, elem, SR_BOOL_T);
+	ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-        string expected = "sysrepo error setting item 'true' at '" +
-            xpath + "': Invalid argument";
-        EXPECT_EQ(expected, string(ex.what()));
+	string expected = "sysrepo error setting item 'true' at '" +
+	    xpath + "': Invalid argument";
+	EXPECT_EQ(expected, string(ex.what()));
     } catch (const std::exception& ex) {
-        ADD_FAILURE() << "unexpected exception with: " << ex.what();
+	ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 
     // Delete (twice).
@@ -692,20 +707,20 @@ TEST(TranslatorBasicTest, list) {
 
     // Empty list.
     S_Iter_Value iter;
-    EXPECT_NO_THROW(iter = t_obj->getIter("/example-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/test-module:container/list"));
     ASSERT_TRUE(iter);
     string xpath;
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
     // Retried with a filled list.
-    xpath = "/example-module:container/list[key1='key1'][key2='key2']/leaf";
+    xpath = "/test-module:container/list[key1='key1'][key2='key2']/leaf";
     S_Val s_val(new Val("Leaf value"));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(iter = t_obj->getIter("/example-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/test-module:container/list"));
     ASSERT_TRUE(iter);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_EQ("/example-module:container/list[key1='key1'][key2='key2']", xpath);
+    EXPECT_EQ("/test-module:container/list[key1='key1'][key2='key2']", xpath);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
