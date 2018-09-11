@@ -419,14 +419,14 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         // We previously did the lookup only for dhcp6 option space, but with the
         // addition of S46 options, we now do it for every space.
         range = idx.equal_range(opt_type);
-        num_defs = distance(range.first, range.second);
+        num_defs = std::distance(range.first, range.second);
 
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
+            num_defs = std::distance(range.first, range.second);
         }
 
         OptionPtr opt;
@@ -538,14 +538,14 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // may be standard options in other spaces (e.g. radius). So we now do
         // the lookup for every space.
         range = idx.equal_range(opt_type);
-        num_defs = distance(range.first, range.second);
+        num_defs = std::distance(range.first, range.second);
 
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
+            num_defs = std::distance(range.first, range.second);
         }
 
         // Check if option unpacking must be deferred
@@ -638,7 +638,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                 idx->equal_range(opt_type);
             // Get the number of returned option definitions for the
             // option code.
-            size_t num_defs = distance(range.first, range.second);
+            size_t num_defs = std::distance(range.first, range.second);
 
             if (num_defs > 1) {
                 // Multiple options of the same code are not supported
@@ -746,7 +746,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                     idx->equal_range(opt_type);
                 // Get the number of returned option definitions for
                 // the option code.
-                size_t num_defs = distance(range.first, range.second);
+                size_t num_defs = std::distance(range.first, range.second);
 
                 if (num_defs > 1) {
                     // Multiple options of the same code are not
