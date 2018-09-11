@@ -169,13 +169,14 @@ module kea-dhcp-types {
   grouping databases {
     container lease-database {
       description "Lease database.";
+      presence "Have lease database.";
       uses database;
     }
     container hosts-databases {
       description "Hosts databases.";
       list hosts-database {
         key database-type;
-	uses database;
+        uses database;
       }
     }
   }
@@ -223,6 +224,7 @@ module kea-dhcp-types {
   grouping control-socket {
     container control-socket {
       description "Control socket";
+      presence "Have control socket.";
       uses kea:control-socket;
     }
   }
@@ -717,7 +719,7 @@ module kea-dhcp-types {
     uses kea:user-context {
       refine user-context {
         description "Option definition user context. Arbitrary JSON data
-	             can be stored here.";
+                     can be stored here.";
       }
     }
   }
