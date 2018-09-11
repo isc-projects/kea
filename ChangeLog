@@ -1,3 +1,9 @@
+1451.	[build]		tmark
+	Resolved a namespace issue with std::distance() in libdhcp++.cc
+	when building with Boost 1.68.   Thanks to Khem Raj for reporting
+	and suggesting a fix.
+	(Gitlab #109,!21, git 1fd301f998129e9926ffa35eac27768ae150633d)
+
 1450.	[build]		tomek
 	Dependencies improved. libkea-process no longer requires libkea-dhcpsrv.
 	As a result, D2 and CA are no longer linked with libkea-dhcpsrv.
