@@ -765,8 +765,534 @@ CREATE TABLE logs (
 CREATE INDEX timestamp_index ON logs (timestamp);
 
 #add auth key for reconfiguration
-ALTER TABLE hosts  
-    ADD COLUMN auth_key VARCHAR(16) NULL; 
+ALTER TABLE hosts
+    ADD COLUMN auth_key VARCHAR(16) NULL;
+
+-- -----------------------------------------------------
+-- Table `modification`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS modification (
+  id TINYINT(3) NOT NULL,
+  modification_type VARCHAR(32) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+INSERT INTO modification(id, modification_type)
+    VALUES(0, "create");
+
+INSERT INTO modification(id, modification_type)
+    VALUES(1, "update");
+
+INSERT INTO modification(id, modification_type)
+    VALUES(2, "delete");
+
+-- -----------------------------------------------------
+-- Table `dhcp4_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_server (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(256) NOT NULL,
+    description TEXT,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY dhcp4_server_tag_UNIQUE (tag),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp4_server_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_audit`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_audit (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    object_type VARCHAR(256) NOT NULL,
+    object_id VARCHAR(128) NOT NULL,
+    modification_type TINYINT(1) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp4_audit_by_modification_ts (modification_ts),
+    KEY fk_dhcp4_audit_modification_type (modification_type),
+    CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type)
+        REFERENCES modification (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `dhcp4_global_parameter`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_global_parameter (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    value LONGTEXT NOT NULL,
+    modification_ts timestamp NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp4_global_parameter_modification_ts (modification_ts),
+    KEY key_dhcp4_global_parameter_name (name)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_global_parameter_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
+    parameter_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (parameter_id, server_id),
+    KEY fk_dhcp4_global_parameter_server_server_id (server_id),
+    KEY key_dhcp4_global_parameter_server (modification_ts),
+    CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
+        REFERENCES dhcp4_global_parameter (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_option_def`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_option_def (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    code TINYINT(3) UNSIGNED NOT NULL,
+    space VARCHAR(128) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    array TINYINT(1) NOT NULL,
+    encapsulate VARCHAR(128) NOT NULL,
+    record_types VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp4_option_def_modification_ts (modification_ts),
+    KEY key_dhcp4_option_def_code_space (code, space)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_option_def_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
+    option_def_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_def_id, server_id),
+    KEY fk_dhcp4_option_def_server_server_id_idx (server_id),
+    KEY key_dhcp4_option_def_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp4_option_def (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_shared_network`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_shared_network (
+    name VARCHAR(128) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    match_client_id TINYINT(1) NOT NULL DEFAULT '1',
+    modification_ts TIMESTAMP NOT NULL,
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT DEFAULT NULL,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    server_hostname VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (name),
+    KEY key_dhcp4_shared_network_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_shared_network_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_shared_network_server (
+    shared_network_name VARCHAR(128) NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (shared_network_name, server_id),
+    KEY key_dhcp4_shared_network_server_modification_ts (modification_ts),
+    KEY fk_dhcp4_shared_network_server_server_id_idx (server_id),
+    CONSTRAINT fk_dhcp4_shared_network_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_shared_network_server_shared_network_name FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp4_shared_network (name) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_subnet`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_subnet (
+    subnet_prefix VARCHAR(32) NOT NULL,
+    4o6_interface VARCHAR(128) DEFAULT NULL,
+    4o6_interface_id VARCHAR(128) DEFAULT NULL,
+    4o6_subnet VARCHAR(64) DEFAULT NULL,
+    boot_file_name VARCHAR(512) DEFAULT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    match_client_id TINYINT(1) NOT NULL DEFAULT '1',
+    modification_ts TIMESTAMP NOT NULL,
+    next_server INT(10) DEFAULT NULL,
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT DEFAULT NULL,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    server_hostname VARCHAR(512) DEFAULT NULL,
+    shared_network_name VARCHAR(128) DEFAULT NULL,
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (subnet_id),
+    UNIQUE KEY subnet_id_UNIQUE (subnet_id),
+    UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
+    KEY subnet4_subnet_prefix (subnet_prefix),
+    KEY fk_dhcp4_subnet_shared_network (shared_network_name),
+    KEY key_dhcp4_subnet_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp4_shared_network (name)
+        ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    start_address INT(10) NOT NULL,
+    end_address INT(10) NOT NULL,
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_pool_modification_ts (modification_ts),
+    KEY fk_dhcp4_pool_subnet_id (subnet_id),
+    CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp4_subnet (subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_subnet_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (subnet_id,server_id),
+    KEY fk_dhcp4_subnet_server_server_id_idx (server_id),
+    KEY key_dhcp4_subnet_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_subnet_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp4_subnet (subnet_id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+
+# Modify the primary key to BINGINT as other tables have.
+ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
+
+# Add conifguration backend specific columns.
+ALTER TABLE dhcp4_options
+    ADD COLUMN dhcp4_shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN dhcp4_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+# Add configuration backend specific constraints.
+ALTER TABLE dhcp4_options
+     ADD CONSTRAINT fk_dhcp4_option_pool_id FOREIGN KEY (dhcp4_pool_id)
+         REFERENCES dhcp4_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+     ADD CONSTRAINT fk_dhcp4_option_shared_network_name FOREIGN KEY (dhcp4_shared_network_name)
+         REFERENCES dhcp4_shared_network (name)
+         ON DELETE CASCADE ON UPDATE CASCADE,
+     ADD CONSTRAINT fk_dhcp4_option_subnet_id FOREIGN KEY (dhcp4_subnet_id)
+         REFERENCES dhcp4_subnet (subnet_id)
+         ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_options_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_options_server (
+    option_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_id, server_id),
+    KEY fk_dhcp4_options_server_server_id (server_id),
+    KEY key_dhcp4_options_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_options_server_option_id FOREIGN KEY (option_id)
+        REFERENCES dhcp4_options (option_id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_options_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_server (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(256) NOT NULL,
+    description TEXT,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY dhcp6_server_tag_UNIQUE (tag),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp6_server_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_audit`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_audit (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    object_type VARCHAR(256) NOT NULL,
+    object_id VARCHAR(128) NOT NULL,
+    modification_type TINYINT(1) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp6_audit_modification_ts (modification_ts),
+    KEY fk_dhcp6_audit_modification_type (modification_type),
+    CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type)
+        REFERENCES modification (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_global_parameter`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_global_parameter (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    value LONGTEXT NOT NULL,
+    modification_ts timestamp NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp6_global_parameter_modification_ts (modification_ts),
+    KEY key_dhcp6_global_parameter_name (name)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_global_parameter_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
+    parameter_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (parameter_id, server_id),
+    KEY fk_dhcp6_global_parameter_server_server_id (server_id),
+    KEY key_dhcp6_global_parameter_server (modification_ts),
+    CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
+        REFERENCES dhcp6_global_parameter (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_option_def`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_option_def (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    code TINYINT(3) UNSIGNED NOT NULL,
+    space VARCHAR(128) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    array TINYINT(1) NOT NULL,
+    encapsulate VARCHAR(128) NOT NULL,
+    record_types VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    PRIMARY KEY (id),
+    UNIQUE KEY id_UNIQUE (id),
+    KEY key_dhcp6_option_def_modification_ts (modification_ts),
+    KEY key_dhcp6_option_def_code_space (code, space)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_option_def_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
+    option_def_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_def_id, server_id),
+    KEY fk_dhcp6_option_def_server_server_id_idx (server_id),
+    KEY key_dhcp6_option_def_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp6_option_def (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_shared_network`
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_shared_network (
+    name VARCHAR(128) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    preferred_lifetime INT(10) DEFAULT NULL,
+    rapid_commit TINYINT(1) NOT NULL DEFAULT '1',
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT DEFAULT NULL,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    server_hostname VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (name),
+    KEY key_dhcp6_shared_network_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_shared_network_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
+    shared_network_name VARCHAR(128) NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    KEY key_dhcp6_shared_network_server_modification_ts (modification_ts),
+    KEY fk_dhcp6_shared_network_server_server_id_idx (server_id),
+    KEY fk_dhcp6_shared_network_server_shared_network_name (shared_network_name),
+    CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_shared_network_server_shared_network_name FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp6_shared_network (name)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_subnet`
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_subnet (
+    subnet_prefix VARCHAR(64) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    preferred_lifetime INT(10) DEFAULT NULL,
+    rapid_commit TINYINT(1) NOT NULL DEFAULT '1',
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT DEFAULT NULL,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    shared_network_name VARCHAR(128) DEFAULT NULL,
+    subnet_id int(10) UNSIGNED NOT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (subnet_id),
+    UNIQUE KEY subnet_id_UNIQUE (subnet_id),
+    UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
+    KEY subnet6_subnet_prefix (subnet_prefix),
+    KEY fk_dhcp6_subnet_shared_network (shared_network_name),
+    KEY key_dhcp6_subnet_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp6_shared_network (name)
+        ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_subnet_server`
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_subnet_server (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (subnet_id, server_id),
+    KEY fk_dhcp6_subnet_server_server_id (server_id),
+    KEY key_dhcp6_subnet_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_subnet_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_pd_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_pd_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    prefix VARCHAR(45) NOT NULL,
+    prefix_length TINYINT(3) NOT NULL,
+    delegated_prefix_length TINYINT(3) NOT NULL,
+    dhcp6_subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY fk_dhcp6_pd_pool_subnet_id (dhcp6_subnet_id),
+    KEY key_dhcp6_pd_pool_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    start_address VARCHAR(45) NOT NULL,
+    end_address VARCHAR(45) NOT NULL,
+    dhcp6_subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY fk_dhcp6_pool_subnet_id (dhcp6_subnet_id),
+    KEY key_dhcp6_pool_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+# Modify the primary key to BINGINT as other tables have.
+ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
+
+# Add conifguration backend specific columns.
+ALTER TABLE dhcp6_options
+    ADD COLUMN dhcp6_shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN dhcp6_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN dhcp6_pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+
+# Add configuration backend specific constraints.
+ALTER TABLE dhcp6_options
+     ADD CONSTRAINT fk_dhcp6_option_pd_pool_id FOREIGN KEY (dhcp6_pd_pool_id)
+         REFERENCES dhcp6_pd_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+     ADD CONSTRAINT fk_dhcp6_option_pool_id FOREIGN KEY (dhcp6_pool_id)
+         REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
+     ADD CONSTRAINT fk_dhcp6_option_shared_network_name FOREIGN KEY (dhcp6_shared_network_name)
+         REFERENCES dhcp6_shared_network (name)
+         ON DELETE CASCADE ON UPDATE CASCADE,
+     ADD CONSTRAINT fk_dhcp6_option_subnet_id FOREIGN KEY (dhcp6_subnet_id)
+         REFERENCES dhcp6_subnet (subnet_id)
+         ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_options_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_options_server (
+    option_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_id, server_id),
+    KEY fk_dhcp6_options_server_server_id_idx (server_id),
+    KEY key_dhcp6_options_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id)
+        REFERENCES dhcp6_options (option_id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
 
 # Update the schema version number
 UPDATE schema_version
