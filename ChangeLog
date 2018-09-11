@@ -1,7 +1,7 @@
 1451.	[build]		tmark
 	Resolved a namespace issue with std::distance() in libdhcp++.cc
-	when building with Boost 1.68.   Thanks to Khem Raj for reporting
-	and suggesting a fix.
+	when building with Boost 1.68.   Thanks to Huy Vu and Khem Raj
+	for reporting and suggesting a fix.
 	(Gitlab #109,!21, git 1fd301f998129e9926ffa35eac27768ae150633d)
 
 1450.	[build]		tomek
