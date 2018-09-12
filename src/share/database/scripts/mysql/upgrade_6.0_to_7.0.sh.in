@@ -324,17 +324,6 @@ ALTER TABLE dhcp4_options
     ADD COLUMN dhcp4_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
-# Add configuration backend specific constraints.
-ALTER TABLE dhcp4_options
-     ADD CONSTRAINT fk_dhcp4_option_pool_id FOREIGN KEY (dhcp4_pool_id)
-         REFERENCES dhcp4_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
-     ADD CONSTRAINT fk_dhcp4_option_shared_network_name FOREIGN KEY (dhcp4_shared_network_name)
-         REFERENCES dhcp4_shared_network (name)
-         ON DELETE CASCADE ON UPDATE CASCADE,
-     ADD CONSTRAINT fk_dhcp4_option_subnet_id FOREIGN KEY (dhcp4_subnet_id)
-         REFERENCES dhcp4_subnet (subnet_id)
-         ON DELETE CASCADE ON UPDATE CASCADE;
-
 # Create table dhcp4_options_server
 CREATE TABLE IF NOT EXISTS dhcp4_options_server (
     option_id BIGINT(20) UNSIGNED NOT NULL,
@@ -556,19 +545,6 @@ ALTER TABLE dhcp6_options
     ADD COLUMN dhcp6_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN dhcp6_pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
-
-# Add configuration backend specific constraints.
-ALTER TABLE dhcp6_options
-     ADD CONSTRAINT fk_dhcp6_option_pd_pool_id FOREIGN KEY (dhcp6_pd_pool_id)
-         REFERENCES dhcp6_pd_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
-     ADD CONSTRAINT fk_dhcp6_option_pool_id FOREIGN KEY (dhcp6_pool_id)
-         REFERENCES dhcp6_pool (id) ON DELETE CASCADE ON UPDATE CASCADE,
-     ADD CONSTRAINT fk_dhcp6_option_shared_network_name FOREIGN KEY (dhcp6_shared_network_name)
-         REFERENCES dhcp6_shared_network (name)
-         ON DELETE CASCADE ON UPDATE CASCADE,
-     ADD CONSTRAINT fk_dhcp6_option_subnet_id FOREIGN KEY (dhcp6_subnet_id)
-         REFERENCES dhcp6_subnet (subnet_id)
-         ON DELETE CASCADE ON UPDATE CASCADE;
 
 # Create table dhcp6_options_server
 CREATE TABLE IF NOT EXISTS dhcp6_options_server (
