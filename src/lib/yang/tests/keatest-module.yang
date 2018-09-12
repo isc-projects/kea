@@ -541,7 +541,7 @@ module keatest-module {
  container tpdfs {
     leaf unival {
        type uniontpdf;
-	 }
+         }
 
     leaf leafrefval {
        type leafreftpdf;
