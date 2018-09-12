@@ -1,14 +1,7 @@
 module kea-types {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-types";
+  namespace "urn:ietf:params:xml:ns:yang:kea-types";
   prefix "kea-types";
-
-  import ietf-inet-types {
-    prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
-  }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
@@ -31,8 +24,10 @@ module kea-types {
   * Grouping
   */
   grouping user-context {
+    description "User context grouping.";
     leaf user-context {
       type user-context;
+      description "User context entry.";
     }
   }
 
@@ -45,7 +40,9 @@ module kea-types {
     }
     leaf socket-type {
       type enumeration {
-        enum "unix";
+        enum "unix" {
+          description "Unix socket type.";
+        }
       }
       mandatory true;
       description "Socket type.";
@@ -57,10 +54,12 @@ module kea-types {
   }
 
   grouping hooks-libraries {
+    description "Hooks libraries grouping.";
     container hooks-libraries {
       description "Hook libraries.";
       list hook-library {
         key library;
+        description "List of hook library.";
         leaf library {
           type string;
           mandatory true;

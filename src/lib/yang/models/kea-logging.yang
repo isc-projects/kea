@@ -1,14 +1,8 @@
 module kea-logging {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-logging";
+  namespace "urn:ietf:params:xml:ns:yang:kea-logging";
   prefix "kea-logging";
 
-  import ietf-inet-types {
-    prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
-  }
   import kea-types {
     prefix kea;
   }
@@ -34,15 +28,17 @@ module kea-logging {
       description "Loggers.";
       list logger {
         key name;
+        description "List of loggers.";
         leaf name {
           type string;
-          description "Name of the logger.";
           mandatory true;
+          description "Name of the logger.";
         }
         container output-options {
           description "Output options.";
           list option {
             key output;
+            description "List of output options.";
             leaf output {
               type string;
               description "Type of output. Special values are stdout (standard

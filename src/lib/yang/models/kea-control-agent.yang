@@ -1,13 +1,10 @@
 module kea-control-agent {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-control-agent";
+  namespace "urn:ietf:params:xml:ns:yang:kea-control-agent";
   prefix "kea-control-agent";
 
   import ietf-inet-types {
     prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
   }
   import kea-types {
     prefix kea;
@@ -31,8 +28,8 @@ module kea-control-agent {
   */
 
   container config {
+    // config true;
     description "Contains control agent configuration.";
-    config true;
 
     leaf http-host {
       type inet:ip-address;
@@ -47,13 +44,21 @@ module kea-control-agent {
     }
 
     container control-sockets {
+      description "Control sockets.";
       list socket {
         key server-type;
+        description "List of server control socket.";
         leaf server-type {
           type enumeration {
-            enum "dhcp4";
-            enum "dhcp6";
-            enum "d2";
+            enum "dhcp4" {
+              description "kea-dhcp4 server";
+            }
+            enum "dhcp6" {
+              description "kea-dhcp6 server";
+            }
+            enum "d2" {
+              description "kea-dhcp-ddns server";
+            }
           }
           mandatory true;
           description "Server type.";
@@ -74,8 +79,8 @@ module kea-control-agent {
   }
 
   container logging {
+    // config true;
     description "Logging";
-    config true;
 
     uses logging:configuration;
   }
