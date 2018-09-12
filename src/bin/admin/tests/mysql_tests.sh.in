@@ -245,7 +245,7 @@ mysql_upgrade_schema_to_version() {
 
 mysql_upgrade_test() {
 
-    test_start "mysql.host_reservation-upgrade"
+    test_start "mysql.upgrade"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -469,10 +469,181 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
 
+    # table: modification (upgrade 6.0 -> 7.0)
+    qry="select id, modification_type from modification";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "modification table is missing or broken. (expected status code %d, returned %d)"
+
+    # table: modification table should have 3 entries (upgrade 6.0 -> 7.0)
+    qry="select count(*) from modification";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 3 "$count" "modification table does not contain correct number of entries. (expected count %d, returned %d)"
+
+    # table: dhcp4_server
+    qry="select id, tag, description, modification_ts from dhcp4_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_audit
+    qry="select id, object_type, object_id, modification_type, modification_ts from dhcp4_audit";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_audit table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_global_parameter
+    qry="select id, name, value, modification_ts from dhcp4_global_parameter";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_global_parameter table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp4_global_parameter_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_global_parameter_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_option_def
+    qry="select id, code, space, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_option_def table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp4_option_def_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_option_def_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_shared_network
+    qry="select name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp4_shared_network";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_shared_network table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_shared_network_server
+    qry="select shared_network_name, server_id, modification_ts from dhcp4_shared_network_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_shared_network_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_subnet
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime from dhcp4_subnet";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_subnet table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_pool
+    qry="select id, start_address, end_address, subnet_id, modification_ts from dhcp4_pool";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_pool table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp4_subnet_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_subnet_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_options (should include three new columns)
+    qry="select shared_network_name, pool_id, modification_ts from dhcp4_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_options table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp4_options_server
+    qry="select option_id, server_id, modification_ts from dhcp4_options_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp4_options_server table missing or broken (expected status code %d, returned %d)";
+    # table: dhcp6_server
+    qry="select id, tag, description, modification_ts from dhcp6_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_audit
+    qry="select id, object_type, object_id, modification_type, modification_ts from dhcp6_audit";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_audit table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_global_parameter
+    qry="select id, name, value, modification_ts from dhcp6_global_parameter";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_global_parameter table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp6_global_parameter_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_global_parameter_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_option_def
+    qry="select id, code, space, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_option_def table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp6_option_def_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_option_def_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_shared_network
+    qry="select name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp6_shared_network";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_shared_network table missing or broken (expected status code %d, returned %d)";
+    # table: dhcp6_shared_network_server
+    qry="select shared_network_name, server_id, modification_ts from dhcp6_shared_network_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_shared_network_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_subnet
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime from dhcp6_subnet";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_subnet table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp6_subnet_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_subnet_server table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_pd_pool
+    qry="select id, prefix_length, delegated_prefix_length, dhcp6_subnet_id, modification_ts from dhcp6_pd_pool";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_pd_pool table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_pool
+    qry="select id, start_address, end_address, dhcp6_subnet_id, modification_ts from dhcp6_pool";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_pool table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_options (should include four new columns)
+    qry="select shared_network_name, pool_id, pd_pool_id, modification_ts from dhcp6_options";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_options table missing or broken (expected status code %d, returned %d)";
+
+    # table: dhcp6_options_server
+    qry="select option_id, server_id, modification_ts from dhcp6_options_server";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "dhcp6_options_server table missing or broken (expected status code %d, returned %d)";
+
     # Verify upgraded schema reports version 7.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
     assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
-
 
     # Let's wipe the whole database
     mysql_wipe

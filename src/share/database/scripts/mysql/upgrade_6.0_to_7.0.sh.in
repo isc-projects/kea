@@ -320,8 +320,8 @@ ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
 
 # Add conifguration backend specific columns.
 ALTER TABLE dhcp4_options
-    ADD COLUMN dhcp4_shared_network_name VARCHAR(128) DEFAULT NULL,
-    ADD COLUMN dhcp4_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 # Create table dhcp4_options_server
@@ -541,9 +541,9 @@ ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
 
 # Add conifguration backend specific columns.
 ALTER TABLE dhcp6_options
-    ADD COLUMN dhcp6_shared_network_name VARCHAR(128) DEFAULT NULL,
-    ADD COLUMN dhcp6_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
-    ADD COLUMN dhcp6_pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
 
 # Create table dhcp6_options_server
