@@ -73,11 +73,12 @@ protected:
     ///
     /// @code
     /// Subnet4Ptr getSubnet4(const SubnetID& subnet_id,
-    ///                       const BackendSelector& selector,
+    ///                       const BackendSelector& backend_selector,
     ///                       const ServerSelector& server_selector) const {
     ///     Subnet4Ptr subnet;
     ///     getPropertyPtrConst<Subnet4Ptr, const SubnetID&>
-    ///         (&ConfigBackendDHCPv4::getSubnet4, selector, subnet, subnet_id);
+    ///         (&ConfigBackendDHCPv4::getSubnet4, backend_selector,
+    ///          server_selector, subnet, subnet_id);
     ///     return (subnet);
     /// }
     /// @endcode
@@ -99,7 +100,7 @@ protected:
     /// @tparam InputType Type of the objects used as input to the backend call.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param selector Backend selector.
+    /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param [out] property Reference to the shared pointer where retrieved
     /// property should be assigned.
@@ -110,14 +111,14 @@ protected:
     template<typename PropertyType, typename... InputType>
     void getPropertyPtrConst(PropertyType (ConfigBackendType::*MethodPointer)
                              (const db::ServerSelector&, InputType...) const,
-                             const db::BackendSelector& selector,
+                             const db::BackendSelector& backend_selector,
                              const db::ServerSelector& server_selector,
                              PropertyType& property,
                              InputType... input) const {
 
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
-        if (selector.amUnspecified()) {
+        if (backend_selector.amUnspecified()) {
             for (auto backend : backends_) {
                 property = ((*backend).*MethodPointer)(server_selector, input...);
                 if (property) {
@@ -127,7 +128,7 @@ protected:
 
         } else {
             // Backend selected, find the one that matches selection.
-            auto backends = selectBackends(selector);
+            auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
                     property = ((*backend).*MethodPointer)(server_selector, input...);
@@ -138,7 +139,7 @@ protected:
 
             } else {
                 isc_throw(db::NoSuchDatabase, "no such database found for selector: "
-                          << selector.toText());
+                          << backend_selector.toText());
             }
         }
     }
@@ -155,12 +156,12 @@ protected:
     /// @code
     /// OptionalValue<std::string>
     /// getGlobalParameter4(const std::string& parameter_name,
-    ///                     const BackendSelector& selector,
+    ///                     const BackendSelector& backend_selector,
     ///                     const ServerSelector& server_selector) const {
     ///     std::string parameter;
     ///     getOptionalPropertyConst<std::string, const std::string&>
-    ///         (&ConfigBackendDHCPv4::getGlobalParameter4, selector, server_selector,
-    ///          parameter, parameter_name);
+    ///         (&ConfigBackendDHCPv4::getGlobalParameter4, backend_selector,
+    ///          server_selector, parameter, parameter_name);
     ///     return (parameter);
     /// }
     /// @endcode
@@ -176,7 +177,7 @@ protected:
     /// @tparam InputType Type of the objects used as input to the backend call.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param selector Backend selector.
+    /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param [out] property Reference to the shared pointer where retrieved
     /// property should be assigned.
@@ -188,14 +189,14 @@ protected:
     void getOptionalPropertyConst(util::OptionalValue<PropertyType>
                                   (ConfigBackendType::*MethodPointer)
                                   (const db::ServerSelector&, InputType...) const,
-                                  const db::BackendSelector& selector,
+                                  const db::BackendSelector& backend_selector,
                                   const db::ServerSelector& server_selector,
                                   util::OptionalValue<PropertyType>& property,
                                   InputType... input) const {
 
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
-        if (selector.amUnspecified()) {
+        if (backend_selector.amUnspecified()) {
             for (auto backend : backends_) {
                 property = ((*backend).*MethodPointer)(server_selector, input...);
                 if (property.isSpecified()) {
@@ -205,7 +206,7 @@ protected:
 
         } else {
             // Backend selected, find the one that matches selection.
-            auto backends = selectBackends(selector);
+            auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
                     property = ((*backend).*MethodPointer)(server_selector, input...);
@@ -216,7 +217,7 @@ protected:
 
             } else {
                 isc_throw(db::NoSuchDatabase, "no such database found for selector: "
-                          << selector.toText());
+                          << backend_selector.toText());
             }
         }
     }
@@ -230,13 +231,13 @@ protected:
     /// @c getSubnets6 method:
     ///
     /// @code
-    /// Subnet6Collection getModifiedSubnets6(const BackendSelector& selector,
+    /// Subnet6Collection getModifiedSubnets6(const BackendSelector& backend_selector,
     ///                                       const ServerSelector& server_selector,
     ///                                       const ptime& modification_time) const {
     ///     Subnet6Collection subnets;
     ///     getMultiplePropertiesConst<Subnet6Collection, const ptime&>
-    ///         (&ConfigBackendDHCPv6::getSubnets6, selector, subnets,
-    ///          modification_time);
+    ///         (&ConfigBackendDHCPv6::getSubnets6, backend_selector, server_selector,
+    ///          subnets, modification_time);
     ///     return (subnets);
     /// }
     /// @endcode
@@ -257,7 +258,7 @@ protected:
     /// @tparam InputType Type of the objects used as input to the backend call.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param selector Backend selector.
+    /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param [out] properties Reference to the collection of retrieved properties.
     /// @param input Values to be used as input to the backend call.
@@ -267,11 +268,11 @@ protected:
     template<typename PropertyCollectionType, typename... InputType>
     void getMultiplePropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)
                                     (const db::ServerSelector&, InputType...) const,
-                                    const db::BackendSelector& selector,
+                                    const db::BackendSelector& backend_selector,
                                     const db::ServerSelector& server_selector,
                                     PropertyCollectionType& properties,
                                     InputType... input) const {
-        if (selector.amUnspecified()) {
+        if (backend_selector.amUnspecified()) {
             for (auto backend : backends_) {
                 properties = ((*backend).*MethodPointer)(server_selector, input...);
                 if (!properties.empty()) {
@@ -280,7 +281,7 @@ protected:
             }
 
         } else {
-            auto backends = selectBackends(selector);
+            auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
                     properties = ((*backend).*MethodPointer)(server_selector, input...);
@@ -291,7 +292,7 @@ protected:
 
             } else {
                 isc_throw(db::NoSuchDatabase, "no database found for selector: "
-                          << selector.toText());
+                          << backend_selector.toText());
             }
         }
     }
@@ -308,7 +309,7 @@ protected:
     /// Subnet4Collection getAllSubnets4(const BackendSelector&, const ServerSelector&) const {
     ///     Subnet4Collection subnets;
     ///     getAllPropertiesConst<Subnet6Collection>
-    ///         (&ConfigBackendDHCPv4::getAllSubnets4, subnets, selector,
+    ///         (&ConfigBackendDHCPv4::getAllSubnets4, subnets, backend_selector,
     ///          server_selector);
     ///     return (subnets);
     /// }
@@ -329,7 +330,7 @@ protected:
     /// properties are stored.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param selector Backend selector.
+    /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param [out] properties Reference to the collection of retrieved properties.
     ///
@@ -338,10 +339,10 @@ protected:
     template<typename PropertyCollectionType>
     void getAllPropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)
                                (const db::ServerSelector&) const,
-                               const db::BackendSelector& selector,
+                               const db::BackendSelector& backend_selector,
                                const db::ServerSelector& server_selector,
                                PropertyCollectionType& properties) const {
-        if (selector.amUnspecified()) {
+        if (backend_selector.amUnspecified()) {
             for (auto backend : backends_) {
                 properties = ((*backend).*MethodPointer)(server_selector);
                 if (!properties.empty()) {
@@ -350,7 +351,7 @@ protected:
             }
 
         } else {
-            auto backends = selectBackends(selector);
+            auto backends = selectBackends(backend_selector);
             if (!backends.empty()) {
                 for (auto backend : backends) {
                     properties = ((*backend).*MethodPointer)(server_selector);
@@ -361,7 +362,7 @@ protected:
 
             } else {
                 isc_throw(db::NoSuchDatabase, "no database found for selector: "
-                          << selector.toText());
+                          << backend_selector.toText());
             }
         }
     }
@@ -377,10 +378,10 @@ protected:
     ///
     /// @code
     /// void createUpdateSubnet6(const Subnet6Ptr& subnet,
-    ///                          const BackendSelector& selector,
+    ///                          const BackendSelector& backend_selector,
     ///                          const ServerSelector& server_selector) {
     ///     createUpdateDeleteProperty<const Subnet6Ptr&>
-    ///         (&ConfigBackendDHCPv6::createUpdateSubnet6, selector,
+    ///         (&ConfigBackendDHCPv6::createUpdateSubnet6, backend_selector,
     ///          server_selector, subnet, selector);
     /// }
     /// @endcode
@@ -400,7 +401,7 @@ protected:
     /// backend method, e.g. new property to be added, updated or deleted.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param selector Backend selector.
+    /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param input Objects used as arguments to the backend method to be
     /// called.
@@ -412,17 +413,17 @@ protected:
     template<typename... InputType>
     void createUpdateDeleteProperty(void (ConfigBackendType::*MethodPointer)
                                     (const db::ServerSelector&, InputType...),
-                                    const db::BackendSelector& selector,
+                                    const db::BackendSelector& backend_selector,
                                     const db::ServerSelector& server_selector,
                                     InputType... input) {
-        auto backends = selectBackends(selector);
+        auto backends = selectBackends(backend_selector);
         if (backends.empty()) {
             isc_throw(db::NoSuchDatabase, "no database found for selector: "
-                      << selector.toText());
+                      << backend_selector.toText());
 
         } else if (backends.size() > 1) {
             isc_throw(db::AmbiguousDatabase, "more than 1 database found for "
-                      "selector: " << selector.toText());
+                      "selector: " << backend_selector.toText());
         }
 
         (*(*(backends.begin())).*MethodPointer)(server_selector, input...);
@@ -435,19 +436,19 @@ protected:
     ///
     /// @param selector Selector for which matching backends should be selected.
     std::list<ConfigBackendTypePtr>
-    selectBackends(const db::BackendSelector& selector) const {
+    selectBackends(const db::BackendSelector& backend_selector) const {
 
         std::list<ConfigBackendTypePtr> selected;
 
-        // In case there is only one backend, it is allowed to not select the
-        // database backend.
-        if ((backends_.size() == 1) && selector.amUnspecified()) {
+        // In case there is only one backend and the caller hasn't specified
+        // any particular backend, simply return it.
+        if ((backends_.size() == 1) && backend_selector.amUnspecified()) {
             selected.push_back(*backends_.begin());
             return (selected);
         }
 
         // For other cases we return empty list.
-        if (backends_.empty() || selector.amUnspecified()) {
+        if (backends_.empty() || backend_selector.amUnspecified()) {
             return (selected);
         }
 
@@ -455,23 +456,23 @@ protected:
         for (auto backend : backends_) {
             // If backend type is specified and it is not matching,
             // do not select this backend.
-            if ((selector.getBackendType() != db::BackendSelector::Type::UNSPEC) &&
-                (selector.getBackendType() !=
+            if ((backend_selector.getBackendType() != db::BackendSelector::Type::UNSPEC) &&
+                (backend_selector.getBackendType() !=
                  db::BackendSelector::stringToBackendType(backend->getType()))) {
                 continue;
             }
 
             // If the host has been specified by the backend's host is not
             // matching, do not select this backend.
-            if ((!selector.getBackendHost().empty()) &&
-                (selector.getBackendHost() != backend->getHost())) {
+            if ((!backend_selector.getBackendHost().empty()) &&
+                (backend_selector.getBackendHost() != backend->getHost())) {
                 continue;
             }
 
             // If the port has been specified by the backend's port is not
             // matching, do not select this backend.
-            if ((selector.getBackendPort() != 0) &&
-                (selector.getBackendPort() != backend->getPort())) {
+            if ((backend_selector.getBackendPort() != 0) &&
+                (backend_selector.getBackendPort() != backend->getPort())) {
                 continue;
             }
 

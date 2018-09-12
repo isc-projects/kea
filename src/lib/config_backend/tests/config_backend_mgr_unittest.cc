@@ -205,13 +205,13 @@ public:
     /// @brief Retrieves a value of the property.
     ///
     /// @param property_name Name of the property which value should be returned.
-    /// @param selector Backend selector. The default value of the selector
+    /// @param backend_selector Backend selector. The default value of the selector
     /// is @c UNSPEC which means that the property will be searched in all backends
     /// and the first value found will be returned.
     /// @param server_selector Server selector. The default value is set to @c ALL,
     /// which means that the property for all servers will be returned.
     virtual int getProperty(const std::string& property_name,
-                            const BackendSelector& selector =
+                            const BackendSelector& backend_selector =
                             BackendSelector::UNSPEC(),
                             const ServerSelector& server_selector =
                             ServerSelector::ALL()) const {
@@ -227,8 +227,8 @@ public:
         // The template arguments specify the returned value type and the
         // argument of the getProperty method.
         getPropertyPtrConst<int, const std::string&>
-            (&TestConfigBackend::getProperty, selector, server_selector, property,
-             property_name);
+            (&TestConfigBackend::getProperty, backend_selector, server_selector,
+             property, property_name);
         return (property);
     }
 
@@ -236,21 +236,21 @@ public:
     ///
     /// @param property_name Name of the property which value should be returned.
     /// @param property_value Value of the property to be retrieved.
-    /// @param selector Backend selector. The default value of the selector
+    /// @param backend_selector Backend selector. The default value of the selector
     /// is @c UNSPEC which means that the property will be searched in all backends
     /// and the first value found will be returned.
     /// @param server_selector Server selector. The default value is set to @c ALL,
     /// which means that the property for all servers will be returned.
     virtual int getProperty(const std::string& property_name,
                             const int property_value,
-                            const BackendSelector& selector =
+                            const BackendSelector& backend_selector =
                             BackendSelector::UNSPEC(),
                             const ServerSelector& server_selector =
                             ServerSelector::ALL()) const {
         int property;
         getPropertyPtrConst<int, const std::string&, int>
-            (&TestConfigBackend::getProperty, selector, server_selector, property,
-             property_name, property_value);
+            (&TestConfigBackend::getProperty, backend_selector, server_selector,
+             property, property_name, property_value);
         return (property);
     }
 
@@ -258,13 +258,13 @@ public:
     /// @brief Retrieves multiple properties.
     ///
     /// @param property_name Name of the properties which should be retrieved.
-    /// @param selector Backend selector. The default value of the selector
+    /// @param backend_selector Backend selector. The default value of the selector
     /// is @c UNSPEC which means that the properties will be searched in all
     /// backends and the first non-empty list will be returned.
     /// @param server_selector Server selector. The default value is set to @c ALL,
     /// which means that the properties for all servers will be returned.
     virtual PropertiesList getProperties(const std::string& property_name,
-                                         const BackendSelector& selector =
+                                         const BackendSelector& backend_selector =
                                          BackendSelector::UNSPEC(),
                                          const ServerSelector& server_selector =
                                          ServerSelector::ALL()) const {
@@ -278,19 +278,19 @@ public:
         // The template arguments specify the type of the list of properties
         // and the argument of the getProperties method.
         getMultiplePropertiesConst<PropertiesList, const std::string&>
-            (&TestConfigBackend::getProperties, selector, server_selector,
+            (&TestConfigBackend::getProperties, backend_selector, server_selector,
              properties, property_name);
         return (properties);
     }
 
     /// @brief Retrieves all properties.
     ///
-    /// @param selector Backend selector. The default value of the selector
+    /// @param backend_selector Backend selector. The default value of the selector
     /// is @c UNSPEC which means that the properties will be searched in all
     /// backends and the first non-empty list will be returned.
     /// @param server_selector Server selector. The default value is set to @c ALL,
     /// which means that the properties for all servers will be returned.
-    virtual PropertiesList getAllProperties(const BackendSelector& selector =
+    virtual PropertiesList getAllProperties(const BackendSelector& backend_selector =
                                             BackendSelector::UNSPEC(),
                                             const ServerSelector& server_selector =
                                             ServerSelector::ALL()) const {
@@ -299,7 +299,7 @@ public:
         // This method is similar to getMultiplePropertiesConst but it lacks
         // an argument and it simply returns all properties.
         getAllPropertiesConst<PropertiesList>
-            (&TestConfigBackend::getAllProperties, selector, server_selector,
+            (&TestConfigBackend::getAllProperties, backend_selector, server_selector,
              properties);
         return (properties);
     }
@@ -307,15 +307,15 @@ public:
     /// @brief Creates new property in a selected backend.
     ///
     /// @param new_property New property to be added to a backend.
-    /// @param selector Backend selector. It has no default value.
+    /// @param backend_selector Backend selector. It has no default value.
     /// @param server_selector The default value is @c ALL which means that
     /// new property is going to be shared by all servers.
     virtual void createProperty(const std::pair<std::string, int>& new_property,
-                                const BackendSelector& selector,
+                                const BackendSelector& backend_selector,
                                 const ServerSelector& server_selector =
                                 ServerSelector::ALL()) {
         createUpdateDeleteProperty<const std::pair<std::string, int>&>
-            (&TestConfigBackend::createProperty, selector, server_selector,
+            (&TestConfigBackend::createProperty, backend_selector, server_selector,
              new_property);
     }
 };
