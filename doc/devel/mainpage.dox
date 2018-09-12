@@ -107,7 +107,6 @@
  *
  * @section libraries Kea libraries
  * - @subpage libcc
- * - @subpage libyang
  * - @subpage libdhcp
  *   - @subpage libdhcpIntro
  *   - @subpage libdhcpRelay
@@ -130,6 +129,7 @@
  * - @subpage libprocess
  *   - @subpage cpl
  *   - @subpage cplSignals
+ * - @subpage libyang
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology
