@@ -63,6 +63,7 @@ TranslatorBasic::value(S_Val s_val) {
 
     case SR_UINT8_T:
         return (Element::create(static_cast<long long>(s_val->data()->get_uint8())));
+
     case SR_UINT16_T:
         return (Element::create(static_cast<long long>(s_val->data()->get_uint16())));
 
@@ -99,8 +100,7 @@ TranslatorBasic::getItem(const string& xpath) {
     try {
         s_val = session_->get_item(xpath.c_str());
     } catch (const sysrepo_exception& ex) {
-        isc_throw(SysrepoError,
-                  "sysrepo error getting item at '" << xpath
+        isc_throw(SysrepoError, "sysrepo error getting item at '" << xpath
                   << "': " << ex.what());
     }
     if (!s_val) {
