@@ -1,13 +1,10 @@
 module kea-dhcp-types {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-dhcp-types";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp-types";
   prefix "kea-dhcp-types";
 
   import ietf-inet-types {
     prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
   }
   import kea-types {
     prefix kea;
@@ -27,19 +24,36 @@ module kea-dhcp-types {
   */
   typedef host-reservation-mode {
     type enumeration {
-      enum "disabled";
-      enum "out-of-pool";
-      enum "all";
+      enum "disabled" {
+        description "Host reservation support is disabled.";
+      }
+      enum "out-of-pool" {
+        description "Allows only out of pool host reservations.";
+      }
+      enum "all" {
+        description "Allows both in pool and out of pool host reservations.";
+      }
+      enum "global" {
+        description "Allows only global host reservations.";
+      }
     }
+    default "all";
     description "Host reservation mode.";
   }
 
   typedef lease-state {
     type enumeration {
-      enum "default";
-      enum "declined";
-      enum "expired-reclaimed";
+      enum "default" {
+        description "Active/default";
+      }
+      enum "declined" {
+        description "Declined";
+      }
+      enum "expired-reclaimed" {
+        description "Expired-reclaimed";
+      }
     }
+    default "default";
     description "Defines state of the lease.";
   }
 
@@ -47,30 +61,34 @@ module kea-dhcp-types {
   * Grouping
   */
   grouping valid-lifetime {
+    description "Valid lifetime grouping.";
     leaf valid-lifetime {
       type uint32;
       units "seconds";
-      description "Valid lifetime.";
+      description "Valid lifetime entry.";
     }
   }
 
   grouping renew-timer {
+    description "Renew timer grouping.";
     leaf renew-timer {
       type uint32;
       units "seconds";
-      description "Renew timer.";
+      description "Renew timer entry.";
     }
   }
 
   grouping rebind-timer {
+    description "Rebind timer grouping.";
     leaf rebind-timer {
       type uint32;
       units "seconds";
-      description "Rebind timer.";
+      description "Rebind timer entry.";
     }
   }
 
   grouping database {
+    description "Database grouping.";
     leaf database-type {
       type string;
       mandatory true;
@@ -138,8 +156,8 @@ module kea-dhcp-types {
     }
     leaf reconnect-wait-time {
       type uint32;
-      default 0;
       units "milliseconds";
+      default 0;
       description "Waiting delay between two recovery attempts.";
     }
     leaf request-timeout {
@@ -167,21 +185,24 @@ module kea-dhcp-types {
   }
 
   grouping databases {
+    description "Databases grouping.";
     container lease-database {
-      description "Lease database.";
       presence "Have lease database.";
+      description "Lease database.";
       uses database;
     }
     container hosts-databases {
       description "Hosts databases.";
       list hosts-database {
         key database-type;
+        description "List of databases.";
         uses database;
       }
     }
   }
 
   grouping expired-leases-processing {
+    description "Expired leases processing grouping.";
     container expired-leases-processing {
       description "Expired leases processing setup.";
       leaf reclaim-timer-wait-time {
@@ -222,14 +243,16 @@ module kea-dhcp-types {
   }
 
   grouping control-socket {
+    description "Control socket grouping.";
     container control-socket {
-      description "Control socket";
       presence "Have control socket.";
+      description "Control socket container.";
       uses kea:control-socket;
     }
   }
 
   grouping dhcp-ddns {
+    description "DHCP-DDNS grouping.";
     container dhcp-ddns {
       description "DHCP-DDNS client setup.";
       leaf enable-updates {
@@ -266,8 +289,12 @@ module kea-dhcp-types {
       }
       leaf ncr-protocol {
         type enumeration {
-          enum "UDP";
-          enum "TCP";
+          enum "UDP" {
+            description "UDP transport";
+          }
+          enum "TCP" {
+            description "TCP transport";
+          }
         }
         default "UDP";
         description "Protocol to use for DHCP-DDNS communication.
@@ -275,7 +302,9 @@ module kea-dhcp-types {
       }
       leaf ncr-format {
         type enumeration {
-          enum "JSON";
+          enum "JSON" {
+            description "JSON format";
+          }
         }
         default "JSON";
         description "Packet format to use for DHCP-DDNS.";
@@ -296,10 +325,18 @@ module kea-dhcp-types {
       }
       leaf replace-client-name {
         type enumeration {
-          enum "when-present";
-          enum "never";
-          enum "always";
-          enum "when-not-present";
+          enum "when-present" {
+            description "When the client sent a name.";
+          }
+          enum "never" {
+            description "Never replace or generate a name.";
+          }
+          enum "always" {
+            description "Always replace or generate a name.";
+          }
+          enum "when-not-present" {
+            description "When the client did not send a name.";
+          }
         }
         default "never";
         description "Replace the name provided by the client.";
@@ -329,8 +366,9 @@ module kea-dhcp-types {
   }
 
   grouping sanity-checks {
+    description "Sanity checks grouping.";
     container sanity-checks {
-      description "Sanity checks.";
+      description "Sanity checks container.";
       leaf lease-checks {
         type enumeration {
           enum "none" {
@@ -360,12 +398,15 @@ module kea-dhcp-types {
   }
 
   grouping client-class {
+    description "Client class grouping.";
     leaf client-class {
       type string;
+      description "Client class entry.";
     }
   }
 
   grouping pool-client-class {
+    description "Client class grouping for a pool.";
     uses client-class {
       refine client-class {
         description "Pool client class guard (only clients belonging
@@ -375,6 +416,7 @@ module kea-dhcp-types {
   }
 
   grouping subnet-client-class {
+    description "Client class grouping for a subnet.";
     uses client-class {
       refine client-class {
         description "Subnet client class guard (only clients belonging to this
@@ -384,6 +426,7 @@ module kea-dhcp-types {
   }
 
   grouping network-client-class {
+    description "Client class grouping for a shared network.";
     uses client-class {
       refine client-class {
         description "Shared network client class guard (only clients
@@ -394,12 +437,15 @@ module kea-dhcp-types {
   }
 
   grouping require-client-classes {
+    description "Require client classes grouping.";
     leaf-list require-client-classes {
       type string;
+      description "List of client classes.";
     }
   }
 
   grouping pool-require-client-classes {
+    description "Require client classes grouping for a pool.";
     uses require-client-classes {
       refine require-client-classes {
         description "Pool require client classes.";
@@ -408,6 +454,7 @@ module kea-dhcp-types {
   }
 
   grouping subnet-require-client-classes {
+    description "Require client classes grouping for a subnet.";
     uses require-client-classes {
       refine require-client-classes {
         description "Subnet require client classes.";
@@ -416,6 +463,7 @@ module kea-dhcp-types {
   }
 
   grouping network-require-client-classes {
+    description "Require client classes grouping for a shared network.";
     uses require-client-classes {
       refine require-client-classes {
         description "Shared network require client classes.";
@@ -424,12 +472,15 @@ module kea-dhcp-types {
   }
 
   grouping interface {
+    description "Interface grouping.";
     leaf interface {
       type string;
+      description "Interface entry.";
     }
   }
 
   grouping subnet-interface {
+    description "Interface grouping for a subnet.";
     uses interface {
       refine interface {
         description "Name of the network interface this subnet is directly
@@ -439,6 +490,7 @@ module kea-dhcp-types {
   }
 
   grouping network-interface {
+    description "Interface grouping for a shared network.";
     uses interface {
       refine interface {
         description "Specifies the network interface this shared network is
@@ -447,13 +499,17 @@ module kea-dhcp-types {
     }
   }
 
+  // To move to DHCPv6.
   grouping interface-id {
+    description "Interface ID grouping.";
     leaf interface-id {
       type string;
+      description "Interface ID entry.";
     }
   }
 
   grouping subnet-interface-id {
+    description "Interface ID grouping for a subnet.";
     uses interface-id {
       refine interface-id {
         description "Subnet interface-id option.";
@@ -462,6 +518,7 @@ module kea-dhcp-types {
   }
 
   grouping network-interface-id {
+    description "Interface ID grouping for a shared network.";
     uses interface-id {
       refine interface-id {
         description "Shared network interface-id option.";
@@ -470,6 +527,7 @@ module kea-dhcp-types {
   }
 
   grouping subnet-id {
+    description "Subnet ID grouping.";
     leaf id {
       type uint32 {
         range 1..max;
@@ -481,6 +539,7 @@ module kea-dhcp-types {
   }
 
   grouping host-identifier {
+    description "Host identifier grouping.";
     leaf identifier {
       type string;
       description "Host identifier.";
@@ -488,6 +547,7 @@ module kea-dhcp-types {
   }
 
   grouping host-hostname {
+    description "Host DNS name grouping.";
     leaf hostname {
       type string;
       description "Host DNS name.";
@@ -495,6 +555,7 @@ module kea-dhcp-types {
   }
 
   grouping host-client-classes {
+    description "Host client classes grouping.";
     leaf-list client-classes {
       type string;
       description "Host client classes (if host identifier matches, a
@@ -504,6 +565,7 @@ module kea-dhcp-types {
   }
 
   grouping host-subnet-id {
+    description "Host subnet ID grouping.";
     leaf subnet-id {
       type uint32;
       mandatory true;
@@ -512,12 +574,15 @@ module kea-dhcp-types {
   }
 
   grouping reservation-mode {
+    description "Reservation mode grouping.";
     leaf reservation-mode {
       type host-reservation-mode;
+      description "Reservation mode entry.";
     }
   }
 
   grouping subnet-reservation-mode {
+    description "Reservation mode grouping for a subnet.";
     uses reservation-mode {
       refine reservation-mode {
         description "Subnet host reservation mode.";
@@ -526,6 +591,7 @@ module kea-dhcp-types {
   }
 
   grouping network-reservation-mode {
+    description "Reservation mode grouping for a shared network.";
     uses reservation-mode {
       refine reservation-mode {
         description "Shared network host reservation mode.";
@@ -534,6 +600,7 @@ module kea-dhcp-types {
   }
 
   grouping interfaces-re-detect {
+    description "Interfaces re-detect grouping.";
     leaf re-detect {
       type boolean;
       default false;
@@ -542,6 +609,7 @@ module kea-dhcp-types {
   }
 
   grouping class-name {
+    description "Client class name grouping.";
     leaf name {
       type string;
       mandatory true;
@@ -550,6 +618,7 @@ module kea-dhcp-types {
   }
 
   grouping class-test {
+    description "Client class test grouping.";
     leaf test {
       type string;
       description "Defines an expression that evaluates every incoming
@@ -558,6 +627,7 @@ module kea-dhcp-types {
   }
 
   grouping class-only-if-required {
+    description "Client class only-if-required grouping.";
     leaf only-if-required {
       type boolean;
       default false;
@@ -566,6 +636,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-name {
+    description "Option definition name grouping.";
     leaf name {
       type string;
       mandatory true;
@@ -574,6 +645,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-type {
+    description "Option definition type grouping.";
     leaf type {
       type string;
       mandatory true;
@@ -583,6 +655,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-record-types {
+    description "Option definition record types grouping.";
     leaf record-types {
       type string;
       description "Option definition record types.";
@@ -590,6 +663,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-encapsulate {
+    description "Option definition encapsulate grouping.";
     leaf encapsulate {
       type string;
       description "Defines option space this new option encapsulates.
@@ -598,6 +672,7 @@ module kea-dhcp-types {
   }
 
   grouping option-data-name {
+    description "Option data name grouping.";
     leaf name {
       type string;
       description "Option name.";
@@ -605,6 +680,7 @@ module kea-dhcp-types {
   }
 
   grouping option-data-data {
+    description "Option data data grouping.";
     leaf data {
       type string;
       description "Option data.";
@@ -612,6 +688,7 @@ module kea-dhcp-types {
   }
 
   grouping option-data-csv-format {
+    description "Option data csv-format grouping.";
     leaf csv-format {
       type boolean;
       default true;
@@ -621,6 +698,7 @@ module kea-dhcp-types {
   }
 
   grouping option-data-always-send {
+    description "Option data always-send grouping.";
     leaf always-send {
       type boolean;
       default false;
@@ -630,6 +708,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-array {
+    description "Option data array grouping.";
     leaf array {
       type boolean;
       default false;
@@ -638,6 +717,7 @@ module kea-dhcp-types {
   }
 
   grouping decline-probation-period {
+    description "Decline probation period grouping.";
     leaf decline-probation-period {
       type uint32;
       units "seconds";
@@ -647,6 +727,7 @@ module kea-dhcp-types {
   }
 
   grouping network-name {
+    description "Shared network name grouping.";
     leaf name {
       type string;
       mandatory true;
@@ -655,6 +736,7 @@ module kea-dhcp-types {
   }
 
   grouping dhcp4o6-port {
+    description "DHCPv4-over-DHCPv6 port grouping.";
     leaf dhcp4o6-port {
       type uint16;
       description "DHCPv4-over-DHCPv6 interserver port.";
@@ -662,6 +744,7 @@ module kea-dhcp-types {
   }
 
   grouping pool-user-context {
+    description "User context grouping for a pool.";
     uses kea:user-context {
       refine user-context {
         description "Pool user context. Arbitrary JSON data can be
@@ -671,6 +754,7 @@ module kea-dhcp-types {
   }   
 
   grouping host-user-context {
+    description "User context grouping for a host reservation.";
     uses kea:user-context {
       refine user-context {
         description "Host user context. Arbitrary JSON data can be
@@ -680,6 +764,7 @@ module kea-dhcp-types {
   }
 
   grouping subnet-user-context {
+    description "User context grouping for a subnet.";
     uses kea:user-context {
       refine user-context {
         description "Subnet user context. Arbitrary JSON data can be
@@ -689,6 +774,7 @@ module kea-dhcp-types {
   }   
 
   grouping network-user-context {
+    description "User context grouping for a shared network.";
     uses kea:user-context {
       refine user-context {
         description "Shared network user context. Arbitrary JSON data can be
@@ -698,6 +784,7 @@ module kea-dhcp-types {
   }
 
   grouping interfaces-user-context {
+    description "User context grouping for interfaces.";
     uses kea:user-context {
       refine user-context {
         description "Interfaces user context. Arbitrary JSON data can
@@ -707,6 +794,7 @@ module kea-dhcp-types {
   }
 
   grouping class-user-context {
+    description "User context grouping for a client class.";
     uses kea:user-context {
       refine user-context {
         description "Client class user context. Arbitrary JSON data can
@@ -716,6 +804,7 @@ module kea-dhcp-types {
   }
 
   grouping option-def-user-context {
+    description "User context grouping for an option definition.";
     uses kea:user-context {
       refine user-context {
         description "Option definition user context. Arbitrary JSON data
@@ -725,6 +814,7 @@ module kea-dhcp-types {
   }
 
   grouping option-data-user-context {
+    description "User context grouping for an option data.";
     uses kea:user-context {
       refine user-context {
         description "Option user context. Arbitrary JSON data can be

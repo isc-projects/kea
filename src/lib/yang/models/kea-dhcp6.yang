@@ -1,13 +1,10 @@
 module kea-dhcp6 {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-dhcp6";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp6";
   prefix "kea-dhcp6";
 
   import ietf-inet-types {
     prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
   }
   import kea-types {
     prefix kea;
@@ -35,9 +32,15 @@ module kea-dhcp6 {
   */
   typedef host-identifier-type {
     type enumeration {
-      enum "duid";
-      enum "hw-address";
-      enum "flex-id";
+      enum "duid" {
+        description "DUID";
+      }
+      enum "hw-address" {
+        description "Hardware address";
+      }
+      enum "flex-id" {
+        description "Flexible identifier";
+      }
     }
     description "Host identifier type.";
   }
@@ -46,6 +49,7 @@ module kea-dhcp6 {
   * Groupings
   */
   grouping preferred-lifetime {
+    description "Preferred lifetime grouping.";
     leaf preferred-lifetime {
       type uint32;
       units "seconds";
@@ -54,6 +58,7 @@ module kea-dhcp6 {
   }
 
   grouping relay {
+    description "Relay grouping.";
     leaf-list ip-addresses {
       type inet:ipv6-address;
       description "IPv6 addresses.";
@@ -61,26 +66,31 @@ module kea-dhcp6 {
   }
 
   grouping rapid-commit {
+    description "Rapid commit grouping.";
     leaf rapid-commit {
       type boolean;
       default false;
+      description "Rapid commit entry.";
     }
   }
 
   grouping subnet6-list {
-    description "Subnet6 list.";
+    description "Subnet6 list grouping.";
     list subnet6 {
       key id;
       ordered-by user;
+      description "List of IPv6 subnets.";
       uses preferred-lifetime;
       uses dhcp:valid-lifetime;
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
       container pools {
+        description "List of pools.";
         list pool {
           key "start-address end-address";
           ordered-by user;
+          description "Pool entry.";
           leaf prefix {
             type inet:ipv6-prefix;
             description "Pool prefix.";
@@ -102,9 +112,11 @@ module kea-dhcp6 {
         }
       }
       container pd-pools {
+        description "List of prefix delegation pools.";
         list pd-pool {
           key prefix;
           ordered-by user;
+          description "Prefix delegation pool entry.";
           leaf prefix {
             type inet:ipv6-prefix;
             mandatory true;
@@ -159,6 +171,7 @@ module kea-dhcp6 {
                      this IPv6 subnet.";
         list host {
           key "identifier-type identifier";
+          description "Host reservation entry.";
           leaf identifier-type {
             type host-identifier-type;
             mandatory true;
@@ -189,6 +202,7 @@ module kea-dhcp6 {
   }
 
   grouping client-class {
+    description "Client class grouping.";
     uses dhcp:class-name;
     uses dhcp:class-test;
     uses dhcp:class-only-if-required;
@@ -197,10 +211,12 @@ module kea-dhcp6 {
   }
 
   grouping option-def-list {
+    description "Option definition list grouping.";
     container option-def-list {
       description "Option definition list.";
       list option-def {
         key "code space";
+        description "Option definition entry.";
         leaf code {
           type uint16;
           mandatory true;
@@ -222,10 +238,12 @@ module kea-dhcp6 {
   }
 
   grouping option-data-list {
+    description "Option data list grouping.";
     container option-data-list {
       description "Option data list.";
       list option-data {
         key "code space";
+        description "Option data entry.";
         leaf code {
           type uint16;
           mandatory true;
@@ -250,8 +268,8 @@ module kea-dhcp6 {
   */
 
   container config {
+    // config true;
     description "Contains DHCPv6 server configuration.";
-    config true;
 
     uses preferred-lifetime;
     uses dhcp:valid-lifetime;
@@ -269,6 +287,7 @@ module kea-dhcp6 {
       list shared-network {
         key name;
         uses dhcp:network-name;
+        description "List of IPv4 shared networks.";
         container subnet6 {
           description "List of IPv6 subnets that belong to this shared
                        network.";
@@ -322,7 +341,7 @@ module kea-dhcp6 {
 
     leaf-list host-reservation-identifiers {
       type host-identifier-type;
-      description "Host reservation identifier.";
+      description "Host reservation identifiers.";
     }
 
     container client-classes {
@@ -330,6 +349,7 @@ module kea-dhcp6 {
       list client-class {
         key name;
         ordered-by user;
+        description "List of client classes.";
         uses client-class;
       }
     }
@@ -343,9 +363,15 @@ module kea-dhcp6 {
       description "Server DUID.";
       leaf type {
         type enumeration {
-          enum "LLT";
-          enum "EN";
-          enum "LL";
+          enum "LLT" {
+            description "Link-layer address and timestamp.";
+          }
+          enum "EN" {
+            description "Enterprise number.";
+          }
+          enum "LL" {
+            description "Link-layer address.";
+          }
         }
         description "Server DIOD type.";
       }
@@ -389,8 +415,8 @@ module kea-dhcp6 {
   }
 
   container logging {
+    // config true;
     description "Logging";
-    config true;
 
     uses logging:configuration;
   }
@@ -399,13 +425,14 @@ module kea-dhcp6 {
   * State data
   */
   container state {
-    description "State of Kea DHCPv6 server.";
     config false;
+    description "State of Kea DHCPv6 server.";
 
     container leases {
       description "Kea DHCPv6 leases.";
       list lease {
         key ip-address;
+        description "List of Kea DHCPv6 leases.";
         leaf ip-address {
           type inet:ipv6-address;
           mandatory true;
@@ -440,9 +467,15 @@ module kea-dhcp6 {
         }
         leaf lease-type {
           type enumeration {
-            enum "IA_NA";
-            enum "IA_TA";
-            enum "IA_PD";
+            enum "IA_NA" {
+              description "Identity association for non-temporary addresses.";
+            }
+            enum "IA_TA" {
+              description "Identity association for temporary addresses.";
+            }
+            enum "IA_PD" {
+              description "Identity association for prefix delegation.";
+            }
           }
           mandatory true;
           description "Lease IA type.";
@@ -490,8 +523,10 @@ module kea-dhcp6 {
     }
 
     container lease-stats {
+      description "Lease statistics.";
       list subnet {
         key subnet-id;
+        description "List of IPv6 subnets.";
         leaf subnet-id {
           type uint32;
           mandatory true;
@@ -529,6 +564,7 @@ module kea-dhcp6 {
       description "Kea DHCPv6 hosts.";
       list host {
         key "subnet-id identifier-type identifier";
+        description "List of Kea DHCPv6 hosts.";
         leaf identifier-type {
           type host-identifier-type;
           mandatory true;

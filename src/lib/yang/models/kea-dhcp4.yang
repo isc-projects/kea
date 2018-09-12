@@ -1,13 +1,10 @@
 module kea-dhcp4 {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang::kea-dhcp4";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp4";
   prefix "kea-dhcp4";
 
   import ietf-inet-types {
     prefix inet;
-  }
-  import ietf-yang-types {
-    prefix yang;
   }
   import kea-types {
     prefix kea;
@@ -34,11 +31,21 @@ module kea-dhcp4 {
   */
   typedef host-identifier-type {
     type enumeration {
-      enum "duid";
-      enum "hw-address";
-      enum "circuit-id";
-      enum "client-id";
-      enum "flex-id";
+      enum "duid" {
+        description "DUID";
+      }
+      enum "hw-address" {
+        description "Hardware address";
+      }
+      enum "circuit-id" {
+        description "Circuit-id option";
+      }
+      enum "client-id" {
+        description "Client identifier";
+      }
+      enum "flex-id" {
+        description "Flexible identifier";
+      }
     }
     description "Host identifier type.";
   }
@@ -47,6 +54,7 @@ module kea-dhcp4 {
   * Groupings
   */
   grouping match-client-id {
+    description "Match client ID grouping.";
     leaf match-client-id {
       type boolean;
       default true;
@@ -56,6 +64,7 @@ module kea-dhcp4 {
   }
 
   grouping next-server {
+    description "Next server address grouping.";
     leaf next-server {
       type inet:ipv4-address;
       description "Next server IPv4 address. If set, this value will be set
@@ -64,6 +73,7 @@ module kea-dhcp4 {
   }
 
   grouping server-hostname {
+    description "Server hostname grouping.";
     leaf server-hostname {
       type string;
       description "Server hostname (up to 64 bytes).";
@@ -71,6 +81,7 @@ module kea-dhcp4 {
   }
 
   grouping boot-file-name {
+    description "Boot file name grouping.";
     leaf boot-file-name {
       type string;
       description "Boot file name (up to 128 bytes).";
@@ -78,6 +89,7 @@ module kea-dhcp4 {
   }
 
   grouping relay {
+    description "Relay grouping.";
     leaf-list ip-addresses {
       type inet:ipv4-address;
       description "IPv4 addresses.";
@@ -85,18 +97,21 @@ module kea-dhcp4 {
   }
 
   grouping subnet4-list {
-    description "Subnet4 list.";
+    description "Subnet4 list grouping.";
     list subnet4 {
       key id;
       ordered-by user;
+      description "List of IPv4 subnets.";
       uses dhcp:valid-lifetime;
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
       container pools {
+        description "List of pools.";
         list pool {
           key "start-address end-address";
           ordered-by user;
+          description "Pool entry.";
           leaf prefix {
             type inet:ipv4-prefix;
             description "Defines a pool of dynamic IPv4 addresses to be managed
@@ -133,6 +148,7 @@ module kea-dhcp4 {
                      this IPv4 subnet.";
         list host {
           key "identifier-type identifier";
+          description "Host reservation entry.";
           leaf identifier-type {
             type host-identifier-type;
             description "Host identifier type.";
@@ -177,6 +193,7 @@ module kea-dhcp4 {
   }
 
   grouping client-class {
+    description "Client class grouping.";
     uses dhcp:class-name;
     uses dhcp:class-test;
     uses dhcp:class-only-if-required;
@@ -189,10 +206,12 @@ module kea-dhcp4 {
   }
 
   grouping option-def-list {
+    description "Option definition list grouping.";
     container option-def-list {
       description "List with custom option definitions.";
       list option-def {
         key "code space";
+        description "Option definition entry.";
         leaf code {
           type uint8;
           mandatory true;
@@ -214,10 +233,12 @@ module kea-dhcp4 {
   }
 
   grouping option-data-list {
+    description "Option data list grouping.";
     container option-data-list {
       description "Option data list.";
       list option-data {
         key "code space";
+        description "Option data entry.";
         leaf code {
           type uint8;
           mandatory true;
@@ -242,8 +263,8 @@ module kea-dhcp4 {
   */
 
   container config {
+    // config true;
     description "Contains DHCPv4 server configuration.";
-    config true;
 
     uses dhcp:valid-lifetime;
     uses dhcp:renew-timer;
@@ -259,6 +280,7 @@ module kea-dhcp4 {
       description "Defines a list of IPv4 shared networks.";
       list shared-network {
         key name;
+        description "List of IPv4 shared networks.";
         uses dhcp:network-name;
         container subnet4 {
           description "List of IPv4 subnets that belong to this shared
@@ -325,7 +347,7 @@ module kea-dhcp4 {
 
     leaf-list host-reservation-identifiers {
       type host-identifier-type;
-      description "Host reservation identifier.";
+      description "Host reservation identifiers.";
     }
 
     container client-classes {
@@ -333,6 +355,7 @@ module kea-dhcp4 {
       list client-class {
         key name;
         ordered-by user;
+        description "List of client classes.";
         uses client-class;
       }
     }
@@ -367,8 +390,8 @@ module kea-dhcp4 {
   }
 
   container logging {
+    // config true;
     description "Logging";
-    config true;
 
     uses logging:configuration;
   }
@@ -377,13 +400,14 @@ module kea-dhcp4 {
   * State data
   */
   container state {
-    description "State of Kea DHCPv4 server.";
     config false;
+    description "State of Kea DHCPv4 server.";
 
     container leases {
       description "Kea DHCPv4 leases.";
       list lease {
         key ip-address;
+        description "List of Kea DHCPv4 leases.";
         leaf ip-address {
           type inet:ipv4-address;
           mandatory true;
@@ -442,8 +466,10 @@ module kea-dhcp4 {
     }
 
     container lease-stats {
+      description "Lease statistics.";
       list subnet {
         key subnet-id;
+        description "List of IPv4 subnets.";
         leaf subnet-id {
           type uint32;
           mandatory true;
@@ -471,6 +497,7 @@ module kea-dhcp4 {
       description "Kea DHCPv4 hosts.";
       list host {
         key "subnet-id identifier-type identifier";
+        description "List of Kea DHCPv4 hosts.";
         leaf identifier-type {
           type host-identifier-type;
           mandatory true;
