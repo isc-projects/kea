@@ -5,25 +5,12 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-lib_LTLIBRARIES = libkea-cb.la
-libkea_cb_la_SOURCES  = base_config_backend.h
-libkea_cb_la_SOURCES += base_config_backend_mgr.h
-libkea_cb_la_SOURCES += base_config_backend_pool.cc base_config_backend_pool.h
-
-
-libkea_cb_la_LIBADD  = $(top_builddir)/src/lib/database/libkea-database.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/log/libkea-log.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
-libkea_cb_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
-libkea_cb_la_LIBADD += $(BOOST_LIBS)
-
-libkea_cb_la_LDFLAGS = -no-undefined -version-info 0:0:0
+EXTRA_DIST  = base_config_backend.h
+EXTRA_DIST += base_config_backend_mgr.h
+EXTRA_DIST += base_config_backend_pool.h
 
 # The message file should be in the distribution.
-#EXTRA_DIST = config_backend.dox
+#EXTRA_DIST += config_backend.dox
 
 CLEANFILES = *.gcno *.gcda
 

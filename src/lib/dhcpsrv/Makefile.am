@@ -213,7 +213,6 @@ if HAVE_CQL
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cql/libkea-cql.la
 endif
 
-libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config_backend/libkea-cb.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
