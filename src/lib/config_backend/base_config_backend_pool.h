@@ -97,7 +97,10 @@ protected:
     /// rest of the backends are skipped.
     ///
     /// @tparam PropertyType Type of the object returned by the backend call.
-    /// @tparam InputType Type of the objects used as input to the backend call.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
     /// @param backend_selector Backend selector.
@@ -108,13 +111,13 @@ protected:
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyType, typename... InputType>
+    template<typename PropertyType, typename... FnPtrArgs, typename... Args>
     void getPropertyPtrConst(PropertyType (ConfigBackendType::*MethodPointer)
-                             (const db::ServerSelector&, InputType...) const,
+                             (const db::ServerSelector&, FnPtrArgs...) const,
                              const db::BackendSelector& backend_selector,
                              const db::ServerSelector& server_selector,
                              PropertyType& property,
-                             InputType... input) const {
+                             Args... input) const {
 
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
@@ -174,7 +177,10 @@ protected:
     ///
     ///
     /// @tparam PropertyType Type of the object returned by the backend call.
-    /// @tparam InputType Type of the objects used as input to the backend call.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
     /// @param backend_selector Backend selector.
@@ -185,14 +191,14 @@ protected:
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyType, typename... InputType>
+    template<typename PropertyType, typename... FnPtrArgs, typename... Args>
     void getOptionalPropertyConst(util::OptionalValue<PropertyType>
                                   (ConfigBackendType::*MethodPointer)
-                                  (const db::ServerSelector&, InputType...) const,
+                                  (const db::ServerSelector&, FnPtrArgs...) const,
                                   const db::BackendSelector& backend_selector,
                                   const db::ServerSelector& server_selector,
                                   util::OptionalValue<PropertyType>& property,
-                                  InputType... input) const {
+                                  Args... input) const {
 
         // If no particular backend is selected, call each backend and return
         // the first non-null (non zero) value.
@@ -255,7 +261,10 @@ protected:
     ///
     /// @tparam PropertyCollectionType Type of the container into which the
     /// properties are stored.
-    /// @tparam InputType Type of the objects used as input to the backend call.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
     /// @param backend_selector Backend selector.
@@ -265,13 +274,13 @@ protected:
     ///
     /// @throw db::NoSuchDatabase if no database matching the given selector
     /// was found.
-    template<typename PropertyCollectionType, typename... InputType>
+    template<typename PropertyCollectionType, typename... FnPtrArgs, typename... Args>
     void getMultiplePropertiesConst(PropertyCollectionType (ConfigBackendType::*MethodPointer)
-                                    (const db::ServerSelector&, InputType...) const,
+                                    (const db::ServerSelector&, FnPtrArgs...) const,
                                     const db::BackendSelector& backend_selector,
                                     const db::ServerSelector& server_selector,
                                     PropertyCollectionType& properties,
-                                    InputType... input) const {
+                                    Args... input) const {
         if (backend_selector.amUnspecified()) {
             for (auto backend : backends_) {
                 properties = ((*backend).*MethodPointer)(server_selector, input...);
@@ -397,8 +406,10 @@ protected:
     /// backend is selected, an exception is thrown. If no backend is selected
     /// an exception is thrown either.
     ///
-    /// @tparam InputType Type of the objects being used as arguments of the
-    /// backend method, e.g. new property to be added, updated or deleted.
+    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
+    /// method to be invoked.
+    /// @tparam Args Parameter pack holding types of the arguments provided
+    /// in the call to this method.
     ///
     /// @param MethodPointer Pointer to the backend method to be called.
     /// @param backend_selector Backend selector.
@@ -410,12 +421,12 @@ protected:
     /// was found.
     /// @throw db::AmbiguousDatabase if multiple databases matching the selector
     /// were found.
-    template<typename... InputType>
+    template<typename... FnPtrArgs, typename... Args>
     void createUpdateDeleteProperty(void (ConfigBackendType::*MethodPointer)
-                                    (const db::ServerSelector&, InputType...),
+                                    (const db::ServerSelector&, FnPtrArgs...),
                                     const db::BackendSelector& backend_selector,
                                     const db::ServerSelector& server_selector,
-                                    InputType... input) {
+                                    Args... input) {
         auto backends = selectBackends(backend_selector);
         if (backends.empty()) {
             isc_throw(db::NoSuchDatabase, "no database found for selector: "
