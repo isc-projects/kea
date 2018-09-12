@@ -122,7 +122,6 @@ using namespace std;
 
   SUBNET "subnet"
   INTERFACE "interface"
-  INTERFACE_ID "interface-id"
   ID "id"
   RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
@@ -1021,7 +1020,6 @@ subnet4_param: valid_lifetime
              | pools_list
              | subnet
              | interface
-             | interface_id
              | id
              | rapid_commit
              | client_class
@@ -1078,14 +1076,6 @@ interface: INTERFACE {
 } COLON STRING {
     ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("interface", iface);
-    ctx.leave();
-};
-
-interface_id: INTERFACE_ID {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("interface-id", iface);
     ctx.leave();
 };
 
