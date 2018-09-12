@@ -25,8 +25,7 @@ libcb_unittests_SOURCES += run_unittests.cc
 libcb_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libcb_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
-libcb_unittests_LDADD  = $(top_builddir)/src/lib/config_backend/libkea-cb.la
-libcb_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+libcb_unittests_LDADD  = $(top_builddir)/src/lib/database/libkea-database.la
 libcb_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libcb_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libcb_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
