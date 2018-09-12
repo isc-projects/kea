@@ -81,12 +81,12 @@ specific model (src/lib/yang/tests/keatest-module.yang).
 To install the test module, issue the following command:
 
 @verbatim
-sudo sysrepoctl --install --yang=src/lib/yang/tests/test-module.yang
+sudo sysrepoctl --install --yang=src/lib/yang/tests/keatest-module.yang
 @endverbatim
 
 To verify that you have the schemas installed, do this:
 @verbatim
 sysrepoctl -l
 @endverbatim
-Make sure that test-module is on the list.
+Make sure that keatest-module is on the list.
 */
