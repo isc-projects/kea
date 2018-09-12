@@ -21,8 +21,8 @@ Watcher::Watcher(SysrepoConnection &connection, const string &xpath)
 Watcher::~Watcher() {
 }
 
-string
-Watcher::getXPath() {
+const string&
+Watcher::getXPath() const {
     return (xpath_);
 }
 

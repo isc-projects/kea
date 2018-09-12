@@ -23,34 +23,48 @@ namespace yang {
 /// JSON that can be sent over control channel and understood by Kea.
 class Watcher {
 public:
-    // Constructor (requires xpath to install a callback)
-    Watcher(SysrepoConnection &connection, const std::string &xpath);
+    // @brief Constructor (requires xpath to install a callback).
+    //
+    // @param connection The sysrepo connection.
+    // @param xpath The xpath to watch to.
+    Watcher(SysrepoConnection& connection, const std::string& xpath);
 
+    // @brief Destructor (doing nothing).
     virtual ~Watcher();
 
-    virtual std::string getXPath();
+    // @brief Get the xpath.
+    // @return The xpath to watch to.
+    virtual const std::string& getXPath() const;
 
     // This method will be called when the callback returns.
     // Need to figure out the type used.
-    void setYangData(void *data);
+    //
+    // @param data The yang data.
+    void setYangData(void* data);
 
-    // This method translates Netconf data to JSON format
+    // @brief This method translates Netconf data to JSON format
     // understood by Kea.
     virtual void translate() = 0;
 
-    // Once setYangData is called,
+    // @brief Get JSON once setYangData is called,
+    // @return The JSON representation of the yang data.
     isc::data::ElementPtr getJSON();
 
 protected:
-    std::string xpath_;
+    // @brief The xpath to watch to.
+    const std::string& xpath_;
 
-    void *netconf_data_;
+    // @brief The yang data.
+    void* netconf_data_;
 
+    // @brief The JSON representation of the yang data.
     isc::data::ElementPtr json_;
 
+    // @brief The sysrepo connection.
     SysrepoConnection &connection_;
 };
 
+/// @brief The type of shared pointers to watcher objects.
 typedef boost::shared_ptr<Watcher> WatcherPtr;
 
 }  // namespace isc::yang
