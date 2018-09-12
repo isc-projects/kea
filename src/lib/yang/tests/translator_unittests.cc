@@ -42,14 +42,14 @@ bool schemaInstalled(const std::string& name, bool verbose = false) {
 
     bool found = false;
     for (int i = 0; i < schema_cnt; i++) {
-	string installed_name(schemas->schema(i)->module_name());
-	if (installed_name == name) {
-	    found = true;
-	}
+        string installed_name(schemas->schema(i)->module_name());
+        if (installed_name == name) {
+            found = true;
+        }
 
-	if (verbose) {
-	  std::cout << "Schema " << i << ": " << installed_name << endl;
-	}
+        if (verbose) {
+          std::cout << "Schema " << i << ": " << installed_name << endl;
+        }
     }
 
     return (found);
@@ -373,13 +373,13 @@ TEST(TranslatorBasicTest, getItem) {
     // Check error.
     xpath = "null";
     try {
-	elem = t_obj->getItem(xpath);
-	ADD_FAILURE() << "expected exception";
+        elem = t_obj->getItem(xpath);
+        ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-	EXPECT_EQ("sysrepo error getting item at 'null': Invalid argument",
-		  string(ex.what()));
+        EXPECT_EQ("sysrepo error getting item at 'null': Invalid argument",
+                  string(ex.what()));
     } catch (const std::exception& ex) {
-	ADD_FAILURE() << "unexpected exception with: " << ex.what();
+        ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 }
 
@@ -506,7 +506,7 @@ TEST(TranslatorBasicTest, setItem) {
     ConstElementPtr elem = Element::createMap();
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_T), NotImplemented);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),
-		 NotImplemented);
+                 NotImplemented);
 
     // List.
     xpath = "/keatest-module:container/list";
@@ -662,28 +662,28 @@ TEST(TranslatorBasicTest, setItem) {
     xpath = "/keatest-module:main/no_such_string";
     elem = Element::create(string("str"));
     try {
-	t_obj->setItem(xpath, elem, SR_STRING_T);
-	ADD_FAILURE() << "expected exception";
+        t_obj->setItem(xpath, elem, SR_STRING_T);
+        ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-	string expected = "sysrepo error setting item '\"str\"' at '" +
-	    xpath + "': Request contains unknown element";
-	EXPECT_EQ(expected, string(ex.what()));
+        string expected = "sysrepo error setting item '\"str\"' at '" +
+            xpath + "': Request contains unknown element";
+        EXPECT_EQ(expected, string(ex.what()));
     } catch (const std::exception& ex) {
-	ADD_FAILURE() << "unexpected exception with: " << ex.what();
+        ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 
     // Bad type.
     xpath = "/keatest-module:main/string";
     elem = Element::create(true);
     try {
-	t_obj->setItem(xpath, elem, SR_BOOL_T);
-	ADD_FAILURE() << "expected exception";
+        t_obj->setItem(xpath, elem, SR_BOOL_T);
+        ADD_FAILURE() << "expected exception";
     } catch (const SysrepoError& ex) {
-	string expected = "sysrepo error setting item 'true' at '" +
-	    xpath + "': Invalid argument";
-	EXPECT_EQ(expected, string(ex.what()));
+        string expected = "sysrepo error setting item 'true' at '" +
+            xpath + "': Invalid argument";
+        EXPECT_EQ(expected, string(ex.what()));
     } catch (const std::exception& ex) {
-	ADD_FAILURE() << "unexpected exception with: " << ex.what();
+        ADD_FAILURE() << "unexpected exception with: " << ex.what();
     }
 
     // Delete (twice).
