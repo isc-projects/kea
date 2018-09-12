@@ -18,7 +18,7 @@ SysrepoConnection::~SysrepoConnection() {
         session_->unlock_datastore();
         session_->session_stop();
 
-        // @todo: how to call disconnect?
+      /// @todo: how to call disconnect?
     }
 }
 
