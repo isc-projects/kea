@@ -13,21 +13,30 @@
 namespace isc {
 namespace yang {
 
+/// @brief Exception from the sysrepo library for connection.
 class SysrepoConnectionError : public Exception {
 public:
     SysrepoConnectionError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Connection to the sysrepo library. Provision, i.e. currently unused.
 class SysrepoConnection {
 public:
+    // @brief Constructor.
     SysrepoConnection();
+
+    // @brief Destructor.
     virtual ~SysrepoConnection();
+
+    // @brief Get a connection and a session.
     void connect();
 
+    // @brief Commit a session.
     void commit();
 
  private:
+    // @brief The session.
     S_Session session_;
 };
 
