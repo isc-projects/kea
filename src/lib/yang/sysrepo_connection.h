@@ -13,30 +13,38 @@
 namespace isc {
 namespace yang {
 
-/// @brief Exception from the sysrepo library for connection.
+/// @brief An exception thrown when connection with sysrepo is broken
 class SysrepoConnectionError : public Exception {
 public:
     SysrepoConnectionError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) {}
 };
 
-/// @brief Connection to the sysrepo library. Provision, i.e. currently unused.
+/// @brief A class that represents a connection to Sysrepo
 class SysrepoConnection {
 public:
-    // @brief Constructor.
+
+    /// @brief constructor
+    ///
+    /// Currently does nothing. You need to explicitly call connect()
     SysrepoConnection();
 
-    // @brief Destructor (closing connection).
+    /// @brief Destructor
+    ///
+    /// Discards any pending data, unlocks datastore and stops session.
     virtual ~SysrepoConnection();
 
     // @brief Get a connection and a session.
     void connect();
 
-    // @brief Commit a session.
+    /// @brief Commits any pending data.
     void commit();
 
  private:
-    // @brief The session.
+
+    /// @brief pointer to a session
+    ///
+    /// May be null if the session is not established.
     S_Session session_;
 };
 
