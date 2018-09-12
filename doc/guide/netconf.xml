@@ -54,9 +54,7 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
     For detailed build instructions, see https://github.com/CESNET/libyang/.</para>
 
     <para>STEP 3. Install syrepo. Download sysrepo from
-    https://github.com/sysrepo/sysrepo.git. Checkout the devel branch.
-    If you want to develop code you should fix the C++ error handling
-    cf issue #1286 and pull request #1302.
+    https://github.com/sysrepo/sysrepo.git. Checkout the last devel branch.
 
 <screen>
 git clone https://github.com/sysrepo/sysrepo.git
