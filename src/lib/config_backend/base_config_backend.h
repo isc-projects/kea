@@ -15,7 +15,20 @@
 namespace isc {
 namespace cb {
 
-/// @brief Base class for server specific configuration backends.
+/// @brief Interface for Kea server specific configuration backend
+/// implementations.
+///
+/// Each Kea server (e.g. DHCPv4 server) needs to implement its own
+/// interface to store and fetch its configuration from the databases.
+/// This is because each Kea server uses a different set of
+/// configuration information. This is a base interface which should
+/// be implemented (and extended) by respective Kea servers to provide
+/// API to store and fetch configuration information from a database.
+/// Such implementation is called configuration backend. Each
+/// configuration backend faciliates a single database type, e.g. MySQL
+/// database. In order to support multiple database types, i.e. MySQL,
+/// Posrgres, Cassandra, each Kea server will have to implement
+/// 3 separate configuration backends, one for each database type.
 class BaseConfigBackend {
 public:
 
@@ -23,6 +36,9 @@ public:
     virtual ~BaseConfigBackend() { }
 
     /// @brief Returns backend type in the textual format.
+    ///
+    /// @return Name of the storage for configurations, e.g. "mysql",
+    /// "pgsql" and so forth.
     virtual std::string getType() const = 0;
 
     /// @brief Returns backend host.
