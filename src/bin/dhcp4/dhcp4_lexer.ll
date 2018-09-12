@@ -712,15 +712,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"interface-id\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SUBNET4:
-        return isc::dhcp::Dhcp4Parser::make_INTERFACE_ID(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("interface-id", driver.loc_);
-    }
-}
-
 \"id\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:
