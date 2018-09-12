@@ -41,6 +41,7 @@
  *   - @subpage unitTestsIntroduction
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
+ *   - @subpage unitTestsSysrepo
  *
  * @section performance Performance
  * - @subpage benchmarks

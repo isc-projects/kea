@@ -7,11 +7,30 @@
 /**
  @page libyang libkea-yang - Kea Yang Utilities Library
 
-All translators take a seesion in constructors and derive from
-the basic / base class and recursively of translators for
-embedded parts.
+The libkea-yang library was developed to handle base YANG operations,
+such are retrieving YANG schema and configuration and translating
+data between YANG syntax and JSON that is understandable by Kea.
 
-@section yangTranslator between Yang and JSON Translator
+@section yangTranslator Translator between Yang and JSON
+
+An essential concept is the idea of translator. It is a primitive that is able
+to convert certain data structure between YANG and JSON. It is envisaged
+that more complex translators will use other translators to handle more
+complex data structures. For details, see @ref isc::yang::TranslatorBasic.
+
+Note that although the initial focus is on translation from YANG to JSON (so
+Kea can retrieve its configuration), the opposite translation direction -
+from JSON to YANG - is also very useful, for at least two reasons. First,
+in many cases we can use it in tests to check that conversion back and forth
+doesn't lose anything: yang = toYang(toJson(yang)). Second, YANG models
+cover two major types of data: configuration and run-time state. While
+we're initially focusing on getting the configuration, the run-time state
+is something that Kea is expected to provide. Kea uses JSON internally in many
+places and that data will have to be exported in YANG format.
+
+All translators take a Session pointer (a structure provided by Sysrepo that
+is responsible for maintaining a connection) in constructors and derive from
+the basic / base class and recursively of translators for embedded parts.
 
 @c isc::yang::TranslatorBasic provides some methods:
  - getItem() gets and translates basic value from Yang to JSON
@@ -22,7 +41,7 @@ embedded parts.
  - getIter() gets an iterator over a Yang list
  - getNext() returns the xpath of the next item
 
-@section yangTranslatorPool between Yang and JSON Translator for pool
+@section yangTranslatorPool Pool translator
 
 @c isc::yang::TranslatorPool is the standard example of a translator
 for a structured value. Its constructor takes a model name: the code
@@ -38,9 +57,36 @@ Note pools show two shortcomings in IETF models:
   code is to translate the whole configuration.
  - prefix and start - end forms of pool ranges are both mandatory.
 
-@section yangTranslatorSubnet between Yang and JSON Translator for subnet
+@section yangTranslatorSubnet Subnet translator
 
 The new thing here is the use of adaptors to move timers from subnets
 to pools and back.
 
+ @page unitTestsSysrepo Running unit-tests with Sysrepo
+
+To run YANG/NETCONF/Sysrepo tests you obviously need to compile Kea with
+Sysrepo support:
+
+@verbatim
+./configure --with-sysrepo
+@endverbatim
+
+For details, see Section 20 "YANG/NETCONF support" in the Kea User's Guide.
+
+You also need to install YANG schemas, so the unit-tests are able to
+retrieve, add, update and generally interact with the sysrepo information.
+There are several production Kea models (src/lib/yang/models) and one test
+specific model (src/lib/yang/tests/keatest-module.yang).
+
+To install the test module, issue the following command:
+
+@verbatim
+sudo sysrepoctl --install --yang=src/lib/yang/tests/test-module.yang
+@endverbatim
+
+To verify that you have the schemas installed, do this:
+@verbatim
+sysrepoctl -l
+@endverbatim
+Make sure that test-module is on the list.
 */
