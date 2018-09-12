@@ -303,12 +303,12 @@ TEST(TranslatorBasicTest, getItem) {
 
     // Identity reference.
     xpath = "/keatest-module:main/id_ref";
-    s_val.reset(new Val("id_1", SR_IDENTITYREF_T));
+    s_val.reset(new Val("keatest-module:id_1", SR_IDENTITYREF_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     ASSERT_TRUE(elem);
     ASSERT_EQ(Element::string, elem->getType());
-    EXPECT_EQ("id_1", elem->stringValue());
+    EXPECT_EQ("keatest-module:id_1", elem->stringValue());
     elem.reset();
 
     // Enumeration item.
@@ -600,12 +600,12 @@ TEST(TranslatorBasicTest, setItem) {
 
     // Identity reference.
     xpath = "/keatest-module:main/id_ref";
-    elem = Element::create(string("id_1"));
+    elem = Element::create(string("keatest-module:id_1"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_IDENTITYREF_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
     ASSERT_TRUE(s_val);
     ASSERT_EQ(SR_IDENTITYREF_T, s_val->type());
-    EXPECT_EQ("id_1", string(s_val->data()->get_identityref()));
+    EXPECT_EQ("keatest-module:id_1", string(s_val->data()->get_identityref()));
     s_val.reset();
 
     // Enumeration item.
