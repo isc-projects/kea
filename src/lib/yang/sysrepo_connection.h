@@ -26,7 +26,7 @@ public:
     // @brief Constructor.
     SysrepoConnection();
 
-    // @brief Destructor.
+    // @brief Destructor (closing connection).
     virtual ~SysrepoConnection();
 
     // @brief Get a connection and a session.
