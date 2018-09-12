@@ -18,7 +18,7 @@ using namespace isc::yang;
 
 namespace {
 
-const std::string TEST_MODULE="test-module";
+const std::string TEST_MODULE="keatest-module";
 
 
 /// @brief checks if specified schema is installed and available in sysrepo
@@ -200,11 +200,11 @@ TEST(TranslatorBasicTest, getItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/test-module:container/list";
+    string xpath = "/keatest-module:container/list";
     S_Val s_val;
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     ConstElementPtr elem;
-    EXPECT_NO_THROW(elem = t_obj->getItem("/test-module:container"));
+    EXPECT_NO_THROW(elem = t_obj->getItem("/keatest-module:container"));
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -216,7 +216,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // String.
-    xpath = "/test-module:main/string";
+    xpath = "/keatest-module:main/string";
     s_val.reset(new Val("str", SR_STRING_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
@@ -226,7 +226,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Bool.
-    xpath = "/test-module:main/boolean";
+    xpath = "/keatest-module:main/boolean";
     s_val.reset(new Val(true, SR_BOOL_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
@@ -236,7 +236,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Unsigned 8 bit integer.
-    xpath = "/test-module:main/ui8";
+    xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
     s_val.reset(new Val(u8, SR_UINT8_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -247,7 +247,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Unsigned 16 bit integer.
-    xpath = "/test-module:main/ui16";
+    xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
     s_val.reset(new Val(u16, SR_UINT16_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -258,7 +258,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Unsigned 32 bit integer.
-    xpath = "/test-module:main/ui32";
+    xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
     s_val.reset(new Val(u32, SR_UINT32_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -269,7 +269,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Signed 8 bit integer.
-    xpath = "/test-module:main/i8";
+    xpath = "/keatest-module:main/i8";
     int8_t s8(8);
     s_val.reset(new Val(s8, SR_INT8_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -280,7 +280,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Signed 16 bit integer.
-    xpath = "/test-module:main/i16";
+    xpath = "/keatest-module:main/i16";
     int16_t s16(16);
     s_val.reset(new Val(s16, SR_INT16_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -291,7 +291,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Signed 32 bit integer.
-    xpath = "/test-module:main/i32";
+    xpath = "/keatest-module:main/i32";
     int32_t s32(32);
     s_val.reset(new Val(s32, SR_INT32_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
@@ -302,7 +302,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Identity reference.
-    xpath = "/test-module:main/id_ref";
+    xpath = "/keatest-module:main/id_ref";
     s_val.reset(new Val("id_1", SR_IDENTITYREF_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
@@ -312,7 +312,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Enumeration item.
-    xpath = "/test-module:main/enum";
+    xpath = "/keatest-module:main/enum";
     s_val.reset(new Val("maybe", SR_ENUM_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
@@ -322,7 +322,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Binary.
-    xpath = "/test-module:main/raw";
+    xpath = "/keatest-module:main/raw";
     s_val.reset(new Val("Zm9vYmFy", SR_BINARY_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
@@ -332,7 +332,7 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Leaf-list: not yet exist.
-    xpath = "/test-module:main/numbers";
+    xpath = "/keatest-module:main/numbers";
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     EXPECT_FALSE(elem);
     elem.reset();
@@ -357,14 +357,14 @@ TEST(TranslatorBasicTest, getItem) {
     elem.reset();
 
     // Unknown / unsupported.
-    xpath = "/test-module:main/dec64";
+    xpath = "/keatest-module:main/dec64";
     s_val.reset(new Val(9.85));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     EXPECT_THROW(elem = t_obj->getItem(xpath), NotImplemented);
     elem.reset();
 
     // Not found.
-    xpath = "/test-module:main/no_such_string";
+    xpath = "/keatest-module:main/no_such_string";
     EXPECT_NO_THROW(sess->delete_item(xpath.c_str()));
     EXPECT_NO_THROW(elem = t_obj->getItem(xpath));
     EXPECT_FALSE(elem);
@@ -502,14 +502,14 @@ TEST(TranslatorBasicTest, setItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/test-module:container";
+    string xpath = "/keatest-module:container";
     ConstElementPtr elem = Element::createMap();
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_T), NotImplemented);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),
 		 NotImplemented);
 
     // List.
-    xpath = "/test-module:container/list";
+    xpath = "/keatest-module:container/list";
     elem = Element::createList();
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_LIST_T));
     S_Val s_val;
@@ -519,7 +519,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // String.
-    xpath = "/test-module:main/string";
+    xpath = "/keatest-module:main/string";
     elem = Element::create(string("str"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_STRING_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -529,7 +529,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Bool.
-    xpath = "/test-module:main/boolean";
+    xpath = "/keatest-module:main/boolean";
     elem = Element::create(true);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_BOOL_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -539,7 +539,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Unsigned 8 bit integer.
-    xpath = "/test-module:main/ui8";
+    xpath = "/keatest-module:main/ui8";
     elem = Element::create(8);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT8_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -549,7 +549,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Unsigned 16 bit integer.
-    xpath = "/test-module:main/ui16";
+    xpath = "/keatest-module:main/ui16";
     elem = Element::create(16);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT16_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -559,7 +559,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Unsigned 32 bit integer.
-    xpath = "/test-module:main/ui32";
+    xpath = "/keatest-module:main/ui32";
     elem = Element::create(32);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_UINT32_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -569,7 +569,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Signed 8 bit integer.
-    xpath = "/test-module:main/i8";
+    xpath = "/keatest-module:main/i8";
     elem = Element::create(8);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_INT8_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -579,7 +579,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Signed 16 bit integer.
-    xpath = "/test-module:main/i16";
+    xpath = "/keatest-module:main/i16";
     elem = Element::create(16);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_INT16_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -589,7 +589,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Signed 32 bit integer.
-    xpath = "/test-module:main/i32";
+    xpath = "/keatest-module:main/i32";
     elem = Element::create(32);
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_INT32_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -599,7 +599,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Identity reference.
-    xpath = "/test-module:main/id_ref";
+    xpath = "/keatest-module:main/id_ref";
     elem = Element::create(string("id_1"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_IDENTITYREF_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -609,7 +609,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Enumeration item.
-    xpath = "/test-module:main/enum";
+    xpath = "/keatest-module:main/enum";
     elem = Element::create(string("maybe"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_ENUM_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -619,7 +619,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Binary.
-    xpath = "/test-module:main/raw";
+    xpath = "/keatest-module:main/raw";
     elem = Element::create(string("foobar"));
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_BINARY_T));
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
@@ -629,7 +629,7 @@ TEST(TranslatorBasicTest, setItem) {
     s_val.reset();
 
     // Leaf-list.
-    xpath = "/test-module:main/numbers";
+    xpath = "/keatest-module:main/numbers";
     S_Vals s_vals;
     EXPECT_NO_THROW(s_vals = sess->get_items(xpath.c_str()));
     EXPECT_FALSE(s_vals);
@@ -654,12 +654,12 @@ TEST(TranslatorBasicTest, setItem) {
     s_vals.reset();
 
     // Unknown / unsupported.
-    xpath = "/test-module:main/dec64";
+    xpath = "/keatest-module:main/dec64";
     elem = Element::create(9.85);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_DECIMAL64_T), NotImplemented);
 
     // Bad xpath.
-    xpath = "/test-module:main/no_such_string";
+    xpath = "/keatest-module:main/no_such_string";
     elem = Element::create(string("str"));
     try {
 	t_obj->setItem(xpath, elem, SR_STRING_T);
@@ -673,7 +673,7 @@ TEST(TranslatorBasicTest, setItem) {
     }
 
     // Bad type.
-    xpath = "/test-module:main/string";
+    xpath = "/keatest-module:main/string";
     elem = Element::create(true);
     try {
 	t_obj->setItem(xpath, elem, SR_BOOL_T);
@@ -687,7 +687,7 @@ TEST(TranslatorBasicTest, setItem) {
     }
 
     // Delete (twice).
-    xpath = "/test-module:main/string";
+    xpath = "/keatest-module:main/string";
     EXPECT_NO_THROW(s_val = sess->get_item(xpath.c_str()));
     EXPECT_TRUE(s_val);
     s_val.reset();
@@ -707,20 +707,20 @@ TEST(TranslatorBasicTest, list) {
 
     // Empty list.
     S_Iter_Value iter;
-    EXPECT_NO_THROW(iter = t_obj->getIter("/test-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
     ASSERT_TRUE(iter);
     string xpath;
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
     // Retried with a filled list.
-    xpath = "/test-module:container/list[key1='key1'][key2='key2']/leaf";
+    xpath = "/keatest-module:container/list[key1='key1'][key2='key2']/leaf";
     S_Val s_val(new Val("Leaf value"));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(iter = t_obj->getIter("/test-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
     ASSERT_TRUE(iter);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_EQ("/test-module:container/list[key1='key1'][key2='key2']", xpath);
+    EXPECT_EQ("/keatest-module:container/list[key1='key1'][key2='key2']", xpath);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 

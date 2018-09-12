@@ -1,6 +1,6 @@
-module test-module {
+module keatest-module {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:test-module";
+  namespace "urn:ietf:params:xml:ns:yang:keatest-module";
   prefix tm;
 
   import ietf-inet-types {
