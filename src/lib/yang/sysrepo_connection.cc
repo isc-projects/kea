@@ -14,11 +14,11 @@ SysrepoConnection::SysrepoConnection() {
 
 SysrepoConnection::~SysrepoConnection() {
     if (session_) {
-      session_->discard_changes();
-      session_->unlock_datastore();
-      session_->session_stop();
+        session_->discard_changes();
+        session_->unlock_datastore();
+        session_->session_stop();
 
-      // how to call disconnect?
+        // @todo: how to call disconnect?
     }
 }
 
@@ -34,10 +34,10 @@ SysrepoConnection::connect() {
 
 void
 SysrepoConnection::commit() {
-  if (!session_) {
-    isc_throw(SysrepoConnectionError, "session not established");
-  }
-  session_->commit();
+    if (!session_) {
+        isc_throw(SysrepoConnectionError, "session not established");
+    }
+    session_->commit();
 }
 
 }
