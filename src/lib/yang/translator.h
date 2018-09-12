@@ -84,8 +84,8 @@ public:
 
     /// @brief Get xpath of the next Yang list item.
     ///
-    /// @param iter The iterator.
-    /// @return The xpath of the next element. Null when at the end of the list.
+    /// @param iter The iterator pointing to the previous element
+    /// @return The xpath of the next element. Empty string when at the end of the list.
     std::string getNext(S_Iter_Value iter);
 
 protected:
