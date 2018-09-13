@@ -26,11 +26,11 @@ TEST(TranslatorDatabaseTest, getEmpty) {
     boost::scoped_ptr<TranslatorDatabase> td_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
 
     // Get empty.
-    const string& xpath = "/kea-dhcp4:config/lease-database";
+    const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ConstElementPtr database;
     EXPECT_NO_THROW(database = td_obj->getDatabase(xpath));
     EXPECT_FALSE(database);
@@ -44,11 +44,11 @@ TEST(TranslatorDatabaseTest, get) {
     boost::scoped_ptr<TranslatorDatabase> td_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/lease-database";
+    const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
@@ -80,11 +80,11 @@ TEST(TranslatorDatabaseTest, set) {
     boost::scoped_ptr<TranslatorDatabase> td_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/lease-database";
+    const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ElementPtr database = Element::createMap();
     database->set("type", Element::create(string("memfile")));
     database->set("lfc-interval", Element::create(3600));
@@ -114,11 +114,11 @@ TEST(TranslatorDatabaseTest, setEmpty) {
     boost::scoped_ptr<TranslatorDatabase> td_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/lease-database";
+    const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
@@ -144,11 +144,11 @@ TEST(TranslatorDatabasesTest, getEmpty) {
     boost::scoped_ptr<TranslatorDatabases> tds_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
 
     // Get empty.
-    const string& xpath = "/kea-dhcp6:config/hosts-databases";
+    const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
     ConstElementPtr databases;
     EXPECT_NO_THROW(databases = tds_obj->getDatabases(xpath));
     EXPECT_FALSE(databases);
@@ -162,11 +162,11 @@ TEST(TranslatorDatabasesTest, get) {
     boost::scoped_ptr<TranslatorDatabases> tds_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/hosts-databases";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
     const string& xdatabase =
         xpath + "/hosts-database[database-type='mysql']";
     const string& xname = xdatabase + "/name";
@@ -228,11 +228,11 @@ TEST(TranslatorDatabasesTest, set) {
     boost::scoped_ptr<TranslatorDatabases> tds_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp6:config/hosts-databases";
+    const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
     ElementPtr database = Element::createMap();
     database->set("type", Element::create(string("memfile")));
     database->set("lfc-interval", Element::create(3600));
@@ -269,12 +269,12 @@ TEST(TranslatorDatabasesTest, setEmpty) {
     boost::scoped_ptr<TranslatorDatabase> td_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
     EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/hosts-databases";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
     const string& xdatabase =
         xpath + "/hosts-database[database-type='mysql']";
     const string& xname = xdatabase + "/name";
@@ -311,11 +311,11 @@ TEST(TranslatorDatabasesTest, setEmpties) {
     boost::scoped_ptr<TranslatorDatabases> tds_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/hosts-databases";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
     const string& xdatabase =
         xpath + "/hosts-database[database-type='mysql']";
     const string& xname = xdatabase + "/name";
