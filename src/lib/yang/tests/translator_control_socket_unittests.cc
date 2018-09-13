@@ -26,11 +26,11 @@ TEST(TranslatorControlSocketTest, getEmpty) {
     boost::scoped_ptr<TranslatorControlSocket> tcs_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tcs_obj.reset(new TranslatorControlSocket(sess, model)));
 
     // Get empty.
-    const string& xpath = "/kea-dhcp4:config/control-socket";
+    const string& xpath = "/kea-dhcp4-server:config/control-socket";
     ConstElementPtr sock;
     EXPECT_NO_THROW(sock = tcs_obj->getControlSocket(xpath));
     EXPECT_FALSE(sock);
@@ -44,11 +44,11 @@ TEST(TranslatorControlSocketTest, get) {
     boost::scoped_ptr<TranslatorControlSocket> tcs_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(tcs_obj.reset(new TranslatorControlSocket(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp6:config/control-socket";
+    const string& xpath = "/kea-dhcp6-server:config/control-socket";
     const string& xname = xpath + "/socket-name";
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
@@ -86,12 +86,12 @@ TEST(TranslatorControlSocketTest, set) {
     boost::scoped_ptr<TranslatorControlSocket> tcs_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-control-agent";
+    const string& model = "kea-ctrl-agent";
     EXPECT_NO_THROW(tcs_obj.reset(new TranslatorControlSocket(sess, model)));
 
     // Set a value.
     const string& xpath =
-        "/kea-control-agent:config/control-sockets/socket[server-type='dhcp4']/control-socket";
+        "/kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/control-socket";
     ElementPtr sock = Element::createMap();
     sock->set("socket-name", Element::create(string("/tmp/kea.sock")));
     sock->set("socket-type", Element::create(string("unix")));
@@ -130,11 +130,11 @@ TEST(TranslatorControlSocketTest, setEmpty) {
     boost::scoped_ptr<TranslatorControlSocket> tcs_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tcs_obj.reset(new TranslatorControlSocket(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:config/control-socket";
+    const string& xpath = "/kea-dhcp4-server:config/control-socket";
     const string& xname = xpath + "/socket-name";
     const string& xtype = xpath + "/socket-type";
     const string& xcontext = xpath + "/user-context";
