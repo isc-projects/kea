@@ -518,13 +518,13 @@ EOF
     assert_eq 0 $ERRCODE "dhcp4_option_def_server table missing or broken (expected status code %d, returned %d)";
 
     # table: dhcp4_shared_network
-    qry="select name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp4_shared_network";
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp4_shared_network";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp4_shared_network table missing or broken (expected status code %d, returned %d)";
 
     # table: dhcp4_shared_network_server
-    qry="select shared_network_name, server_id, modification_ts from dhcp4_shared_network_server";
+    qry="select shared_network_id, server_id, modification_ts from dhcp4_shared_network_server";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp4_shared_network_server table missing or broken (expected status code %d, returned %d)";
@@ -595,12 +595,13 @@ EOF
     assert_eq 0 $ERRCODE "dhcp6_option_def_server table missing or broken (expected status code %d, returned %d)";
 
     # table: dhcp6_shared_network
-    qry="select name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp6_shared_network";
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, user_context, valid_lifetime from dhcp6_shared_network";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_shared_network table missing or broken (expected status code %d, returned %d)";
+
     # table: dhcp6_shared_network_server
-    qry="select shared_network_name, server_id, modification_ts from dhcp6_shared_network_server";
+    qry="select shared_network_id, server_id, modification_ts from dhcp6_shared_network_server";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "dhcp6_shared_network_server table missing or broken (expected status code %d, returned %d)";
