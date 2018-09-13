@@ -953,8 +953,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet (
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
     PRIMARY KEY (subnet_id),
-    UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
-    KEY subnet4_subnet_prefix (subnet_prefix),
+    UNIQUE KEY subnet4_subnet_prefix (subnet_prefix),
     KEY fk_dhcp4_subnet_shared_network (shared_network_name),
     KEY key_dhcp4_subnet_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
@@ -1190,7 +1189,7 @@ CREATE TABLE dhcp6_subnet (
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
     PRIMARY KEY (subnet_id),
-    UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
+    UNIQUE KEY subnet_prefix_UNIQUE (subnet_prefix),
     KEY subnet6_subnet_prefix (subnet_prefix),
     KEY fk_dhcp6_subnet_shared_network (shared_network_name),
     KEY key_dhcp6_subnet_modification_ts (modification_ts),
