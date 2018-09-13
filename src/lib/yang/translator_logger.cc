@@ -24,8 +24,10 @@ TranslatorLogger::~TranslatorLogger() {
 ElementPtr
 TranslatorLogger::getLogger(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             return (getLoggerKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -107,8 +109,10 @@ TranslatorLogger::getOutputOptions(const string& xpath) {
 void
 TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             setLoggerKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -194,8 +198,10 @@ TranslatorLoggers::~TranslatorLoggers() {
 ConstElementPtr
 TranslatorLoggers::getLoggers(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             return (getLoggersKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -227,8 +233,10 @@ TranslatorLoggers::getLoggersKea(const string& xpath) {
 void
 TranslatorLoggers::setLoggers(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             setLoggersKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
