@@ -1,7 +1,7 @@
-module kea-dhcp6 {
+module kea-dhcp6-server {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp6";
-  prefix "kea-dhcp6";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp6-server";
+  prefix "kea-dhcp6-server";
 
   import ietf-inet-types {
     prefix inet;

@@ -1,7 +1,7 @@
-module kea-dhcp4 {
+module kea-dhcp4-server {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp4";
-  prefix "kea-dhcp4";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp4-server";
+  prefix "kea-dhcp4-server";
 
   import ietf-inet-types {
     prefix inet;
