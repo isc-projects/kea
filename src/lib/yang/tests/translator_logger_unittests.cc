@@ -26,11 +26,11 @@ TEST(TranslatorLoggersTest, getEmpty) {
     boost::scoped_ptr<TranslatorLoggers> tls_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tls_obj.reset(new TranslatorLoggers(sess, model)));
 
     // Get empty.
-    const string& xpath = "/kea-dhcp4:logging/loggers";
+    const string& xpath = "/kea-dhcp4-server:logging/loggers";
     ConstElementPtr loggers;
     EXPECT_NO_THROW(loggers = tls_obj->getLoggers(xpath));
     ASSERT_TRUE(loggers);
@@ -45,11 +45,11 @@ TEST(TranslatorLoggersTest, get) {
     boost::scoped_ptr<TranslatorLoggers> tls_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(tls_obj.reset(new TranslatorLoggers(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp6:logging/loggers";
+    const string& xpath = "/kea-dhcp6-server:logging/loggers";
     const string& xlogger = xpath + "/logger[name='foo']";
     const string& xseverity = xlogger + "/severity";
     const string& xoption = xlogger + "/output-options/option[output='/bar']";
@@ -100,11 +100,11 @@ TEST(TranslatorLoggersTest, set) {
     boost::scoped_ptr<TranslatorLoggers> tls_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(tls_obj.reset(new TranslatorLoggers(sess, model)));
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4:logging/loggers";
+    const string& xpath = "/kea-dhcp4-server:logging/loggers";
     ElementPtr option = Element::createMap();
     option->set("output", Element::create(string("/bar")));
     option->set("maxver", Element::create(10));
@@ -151,10 +151,10 @@ TEST(TranslatorLoggersTest, set) {
 
     // Check the tree representation.
     S_Tree tree;
-    EXPECT_NO_THROW(tree = sess->get_subtree("/kea-dhcp4:logging"));
+    EXPECT_NO_THROW(tree = sess->get_subtree("/kea-dhcp4-server:logging"));
     ASSERT_TRUE(tree);
     string expected =
-        "kea-dhcp4:logging (container)\n"
+        "kea-dhcp4-server:logging (container)\n"
         " |\n"
         " -- loggers (container)\n"
         "     |\n"
