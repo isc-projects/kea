@@ -796,7 +796,6 @@ CREATE TABLE IF NOT EXISTS dhcp4_server (
     modification_ts TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY dhcp4_server_tag_UNIQUE (tag),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp4_server_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
@@ -806,11 +805,10 @@ CREATE TABLE IF NOT EXISTS dhcp4_server (
 CREATE TABLE IF NOT EXISTS dhcp4_audit (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     object_type VARCHAR(256) NOT NULL,
-    object_id VARCHAR(128) NOT NULL,
+    object_id BIGINT(20) UNSIGNED NOT NULL,
     modification_type TINYINT(1) NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp4_audit_by_modification_ts (modification_ts),
     KEY fk_dhcp4_audit_modification_type (modification_type),
     CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type)
@@ -828,13 +826,14 @@ CREATE TABLE IF NOT EXISTS dhcp4_global_parameter (
     value LONGTEXT NOT NULL,
     modification_ts timestamp NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp4_global_parameter_modification_ts (modification_ts),
     KEY key_dhcp4_global_parameter_name (name)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_global_parameter_server`
+-- M-to-M cross-reference between global parameters and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
     parameter_id BIGINT(20) UNSIGNED NOT NULL,
@@ -864,13 +863,14 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def (
     record_types VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp4_option_def_modification_ts (modification_ts),
     KEY key_dhcp4_option_def_code_space (code, space)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_option_def_server`
+-- M-to-M cross-reference between option definitions and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
     option_def_id BIGINT(20) UNSIGNED NOT NULL,
@@ -890,6 +890,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
 -- Table `dhcp4_shared_network`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_shared_network (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(128) NOT NULL,
     client_class VARCHAR(128) DEFAULT NULL,
     interface VARCHAR(128) DEFAULT NULL,
@@ -903,31 +904,35 @@ CREATE TABLE IF NOT EXISTS dhcp4_shared_network (
     server_hostname VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
-    PRIMARY KEY (name),
+    PRIMARY KEY (id),
+    UNIQUE KEY name_UNIQUE (name),
     KEY key_dhcp4_shared_network_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_shared_network_server`
+-- M-to-M cross-reference between shared networks and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_shared_network_server (
-    shared_network_name VARCHAR(128) NOT NULL,
+    shared_network_id BIGINT(20) UNSIGNED NOT NULL,
     server_id BIGINT(20) UNSIGNED NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
-    PRIMARY KEY (shared_network_name, server_id),
+    PRIMARY KEY (shared_network_id, server_id),
     KEY key_dhcp4_shared_network_server_modification_ts (modification_ts),
-    KEY fk_dhcp4_shared_network_server_server_id_idx (server_id),
+    KEY fk_dhcp4_shared_network_server_server_id (server_id),
     CONSTRAINT fk_dhcp4_shared_network_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION,
-    CONSTRAINT fk_dhcp4_shared_network_server_shared_network_name FOREIGN KEY (shared_network_name)
-        REFERENCES dhcp4_shared_network (name) ON DELETE NO ACTION ON UPDATE NO ACTION
+    CONSTRAINT fk_dhcp4_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
+        REFERENCES dhcp4_shared_network (id) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp4_subnet`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_subnet (
+    subnet_id INT(10) UNSIGNED NOT NULL,
     subnet_prefix VARCHAR(32) NOT NULL,
     4o6_interface VARCHAR(128) DEFAULT NULL,
     4o6_interface_id VARCHAR(128) DEFAULT NULL,
@@ -945,11 +950,9 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet (
     reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
     server_hostname VARCHAR(512) DEFAULT NULL,
     shared_network_name VARCHAR(128) DEFAULT NULL,
-    subnet_id INT(10) UNSIGNED NOT NULL,
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
     PRIMARY KEY (subnet_id),
-    UNIQUE KEY subnet_id_UNIQUE (subnet_id),
     UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
     KEY subnet4_subnet_prefix (subnet_prefix),
     KEY fk_dhcp4_subnet_shared_network (shared_network_name),
@@ -978,6 +981,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_pool (
 
 -- -----------------------------------------------------
 -- Table `dhcp4_subnet_server`
+-- M-to-M cross-reference between subnets and servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
     subnet_id INT(10) UNSIGNED NOT NULL,
@@ -1006,6 +1010,7 @@ ALTER TABLE dhcp4_options
 
 -- -----------------------------------------------------
 -- Table `dhcp4_options_server`
+-- M-to-M cross-reference between options and servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_options_server (
     option_id BIGINT(20) UNSIGNED NOT NULL,
@@ -1032,7 +1037,6 @@ CREATE TABLE IF NOT EXISTS dhcp6_server (
     modification_ts TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
     UNIQUE KEY dhcp6_server_tag_UNIQUE (tag),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp6_server_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
@@ -1042,11 +1046,10 @@ CREATE TABLE IF NOT EXISTS dhcp6_server (
 CREATE TABLE IF NOT EXISTS dhcp6_audit (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     object_type VARCHAR(256) NOT NULL,
-    object_id VARCHAR(128) NOT NULL,
+    object_id BIGINT(20) UNSIGNED NOT NULL,
     modification_type TINYINT(1) NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp6_audit_modification_ts (modification_ts),
     KEY fk_dhcp6_audit_modification_type (modification_type),
     CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type)
@@ -1063,13 +1066,14 @@ CREATE TABLE IF NOT EXISTS dhcp6_global_parameter (
     value LONGTEXT NOT NULL,
     modification_ts timestamp NOT NULL,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp6_global_parameter_modification_ts (modification_ts),
     KEY key_dhcp6_global_parameter_name (name)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_global_parameter_server`
+-- M-to-M cross-reference between global parameters and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
     parameter_id BIGINT(20) UNSIGNED NOT NULL,
@@ -1099,13 +1103,14 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def (
     record_types VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
     PRIMARY KEY (id),
-    UNIQUE KEY id_UNIQUE (id),
     KEY key_dhcp6_option_def_modification_ts (modification_ts),
     KEY key_dhcp6_option_def_code_space (code, space)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_option_def_server`
+-- M-to-M cross-reference between option definitions and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
     option_def_id BIGINT(20) UNSIGNED NOT NULL,
@@ -1125,6 +1130,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
 -- Table `dhcp6_shared_network`
 -- -----------------------------------------------------
 CREATE TABLE dhcp6_shared_network (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     name VARCHAR(128) NOT NULL,
     client_class VARCHAR(128) DEFAULT NULL,
     interface VARCHAR(128) DEFAULT NULL,
@@ -1139,25 +1145,28 @@ CREATE TABLE dhcp6_shared_network (
     server_hostname VARCHAR(512) DEFAULT NULL,
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
-    PRIMARY KEY (name),
+    PRIMARY KEY (id),
+    UNIQUE KEY name_UNIQUE (name),
     KEY key_dhcp6_shared_network_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
 -- -----------------------------------------------------
 -- Table `dhcp6_shared_network_server`
+-- M-to-M cross-reference between shared networks and
+-- servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
-    shared_network_name VARCHAR(128) NOT NULL,
+    shared_network_id BIGINT(20) UNSIGNED NOT NULL,
     server_id BIGINT(20) UNSIGNED NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     KEY key_dhcp6_shared_network_server_modification_ts (modification_ts),
     KEY fk_dhcp6_shared_network_server_server_id_idx (server_id),
-    KEY fk_dhcp6_shared_network_server_shared_network_name (shared_network_name),
+    KEY fk_dhcp6_shared_network_server_shared_network_id (shared_network_id),
     CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION,
-    CONSTRAINT fk_dhcp6_shared_network_server_shared_network_name FOREIGN KEY (shared_network_name)
-        REFERENCES dhcp6_shared_network (name)
+    CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
+        REFERENCES dhcp6_shared_network (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
@@ -1165,6 +1174,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
 -- Table `dhcp6_subnet`
 -- -----------------------------------------------------
 CREATE TABLE dhcp6_subnet (
+    subnet_id INT(10) UNSIGNED NOT NULL,
     subnet_prefix VARCHAR(64) NOT NULL,
     client_class VARCHAR(128) DEFAULT NULL,
     interface VARCHAR(128) DEFAULT NULL,
@@ -1177,11 +1187,9 @@ CREATE TABLE dhcp6_subnet (
     require_client_classes LONGTEXT,
     reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
     shared_network_name VARCHAR(128) DEFAULT NULL,
-    subnet_id int(10) UNSIGNED NOT NULL,
     user_context LONGTEXT,
     valid_lifetime INT(10) DEFAULT NULL,
     PRIMARY KEY (subnet_id),
-    UNIQUE KEY subnet_id_UNIQUE (subnet_id),
     UNIQUE KEY subnet_prefix_UNIQUE (subnet_id),
     KEY subnet6_subnet_prefix (subnet_prefix),
     KEY fk_dhcp6_subnet_shared_network (shared_network_name),
@@ -1193,6 +1201,7 @@ CREATE TABLE dhcp6_subnet (
 
 -- -----------------------------------------------------
 -- Table `dhcp6_subnet_server`
+-- M-to-M cross-reference between subnets and servers
 -- -----------------------------------------------------
 CREATE TABLE dhcp6_subnet_server (
     subnet_id INT(10) UNSIGNED NOT NULL,
@@ -1254,6 +1263,7 @@ ALTER TABLE dhcp6_options
 
 -- -----------------------------------------------------
 -- Table `dhcp6_options_server`
+-- M-to-M cross-reference between options and servers
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp6_options_server (
     option_id BIGINT(20) UNSIGNED NOT NULL,
