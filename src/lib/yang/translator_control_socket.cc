@@ -25,8 +25,10 @@ TranslatorControlSocket::~TranslatorControlSocket() {
 ConstElementPtr
 TranslatorControlSocket::getControlSocket(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             return (getControlSocketKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -60,8 +62,10 @@ void
 TranslatorControlSocket::setControlSocket(const string& xpath,
                                           ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6") ||
-            (model_ == "kea-dhcpddns") || (model_ == "kea-control-agent")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server") ||
+            (model_ == "kea-dhcp-ddns") ||
+            (model_ == "kea-ctrl-agent")) {
             setControlSocketKea(xpath, elem);
         } else {
           isc_throw(NotImplemented,
