@@ -25,7 +25,8 @@ TranslatorOptionDef::~TranslatorOptionDef() {
 ElementPtr
 TranslatorOptionDef::getOptionDef(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server")) {
             return (getOptionDefKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -73,7 +74,8 @@ TranslatorOptionDef::getOptionDefKea(const string& xpath) {
 void
 TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server")) {
             setOptionDefKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -131,7 +133,8 @@ TranslatorOptionDefList::~TranslatorOptionDefList() {
 ConstElementPtr
 TranslatorOptionDefList::getOptionDefList(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server")) {
             return (getOptionDefListKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -164,7 +167,8 @@ void
 TranslatorOptionDefList::setOptionDefList(const string& xpath,
                                           ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4") || (model_ == "kea-dhcp6")) {
+        if ((model_ == "kea-dhcp4-server") ||
+            (model_ == "kea-dhcp6-server")) {
             setOptionDefListKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
