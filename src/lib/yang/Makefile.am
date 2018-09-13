@@ -7,6 +7,8 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES = sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
+libkea_yang_la_SOURCES += translator_option_def.cc
+libkea_yang_la_SOURCES += translator_option_def.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
