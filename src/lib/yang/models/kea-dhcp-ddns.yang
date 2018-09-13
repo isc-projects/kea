@@ -1,7 +1,7 @@
-module kea-dhcpddns {
+module kea-dhcp-ddns {
   yang-version 1.1;
-  namespace "urn:ietf:params:xml:ns:yang:kea-dhcpddns";
-  prefix "kea-dhcpddns";
+  namespace "urn:ietf:params:xml:ns:yang:kea-dhcp-ddns";
+  prefix "kea-dhcp-ddns";
 
   import ietf-inet-types {
     prefix inet;
