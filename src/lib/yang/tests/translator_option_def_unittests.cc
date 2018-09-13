@@ -27,11 +27,11 @@ TEST(TranslatorOptionDefListTest, getEmpty) {
     boost::scoped_ptr<TranslatorOptionDefList> todl_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(todl_obj.reset(new TranslatorOptionDefList(sess, model)));
 
     // Get the option definition list and checks it is empty.
-    const string& xpath = "/kea-dhcp4:config/option-def-list";
+    const string& xpath = "/kea-dhcp4-server:config/option-def-list";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = todl_obj->getOptionDefList(xpath));
     ASSERT_TRUE(options);
@@ -47,11 +47,11 @@ TEST(TranslatorOptionDefListTest, get) {
     boost::scoped_ptr<TranslatorOptionDefList> todl_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(todl_obj.reset(new TranslatorOptionDefList(sess, model)));
 
     // Create the option code 100.
-    const string& xpath = "/kea-dhcp6:config/option-def-list";
+    const string& xpath = "/kea-dhcp6-server:config/option-def-list";
     const string& xdef = xpath + "/option-def[code='100'][space='isc']";
     const string& xname = xdef + "/name";
     const string& xtype = xdef + "/type";
@@ -87,11 +87,11 @@ TEST(TranslatorOptionDefListTest, setEmpty) {
     boost::scoped_ptr<TranslatorOptionDefList> todl_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp4";
+    const string& model = "kea-dhcp4-server";
     EXPECT_NO_THROW(todl_obj.reset(new TranslatorOptionDefList(sess, model)));
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4:config/option-def-list";
+    const string& xpath = "/kea-dhcp4-server:config/option-def-list";
     ConstElementPtr defs = Element::createList();
     EXPECT_NO_THROW(todl_obj->setOptionDefList(xpath, defs));
 
@@ -110,11 +110,11 @@ TEST(TranslatorOptionDefListTest, set) {
     boost::scoped_ptr<TranslatorOptionDefList> todl_obj;
 
     // Use the ad hoc model.
-    const string& model = "kea-dhcp6";
+    const string& model = "kea-dhcp6-server";
     EXPECT_NO_THROW(todl_obj.reset(new TranslatorOptionDefList(sess, model)));
 
     // Set one option def.
-    const string& xpath = "/kea-dhcp6:config/option-def-list";
+    const string& xpath = "/kea-dhcp6-server:config/option-def-list";
     ElementPtr defs = Element::createList();
     ElementPtr def = Element::createMap();
     def->set("code", Element::create(100));
@@ -134,10 +134,10 @@ TEST(TranslatorOptionDefListTest, set) {
 
     // Check the tree representation.
     S_Tree tree;
-    EXPECT_NO_THROW(tree = sess->get_subtree("/kea-dhcp6:config"));
+    EXPECT_NO_THROW(tree = sess->get_subtree("/kea-dhcp6-server:config"));
     ASSERT_TRUE(tree);
     string expected =
-        "kea-dhcp6:config (container)\n"
+        "kea-dhcp6-server:config (container)\n"
         " |\n"
         " -- option-def-list (container)\n"
         "     |\n"
