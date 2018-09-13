@@ -327,7 +327,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
 
 # Modify the primary key to BINGINT as other tables have.
 #
-ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
+ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 # Add conifguration backend specific columns.
 ALTER TABLE dhcp4_options
@@ -562,7 +562,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_pool (
 ) ENGINE=InnoDB;
 
 # Modify the primary key to BINGINT as other tables have.
-ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL;
+ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
 
 # Add conifguration backend specific columns.
 ALTER TABLE dhcp6_options
