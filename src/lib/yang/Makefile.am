@@ -24,7 +24,8 @@ libkea_yang_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libkea_yang_includedir = $(pkgincludedir)/yang
 libkea_yang_include_HEADERS = \
 	sysrepo_error.h \
-	translator.h
+	translator.h \
+	translator_control_socket.h
 
 EXTRA_DIST = yang.dox
 
