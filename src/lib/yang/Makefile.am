@@ -4,19 +4,6 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_CPPFLAGS)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-nobase_dist_pkgdata_DATA  = models/ietf-dhcpv6-client.yang
-nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-options.yang
-nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-relay.yang
-nobase_dist_pkgdata_DATA += models/etf-dhcpv6-server.yang
-nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-types.yang
-nobase_dist_pkgdata_DATA += models/kea-ctrl-agent.yang
-nobase_dist_pkgdata_DATA += models/kea-dhcp-ddns.yang
-nobase_dist_pkgdata_DATA += models/kea-dhcp-types.yang
-nobase_dist_pkgdata_DATA += models/kea-dhcp4-server.yang
-nobase_dist_pkgdata_DATA += models/kea-dhcp6-server.yang
-nobase_dist_pkgdata_DATA += models/kea-logging.yang
-nobase_dist_pkgdata_DATA += models/kea-types.yang
-
 lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES = sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
@@ -38,5 +25,18 @@ libkea_yang_include_HEADERS = \
 	translator.h
 
 EXTRA_DIST = yang.dox
+# Distribute yang models.
+EXTRA_DIST += models/ietf-dhcpv6-client.yang
+EXTRA_DIST += models/ietf-dhcpv6-options.yang
+EXTRA_DIST += models/ietf-dhcpv6-relay.yang
+EXTRA_DIST += models/ietf-dhcpv6-server.yang
+EXTRA_DIST += models/ietf-dhcpv6-types.yang
+EXTRA_DIST += models/kea-ctrl-agent.yang
+EXTRA_DIST += models/kea-dhcp-ddns.yang
+EXTRA_DIST += models/kea-dhcp-types.yang
+EXTRA_DIST += models/kea-dhcp4-server.yang
+EXTRA_DIST += models/kea-dhcp6-server.yang
+EXTRA_DIST += models/kea-logging.yang
+EXTRA_DIST += models/kea-types.yang
 
 CLEANFILES = *.gcno *.gcda
