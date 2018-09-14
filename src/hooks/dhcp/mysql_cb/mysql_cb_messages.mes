@@ -1,0 +1,3 @@
+# Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+
+$NAMESPACE isc::cb
