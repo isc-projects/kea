@@ -482,7 +482,7 @@ EOF
     run_statement "dhcp4_server" "$qry"
 
     # table: dhcp4_audit
-    qry="select id, object_type, object_id, modification_type, modification_ts from dhcp4_audit"
+    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp4_audit"
     run_statement "dhcp4_audit" "$qry"
 
     # table: dhcp4_global_parameter
@@ -534,7 +534,7 @@ EOF
     run_statement "dhcp6_server" "$qry"
 
     # table: dhcp6_audit
-    qry="select id, object_type, object_id, modification_type, modification_ts from dhcp6_audit"
+    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp6_audit"
     run_statement "dhcp6_audit" "$qry"
 
     # table: dhcp6_global_parameter
