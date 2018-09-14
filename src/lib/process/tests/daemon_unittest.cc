@@ -213,7 +213,7 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
 
     if (pid == 0) {
         // This is the child, die right away. Tragic, no?
-        exit (0);
+        _exit (0);
     }
 
     // Back in the parent test, we need to wait for the child to die
