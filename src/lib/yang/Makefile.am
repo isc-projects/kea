@@ -26,7 +26,8 @@ libkea_yang_includedir = $(pkgincludedir)/yang
 libkea_yang_include_HEADERS = \
 	adaptor.h \
 	sysrepo_error.h \
-	translator.h
+	translator.h \
+	translator_option_data.h
 
 EXTRA_DIST = yang.dox
 
