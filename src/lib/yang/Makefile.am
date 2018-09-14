@@ -1,8 +1,21 @@
-SUBDIRS = . tests
+SUBDIRS = .  tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_CPPFLAGS)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
+
+nobase_dist_pkgdata_DATA  = models/ietf-dhcpv6-client.yang
+nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-options.yang
+nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-relay.yang
+nobase_dist_pkgdata_DATA += models/etf-dhcpv6-server.yang
+nobase_dist_pkgdata_DATA += models/ietf-dhcpv6-types.yang
+nobase_dist_pkgdata_DATA += models/kea-ctrl-agent.yang
+nobase_dist_pkgdata_DATA += models/kea-dhcp-ddns.yang
+nobase_dist_pkgdata_DATA += models/kea-dhcp-types.yang
+nobase_dist_pkgdata_DATA += models/kea-dhcp4-server.yang
+nobase_dist_pkgdata_DATA += models/kea-dhcp6-server.yang
+nobase_dist_pkgdata_DATA += models/kea-logging.yang
+nobase_dist_pkgdata_DATA += models/kea-types.yang
 
 lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES  = adaptor.cc adaptor.h

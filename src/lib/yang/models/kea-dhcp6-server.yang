@@ -22,7 +22,7 @@ module kea-dhcp6-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-08-20 {
+  revision 2018-09-14 {
     description "Initial revision";
     reference "";
   }
@@ -57,6 +57,14 @@ module kea-dhcp6-server {
     }
   }
 
+  grouping interface-id {
+    description "Interface ID grouping.";
+    leaf interface-id {
+      type string;
+      description "Interface ID entry.";
+    }
+  }
+
   grouping relay {
     description "Relay grouping.";
     leaf-list ip-addresses {
@@ -71,6 +79,40 @@ module kea-dhcp6-server {
       type boolean;
       default false;
       description "Rapid commit entry.";
+    }
+  }
+
+  grouping host {
+    description "Host grouping.";
+    leaf identifier-type {
+      type host-identifier-type;
+      mandatory true;
+      description "Host identifier type.";
+    }
+    uses dhcp:host-identifier;
+    leaf-list ip-addresses {
+      type inet:ipv6-address;
+      description "Host reserved IP addresses.";
+    }
+    leaf-list prefixes {
+      type inet:ipv6-prefix;
+      description "Host reserved IP prefixes.";
+    }
+    uses dhcp:host-hostname;
+    uses dhcp:host-client-classes;
+    uses option-data-list;
+    uses dhcp:host-user-context;
+  }
+
+  grouping reservations {
+    description "Host reservations grouping.";
+    container reservations {
+      description "Host reservations container.";
+      list host {
+        key "identifier-type identifier";
+        description "Host reservation entry.";
+        uses host;
+      }
     }
   }
 
@@ -157,7 +199,11 @@ module kea-dhcp6-server {
         description "IPv6 subnet prefix.";
       }
       uses dhcp:subnet-interface;
-      uses dhcp:subnet-interface-id;
+      uses interface-id {
+        refine interface-id {
+          description "Subnet interface-id option.";
+        }
+      }
       uses dhcp:subnet-id;
       uses rapid-commit {
         refine rapid-commit {
@@ -166,30 +212,9 @@ module kea-dhcp6-server {
       }
       uses dhcp:subnet-client-class;
       uses dhcp:require-client-classes;
-      container reservations {
-        description "A container with host reservations specific to
-                     this IPv6 subnet.";
-        list host {
-          key "identifier-type identifier";
-          description "Host reservation entry.";
-          leaf identifier-type {
-            type host-identifier-type;
-            mandatory true;
-            description "Host identifier type.";
-          }
-          uses dhcp:host-identifier;
-          leaf-list ip-addresses {
-            type inet:ipv6-address;
-            description "Host reserved IP addresses.";
-          }
-          leaf-list prefixes {
-            type inet:ipv6-prefix;
-            description "Host reserved IP prefixes.";
-          }
-          uses dhcp:host-hostname;
-          uses dhcp:host-client-classes;
-          uses option-data-list;
-          uses dhcp:host-user-context;
+      uses reservations {
+        refine reservations {
+          description "Subnet host reservations.";
         }
       }
       uses dhcp:subnet-reservation-mode;
@@ -294,7 +319,11 @@ module kea-dhcp6-server {
           uses subnet6-list;
         }
         uses dhcp:network-interface;
-        uses dhcp:network-interface-id;
+        uses interface-id {
+          refine interface-id {
+            description "Shared network interface-id option.";
+          }
+        }
         uses dhcp:renew-timer;
         uses dhcp:rebind-timer;
         uses option-data-list;
@@ -412,6 +441,11 @@ module kea-dhcp6-server {
       }
     }
     uses dhcp:sanity-checks;
+    uses reservations {
+      refine reservations {
+        description "Global host reservations.";
+      }
+    }
   }
 
   container logging {
@@ -565,25 +599,8 @@ module kea-dhcp6-server {
       list host {
         key "subnet-id identifier-type identifier";
         description "List of Kea DHCPv6 hosts.";
-        leaf identifier-type {
-          type host-identifier-type;
-          mandatory true;
-          description "Host identifier type.";
-        }
-        uses dhcp:host-identifier;
+        uses host;
         uses dhcp:host-subnet-id;
-        leaf-list ip-addresses {
-          type inet:ipv6-address;
-          description "Host reserved IP addresses.";
-        }
-        leaf-list prefixes {
-          type inet:ipv6-prefix;
-          description "Host reserved prefixes.";
-        }
-        uses dhcp:host-hostname;
-        uses dhcp:host-client-classes;
-        uses option-data-list;
-        uses dhcp:host-user-context;
         leaf auth-key {
           type string;
           description "Host authentication key.";
