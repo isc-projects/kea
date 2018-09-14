@@ -721,15 +721,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"rapid-commit\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::SUBNET4:
-        return isc::dhcp::Dhcp4Parser::make_RAPID_COMMIT(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("rapid-commit", driver.loc_);
-    }
-}
-
 \"reservation-mode\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::SUBNET4:

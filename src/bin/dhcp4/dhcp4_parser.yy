@@ -123,7 +123,6 @@ using namespace std;
   SUBNET "subnet"
   INTERFACE "interface"
   ID "id"
-  RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
@@ -1021,7 +1020,6 @@ subnet4_param: valid_lifetime
              | subnet
              | interface
              | id
-             | rapid_commit
              | client_class
              | require_client_classes
              | reservations
@@ -1113,11 +1111,6 @@ hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1
 id: ID COLON INTEGER {
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("id", id);
-};
-
-rapid_commit: RAPID_COMMIT COLON BOOLEAN {
-    ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("rapid-commit", rc);
 };
 
 // ---- shared-networks ---------------------
