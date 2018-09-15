@@ -39,6 +39,8 @@ then
 	echo "    get lib path"
 	echo "--modversion"
 	echo "    get version"
+	echo "--variable=SR_REPOSITORY_LOC"
+	echo "    get repo path"
 	echo "libraries:"
 	echo "    libsysrepo"
 	exit 0
@@ -67,7 +69,8 @@ then
 fi
 if [ $1 == "--libs" ]
 then
-	echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -l:${sysrepo_lib}.a -lSysrepo-cpp -lyang -pthread -lpcre -lev -lprotobuf -lavl -lprotobuf-c"
+# Earlier versions also required -lprotobuf, but it is no longer needed.
+	echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -l:${sysrepo_lib}.a -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
 	exit 0
 fi
 if [ $1 == "--modversion" ]
@@ -77,6 +80,10 @@ then
 	PATCH="0"
 	echo "${MAJOR}.${MINOR}.${PATCH}"
 	exit 0
+fi
+if [ $1 == "--variable=SR_REPOSITORY_LOC" ]
+then
+	echo "${SYSREPO_PATH}/build/repository"
 fi
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"
