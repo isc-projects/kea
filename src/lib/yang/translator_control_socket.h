@@ -69,6 +69,8 @@ protected:
     ///    +--rw user-context?  string
     /// @endcode
     ///
+    /// Null elem argument removes the container.
+    ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
     void setControlSocketKea(const std::string& xpath,
