@@ -60,6 +60,8 @@ public:
 
     /// @brief Translate and set database access from JSON to Yang.
     ///
+    /// Null elem argument removes the database entry.
+    ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
     /// @param skip The skip type field flag.
@@ -133,6 +135,8 @@ public:
     isc::data::ConstElementPtr getDatabases(const std::string& xpath);
 
     /// @brief Translate and set database accesses from JSON to Yang.
+    ///
+    /// Null elem argument removes the database list.
     ///
     /// @param xpath The xpath of databases.
     /// @param elem The JSON element.
