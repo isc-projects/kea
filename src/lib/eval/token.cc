@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,8 @@
 #include <dhcp/option_vendor_class.h>
 #include <cstring>
 #include <string>
+#include <iomanip>
+#include <sstream>
 
 using namespace isc::dhcp;
 using namespace isc::util;
@@ -627,6 +629,42 @@ TokenIfElse::evaluate(Pkt& /*pkt*/, ValueStack& values) {
             .arg(toHex(iftrue))
             .arg(toHex(iffalse));
     }
+}
+
+void
+TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
+    if (values.size() < 2) {
+        isc_throw(EvalBadStack, "Incorrect stack order. Expected at least "
+                  "2 values for hexstring, got " << values.size());
+    }
+
+    string separator = values.top();
+    values.pop();
+    string binary = values.top();
+    values.pop();
+
+    // Unknown separator is interpreted as none.
+    if ((separator != ":") && (separator != "-") && !separator.empty()) {
+        separator.clear();
+    }
+
+    bool first = true;
+    stringstream tmp;
+    tmp << hex;
+    for (size_t i = 0; i < binary.size(); ++i) {
+        if (!first) {
+            tmp << separator;
+            first = false;
+        }
+        tmp << setw(2) << setfill('0') << static_cast<unsigned>(binary[i]);
+    }
+    values.push(tmp.str());
+
+    // Log what we popped and pushed
+    LOG_DEBUG(eval_logger, EVAL_DBG_STACK, EVAL_DEBUG_TOHEXSTRING)
+        .arg(toHex(binary))
+        .arg(separator)
+        .arg(tmp.str());
 }
 
 void

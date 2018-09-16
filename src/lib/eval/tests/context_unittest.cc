@@ -1056,6 +1056,12 @@ TEST_F(EvalContextTest, pkt4FieldChaddr) {
     testPkt4Field("pkt4.mac == 0x000102030405", TokenPkt4::CHADDR, 3);
 }
 
+// Tests whether chaddr field in DHCPv4 can be accessed and converted.
+TEST_F(EvalContextTest, pkt4FieldChaddrHexa) {
+    testPkt4Field("hexstring(pkt4.mac, ':') == '00:01:02:03:04:05'",
+                  TokenPkt4::CHADDR, 5);
+}
+
 // Tests whether hlen field in DHCPv4 can be accessed.
 TEST_F(EvalContextTest, pkt4FieldHlen) {
     testPkt4Field("pkt4.hlen == 0x6", TokenPkt4::HLEN, 3);
