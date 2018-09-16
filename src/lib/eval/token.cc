@@ -654,9 +654,11 @@ TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     for (size_t i = 0; i < binary.size(); ++i) {
         if (!first) {
             tmp << separator;
+        } else {
             first = false;
         }
-        tmp << setw(2) << setfill('0') << static_cast<unsigned>(binary[i]);
+        tmp << setw(2) << setfill('0')
+            << (static_cast<unsigned>(binary[i]) & 0xff);
     }
     values.push(tmp.str());
 
