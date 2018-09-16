@@ -504,6 +504,12 @@ TEST_F(ExpressionsTest, evaluateString) {
                                  "ifelse(option[100].exists,"
                                          "option[100].hex,'none?'))",
                          "hundred4");
+
+    // Check that hexstring works as expecting.
+    testExpressionString(Option::V4, "hexstring(0x1234,':')", "12:34");
+    testExpressionString(Option::V4, "hexstring(0x56789a,'-')", "56-78-9a");
+    testExpressionString(Option::V4, "hexstring(0xbcde,'')", "bcde");
+    testExpressionString(Option::V4, "hexstring(0xf01234,'foo')", "f01234");
 }
 
 };
