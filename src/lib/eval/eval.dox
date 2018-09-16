@@ -160,7 +160,9 @@ instantiated with the appropriate value and put onto the expression vector.
  - isc::dhcp::TokenSubstring -- represents the substring(text, start, length) operator.
  - isc::dhcp::TokenConcat -- represents the concat operator which
    concatenate two other tokens.
- - isc::dhcp::TokenIfElse == represents the ifelse(cond, iftrue, ifelse) operator.
+ - isc::dhcp::TokenIfElse -- represents the ifelse(cond, iftrue, ifelse) operator.
+ - isc::dhcp::TokenToHexString -- represents the hexstring operator which
+   converts a binary value to its hexadecimal string representation. 
  - isc::dhcp::TokenNot -- the logical not operator.
  - isc::dhcp::TokenAnd -- the logical and (strict) operator.
  - isc::dhcp::TokenOr -- the logical or (strict) operator (strict means
