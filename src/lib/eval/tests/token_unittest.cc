@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1951,6 +1951,35 @@ TEST_F(TokenTest, concat) {
     // for comparison
     addString("EVAL_DEBUG_CONCAT Popping 0x626172 and 0x666F6F "
               "pushing 0x666F6F626172");
+    EXPECT_TRUE(checkFile());
+}
+
+// This test checks if a token representing a hexstring request
+// throws an exception if there aren't enough values on the stack.
+// The actual packet is not used.
+TEST_F(TokenTest, tohexstring) {
+    ASSERT_NO_THROW(t_.reset(new TokenToHexString()));
+
+    // Hexstring equires two values on the stack, try
+    // with 0 and 1 both should throw an exception
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    values_.push("foo");
+    EXPECT_THROW(t_->evaluate(*pkt4_, values_), EvalBadStack);
+
+    // Two should work
+    values_.push("-");
+    EXPECT_NO_THROW(t_->evaluate(*pkt4_, values_));
+
+    // Check the result
+    ASSERT_EQ(1, values_.size());
+    EXPECT_EQ("66-6f-6f", values_.top());
+
+    // Check that the debug output was correct.  Add the strings
+    // to the test vector in the class and then call checkFile
+    // for comparison
+    addString("EVAL_DEBUG_TOHEXSTRING Popping binary value 0x666F6F and "
+              "separator -, pushing result 66-6f-6f");
     EXPECT_TRUE(checkFile());
 }
 
