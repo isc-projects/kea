@@ -47,7 +47,7 @@ Adaptor::fromParent(const string& name, ConstElementPtr parent,
         return;
     }
     BOOST_FOREACH(ElementPtr item, list->listValue()) {
-        // don't override?
+        // don't override. Skip this entry if it already has the parameter.
         if (item->contains(name)) {
             continue;
         }
