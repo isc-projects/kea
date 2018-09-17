@@ -41,12 +41,20 @@ public:
     /// Get user-context and/or comment and return it with the comment
     /// if exists moved inside the user-context (without checking if
     /// there is already a comment as it should never be the case).
+    ///
+    /// This behavior is used to handle comments. For historical purposes
+    /// Kea allows to define comments in some scopes. Once the user-context
+    /// has been introduced, the comment (as a separate text field)
+    /// disappeared and was moved to comment key within user-context.
+    /// Nevertheless, the old syntax is still supported.
     static isc::data::ConstElementPtr
     getContext(isc::data::ConstElementPtr parent);
 
-    /// @brief From parent.
+    /// @brief Moves a parameter from parent to a list of children.
     ///
     /// Move a parameter from the parent to each item in a list.
+    /// If the parameter exists in a child, it is skipped for this
+    /// particular child, not overridden.
     ///
     /// @param name The parameter name.
     /// @param parent The parent element.
@@ -55,9 +63,11 @@ public:
                            isc::data::ConstElementPtr parent,
                            isc::data::ConstElementPtr list);
 
-    /// @brief To parent.
+    /// @brief Moves a parameter to a parent.
     ///
-    /// Move a parameter from children to the parent.
+    /// Move a parameter from children to the parent. All children
+    /// on the list must have the parameter specified and it has to have
+    /// the same value.
     ///
     /// @param name The parameter name.
     /// @param parent The parent element.
