@@ -76,7 +76,7 @@ public:
                          isc::data::ElementPtr parent,
                          isc::data::ConstElementPtr list);
 
-    /// @brief Modify.
+    /// @brief Modify a configuration in its JSON element format.
     ///
     /// Smart merging tool, e.g. completing a from yang configuration.
     ///
@@ -88,12 +88,39 @@ public:
     ///   * special value -1: current scope is a list, apply to all items.
     ///   * map { "<key>": <value> }: current scope is a list, go down to
     ///     the item using the key / value pair.
-    ///  - an action can be: insert, replace or delete.
+    ///  - an action can be: insert, replace or delete:
+    ///   * insert adds a value at a key:
+    ///     . in a map the key is the new entry key
+    ///     . in a list an integer key is the new element index
+    ///     . in a list a map key is the key / value pair the to modify
+    ///       element contains
+    ///   * replace adds or replaces if it already exists a value at
+    ///     an entry key in a map.
+    ///   * delete removes a value designed by a key
+    ///
+    /// For instance to add a control-socket entry in a configuration
+    /// from a generic (vs Kea) model:
+    /// @code
+    ///   path := [ ]
+    ///   actions := [ {
+    ///     "action": "insert",
+    ///     "key": "Dhcp4",
+    ///     "value":
+    ///       {
+    ///         "control-socket":
+    ///           {
+    ///              "socket-type": "unix",
+    ///              "socket-name": "/tmp/kea4-ctrl-socket"
+    ///           }
+    ///       }
+    ///    }
+    /// @endcode
     ///
     /// @param path The search list to follow down to the place to
     ///             apply the action list.
     /// @param actions The action list
     /// @param config The configuration (JSON map) to modify.
+    /// @note modify does not throw but returns on unexpected conditions.
     static void modify(isc::data::ConstElementPtr path,
                        isc::data::ConstElementPtr actions,
                        isc::data::ElementPtr config);
