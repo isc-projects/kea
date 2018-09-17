@@ -18,7 +18,8 @@ using namespace isc::yang;
 
 namespace {
 
-// Test get context.
+// Test that get context works as expected i.e. moves a comment into
+// the user context creating it if not exists.
 TEST(AdaptorTest, getContext) {
     // Empty.
     string config = "{\n"
@@ -82,7 +83,8 @@ TEST(AdaptorTest, getContext) {
     EXPECT_EQ("{ \"bar\": 2, \"comment\": \"a comment\" }", context->str());
 }
 
-// Test from parent.
+// Test that fromParent works as expected i.e. moves parameters from the
+// parent to children and not overwrite them.
 TEST(AdaptorTest, fromParent) {
     string config = "{\n"
         " \"param1\": 123,\n"
@@ -118,7 +120,8 @@ TEST(AdaptorTest, fromParent) {
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 }
 
-// Test to parent.
+// Test that toParent works as expected i.e. moves parameters from children
+// to the parent throwing when a value differs between two children.
 TEST(AdaptorTest, toParent) {
     string config = "{\n"
         " \"list\": [\n"
@@ -156,7 +159,7 @@ TEST(AdaptorTest, toParent) {
     EXPECT_NO_THROW(Adaptor::toParent("param2",json, json->get("list")));
     EXPECT_TRUE(json->equals(*Element::fromJSON(expected)));
 
-    // param1 has different value so it should throw.
+    // param[345] have different values so it should throw.
     EXPECT_THROW(Adaptor::toParent("param3",json, json->get("list")),
                  BadValue);
     EXPECT_THROW(Adaptor::toParent("param4",json, json->get("list")),
@@ -249,7 +252,7 @@ TEST(AdaptorTest, modifyMapDelete) {
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"delete\",\n"
-        "  \"last\": \"test\"\n"
+        "  \"key\": \"test\"\n"
         "}]\n";
     ConstElementPtr actions;
     ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
@@ -341,10 +344,10 @@ TEST(AdaptorTest, modifyListDelete) {
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"delete\",\n"
-        "  \"last\": 2\n"
+        "  \"key\": 2\n"
         "},{\n"
         "  \"action\": \"delete\",\n"
-        "  \"last\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
+        "  \"key\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
         "}]\n";
     ConstElementPtr actions;
     ASSERT_NO_THROW(actions = Element::fromJSON(sactions));
@@ -365,7 +368,8 @@ TEST(AdaptorTest, modifyListAllDelete) {
         "]]]\n";
     ElementPtr json;
     ASSERT_NO_THROW(json = Element::fromJSON(config));
-    // The only change from the previous unit test is 0 -> -1.
+    // The main change from the previous unit test is key 0 -> -1 so
+    // modify() applies the delete to all elements vs only the first one.
     string spath = "[ -1 ]";
     ConstElementPtr path;
     ASSERT_NO_THROW(path = Element::fromJSON(spath));
@@ -373,10 +377,10 @@ TEST(AdaptorTest, modifyListAllDelete) {
     string sactions = "[\n"
         "{\n"
         "  \"action\": \"delete\",\n"
-        "  \"last\": 2\n"
+        "  \"key\": 2\n"
         "},{\n"
         "  \"action\": \"delete\",\n"
-        "  \"last\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
+        "  \"key\": { \"key\": \"foo\", \"value\": \"bar\" }\n"
         "}]\n";
     ConstElementPtr actions;
     ASSERT_NO_THROW(actions = Element::fromJSON(sactions));

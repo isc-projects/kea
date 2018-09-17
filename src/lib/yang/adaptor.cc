@@ -82,16 +82,22 @@ Adaptor::toParent(const string& name, ElementPtr parent,
         parent->set(name, param);
     }
 }
-                      
+
 namespace {
 
 /// @brief Apply insert.
 ///
+/// This function applies an insert action at the given scope:
+///  - in a map it adds the value at the key when the key does not exist
+///  - in a list it appends the value
+///  - in other scope type it does nothing
+/// @note a copy of the value is used to avoid unwanted sharing/side effects.
+///
 /// @param key The key of the modification.
 /// @param value The value of the modification.
 /// @param scope The place to apply the insert.
-void apply_insert(ConstElementPtr key, ConstElementPtr value,
-                  ElementPtr scope) {
+void applyInsert(ConstElementPtr key, ConstElementPtr value,
+                 ElementPtr scope) {
     if (scope->getType() == Element::map) {
         if (!key || !value || (key->getType() != Element::string)) {
             return;
@@ -109,13 +115,13 @@ void apply_insert(ConstElementPtr key, ConstElementPtr value,
 
 /// @brief Apply replace.
 ///
-/// For maps same than insert but the new value is set even if the key
-/// already exists.
+/// This function works only on map scopes and acts as insert at the
+/// exception the new value is set even if the key already exists.
 ///
 /// @param key The key of the modification.
 /// @param value The value of the modification.
 /// @param scope The place to apply the replace.
-void apply_replace(ConstElementPtr key, ConstElementPtr value,
+void applyReplace(ConstElementPtr key, ConstElementPtr value,
                    ElementPtr scope) {
     if ((scope->getType() != Element::map) ||
         !key || !value || (key->getType() != Element::string)) {
@@ -129,32 +135,40 @@ void apply_replace(ConstElementPtr key, ConstElementPtr value,
 
 /// @brief Apply delete.
 ///
-/// @param last The last item of the path.
+/// This function deletes the value designed by the key from the given scope:
+///  - in a map the key is the key of the value to remove
+///  - in a list the key is:
+///     * when it is an integer the index of the value to remove
+///     * when it is a map the key / value pair which belongs to the value
+///      to remove
+///  - in other scope type it does nothing
+///
+/// @param key The key item of the path.
 /// @param scope The place to apply the delete.
-void apply_delete(ConstElementPtr last, ElementPtr scope) {
+void applyDelete(ConstElementPtr key, ElementPtr scope) {
     if (scope->getType() == Element::map) {
-        if (!last || (last->getType() != Element::string)) {
+        if (!key || (key->getType() != Element::string)) {
             return;
         }
-        string name = last->stringValue();
+        string name = key->stringValue();
         if (!name.empty()) {
             scope->remove(name);
         }
     } else if (scope->getType() == Element::list) {
-        if (!last) {
+        if (!key) {
             return;
-        } else if (last->getType() == Element::integer) {
-            int index = last->intValue();
+        } else if (key->getType() == Element::integer) {
+            int index = key->intValue();
             if ((index >= 0) && (index < scope->size())) {
                 scope->remove(index);
             }
-        } else if (last->getType() == Element::map) {
-            ConstElementPtr key = last->get("key");
-            ConstElementPtr value = last->get("value");
-            if (!key || !value || (key->getType() != Element::string)) {
+        } else if (key->getType() == Element::map) {
+            ConstElementPtr entry = key->get("key");
+            ConstElementPtr value = key->get("value");
+            if (!entry || !value || (entry->getType() != Element::string)) {
                 return;
             }
-            string name = key->stringValue();
+            string name = entry->stringValue();
             if (name.empty()) {
                 return;
             }
@@ -175,10 +189,13 @@ void apply_delete(ConstElementPtr last, ElementPtr scope) {
 
 /// @brief Apply action.
 ///
+/// This function applies one action (insert, replace or delete) using
+/// applyInsert, applyReplace or applyDelete.
+///
 /// @param actions The action list.
 /// @param scope The current scope.
 /// @param next The index of the next action.
-void apply_action(ConstElementPtr actions, ElementPtr scope, size_t next) {
+void applyAction(ConstElementPtr actions, ElementPtr scope, size_t next) {
     if (next == actions->size()) {
         return;
     }
@@ -186,33 +203,41 @@ void apply_action(ConstElementPtr actions, ElementPtr scope, size_t next) {
     ++next;
     if (!action || (action->getType() != Element::map) ||
         !action->contains("action")) {
-        apply_action(actions, scope, next);
+        applyAction(actions, scope, next);
         return;
     }
     string name = action->get("action")->stringValue();
     if (name == "insert") {
-        apply_insert(action->get("key"), action->get("value"), scope);
+        applyInsert(action->get("key"), action->get("value"), scope);
     } else if (name == "replace") {
-        apply_replace(action->get("key"), action->get("value"), scope);
+        applyReplace(action->get("key"), action->get("value"), scope);
     } else if (name == "delete") {
-        apply_delete(action->get("last"), scope);
+        applyDelete(action->get("key"), scope);
     }
-    apply_action(actions, scope, next);
+    applyAction(actions, scope, next);
 }
 
-/// @brief Modify down.
+/// @brief Apply recursively actions following the path and going down
+/// in the to modify structure.
+///
+/// The recursive call when the end of the path is not reached is done:
+///  - in a map on the value at the key
+///  - in a list the next path item is:
+///     * if it is a positive integer on the value at the index
+///     * if it is -1 on all elements of the list
+///     * if a map on the element where the key / value pair belongs to
 ///
 /// @param path The search list.
 /// @param actions The action list.
 /// @param scope The current scope.
 /// @param next The index of the next item to use in the path.
-void path_down(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
+void applyDown(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
                size_t next) {
     if (!scope) {
         return;
     }
     if (next == path->size()) {
-        apply_action(actions, scope, 0);
+        applyAction(actions, scope, 0);
         return;
     }
     ConstElementPtr step = path->get(next);
@@ -227,7 +252,7 @@ void path_down(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         }
         ElementPtr down = boost::const_pointer_cast<Element>(scope->get(name));
         if (down) {
-            path_down(path, actions, down, next);
+            applyDown(path, actions, down, next);
         }
     } else if (scope->getType() == Element::list) {
         if (!step) {
@@ -250,7 +275,7 @@ void path_down(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
                 }
                 ConstElementPtr compare = down->get(name);
                 if (compare && value->equals(*compare)) {
-                    path_down(path, actions, down, next);
+                    applyDown(path, actions, down, next);
                     return;
                 }
             }
@@ -260,20 +285,21 @@ void path_down(ConstElementPtr path, ConstElementPtr actions, ElementPtr scope,
         int index = step->intValue();
         if (index == -1) {
             for (ElementPtr down : downs) {
-                path_down(path, actions, down, next);
+                applyDown(path, actions, down, next);
             }
         } else if ((index >= 0) && (index < scope->size())) {
-            path_down(path, actions, scope->getNonConst(index), next);
+            applyDown(path, actions, scope->getNonConst(index), next);
         }
     }
 }
 
 } // end of anonymous namespace
 
+/// Apply recursively starting at the beginning of the path.
 void
 Adaptor::modify(ConstElementPtr path, ConstElementPtr actions,
                 ElementPtr config) {
-    path_down(path, actions, config, 0);
+    applyDown(path, actions, config, 0);
 }
 
 }; // end of namespace isc::yang
