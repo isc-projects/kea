@@ -1,3 +1,8 @@
+1453.	[func]		marcin
+	Updated MySQL schema to facilitate Kea Configuration Backend
+	feature.
+	(Gitlab #89,!22, git e28c0c7b3e7a7729167cdad993f634ed1f0ac53b)
+
 1452.	[func]		marcin
 	Implemented libkea-cb library which includes basic class
 	hierarchy for the Kea Configuration Backend.
