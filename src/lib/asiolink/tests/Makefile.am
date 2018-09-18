@@ -49,7 +49,7 @@ run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 # KEA_CXXFLAGS)
 run_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 if USE_GXX
-run_unittests_CXXFLAGS += -Wno-unused-parameter
+run_unittests_CXXFLAGS += -Wno-unused-parameter -Wno-unused-private-field
 endif
 endif
 
