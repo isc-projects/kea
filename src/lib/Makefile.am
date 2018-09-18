@@ -13,7 +13,7 @@ if HAVE_CQL
 SUBDIRS += cql
 endif
 
-SUBDIRS += testutils hooks dhcp config stats
+SUBDIRS += config_backend testutils hooks dhcp config stats
 
 if HAVE_SYSREPO
 SUBDIRS += yang
