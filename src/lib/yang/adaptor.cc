@@ -218,7 +218,7 @@ void applyAction(ConstElementPtr actions, ElementPtr scope, size_t next) {
 }
 
 /// @brief Apply recursively actions following the path and going down
-/// in the to modify structure.
+/// in the to-be-modified structure.
 ///
 /// The recursive call when the end of the path is not reached is done:
 ///  - in a map on the value at the key

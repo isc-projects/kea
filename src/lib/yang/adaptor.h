@@ -92,7 +92,7 @@ public:
     ///   * insert adds a value at a key:
     ///     . in a map the key is the new entry key
     ///     . in a list an integer key is the new element index
-    ///     . in a list a map key is the key / value pair the to modify
+    ///     . in a list a map key is the key / value pair the to-be-modified
     ///       element contains
     ///   * replace adds or replaces if it already exists a value at
     ///     an entry key in a map.
