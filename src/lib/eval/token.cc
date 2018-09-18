@@ -643,11 +643,6 @@ TokenToHexString::evaluate(Pkt& /*pkt*/, ValueStack& values) {
     string binary = values.top();
     values.pop();
 
-    // Unknown separator is interpreted as none.
-    if ((separator != ":") && (separator != "-") && !separator.empty()) {
-        separator.clear();
-    }
-
     bool first = true;
     stringstream tmp;
     tmp << hex;

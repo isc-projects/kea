@@ -745,13 +745,13 @@ public:
     /// two values on the stack as parameters and push the resulting
     /// hexadecimal string onto the stack.
     /// From the top it expects the values on the stack as:
-    /// - separator ('-', ':' or something else interpreted as '')
+    /// - separator
     /// - binary
     ///
     /// binary is the binary value (note it can be any value, i.e.
     /// it is not checked to really be not printable).
-    /// separator is litteral '-' or ':' or something else interpreted as ''
-    /// i.e. no separator.
+    /// separator is litteral for instance '-' or ':'. The empty separator
+    /// means no separator.
     ///
     /// The following example use a binary MAC address 06:ce:8f:55:b3:33:
     /// - <mac>, '-' => "06-ce-8f-55-b3-33"
