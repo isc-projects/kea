@@ -8,42 +8,22 @@
 #define MYSQL_CONNECTION_H
 
 #include <database/database_connection.h>
+#include <database/db_exceptions.h>
 #include <database/db_log.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_binding.h>
+#include <mysql/mysql_constants.h>
 #include <boost/scoped_ptr.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <errmsg.h>
+#include <functional>
 #include <vector>
 #include <stdint.h>
 
 namespace isc {
 namespace db {
 
-/// @name MySQL constants.
-///
-//@{
-
-/// @brief MySQL false value.
-extern const my_bool MLM_FALSE;
-
-/// @brief MySQL true value.
-extern const my_bool MLM_TRUE;
-
-/// @brief MySQL fetch success code.
-extern const int MLM_MYSQL_FETCH_SUCCESS;
-
-/// @brief MySQL fetch failure code.
-extern const int MLM_MYSQL_FETCH_FAILURE;
-
-//@}
-
-/// @name Current database schema version values.
-//@{
-const uint32_t MYSQL_SCHEMA_VERSION_MAJOR = 7;
-const uint32_t MYSQL_SCHEMA_VERSION_MINOR = 0;
-
-//@}
 
 /// @brief Fetch and Release MySQL Results
 ///
@@ -211,6 +191,9 @@ private:
 class MySqlConnection : public db::DatabaseConnection {
 public:
 
+    /// @brief Function invoked to process fetched row.
+    typedef std::function<void(BindingCollection&)> ConsumeResultFun;
+
     /// @brief Constructor
     ///
     /// Initialize MySqlConnection object with parameters needed for connection.
@@ -328,6 +311,171 @@ public:
 
     /// @brief Starts Transaction
     void startTransaction();
+
+    /// @brief Executes SELECT query using prepared statement.
+    ///
+    /// The statement index must point to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement. The size of
+    /// the @c out_bindings must match the number of selected columns. The
+    /// output bindings must be created and must encapsulate values of
+    /// the appropriate type, e.g. string, uint32_t etc.
+    ///
+    /// This method executes prepared statement using provided bindings and
+    /// calls @c process_result function for each returned row. The
+    /// @c process_result function is implemented by the caller and should
+    /// gather and store each returned row in an external data structure prior
+    /// to returning because the values in the @c out_bindings will be
+    /// overwritten by the values of the next returned row when this function
+    /// is called again.
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Index of the query to be executed.
+    /// @param in_bindings Input bindings holding values to substitue placeholders
+    /// in the query.
+    /// @param [out] out_bindings Output bindings where retrieved data will be
+    /// stored.
+    /// @param process_result Pointer to the function to be invoked for each
+    /// retrieved row. This function consumes the retrieved data from the
+    /// output bindings.
+    template<typename StatementIndex>
+    void selectQuery(const StatementIndex& index,
+                     const BindingCollection& in_bindings,
+                     BindingCollection& out_bindings,
+                     ConsumeResultFun process_result) {
+        // Extract native input bindings.
+        std::vector<MYSQL_BIND> in_bind_vec;
+        for (MySqlBindingPtr in_binding : in_bindings) {
+            in_bind_vec.push_back(in_binding->getMySqlBinding());
+        }
+
+        int status = 0;
+        if (!in_bind_vec.empty()) {
+            // Bind parameters to the prepared statement.
+            status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        }
+
+        // Bind variables that will receive results as well.
+        std::vector<MYSQL_BIND> out_bind_vec;
+        for (MySqlBindingPtr out_binding : out_bindings) {
+            out_bind_vec.push_back(out_binding->getMySqlBinding());
+        }
+        if (!out_bind_vec.empty()) {
+            status = mysql_stmt_bind_result(statements_[index], &out_bind_vec[0]);
+        }
+
+        // Execute query.
+        status = mysql_stmt_execute(statements_[index]);
+        checkError(status, index, "unable to execute");
+
+        status = mysql_stmt_store_result(statements_[index]);
+        checkError(status, index, "unable to set up for storing all results");
+
+        // Fetch results.
+        MySqlFreeResult fetch_release(statements_[index]);
+        while ((status = mysql_stmt_fetch(statements_[index])) ==
+               MLM_MYSQL_FETCH_SUCCESS) {
+            try {
+                // For each returned row call user function which should
+                // consume the row and copy the data to a safe place.
+                process_result(out_bindings);
+
+            } catch (const std::exception& ex) {
+                // Rethrow the exception with a bit more data.
+                isc_throw(BadValue, ex.what() << ". Statement is <" <<
+                          text_statements_[index] << ">");
+            }
+        }
+
+        // How did the fetch end?
+        // If mysql_stmt_fetch return value is equal to 1 an error occurred.
+        if (status == MLM_MYSQL_FETCH_FAILURE) {
+            // Error - unable to fetch results
+            checkError(status, index, "unable to fetch results");
+
+        } else if (status == MYSQL_DATA_TRUNCATED) {
+            // Data truncated - throw an exception indicating what was at fault
+            isc_throw(DataTruncated, text_statements_[index]
+                      << " returned truncated data");
+        }
+    }
+
+    /// @brief Executes INSERT prepared statement.
+    ///
+    /// The statement index must point to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// This method executes prepared statement using provided bindings to
+    /// insert data into the database.
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Index of the query to be executed.
+    /// @param in_bindings Input bindings holding values to substitue placeholders
+    /// in the query.
+    template<typename StatementIndex>
+    void insertQuery(const StatementIndex& index,
+                     const BindingCollection& in_bindings) {
+        std::vector<MYSQL_BIND> in_bind_vec;
+        for (MySqlBindingPtr in_binding : in_bindings) {
+            in_bind_vec.push_back(in_binding->getMySqlBinding());
+        }
+
+        // Bind the parameters to the statement
+        int status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        checkError(status, index, "unable to bind parameters");
+
+        // Execute the statement
+        status = mysql_stmt_execute(statements_[index]);
+
+        if (status != 0) {
+            // Failure: check for the special case of duplicate entry.
+            if (mysql_errno(mysql_) == ER_DUP_ENTRY) {
+                isc_throw(DuplicateEntry, "Database duplicate entry error");
+        }
+            checkError(status, index, "unable to execute");
+        }
+    }
+
+    /// @brief Executes UPDATE or DELETE prepared statement and returns
+    /// the number of affected rows.
+    ///
+    /// The statement index must point to an existing prepared statement
+    /// associated with the connection. The @c in_bindings size must match
+    /// the number of placeholders in the prepared statement.
+    ///
+    /// @tparam StatementIndex Type of the statement index enum.
+    ///
+    /// @param index Index of the query to be executed.
+    /// @param in_bindings Input bindings holding values to substitue placeholders
+    /// in the query.
+    ///
+    /// @return Number of affected rows.
+    template<typename StatementIndex>
+    uint64_t updateDeleteQuery(const StatementIndex& index,
+                               const BindingCollection& in_bindings) {
+        std::vector<MYSQL_BIND> in_bind_vec;
+        for (MySqlBindingPtr in_binding : in_bindings) {
+            in_bind_vec.push_back(in_binding->getMySqlBinding());
+        }
+
+        // Bind the parameters to the statement
+        int status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+        checkError(status, index, "unable to bind parameters");
+
+        // Execute the statement
+        status = mysql_stmt_execute(statements_[index]);
+
+        if (status != 0) {
+            checkError(status, index, "unable to execute");
+        }
+
+        // Let's return how many rows were affected.
+        return (static_cast<uint64_t>(mysql_stmt_affected_rows(statements_[index])));
+    }
+
 
     /// @brief Commit Transactions
     ///

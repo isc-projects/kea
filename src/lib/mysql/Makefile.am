@@ -1,4 +1,4 @@
-SUBDIRS = . testutils
+SUBDIRS = . testutils tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
@@ -9,6 +9,8 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-mysql.la
 libkea_mysql_la_SOURCES  = mysql_connection.cc mysql_connection.h
+libkea_mysql_la_SOURCES += mysql_binding.cc mysql_binding.h
+libkea_mysql_la_SOURCES += mysql_constants.h
 
 libkea_mysql_la_LIBADD  = $(top_builddir)/src/lib/database/libkea-database.la
 libkea_mysql_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la

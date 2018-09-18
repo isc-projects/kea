@@ -4,7 +4,6 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-
 #include <config.h>
 
 #include <database/db_log.h>
@@ -23,11 +22,6 @@ using namespace std;
 
 namespace isc {
 namespace db {
-
-const my_bool MLM_FALSE = 0;
-const my_bool MLM_TRUE = 1;
-const int MLM_MYSQL_FETCH_SUCCESS = 0;
-const int MLM_MYSQL_FETCH_FAILURE = 1;
 
 /// @todo: Migrate this default value to src/bin/dhcpX/simple_parserX.cc
 const int MYSQL_DEFAULT_CONNECTION_TIMEOUT = 5; // seconds
@@ -298,73 +292,20 @@ MySqlConnection::~MySqlConnection() {
 void
 MySqlConnection::convertToDatabaseTime(const time_t input_time,
                                        MYSQL_TIME& output_time) {
-
-    // Convert to broken-out time
-    struct tm time_tm;
-    (void) localtime_r(&input_time, &time_tm);
-
-    // Place in output expire structure.
-    output_time.year = time_tm.tm_year + 1900;
-    output_time.month = time_tm.tm_mon + 1;     // Note different base
-    output_time.day = time_tm.tm_mday;
-    output_time.hour = time_tm.tm_hour;
-    output_time.minute = time_tm.tm_min;
-    output_time.second = time_tm.tm_sec;
-    output_time.second_part = 0;                // No fractional seconds
-    output_time.neg = my_bool(0);               // Not negative
+    MySqlBinding::convertToDatabaseTime(input_time, output_time);
 }
 
 void
 MySqlConnection::convertToDatabaseTime(const time_t cltt,
                                      const uint32_t valid_lifetime,
                                      MYSQL_TIME& expire) {
-
-    // Calculate expiry time. Store it in the 64-bit value so as we can detect
-    // overflows.
-    int64_t expire_time_64 = static_cast<int64_t>(cltt) +
-        static_cast<int64_t>(valid_lifetime);
-
-    // Even on 64-bit systems MySQL doesn't seem to accept the timestamps
-    // beyond the max value of int32_t.
-    if (expire_time_64 > DatabaseConnection::MAX_DB_TIME) {
-        isc_throw(BadValue, "Time value is too large: " << expire_time_64);
-    }
-
-    const time_t expire_time = static_cast<const time_t>(expire_time_64);
-
-    // Convert to broken-out time
-    struct tm expire_tm;
-    (void) localtime_r(&expire_time, &expire_tm);
-
-    // Place in output expire structure.
-    expire.year = expire_tm.tm_year + 1900;
-    expire.month = expire_tm.tm_mon + 1;     // Note different base
-    expire.day = expire_tm.tm_mday;
-    expire.hour = expire_tm.tm_hour;
-    expire.minute = expire_tm.tm_min;
-    expire.second = expire_tm.tm_sec;
-    expire.second_part = 0;                  // No fractional seconds
-    expire.neg = my_bool(0);                 // Not negative
+    MySqlBinding::convertToDatabaseTime(cltt, valid_lifetime, expire);
 }
 
 void
 MySqlConnection::convertFromDatabaseTime(const MYSQL_TIME& expire,
-                                       uint32_t valid_lifetime, time_t& cltt) {
-
-    // Copy across fields from MYSQL_TIME structure.
-    struct tm expire_tm;
-    memset(&expire_tm, 0, sizeof(expire_tm));
-
-    expire_tm.tm_year = expire.year - 1900;
-    expire_tm.tm_mon = expire.month - 1;
-    expire_tm.tm_mday = expire.day;
-    expire_tm.tm_hour = expire.hour;
-    expire_tm.tm_min = expire.minute;
-    expire_tm.tm_sec = expire.second;
-    expire_tm.tm_isdst = -1;    // Let the system work out about DST
-
-    // Convert to local time
-    cltt = mktime(&expire_tm) - valid_lifetime;
+                                         uint32_t valid_lifetime, time_t& cltt) {
+    MySqlBinding::convertFromDatabaseTime(expire, valid_lifetime, cltt);
 }
 
 void
