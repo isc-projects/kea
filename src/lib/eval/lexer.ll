@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -201,6 +201,7 @@ addr6 [0-9a-fA-F]*\:[0-9a-fA-F]*\:[0-9a-fA-F:.]*
 "all"          return isc::eval::EvalParser::make_ALL(loc);
 "concat"       return isc::eval::EvalParser::make_CONCAT(loc);
 "ifelse"       return isc::eval::EvalParser::make_IFELSE(loc);
+"hexstring"    return isc::eval::EvalParser::make_TOHEXSTRING(loc);
 "not"          return isc::eval::EvalParser::make_NOT(loc);
 "and"          return isc::eval::EvalParser::make_AND(loc);
 "or"           return isc::eval::EvalParser::make_OR(loc);
