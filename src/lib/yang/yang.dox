@@ -49,7 +49,7 @@ implements some variants to accommodate the model with shared code
 moved into a common private routine.
 
 @c isc::yang::TranslatorPools deals with a list of pools. The getPools
-method iterates over thr lidt in both ways. Loot at examples in unit
+method iterates over the list in both ways. Look at examples in unit
 tests to understand how can be filled.
 
 Note pools show two shortcomings in IETF models:
@@ -61,6 +61,16 @@ Note pools show two shortcomings in IETF models:
 
 The new thing here is the use of adaptors to move timers from subnets
 to pools and back.
+
+@section yangAdaptor Adapting JSON configuration
+
+Adaptors are tools which adapts JSON complete or partial configuration
+before translation to Yang to ease this translation or after translation
+from Yang to follow the Kea syntax, for instance by adding static
+components which are not in the model.
+
+Methods provided by adaptors are class methods (i.e. declared static).
+Specific adaptors are derived from the isc::yang::Adaptor base class.
 
  @page unitTestsSysrepo Running unit-tests with Sysrepo
 
