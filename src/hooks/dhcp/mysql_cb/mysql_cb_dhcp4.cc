@@ -17,128 +17,6 @@ using namespace isc::db;
 
 namespace {
 
-class Binding;
-
-typedef boost::shared_ptr<Binding> BindingPtr;
-
-class Binding {
-public:
-
-    enum_field_types getType() const {
-        return (bind_.buffer_type);
-    }
-
-    MYSQL_BIND& getMySqlBinding() {
-        return (bind_);
-    }
-
-    void setBufferValue(const std::string& value) {
-        buffer_.assign(value.begin(), value.end());
-        bind_.buffer = &buffer_[0];
-        bind_.buffer_length = value.size();
-    }
-
-    template<typename T>
-    T getValue() const {
-        const T* value = reinterpret_cast<const T*>(&buffer_[0]);
-        return (*value);
-    }
-
-    bool amNull() const {
-        return (null_value_ == MLM_TRUE);
-    }
-
-    static BindingPtr createString(const unsigned long length = 512) {
-        BindingPtr binding(new Binding(MYSQL_TYPE_STRING));
-        binding->setBufferLength(length);
-        return (binding);
-    }
-
-    static BindingPtr createString(const std::string& value) {
-        BindingPtr binding(new Binding(MYSQL_TYPE_STRING));
-        binding->setBufferValue(value);
-        return (binding);
-    }
-
-    static BindingPtr createTimestamp() {
-        BindingPtr binding(new Binding(MYSQL_TYPE_TIMESTAMP));
-        binding->setBufferLength(sizeof(MYSQL_TIME));
-        return (binding);
-    }
-
-private:
-
-    Binding(enum_field_types buffer_type)
-        : buffer_(), length_(0), null_value_(MLM_FALSE) {
-        bind_.buffer_type = buffer_type;
-        bind_.length = &length_;
-        bind_.is_null = &null_value_;
-    }
-
-    void setBufferLength(const unsigned long length) {
-        length_ = length;
-        buffer_.resize(length_);
-        bind_.buffer = &buffer_[0];
-        bind_.buffer_length = length_;
-    }
-
-    std::vector<uint8_t> buffer_;
-
-    unsigned long length_;
-
-    my_bool null_value_;
-
-    MYSQL_BIND bind_;
-};
-
-typedef std::vector<BindingPtr> BindingCollection;
-
-class DatabaseExchange {
-public:
-
-    typedef std::function<void()> ConsumeResultFun;
-
-    void selectQuery(MYSQL_STMT* statement,
-                     const BindingCollection& in_bindings,
-                     BindingCollection& out_bindings,
-                     ConsumeResultFun process_result) {
-        std::vector<MYSQL_BIND> in_bind_vec;
-        for (BindingPtr in_binding : in_bindings) {
-            in_bind_vec.push_back(in_binding->getMySqlBinding());
-        }
-
-        int status = 0;
-
-        if (!in_bind_vec.empty()) {
-            status = mysql_stmt_bind_param(statement, &in_bind_vec[0]);
-        }
-
-        std::vector<MYSQL_BIND> out_bind_vec;
-        for (BindingPtr out_binding : out_bindings) {
-            out_bind_vec.push_back(out_binding->getMySqlBinding());
-        }
-
-        if (!out_bind_vec.empty()) {
-            status = mysql_stmt_bind_result(statement, &out_bind_vec[0]);
-        }
-
-        status = mysql_stmt_execute(statement);
-
-        status = mysql_stmt_store_result(statement);
-
-        MySqlFreeResult fetch_release(statement);
-        while ((status = mysql_stmt_fetch(statement)) ==
-               MLM_MYSQL_FETCH_SUCCESS) {
-            try {
-                process_result();
-            } catch (...) {
-                throw;
-            }
-        }
-    }
-
-};
-
 }
 
 namespace isc {
@@ -252,10 +130,9 @@ MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& selector,
     BindingCollection out_bindings;
     out_bindings.push_back(Binding::createString());
 
-    DatabaseExchange xchg;
-    xchg.selectQuery(impl_->conn_.statements_[MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID],
-                     in_bindings, out_bindings,
-                     [&out_bindings]() {
+    impl_->conn_.selectQuery(MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID,
+                             in_bindings, out_bindings,
+                             [&out_bindings]() {
         uint32_t hostname = out_bindings[0]->getValue<uint32_t>();
     });
 
