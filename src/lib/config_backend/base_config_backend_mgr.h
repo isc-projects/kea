@@ -49,7 +49,7 @@ namespace cb {
 /// details. The @c BaseConfigBackendMgr is provided with the pool type
 /// via class template parameter. Respective CBM implementations
 /// use their own pools, which provide APIs appropriate for those
-/// implementation.
+/// implementations.
 ///
 /// @tparam ConfgBackendPoolType Type of the configuration backend pool
 /// to be used by the manager. It must derive from @c BaseConfigBackendPool
