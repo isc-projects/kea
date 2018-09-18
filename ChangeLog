@@ -1,3 +1,8 @@
+1452.	[func]		marcin
+	Implemented libkea-cb library which includes basic class
+	hierarchy for the Kea Configuration Backend.
+	(Gitlab #28,!20, git fb5c031ecaf4182e56f62874e9a6bd4c1d755a77)
+
 1451.	[build]		tmark
 	Resolved a namespace issue with std::distance() in libdhcp++.cc
 	when building with Boost 1.68.   Thanks to Huy Vu and Khem Raj
