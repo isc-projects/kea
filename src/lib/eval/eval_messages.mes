@@ -144,6 +144,15 @@ string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
 
+# For use with TokenToHexString
+
+% EVAL_DEBUG_TOHEXSTRING Popping binary value %1 and separator %2, pushing result %3
+This debug message indicates that two values are being popped from
+the value stack and a result is being pushed onto the value stack.
+The values being popped are the binary value to convert and the separator.
+The binary value is converted to its hexadecimal string representation
+and pushed onto the stack. The binary value is displayed in hex.
+
 % EVAL_DEBUG_VENDOR_CLASS_DATA Data %1 (out of %2 received) in vendor class found, pushing result '%3'
 This debug message indicates that vendor class option was found and passed
 enterprise-id checks and has sufficient number of data chunks. The total number

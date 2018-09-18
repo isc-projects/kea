@@ -569,7 +569,7 @@ Please make sure that your compilation has the following:
             // the incoming packet or even its metadata (e.g. the interface
             // it was received over from)
             "name": "Configuration-Token",
-            "expr": "pkt.iface"
+            "expr": "hexstring(pkt4.mac,':')"
         }
         ] // End of attributes
     } // End of access
