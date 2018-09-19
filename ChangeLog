@@ -1,3 +1,9 @@
+1455.	[func]		fdupont
+	Implemented hexstring(value, separator) operator that can be used
+	in any expression, such as client classification, flex-id or
+	RADIUS attribute.
+	(Gitlab #67,!34, git xxx)
+
 1454.	[func]		fdupont
 	Unused interface-id and rapid-commit parameters removed from
 	DHCPv4 parser.
