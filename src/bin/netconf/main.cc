@@ -8,7 +8,7 @@
 
 #include <netconf/netconf_log.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/daemon.h>
+#include <process/daemon.h>
 #include <iostream>
 #include <fstream>
 #include <unistd.h>
@@ -36,7 +36,7 @@ usage() {
     exit(EXIT_FAILURE);
 }
 
-/// @name Temporary code until isc::dhcp::Daemon is used.
+/// @name Temporary code until isc::process::Daemon is used.
 ///
 /// @{
 const char* PID_FILENAME = "kea-netconf.test_config.pid";
@@ -46,7 +46,7 @@ volatile bool SHUTDOWN_FLAG = false;
 void
 createPIDFile(int pid) {
     // This is not a real implemented. We will soon use the one coming
-    // from isc::dhcp::Daemon AFTER it's moved to libprocess.
+    // from isc::process::Daemon AFTER it's moved to libprocess.
 
     ofstream file(PID_FILENAME, ios::trunc);
     file << pid;
@@ -101,7 +101,7 @@ main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
     try {
 
-        // Temporary code. This will be replaced with isc::dhcp::Daemon
+        // Temporary code. This will be replaced with isc::process::Daemon
         // once it is migrated to libprocess. We DO NOT want to bring
         // the whole libdhcpsrv into netconf.
         createPIDFile(getpid());
@@ -111,7 +111,7 @@ main(int argc, char* argv[]) {
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         bool verbose_mode = true;
-        isc::dhcp::Daemon::loggerInit(NETCONF_LOGGER_NAME, verbose_mode);
+        isc::process::Daemon::loggerInit(NETCONF_LOGGER_NAME, verbose_mode);
         LOG_INFO(netconf_logger, NETCONF_STARTING).arg(VERSION).arg(getpid());
 
         Connection conn("kea-netconf");

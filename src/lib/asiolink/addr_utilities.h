@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,8 +21,6 @@ namespace dhcp {
 /// Example: For 2001:db8:1\::deaf:beef and length /120 the function will return
 /// 2001:db8:1\::dead:be00. See also @ref lastAddrInPrefix.
 ///
-/// @todo It currently works for v6 only and will throw if v4 address is passed.
-///
 /// @param prefix and address that belongs to a prefix
 /// @param len prefix length
 ///
@@ -34,8 +32,6 @@ isc::asiolink::IOAddress firstAddrInPrefix(const isc::asiolink::IOAddress& prefi
 ///
 /// Example: For 2001:db8:1\::deaf:beef and length /112 the function will return
 /// 2001:db8:1\::dead:ffff. See also @ref firstAddrInPrefix.
-///
-/// @todo It currently works for v6 only and will throw if v4 address is passed.
 ///
 /// @param prefix and address that belongs to a prefix
 /// @param len prefix length

@@ -31,8 +31,6 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 EXTRA_DIST =
 EXTRA_DIST += parsers/client_class_def_parser.cc
 EXTRA_DIST += parsers/client_class_def_parser.h
-EXTRA_DIST += parsers/dbaccess_parser.cc
-EXTRA_DIST += parsers/dbaccess_parser.h
 EXTRA_DIST += parsers/dhcp_parsers.cc
 EXTRA_DIST += parsers/dhcp_parsers.h
 EXTRA_DIST += parsers/expiration_config_parser.cc
@@ -110,11 +108,12 @@ libkea_dhcpsrv_la_SOURCES += cfg_subnets6.cc cfg_subnets6.h
 libkea_dhcpsrv_la_SOURCES += cfg_mac_source.cc cfg_mac_source.h
 libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += client_class_def.cc client_class_def.h
+libkea_dhcpsrv_la_SOURCES += config_backend_dhcp4.h
+libkea_dhcpsrv_la_SOURCES += config_backend_pool_dhcp4.cc config_backend_pool_dhcp4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h
 libkea_dhcpsrv_la_SOURCES += d2_client_mgr.cc d2_client_mgr.h
-libkea_dhcpsrv_la_SOURCES += db_exceptions.h
 libkea_dhcpsrv_la_SOURCES += db_type.h
 libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_exceptions.h
@@ -199,7 +198,7 @@ libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_dhcpsrv_la_LIBADD  = $(top_builddir)/src/lib/eval/libkea-eval.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-#libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/process/libkea-process.la
+libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/process/libkea-process.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/stats/libkea-stats.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
@@ -273,6 +272,8 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfg_subnets6.h \
 	cfgmgr.h \
 	client_class_def.h \
+	config_backend_dhcp4.h \
+	config_backend_pool_dhcp4.h \
 	csv_lease_file4.h \
 	csv_lease_file6.h \
 	dhcpsrv_exceptions.h \

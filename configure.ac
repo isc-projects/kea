@@ -74,6 +74,9 @@ if test "$cross_compiling" = "yes"; then
 fi
 AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
 
+# pkg-config can be required.
+AC_PATH_PROG([PKG_CONFIG], [pkg-config])
+
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
 # by default.
@@ -817,7 +820,6 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
     CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
@@ -1532,6 +1534,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/config_backend/Makefile
+                 src/lib/config_backend/tests/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
                  src/lib/database/Makefile
@@ -1597,6 +1601,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/yang/Makefile
+                 src/lib/yang/tests/Makefile
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile

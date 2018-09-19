@@ -41,6 +41,7 @@
  *   - @subpage unitTestsIntroduction
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
+ *   - @subpage unitTestsSysrepo
  *
  * @section performance Performance
  * - @subpage benchmarks
@@ -129,6 +130,7 @@
  * - @subpage libprocess
  *   - @subpage cpl
  *   - @subpage cplSignals
+ * - @subpage libyang
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology

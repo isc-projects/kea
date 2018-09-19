@@ -38,12 +38,12 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
     </para>
 
     <para>STEP 2. Install libyang. Download libyang from
-    https://github.com/CESNET/libyang/releases.  As of writing this document, the latest
-    version was 0.15-r1.
+    https://github.com/CESNET/libyang.git. Checkout the devel branch.
 
 <screen>
-    tar zxvf libyang-0.15-r1.tar.gz
-    cd libyang-0.15-r1/
+    git clone https://github.com/CESNET/libyang.git
+    cd libyang
+    git checkout devel
     mkdir build
     cd build
     cmake ..
@@ -53,12 +53,13 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
 
     For detailed build instructions, see https://github.com/CESNET/libyang/.</para>
 
-    <para>STEP 3. Install syrepo. Download sysrepo from https://github.com/sysrepo/sysrepo/releases.
-    As of writing this document, the 0.7.4 as the latest version.
+    <para>STEP 3. Install syrepo. Download sysrepo from
+    https://github.com/sysrepo/sysrepo.git. Checkout the last devel branch.
 
 <screen>
-tar zxvf sysrepo-0.7.4.tar.gz
-cd sysrepo-0.7.4
+git clone https://github.com/sysrepo/sysrepo.git
+cd sysrepo
+git checkout devel
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DGEN_LANGUAGE_BINDINGS=ON -DGEN_CPP_BINDINGS=ON\
