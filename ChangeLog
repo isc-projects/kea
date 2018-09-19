@@ -2,7 +2,7 @@
 	Implemented hexstring(value, separator) operator that can be used
 	in any expression, such as client classification, flex-id or
 	RADIUS attribute.
-	(Gitlab #67,!34, git xxx)
+	(Gitlab #67,!34, git 004d9a29db09b1c203c52e23585bd275c52095fa)
 
 1454.	[func]		fdupont
 	Unused interface-id and rapid-commit parameters removed from
