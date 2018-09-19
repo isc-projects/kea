@@ -1,7 +1,7 @@
 1454.	[func]		fdupont
 	Unused interface-id and rapid-commit parameters removed from
 	DHCPv4 parser.
-	(Gitlav #116,!24, git 7e47292f10acb9179241c991d3591e9bfa47c37d)
+	(Gitlab #116,!24, git 7e47292f10acb9179241c991d3591e9bfa47c37d)
 
 1453.	[func]		marcin
 	Updated MySQL schema to facilitate Kea Configuration Backend
