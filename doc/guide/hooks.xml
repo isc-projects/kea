@@ -1215,7 +1215,9 @@ $
           can be represented as 626174. Alternatively, it can be expressed
           as quoted value (using double and single quotes), e.g. "'bar'".
           The former is more convenient for printable characters, while hex
-          string values are more convenient for non-printable characters.
+          string values are more convenient for non-printable characters
+          and does not require the use of the <command>hexstring</command>
+          operator.
         </para>
 <screen>
 "Dhcp6": {
