@@ -74,6 +74,7 @@ using namespace isc::eval;
   COMA ","
   CONCAT "concat"
   IFELSE "ifelse"
+  TOHEXSTRING "hexstring"
   PKT6 "pkt6"
   MSGTYPE "msgtype"
   TRANSID "transid"
@@ -348,6 +349,11 @@ string_expr : STRING
                   {
                       TokenPtr cond(new TokenIfElse());
                       ctx.expression.push_back(cond);
+                  }
+            | TOHEXSTRING "(" string_expr "," string_expr ")"
+                  {
+                      TokenPtr tohex(new TokenToHexString());
+                      ctx.expression.push_back(tohex);
                   }
             | VENDOR "." ENTERPRISE
                 {

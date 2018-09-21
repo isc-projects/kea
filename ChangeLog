@@ -1,3 +1,24 @@
+1455.	[func]		fdupont
+	Implemented hexstring(value, separator) operator that can be used
+	in any expression, such as client classification, flex-id or
+	RADIUS attribute.
+	(Gitlab #67,!34, git 004d9a29db09b1c203c52e23585bd275c52095fa)
+
+1454.	[func]		fdupont
+	Unused interface-id and rapid-commit parameters removed from
+	DHCPv4 parser.
+	(Gitlab #116,!24, git 7e47292f10acb9179241c991d3591e9bfa47c37d)
+
+1453.	[func]		marcin
+	Updated MySQL schema to facilitate Kea Configuration Backend
+	feature.
+	(Gitlab #89,!22, git e28c0c7b3e7a7729167cdad993f634ed1f0ac53b)
+
+1452.	[func]		marcin
+	Implemented libkea-cb library which includes basic class
+	hierarchy for the Kea Configuration Backend.
+	(Gitlab #28,!20, git fb5c031ecaf4182e56f62874e9a6bd4c1d755a77)
+
 1451.	[build]		tmark
 	Resolved a namespace issue with std::distance() in libdhcp++.cc
 	when building with Boost 1.68.   Thanks to Huy Vu and Khem Raj
