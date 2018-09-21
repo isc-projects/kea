@@ -13,7 +13,49 @@
 namespace isc {
 namespace yang {
 
-// @brief Between Yang and JSON translator class for a logger.
+// @brief A translator class for converting a logger between
+// YANG and JSON.
+//
+// Currently supports all kea servers and agents. Speficic to Kea.
+//
+// JSON syntax for all Kea servers with loggers is:
+// @code
+// {
+//     "name": <name>,
+//     "output_options": [ <output options> ],
+//     "severity": <severity>,
+//     "debuglevel": <debug level>,
+//     "user-context": { <json map> },
+//     "comment": <comment>
+// }
+// @endcode
+//
+// JSON syntax for all Kea server for output options is:
+// @code
+// {
+//    "output": <output, e.g. log file name>,
+//    "maxver": <maximum file version>,
+//    "maxsize": <maxium file size>,
+//    "flush": <flush flag>
+// }
+// @endcode
+//
+// YANG syntax for kea-logging is:
+// @code
+//  +--rw logger               container
+//     |
+//     +--rw name?             string
+//     +--rw output-options    container
+//     |  +--rw option*        [output]
+//     |     +--rw output      string
+//     |     +--rw maxver?     uint32
+//     |     +--rw maxsize?    uint32
+//     |     +--rw flush?      boolean
+//     +--rw debuglevel?       uint8
+//     +--rw severity?         enumeration
+//     +--rw user-context?     string
+// @endcode
+//
 class TranslatorLogger : virtual public TranslatorBasic {
 public:
 
@@ -26,64 +68,42 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorLogger();
 
-    /// @brief Get and translate a logger from Yang to JSON.
-    ///
-    /// JSON syntax for all Kea servers with loggers is:
-    /// @code
-    /// {
-    ///     "name": <name>,
-    ///     "output_options": [ <output options> ],
-    ///     "severity": <severity>,
-    ///     "debuglevel": <debug level>,
-    ///     "user-context": { <json map> },
-    ///     "comment": <comment>
-    /// }
-    /// @endcode
+    /// @brief Get and translate a logger from YANG to JSON.
     ///
     /// @param xpath The xpath of the logger.
     /// @return JSON representation of the logger.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getLogger(const std::string& xpath);
 
-    /// @brief Translate and set logger from JSON to Yang.
+    /// @brief Translate and set logger from JSON to YANG.
     ///
     /// @param xpath The xpath of the logger.
     /// @param elem The JSON element.
     void setLogger(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief Get and translate an output option from Yang to JSON.
-    ///
-    /// JSON syntax for all Kea server fro output options is:
-    /// @code
-    /// {
-    ///    "output": <output, e.g. log file name>,
-    ///    "maxver": <maximum file version>,
-    ///    "maxsize": <maxium file size>,
-    ///    "flush": <flush flag>
-    /// }
-    /// @endcode
+    /// @brief Get and translate an output option from YANG to JSON.
     ///
     /// @param xpath The xpath of the output option.
     /// @return JSON representation of the output option.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOption(const std::string& xpath);
 
-    /// @brief Get and translate output options from Yang to JSON.
+    /// @brief Get and translate output options from YANG to JSON.
     ///
     /// @param xpath The xpath of output options.
     /// @return JSON representation of output options.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getOutputOptions(const std::string& xpath);
 
-    /// @brief Translate and set an output option from JSON to Yang.
+    /// @brief Translate and set an output option from JSON to YANG.
     ///
     /// @param xpath The xpath of the output option.
     /// @param elem The JSON element.
     void setOutputOption(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
 
-    /// @brief Translate and set output options from JSON to Yang.
+    /// @brief Translate and set output options from JSON to YANG.
     ///
     /// @param xpath The xpath of the output options.
     /// @param elem The JSON element.
@@ -99,22 +119,6 @@ protected:
 
     /// @brief setLogger for kea-logging.
     ///
-    /// Yang syntax for kea-logging is:
-    /// @code
-    ///  +--rw logger               container
-    ///     |
-    ///     +--rw name?             string
-    ///     +--rw output-options    container
-    ///     |  +--rw option*        [output]
-    ///     |     +--rw output      string
-    ///     |     +--rw maxver?     uint32
-    ///     |     +--rw maxsize?    uint32
-    ///     |     +--rw flush?      boolean
-    ///     +--rw debuglevel?       uint8
-    ///     +--rw severity?         enumeration
-    ///     +--rw user-context?     string
-    /// @endcode
-    ///
     /// @param xpath The xpath of the logger.
     /// @param elem The JSON element.
     void setLoggerKea(const std::string& xpath,
@@ -124,7 +128,13 @@ protected:
     std::string model_;
 };
 
-// @brief Between Yang and JSON translator class for loggers.
+// @brief A translator class for converting a logger list between
+// YANG and JSON.
+//
+// Currently supports all kea servers and agents. Speficic to Kea.
+//
+// YANG logger list key is the name, output option list key is the output.
+//
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
 
@@ -137,14 +147,14 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorLoggers();
 
-    /// @brief Get and translate loggeres from Yang to JSON.
+    /// @brief Get and translate loggeres from YANG to JSON.
     ///
     /// @param xpath The xpath of loggers.
     /// @return JSON representation of loggers.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getLoggers(const std::string& xpath);
 
-    /// @brief Translate and set loggeres from JSON to Yang.
+    /// @brief Translate and set loggeres from JSON to YANG.
     ///
     /// @param xpath The xpath of loggers.
     /// @param elem The JSON element.
@@ -160,8 +170,6 @@ protected:
     isc::data::ElementPtr getLoggersKea(const std::string& xpath);
 
     /// @brief setLoggers for kea-logging.
-    ///
-    /// Logger key is the name, output options key is the output.
     ///
     /// @param xpath The xpath of loggers.
     /// @param elem The JSON element.
