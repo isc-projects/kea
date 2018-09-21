@@ -43,7 +43,11 @@ else
 fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
-AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+# We do not want to put this in a config.h, because it messes up ccache
+# horribly. When building different branches, the commit-id is different
+# and since the config.h is included in most files *and* has a different
+# content, ccache can't use cached content and thus has to do full compilation.
+echo "#define EXTENDED_VERSION \"${KEA_SRCID}\"" > kea_version.h
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
