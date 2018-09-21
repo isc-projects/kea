@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <netconf/netconf_log.h>
 #include <exceptions/exceptions.h>

@@ -14,6 +14,7 @@
 #include <process/d_log.h>
 #include <process/d_controller.h>
 #include <process/config_base.h>
+#include <kea_version.h>
 
 #ifdef HAVE_MYSQL
 #include <dhcpsrv/mysql_lease_mgr.h>

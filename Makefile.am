@@ -150,4 +150,4 @@ CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
 # config.h may be included by headers supplied for building user-written
 # hooks libraries, so we need to include it in the distribution.
-pkginclude_HEADERS = config.h
+pkginclude_HEADERS = config.h kea_version.h

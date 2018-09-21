@@ -5,6 +5,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>

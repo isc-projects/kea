@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <lfc/lfc_controller.h>
 #include <lfc/lfc_log.h>
