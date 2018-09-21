@@ -13,7 +13,31 @@
 namespace isc {
 namespace yang {
 
-// @brief Between Yang and JSON translator class for the control socket.
+// @brief A translator class for converting a control socket between
+// YANG and JSON.
+//
+// Supports all kea-* models at the exception of kea-dhcp-ddns.
+// Specific to Kea so does not exists in ietf-dhcpv6-server.
+//
+// JSON syntax for all Kea servers with command channel is:
+// @code
+// "control-socket": {
+//     "socket-type": "<socket type>",
+//     "socket-name": "<socket name>",
+//     "user-context": { <json map> },
+//     "comment": "<comment>"
+// }
+// @endcode
+//
+// YANG syntax is:
+// @code
+//  +--rw control-socket   container
+//    |
+//    +--rw socket-name    string
+//    +--rw socket-type    enumeration
+//    +--rw user-context?  string
+// @endcode
+//
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:
 
@@ -26,24 +50,14 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorControlSocket();
 
-    /// @brief Get and translate a control socket from Yang to JSON.
-    ///
-    /// JSON syntax for all Kea servers with command channel is:
-    /// @code
-    /// "control-socket": {
-    ///     "socket-type": "<socket type>",
-    ///     "socket-name": "<socket name>",
-    ///     "user-context": { <json map> },
-    ///     "comment": "<comment>"
-    /// }
-    /// @endcode
+    /// @brief Get and translate a control socket from YANG to JSON.
     ///
     /// @param xpath The xpath of the control socket.
     /// @return JSON representation of the control socket.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getControlSocket(const std::string& xpath);
 
-    /// @brief Translate and set control socket from JSON to Yang.
+    /// @brief Translate and set control socket from JSON to YANG.
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
@@ -59,15 +73,6 @@ protected:
     isc::data::ElementPtr getControlSocketKea(const std::string& xpath);
 
     /// @brief setControlSocket for kea models.
-    ///
-    /// Yang syntax is:
-    /// @code
-    ///  +--rw control-socket   container
-    ///    |
-    ///    +--rw socket-name    string
-    ///    +--rw socket-type    enumeration
-    ///    +--rw user-context?  string
-    /// @endcode
     ///
     /// Null elem argument removes the container.
     ///
