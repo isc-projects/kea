@@ -15,7 +15,7 @@
 namespace isc {
 namespace yang {
 
-/// @brief Between Yang and JSON translator class for basic values.
+/// @brief Between YANG and JSON translator class for basic values.
 class TranslatorBasic {
 public:
 
@@ -27,7 +27,7 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorBasic();
 
-    /// @brief Translate basic value from Yang to JSON.
+    /// @brief Translate basic value from YANG to JSON.
     ///
     /// @note Please don't use this outside tests.
     ///
@@ -36,7 +36,7 @@ public:
     /// @throw NotImplemented when the value type is not supported.
     static isc::data::ElementPtr value(S_Val s_val);
 
-    /// @brief Get and translate basic value from Yang to JSON.
+    /// @brief Get and translate basic value from YANG to JSON.
     ///
     /// @note Should be const as it is read only...
     ///
@@ -47,14 +47,14 @@ public:
     /// @throw NotImplemented when the value type is not supported.
     isc::data::ElementPtr getItem(const std::string& xpath);
 
-    /// @brief Get and translate a list of basic values from Yang to JSON.
+    /// @brief Get and translate a list of basic values from YANG to JSON.
     ///
     /// @param xpath The xpath of the list of basic values.
     /// @return The ListElement representing the leaf-list at xpath or
     /// null when not found.
     isc::data::ElementPtr getItems(const std::string& xpath);
 
-    /// @brief Translate basic value from JSON to Yang.
+    /// @brief Translate basic value from JSON to YANG.
     ///
     /// @note Please don't use this outside tests.
     ///
@@ -62,7 +62,7 @@ public:
     /// @param type The sysrepo type.
     static S_Val value(isc::data::ConstElementPtr elem, sr_type_t type);
 
-    /// @brief Translate and set basic value from JSON to Yang.
+    /// @brief Translate and set basic value from JSON to YANG.
     ///
     /// @param xpath The xpath of the basic value.
     /// @param elem The JSON element.
@@ -70,20 +70,20 @@ public:
     void setItem(const std::string& xpath, isc::data::ConstElementPtr elem,
                  sr_type_t type);
 
-    /// @brief Delete basic value from Yang.
+    /// @brief Delete basic value from YANG.
     ///
     /// @param xpath The xpath of the basic value.
     void delItem(const std::string& xpath);
 
     /// List iterator methods keeping the session private.
 
-    /// @brief Get iterator over a Yang list.
+    /// @brief Get iterator over a YANG list.
     ///
     /// @param xpath The xpath of the list.
     /// @return An S_Iter_Value pointer. Null is the list does not exist.
     S_Iter_Value getIter(const std::string& xpath);
 
-    /// @brief Get xpath of the next Yang list item.
+    /// @brief Get xpath of the next YANG list item.
     ///
     /// @param iter The iterator pointing to the previous element
     /// @return The xpath of the next element. Empty string when at the end of the list.

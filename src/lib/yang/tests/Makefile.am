@@ -17,7 +17,8 @@ EXTRA_DIST = keatest-module.yang
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES  = translator_unittests.cc
+run_unittests_SOURCES  = adaptor_unittests.cc
+run_unittests_SOURCES += translator_unittests.cc
 run_unittests_SOURCES += translator_option_data_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
