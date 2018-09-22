@@ -131,6 +131,7 @@ protected:
     ///
     /// @param xpath The xpath of the option data list.
     /// @param elem The JSON element.
+    /// @throw BadValue on option data without code or space.
     void setOptionDataListKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
 

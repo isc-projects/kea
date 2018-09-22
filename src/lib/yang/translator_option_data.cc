@@ -43,7 +43,9 @@ TranslatorOptionData::getOptionDataKea(const string& xpath) {
     ConstElementPtr code = getItem(xpath + "/code");
     ConstElementPtr space = getItem(xpath + "/space");
     if (!code || !space) {
-        return (ElementPtr());
+        // Can't happen as code and space are the keys.
+        isc_throw(Unexpected, "getOptionDataKea requires code and space: "
+                  << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("code", code);
@@ -93,6 +95,7 @@ TranslatorOptionData::setOptionData(const string& xpath,
 void
 TranslatorOptionData::setOptionDataKea(const string& xpath,
                                        ConstElementPtr elem) {
+    // Skip keys code and space.
     ConstElementPtr name = elem->get("name");
     if (name) {
         setItem(xpath + "/name", name, SR_STRING_T);
@@ -146,7 +149,9 @@ TranslatorOptionDataList::getOptionDataListKea(const string& xpath) {
     ElementPtr result = Element::createList();
     S_Iter_Value iter = getIter(xpath + "/*");
     if (!iter) {
-        return (ConstElementPtr());
+        // Can't happen.
+        isc_throw(Unexpected, "getOptionDataListKea: can't get iterator: "
+                  << xpath);
     }
     for (;;) {
         const string& option = getNext(iter);
@@ -187,7 +192,7 @@ TranslatorOptionDataList::setOptionDataListKea(const string& xpath,
         }
         unsigned code = static_cast<unsigned>(option->get("code")->intValue());
         if (!option->contains("space")) {
-            isc_throw(BadValue,"option data without space: " <<option->str());
+            isc_throw(BadValue, "option data without space: " <<option->str());
         }
         string space = option->get("space")->stringValue();
         ostringstream keys;
