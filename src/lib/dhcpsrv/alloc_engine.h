@@ -315,6 +315,8 @@ public:
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext6 : public boost::noncopyable {
 
+        std::string get_domain_suffix()const;
+
         /// @name Parameters pertaining to DHCPv6 message
         //@{
 
@@ -1072,6 +1074,9 @@ public:
     /// information to the allocation engine methods is that adding
     /// new information doesn't modify the API of the allocation engine.
     struct ClientContext4 : public boost::noncopyable {
+
+        std::string get_domain_suffix()const;
+
         /// @brief Subnet selected for the client by the server.
         Subnet4Ptr subnet_;
 

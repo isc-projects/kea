@@ -118,6 +118,43 @@ Dhcp4Hooks Hooks;
 namespace isc {
 namespace dhcp {
 
+std::string AllocEngine::ClientContext4::get_domain_suffix()const {
+
+    
+    // Subnet should have been already selected when the context was created.
+    Subnet4Ptr subnet = subnet_;
+    if (!subnet) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays).
+
+        // Some other error, return an empty lease.
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query_->getLabel())
+            .arg("NO SUBNET SELECTED FOR HOST")
+            .arg(currentHost()->getHostname());
+        
+        return "";
+    }
+
+    if (subnet->getCfgOption()->empty()) {
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+            .arg(query_->getLabel())
+            .arg("OPTIONS FOR SUBNET IS EMPTY")
+            .arg(currentHost()->getHostname());
+
+        return "";
+    }
+        
+    std::string domain_suffix = subnet_->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_DOMAIN_NAME).formatted_value_;
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CLASS_ASSIGNED)
+        .arg(query_->getLabel())
+        .arg("GOT DOMAIN SUFFIX")
+        .arg(domain_suffix);
+
+    return domain_suffix;
+}
+
 Dhcpv4Exchange::Dhcpv4Exchange(const AllocEnginePtr& alloc_engine,
                                const Pkt4Ptr& query,
                                const Subnet4Ptr& subnet)
@@ -1638,16 +1675,18 @@ Dhcpv4Srv::processClientFqdnOption(Dhcpv4Exchange& ex) {
     fqdn_resp->setFlag(Option4ClientFqdn::FLAG_E,
                        fqdn->getFlag(Option4ClientFqdn::FLAG_E));
 
+    std::string domain_suffix = ex.getContext()->get_domain_suffix();
+
     if (ex.getContext()->currentHost() &&
         !ex.getContext()->currentHost()->getHostname().empty()) {
         D2ClientMgr& d2_mgr = CfgMgr::instance().getD2ClientMgr();
-        fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->currentHost()->getHostname(),
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ex.getContext()->currentHost()->getHostname(), domain_suffix,
                                                     true), Option4ClientFqdn::FULL);
 
     } else {
         // Adjust the domain name based on domain name value and type sent by the
         // client and current configuration.
-        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp);
+        d2_mgr.adjustDomainName<Option4ClientFqdn>(*fqdn, *fqdn_resp, domain_suffix);
     }
 
     // Add FQDN option to the response message. Note that, there may be some
@@ -1684,6 +1723,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
     }
 
     AllocEngine::ClientContext4Ptr ctx = ex.getContext();
+    std::string domain_suffix = ex.getContext()->get_domain_suffix();
 
     // Hostname reservations take precedence over any other configuration,
     // i.e. DDNS configuration.
@@ -1720,7 +1760,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // name for this client.
         if (should_send_hostname) {
             const std::string& hostname =
-                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
+                d2_mgr.qualifyName(ctx->currentHost()->getHostname(), domain_suffix,
                                                              false);
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESERVED_HOSTNAME_ASSIGNED)
@@ -1815,7 +1855,7 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // hostname. We don't want to append the trailing dot because
         // we don't know whether the hostname is partial or not and some
         // clients do not handle the hostnames with the trailing dot.
-        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, false));
+        opt_hostname_resp->setValue(d2_mgr.qualifyName(hostname, domain_suffix, false));
     }
 
     LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA, DHCP4_RESPONSE_HOSTNAME_DATA)
@@ -2107,7 +2147,7 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             if (ctx->currentHost() && !ctx->currentHost()->getHostname().empty()) {
 
                 lease->hostname_ = CfgMgr::instance().getD2ClientMgr()
-                    .qualifyName(ctx->currentHost()->getHostname(),
+                    .qualifyName(ctx->currentHost()->getHostname(), ctx->get_domain_suffix(),
                                  static_cast<bool>(fqdn));
                 should_update = true;
 

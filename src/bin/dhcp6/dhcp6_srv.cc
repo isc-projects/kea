@@ -1540,17 +1540,18 @@ Dhcpv6Srv::processClientFqdn(const Pkt6Ptr& question, const Pkt6Ptr& answer,
     // current configuration.
     d2_mgr.adjustFqdnFlags<Option6ClientFqdn>(*fqdn, *fqdn_resp);
 
+    std::string domain_suffix = ctx.get_domain_suffix();
     // If there's a reservation and it has a hostname specified, use it!
     if (ctx.currentHost() && !ctx.currentHost()->getHostname().empty()) {
         // Add the qualifying suffix.
         // After #3765, this will only occur if the suffix is not empty.
-        fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.currentHost()->getHostname(),
+        fqdn_resp->setDomainName(d2_mgr.qualifyName(ctx.currentHost()->getHostname(), domain_suffix,
                                                     true),
                                                     Option6ClientFqdn::FULL);
     } else {
         // Adjust the domain name based on domain name value and type sent by
         // the client and current configuration.
-        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp);
+        d2_mgr.adjustDomainName<Option6ClientFqdn>(*fqdn, *fqdn_resp, domain_suffix);
     }
 
     // Once we have the FQDN setup to use it for the lease hostname.  This
@@ -3521,7 +3522,7 @@ Dhcpv6Srv::updateReservedFqdn(const AllocEngine::ClientContext6& ctx,
    if (ctx.currentHost() &&
        !ctx.currentHost()->getHostname().empty()) {
        std::string new_name = CfgMgr::instance().getD2ClientMgr().
-           qualifyName(ctx.currentHost()->getHostname(), true);
+           qualifyName(ctx.currentHost()->getHostname(), ctx.get_domain_suffix(), true);
 
        if (new_name != name) {
            fqdn->setDomainName(new_name, Option6ClientFqdn::FULL);

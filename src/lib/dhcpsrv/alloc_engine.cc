@@ -426,6 +426,42 @@ inAllowedPool(AllocEngine::ClientContext6& ctx, const Lease::Type& lease_type,
 namespace isc {
 namespace dhcp {
 
+std::string AllocEngine::ClientContext6::get_domain_suffix()const {
+    
+    // Subnet should have been already selected when the context was created.
+    Subnet6Ptr subnet = subnet_;
+    if (!subnet) {
+        // This particular client is out of luck today. We do not have
+        // information about the subnet he is connected to. This likely means
+        // misconfiguration of the server (or some relays).
+
+        // Some other error, return an empty lease.
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_EXTEND_ERROR)
+            .arg(query_->getLabel())
+            .arg("NO SUBNET SELECTED FOR HOST")
+            .arg(currentHost()->getHostname());
+        
+        return "";
+    }
+
+    if (subnet->getCfgOption()->empty()) {
+        LOG_ERROR(alloc_engine_logger, ALLOC_ENGINE_V6_EXTEND_ERROR)
+            .arg(query_->getLabel())
+            .arg("OPTIONS FOR SUBNET IS EMPTY")
+            .arg(currentHost()->getHostname());
+
+        return "";
+    }
+
+    std::string domain_suffix = subnet_->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_DOMAIN_NAME).formatted_value_;
+    LOG_INFO(alloc_engine_logger, ALLOC_ENGINE_V6_EXTEND_ERROR)
+        .arg(query_->getLabel())
+        .arg("GOT DOMAIN SUFFIX")
+        .arg(domain_suffix);
+
+    return domain_suffix;
+}
+
 AllocEngine::ClientContext6::ClientContext6()
     : query_(), fake_allocation_(false), subnet_(), host_subnet_(), duid_(),
       hwaddr_(), host_identifiers_(), hosts_(), fwd_dns_update_(false),
@@ -1075,7 +1111,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                             // the hostname as it is specified for the reservation.
                             OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                             ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                                qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                                qualifyName(host->getHostname(), ctx.get_domain_suffix(), static_cast<bool>(fqdn));
                         }
                     }
                 }
@@ -1147,7 +1183,7 @@ AllocEngine::allocateReservedLeases6(ClientContext6& ctx,
                         // the hostname as it is specified for the reservation.
                         OptionPtr fqdn = ctx.query_->getOption(D6O_CLIENT_FQDN);
                         ctx.hostname_ = CfgMgr::instance().getD2ClientMgr().
-                            qualifyName(host->getHostname(), static_cast<bool>(fqdn));
+                            qualifyName(host->getHostname(), ctx.get_domain_suffix(), static_cast<bool>(fqdn));
                     }
                 }
 
