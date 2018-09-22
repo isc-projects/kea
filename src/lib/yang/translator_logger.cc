@@ -131,6 +131,7 @@ TranslatorLogger::setLogger(const string& xpath, ConstElementPtr elem) {
 
 void
 TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
+    // Skip name as it is the key.
     ConstElementPtr options = elem->get("output_options");
     if (options && (options->size() > 0)) {
         setOutputOptions(xpath + "/output-options", options);
@@ -153,6 +154,7 @@ TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
 void
 TranslatorLogger::setOutputOption(const string& xpath, ConstElementPtr elem) {
     bool created = false;
+    // Skip output as it is the key.
     ConstElementPtr maxver = elem->get("maxver");
     if (maxver) {
         setItem(xpath + "/maxver", maxver, SR_UINT32_T);
