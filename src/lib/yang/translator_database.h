@@ -101,7 +101,7 @@ protected:
     /// @brief getDatabase JSON for kea-dhcp[46].
     ///
     /// @param xpath The xpath of the database.
-    /// @return JSON representation of the database.
+    /// @return JSON representation of the database or null if none.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabaseKea(const std::string& xpath);
 
