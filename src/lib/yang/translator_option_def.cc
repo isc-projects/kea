@@ -45,13 +45,13 @@ TranslatorOptionDef::getOptionDefKea(const string& xpath) {
     ConstElementPtr type = getItem(xpath + "/type");
     ConstElementPtr space = getItem(xpath + "/space");
     if (!code || !space) {
-	// Can't happen as code and space are the keys.
-	isc_throw(Unexpected, "getOptionDefKea requires code and space: "
-		  << xpath);
+        // Can't happen as code and space are the keys.
+        isc_throw(Unexpected, "getOptionDefKea requires code and space: "
+                  << xpath);
     }
     if (!name || !type) {
-	isc_throw(BadValue, "getOptionDefKea requires name and type: "
-		  << xpath);
+        isc_throw(BadValue, "getOptionDefKea requires name and type: "
+                  << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("code", code);
