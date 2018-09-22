@@ -21,61 +21,24 @@ using namespace isc::yang::test;
 namespace {
 
 /// @brief Translator name.
-extern char const name[] = "option data list";
+extern char const option_data_list[] = "option data list";
 
 /// @brief Test fixture class for @ref TranslatorOptionDataList.
-class TranslatorOptionDataListTest : public GenericTranslatorTest<name, TranslatorOptionDataList> {
+class TranslatorOptionDataListTest :
+    public GenericTranslatorTest<option_data_list, TranslatorOptionDataList> {
 public:
 
-    /// Constructor (passes the model).
-    ///
-    /// @param model The model.
-    TranslatorOptionDataListTest(string model) : GenericTranslatorTest<name, TranslatorOptionDataList>(model) { }
+    /// Constructor.
+    TranslatorOptionDataListTest() { }
 
     /// Destructor (does nothing).
     virtual ~TranslatorOptionDataListTest() { }
 };
 
-#if 0
-/// @brief Test fixture sub-class using the IETF model.
-class TranslatorOptionDataListIetf6Test : public TranslatorOptionDataListTest {
-public:
-
-    /// Constructor.
-    TranslatorOptionDataListIetf6Test() :
-        TranslatorOptionDataListTest("ietf-dhcpv6-server") { }
-
-    /// Destructor.
-    ~TranslatorOptionDataListIetf6Test() { }
-};
-#endif
-
-/// @brief Test fixture sub-class using the kea DHcpv4 server model.
-class TranslatorOptionDataListKea4Test : public TranslatorOptionDataListTest {
-public:
-
-    /// Constructor.
-    TranslatorOptionDataListKea4Test() :
-        TranslatorOptionDataListTest("kea-dhcp4-server") { }
-
-    /// Destructor.
-    ~TranslatorOptionDataListKea4Test() { }
-};
-
-/// @brief Test fixture sub-class using the kea DHcpv6 server model.
-class TranslatorOptionDataListKea6Test : public TranslatorOptionDataListTest {
-public:
-
-    /// Constructor.
-    TranslatorOptionDataListKea6Test() :
-        TranslatorOptionDataListTest("kea-dhcp6-server") { }
-
-    /// Destructor.
-    ~TranslatorOptionDataListKea6Test() { }
-};
-
 // Test get empty option data list.
-TEST_F(TranslatorOptionDataListKea4Test, getEmpty) {
+TEST_F(TranslatorOptionDataListTest, getEmpty) {
+    useModel("kea-dhcp4-server");
+
     // Get the option data list and checks it is empty.
     const string& xpath = "/kea-dhcp4-server:config/option-data-list";
     ConstElementPtr options;
@@ -86,7 +49,9 @@ TEST_F(TranslatorOptionDataListKea4Test, getEmpty) {
 }
 
 // Test get one option data.
-TEST_F(TranslatorOptionDataListKea6Test, get) {
+TEST_F(TranslatorOptionDataListTest, get) {
+    useModel("kea-dhcp6-server");
+
     // Create the option code 100.
     const string& xpath = "/kea-dhcp6-server:config/option-data-list";
     const string& xoption = xpath + "/option-data[code='100'][space='dns']";
@@ -116,7 +81,9 @@ TEST_F(TranslatorOptionDataListKea6Test, get) {
 }
 
 // Test set empty option data list.
-TEST_F(TranslatorOptionDataListKea4Test, setEmpty) {
+TEST_F(TranslatorOptionDataListTest, setEmpty) {
+    useModel("kea-dhcp4-server");
+
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config/option-data-list";
     ConstElementPtr options = Element::createList();
@@ -130,7 +97,9 @@ TEST_F(TranslatorOptionDataListKea4Test, setEmpty) {
 }
 
 // Test set an option data.
-TEST_F(TranslatorOptionDataListKea6Test, set) {
+TEST_F(TranslatorOptionDataListTest, set) {
+    useModel("kea-dhcp6-server");
+
     // Set one option data.
     const string& xpath = "/kea-dhcp6-server:config/option-data-list";
     ElementPtr options = Element::createList();
