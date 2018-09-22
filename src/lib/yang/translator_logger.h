@@ -107,6 +107,7 @@ protected:
     ///
     /// @param xpath The xpath of the output options.
     /// @param elem The JSON element.
+    /// @throw BadValue on an output option without output.
     void setOutputOptions(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
 
@@ -173,6 +174,7 @@ protected:
     ///
     /// @param xpath The xpath of loggers.
     /// @param elem The JSON element.
+    /// @throw BadValue on a logger without name.
     void setLoggersKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
 

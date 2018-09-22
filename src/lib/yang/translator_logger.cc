@@ -43,7 +43,8 @@ ElementPtr
 TranslatorLogger::getLoggerKea(const string& xpath) {
     ConstElementPtr name = getItem(xpath + "/name");
     if (!name) {
-        return (ElementPtr());
+        // Can't happen as name is the key.
+        isc_throw(Unexpected, "getLoggerKea requires name: " << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("name", name);
@@ -70,7 +71,8 @@ ElementPtr
 TranslatorLogger::getOutputOption(const string& xpath) {
     ConstElementPtr output = getItem(xpath + "/output");
     if (!output) {
-        return (ElementPtr());
+        // Can't happen as output is the key.
+        isc_throw(Unexpected, "getOutputOption requires (!output): " << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("output", output);
@@ -93,7 +95,9 @@ ElementPtr
 TranslatorLogger::getOutputOptions(const string& xpath) {
     S_Iter_Value iter = getIter(xpath + "/*");
     if (!iter) {
-        return (ElementPtr());
+        // Can't happen.
+        isc_throw(Unexpected, "getOutputOptions: can't get iterator: "
+                  << xpath);
     }
     ElementPtr result = Element::createList();
     for (;;) {
@@ -217,7 +221,8 @@ ElementPtr
 TranslatorLoggers::getLoggersKea(const string& xpath) {
     S_Iter_Value iter = getIter(xpath + "/*");
     if (!iter) {
-        return (ElementPtr());
+        // Can't happen.
+        isc_throw(Unexpected, "getLoggersKea: can't get iterator: " << xpath);
     }
     ElementPtr result = Element::createList();
     for (;;) {
