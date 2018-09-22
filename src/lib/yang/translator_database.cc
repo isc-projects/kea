@@ -41,9 +41,7 @@ ElementPtr
 TranslatorDatabase::getDatabaseKea(const string& xpath) {
     ConstElementPtr type = getItem(xpath + "/database-type");
     if (!type) {
-        // Can't happen as database-type is the key.
-        isc_throw(Unexpected, "getDatabaseKea requires database-type: "
-                  << xpath);
+        return (ElementPtr());
     }
     ElementPtr result = Element::createMap();
     result->set("type", type);
