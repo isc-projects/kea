@@ -78,12 +78,14 @@ protected:
     /// @param xpath The xpath of the option definition.
     /// @return JSON representation of the option definition.
     /// @throw SysrepoError when sysrepo raises an error.
+    /// @throw BadValue on option definition without name or type.
     isc::data::ElementPtr getOptionDefKea(const std::string& xpath);
 
     /// @brief setOptionDef for kea-dhcp[46].
     ///
     /// @param xpath The xpath of the option definition.
     /// @param elem The JSON element.
+    /// @throw BadValue on option definition without name or type.
     void setOptionDefKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
 
@@ -135,6 +137,7 @@ protected:
     ///
     /// @param xpath The xpath of the option definition list.
     /// @param elem The JSON element.
+    /// @throw BadValue on option definition without code or space.
     void setOptionDefListKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
 
