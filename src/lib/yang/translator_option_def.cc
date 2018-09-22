@@ -44,8 +44,14 @@ TranslatorOptionDef::getOptionDefKea(const string& xpath) {
     ConstElementPtr name = getItem(xpath + "/name");
     ConstElementPtr type = getItem(xpath + "/type");
     ConstElementPtr space = getItem(xpath + "/space");
-    if (!code || !name || !type || !space) {
-        return (ElementPtr());
+    if (!code || !space) {
+	// Can't happen as code and space are the keys.
+	isc_throw(Unexpected, "getOptionDefKea requires code and space: "
+		  << xpath);
+    }
+    if (!name || !type) {
+	isc_throw(BadValue, "getOptionDefKea requires name and type: "
+		  << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("code", code);
@@ -92,6 +98,7 @@ TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
 void
 TranslatorOptionDef::setOptionDefKea(const string& xpath,
                                      ConstElementPtr elem) {
+    // Skip code and space as they are the keys.
     ConstElementPtr name = elem->get("name");
     if (!name) {
         isc_throw(BadValue, "option definition with name: " << elem->str());
@@ -151,7 +158,9 @@ TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
     ElementPtr result = Element::createList();
     S_Iter_Value iter = getIter(xpath + "/*");
     if (!iter) {
-        return (ConstElementPtr());
+        // Can't happen.
+        isc_throw(Unexpected, "getOptionDefListKea: can't get iterator: "
+                  << xpath);
     }
     for (;;) {
         const string& def = getNext(iter);
