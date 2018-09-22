@@ -110,6 +110,7 @@ protected:
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
     /// @param skip The skip type field flag.
+    /// @throw BadValue on database without tyoe,
     void setDatabaseKea(const std::string& xpath,
                         isc::data::ConstElementPtr elem,
                         bool skip);
@@ -165,6 +166,7 @@ protected:
     ///
     /// @param xpath The xpath of databases.
     /// @param elem The JSON element.
+    /// @throw BadValue on database without tyoe,
     void setDatabasesKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
 

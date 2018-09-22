@@ -41,7 +41,9 @@ ElementPtr
 TranslatorDatabase::getDatabaseKea(const string& xpath) {
     ConstElementPtr type = getItem(xpath + "/database-type");
     if (!type) {
-        return (ElementPtr());
+        // Can't happen as database-type is the key.
+        isc_throw(Unexpected, "getDatabaseKea requires database-type: "
+                  << xpath);
     }
     ElementPtr result = Element::createMap();
     result->set("type", type);
@@ -146,7 +148,8 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     if (!skip) {
         ConstElementPtr type = elem->get("type");
         if (!type) {
-            isc_throw(BadValue, "setDatabase missing database type");
+            isc_throw(BadValue, "setDatabase requires database type: "
+                      << elem->str());
         }
         setItem(xpath + "/database-type", type, SR_STRING_T);
     }
@@ -251,7 +254,8 @@ ElementPtr
 TranslatorDatabases::getDatabasesKea(const string& xpath) {
     S_Iter_Value iter = getIter(xpath + "/*");
     if (!iter) {
-        return (ElementPtr());
+        // Can't happen.
+        isc_throw(Unexpected, "getDatabasesKea can't get iterator: " << xpath);
     }
     ElementPtr result = Element::createList();
     for (;;) {
