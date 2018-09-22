@@ -25,11 +25,15 @@ class GenericTranslatorTest : public ::testing::Test {
 public:
 
     /// @brief Constructor.
+    GenericTranslatorTest() : conn_(), sess_(), t_obj_() { }
+
+    /// @brief useModel
     ///
-    /// Open a sysrepo session and create a translator object.
+    /// Open a sysrepo session and create a translator object using
+    /// the given model.
     ///
-    /// #param model The model to use.
-    GenericTranslatorTest(std::string model) : conn_(), sess_(), t_obj_() {
+    /// @param model The model to use.
+    void useModel(std::string model) {
         std::string full_name =
             "translator " + std::string(Name) + " unittests";
         conn_.reset(new Connection(full_name.c_str()));
