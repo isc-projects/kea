@@ -53,7 +53,7 @@ public:
     /// @brief Get and translate a control socket from YANG to JSON.
     ///
     /// @param xpath The xpath of the control socket.
-    /// @return JSON representation of the control socket.
+    /// @return JSON representation of the control socket or null.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getControlSocket(const std::string& xpath);
 
