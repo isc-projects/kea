@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . pretests tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_CPPFLAGS)
