@@ -78,6 +78,7 @@ protected:
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
+    /// @throw BadValue on control socket without socket type or name.
     void setControlSocketKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
 

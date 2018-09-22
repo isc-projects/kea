@@ -55,7 +55,8 @@ TranslatorControlSocket::getControlSocketKea(const string& xpath) {
         }
         return (result);
     }
-    return (ElementPtr());
+    isc_throw(Unexpected, "getControlSocketKea rquires name and type: "
+              << xpath);
 }
 
 void
