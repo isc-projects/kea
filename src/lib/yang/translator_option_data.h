@@ -13,10 +13,7 @@
 namespace isc {
 namespace yang {
 
-// @brief A translator class for converting an option data between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+// Option data translation between YANG and JSON
 //
 // JSON syntax for Kea DHCP with command channel is:
 // @code
@@ -58,13 +55,24 @@ namespace yang {
 // @code
 //  /kea-dhcp6-server:config (container)
 //  /kea-dhcp6-server:config/option-data-list (container)
-//  /kea-dhcp6-server:config/option-data-list/option-data (list instance)
-//  /kea-dhcp6-server:config/option-data-list/option-data/code = 100
-//  /kea-dhcp6-server:config/option-data-list/option-data/space = dns
-//  /kea-dhcp6-server:config/option-data-list/option-data/data = 12121212
-//  /kea-dhcp6-server:config/option-data-list/option-data/csv-format = false
-//  /kea-dhcp6-server:config/option-data-list/option-data/always-send = false
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns'] (list instance)
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns']/code = 100
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns']/space = dns
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns']/data = 12121212
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns']/csv-format = false
+//  /kea-dhcp6-server:config/option-data-list/
+//     option-data[code='100'][space='dns']/always-send = false
 // @endcode
+
+// @brief A translator class for converting an option data between
+// YANG and JSON.
+//
+// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorOptionData : virtual public TranslatorBasic {
 public:
 
@@ -115,9 +123,6 @@ protected:
 // YANG and JSON.
 //
 // Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
-//
-// YANG syntax is a option-data list keyed by code and space.
-//
 class TranslatorOptionDataList : virtual public TranslatorOptionData {
 public:
 
