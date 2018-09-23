@@ -5,13 +5,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 /**
- @page libyang libkea-yang - Kea Yang Utilities Library
+ @page libyang libkea-yang - Kea YANG Utilities Library
 
 The libkea-yang library was developed to handle base YANG operations,
 such are retrieving YANG schema and configuration and translating
 data between YANG syntax and JSON that is understandable by Kea.
 
-@section yangTranslator Translator between Yang and JSON
+@section yangTranslator Translator between YANG and JSON
 
 An essential concept is the idea of translator. It is a primitive that is able
 to convert certain data structure between YANG and JSON. It is envisaged
@@ -33,12 +33,12 @@ is responsible for maintaining a connection) in constructors and derive from
 the basic / base class and recursively of translators for embedded parts.
 
 @c isc::yang::TranslatorBasic provides some methods:
- - getItem() gets and translates basic value from Yang to JSON
- - getItems() gets and translates a leaf-list from Yang to JSON
+ - getItem() gets and translates basic value from YANG to JSON
+ - getItems() gets and translates a leaf-list from YANG to JSON
    (for a list please use an iterator)
- - setItem() translates and sets a basic value from JSON to Yang
+ - setItem() translates and sets a basic value from JSON to YANG
  - delItem() deletes a value
- - getIter() gets an iterator over a Yang list
+ - getIter() gets an iterator over a YANG list
  - getNext() returns the xpath of the next item
 
 @section yangTranslatorPool Pool translator
@@ -65,8 +65,8 @@ to pools and back.
 @section yangAdaptor Adapting JSON configuration
 
 Adaptors are tools which adapts JSON complete or partial configuration
-before translation to Yang to ease this translation or after translation
-from Yang to follow the Kea syntax, for instance by adding static
+before translation to YANG to ease this translation or after translation
+from YANG to follow the Kea syntax, for instance by adding static
 components which are not in the model.
 
 Methods provided by adaptors are class methods (i.e. declared static).

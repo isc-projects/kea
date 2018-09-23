@@ -21,10 +21,10 @@ public:
     {}
 };
 
-/// @brief JSON adaptor between canonical Kea and Yang models.
+/// @brief JSON adaptor between canonical Kea and YANG models.
 ///
 /// An adaptor slightly modifies a JSON configuration between canonical Kea
-/// what required or rendered by a Yang model, e.g. moving a parameter
+/// what required or rendered by a YANG model, e.g. moving a parameter
 /// to/from a parent.
 /// The basic adaptor provides a set of tools.
 class Adaptor {
