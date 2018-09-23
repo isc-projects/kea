@@ -18,56 +18,6 @@ using namespace isc::yang;
 
 namespace {
 
-const std::string TEST_MODULE="keatest-module";
-
-
-/// @brief checks if specified schema is installed and available in sysrepo
-///
-/// @name name of the schema to be checked (without .yang)
-/// @verbose print installed schemas?
-/// @return true if installed, false otherwise.
-bool schemaInstalled(const std::string& name, bool verbose = false) {
-    // Get a connection.
-    S_Connection conn(new Connection("translator unittests"));
-    // Get a session.
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-
-    S_Yang_Schemas schemas = sess->list_schemas();
-
-    size_t schema_cnt = schemas->schema_cnt();
-
-    if (verbose) {
-      cout << "There are " << schema_cnt << " YANG schema(s) installed:" << endl;
-    }
-
-    bool found = false;
-    for (int i = 0; i < schema_cnt; i++) {
-        string installed_name(schemas->schema(i)->module_name());
-        if (installed_name == name) {
-            found = true;
-        }
-
-        if (verbose) {
-          std::cout << "Schema " << i << ": " << installed_name << endl;
-        }
-    }
-
-    return (found);
-}
-
-// This test verifies if the test schema is installed and accessible.
-TEST(TranslatorBasicTest, environmentCheck1) {
-
-  EXPECT_TRUE(schemaInstalled(TEST_MODULE))
-    << "\nERROR: Module used in unit-tests " << TEST_MODULE
-    << " is not installed. The environment is not suitable for\n"
-    << "ERROR: running unit-tests. Please locate " << TEST_MODULE <<".yang "
-    << "and issue the following command:\n"
-    << "ERROR: sysrepoctl --install --yang=" << TEST_MODULE << ".yang\n"
-    << "ERROR:\n"
-    << "ERROR: Following tests will most likely fail.\n";
-}
-
 // Test constructor.
 TEST(TranslatorBasicTest, constructor) {
     // Get a connection.
