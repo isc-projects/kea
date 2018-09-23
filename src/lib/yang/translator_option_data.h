@@ -42,6 +42,29 @@ namespace yang {
 //    +--rw always-send?   boolean
 //    +--rw user-context?  string
 // @endcode
+//
+// An example in JSON and YANG formats:
+// @code
+// [
+//     {
+//         "code": 100,
+//         "space": "dns",
+//         "csv-format": false,
+//         "data": "12121212",
+//         "always-send": false
+//     }
+// ]
+// @endcode
+// @code
+//  /kea-dhcp6-server:config (container)
+//  /kea-dhcp6-server:config/option-data-list (container)
+//  /kea-dhcp6-server:config/option-data-list/option-data (list instance)
+//  /kea-dhcp6-server:config/option-data-list/option-data/code = 100
+//  /kea-dhcp6-server:config/option-data-list/option-data/space = dns
+//  /kea-dhcp6-server:config/option-data-list/option-data/data = 12121212
+//  /kea-dhcp6-server:config/option-data-list/option-data/csv-format = false
+//  /kea-dhcp6-server:config/option-data-list/option-data/always-send = false
+// @endcode
 class TranslatorOptionData : virtual public TranslatorBasic {
 public:
 

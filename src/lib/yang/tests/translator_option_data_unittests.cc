@@ -35,7 +35,8 @@ public:
     virtual ~TranslatorOptionDataListTest() { }
 };
 
-// Test get empty option data list.
+// This test verifies that an empty option data list can be properly
+// translated from YANG to JSON.
 TEST_F(TranslatorOptionDataListTest, getEmpty) {
     useModel("kea-dhcp4-server");
 
@@ -48,7 +49,8 @@ TEST_F(TranslatorOptionDataListTest, getEmpty) {
     EXPECT_EQ(0, options->size());
 }
 
-// Test get one option data.
+// This test verifies that one option data can be properly translated
+// from YANG to JSON.
 TEST_F(TranslatorOptionDataListTest, get) {
     useModel("kea-dhcp6-server");
 
@@ -80,7 +82,8 @@ TEST_F(TranslatorOptionDataListTest, get) {
     EXPECT_TRUE(option->equals(*options->get(0)));
 }
 
-// Test set empty option data list.
+// This test verifies that an empty option data list can be properly
+// translated from JSON to YANG.
 TEST_F(TranslatorOptionDataListTest, setEmpty) {
     useModel("kea-dhcp4-server");
 
@@ -96,7 +99,8 @@ TEST_F(TranslatorOptionDataListTest, setEmpty) {
     EXPECT_EQ(0, options->size());
 }
 
-// Test set an option data.
+// This test verifies that one option data can be properly translated
+// from JSON to YANG.
 TEST_F(TranslatorOptionDataListTest, set) {
     useModel("kea-dhcp6-server");
 
