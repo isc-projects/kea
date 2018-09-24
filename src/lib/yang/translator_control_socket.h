@@ -13,11 +13,7 @@
 namespace isc {
 namespace yang {
 
-// @brief A translator class for converting a control socket between
-// YANG and JSON.
-//
-// Supports all kea-* models at the exception of kea-dhcp-ddns.
-// Specific to Kea so does not exists in ietf-dhcpv6-server.
+// Control socket translation between YANG and JSON
 //
 // JSON syntax for all Kea servers with command channel is:
 // @code
@@ -38,6 +34,36 @@ namespace yang {
 //    +--rw user-context?  string
 // @endcode
 //
+// An example in JSON and YANG formats:
+// @code
+// {
+//     "socket-name": "/tmp/kea.sock",
+//     "socket-type": "unix",
+//     "user-context": { "foo": 1 }
+// }
+// @endcode
+// @code
+//  /kea-ctrl-agent:config (container)
+//  /kea-ctrl-agent:config/control-sockets (container)
+//  /kea-ctrl-agent:config/control-sockets/
+//     socket[server-type='dhcp4'] (list instance)
+//  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+//     server-type = dhcp4
+//  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+//     control-socket (container)
+//  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+//     control-socket/socket-name = /tmp/kea.sock
+//  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+//     control-socket/socket-type = unix
+//  /kea-ctrl-agent:config/control-sockets/socket[server-type='dhcp4']/
+//     control-socket/user-context = { \"foo\": 1 }
+// @endcode
+
+// @brief A translator class for converting a control socket between
+// YANG and JSON.
+//
+// Supports all kea-* models at the exception of kea-dhcp-ddns.
+// Specific to Kea so does not exists in ietf-dhcpv6-server.
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:
 
