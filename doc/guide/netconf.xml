@@ -38,12 +38,13 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
     </para>
 
     <para>STEP 2. Install libyang. Download libyang from
-    https://github.com/CESNET/libyang.git. Checkout the devel branch.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://github.com/CESNET/libyang/releases" />. The version used
+    during Kea development was 0.16-r1.
 
 <screen>
-    git clone https://github.com/CESNET/libyang.git
-    cd libyang
-    git checkout devel
+    libyang-0.16-r1.tar.gz
+    cd libyang-0.16-r1
     mkdir build
     cd build
     cmake ..
@@ -51,15 +52,18 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
     sudo make install
 </screen>
 
-    For detailed build instructions, see https://github.com/CESNET/libyang/.</para>
+    For detailed build instructions, see
+    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://github.com/CESNET/libyang" /></para>
 
     <para>STEP 3. Install syrepo. Download sysrepo from
-    https://github.com/sysrepo/sysrepo.git. Checkout the last devel branch.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink"
+          xlink:href="https://github.com/sysrepo/sysrepo/releases" />.
+    The version used during Kea development was 0.7.5.
 
 <screen>
-git clone https://github.com/sysrepo/sysrepo.git
-cd sysrepo
-git checkout devel
+tar zxvf sysrepo-0.7.5.tar.gz
+cd sysrepo-0.7.5
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DGEN_LANGUAGE_BINDINGS=ON -DGEN_CPP_BINDINGS=ON\
@@ -69,7 +73,8 @@ sudo make install
 </screen>
 
 For detailed instructions, see Build &amp; Installation Steps Section on the project page
-located at https://github.com/sysrepo/sysrepo.
+located at <link xmlns:xlink="http://www.w3.org/1999/xlink"
+                 xlink:href="https://github.com/sysrepo/sysrepo" />.
 </para>
 </section>
 
