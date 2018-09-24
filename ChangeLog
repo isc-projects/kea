@@ -1,3 +1,8 @@
+1456.	[build]		tomek
+	Extended Kea version is now stored in a separate file for
+	build performance reasons.
+	(Gitlab #137,!42, git 87479e979ca3d3025cb4129ace991a59e32e0f62)
+
 1455.	[func]		fdupont
 	Implemented hexstring(value, separator) operator that can be used
 	in any expression, such as client classification, flex-id or
