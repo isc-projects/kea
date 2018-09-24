@@ -13,11 +13,7 @@
 namespace isc {
 namespace yang {
 
-// @brief A translator class for converting an option definition between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, does not exist in
-// ietf-dhcpv6-server.
+// Option definition translation between YANG and JSON
 //
 // JSON syntax for Kea DHCP servers is:
 // @code
@@ -46,6 +42,40 @@ namespace yang {
 //    +--rw user-context?  string
 // @endcode
 //
+// An example in JSON and YANG formats:
+// @code
+// [
+//     {
+//         "code": 100,
+//         "name": "foo",
+//         "space": "isc",
+//         "type": "string",
+//         "array": false
+//     }
+// ]
+// @endcode
+// @code
+//  /kea-dhcp6-server:config (container)
+//  /kea-dhcp6-server:config/option-def-list (container)
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc'] (list instance)
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc']/code = 100
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc']/space = isc
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc']/name = foo
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc']/type = string
+//  /kea-dhcp6-server:config/option-def-list/
+//     option-def[code='100'][space='isc']/array = false
+// @endcode
+
+// @brief A translator class for converting an option definition between
+// YANG and JSON.
+//
+// Currently supports on kea-dhcp[46]-server, does not exist in
+// ietf-dhcpv6-server.
 class TranslatorOptionDef : virtual public TranslatorBasic {
 public:
 
@@ -98,9 +128,6 @@ protected:
 //
 // Currently supports on kea-dhcp[46]-server, does not exist in
 // ietf-dhcpv6-server.
-//
-// YANG syntax is a option-def list keyed by code and space.
-//
 class TranslatorOptionDefList : virtual public TranslatorOptionDef {
 public:
 
