@@ -13,10 +13,7 @@
 namespace isc {
 namespace yang {
 
-// @brief A translator class for converting a database access between
-// YANG and JSON.
-//
-// Supports kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+// Database access translation between YANG and JSON
 //
 // JSON syntax for all Kea servers with database access is:
 // @code
@@ -43,11 +40,11 @@ namespace yang {
 // }
 // @endcode
 //
-// YANG syntax for kea-dhcp[46] is:
+// YANG syntax for kea-dhcp[46] is using database-type as the list key:
 // @code
 //  +--rw database                container
 //    |
-//    +--rw datanase=type?        string
+//    +--rw database-type?        string
 //    +--rw user?                 string
 //    +--rw password?             string
 //    +--rw host?                 string
@@ -67,6 +64,42 @@ namespace yang {
 //    +--rw user-context?         string
 // @endcode
 //
+// An example in JSON and YANG formats:
+// @code
+// [
+//     {
+//         "type": "mysql",
+//         "name": "kea",
+//         "user": "kea",
+//         "password": "kea",
+//         "host": "localhost",
+//         "port": 3306
+//     }
+// ]
+// @endcode
+// @code
+// /kea-dhcp6-server:config (container)
+// /kea-dhcp6-server:config/hosts-databases (container)
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql'] (list instance)
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/type = mysql
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/name = kea
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/user = kea
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/password = kea
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/host = localhost
+// /kea-dhcp6-server:config/hosts-databases/
+//    hosts-database[database-type='mysql']/port = 3306
+// @endcode
+
+// @brief A translator class for converting a database access between
+// YANG and JSON.
+//
+// Supports kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorDatabase : virtual public TranslatorBasic {
 public:
 
@@ -123,9 +156,6 @@ protected:
 // YANG and JSON.
 //
 // Supports kea-dhcp[46]-server, does not exist in ietf-dhcpv6-server.
-//
-// YANG list key is the database-type.
-//
 class TranslatorDatabases : virtual public TranslatorDatabase {
 public:
 
