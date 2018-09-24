@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <sysrepo-cpp/Session.h>
+#include <sstream>
 
 using namespace std;
 
@@ -16,6 +17,26 @@ const string KEA_DHCP4_MODULE = "kea-dhcp4-server";
 const string KEA_DHCP6_MODULE = "kea-dhcp6-server";
 const string KEA_CTRL_AGENT_MODULE = "kea-ctrl-agent";
 const string KEA_D2_MODULE = "kea-dhcp-ddns";
+
+/// @brief Returns nicely formed error message if module is missing
+///
+/// @param name name of the YANG module to complain about
+/// @return a text explaining what the problem is and how to fix it
+string missingModuleText(const string& name) {
+    stringstream tmp;
+    tmp << "ERROR: YANG model " << name << " is not installed." << endl
+        << "The environment is not suitable for running unit-tests." << endl
+        << "Please locate " << name << ".yang and issue the following command:" << endl
+        << endl
+        << "# sysrepoctl -i -g " << name << ".yang" << endl
+        << endl
+        << "If sysrepoctl complains about missing data model, you may need to specify " << endl
+        << "the default Sysrepo schema directory with -s PATH. You can check it with:" << endl
+        << endl
+        << "$ sysrepoctl -l" << endl
+        << endl;
+    return (tmp.str());
+}
 
 /// @brief Checks sysrepo setup:
 ///  - connection establishment
@@ -29,31 +50,32 @@ int main() {
     try {
         conn.reset(new Connection("sysrepo setup check"));
     } catch (const sysrepo_exception& ex) {
-        cerr << "Can't connect to sysrepo: " << ex.what() << endl;
+        cerr << "ERROR: Can't connect to sysrepo: " << ex.what() << endl;
         exit(-1);
     }
     try {
         conn.reset(new Connection("sysrepo setup check",
                                   SR_CONN_DAEMON_REQUIRED));
     } catch (const sysrepo_exception& ex) {
-        cerr <<"Can't require sysrepo daemon: " <<ex.what() << endl
+        cerr <<"ERROR: Can't connect to sysrepo daemon: " <<ex.what() << endl
              << endl
              << "Sysrepo daemon is required or actions will be local to "
-             << "the local library instance" << endl;
+             << "the local library instance." << endl;
         exit(-2);
     }
     S_Session sess;
     try {
         sess.reset(new Session(conn, SR_DS_CANDIDATE));
     } catch (const sysrepo_exception& ex) {
-        cerr << "Can't establish a sysrepo session: " << ex.what() << endl;
+        cerr << "ERROR: Can't establish a sysrepo session: " << ex.what() << endl;
         exit(-3);
     }
     S_Yang_Schemas schemas;
     try {
         schemas = sess->list_schemas();
     } catch (const sysrepo_exception& ex) {
-        cerr << "Can't list available schemas: " <<  ex.what() << endl;
+        cerr << "ERROR: Can't list available schemas: " <<  ex.what() << endl;
+        exit(-4);
     }
     bool found_test = false;
     bool found_ietf = false;
@@ -82,39 +104,38 @@ int main() {
         }
     }
 
+
+    int exit_code = 0;
+
     if (!found_test) {
-        cerr << "Module used in unit-tests " << TEST_MODULE
-             << " is not installed. The environment is not suitable for "
-             << "running unit-tests. Please locate " << TEST_MODULE
-             << ".yang and issue the following command:" << endl
-             << "sysrepoctl --i -g " << TEST_MODULE << ".yang" << endl;
-        exit(-4);
+        cerr << missingModuleText(TEST_MODULE);
+        exit_code = -5;
     }
 
     if (!found_ietf) {
-        cerr << "Please install " << IETF_MODULE << " module" << endl;
-        exit(-5);
+        cerr << missingModuleText(IETF_MODULE);
+        exit_code = -6;
     }
 
     if (!found_kea4) {
-        cerr <<"Please install " << KEA_DHCP4_MODULE << " module" << endl;
-        exit(-6);
+        cerr << missingModuleText(KEA_DHCP4_MODULE);
+        exit_code = -7;
     }
 
     if (!found_kea6) {
-        cerr <<"Please install " << KEA_DHCP6_MODULE << " module" << endl;
-        exit(-7);
+        cerr << missingModuleText(KEA_DHCP6_MODULE);
+        exit_code = -8;
     }
 
     if (!found_keaca) {
-        cerr <<"Please install " << KEA_CTRL_AGENT_MODULE << " module" << endl;
-        exit(-8);
+        cerr << missingModuleText(KEA_CTRL_AGENT_MODULE);
+        exit_code = -9;
     }
 
     if (!found_kea2) {
-        cerr <<"Please install " << KEA_D2_MODULE<< " module" << endl;
-        exit(-9);
+        cerr << missingModuleText(KEA_D2_MODULE);
+        exit_code = -10;
     }
 
-    exit(0);
+    exit(exit_code);
 }
