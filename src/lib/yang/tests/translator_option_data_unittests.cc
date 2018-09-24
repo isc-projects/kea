@@ -100,7 +100,7 @@ TEST_F(TranslatorOptionDataListTest, setEmpty) {
 
     // Check that the tree representation is empty.
     S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
+    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
     EXPECT_FALSE(tree);
 }
 
