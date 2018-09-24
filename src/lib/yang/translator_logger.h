@@ -13,10 +13,7 @@
 namespace isc {
 namespace yang {
 
-// @brief A translator class for converting a logger between
-// YANG and JSON.
-//
-// Currently supports all kea servers and agents. Speficic to Kea.
+// Logger translation between YANG and JSON
 //
 // JSON syntax for all Kea servers with loggers is:
 // @code
@@ -40,7 +37,8 @@ namespace yang {
 // }
 // @endcode
 //
-// YANG syntax for kea-logging is:
+// YANG syntax for kea-logging is with name as the logger list key and
+// output as the output option list key.
 // @code
 //  +--rw logger               container
 //     |
@@ -56,6 +54,42 @@ namespace yang {
 //     +--rw user-context?     string
 // @endcode
 //
+// An example in JSON and YANG formats:
+// @code
+// [
+//     {
+//         "name": "foo",
+//         "severity": "WARN",
+//         "output_options":
+//             [
+//                 {
+//                     "output": "/bar",
+//                     "maxver": 10
+//                 }
+//             ]
+//     }
+// ]
+// @endcode
+// @code
+//  /kea-dhcp4-server:logging (container)
+//  /kea-dhcp4-server:logging/loggers (container)
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo'] (list instance)
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/name = foo
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/
+//     output-options (container)
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+//     option[output='/bar'] (list instance)
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+//     option[output='/bar']/option = /bar
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+//     option[output='/bar']/maxver = 10
+//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/severity = WARN
+// @endcode
+
+// @brief A translator class for converting a logger between
+// YANG and JSON.
+//
+// Currently supports all kea servers and agents. Speficic to Kea.
 class TranslatorLogger : virtual public TranslatorBasic {
 public:
 
@@ -133,9 +167,6 @@ protected:
 // YANG and JSON.
 //
 // Currently supports all kea servers and agents. Speficic to Kea.
-//
-// YANG logger list key is the name, output option list key is the output.
-//
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
 
