@@ -70,7 +70,8 @@ TEST_F(TranslatorOptionDataListTest, get) {
     ConstElementPtr option;
     EXPECT_NO_THROW(option = t_obj_->getOptionData(xoption));
     ASSERT_TRUE(option);
-    EXPECT_EQ("{ \"always-send\": false, \"code\": 100, \"csv-format\": false, \"data\": \"12121212\", \"space\": \"dns\" }",
+    EXPECT_EQ("{ \"always-send\": false, \"code\": 100, \"csv-format\": false, "
+              "\"data\": \"12121212\", \"space\": \"dns\" }",
               option->str());
 
     // Get the option data list.

@@ -16,7 +16,7 @@ namespace isc {
 namespace yang {
 namespace test {
 
-/// @brief Test Fixture temolate for translator tests.
+/// @brief Test Fixture template for translator tests.
 ///
 /// @tparam Name The name of the translator to test.
 /// @tparam Type The type of the translator to test.
