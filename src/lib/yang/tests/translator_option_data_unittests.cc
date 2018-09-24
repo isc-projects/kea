@@ -97,6 +97,11 @@ TEST_F(TranslatorOptionDataListTest, setEmpty) {
     EXPECT_NO_THROW(options = t_obj_->getOptionDataList(xpath));
     ASSERT_TRUE(options);
     EXPECT_EQ(0, options->size());
+
+    // Check that the tree representation is empty.
+    S_Tree tree;
+    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp6-server:config"));
+    EXPECT_FALSE(tree);
 }
 
 // This test verifies that one option data can be properly translated
@@ -144,6 +149,9 @@ TEST_F(TranslatorOptionDataListTest, set) {
         "         |\n"
         "         -- always-send = false\n";
     EXPECT_EQ(expected, tree->to_string(100));
+
+    // Check it validates.
+    EXPECT_NO_THROW(sess_->validate());
 }
 
 }; // end of anonymous namespace
