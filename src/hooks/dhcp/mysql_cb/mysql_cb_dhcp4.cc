@@ -4,20 +4,24 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <cc/data.h>
 #include <database/db_exceptions.h>
+#include <dhcp/classify.h>
+#include <dhcp/dhcp6.h>
 #include <mysql_cb_dhcp4.h>
 #include <mysql/mysql_connection.h>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/lexical_cast.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <array>
+#include <sstream>
 #include <utility>
 #include <vector>
 
 using namespace isc::db;
-
-namespace {
-
-}
+using namespace isc::data;
+using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
@@ -34,6 +38,11 @@ public:
     /// database.
     enum StatementIndex {
         GET_SUBNET4_ID,
+        GET_SUBNET4_PREFIX,
+        GET_ALL_SUBNETS4,
+        GET_MODIFIED_SUBNETS4,
+        INSERT_SUBNET4,
+        UPDATE_SUBNET4,
         NUM_STATEMENTS
     };
 
@@ -46,6 +55,292 @@ public:
     /// @brief Destructor.
     ~MySqlConfigBackendDHCPv4Impl();
 
+    /// @brief Sends query to the database to retrieve multiple subnets.
+    ///
+    /// Query should order subnets by subnet_id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] subnets Reference to the container where fetched subnets
+    /// will be inserted.
+    void getSubnets4(const StatementIndex& index,
+                     const MySqlBindingCollection& in_bindings,
+                     Subnet4Collection& subnets) {
+        // Create output bindings. The order must match that in the prepared
+        // statement.
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint32_t>(), // subnet_id
+            MySqlBinding::createString(32), // subnet_prefix
+            MySqlBinding::createString(128), // 4o6_interface
+            MySqlBinding::createString(128), // 4o6_interface_id
+            MySqlBinding::createString(64), // 4o6_subnet
+            MySqlBinding::createString(512), // boot_file_name
+            MySqlBinding::createString(128), // client_class
+            MySqlBinding::createString(128), // interface
+            MySqlBinding::createInteger<uint8_t>(), // match_client_id
+            MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createInteger<uint32_t>(), // next_server
+            MySqlBinding::createInteger<uint32_t>(), // rebind_timer
+            MySqlBinding::createString(65536), // relay
+            MySqlBinding::createInteger<uint32_t>(), // renew_timer
+            MySqlBinding::createString(65536), // require_client_classes
+            MySqlBinding::createInteger<uint8_t>(), // reservation_mode
+            MySqlBinding::createString(512), // server_hostname
+            MySqlBinding::createString(128), // shared_network_name
+            MySqlBinding::createString(65536), // user_context
+            MySqlBinding::createInteger<uint32_t>() // valid_lifetime
+        };
+
+        // Execute actual query.
+        conn_.selectQuery(index, in_bindings, out_bindings,
+                          [&subnets](MySqlBindingCollection& out_bindings) {
+            // Get pointer to the last subnet in the collection.
+            Subnet4Ptr last_subnet;
+            if (!subnets.empty()) {
+                last_subnet = *subnets.rbegin();
+            }
+
+            // Subnet has been returned. Assuming that subnets are ordered by
+            // subnet identifier, if the subnet identifier of the current row
+            // is different than the subnet identifier of the previously returned
+            // row, it means that we have to construct new subnet object.
+            if (!last_subnet || (last_subnet->getID() != out_bindings[0]->getInteger<uint32_t>())) {
+                // subnet_id
+                SubnetID subnet_id(out_bindings[0]->getInteger<uint32_t>());
+                // subnet_prefix
+                std::string subnet_prefix = out_bindings[1]->getString();
+                auto prefix_pair = Subnet4::parsePrefix(subnet_prefix);
+                // renew_timer
+                uint32_t renew_timer = out_bindings[13]->getIntegerOrDefault<uint32_t>(0);
+                // rebind_timer
+                uint32_t rebind_timer = out_bindings[11]->getIntegerOrDefault<uint32_t>(0);
+                // valid_lifetime
+                uint32_t valid_lifetime = out_bindings[19]->getIntegerOrDefault<uint32_t>(0);
+
+                // Create subnet with basic settings.
+                last_subnet.reset(new Subnet4(prefix_pair.first, prefix_pair.second,
+                                              renew_timer, rebind_timer,
+                                              valid_lifetime, subnet_id));
+
+                // 4o6_interface
+                if (!out_bindings[2]->amNull()) {
+                    last_subnet->get4o6().setIface4o6(out_bindings[2]->getString());
+                }
+                // 4o6_interface_id
+                if (!out_bindings[3]->amNull()) {
+                    std::string dhcp4o6_interface_id = out_bindings[3]->getString();
+                    OptionBuffer dhcp4o6_interface_id_buf(dhcp4o6_interface_id.begin(),
+                                                          dhcp4o6_interface_id.end());
+                    OptionPtr option_dhcp4o6_interface_id(new Option(Option::V6, D6O_INTERFACE_ID,
+                                                                     dhcp4o6_interface_id_buf));
+                    last_subnet->get4o6().setInterfaceId(option_dhcp4o6_interface_id);
+                }
+                // 4o6_subnet
+                if (!out_bindings[4]->amNull()) {
+                    std::pair<IOAddress, uint8_t> dhcp4o6_subnet_prefix_pair =
+                        Subnet6::parsePrefix(out_bindings[4]->getString());
+                    last_subnet->get4o6().setSubnet4o6(dhcp4o6_subnet_prefix_pair.first,
+                                                       dhcp4o6_subnet_prefix_pair.second);
+                }
+                // boot_file_name
+                last_subnet->setFilename(out_bindings[5]->getStringOrDefault(""));
+                // client_class
+                if (!out_bindings[6]->amNull()) {
+                    last_subnet->allowClientClass(out_bindings[6]->getString());
+                }
+                // interface
+                last_subnet->setIface(out_bindings[7]->getStringOrDefault(""));
+                // match_client_id
+                last_subnet->setMatchClientId(static_cast<bool>
+                                              (out_bindings[8]->getIntegerOrDefault<uint8_t>(1)));
+                // next_server
+                last_subnet->setSiaddr(IOAddress(out_bindings[10]->getIntegerOrDefault<uint32_t>(0)));
+                // relay
+                ElementPtr relay_element = out_bindings[12]->getJSON();
+                if (relay_element) {
+                    if (relay_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid relay value "
+                                  << out_bindings[12]->getString());
+                    }
+                    for (auto i = 0; i < relay_element->size(); ++i) {
+                        auto relay_address_element = relay_element->get(i);
+                        if (relay_address_element->getType() != Element::string) {
+                            isc_throw(BadValue, "relay address must be a string");
+                        }
+                        last_subnet->addRelayAddress(IOAddress(relay_element->get(i)->stringValue()));
+                    }
+                }
+                // require_client_classes
+                ElementPtr require_element = out_bindings[14]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid require_client_classes value "
+                                  << out_bindings[14]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_subnet->requireClientClass(require_item->stringValue());
+                    }
+                }
+                // reservation_mode
+                last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
+                    (out_bindings[15]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                // server_hostname
+                last_subnet->setSname(out_bindings[16]->getStringOrDefault(""));
+                // user_context
+                ElementPtr user_context = out_bindings[18]->getJSON();
+                if (user_context) {
+                    last_subnet->setContext(user_context);
+                }
+
+                // Subnet ready. Add it to the list.
+                subnets.push_back(last_subnet);
+            }
+        });
+    }
+
+    /// @brief Sends query to retrieve single subnet by id.
+    ///
+    /// @param selector Server selector.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Pointer to the returned subnet or NULL if such subnet
+    /// doesn't exist.
+    Subnet4Ptr getSubnet4(const ServerSelector& selector,
+                          const SubnetID& subnet_id) {
+        MySqlBindingCollection in_bindings;
+        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
+
+        Subnet4Collection subnets;
+        getSubnets4(GET_SUBNET4_ID, in_bindings, subnets);
+
+        return (subnets.empty() ? Subnet4Ptr() : *subnets.begin());
+    }
+
+    /// @brief Sends query to retrieve single subnet by prefix.
+    ///
+    /// The prefix should be in the following format: "192.0.2.0/24".
+    ///
+    /// @param selector Server selector.
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Pointer to the returned subnet or NULL if such subnet
+    /// doesn't exist.
+    Subnet4Ptr getSubnet4(const ServerSelector& selector,
+                          const std::string& subnet_prefix) {
+        MySqlBindingCollection in_bindings;
+        in_bindings.push_back(MySqlBinding::createString(subnet_prefix));
+
+        Subnet4Collection subnets;
+        getSubnets4(GET_SUBNET4_PREFIX, in_bindings, subnets);
+
+        return (subnets.empty() ? Subnet4Ptr() : *subnets.begin());
+    }
+
+    /// @brief Sends query to insert or update subnet.
+    ///
+    /// @param selector Server selector.
+    /// @param subnet Pointer to the subnet to be inserted or updated.
+    void createUpdateSubnet4(const ServerSelector& selector,
+                             const Subnet4Ptr& subnet) {
+        // Convert DHCPv4o6 interface id to text.
+        OptionPtr dhcp4o6_interface_id = subnet->get4o6().getInterfaceId();
+        std::string dhcp4o6_interface_id_text;
+        if (dhcp4o6_interface_id) {
+            dhcp4o6_interface_id_text.assign(dhcp4o6_interface_id->getData().begin(),
+                                             dhcp4o6_interface_id->getData().end());
+        }
+
+        // Convert DHCPv4o6 subnet to text.
+        std::string dhcp4o6_subnet;
+        if (!subnet->get4o6().getSubnet4o6().first.isV6Zero() ||
+            (subnet->get4o6().getSubnet4o6().second != 128u)) {
+            std::ostringstream s;
+            s << subnet->get4o6().getSubnet4o6().first << "/"
+              << static_cast<int>(subnet->get4o6().getSubnet4o6().second);
+            dhcp4o6_subnet = s.str();
+        }
+
+        // Create JSON list of relay addresses.
+        ElementPtr relay_element = Element::createList();
+        const auto& addresses = subnet->getRelayAddresses();
+        if (!addresses.empty()) {
+            for (const auto& address : addresses) {
+                relay_element->add(Element::create(address.toText()));
+            }
+        }
+
+        // Create JSON list of required classes.
+        ElementPtr required_classes_element = Element::createList();
+        const auto& required_classes = subnet->getRequiredClasses();
+        for (auto required_class = required_classes.cbegin();
+             required_class != required_classes.cend();
+             ++required_class) {
+            required_classes_element->add(Element::create(*required_class));
+        }
+
+        // Create binding with shared network name if the subnet belongs to a
+        // shared network.
+        SharedNetwork4Ptr shared_network;
+        subnet->getSharedNetwork(shared_network);
+        MySqlBindingPtr shared_network_binding =
+            (shared_network ? MySqlBinding::createString(shared_network->getName()) :
+             MySqlBinding::createNull());
+
+        // Create user context binding if user context exists.
+        auto context_element = subnet->getContext();
+        MySqlBindingPtr context_binding =
+            (context_element ? MySqlBinding::createString(context_element->str()) :
+             MySqlBinding::createNull());
+
+        // Create input bindings.
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint32_t>(subnet->getID()),
+            MySqlBinding::createString(subnet->toText()),
+            MySqlBinding::condCreateString(subnet->get4o6().getIface4o6()),
+            MySqlBinding::condCreateString(dhcp4o6_interface_id_text),
+            MySqlBinding::condCreateString(dhcp4o6_subnet),
+            MySqlBinding::condCreateString(subnet->getFilename()),
+            MySqlBinding::condCreateString(subnet->getClientClass()),
+            MySqlBinding::condCreateString(subnet->getIface()),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getMatchClientId())),
+            MySqlBinding::createTimestamp(subnet->getModificationTime()),
+            MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().toUint32()),
+            MySqlBinding::createInteger<uint32_t>(subnet->getT2()),
+            MySqlBinding::condCreateString(relay_element->str()),
+            MySqlBinding::createInteger<uint32_t>(subnet->getT1()),
+            MySqlBinding::condCreateString(required_classes_element->str()),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
+            MySqlBinding::condCreateString(subnet->getSname()),
+            shared_network_binding,
+            context_binding,
+            MySqlBinding::createInteger<uint32_t>(subnet->getValid())
+        };
+
+        // Check if the subnet already exists.
+        Subnet4Ptr existing_subnet = getSubnet4(selector, subnet->getID());
+
+        // If the subnet exists we are going to update this subnet.
+        if (existing_subnet) {
+            // Need to add one more binding for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(existing_subnet->getID()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
+                                    in_bindings);
+
+        } else {
+            // If the subnet doesn't exist, let's insert it.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
+                              in_bindings);
+        }
+    }
+
     /// @brief Represents connection to the MySQL database.
     MySqlConnection conn_;
 };
@@ -57,8 +352,161 @@ TaggedStatementArray;
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve data from the database.
 TaggedStatementArray tagged_statements = { {
+    // Select subnet by id.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID,
-      "SELECT hostname FROM hosts WHERE dhcp4_subnet_id = ?" }
+      "SELECT "
+      "  subnet_id,"
+      "  subnet_prefix,"
+      "  4o6_interface,"
+      "  4o6_interface_id,"
+      "  4o6_subnet,"
+      "  boot_file_name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  next_server,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  server_hostname,"
+      "  shared_network_name,"
+      "  user_context,"
+      "  valid_lifetime "
+      "FROM dhcp4_subnet WHERE subnet_id = ? "
+      "ORDER BY subnet_id" },
+
+    // Select subnet by prefix.
+    { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX,
+      "SELECT "
+      "  subnet_id,"
+      "  subnet_prefix,"
+      "  4o6_interface,"
+      "  4o6_interface_id,"
+      "  4o6_subnet,"
+      "  boot_file_name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  next_server,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  server_hostname,"
+      "  shared_network_name,"
+      "  user_context,"
+      "  valid_lifetime "
+      "FROM dhcp4_subnet WHERE subnet_prefix = ? "
+      "ORDER BY subnet_id" },
+
+    // Select all subnets.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
+      "SELECT "
+      "  subnet_id,"
+      "  subnet_prefix,"
+      "  4o6_interface,"
+      "  4o6_interface_id,"
+      "  4o6_subnet,"
+      "  boot_file_name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  next_server,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  server_hostname,"
+      "  shared_network_name,"
+      "  user_context,"
+      "  valid_lifetime "
+      "FROM dhcp4_subnet "
+      "ORDER BY subnet_id" },
+
+    // Select subnets having modification time later than X.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
+      "SELECT "
+      "  subnet_id,"
+      "  subnet_prefix,"
+      "  4o6_interface,"
+      "  4o6_interface_id,"
+      "  4o6_subnet,"
+      "  boot_file_name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  next_server,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  server_hostname,"
+      "  shared_network_name,"
+      "  user_context,"
+      "  valid_lifetime "
+      "FROM dhcp4_subnet "
+      "WHERE modification_ts > ? "
+      "ORDER BY subnet_id" },
+
+    // Insert a subnet.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
+      "INSERT INTO dhcp4_subnet("
+      "  subnet_id,"
+      "  subnet_prefix,"
+      "  4o6_interface,"
+      "  4o6_interface_id,"
+      "  4o6_subnet,"
+      "  boot_file_name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  next_server,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  server_hostname,"
+      "  shared_network_name,"
+      "  user_context,"
+      "  valid_lifetime"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
+      "?, ?, ?, ?, ?, ?, ?, ?)" },
+
+    // Update existing subnet.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
+      "UPDATE dhcp4_subnet SET "
+      "  subnet_id = ?,"
+      "  subnet_prefix = ?,"
+      "  4o6_interface = ?,"
+      "  4o6_interface_id = ?,"
+      "  4o6_subnet = ?,"
+      "  boot_file_name = ?,"
+      "  client_class = ?,"
+      "  interface = ?,"
+      "  match_client_id = ?,"
+      "  modification_ts = ?,"
+      "  next_server = ?,"
+      "  rebind_timer = ?,"
+      "  relay = ?,"
+      "  renew_timer = ?,"
+      "  require_client_classes = ?,"
+      "  reservation_mode = ?,"
+      "  server_hostname = ?,"
+      "  shared_network_name = ?,"
+      "  user_context = ?,"
+      "  valid_lifetime = ? "
+      "WHERE subnet_id = ?" }
 }
 };
 
@@ -119,80 +567,94 @@ MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
 Subnet4Ptr
 MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& selector,
                                      const std::string& subnet_prefix) const {
+    return (impl_->getSubnet4(selector, subnet_prefix));
 }
 
 Subnet4Ptr
 MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& selector,
                                      const SubnetID& subnet_id) const {
-    BindingCollection in_bindings;
-    in_bindings.push_back(Binding::createString("1024"));
-
-    BindingCollection out_bindings;
-    out_bindings.push_back(Binding::createString());
-
-    impl_->conn_.selectQuery(MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID,
-                             in_bindings, out_bindings,
-                             [&out_bindings]() {
-        uint32_t hostname = out_bindings[0]->getValue<uint32_t>();
-    });
-
-    return (Subnet4Ptr());
+    return (impl_->getSubnet4(selector, subnet_id));
 }
 
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& selector) const {
+    Subnet4Collection subnets;
+    MySqlBindingCollection in_bindings;
+    impl_->getSubnets4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
+                      in_bindings, subnets);
+    return (subnets);
 }
 
 Subnet4Collection
 MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& selector,
                                               const boost::posix_time::ptime& modification_time) const {
+    Subnet4Collection subnets;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createTimestamp(modification_time)
+    };
+    impl_->getSubnets4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
+                       in_bindings, subnets);
+    return (subnets);
 }
 
 SharedNetwork4Ptr
 MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& selector,
                                             const std::string& name) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& selector) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 SharedNetwork4Collection
-MySqlConfigBackendDHCPv4::getModifiedSharedNetworks4(const ServerSelector& selector,
-                                                     const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::
+getModifiedSharedNetworks4(const ServerSelector& selector,
+                           const boost::posix_time::ptime& modification_time) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 OptionDefinitionPtr
 MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& selector,
                                         const uint16_t code,
                                         const std::string& space) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& selector) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 OptionDefContainer
-MySqlConfigBackendDHCPv4::getModifiedOptionDefs4(const ServerSelector& selector,
-                                                 const boost::posix_time::ptime& modification_time) const {
+MySqlConfigBackendDHCPv4::
+getModifiedOptionDefs4(const ServerSelector& selector,
+                       const boost::posix_time::ptime& modification_time) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 util::OptionalValue<std::string>
 MySqlConfigBackendDHCPv4::getGlobalStringParameter4(const ServerSelector& selector,
                                                     const std::string& name) const {
+    isc_throw(NotImplemented, "not implemented");
 }
+
 util::OptionalValue<int64_t>
 MySqlConfigBackendDHCPv4::getGlobalNumberParameter4(const ServerSelector& selector,
                                                     const std::string& name) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 std::map<std::string, std::string>
 MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& selector) const {
+    isc_throw(NotImplemented, "not implemented");
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& selector,
                                               const Subnet4Ptr& subnet) {
+    impl_->createUpdateSubnet4(selector, subnet);
 }
 
 void
@@ -305,10 +767,12 @@ MySqlConfigBackendDHCPv4::getType() const {
 
 std::string
 MySqlConfigBackendDHCPv4::getHost() const {
+    return ("");
 }
 
 uint16_t
 MySqlConfigBackendDHCPv4::getPort() const {
+    return (0);
 }
 
 } // end of namespace isc::dhcp

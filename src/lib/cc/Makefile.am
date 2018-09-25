@@ -10,6 +10,7 @@ libkea_cc_la_SOURCES += cfg_to_element.h dhcp_config_error.h
 libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 libkea_cc_la_SOURCES += json_feed.cc json_feed.h
 libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
+libkea_cc_la_SOURCES += stamped_element.cc stamped_element.h
 libkea_cc_la_SOURCES += user_context.cc user_context.h
 
 libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
@@ -28,6 +29,7 @@ libkea_cc_include_HEADERS = \
 	dhcp_config_error.h \
 	json_feed.h \
 	simple_parser.h \
+	stamped_element.h \
 	user_context.h
 
 EXTRA_DIST = cc.dox

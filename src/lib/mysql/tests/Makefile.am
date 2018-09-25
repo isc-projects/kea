@@ -18,7 +18,8 @@ TESTS =
 if HAVE_GTEST
 TESTS += libmysql_unittests
 
-libmysql_unittests_SOURCES  = mysql_connection_unittest.cc
+libmysql_unittests_SOURCES  = mysql_binding_unittest.cc
+libmysql_unittests_SOURCES += mysql_connection_unittest.cc
 libmysql_unittests_SOURCES += run_unittests.cc
 
 libmysql_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

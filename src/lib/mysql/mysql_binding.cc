@@ -8,6 +8,8 @@
 
 #include <mysql/mysql_binding.h>
 
+using namespace isc::data;
+
 namespace isc {
 namespace db {
 
@@ -21,6 +23,23 @@ MySqlBinding::getString() const {
     return (std::string(buffer_.begin(), buffer_.begin() + length_));
 }
 
+std::string
+MySqlBinding::getStringOrDefault(const std::string& default_value) const {
+    if (amNull()) {
+        return (default_value);
+    }
+    return (getString());
+}
+
+ElementPtr
+MySqlBinding::getJSON() const {
+    if (amNull()) {
+        return (ElementPtr());
+    }
+    std::string s = getString();
+    return (Element::fromJSON(s));
+}
+
 std::vector<uint8_t>
 MySqlBinding::getBlob() const {
     // Make sure the binding type is blob.
@@ -31,6 +50,14 @@ MySqlBinding::getBlob() const {
     return (std::vector<uint8_t>(buffer_.begin(), buffer_.begin() + length_));
 }
 
+std::vector<uint8_t>
+MySqlBinding::getBlobOrDefault(const std::vector<uint8_t>& default_value) const {
+    if (amNull()) {
+        return (default_value);
+    }
+    return (getBlob());
+}
+
 boost::posix_time::ptime
 MySqlBinding::getTimestamp() const {
     // Make sure the binding type is timestamp.
@@ -39,6 +66,14 @@ MySqlBinding::getTimestamp() const {
     // then convert it to posix time.
     const MYSQL_TIME* database_time = reinterpret_cast<const MYSQL_TIME*>(&buffer_[0]);
     return (convertFromDatabaseTime(*database_time));
+}
+
+boost::posix_time::ptime
+MySqlBinding::getTimestampOrDefault(const boost::posix_time::ptime& default_value) const {
+    if (amNull()) {
+        return (default_value);
+    }
+    return (getTimestamp());
 }
 
 MySqlBindingPtr
@@ -54,6 +89,11 @@ MySqlBinding::createString(const std::string& value) {
                                              value.size()));
     binding->setBufferValue(value.begin(), value.end());
     return (binding);
+}
+
+MySqlBindingPtr
+MySqlBinding::condCreateString(const std::string& value) {
+    return (value.empty() ? MySqlBinding::createNull() : createString(value));
 }
 
 MySqlBindingPtr

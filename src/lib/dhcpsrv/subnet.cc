@@ -11,6 +11,7 @@
 #include <dhcp/option_space.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
+#include <boost/lexical_cast.hpp>
 #include <algorithm>
 #include <sstream>
 
@@ -213,6 +214,26 @@ Subnet::sumPoolCapacity(const PoolCollection& pools,
 
     return (sum);
 }
+
+std::pair<IOAddress, uint8_t>
+Subnet::parsePrefixCommon(const std::string& prefix) {
+    auto pos = prefix.find('/');
+    if ((pos == std::string::npos) ||
+        (pos == prefix.size() - 1) ||
+        (pos == 0)) {
+        isc_throw(BadValue, "unable to parse invalid prefix " << prefix);
+    }
+
+    try {
+        IOAddress address(prefix.substr(0, pos));
+        int length = boost::lexical_cast<int>(prefix.substr(pos + 1));
+        return (std::make_pair(address, static_cast<int>(length)));
+
+    } catch (...) {
+        isc_throw(BadValue, "unable to parse invalid prefix " << prefix);
+    }
+}
+
 
 void Subnet4::checkType(Lease::Type type) const {
     if (type != Lease::TYPE_V4) {
@@ -717,6 +738,16 @@ Subnet4::toElement() const {
     return (map);
 }
 
+std::pair<IOAddress, uint8_t>
+Subnet4::parsePrefix(const std::string& prefix) {
+    std::pair<IOAddress, uint8_t> parsed = Subnet::parsePrefixCommon(prefix);
+    if (!parsed.first.isV4() || parsed.first.isV4Zero() ||
+        (parsed.second > 32) || (parsed.second == 0)) {
+        isc_throw(BadValue, "unable to parse invalid IPv4 prefix " << prefix);
+    }
+    return (parsed);
+}
+
 data::ElementPtr
 Subnet6::toElement() const {
     // Prepare the map
@@ -746,6 +777,16 @@ Subnet6::toElement() const {
     map->set("pd-pools", pdpool_list);
 
     return (map);
+}
+
+std::pair<IOAddress, uint8_t>
+Subnet6::parsePrefix(const std::string& prefix) {
+    std::pair<IOAddress, uint8_t> parsed = Subnet::parsePrefixCommon(prefix);
+    if (!parsed.first.isV6() || parsed.first.isV6Zero() ||
+        (parsed.second > 128) || (parsed.second == 0)) {
+        isc_throw(BadValue, "unable to parse invalid IPv6 prefix " << prefix);
+    }
+    return (parsed);
 }
 
 

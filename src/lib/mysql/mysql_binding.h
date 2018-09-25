@@ -7,6 +7,7 @@
 #ifndef MYSQL_BINDING_H
 #define MYSQL_BINDING_H
 
+#include <cc/data.h>
 #include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 #include <boost/date_time/posix_time/conversion.hpp>
@@ -182,6 +183,28 @@ public:
     /// @return String value.
     std::string getString() const;
 
+    /// @brief Returns value held in the binding as string.
+    ///
+    /// If the value to be returned is null, a default value is returned.
+    ///
+    /// @param default_value Default value.
+    ///
+    /// @throw InvalidOperation if the binding type is not @c MYSQL_TYPE_STRING.
+    ///
+    /// @return String value.
+    std::string getStringOrDefault(const std::string& default_value) const;
+
+    /// @brief Returns value held in the binding as JSON.
+    ///
+    /// Call @c MySqlBinding::amNull to verify that the value is not
+    /// null prior to calling this method.
+    ///
+    /// @throw InvalidOperation if the binding is not @c MYSQL_TYPE_STRING.
+    /// @throw data::JSONError if the string value is not a valid JSON.
+    ///
+    /// @return JSON structure or NULL if the string is null.
+    data::ElementPtr getJSON() const;
+
     /// @brief Returns value held in the binding as blob.
     ///
     /// Call @c MySqlBinding::amNull to verify that the value is not
@@ -192,6 +215,18 @@ public:
     ///
     /// @return Blob in a vactor.
     std::vector<uint8_t> getBlob() const;
+
+    /// @brief Returns value held in the binding as blob.
+    ///
+    /// If the value to be returned is null, a default value is returned.
+    ///
+    /// @param default_value Default value.
+    ///
+    /// @throw InvalidOperation if the binding type is not @c MYSQL_TYPE_BLOB.
+    ///
+    /// @return Blob in a vactor.
+    std::vector<uint8_t>
+    getBlobOrDefault(const std::vector<uint8_t>& default_value) const;
 
     /// @brief Returns numeric value held in the binding.
     ///
@@ -215,6 +250,26 @@ public:
         return (*value);
     }
 
+    /// @brief Returns numeric value held in the binding.
+    ///
+    /// If the value to be returned is null, a default value is returned.
+    ///
+    /// @tparam Numeric type corresponding to the binding type, e.g.
+    /// @c uint8_t, @c uint16_t etc.
+    /// @param default_value Default value.
+    ///
+    /// @throw InvalidOperation if the binding type does not match the
+    /// template parameter.
+    ///
+    /// @return Numeric value of a specified type.
+    template<typename T>
+    T getIntegerOrDefault(T default_value) const {
+        if (amNull()) {
+            return (default_value);
+        }
+        return (getInteger<T>());
+    }
+
     /// @brief Returns timestamp value held in the binding.
     ///
     /// Call @c MySqlBinding::amNull to verify that the value is not
@@ -225,6 +280,18 @@ public:
     ///
     /// @return Timestamp converted to posix time.
     boost::posix_time::ptime getTimestamp() const;
+
+    /// @brief Returns timestamp value held in the binding.
+    ///
+    /// If the value to be returned is null, a default value is returned.
+    ///
+    /// @param default_value Default value.
+    ///
+    /// @throw InvalidOperation if the binding type is not @c MYSQL_TYPE_TIMESTAMP.
+    ///
+    /// @return Timestamp converted to posix time.
+    boost::posix_time::ptime
+    getTimestampOrDefault(const boost::posix_time::ptime& default_value) const;
 
     /// @brief Checks if the bound value is NULL.
     ///
@@ -247,6 +314,14 @@ public:
     ///
     /// @return Pointer to the created binding.
     static MySqlBindingPtr createString(const std::string& value);
+
+    /// @brief Conditionally creates binding of text type for sending
+    /// data if provided value is not empty.
+    ///
+    /// @param value String value to be sent to the database.
+    ///
+    /// @return Pointer to the created binding.
+    static MySqlBindingPtr condCreateString(const std::string& value);
 
     /// @brief Creates binding of blob type for receiving data.
     ///
@@ -302,6 +377,20 @@ public:
                                                  MySqlBindingTraits<T>::length));
         binding->setValue(value);
         return (binding);
+    }
+
+    /// @brief Conditionally creates binding of numeric type for sending
+    /// data if provided value is not 0.
+    ///
+    /// @tparam Numeric type corresponding to the binding type, e.g.
+    /// @c uint8_t, @c uint16_t etc.
+    ///
+    /// @param value Numeric value to be sent to the database.
+    ///
+    /// @return Pointer to the created binding.
+    template<typename T>
+    static MySqlBindingPtr condCreateInteger(T value) {
+        return (value == 0 ? createNull() : createInteger(value));
     }
 
     /// @brief Creates binding of timestamp type for receiving data.
@@ -470,7 +559,7 @@ private:
 };
 
 /// @brief Collection of bindings.
-typedef std::vector<MySqlBindingPtr> BindingCollection;
+typedef std::vector<MySqlBindingPtr> MySqlBindingCollection;
 
 
 } // end of namespace isc::db
