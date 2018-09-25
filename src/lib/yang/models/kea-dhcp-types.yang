@@ -14,7 +14,7 @@ module kea-dhcp-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-08-20 {
+  revision 2018-09-14 {
     description "Initial revision";
     reference "";
   }
@@ -499,33 +499,6 @@ module kea-dhcp-types {
     }
   }
 
-  // To move to DHCPv6.
-  grouping interface-id {
-    description "Interface ID grouping.";
-    leaf interface-id {
-      type string;
-      description "Interface ID entry.";
-    }
-  }
-
-  grouping subnet-interface-id {
-    description "Interface ID grouping for a subnet.";
-    uses interface-id {
-      refine interface-id {
-        description "Subnet interface-id option.";
-      }
-    }
-  }
-
-  grouping network-interface-id {
-    description "Interface ID grouping for a shared network.";
-    uses interface-id {
-      refine interface-id {
-        description "Shared network interface-id option.";
-      }
-    }
-  }
-
   grouping subnet-id {
     description "Subnet ID grouping.";
     leaf id {
@@ -751,7 +724,7 @@ module kea-dhcp-types {
                      stored here.";
       }
     }
-  }   
+  }
 
   grouping host-user-context {
     description "User context grouping for a host reservation.";
@@ -771,7 +744,7 @@ module kea-dhcp-types {
                      stored here.";
       }
     }
-  }   
+  }
 
   grouping network-user-context {
     description "User context grouping for a shared network.";
