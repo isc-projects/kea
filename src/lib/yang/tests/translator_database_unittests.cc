@@ -7,59 +7,63 @@
 #include <config.h>
 
 #include <yang/translator_database.h>
+#include <yang/tests/sysrepo_setup.h>
 
-#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
+using namespace isc::yang::test;
 
 namespace {
 
-// Test get empty database using the ad hoc model.
-TEST(TranslatorDatabaseTest, getEmpty) {
-    // Get a translator database object to play with.
-    S_Connection conn(new Connection("translator database access unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabase> td_obj;
+/// @brief Translator name.
+extern char const database_access[] = "database access";
 
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
+/// @brief Test fixture class for @ref TranslatorDatabase.
+class TranslatorDatabaseTest :
+    public GenericTranslatorTest<database_access, TranslatorDatabase> {
+public:
+
+    /// Constructor.
+    TranslatorDatabaseTest() { }
+
+    /// Destructor (does nothing).
+    virtual ~TranslatorDatabaseTest() { }
+};
+
+// This test verifies that an empty database can be properly
+// translated from YANG to JSON.
+TEST_F(TranslatorDatabaseTest, getEmpty) {
+    useModel("kea-dhcp4-server");
 
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = td_obj->getDatabase(xpath));
+    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
     EXPECT_FALSE(database);
 }
 
-// Test get a database using the ad hoc model.
-TEST(TranslatorDatabaseTest, get) {
-    // Get a translator database object to play with.
-    S_Connection conn(new Connection("translator database access unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabase> td_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
+// This test verifies that a database can be properly
+// translated from YANG to JSON.
+TEST_F(TranslatorDatabaseTest, get) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
-    EXPECT_NO_THROW(sess->set_item(xtype.c_str(), s_type));
+    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     uint32_t li = 3600;
     S_Val s_interval(new Val(li, SR_UINT32_T));
-    EXPECT_NO_THROW(sess->set_item(xinterval.c_str(), s_interval));
+    EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
 
     // Get empty.
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = td_obj->getDatabase(xpath));
+    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
     ASSERT_TRUE(database);
     EXPECT_EQ(2, database->size());
     ConstElementPtr type = database->get("type");
@@ -72,27 +76,21 @@ TEST(TranslatorDatabaseTest, get) {
     EXPECT_EQ(li, interval->intValue());
 }
 
-// Test set a database using the ad hoc model.
-TEST(TranslatorDatabaseTest, set) {
-    // Get a translator database object to play with.
-    S_Connection conn(new Connection("translator database access unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabase> td_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
+// This test verifies that a database can be properly
+// translated from JSON to YANG.
+TEST_F(TranslatorDatabaseTest, set) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     ElementPtr database = Element::createMap();
     database->set("type", Element::create(string("memfile")));
     database->set("lfc-interval", Element::create(3600));
-    ASSERT_NO_THROW(td_obj->setDatabase(xpath, database));
+    ASSERT_NO_THROW(t_obj_->setDatabase(xpath, database));
 
     // Get it back.
     ConstElementPtr got;
-    EXPECT_NO_THROW(got = td_obj->getDatabase(xpath));
+    EXPECT_NO_THROW(got = t_obj_->getDatabase(xpath));
     ASSERT_TRUE(got);
     ASSERT_EQ(Element::map, got->getType());
     EXPECT_EQ(2, got->size());
@@ -106,64 +104,61 @@ TEST(TranslatorDatabaseTest, set) {
     EXPECT_EQ(3600, interval->intValue());
 }
 
-// Test set empty database using the ad hoc model.
-TEST(TranslatorDatabaseTest, setEmpty) {
-    // Get a translator database object to play with.
-    S_Connection conn(new Connection("translator database access unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabase> td_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
+// This test verifies that an empty database can be properly
+// translated from JSON to YANG.
+TEST_F(TranslatorDatabaseTest, setEmpty) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
     const string& xtype = xpath + "/database-type";
     const string& xinterval = xpath + "/lfc-interval";
     S_Val s_type(new Val("memfile"));
-    EXPECT_NO_THROW(sess->set_item(xtype.c_str(), s_type));
+    EXPECT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     uint32_t li = 3600;
     S_Val s_interval(new Val(li, SR_UINT32_T));
-    EXPECT_NO_THROW(sess->set_item(xinterval.c_str(), s_interval));
+    EXPECT_NO_THROW(sess_->set_item(xinterval.c_str(), s_interval));
 
     // Reset to empty.
-    ASSERT_NO_THROW(td_obj->setDatabase(xpath, ConstElementPtr()));
+    ASSERT_NO_THROW(t_obj_->setDatabase(xpath, ConstElementPtr()));
 
     // Get it back.
     ConstElementPtr database;
-    EXPECT_NO_THROW(database = td_obj->getDatabase(xpath));
+    EXPECT_NO_THROW(database = t_obj_->getDatabase(xpath));
     EXPECT_FALSE(database);
 }
 
-// Test get empty databases.
-TEST(TranslatorDatabasesTest, getEmpty) {
-    // Get a translator databases object to play with.
-    S_Connection conn(new Connection("translator database accesses unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabases> tds_obj;
+/// @brief Translator name.
+extern char const database_accesses[] = "database accesses";
 
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp6-server";
-    EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
+/// @brief Test fixture class for @ref TranslatorDatabases.
+class TranslatorDatabasesTest :
+    public GenericTranslatorTest<database_accesses, TranslatorDatabases> {
+public:
+
+    /// Constructor.
+    TranslatorDatabasesTest() { }
+
+    /// Destructor (does nothing).
+    virtual ~TranslatorDatabasesTest() { }
+};
+
+// This test verifies that an empty database list can be properly
+// translated from YANG to JSON.
+TEST_F(TranslatorDatabasesTest, getEmpty) {
+    useModel("kea-dhcp6-server");
 
     // Get empty.
     const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = tds_obj->getDatabases(xpath));
+    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 
-// Test get databases.
-TEST(TranslatorDatabasesTest, get) {
-    // Get a translator databases object to play with.
-    S_Connection conn(new Connection("translator database accesses unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabases> tds_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
+// This test verifies that a database list can be properly
+// translated from YANG to JSON.
+TEST_F(TranslatorDatabasesTest, get) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
@@ -175,20 +170,20 @@ TEST(TranslatorDatabasesTest, get) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xname.c_str(), s_name));
+    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
     S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xuser.c_str(), s_user));
+    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
     S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xpassword.c_str(), s_password));
+    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
     S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess->set_item(xhost.c_str(), s_host));
+    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
     S_Val s_port(new Val(mport, SR_UINT16_T));
-    EXPECT_NO_THROW(sess->set_item(xport.c_str(), s_port));
+    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = tds_obj->getDatabases(xpath));
+    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
     ASSERT_TRUE(databases);
     ASSERT_EQ(1, databases->size());
     ConstElementPtr database = databases->get(0);
@@ -220,16 +215,10 @@ TEST(TranslatorDatabasesTest, get) {
     EXPECT_EQ(mport, port->intValue());
 }
 
-// Test set databases.
-TEST(TranslatorDatabasesTest, set) {
-    // Get a translator databases object to play with.
-    S_Connection conn(new Connection("translator database accesses unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabases> tds_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp6-server";
-    EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
+// This test verifies that a database list can be properly
+// translated from JSON to YANG.
+TEST_F(TranslatorDatabasesTest, set) {
+    useModel("kea-dhcp6-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
@@ -238,11 +227,11 @@ TEST(TranslatorDatabasesTest, set) {
     database->set("lfc-interval", Element::create(3600));
     ElementPtr databases = Element::createList();
     databases->add(database);
-    ASSERT_NO_THROW(tds_obj->setDatabases(xpath, databases));
+    ASSERT_NO_THROW(t_obj_->setDatabases(xpath, databases));
 
     // Get it back.
     ConstElementPtr gots;
-    EXPECT_NO_THROW(gots = tds_obj->getDatabases(xpath));
+    EXPECT_NO_THROW(gots = t_obj_->getDatabases(xpath));
     ASSERT_TRUE(gots);
     ASSERT_EQ(Element::list, gots->getType());
     ASSERT_EQ(1, gots->size());
@@ -258,20 +247,15 @@ TEST(TranslatorDatabasesTest, set) {
     ASSERT_TRUE(interval);
     ASSERT_EQ(Element::integer, interval->getType());
     EXPECT_EQ(3600, interval->intValue());
+
+    // Check it validates.
+    EXPECT_NO_THROW(sess_->validate());
 }
 
-// Test set empty database.
-TEST(TranslatorDatabasesTest, setEmpty) {
-    // Get a translator databases object to play with.
-    S_Connection conn(new Connection("translator database accesses unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabases> tds_obj;
-    boost::scoped_ptr<TranslatorDatabase> td_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
-    EXPECT_NO_THROW(td_obj.reset(new TranslatorDatabase(sess, model)));
+// This test verifies that an emptied database list can be properly
+// translated from JSON to YANG.
+TEST_F(TranslatorDatabasesTest, setEmpty) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
@@ -283,36 +267,30 @@ TEST(TranslatorDatabasesTest, setEmpty) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xname.c_str(), s_name));
+    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
     S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xuser.c_str(), s_user));
+    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
     S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xpassword.c_str(), s_password));
+    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
     S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess->set_item(xhost.c_str(), s_host));
+    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
     S_Val s_port(new Val(mport, SR_UINT16_T));
-    EXPECT_NO_THROW(sess->set_item(xport.c_str(), s_port));
+    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Reset to empty.
-    ASSERT_NO_THROW(td_obj->setDatabase(xdatabase, ConstElementPtr()));
+    ASSERT_NO_THROW(t_obj_->setDatabase(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = tds_obj->getDatabases(xpath));
+    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 
-// Test set empty databases.
-TEST(TranslatorDatabasesTest, setEmpties) {
-    // Get a translator databases object to play with.
-    S_Connection conn(new Connection("translator database accesses unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-    boost::scoped_ptr<TranslatorDatabases> tds_obj;
-
-    // Use the ad hoc model.
-    const string& model = "kea-dhcp4-server";
-    EXPECT_NO_THROW(tds_obj.reset(new TranslatorDatabases(sess, model)));
+// This test verifies that an empty database list can be properly
+// translated from JSON to YANG.
+TEST_F(TranslatorDatabasesTest, setEmpties) {
+    useModel("kea-dhcp4-server");
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
@@ -324,23 +302,23 @@ TEST(TranslatorDatabasesTest, setEmpties) {
     const string& xhost = xdatabase + "/host";
     const string& xport = xdatabase + "/port";
     S_Val s_name(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xname.c_str(), s_name));
+    EXPECT_NO_THROW(sess_->set_item(xname.c_str(), s_name));
     S_Val s_user(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xuser.c_str(), s_user));
+    EXPECT_NO_THROW(sess_->set_item(xuser.c_str(), s_user));
     S_Val s_password(new Val("kea"));
-    EXPECT_NO_THROW(sess->set_item(xpassword.c_str(), s_password));
+    EXPECT_NO_THROW(sess_->set_item(xpassword.c_str(), s_password));
     S_Val s_host(new Val("localhost"));
-    EXPECT_NO_THROW(sess->set_item(xhost.c_str(), s_host));
+    EXPECT_NO_THROW(sess_->set_item(xhost.c_str(), s_host));
     uint16_t mport = 3306;
     S_Val s_port(new Val(mport, SR_UINT16_T));
-    EXPECT_NO_THROW(sess->set_item(xport.c_str(), s_port));
+    EXPECT_NO_THROW(sess_->set_item(xport.c_str(), s_port));
 
     // Reset to empty.
-    ASSERT_NO_THROW(tds_obj->setDatabases(xdatabase, ConstElementPtr()));
+    ASSERT_NO_THROW(t_obj_->setDatabases(xdatabase, ConstElementPtr()));
 
     // Get empty.
     ConstElementPtr databases;
-    EXPECT_NO_THROW(databases = tds_obj->getDatabases(xpath));
+    EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
 }
 
