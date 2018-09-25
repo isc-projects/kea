@@ -33,6 +33,7 @@ mysql_cb_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 mysql_cb_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 
 mysql_cb_unittests_LDADD  = $(top_builddir)/src/hooks/dhcp/mysql_cb/libmysqlcb.la
+mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 mysql_cb_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la

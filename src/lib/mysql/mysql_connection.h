@@ -192,7 +192,7 @@ class MySqlConnection : public db::DatabaseConnection {
 public:
 
     /// @brief Function invoked to process fetched row.
-    typedef std::function<void(BindingCollection&)> ConsumeResultFun;
+    typedef std::function<void(MySqlBindingCollection&)> ConsumeResultFun;
 
     /// @brief Constructor
     ///
@@ -341,8 +341,8 @@ public:
     /// output bindings.
     template<typename StatementIndex>
     void selectQuery(const StatementIndex& index,
-                     const BindingCollection& in_bindings,
-                     BindingCollection& out_bindings,
+                     const MySqlBindingCollection& in_bindings,
+                     MySqlBindingCollection& out_bindings,
                      ConsumeResultFun process_result) {
         // Extract native input bindings.
         std::vector<MYSQL_BIND> in_bind_vec;
@@ -417,7 +417,7 @@ public:
     /// in the query.
     template<typename StatementIndex>
     void insertQuery(const StatementIndex& index,
-                     const BindingCollection& in_bindings) {
+                     const MySqlBindingCollection& in_bindings) {
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());
@@ -455,7 +455,7 @@ public:
     /// @return Number of affected rows.
     template<typename StatementIndex>
     uint64_t updateDeleteQuery(const StatementIndex& index,
-                               const BindingCollection& in_bindings) {
+                               const MySqlBindingCollection& in_bindings) {
         std::vector<MYSQL_BIND> in_bind_vec;
         for (MySqlBindingPtr in_binding : in_bindings) {
             in_bind_vec.push_back(in_binding->getMySqlBinding());

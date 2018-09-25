@@ -149,7 +149,7 @@ public:
     ///
     /// @param in_bindings Collection of bindings encapsulating the data to
     /// be inserted into the database and then retrieved.
-    void testInsertSelect(const BindingCollection& in_bindings) {
+    void testInsertSelect(const MySqlBindingCollection& in_bindings) {
         // Expecting 6 bindings because we have 6 columns in our table.
         ASSERT_EQ(6, in_bindings.size());
         // We are going to select by int_value so this value must not be null.
@@ -160,11 +160,11 @@ public:
                                           in_bindings));
 
         // Create input binding for select query.
-        BindingCollection bindings =
+        MySqlBindingCollection bindings =
             { MySqlBinding::createInteger<uint32_t>(in_bindings[1]->getInteger<uint32_t>()) };
 
         // Also, create output (placeholder) bindings for receiving data.
-        BindingCollection out_bindings = {
+        MySqlBindingCollection out_bindings = {
             MySqlBinding::createInteger<uint8_t>(),
             MySqlBinding::createInteger<uint32_t>(),
             MySqlBinding::createInteger<int64_t>(),
@@ -177,7 +177,7 @@ public:
         // returned row the lambda provided as 4th argument should be executed.
         ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
                                           bindings, out_bindings,
-                                          [&](BindingCollection& out_bindings) {
+                                          [&](MySqlBindingCollection& out_bindings) {
 
             // Compare received data with input data assuming they are both non-null.
 
@@ -230,7 +230,7 @@ public:
 // from the dataabse.
 TEST_F(MySqlConnectionTest, select) {
     std::string blob = "myblob";
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -246,7 +246,7 @@ TEST_F(MySqlConnectionTest, select) {
 // retrieved.
 TEST_F(MySqlConnectionTest, selectNullInteger) {
     std::string blob = "myblob";
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createNull(),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -263,7 +263,7 @@ TEST_F(MySqlConnectionTest, selectNullInteger) {
 TEST_F(MySqlConnectionTest, selectNullString) {
     std::string blob = "myblob";
 
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -278,7 +278,7 @@ TEST_F(MySqlConnectionTest, selectNullString) {
 // Test that null value can be inserted to a column having blob type and
 // retrieved.
 TEST_F(MySqlConnectionTest, selectNullBlob) {
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -294,7 +294,7 @@ TEST_F(MySqlConnectionTest, selectNullBlob) {
 // retrieved.
 TEST_F(MySqlConnectionTest, selectNullTimestamp) {
     std::string blob = "myblob";
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -309,7 +309,7 @@ TEST_F(MySqlConnectionTest, selectNullTimestamp) {
 // Test that empty string and empty blob can be inserted to a database.
 TEST_F(MySqlConnectionTest, selectEmptyStringBlob) {
     std::string blob = "";
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -324,7 +324,7 @@ TEST_F(MySqlConnectionTest, selectEmptyStringBlob) {
 // Test that a row can be deleted from the database.
 TEST_F(MySqlConnectionTest, deleteByValue) {
     // Insert a row with numeric values.
-    BindingCollection in_bindings = {
+    MySqlBindingCollection in_bindings = {
         MySqlBinding::createInteger<uint8_t>(123),
         MySqlBinding::createInteger<uint32_t>(1024),
         MySqlBinding::createInteger<int64_t>(-4096),
@@ -354,7 +354,7 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
     ASSERT_TRUE(deleted);
 
     // Let's confirm that it has been deleted by issuing a select query.
-    BindingCollection out_bindings = {
+    MySqlBindingCollection out_bindings = {
         MySqlBinding::createInteger<uint8_t>(),
         MySqlBinding::createInteger<uint32_t>(),
         MySqlBinding::createInteger<int64_t>(),
@@ -365,7 +365,7 @@ TEST_F(MySqlConnectionTest, deleteByValue) {
 
     ASSERT_NO_THROW(conn_.selectQuery(MySqlConnectionTest::GET_BY_INT_VALUE,
                                       in_bindings, out_bindings,
-                                      [&deleted](BindingCollection& out_bindings) {
+                                      [&deleted](MySqlBindingCollection& out_bindings) {
         // This will be executed if the row is returned as a result of
         // select query. We expect that this is not executed.
         deleted = false;

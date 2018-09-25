@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
@@ -45,7 +46,9 @@ typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network : public virtual isc::data::UserContext, public isc::data::CfgToElement {
+class Network : public virtual isc::data::StampedElement,
+                public virtual isc::data::UserContext,
+                public isc::data::CfgToElement {
 public:
     /// @brief Holds optional information about relay.
     ///

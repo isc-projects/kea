@@ -43,6 +43,7 @@ libdhcp_mysql_cb_la_LDFLAGS  = $(AM_LDFLAGS) $(MYSQL_LIBS)o
 libdhcp_mysql_cb_la_LDFLAGS  += -avoid-version -export-dynamic -module
 
 libdhcp_mysql_cb_la_LIBADD  = libmysqlcb.la
+libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_mysql_cb_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la

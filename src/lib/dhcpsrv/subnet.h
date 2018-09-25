@@ -25,7 +25,9 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 #include <map>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
@@ -359,6 +361,17 @@ protected:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// IPv4 and IPv6 specific conversion functions should apply extra checks
+    /// on the returned values, i.e. whether length is in range and the IP
+    /// address has a valid type.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided prefix is not valid.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefixCommon(const std::string& prefix);
+
     /// @brief subnet-id
     ///
     /// Subnet-id is a unique value that can be used to find or identify
@@ -545,6 +558,13 @@ public:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided invalid IPv4 prefix.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefix(const std::string& prefix);
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -656,6 +676,13 @@ public:
     ///
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
+
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided invalid IPv4 prefix.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefix(const std::string& prefix);
 
 private:
 
