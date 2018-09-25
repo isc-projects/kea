@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -504,6 +504,12 @@ TEST_F(ExpressionsTest, evaluateString) {
                                  "ifelse(option[100].exists,"
                                          "option[100].hex,'none?'))",
                          "hundred4");
+
+    // Check that hexstring works as expecting.
+    testExpressionString(Option::V4, "hexstring(0x1234,':')", "12:34");
+    testExpressionString(Option::V4, "hexstring(0x56789a,'-')", "56-78-9a");
+    testExpressionString(Option::V4, "hexstring(0xbcde,'')", "bcde");
+    testExpressionString(Option::V4, "hexstring(0xf01234,'..')", "f0..12..34");
 }
 
 };

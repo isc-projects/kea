@@ -462,6 +462,14 @@ public:
         EXPECT_TRUE(alt);
     }
 
+    /// @brief checks if the given token is a hexstring operator
+    void checkTokenToHexString(const TokenPtr& token) {
+        ASSERT_TRUE(token);
+        boost::shared_ptr<TokenToHexString> tohex =
+            boost::dynamic_pointer_cast<TokenToHexString>(token);
+        EXPECT_TRUE(tohex);
+    }
+
     /// @brief checks if the given expression raises the expected message
     /// when it is parsed.
     void checkError(const string& expr, const string& msg) {
@@ -1056,6 +1064,12 @@ TEST_F(EvalContextTest, pkt4FieldChaddr) {
     testPkt4Field("pkt4.mac == 0x000102030405", TokenPkt4::CHADDR, 3);
 }
 
+// Tests whether chaddr field in DHCPv4 can be accessed and converted.
+TEST_F(EvalContextTest, pkt4FieldChaddrHexa) {
+    testPkt4Field("hexstring(pkt4.mac, ':') == '00:01:02:03:04:05'",
+                  TokenPkt4::CHADDR, 5);
+}
+
 // Tests whether hlen field in DHCPv4 can be accessed.
 TEST_F(EvalContextTest, pkt4FieldHlen) {
     testPkt4Field("pkt4.hlen == 0x6", TokenPkt4::HLEN, 3);
@@ -1308,6 +1322,25 @@ TEST_F(EvalContextTest, ifElse) {
     checkTokenString(tmp2, "us");
     checkTokenString(tmp3, "them");
     checkTokenIfElse(tmp4);
+}
+
+// Test the parsing of a hexstring expression
+TEST_F(EvalContextTest, toHexString) {
+    EvalContext eval(Option::V4);
+
+    EXPECT_NO_THROW(parsed_ =
+        eval.parseString("hexstring(0x666f,'-') == '66-6f'"));
+    EXPECT_TRUE(parsed_);
+
+    ASSERT_EQ(5, eval.expression.size());
+
+    TokenPtr tmp1 = eval.expression.at(0);
+    TokenPtr tmp2 = eval.expression.at(1);
+    TokenPtr tmp3 = eval.expression.at(2);
+
+    checkTokenHexString(tmp1, "fo");
+    checkTokenString(tmp2, "-");
+    checkTokenToHexString(tmp3);
 }
 
 //
