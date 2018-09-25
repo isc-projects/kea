@@ -39,12 +39,12 @@ string missingModuleText(const string& name) {
 
 /// @brief Checks sysrepo setup:
 ///  - connection establishment
-///  - daemon required
 ///  - session establishment
 ///  - test module
 ///  - type modules
 ///  - IETF module
 ///  - Kea modules.
+///  - daemon required
 int main() {
     S_Connection conn;
     try {
@@ -53,31 +53,24 @@ int main() {
         cerr << "ERROR: Can't connect to sysrepo: " << ex.what() << endl;
         exit(-1);
     }
-    try {
-        conn.reset(new Connection("sysrepo setup check",
-                                  SR_CONN_DAEMON_REQUIRED));
-    } catch (const sysrepo_exception& ex) {
-        cerr <<"ERROR: Can't connect to sysrepo daemon: " <<ex.what() << endl
-             << endl
-             << "Sysrepo daemon is required or actions will be local to "
-             << "the local library instance." << endl;
-        exit(-2);
-    }
+
     S_Session sess;
     try {
         sess.reset(new Session(conn, SR_DS_CANDIDATE));
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't establish a sysrepo session: "
              << ex.what() << endl;
-        exit(-3);
+        exit(-2);
     }
+
     S_Yang_Schemas schemas;
     try {
         schemas = sess->list_schemas();
     } catch (const sysrepo_exception& ex) {
         cerr << "ERROR: Can't list available schemas: " <<  ex.what() << endl;
-        exit(-4);
+        exit(-3);
     }
+
     bool found_test = false;
     bool found_ietf_types = false;
     bool found_yang_types =false;
@@ -111,13 +104,12 @@ int main() {
         }
     }
 
-
     int exit_code = 0;
 
     if (!found_test || !found_ietf_types || !found_yang_types ||
         !found_ietf || !found_kea4 || !found_kea6 || !found_keaca ||
         !found_kea2) {
-        exit_code = 4;
+        exit_code = -4;
     }
 
     if (!found_test) {
@@ -158,6 +150,18 @@ int main() {
     if (!found_kea2) {
         cerr << missingModuleText(KEA_D2_MODULE);
         --exit_code;
+    }
+
+    try {
+        sess.reset();
+        conn.reset(new Connection("sysrepo setup check",
+                                  SR_CONN_DAEMON_REQUIRED));
+    } catch (const sysrepo_exception& ex) {
+        cerr <<"ERROR: Can't connect to sysrepo daemon: " <<ex.what() << endl
+             << endl
+             << "Sysrepo daemon is required or actions will be local to "
+             << "the local library instance." << endl;
+        exit_code -= 100;
     }
 
     exit(exit_code);
