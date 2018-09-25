@@ -867,6 +867,7 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
+DISTCHECK_SYSREPO_CONFIGURE_FLAG=
 sysrepo_config="no"
 AC_ARG_WITH([sysrepo],
   AC_HELP_STRING([--with-sysrepo=PATH],
@@ -875,13 +876,16 @@ AC_ARG_WITH([sysrepo],
 
 if test "${sysrepo_config}" = "yes" ; then
     SYSREPO_CONFIG="$PKG_CONFIG"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 elif test "${sysrepo_config}" != "no" ; then
     SYSREPO_CONFIG="${sysrepo_config}"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 fi
+AC_SUBST(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 
 if test "$SYSREPO_CONFIG" != "" ; then
     if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
-        AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
+        AC_MSG_ERROR([--with-sysrepo should point to a pkg-config or sysrepo_config program])
     fi
 
     # Let's get the configuration environment for pure Sysrepo (written in C) first
@@ -889,6 +893,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
     SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
     SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
     SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+    SYSREPO_REPO=`$SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo`
 
     # Now get the environment for C++ bindings for Sysrepo.
     SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
@@ -912,6 +917,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
 
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_REPO)
 
     # Check that a simple program using Sysrepo functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -1815,6 +1821,7 @@ Sysrepo:
   SYSREPO_VERSION:     ${SYSREPO_VERSION}
   SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
   SYSREPO_LIBS:        ${SYSREPO_LIBS}
+  SYSREPO_REPO:        ${SYSREPO_REPO}
 END
 else
 cat >> config.report << END
