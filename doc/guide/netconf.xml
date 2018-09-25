@@ -134,8 +134,8 @@ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s
 
 Note the first -s parameter specifies the location of your YANG schema
 repository. You can check it with sysrepoctl -l. This is a parameter that is
-configured during sysrepo compilation.
-<!-- will be fixed soon -->
+configured during sysrepo compilation and is detected by Kea configure
+under the SYSREPO_REPO name.
 
 The installation should look similar to the following:
 <screen>
