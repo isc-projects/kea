@@ -8,10 +8,13 @@
 #include <database/db_exceptions.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/lease.h>
 #include <mysql_cb_dhcp4.h>
 #include <mysql/mysql_connection.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/pointer_cast.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <array>
@@ -42,7 +45,9 @@ public:
         GET_ALL_SUBNETS4,
         GET_MODIFIED_SUBNETS4,
         INSERT_SUBNET4,
+        INSERT_POOL4,
         UPDATE_SUBNET4,
+        DELETE_POOLS4_SUBNET_ID,
         NUM_STATEMENTS
     };
 
@@ -91,12 +96,20 @@ public:
             MySqlBinding::createString(512), // server_hostname
             MySqlBinding::createString(128), // shared_network_name
             MySqlBinding::createString(65536), // user_context
-            MySqlBinding::createInteger<uint32_t>() // valid_lifetime
+            MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
+            MySqlBinding::createInteger<uint64_t>(), // pool: id
+            MySqlBinding::createInteger<uint32_t>(), // pool: start_address
+            MySqlBinding::createInteger<uint32_t>(), // pool: end_address
+            MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
+            MySqlBinding::createTimestamp() // pool: modification_ts
         };
+
+        uint64_t last_pool_id = 0;
 
         // Execute actual query.
         conn_.selectQuery(index, in_bindings, out_bindings,
-                          [&subnets](MySqlBindingCollection& out_bindings) {
+                          [&subnets, &last_pool_id]
+                          (MySqlBindingCollection& out_bindings) {
             // Get pointer to the last subnet in the collection.
             Subnet4Ptr last_subnet;
             if (!subnets.empty()) {
@@ -108,6 +121,11 @@ public:
             // is different than the subnet identifier of the previously returned
             // row, it means that we have to construct new subnet object.
             if (!last_subnet || (last_subnet->getID() != out_bindings[0]->getInteger<uint32_t>())) {
+
+                // Reset pool id, because current row defines new subnet. Subsequent
+                // rows will contain pool information.
+                last_pool_id = 0;
+
                 // subnet_id
                 SubnetID subnet_id(out_bindings[0]->getInteger<uint32_t>());
                 // subnet_prefix
@@ -202,6 +220,17 @@ public:
 
                 // Subnet ready. Add it to the list.
                 subnets.push_back(last_subnet);
+            }
+
+            if (!out_bindings[20]->amNull() &&
+                (out_bindings[21]->getInteger<uint32_t>() != 0) &&
+                (out_bindings[22]->getInteger<uint32_t>() != 0) &&
+                ((last_pool_id == 0) ||
+                 (out_bindings[20]->getInteger<uint64_t>() != last_pool_id))) {
+                last_pool_id = out_bindings[20]->getInteger<uint64_t>();
+                Pool4Ptr pool(new Pool4(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
+                                        IOAddress(out_bindings[22]->getInteger<uint32_t>())));
+                last_subnet->addPool(pool);
             }
         });
     }
@@ -329,6 +358,10 @@ public:
 
         // If the subnet exists we are going to update this subnet.
         if (existing_subnet) {
+            // Delete existing pools in case the updated subnet contains different
+            // set of pools.
+            deletePools4(existing_subnet);
+
             // Need to add one more binding for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(existing_subnet->getID()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
@@ -339,6 +372,40 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
                               in_bindings);
         }
+
+        // (Re)create pools.
+        for (auto pool : subnet->getPools(Lease::TYPE_V4)) {
+            createPool4(boost::dynamic_pointer_cast<Pool4>(pool), subnet);
+        }
+    }
+
+    /// @brief Inserts new IPv4 pool to the database.
+    ///
+    /// @param pool Pointer to the pool to be inserted.
+    /// @param subnet Pointer to the subnet that this pool belongs to.
+    void createPool4(const Pool4Ptr& pool, const Subnet4Ptr& subnet) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint32_t>(pool->getFirstAddress().toUint32()),
+            MySqlBinding::createInteger<uint32_t>(pool->getLastAddress().toUint32()),
+            MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet->getID())),
+            MySqlBinding::createTimestamp(subnet->getModificationTime())
+        };
+
+        // Run INSERT.
+        conn_.insertQuery(INSERT_POOL4, in_bindings);
+    }
+
+    /// @brief Deletes pools belonging to a subnet from the database.
+    ///
+    /// @param subnet Pointer to the subnet for which pools should be
+    /// deleted.
+    void deletePools4(const Subnet4Ptr& subnet) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint32_t>(subnet->getID())
+        };
+
+        // Run DELETE.
+        conn_.updateDeleteQuery(DELETE_POOLS4_SUBNET_ID, in_bindings);
     }
 
     /// @brief Represents connection to the MySQL database.
@@ -354,108 +421,134 @@ TaggedStatementArray;
 TaggedStatementArray tagged_statements = { {
     // Select subnet by id.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID,
-      "SELECT "
-      "  subnet_id,"
-      "  subnet_prefix,"
-      "  4o6_interface,"
-      "  4o6_interface_id,"
-      "  4o6_subnet,"
-      "  boot_file_name,"
-      "  client_class,"
-      "  interface,"
-      "  match_client_id,"
-      "  modification_ts,"
-      "  next_server,"
-      "  rebind_timer,"
-      "  relay,"
-      "  renew_timer,"
-      "  require_client_classes,"
-      "  reservation_mode,"
-      "  server_hostname,"
-      "  shared_network_name,"
-      "  user_context,"
-      "  valid_lifetime "
-      "FROM dhcp4_subnet WHERE subnet_id = ? "
-      "ORDER BY subnet_id" },
+      "SELECT"
+      "  s.subnet_id,"
+      "  s.subnet_prefix,"
+      "  s.4o6_interface,"
+      "  s.4o6_interface_id,"
+      "  s.4o6_subnet,"
+      "  s.boot_file_name,"
+      "  s.client_class,"
+      "  s.interface,"
+      "  s.match_client_id,"
+      "  s.modification_ts,"
+      "  s.next_server,"
+      "  s.rebind_timer,"
+      "  s.relay,"
+      "  s.renew_timer,"
+      "  s.require_client_classes,"
+      "  s.reservation_mode,"
+      "  s.server_hostname,"
+      "  s.shared_network_name,"
+      "  s.user_context,"
+      "  s.valid_lifetime,"
+      "  p.id,"
+      "  p.start_address,"
+      "  p.end_address,"
+      "  p.subnet_id,"
+      "  p.modification_ts "
+      "FROM dhcp4_subnet AS s "
+      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "WHERE s.subnet_id = ? "
+      "ORDER BY s.subnet_id, p.id" },
 
     // Select subnet by prefix.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX,
-      "SELECT "
-      "  subnet_id,"
-      "  subnet_prefix,"
-      "  4o6_interface,"
-      "  4o6_interface_id,"
-      "  4o6_subnet,"
-      "  boot_file_name,"
-      "  client_class,"
-      "  interface,"
-      "  match_client_id,"
-      "  modification_ts,"
-      "  next_server,"
-      "  rebind_timer,"
-      "  relay,"
-      "  renew_timer,"
-      "  require_client_classes,"
-      "  reservation_mode,"
-      "  server_hostname,"
-      "  shared_network_name,"
-      "  user_context,"
-      "  valid_lifetime "
-      "FROM dhcp4_subnet WHERE subnet_prefix = ? "
-      "ORDER BY subnet_id" },
+      "SELECT"
+      "  s.subnet_id,"
+      "  s.subnet_prefix,"
+      "  s.4o6_interface,"
+      "  s.4o6_interface_id,"
+      "  s.4o6_subnet,"
+      "  s.boot_file_name,"
+      "  s.client_class,"
+      "  s.interface,"
+      "  s.match_client_id,"
+      "  s.modification_ts,"
+      "  s.next_server,"
+      "  s.rebind_timer,"
+      "  s.relay,"
+      "  s.renew_timer,"
+      "  s.require_client_classes,"
+      "  s.reservation_mode,"
+      "  s.server_hostname,"
+      "  s.shared_network_name,"
+      "  s.user_context,"
+      "  s.valid_lifetime,"
+      "  p.id,"
+      "  p.start_address,"
+      "  p.end_address,"
+      "  p.subnet_id,"
+      "  p.modification_ts "
+      "FROM dhcp4_subnet AS s "
+      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "WHERE s.subnet_prefix = ? "
+      "ORDER BY s.subnet_id, p.id" },
 
     // Select all subnets.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
-      "SELECT "
-      "  subnet_id,"
-      "  subnet_prefix,"
-      "  4o6_interface,"
-      "  4o6_interface_id,"
-      "  4o6_subnet,"
-      "  boot_file_name,"
-      "  client_class,"
-      "  interface,"
-      "  match_client_id,"
-      "  modification_ts,"
-      "  next_server,"
-      "  rebind_timer,"
-      "  relay,"
-      "  renew_timer,"
-      "  require_client_classes,"
-      "  reservation_mode,"
-      "  server_hostname,"
-      "  shared_network_name,"
-      "  user_context,"
-      "  valid_lifetime "
-      "FROM dhcp4_subnet "
-      "ORDER BY subnet_id" },
+      "SELECT"
+      "  s.subnet_id,"
+      "  s.subnet_prefix,"
+      "  s.4o6_interface,"
+      "  s.4o6_interface_id,"
+      "  s.4o6_subnet,"
+      "  s.boot_file_name,"
+      "  s.client_class,"
+      "  s.interface,"
+      "  s.match_client_id,"
+      "  s.modification_ts,"
+      "  s.next_server,"
+      "  s.rebind_timer,"
+      "  s.relay,"
+      "  s.renew_timer,"
+      "  s.require_client_classes,"
+      "  s.reservation_mode,"
+      "  s.server_hostname,"
+      "  s.shared_network_name,"
+      "  s.user_context,"
+      "  s.valid_lifetime,"
+      "  p.id,"
+      "  p.start_address,"
+      "  p.end_address,"
+      "  p.subnet_id,"
+      "  p.modification_ts "
+      "FROM dhcp4_subnet AS s "
+      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "ORDER BY s.subnet_id" },
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
-      "SELECT "
-      "  subnet_id,"
-      "  subnet_prefix,"
-      "  4o6_interface,"
-      "  4o6_interface_id,"
-      "  4o6_subnet,"
-      "  boot_file_name,"
-      "  client_class,"
-      "  interface,"
-      "  match_client_id,"
-      "  modification_ts,"
-      "  next_server,"
-      "  rebind_timer,"
-      "  relay,"
-      "  renew_timer,"
-      "  require_client_classes,"
-      "  reservation_mode,"
-      "  server_hostname,"
-      "  shared_network_name,"
-      "  user_context,"
-      "  valid_lifetime "
-      "FROM dhcp4_subnet "
-      "WHERE modification_ts > ? "
-      "ORDER BY subnet_id" },
+      "SELECT"
+      "  s.subnet_id,"
+      "  s.subnet_prefix,"
+      "  s.4o6_interface,"
+      "  s.4o6_interface_id,"
+      "  s.4o6_subnet,"
+      "  s.boot_file_name,"
+      "  s.client_class,"
+      "  s.interface,"
+      "  s.match_client_id,"
+      "  s.modification_ts,"
+      "  s.next_server,"
+      "  s.rebind_timer,"
+      "  s.relay,"
+      "  s.renew_timer,"
+      "  s.require_client_classes,"
+      "  s.reservation_mode,"
+      "  s.server_hostname,"
+      "  s.shared_network_name,"
+      "  s.user_context,"
+      "  s.valid_lifetime,"
+      "  p.id,"
+      "  p.start_address,"
+      "  p.end_address,"
+      "  p.subnet_id,"
+      "  p.modification_ts "
+      "FROM dhcp4_subnet AS s "
+      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "WHERE s.modification_ts > ? "
+      "ORDER BY s.subnet_id" },
 
     // Insert a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
@@ -483,6 +576,14 @@ TaggedStatementArray tagged_statements = { {
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       "?, ?, ?, ?, ?, ?, ?, ?)" },
 
+    { MySqlConfigBackendDHCPv4Impl::INSERT_POOL4,
+      "INSERT INTO dhcp4_pool("
+      "  start_address,"
+      "  end_address,"
+      "  subnet_id,"
+      "  modification_ts"
+      ") VALUES (?, ?, ?, ?)" },
+
     // Update existing subnet.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
       "UPDATE dhcp4_subnet SET "
@@ -506,6 +607,11 @@ TaggedStatementArray tagged_statements = { {
       "  shared_network_name = ?,"
       "  user_context = ?,"
       "  valid_lifetime = ? "
+      "WHERE subnet_id = ?" },
+
+    // Delete pools for a subnet.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
+      "DELETE FROM dhcp4_pool "
       "WHERE subnet_id = ?" }
 }
 };
