@@ -21,7 +21,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-08-20 {
+  revision 2018-09-14 {
     description "Initial revision";
     reference "";
   }
@@ -96,6 +96,39 @@ module kea-dhcp4-server {
     }
   }
 
+  grouping host {
+    description "Host grouping.";
+    leaf identifier-type {
+      type host-identifier-type;
+      mandatory true;
+      description "Host identifier type.";
+    }
+    uses dhcp:host-identifier;
+    leaf ip-address {
+      type inet:ipv4-address;
+      description "Host reserved IPv4 address.";
+    }
+    uses dhcp:host-hostname;
+    uses dhcp:host-client-classes;
+    uses option-data-list;
+    uses next-server;
+    uses server-hostname;
+    uses boot-file-name;
+    uses dhcp:host-user-context;
+  }    
+
+  grouping reservations {
+    description "Host reservations grouping.";
+    container reservations {
+      description "Host reservations container.";
+      list host {
+        key "identifier-type identifier";
+        description "Host reservation entry.";
+        uses host;
+      }
+    }
+  }
+
   grouping subnet4-list {
     description "Subnet4 list grouping.";
     list subnet4 {
@@ -139,32 +172,12 @@ module kea-dhcp4-server {
         description "IPv4 subnet prefix.";
       }
       uses dhcp:subnet-interface;
-      uses dhcp:subnet-interface-id;
       uses dhcp:subnet-id;
       uses dhcp:subnet-client-class;
       uses dhcp:subnet-require-client-classes;
-      container reservations {
-        description "A container with host reservations specific to
-                     this IPv4 subnet.";
-        list host {
-          key "identifier-type identifier";
-          description "Host reservation entry.";
-          leaf identifier-type {
-            type host-identifier-type;
-            description "Host identifier type.";
-          }
-          uses dhcp:host-identifier;
-          leaf ip-address {
-            type inet:ipv4-address;
-            description "Host reserved IPv4 address.";
-          }
-          uses dhcp:host-hostname;
-          uses dhcp:host-client-classes;
-          uses option-data-list;
-          uses next-server;
-          uses server-hostname;
-          uses boot-file-name;
-          uses dhcp:host-user-context;
+      uses reservations {
+        refine reservations {
+          description "Subnet host reservations.";
         }
       }
       uses dhcp:subnet-reservation-mode;
@@ -387,6 +400,11 @@ module kea-dhcp4-server {
       }
     }
     uses dhcp:sanity-checks;
+    uses reservations {
+      refine reservations {
+        description "Global host reservations.";
+      }
+    }
   }
 
   container logging {
@@ -498,24 +516,8 @@ module kea-dhcp4-server {
       list host {
         key "subnet-id identifier-type identifier";
         description "List of Kea DHCPv4 hosts.";
-        leaf identifier-type {
-          type host-identifier-type;
-          mandatory true;
-          description "Host identifier type.";
-        }
-        uses dhcp:host-identifier;
+        uses host;
         uses dhcp:host-subnet-id;
-        leaf ip-address {
-          type inet:ipv4-address;
-          description "Host reserved IP address.";
-        }
-        uses dhcp:host-hostname;
-        uses dhcp:host-client-classes;
-        uses option-data-list;
-        uses next-server;
-        uses server-hostname;
-        uses boot-file-name;
-        uses dhcp:host-user-context;
         leaf auth-key {
           type string;
           description "Host authentication key (unused in DHCPv4).";

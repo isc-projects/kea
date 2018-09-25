@@ -18,7 +18,7 @@ module kea-ctrl-agent {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea control agent.";
 
-  revision 2018-08-20 {
+  revision 2018-09-14 {
     description "Initial revision";
     reference "";
   }
