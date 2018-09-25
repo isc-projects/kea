@@ -1534,6 +1534,8 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/config_backend/Makefile
+                 src/lib/config_backend/tests/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
                  src/lib/database/Makefile

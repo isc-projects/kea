@@ -5,7 +5,8 @@ AM_CPPFLAGS += $(BOOST_INCLUDES) $(SYSREPO_CPPFLAGS)
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 lib_LTLIBRARIES = libkea-yang.la
-libkea_yang_la_SOURCES = sysrepo_error.h
+libkea_yang_la_SOURCES  = adaptor.cc adaptor.h
+libkea_yang_la_SOURCES += sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -21,6 +22,7 @@ libkea_yang_la_LDFLAGS = -no-undefined -version-info 0:0:0
 # Specify the headers for copying into the installation directory tree.
 libkea_yang_includedir = $(pkgincludedir)/yang
 libkea_yang_include_HEADERS = \
+	adaptor.h \
 	sysrepo_error.h \
 	translator.h
 

@@ -92,8 +92,8 @@ located at https://github.com/sysrepo/sysrepo.
 
 After installation the result should be similar to this:
 <screen>
-Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/
-Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.4/build/repository/data/
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.5/build/repository/data/
 (Do not alter contents of these directories manually)
 
 Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
@@ -121,8 +121,8 @@ src/lib/libyang/models. To install Kea models, do the following:
 
 <screen>
 cd src/lib/yang/models
-sudo sysrepoctl -i -g kea-dhcp4-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
-sudo sysrepoctl -i -g ietf-dhcp6-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+sudo sysrepoctl -i -g kea-dhcp4-server.yang -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ -s ./
+sudo sysrepoctl -i -g ietf-dhcp6-server.yang -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ -s ./
 </screen>
 
 Note the first -s parameter specifies the location of your YANG schema
@@ -132,15 +132,15 @@ configured during sysrepo compilation.
 
 The installation should look similar to the following:
 <screen>
-$ sudo sysrepoctl -i -g ietf-dhcp6-server.yang -s /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ -s ./
+$ sudo sysrepoctl -i -g ietf-dhcp6-server.yang -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ -s ./
 Installing a new module from file 'ietf-dhcp6-server.yang'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcp6-server@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcp6-server@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcp6-server' imports 'ietf-dhcp6-options'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcp6-options@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcp6-options@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcp6-options' imports 'ietf-dhcp6-types'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcp6-types@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcp6-types@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcp6-server' imports 'ietf-dhcp6-types'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.4/build/repository/yang/ietf-dhcp6-types@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcp6-types@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcp6-server' imports 'ietf-interfaces'...
 Schema of the module ietf-interfaces is already installed, skipping...
 Installing data files for module 'ietf-dhcp6-server'...
@@ -160,8 +160,8 @@ You can confirm whether the models are imported correctly by using sysrepoctl -l
 
 <screen>
 $ sysrepoctl -l
-Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.4/build/repository/yang/
-Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.4/build/repository/data/
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.5/build/repository/data/
 (Do not alter contents of these directories manually)
 
 Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
