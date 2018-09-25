@@ -19,8 +19,7 @@ const string KEA_DHCP4_MODULE = "kea-dhcp4-server";
 const string KEA_DHCP6_MODULE = "kea-dhcp6-server";
 const string KEA_CTRL_AGENT_MODULE = "kea-ctrl-agent";
 const string KEA_D2_MODULE = "kea-dhcp-ddns";
-// const string REPOSITORY = SYSREPO_REPO;
-const string REPOSITORY = "<sysrepo repository>";
+const string REPOSITORY = SYSREPO_REPO;
 
 /// @brief Returns nicely formed error message if module is missing
 ///
