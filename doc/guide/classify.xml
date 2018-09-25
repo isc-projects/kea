@@ -718,6 +718,7 @@
 <row><entry>Concat</entry><entry>concat('foo','bar')</entry><entry>Return the
 concatenation of the strings</entry></row>
 <row><entry>Ifelse</entry><entry>ifelse('foo' == 'bar','us','them')</entry><entry>Return the branch value according to the condition</entry></row>
+<row><entry>Hexstring</entry><entry>hexstring('foo', '-')</entry><entry>Converts the value to a hexadecimal string, e.g. 0a:1b:2c:3e</entry></row>
           </tbody>
           </tgroup>
         </table>
@@ -771,6 +772,16 @@ concatenation of the strings</entry></row>
            <screen>
          ifelse(option[230].exists, option[230].hex, 'none')
            </screen>
+        </section>
+        <section>
+          <title>Hexstring</title>
+          The hexstring function "hexstring(binary, separator)" returns
+          the binary value as its hexadecimal string representation:
+          pairs of hexadecimal digits separated by the separator, e.g
+          ':', '-', '' (empty separator).
+            <screen>
+          hexstring(pkt4.mac, ':')
+            </screen>
         </section>
     </section>
 

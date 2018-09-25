@@ -74,6 +74,22 @@ public:
         isc::Exception(file, line, what) {}
 };
 
+/// @brief Error when specified database could not be found in the server
+/// configuration.
+class NoSuchDatabase :  public Exception {
+public:
+    NoSuchDatabase(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
+/// @brief Specification of the database backend to be used yields
+/// multiple results.
+class AmbiguousDatabase :  public Exception {
+public:
+    AmbiguousDatabase(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
+
 }  // namespace isc
 }  // namespace db
 
