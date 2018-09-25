@@ -943,7 +943,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet (
     interface VARCHAR(128) DEFAULT NULL,
     match_client_id TINYINT(1) NOT NULL DEFAULT '1',
     modification_ts TIMESTAMP NOT NULL,
-    next_server INT(10) DEFAULT NULL,
+    next_server INT(10) UNSIGNED DEFAULT NULL,
     rebind_timer INT(10) DEFAULT NULL,
     relay LONGTEXT,
     renew_timer INT(10) DEFAULT NULL,
@@ -967,8 +967,8 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet (
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_pool (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    start_address INT(10) NOT NULL,
-    end_address INT(10) NOT NULL,
+    start_address INT(10) UNSIGNED NOT NULL,
+    end_address INT(10) UNSIGNED NOT NULL,
     subnet_id INT(10) UNSIGNED NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     PRIMARY KEY (id),

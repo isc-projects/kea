@@ -6,6 +6,8 @@
 
 #include <config.h>
 #include <dhcp/dhcp6.h>
+#include <dhcpsrv/pool.h>
+#include <dhcpsrv/subnet.h>
 #include <mysql_cb_dhcp4.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <boost/shared_ptr.hpp>
@@ -87,10 +89,23 @@ public:
         // shared-network?
         subnet->setValid(555555);
 
+        Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
+        subnet->addPool(pool1);
+
+        Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.50"), IOAddress("192.0.2.60")));
+        subnet->addPool(pool2);
+
         test_subnets_.push_back(subnet);
 
         // Other subnets include mostly null values except for mandatory parameters.
         subnet.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 20, 30, 40, 1024));
+
+        pool1.reset(new Pool4(IOAddress("10.0.0.10"), IOAddress("10.0.0.20")));
+        subnet->addPool(pool1);
+
+        pool2.reset(new Pool4(IOAddress("10.0.0.50"), IOAddress("10.0.0.60")));
+        subnet->addPool(pool2);
+
         test_subnets_.push_back(subnet);
 
         subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 20, 30, 40, 2048));
