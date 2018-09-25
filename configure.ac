@@ -47,7 +47,8 @@ fi
 # horribly. When building different branches, the commit-id is different
 # and since the config.h is included in most files *and* has a different
 # content, ccache can't use cached content and thus has to do full compilation.
-echo "#define EXTENDED_VERSION \"${KEA_SRCID}\"" > kea_version.h
+# Now it is in kea_version.h and config.status substitutes it.
+AC_SUBST(KEA_SRCID)
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
@@ -1463,6 +1464,7 @@ AC_CONFIG_FILES([Makefile
                  doc/version.ent
                  ext/Makefile
                  ext/gtest/Makefile
+                 kea_version.h
                  m4macros/Makefile
                  src/Makefile
                  src/bin/Makefile
