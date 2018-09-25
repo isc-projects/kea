@@ -20,6 +20,7 @@ TESTS += run_unittests
 run_unittests_SOURCES  = adaptor_unittests.cc
 run_unittests_SOURCES += sysrepo_setup.h
 run_unittests_SOURCES += translator_unittests.cc
+run_unittests_SOURCES += translator_database_unittests.cc
 run_unittests_SOURCES += translator_option_data_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
