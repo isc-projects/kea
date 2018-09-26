@@ -1,0 +1,40 @@
+// This is a example of a configuration for Netconf.
+// It uses embedded (i.e., which will be included in configuration objects
+// and not stripped by at lexical analysis) comments.
+
+{
+    "Netconf":
+    {
+        // Global scope
+        "comment": "The Netconf Agent",
+
+        // In servers
+        "managed-servers":
+        {
+            "dhcp4":
+            {
+                "comment": "the model is mandatory",
+                "model": "kea-dhcp4-server",
+                // In control socket.
+                "control-socket":
+                {
+                    "comment": "using unix/local socket",
+                    "type": "unix",
+                    "name": "/path/to/the/unix/socket-v4"
+                }
+            }
+        }
+
+    },
+
+    "Logging":
+    {
+        // In loggers
+        "loggers": [
+            {
+                "comment": "A logger",
+                "name": "kea-ctrl-agent"
+            }
+        ]
+    }
+}

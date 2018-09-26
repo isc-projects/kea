@@ -1,4 +1,3 @@
-
 SUBDIRS = . tests
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
@@ -17,7 +16,7 @@ CLEANFILES  = *.gcno *.gcda netconf_messages.h netconf_messages.cc s-messages
 man_MANS = kea-netconf.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-netconf.xml
-#EXTRA_DIST += netconf.dox netconf_hooks.dox netconfo6.dox
+#EXTRA_DIST += netconf.dox netconf_hooks.dox
 #EXTRA_DIST += netconf_parser.yy
 
 if GENERATE_DOCS
@@ -47,18 +46,38 @@ BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 noinst_LTLIBRARIES = libnetconf.la
 
 libnetconf_la_SOURCES  = netconf_log.cc netconf_log.h
+libnetconf_la_SOURCES += parser_context.cc parser_context.h
+libnetconf_la_SOURCES += parser_context_decl.h netconf_lexer.ll
+libnetconf_la_SOURCES += netconf_parser.cc netconf_parser.h
+libnetconf_la_SOURCES += location.hh position.hh stack.hh
 
 nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
 
 EXTRA_DIST += netconf_messages.mes
+EXTRA_DIST += netconf_lexer.ll
+EXTRA_DIST += netconf_parser.yy
 
 sbin_PROGRAMS = kea-netconf
 
 kea_netconf_SOURCES  = main.cc
 
 kea_netconf_LDADD  = libnetconf.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/util/unittests/libutil_unittests.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+kea_netconf_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_netconf_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
 
@@ -67,7 +86,7 @@ kea_netconfdir = $(pkgdatadir)
 
 if GENERATE_PARSER
 
-#parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
+parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
 #	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
@@ -79,11 +98,11 @@ if GENERATE_PARSER
 # Call flex with -s to check that the default rule can be suppressed
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
-#location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h: netconf_parser.yy
-#	$(YACC) --defines=netconf_parser.h --report=all --report-file=netconf_parser.report -o netconf_parser.cc netconf_parser.yy
+location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h: netconf_parser.yy
+	$(YACC) --defines=netconf_parser.h --report=all --report-file=netconf_parser.report -o netconf_parser.cc netconf_parser.yy
 
-#netconf_lexer.cc: netconf_lexer.ll
-#	$(LEX) --prefix netconf_ -o netconf_lexer.cc netconf_lexer.ll
+netconf_lexer.cc: netconf_lexer.ll
+	$(LEX) --prefix netconf_ -o netconf_lexer.cc netconf_lexer.ll
 
 else
 
