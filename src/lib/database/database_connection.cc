@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <cc/cfg_to_element.h>
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
@@ -151,6 +152,58 @@ DatabaseConnection::invokeDbLostCallback() const {
     return (false);
 }
 
+isc::data::ElementPtr
+DatabaseConnection::toElement(const ParameterMap& params) {
+    isc::data::ElementPtr result = isc::data::Element::createMap();
+
+    for (auto param: params) {
+        std::string keyword = param.first;
+        std::string value = param.second;
+
+        if ((keyword == "lfc-interval") ||
+            (keyword == "connect-timeout") ||
+            (keyword == "port")) {
+            // integer parameters
+            int64_t int_value;
+            try {
+                int_value = boost::lexical_cast<int64_t>(value);
+                result->set(keyword, isc::data::Element::create(int_value));
+            } catch (...) {
+                isc_throw(ToElementError, "invalid DB access "
+                          << "integer parameter: " << keyword << "=" << value);
+            }
+        } else if ((keyword == "persist") ||
+                   (keyword == "readonly")) {
+            if (value == "true") {
+                result->set(keyword, isc::data::Element::create(true));
+            } else if (value == "false") {
+                result->set(keyword, isc::data::Element::create(false));
+            } else {
+                isc_throw(ToElementError, "invalid DB access "
+                          << "boolean parameter: " << keyword << "=" << value);
+            }
+        } else if ((keyword == "type") ||
+                   (keyword == "user") ||
+                   (keyword == "password") ||
+                   (keyword == "host") ||
+                   (keyword == "name") ||
+                   (keyword == "contact-points") ||
+                   (keyword == "keyspace")) {
+            result->set(keyword, isc::data::Element::create(value));
+        } else {
+            isc_throw(ToElementError, "unknown DB access parameter: "
+                      << keyword << "=" << value);
+        }
+    }
+
+    return (result);
+}
+
+isc::data::ElementPtr
+DatabaseConnection::toElementDbAccessString(const std::string& dbaccess) {
+    ParameterMap params = parse(dbaccess);
+    return (toElement(params));
+}
 
 DatabaseConnection::DbLostCallback
 DatabaseConnection::db_lost_callback = 0;

@@ -22,6 +22,7 @@ TESTS += run_unittests
 run_unittests_SOURCES = client_connection_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_SOURCES += command_mgr_unittests.cc
+run_unittests_SOURCES += config_ctl_info_unittests.cc
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)

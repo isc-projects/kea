@@ -5,12 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <exceptions/exceptions.h>
+#include <cc/cfg_to_element.h>
+#include <cc/data.h>
 #include <database/database_connection.h>
+#include <database/dbaccess_parser.h>
+#include <exceptions/exceptions.h>
 #include <gtest/gtest.h>
 
 #include <boost/bind.hpp>
 
+using namespace isc::data;
 using namespace isc::db;
 
 /// @brief Test fixture for exercising DbLostCallback invocation
@@ -246,4 +250,68 @@ TEST(DatabaseConnectionTest, redactAccessStringNoPassword) {
     EXPECT_EQ("me", parameters["user"]);
     EXPECT_EQ("kea", parameters["name"]);
     EXPECT_EQ("mysql", parameters["type"]);
+}
+
+// Check that the toElementDbAccessString() handles all valid parameters
+// Note that because toElementDbAccessString() utilizes
+// toElement() this tests both.
+TEST(DatabaseConnection, toElementDbAccessStringValid) {
+    const char* configs[] = {
+        "{\n"
+        "\"type\": \"memfile\", \n"
+        "\"user\": \"user_str\", \n"
+        "\"name\": \"name_str\", \n"
+        "\"host\": \"host_str\", \n"
+        "\"password\": \"password_str\", \n"
+        "\"contact-points\": \"contact_str\", \n"
+        "\"keyspace\": \"keyspace_str\", \n"
+        "\"lfc-interval\" : 100, \n"
+        "\"connect-timeout\" : 200, \n"
+        "\"port\" : 300, \n"
+        "\"persist\" : true, \n"
+        "\"readonly\" : false \n"
+        "}\n"
+    };
+
+    DbAccessParser parser;
+    std::string access_str;
+    ConstElementPtr json_elements;
+
+    ASSERT_NO_THROW(json_elements = Element::fromJSON(configs[0]));
+    ASSERT_NO_THROW(parser.parse(access_str, json_elements));
+
+    ElementPtr round_trip = DatabaseConnection::toElementDbAccessString(access_str);
+
+    ASSERT_TRUE(json_elements->equals(*round_trip));
+}
+
+// Check that toElementDbAccessString() catches invalid parameters.
+// Note that because toElementDbAccessString() utilizes
+// toElement() this tests both.
+TEST(DatabaseConnection, toElementDbAccessStringInvalid) {
+    std::vector<std::string> access_strs = {
+        "bogus-param=memfile",
+        "lfc-interval=not-an-integer",
+        "connect-timeout=not-an-integer",
+        "port=not-an-integer",
+        "persist=not-boolean",
+        "readonly=not-boolean"
+    };
+
+    for (auto access_str : access_strs) {
+        ASSERT_THROW(DatabaseConnection::toElementDbAccessString(access_str),
+                     isc::ToElementError)
+                    << "access string should have failed, string=["
+                    << access_str << "]";
+    }
+}
+
+// Check that toElementDbAccessString() handles empty access string
+// Note that because toElementDbAccessString() utilizes
+// toElement() this tests both.
+TEST(DatabaseConnection, toElementDbAccessStringEmpty) {
+    ConstElementPtr elements;
+    ASSERT_NO_THROW(elements = DatabaseConnection::toElementDbAccessString(""));
+    ASSERT_TRUE(elements);
+    ASSERT_EQ(0, elements->size());
 }
