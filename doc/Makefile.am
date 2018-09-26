@@ -57,6 +57,8 @@ nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
+nobase_dist_doc_DATA += examples/netconf/comments.json
+nobase_dist_doc_DATA += examples/netconf/simple.json
 
 devel:
 	mkdir -p html
