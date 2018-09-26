@@ -192,6 +192,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
 CREATE TABLE IF NOT EXISTS dhcp4_option_def (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     code TINYINT(3) UNSIGNED NOT NULL,
+    name VARCHAR(128) NOT NULL,
     space VARCHAR(128) NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     array TINYINT(1) NOT NULL,
@@ -333,7 +334,7 @@ ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INC
 ALTER TABLE dhcp4_options
     ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
     ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
-    ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL;
 
 # Create table dhcp4_options_server
 # M-to-M cross-reference between options and servers
@@ -417,6 +418,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
 CREATE TABLE IF NOT EXISTS dhcp6_option_def (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     code TINYINT(3) UNSIGNED NOT NULL,
+    name VARCHAR(128) NOT NULL,
     space VARCHAR(128) NOT NULL,
     modification_ts TIMESTAMP NOT NULL,
     array TINYINT(1) NOT NULL,
@@ -569,7 +571,7 @@ ALTER TABLE dhcp6_options
     ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
     ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
     ADD COLUMN pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
-    ADD COLUMN modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL;
 
 # Create table dhcp6_options_server
 # M-to-M cross-reference between options and servers

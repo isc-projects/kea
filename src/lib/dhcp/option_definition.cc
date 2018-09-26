@@ -48,7 +48,10 @@ OptionDefinition::OptionDefinition(const std::string& name,
       code_(code),
       type_(OPT_UNKNOWN_TYPE),
       array_type_(array_type),
-      encapsulated_space_("") {
+      encapsulated_space_(""),
+      record_fields_(),
+      user_context_(),
+      option_space_name_() {
     // Data type is held as enum value by this class.
     // Use the provided option type string to get the
     // corresponding enum value.
@@ -77,7 +80,10 @@ OptionDefinition::OptionDefinition(const std::string& name,
       // corresponding enum value.
       type_(OptionDataTypeUtil::getDataType(type)),
       array_type_(false),
-      encapsulated_space_(encapsulated_space) {
+      encapsulated_space_(encapsulated_space),
+      record_fields_(),
+      user_context_(),
+      option_space_name_() {
 }
 
 OptionDefinition::OptionDefinition(const std::string& name,
@@ -88,7 +94,10 @@ OptionDefinition::OptionDefinition(const std::string& name,
       code_(code),
       type_(type),
       array_type_(false),
-      encapsulated_space_(encapsulated_space) {
+      encapsulated_space_(encapsulated_space),
+      record_fields_(),
+      user_context_(),
+      option_space_name_() {
 }
 
 bool
@@ -98,7 +107,8 @@ OptionDefinition::equals(const OptionDefinition& other) const {
             type_ == other.type_ &&
             array_type_ == other.array_type_ &&
             encapsulated_space_ == other.encapsulated_space_ &&
-            record_fields_ == other.record_fields_);
+            record_fields_ == other.record_fields_ &&
+            option_space_name_ == other.option_space_name_);
 }
 
 void

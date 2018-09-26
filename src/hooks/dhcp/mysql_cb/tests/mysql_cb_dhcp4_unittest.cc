@@ -51,6 +51,7 @@ public:
         // Create test data.
         initTestSubnets();
         initTestSharedNetworks();
+        initTestOptionDefs();
         initTimestamps();
     }
 
@@ -147,6 +148,31 @@ public:
         test_networks_.push_back(shared_network);
     }
 
+    /// @brief Creates several option definitions used in tests.
+    void initTestOptionDefs() {
+        ElementPtr user_context = Element::createMap();
+        user_context->set("foo", Element::create("bar"));
+
+        OptionDefinitionPtr option_def(new OptionDefinition("foo", 234, "string",
+                                                            "espace"));
+        option_def->setOptionSpaceName("dhcp4");
+        test_option_defs_.push_back(option_def);
+
+        option_def.reset(new OptionDefinition("bar", 234, "uint32", true));
+        option_def->setOptionSpaceName("dhcp4");
+        test_option_defs_.push_back(option_def);
+
+        option_def.reset(new OptionDefinition("fish", 235, "record", true));
+        option_def->setOptionSpaceName("dhcp4");
+        option_def->addRecordField("uint32");
+        option_def->addRecordField("string");
+        test_option_defs_.push_back(option_def);
+
+        option_def.reset(new OptionDefinition("whale", 236, "string"));
+        option_def->setOptionSpaceName("xyz");
+        test_option_defs_.push_back(option_def);
+    }
+
     /// @brief Initialize posix time values used in tests.
     void initTimestamps() {
         // Current time minus 1 hour to make sure it is in the past.
@@ -163,6 +189,9 @@ public:
 
     /// @brief Holds pointers to shared networks used in tests.
     std::vector<SharedNetwork4Ptr> test_networks_;
+
+    /// @brief Holds pointers to option definitions used in tests.
+    std::vector<OptionDefinitionPtr> test_option_defs_;
 
     /// @brief Holds timestamp values used in tests.
     std::map<std::string, boost::posix_time::ptime> timestamps_;
@@ -351,6 +380,96 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
                                                   timestamps_["tomorrow"]);
     ASSERT_TRUE(networks.empty());
 }
+
+// Test that subnet can be inserted, fetched, updated and then fetched again.
+TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
+    // Insert new option definition.
+    OptionDefinitionPtr option_def = test_option_defs_[0];
+    cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def);
+
+    // Fetch this option_definition by subnet identifier.
+    OptionDefinitionPtr returned_option_def =
+        cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+                              test_option_defs_[0]->getCode(),
+                              test_option_defs_[0]->getOptionSpaceName());
+    ASSERT_TRUE(returned_option_def);
+
+    EXPECT_TRUE(returned_option_def->equals(*option_def));
+
+    // Update the option definition in the database.
+    OptionDefinitionPtr option_def2 = test_option_defs_[1];
+    cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def2);
+
+    // Fetch updated option definition and see if it matches.
+    returned_option_def = cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+                                                test_option_defs_[1]->getCode(),
+                                                test_option_defs_[1]->getOptionSpaceName());
+    EXPECT_TRUE(returned_option_def->equals(*option_def2));
+}
+
+// Test that all shared networks can be fetched.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
+    // Insert test option definitions into the database. Note that the second
+    // option definition will overwrite the first option definition as they use
+    // the same code and space.
+    for (auto option_def : test_option_defs_) {
+        cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def);
+    }
+
+    // Fetch all option_definitions.
+    OptionDefContainer option_defs = cbptr_->getAllOptionDefs4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+
+    // See if option definitions are returned ok.
+    for (auto def = option_defs.begin(); def != option_defs.end(); ++def) {
+        bool success = false;
+        for (auto i = 1; i < test_option_defs_.size(); ++i) {
+            if ((*def)->equals(*test_option_defs_[i])) {
+                success = true;
+            }
+        }
+        ASSERT_TRUE(success) << "failed for option definition " << (*def)->getCode()
+            << ", option space " << (*def)->getOptionSpaceName();
+    }
+}
+
+// Test that option definitions modified after given time can be fetched.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefinitions4) {
+    // Explicitly set timestamps of option definitions. First option
+    // definition has a timestamp pointing to the future. Second option
+    // definition has timestamp pointing to the past (yesterday).
+    // Third option definitions has a timestamp pointing to the
+    // past (an hour ago).
+    test_option_defs_[1]->setModificationTime(timestamps_["tomorrow"]);
+    test_option_defs_[2]->setModificationTime(timestamps_["yesterday"]);
+    test_option_defs_[3]->setModificationTime(timestamps_["today"]);
+
+    // Insert option definitions into the database.
+    for (int i = 1; i < test_networks_.size(); ++i) {
+        cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(),
+                                       test_option_defs_[i]);
+    }
+
+    // Fetch option definitions with timestamp later than today. Only one
+    // option definition should be returned.
+    OptionDefContainer
+        option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+                                                     timestamps_["today"]);
+    ASSERT_EQ(1, option_defs.size());
+
+    // Fetch option definitions with timestamp later than yesterday. We
+    // should get two option definitions.
+    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+                                                 timestamps_["yesterday"]);
+    ASSERT_EQ(2, option_defs.size());
+
+    // Fetch option definitions with timestamp later than tomorrow. Nothing
+    // should be returned.
+    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+                                              timestamps_["tomorrow"]);
+    ASSERT_TRUE(option_defs.empty());
+}
+
 
 
 }

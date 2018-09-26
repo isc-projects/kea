@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space_container.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 
 #include <boost/multi_index/hashed_index.hpp>
@@ -133,7 +134,7 @@ class OptionIntArray;
 /// @todo Extend this class to use custom namespaces.
 /// @todo Extend this class with more factory functions.
 /// @todo Derive from UserContext without breaking the multi index.
-class OptionDefinition {
+class OptionDefinition : public data::StampedElement {
 public:
 
     /// List of fields within the record.
@@ -305,6 +306,32 @@ public:
     /// @param map A pointer to map where the user context will be unparsed.
     void contextToElement(data::ElementPtr map) const {
         user_context_.contextToElement(map);
+    }
+
+    /// @brief Returns option space name.
+    ///
+    /// Option definitions are associated with option spaces. Typically,
+    /// such association is made when the option definition is put into
+    /// the @c CfgOptionDef structure. However, in some cases it is also
+    /// required to associate option definition with the particular option
+    /// space outside of that structure. In particular, when the option
+    /// definition is fetched from a database. The database configuration
+    /// backend will set option space upon return of the option definition.
+    /// In other cases this value won't be set.
+    ///
+    /// @return Option space name or empty string if option space
+    /// name is not set.
+    std::string getOptionSpaceName() const {
+        return (option_space_name_);
+    }
+
+    /// @brief Sets option space name for option definition.
+    ///
+    /// See @c getOptionSpaceName to learn when option space name is set.
+    ///
+    /// @param option_space_name New option space name.
+    void setOptionSpaceName(const std::string& option_space_name) {
+        option_space_name_ = option_space_name;
     }
 
     /// @brief Check if the option definition is valid.
@@ -733,6 +760,8 @@ private:
     RecordFieldsCollection record_fields_;
     /// User context
     data::UserContext user_context_;
+    /// Option space name
+    std::string option_space_name_;
 };
 
 
