@@ -494,7 +494,7 @@ EOF
     run_statement "dhcp4_global_parameter_server" "$qry"
 
     # table: dhcp4_option_def
-    qry="select id, code, space, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
     run_statement "dhcp4_option_def" "$qry"
 
     # table: dhcp4_option_def_server
@@ -546,7 +546,7 @@ EOF
     run_statement "dhcp6_global_parameter_server" "$qry"
 
     # table: dhcp6_option_def
-    qry="select id, code, space, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
     run_statement "dhcp6_option_def" "$qry"
 
     # table: dhcp6_option_def_server

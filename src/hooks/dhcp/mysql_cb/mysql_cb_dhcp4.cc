@@ -8,6 +8,7 @@
 #include <database/db_exceptions.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/option_data_types.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
@@ -48,11 +49,16 @@ public:
         GET_SHARED_NETWORK4_NAME,
         GET_ALL_SHARED_NETWORKS4,
         GET_MODIFIED_SHARED_NETWORKS4,
+        GET_OPTION_DEF4_CODE_SPACE,
+        GET_ALL_OPTION_DEFS4,
+        GET_MODIFIED_OPTION_DEFS4,
         INSERT_SUBNET4,
         INSERT_POOL4,
         INSERT_SHARED_NETWORK4,
+        INSERT_OPTION_DEF4,
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
+        UPDATE_OPTION_DEF4,
         DELETE_POOLS4_SUBNET_ID,
         NUM_STATEMENTS
     };
@@ -322,12 +328,6 @@ public:
             (shared_network ? MySqlBinding::createString(shared_network->getName()) :
              MySqlBinding::createNull());
 
-        // Create user context binding if user context exists.
-        auto context_element = subnet->getContext();
-        MySqlBindingPtr context_binding =
-            (context_element ? MySqlBinding::createString(context_element->str()) :
-             MySqlBinding::createNull());
-
         // Create input bindings.
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID()),
@@ -348,7 +348,7 @@ public:
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
             MySqlBinding::condCreateString(subnet->getSname()),
             shared_network_binding,
-            context_binding,
+            createInputContextBinding(subnet),
             MySqlBinding::createInteger<uint32_t>(subnet->getValid())
         };
 
@@ -452,6 +452,7 @@ public:
             if ((last_network_id == 0) ||
                 (last_network_id != out_bindings[0]->getInteger<uint64_t>())) {
 
+                last_network_id = out_bindings[0]->getInteger<uint64_t>();
                 last_network.reset(new SharedNetwork4(out_bindings[1]->getString()));
 
                 // client_class
@@ -587,7 +588,171 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
                               in_bindings);
         }
+    }
 
+    /// @brief Sends query to the database to retrieve multiple option
+    /// definitions.
+    ///
+    /// Query should order option definitions by id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] option_defs Reference to the container where fetched
+    /// option definitions will be inserted.
+    void getOptionDefs4(const StatementIndex& index,
+                        const MySqlBindingCollection& in_bindings,
+                        OptionDefContainer& option_defs) {
+        // Create output bindings. The order must match that in the prepared
+        // statement.
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint64_t>(), // id
+            MySqlBinding::createInteger<uint8_t>(), // code
+            MySqlBinding::createString(128), // name
+            MySqlBinding::createString(128), // space
+            MySqlBinding::createInteger<uint8_t>(), // type
+            MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createInteger<uint8_t>(), // array
+            MySqlBinding::createString(128), // encapsulate
+            MySqlBinding::createString(512), // record_types
+            MySqlBinding::createString(65536) // user_context
+        };
+
+        uint64_t last_def_id = 0;
+
+        // Run select query.
+        conn_.selectQuery(index, in_bindings, out_bindings,
+                          [&option_defs, &last_def_id]
+                          (MySqlBindingCollection& out_bindings) {
+            // Get pointer to last fetched option definition.
+            OptionDefinitionPtr last_def;
+            if (!option_defs.empty()) {
+                last_def = *option_defs.rbegin();
+            }
+
+            // See if the last fetched definition is the one for which we now got
+            // the row of data. If not, it means that we need to create new option
+            // definition.
+            if ((last_def_id == 0) ||
+                (last_def_id != out_bindings[0]->getInteger<uint64_t>())) {
+
+                last_def_id = out_bindings[0]->getInteger<uint64_t>();
+
+                // Check array type, because depending on this value we have to use
+                // different constructor.
+                bool array_type = static_cast<bool>(out_bindings[6]->getInteger<uint8_t>());
+                if (array_type) {
+                    // Create array option.
+                    last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
+                                                        out_bindings[1]->getInteger<uint8_t>(),
+                                                        static_cast<OptionDataType>
+                                                        (out_bindings[4]->getInteger<uint8_t>()),
+                                                        array_type));
+                } else {
+                    // Create non-array option.
+                    last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
+                                                        out_bindings[1]->getInteger<uint8_t>(),
+                                                        static_cast<OptionDataType>
+                                                        (out_bindings[4]->getInteger<uint8_t>()),
+                                                        out_bindings[7]->getStringOrDefault("").c_str()));
+                }
+
+                // space
+                last_def->setOptionSpaceName(out_bindings[3]->getStringOrDefault(""));
+
+                // record_types
+                ElementPtr record_types_element = out_bindings[8]->getJSON();
+                if (record_types_element) {
+                    if (record_types_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid record_types value "
+                                  << out_bindings[8]->getString());
+                    }
+                    // This element must contain a list of integers specifying
+                    // types of the record fields.
+                    for (auto i = 0; i < record_types_element->size(); ++i) {
+                        auto type_element = record_types_element->get(i);
+                        if (type_element->getType() != Element::integer) {
+                            isc_throw(BadValue, "record type values must be integers");
+                        }
+                        last_def->addRecordField(static_cast<OptionDataType>
+                                                 (type_element->intValue()));
+                    }
+                }
+
+                // Update modification time.
+                last_def->setModificationTime(out_bindings[5]->getTimestamp());
+
+                // Store created option definition.
+                option_defs.push_back(last_def);
+            }
+        });
+    }
+
+    /// @brief Sends query to retrieve single option definition by code and
+    /// option space.
+    ///
+    /// @param selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option definition or NULL if such
+    /// option definition doesn't exist.
+    OptionDefinitionPtr getOptionDef4(const ServerSelector& selector,
+                                      const uint16_t code,
+                                      const std::string& space) {
+        OptionDefContainer option_defs;
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
+            MySqlBinding::createString(space)
+        };
+        getOptionDefs4(GET_OPTION_DEF4_CODE_SPACE, in_bindings, option_defs);
+        return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
+    }
+
+    /// @brief Sends query to insert or update option definition.
+    ///
+    /// @param selector Server selector.
+    /// @param option_def Pointer to the option definition to be inserted or updated.
+    void createUpdateOptionDef4(const ServerSelector& selector,
+                                const OptionDefinitionPtr& option_def) {
+        ElementPtr record_types = Element::createList();
+        for (auto field : option_def->getRecordFields()) {
+            record_types->add(Element::create(static_cast<int>(field)));
+        }
+        MySqlBindingPtr record_types_binding = record_types->empty() ?
+            MySqlBinding::createNull() : MySqlBinding::createString(record_types->str());
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getCode())),
+            MySqlBinding::createString(option_def->getName()),
+            MySqlBinding::createString(option_def->getOptionSpaceName().empty() ?
+                                       "dhcp4" : option_def->getOptionSpaceName()),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getType())),
+            MySqlBinding::createTimestamp(option_def->getModificationTime()),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getArrayType())),
+            MySqlBinding::createString(option_def->getEncapsulatedSpace()),
+            record_types_binding,
+            createInputContextBinding(option_def)
+        };
+
+        // If the shared network exists we are going to update this network.
+        OptionDefinitionPtr existing_definition = getOptionDef4(selector,
+                                                                option_def->getCode(),
+                                                                option_def->getOptionSpaceName());
+        if (existing_definition) {
+            // Need to add two more bindings for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(existing_definition->getCode()));
+            in_bindings.push_back(MySqlBinding::createString(existing_definition->getOptionSpaceName()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
+                                    in_bindings);
+
+        } else {
+            // If the option definition doesn't exist, let's insert it.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
+                              in_bindings);
+        }
     }
 
     /// @brief Creates input binding for relay addresses.
@@ -632,13 +797,14 @@ public:
 
     /// @brief Creates input binding for user context parameter.
     ///
-    /// @param network Pointer to a shared network or subnet for which binding
-    /// should be created.
+    /// @param network Pointer to a shared network, subnet or other configuration
+    /// element for which binding should be created.
     /// @return Pointer to the binding (possibly null binding if context is
     /// null).
-    MySqlBindingPtr createInputContextBinding(const NetworkPtr& network) {
+    template<typename T>
+    MySqlBindingPtr createInputContextBinding(const T& config_element) {
         // Create user context binding if user context exists.
-        auto context_element = network->getContext();
+        auto context_element = config_element->getContext();
         return (context_element ? MySqlBinding::createString(context_element->str()) :
                 MySqlBinding::createNull());
     }
@@ -844,6 +1010,56 @@ TaggedStatementArray tagged_statements = { {
       "WHERE n.modification_ts > ? "
       "ORDER BY n.id" },
 
+    // Retrieves option definition by code and space.
+    { MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
+      "SELECT"
+      "  d.id,"
+      "  d.code,"
+      "  d.name,"
+      "  d.space,"
+      "  d.type,"
+      "  d.modification_ts,"
+      "  d.array,"
+      "  d.encapsulate,"
+      "  d.record_types,"
+      "  d.user_context "
+      "FROM dhcp4_option_def AS d "
+      "WHERE d.code = ? AND d.space = ? "
+      "ORDER BY d.id" },
+
+    // Retrieves all option definitions.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
+      "SELECT"
+      "  d.id,"
+      "  d.code,"
+      "  d.name,"
+      "  d.space,"
+      "  d.type,"
+      "  d.modification_ts,"
+      "  d.array,"
+      "  d.encapsulate,"
+      "  d.record_types,"
+      "  d.user_context "
+      "FROM dhcp4_option_def AS d "
+      "ORDER BY d.id" },
+
+    // Retrieves modified option definitions.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
+      "SELECT"
+      "  d.id,"
+      "  d.code,"
+      "  d.name,"
+      "  d.space,"
+      "  d.type,"
+      "  d.modification_ts,"
+      "  d.array,"
+      "  d.encapsulate,"
+      "  d.record_types,"
+      "  d.user_context "
+      "FROM dhcp4_option_def AS d "
+      "WHERE modification_ts > ? "
+      "ORDER BY d.id" },
+
     // Insert a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
       "INSERT INTO dhcp4_subnet("
@@ -870,6 +1086,7 @@ TaggedStatementArray tagged_statements = { {
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       "?, ?, ?, ?, ?, ?, ?, ?)" },
 
+    // Insert pool for a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_POOL4,
       "INSERT INTO dhcp4_pool("
       "  start_address,"
@@ -894,6 +1111,20 @@ TaggedStatementArray tagged_statements = { {
       "user_context,"
       "valid_lifetime"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+
+    // Insert option definition.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
+      "INSERT INTO dhcp4_option_def ("
+      "code,"
+      "name,"
+      "space,"
+      "type,"
+      "modification_ts,"
+      "array,"
+      "encapsulate,"
+      "record_types,"
+      "user_context"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Update existing subnet.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
@@ -936,6 +1167,20 @@ TaggedStatementArray tagged_statements = { {
       "  user_context = ?,"
       "  valid_lifetime = ? "
       "WHERE name = ?" },
+
+    // Update existing option definition.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
+      "UPDATE dhcp4_option_def SET"
+      "  code = ?,"
+      "  name = ?,"
+      "  space = ?,"
+      "  type = ?,"
+      "  modification_ts = ?,"
+      "  array = ?,"
+      "  encapsulate = ?,"
+      "  record_types = ?,"
+      "  user_context = ? "
+      "WHERE code = ? AND space = ?" },
 
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
@@ -1063,19 +1308,29 @@ OptionDefinitionPtr
 MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& selector,
                                         const uint16_t code,
                                         const std::string& space) const {
-    isc_throw(NotImplemented, "not implemented");
+    return (impl_->getOptionDef4(selector, code, space));
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& selector) const {
-    isc_throw(NotImplemented, "not implemented");
+    OptionDefContainer option_defs;
+    MySqlBindingCollection in_bindings;
+    impl_->getOptionDefs4(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
+                          in_bindings, option_defs);
+    return (option_defs);
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::
 getModifiedOptionDefs4(const ServerSelector& selector,
                        const boost::posix_time::ptime& modification_time) const {
-    isc_throw(NotImplemented, "not implemented");
+    OptionDefContainer option_defs;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createTimestamp(modification_time)
+    };
+    impl_->getOptionDefs4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
+                          in_bindings, option_defs);
+    return (option_defs);
 }
 
 util::OptionalValue<std::string>
@@ -1110,6 +1365,7 @@ MySqlConfigBackendDHCPv4::createUpdateSharedNetwork4(const ServerSelector& selec
 void
 MySqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& selector,
                                                  const OptionDefinitionPtr& option_def) {
+    impl_->createUpdateOptionDef4(selector, option_def);
 }
 
 void
