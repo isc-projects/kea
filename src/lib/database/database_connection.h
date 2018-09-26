@@ -7,6 +7,7 @@
 #ifndef DATABASE_CONNECTION_H
 #define DATABASE_CONNECTION_H
 
+#include <cc/data.h>
 #include <boost/noncopyable.hpp>
 #include <boost/function.hpp>
 #include <boost/shared_ptr.hpp>
@@ -96,7 +97,7 @@ public:
         return (retries_left_ ? --retries_left_ : false);
     }
 
-    /// @brief Returns the maximum number for retries allowed 
+    /// @brief Returns the maximum number for retries allowed
     unsigned int maxRetries() {
         return (max_retries_);
     }
@@ -214,6 +215,18 @@ public:
     /// @return Returns the result of the callback or false if there is no
     /// callback.
     bool invokeDbLostCallback() const;
+
+    /// @brief Unparse a parameter map
+    ///
+    /// @param params the parameter map to unparse
+    /// @return a pointer to configuration
+    static isc::data::ElementPtr toElement(const ParameterMap& params);
+
+    /// @brief Unparse an access string
+    ///
+    /// @param dbaccess the database access string
+    /// @return a pointer to configuration
+    static isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
 
     /// @brief Optional call back function to invoke if a successfully
     /// open connection subsequently fails
