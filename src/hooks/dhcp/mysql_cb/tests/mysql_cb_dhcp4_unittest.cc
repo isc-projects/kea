@@ -28,7 +28,7 @@ public:
 
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4Test()
-        : test_subnets_(), timestamps_() {
+        : test_subnets_(), test_networks_(), timestamps_() {
         // Recreate database schema.
         destroyMySQLSchema();
         createMySQLSchema();
@@ -50,6 +50,7 @@ public:
 
         // Create test data.
         initTestSubnets();
+        initTestSharedNetworks();
         initTimestamps();
     }
 
@@ -115,6 +116,37 @@ public:
         test_subnets_.push_back(subnet);
     }
 
+    /// @brief Creates several subnets used in tests.
+    void initTestSharedNetworks() {
+        ElementPtr user_context = Element::createMap();
+        user_context->set("foo", Element::create("bar"));
+
+        SharedNetwork4Ptr shared_network(new SharedNetwork4("level1"));
+        shared_network->allowClientClass("foo");
+        shared_network->setIface("eth1");
+        shared_network->setMatchClientId(false);
+        shared_network->setT2(323212);
+        shared_network->addRelayAddress(IOAddress("10.2.3.4"));
+        shared_network->addRelayAddress(IOAddress("10.5.6.7"));
+        shared_network->setT1(1234);
+        shared_network->requireClientClass("required-class1");
+        shared_network->requireClientClass("required-class2");
+        shared_network->setHostReservationMode(Subnet4::HR_DISABLED);
+        shared_network->setContext(user_context);
+        shared_network->setValid(5555);
+
+        test_networks_.push_back(shared_network);
+
+        shared_network.reset(new SharedNetwork4("level1"));
+        test_networks_.push_back(shared_network);
+
+        shared_network.reset(new SharedNetwork4("level2"));
+        test_networks_.push_back(shared_network);
+
+        shared_network.reset(new SharedNetwork4("level3"));
+        test_networks_.push_back(shared_network);
+    }
+
     /// @brief Initialize posix time values used in tests.
     void initTimestamps() {
         // Current time minus 1 hour to make sure it is in the past.
@@ -128,6 +160,9 @@ public:
 
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;
+
+    /// @brief Holds pointers to shared networks used in tests.
+    std::vector<SharedNetwork4Ptr> test_networks_;
 
     /// @brief Holds timestamp values used in tests.
     std::map<std::string, boost::posix_time::ptime> timestamps_;
@@ -230,5 +265,92 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
                                           timestamps_["tomorrow"]);
     ASSERT_TRUE(subnets.empty());
 }
+
+// Test that shared network can be inserted, fetched, updated and then
+// fetched again.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
+    // Insert new shared network.
+    SharedNetwork4Ptr shared_network = test_networks_[0];
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), shared_network);
+
+    // Fetch this shared network by name.
+    SharedNetwork4Ptr
+        returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                     test_networks_[0]->getName());
+    ASSERT_TRUE(returned_network);
+
+    // The easiest way to verify whether the returned shared network matches the
+    // inserted shared network is to convert both to text.
+    EXPECT_EQ(shared_network->toElement()->str(),
+              returned_network->toElement()->str());
+
+    // Update shared network in the database.
+    SharedNetwork4Ptr shared_network2 = test_networks_[1];
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), shared_network2);
+
+    // Fetch updated subnet and see if it matches.
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                 test_networks_[1]->getName());
+    EXPECT_EQ(shared_network2->toElement()->str(),
+              returned_network->toElement()->str());
+}
+
+// Test that all shared networks can be fetched.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
+    // Insert test shared networks into the database. Note that the second shared
+    // network will overwrite the first shared network as they use the same name.
+    for (auto network : test_networks_) {
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), network);
+    }
+
+    // Fetch all shared networks.
+    SharedNetwork4Collection networks =
+        cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(test_networks_.size() - 1, networks.size());
+
+    // See if shared networks are returned ok.
+    for (auto i = 0; i < networks.size(); ++i) {
+        EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
+                  networks[i]->toElement()->str());
+    }
+}
+
+// Test that shared networks modified after given time can be fetched.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
+    // Explicitly set timestamps of shared networks. First shared
+    // network has a timestamp pointing to the future. Second shared
+    // network has timestamp pointing to the past (yesterday).
+    // Third shared network has a timestamp pointing to the
+    // past (an hour ago).
+    test_networks_[1]->setModificationTime(timestamps_["tomorrow"]);
+    test_networks_[2]->setModificationTime(timestamps_["yesterday"]);
+    test_networks_[3]->setModificationTime(timestamps_["today"]);
+
+    // Insert shared networks into the database.
+    for (int i = 1; i < test_networks_.size(); ++i) {
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                           test_networks_[i]);
+    }
+
+    // Fetch shared networks with timestamp later than today. Only one
+    // shared network  should be returned.
+    SharedNetwork4Collection
+        networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+                                                      timestamps_["today"]);
+    ASSERT_EQ(1, networks.size());
+
+    // Fetch shared networks with timestamp later than yesterday. We
+    // should get two shared networks.
+    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+                                                 timestamps_["yesterday"]);
+    ASSERT_EQ(2, networks.size());
+
+    // Fetch shared networks with timestamp later than tomorrow. Nothing
+    // should be returned.
+    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+                                                  timestamps_["tomorrow"]);
+    ASSERT_TRUE(networks.empty());
+}
+
 
 }
