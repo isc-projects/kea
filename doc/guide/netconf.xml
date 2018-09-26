@@ -117,7 +117,7 @@ ietf-ip                    | 2014-06-16 | Installed   |                     |   
 
     <para>
 Installing Kea YANG modules. There are two major modules that Kea is able to
-support: kea-dhcp4-server and ietf-dhcp6-server. Note that while there is an
+support: kea-dhcp4-server and kea-dhcp6-server. Note that while there is an
 active effort at DHC working group at IETF to develop an DHCPv6 YANG model,
 similar initiative for DHCPv4 died long time ago. As such, Kea uses its own
 dedicated models for DHCPv4 and DHCPv6 but partially supports the IETF model
@@ -129,7 +129,7 @@ src/lib/libyang/models. To install models, do the following:
 cd src/lib/yang/models
 sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g ietf-dhcpv6-server.yang
 sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g kea-dhcp4-server.yang
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g ietf-dhcp6-server.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g kea-dhcp6-server.yang
 </screen>
 
 Note the first -s parameter specifies the location of your YANG schema
