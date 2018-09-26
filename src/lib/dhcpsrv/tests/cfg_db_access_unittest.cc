@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <database/dbaccess_parser.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
@@ -194,5 +195,63 @@ TEST_F(CfgMySQLDbAccessTest, createManagers) {
 }
 
 #endif
+
+// Check that the toElementDbAccessString() handles all valid parameters
+TEST(CfgDbAccess, toElementDbAccessStringValid) {
+    const char* configs[] = {
+        "{\n"
+        "\"type\": \"memfile\", \n"
+        "\"user\": \"user_str\", \n"
+        "\"name\": \"name_str\", \n"
+        "\"host\": \"host_str\", \n"
+        "\"password\": \"password_str\", \n"
+        "\"contact-points\": \"contact_str\", \n"
+        "\"keyspace\": \"keyspace_str\", \n"
+        "\"lfc-interval\" : 100, \n"
+        "\"connect-timeout\" : 200, \n"
+        "\"port\" : 300, \n"
+        "\"persist\" : true, \n"
+        "\"readonly\" : false \n"
+        "}\n"
+    };
+
+    db::DbAccessParser parser;
+    std::string access_str;
+    data::ConstElementPtr json_elements;
+
+    ASSERT_NO_THROW(json_elements = data::Element::fromJSON(configs[0]));
+    ASSERT_NO_THROW(parser.parse(access_str, json_elements));
+
+    data::ElementPtr round_trip = CfgDbAccess::toElementDbAccessString(access_str);
+
+    ASSERT_TRUE(json_elements->equals(*round_trip));
+}
+
+// Check that toElementDbAccessString() catches invalid parameters.
+TEST(CfgDbAccess, toElementDbAccessStringInvalid) {
+    std::vector<std::string> access_strs = {
+        "bogus-param=memfile",
+        "lfc-interval=not-an-integer",
+        "connect-timeout=not-an-integer",
+        "port=not-an-integer",
+        "persist=not-boolean",
+        "readonly=not-boolean"
+    };
+
+    for (auto access_str : access_strs) {
+        ASSERT_THROW(CfgDbAccess::toElementDbAccessString(access_str),
+                     isc::ToElementError)
+                    << "access string should have failed, string=["
+                    << access_str << "]";
+    }
+}
+
+// Check that toElementDbAccessString() handles empty access string
+TEST(CfgDbAccess, toElementDbAccessStringEmpty) {
+    data::ConstElementPtr elements;
+    ASSERT_NO_THROW(elements = CfgDbAccess::toElementDbAccessString(""));
+    ASSERT_TRUE(elements);
+    ASSERT_EQ(0, elements->size());
+}
 
 } // end of anonymous namespace
