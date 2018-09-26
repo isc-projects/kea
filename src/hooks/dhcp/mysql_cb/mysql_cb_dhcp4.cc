@@ -8,6 +8,7 @@
 #include <database/db_exceptions.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
+#include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
 #include <mysql_cb_dhcp4.h>
@@ -44,9 +45,14 @@ public:
         GET_SUBNET4_PREFIX,
         GET_ALL_SUBNETS4,
         GET_MODIFIED_SUBNETS4,
+        GET_SHARED_NETWORK4_NAME,
+        GET_ALL_SHARED_NETWORKS4,
+        GET_MODIFIED_SHARED_NETWORKS4,
         INSERT_SUBNET4,
         INSERT_POOL4,
+        INSERT_SHARED_NETWORK4,
         UPDATE_SUBNET4,
+        UPDATE_SHARED_NETWORK4,
         DELETE_POOLS4_SUBNET_ID,
         NUM_STATEMENTS
     };
@@ -174,6 +180,8 @@ public:
                 // match_client_id
                 last_subnet->setMatchClientId(static_cast<bool>
                                               (out_bindings[8]->getIntegerOrDefault<uint8_t>(1)));
+                // modification_ts
+                last_subnet->setModificationTime(out_bindings[9]->getTimestamp());
                 // next_server
                 last_subnet->setSiaddr(IOAddress(out_bindings[10]->getIntegerOrDefault<uint32_t>(0)));
                 // relay
@@ -297,15 +305,6 @@ public:
             dhcp4o6_subnet = s.str();
         }
 
-        // Create JSON list of relay addresses.
-        ElementPtr relay_element = Element::createList();
-        const auto& addresses = subnet->getRelayAddresses();
-        if (!addresses.empty()) {
-            for (const auto& address : addresses) {
-                relay_element->add(Element::create(address.toText()));
-            }
-        }
-
         // Create JSON list of required classes.
         ElementPtr required_classes_element = Element::createList();
         const auto& required_classes = subnet->getRequiredClasses();
@@ -343,9 +342,9 @@ public:
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
             MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().toUint32()),
             MySqlBinding::createInteger<uint32_t>(subnet->getT2()),
-            MySqlBinding::condCreateString(relay_element->str()),
+            createInputRelayBinding(subnet),
             MySqlBinding::createInteger<uint32_t>(subnet->getT1()),
-            MySqlBinding::condCreateString(required_classes_element->str()),
+            createInputRequiredClassesBinding(subnet),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
             MySqlBinding::condCreateString(subnet->getSname()),
             shared_network_binding,
@@ -406,6 +405,242 @@ public:
 
         // Run DELETE.
         conn_.updateDeleteQuery(DELETE_POOLS4_SUBNET_ID, in_bindings);
+    }
+
+    /// @brief Sends query to the database to retrieve multiple shared
+    /// networks.
+    ///
+    /// Query should order shared networks by id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] shared_networks Reference to the container where fetched
+    /// shared networks will be inserted.
+    void getSharedNetworks4(const StatementIndex& index,
+                            const MySqlBindingCollection& in_bindings,
+                            SharedNetwork4Collection& shared_networks) {
+        // Create output bindings. The order must match that in the prepared
+        // statement.
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint64_t>(), // id
+            MySqlBinding::createString(128), // name
+            MySqlBinding::createString(128), // client_class
+            MySqlBinding::createString(128), // interface
+            MySqlBinding::createInteger<uint8_t>(), // match_client_id
+            MySqlBinding::createTimestamp(), // modification_ts
+            MySqlBinding::createInteger<uint32_t>(), // rebind_timer
+            MySqlBinding::createString(65536), // relay
+            MySqlBinding::createInteger<uint32_t>(), // renew_timer
+            MySqlBinding::createString(65536), // require_client_classes
+            MySqlBinding::createInteger<uint8_t>(), // reservation_mode
+            MySqlBinding::createString(65536), // user_context
+            MySqlBinding::createInteger<uint32_t>() // valid_lifetime
+        };
+
+        uint64_t last_network_id = 0;
+        conn_.selectQuery(index, in_bindings, out_bindings,
+                          [&shared_networks, &last_network_id]
+                          (MySqlBindingCollection& out_bindings) {
+            SharedNetwork4Ptr last_network;
+            if (!shared_networks.empty()) {
+                last_network = *shared_networks.rbegin();
+            }
+
+            if ((last_network_id == 0) ||
+                (last_network_id != out_bindings[0]->getInteger<uint64_t>())) {
+
+                last_network.reset(new SharedNetwork4(out_bindings[1]->getString()));
+
+                // client_class
+                if (!out_bindings[2]->amNull()) {
+                    last_network->allowClientClass(out_bindings[2]->getString());
+                }
+                // interface
+                last_network->setIface(out_bindings[3]->getStringOrDefault(""));
+
+                // match_client_id
+                last_network->setMatchClientId(static_cast<bool>
+                    (out_bindings[4]->getIntegerOrDefault<uint8_t>(1)));
+
+                // modification_ts
+                last_network->setModificationTime(out_bindings[5]->getTimestamp());
+
+                // rebind_timer
+                if (!out_bindings[6]->amNull()) {
+                    last_network->setT2(out_bindings[6]->getInteger<uint32_t>());
+                }
+
+                // relay
+                ElementPtr relay_element = out_bindings[7]->getJSON();
+                if (relay_element) {
+                    if (relay_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid relay value "
+                                  << out_bindings[7]->getString());
+                    }
+                    for (auto i = 0; i < relay_element->size(); ++i) {
+                        auto relay_address_element = relay_element->get(i);
+                        if (relay_address_element->getType() != Element::string) {
+                            isc_throw(BadValue, "relay address must be a string");
+                        }
+                        last_network->addRelayAddress(IOAddress(relay_element->get(i)->stringValue()));
+                    }
+                }
+
+                // renew_timer
+                if (!out_bindings[8]->amNull()) {
+                    last_network->setT1(out_bindings[8]->getInteger<uint32_t>());
+                }
+
+                // require_client_classes
+                ElementPtr require_element = out_bindings[9]->getJSON();
+                if (require_element) {
+                    if (require_element->getType() != Element::list) {
+                        isc_throw(BadValue, "invalid require_client_classes value "
+                              << out_bindings[14]->getString());
+                    }
+                    for (auto i = 0; i < require_element->size(); ++i) {
+                        auto require_item = require_element->get(i);
+                        if (require_item->getType() != Element::string) {
+                            isc_throw(BadValue, "elements of require_client_classes list must"
+                                      "be valid strings");
+                        }
+                        last_network->requireClientClass(require_item->stringValue());
+                    }
+                }
+
+                // reservation_mode
+                last_network->setHostReservationMode(static_cast<Subnet4::HRMode>
+                    (out_bindings[10]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+
+                // user_context
+                ElementPtr user_context = out_bindings[11]->getJSON();
+                if (user_context) {
+                    last_network->setContext(user_context);
+                }
+
+                // valid_lifetime
+                if (!out_bindings[12]->amNull()) {
+                    last_network->setValid(out_bindings[12]->getInteger<uint32_t>());
+                }
+
+                shared_networks.push_back(last_network);
+            }
+        });
+    }
+
+    /// @brief Sends query to retrieve single shared network by name.
+    ///
+    /// @param selector Server selector.
+    /// @param name Shared network name.
+    ///
+    /// @return Pointer to the returned shared network or NULL if such shared
+    /// network doesn't exist.
+    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& selector,
+                                        const std::string& name) {
+        MySqlBindingCollection in_bindings;
+        in_bindings.push_back(MySqlBinding::createString(name));
+
+        SharedNetwork4Collection shared_networks;
+        getSharedNetworks4(GET_SHARED_NETWORK4_NAME, in_bindings, shared_networks);
+
+        return (shared_networks.empty() ? SharedNetwork4Ptr() : *shared_networks.begin());
+    }
+
+    /// @brief Sends query to insert or update shared network.
+    ///
+    /// @param selector Server selector.
+    /// @param subnet Pointer to the shared network to be inserted or updated.
+    void createUpdateSharedNetwork4(const ServerSelector& selector,
+                                    const SharedNetwork4Ptr& shared_network) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(shared_network->getName()),
+            MySqlBinding::condCreateString(shared_network->getClientClass()),
+            MySqlBinding::condCreateString(shared_network->getIface()),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(shared_network->getMatchClientId())),
+            MySqlBinding::createTimestamp(shared_network->getModificationTime()),
+            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getT2()),
+            createInputRelayBinding(shared_network),
+            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getT1()),
+            createInputRequiredClassesBinding(shared_network),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                 (shared_network->getHostReservationMode())),
+            createInputContextBinding(shared_network),
+            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getValid())
+        };
+
+        // Check if the shared network already exists.
+        SharedNetwork4Ptr existing_network = getSharedNetwork4(selector,
+                                                               shared_network->getName());
+
+        // If the shared network exists we are going to update this network.
+        if (existing_network) {
+            // Need to add one more binding for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createString(existing_network->getName()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
+                                    in_bindings);
+
+        } else {
+            // If the shared network doesn't exist, let's insert it.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
+                              in_bindings);
+        }
+
+    }
+
+    /// @brief Creates input binding for relay addresses.
+    ///
+    /// @param network Pointer to a shared network or subnet for which binding
+    /// should be created.
+    /// @return Pointer to the binding (possibly null binding if there are no
+    /// relay addresses specified).
+    MySqlBindingPtr createInputRelayBinding(const NetworkPtr& network) {
+        ElementPtr relay_element = Element::createList();
+        const auto& addresses = network->getRelayAddresses();
+        if (!addresses.empty()) {
+            for (const auto& address : addresses) {
+                relay_element->add(Element::create(address.toText()));
+            }
+        }
+
+        return (relay_element->empty() ? MySqlBinding::createNull() :
+                MySqlBinding::condCreateString(relay_element->str()));
+    }
+
+    /// @brief Creates input binding for 'require_client_classes' parameter.
+    ///
+    /// @param network Pointer to a shared network or subnet for which binding
+    /// should be created.
+    /// @return Pointer to the binding (possibly null binding if there are no
+    /// required classes specified).
+    MySqlBindingPtr createInputRequiredClassesBinding(const NetworkPtr& network) {
+        // Create JSON list of required classes.
+        ElementPtr required_classes_element = Element::createList();
+        const auto& required_classes = network->getRequiredClasses();
+        for (auto required_class = required_classes.cbegin();
+             required_class != required_classes.cend();
+             ++required_class) {
+            required_classes_element->add(Element::create(*required_class));
+        }
+
+        return (required_classes_element ?
+                MySqlBinding::createString(required_classes_element->str()) :
+                MySqlBinding::createNull());
+    }
+
+    /// @brief Creates input binding for user context parameter.
+    ///
+    /// @param network Pointer to a shared network or subnet for which binding
+    /// should be created.
+    /// @return Pointer to the binding (possibly null binding if context is
+    /// null).
+    MySqlBindingPtr createInputContextBinding(const NetworkPtr& network) {
+        // Create user context binding if user context exists.
+        auto context_element = network->getContext();
+        return (context_element ? MySqlBinding::createString(context_element->str()) :
+                MySqlBinding::createNull());
     }
 
     /// @brief Represents connection to the MySQL database.
@@ -550,6 +785,65 @@ TaggedStatementArray tagged_statements = { {
       "WHERE s.modification_ts > ? "
       "ORDER BY s.subnet_id" },
 
+    // Select shared network by name.
+    { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME,
+      "SELECT"
+      "  n.id,"
+      "  n.name,"
+      "  n.client_class,"
+      "  n.interface,"
+      "  n.match_client_id,"
+      "  n.modification_ts,"
+      "  n.rebind_timer,"
+      "  n.relay,"
+      "  n.renew_timer,"
+      "  n.require_client_classes,"
+      "  n.reservation_mode,"
+      "  n.user_context,"
+      "  n.valid_lifetime "
+      "FROM dhcp4_shared_network AS n "
+      "WHERE n.name = ? "
+      "ORDER BY n.id" },
+
+    // Select all shared networks.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
+      "SELECT"
+      "  n.id,"
+      "  n.name,"
+      "  n.client_class,"
+      "  n.interface,"
+      "  n.match_client_id,"
+      "  n.modification_ts,"
+      "  n.rebind_timer,"
+      "  n.relay,"
+      "  n.renew_timer,"
+      "  n.require_client_classes,"
+      "  n.reservation_mode,"
+      "  n.user_context,"
+      "  n.valid_lifetime "
+      "FROM dhcp4_shared_network AS n "
+      "ORDER BY n.id" },
+
+    // Select modified shared networks.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
+      "SELECT"
+      "  n.id,"
+      "  n.name,"
+      "  n.client_class,"
+      "  n.interface,"
+      "  n.match_client_id,"
+      "  n.modification_ts,"
+      "  n.rebind_timer,"
+      "  n.relay,"
+      "  n.renew_timer,"
+      "  n.require_client_classes,"
+      "  n.reservation_mode,"
+      "  n.user_context,"
+      "  n.valid_lifetime "
+      "FROM dhcp4_shared_network AS n "
+      "WHERE n.modification_ts > ? "
+      "ORDER BY n.id" },
+
     // Insert a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
       "INSERT INTO dhcp4_subnet("
@@ -584,9 +878,26 @@ TaggedStatementArray tagged_statements = { {
       "  modification_ts"
       ") VALUES (?, ?, ?, ?)" },
 
+    // Insert a shared network.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
+      "INSERT INTO dhcp4_shared_network("
+      "name,"
+      "client_class,"
+      "interface,"
+      "match_client_id,"
+      "modification_ts,"
+      "rebind_timer,"
+      "relay,"
+      "renew_timer,"
+      "require_client_classes,"
+      "reservation_mode,"
+      "user_context,"
+      "valid_lifetime"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+
     // Update existing subnet.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-      "UPDATE dhcp4_subnet SET "
+      "UPDATE dhcp4_subnet SET"
       "  subnet_id = ?,"
       "  subnet_prefix = ?,"
       "  4o6_interface = ?,"
@@ -608,6 +919,23 @@ TaggedStatementArray tagged_statements = { {
       "  user_context = ?,"
       "  valid_lifetime = ? "
       "WHERE subnet_id = ?" },
+
+    // Update existing shared network.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
+      "UPDATE dhcp4_shared_network SET"
+      "  name = ?,"
+      "  client_class = ?,"
+      "  interface = ?,"
+      "  match_client_id = ?,"
+      "  modification_ts = ?,"
+      "  rebind_timer = ?,"
+      "  relay = ?,"
+      "  renew_timer = ?,"
+      "  require_client_classes = ?,"
+      "  reservation_mode = ?,"
+      "  user_context = ?,"
+      "  valid_lifetime = ? "
+      "WHERE name = ?" },
 
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
@@ -706,19 +1034,29 @@ MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& selector,
 SharedNetwork4Ptr
 MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& selector,
                                             const std::string& name) const {
-    isc_throw(NotImplemented, "not implemented");
+    return (impl_->getSharedNetwork4(selector, name));
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& selector) const {
-    isc_throw(NotImplemented, "not implemented");
+    SharedNetwork4Collection shared_networks;
+    MySqlBindingCollection in_bindings;
+    impl_->getSharedNetworks4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
+                              in_bindings, shared_networks);
+    return (shared_networks);
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::
 getModifiedSharedNetworks4(const ServerSelector& selector,
                            const boost::posix_time::ptime& modification_time) const {
-    isc_throw(NotImplemented, "not implemented");
+    SharedNetwork4Collection shared_networks;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createTimestamp(modification_time)
+    };
+    impl_->getSharedNetworks4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
+                              in_bindings, shared_networks);
+    return (shared_networks);
 }
 
 OptionDefinitionPtr
@@ -766,6 +1104,7 @@ MySqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& selector,
 void
 MySqlConfigBackendDHCPv4::createUpdateSharedNetwork4(const ServerSelector& selector,
                                                      const SharedNetwork4Ptr& shared_network) {
+    impl_->createUpdateSharedNetwork4(selector, shared_network);
 }
 
 void
