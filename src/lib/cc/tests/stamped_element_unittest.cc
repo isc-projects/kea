@@ -32,7 +32,7 @@ TEST(StampedElementTest, create) {
 // value.
 TEST(StampedElementTest, setModificationTime) {
     boost::posix_time::ptime
-        modification_time(boost::gregorian::date(2002, boost::date_time::Jan, 10), 
+        modification_time(boost::gregorian::date(2002, boost::date_time::Jan, 10),
                           boost::posix_time::time_duration(1,2,3));
     StampedElement element;
     element.setModificationTime(modification_time);
@@ -43,7 +43,7 @@ TEST(StampedElementTest, setModificationTime) {
 // time.
 TEST(StampedElementTest, update) {
     boost::posix_time::ptime
-        modification_time(boost::gregorian::date(2002, boost::date_time::Jan, 10), 
+        modification_time(boost::gregorian::date(2002, boost::date_time::Jan, 10),
                           boost::posix_time::time_duration(1,2,3));
     StampedElement element;
     element.setModificationTime(modification_time);
