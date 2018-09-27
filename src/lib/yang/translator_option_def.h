@@ -13,69 +13,69 @@
 namespace isc {
 namespace yang {
 
-// Option definition translation between YANG and JSON
-//
-// JSON syntax for Kea DHCP servers is:
-// @code
-// {
-//     "code": <code>,
-//     "name": <name>,
-//     "space": <space>,
-//     "type": <type>,
-//     "array": <array flag>,
-//     "encapsulate": <encapsulated space>,
-//     "record-types": <record types>,
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// YANG syntax for kea-dhcp[46] with code and space as keys is:
-// @code
-//    +--rw name           string
-//    +--rw code           uint8 / uint16
-//    +--rw type           string
-//    +--rw record-types?  string
-//    +--rw space          string
-//    +--rw encapsulate?   string
-//    +--rw array?         boolean
-//    +--rw user-context?  string
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "code": 100,
-//         "name": "foo",
-//         "space": "isc",
-//         "type": "string",
-//         "array": false
-//     }
-// ]
-// @endcode
-// @code
-//  /kea-dhcp6-server:config (container)
-//  /kea-dhcp6-server:config/option-def-list (container)
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc'] (list instance)
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc']/code = 100
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc']/space = isc
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc']/name = foo
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc']/type = string
-//  /kea-dhcp6-server:config/option-def-list/
-//     option-def[code='100'][space='isc']/array = false
-// @endcode
+/// @brief Option definition translation between YANG and JSON
+///
+/// JSON syntax for Kea DHCP servers is:
+/// @code
+/// {
+///     "code": <code>,
+///     "name": <name>,
+///     "space": <space>,
+///     "type": <type>,
+///     "array": <array flag>,
+///     "encapsulate": <encapsulated space>,
+///     "record-types": <record types>,
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// YANG syntax for kea-dhcp[46] with code and space as keys is:
+/// @code
+///    +--rw name           string
+///    +--rw code           uint8 / uint16
+///    +--rw type           string
+///    +--rw record-types?  string
+///    +--rw space          string
+///    +--rw encapsulate?   string
+///    +--rw array?         boolean
+///    +--rw user-context?  string
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "code": 100,
+///         "name": "foo",
+///         "space": "isc",
+///         "type": "string",
+///         "array": false
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /kea-dhcp6-server:config (container)
+///  /kea-dhcp6-server:config/option-def-list (container)
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc'] (list instance)
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc']/code = 100
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc']/space = isc
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc']/name = foo
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc']/type = string
+///  /kea-dhcp6-server:config/option-def-list/
+///     option-def[code='100'][space='isc']/array = false
+/// @endcode
 
-// @brief A translator class for converting an option definition between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, does not exist in
-// ietf-dhcpv6-server.
+/// @brief A translator class for converting an option definition between
+/// YANG and JSON.
+///
+/// Currently supports kea-dhcp[46]-server models.
+/// @todo: Support for ietf-dhcpv6-server model.
 class TranslatorOptionDef : virtual public TranslatorBasic {
 public:
 
@@ -103,7 +103,7 @@ public:
                       isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getOptionDef JSON for kea-dhcp[46].
+    /// @brief getOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the option definition.
     /// @return JSON representation of the option definition.
@@ -111,7 +111,7 @@ protected:
     /// @throw BadValue on option definition without name or type.
     isc::data::ElementPtr getOptionDefKea(const std::string& xpath);
 
-    /// @brief setOptionDef for kea-dhcp[46].
+    /// @brief setOptionDef implementation specific to kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the option definition.
     /// @param elem The JSON element.
@@ -126,9 +126,9 @@ protected:
 // @brief A translator class for converting an option definition list
 // between YANG and JSON.
 //
-// Currently supports on kea-dhcp[46]-server, does not exist in
-// ietf-dhcpv6-server.
-class TranslatorOptionDefList : virtual public TranslatorOptionDef {
+/// Currently supports kea-dhcp[46]-server models.
+/// @todo: Support for ietf-dhcpv6-server model.
+class TranslatorOptionDefList : public TranslatorOptionDef {
 public:
 
     /// @brief Constructor.
@@ -154,13 +154,15 @@ public:
                           isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getOptionDefList for kea-dhcp[46].
+    /// @brief getOptionDefList implementation specific to kea-dhcp[46]-server
+    ///        models.
     ///
     /// @param xpath The xpath of the option definition list.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getOptionDefListKea(const std::string& xpath);
 
-    /// @brief setOptionDefList for kea-dhcp[46].
+    /// @brief setOptionDefList implementation specific to kea-dhcp[46]-server
+    ///        models.
     ///
     /// @param xpath The xpath of the option definition list.
     /// @param elem The JSON element.
