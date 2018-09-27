@@ -130,8 +130,7 @@ TranslatorOptionDef::setOptionDefKea(const string& xpath,
 
 TranslatorOptionDefList::TranslatorOptionDefList(S_Session session,
                                                  const string& model)
-    : TranslatorBasic(session), TranslatorOptionDef(session, model),
-      model_(model) {
+    : TranslatorOptionDef(session, model) {
 }
 
 TranslatorOptionDefList::~TranslatorOptionDefList() {
