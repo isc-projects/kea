@@ -46,7 +46,11 @@ BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 
 noinst_LTLIBRARIES = libnetconf.la
 
-libnetconf_la_SOURCES  = netconf_log.cc netconf_log.h
+libnetconf_la_SOURCES  = netconf_cfg_mgr.cc netconf_cfg_mgr.h
+libnetconf_la_SOURCES += netconf_controller.h netconf_controller.cc
+libnetconf_la_SOURCES += netconf_log.cc netconf_log.h
+libnetconf_la_SOURCES += netconf_process.cc netconf_process.h
+libnetconf_la_SOURCES += simple_parser.cc simple_parser.h
 
 nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
 
