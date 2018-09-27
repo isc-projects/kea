@@ -40,7 +40,7 @@ lib_hooksdir = $(libdir)/hooks
 lib_hooks_LTLIBRARIES = libdhcp_mysql_cb.la
 
 libdhcp_mysql_cb_la_SOURCES  =
-libdhcp_mysql_cb_la_LDFLAGS  = $(AM_LDFLAGS) $(MYSQL_LIBS)o
+libdhcp_mysql_cb_la_LDFLAGS  = $(AM_LDFLAGS) $(MYSQL_LIBS)
 libdhcp_mysql_cb_la_LDFLAGS  += -avoid-version -export-dynamic -module
 
 libdhcp_mysql_cb_la_LIBADD  = libmysqlcb.la
