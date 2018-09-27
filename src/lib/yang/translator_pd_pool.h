@@ -13,106 +13,106 @@
 namespace isc {
 namespace yang {
 
-// Prefix delegation pool translation between YANG and JSON
-//
-// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
-// @code
-// {
-//     "prefix": <prefix base>,
-//     "prefix-len": <prefix length>,
-//     "delegated-len": <delegated length>,
-//     "excluded-prefix": <excluded prefix>,
-//     "excluded-prefix-len": <excluded prefix length>,
-//     "option-data": [ <list of option data> ],
-//     "client-class": "<guard class name>",
-//     "require-client-classes": [ <list of required class names> ],
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// YANG syntax for ietf-dhcpv6-server is with pool-id as the key.
-// @code
-//  +--rw pool-id                     uint32
-//  +--rw prefix                      inet:ipv6-prefix
-//  +--rw prefix-length               uint8
-//  +--rw valid-lifetime              yang:timeticks
-//  +--rw renew-time                  yang:timeticks
-//  +--rw rebind-time                 yang:timeticks
-//  +--rw preferred-lifetime          yang:timeticks
-//  +--rw rapid-commit?               boolean
-//  +--rw client-class?               string
-//  +--rw max-pd-space-utilization?   threshold
-//  +--rw option-set-id?
-//     /server/server-config/option-sets/option-set/option-set-id
-// @endcode
-//
-// YANG syntax for kea-dhcp6 is with prefix as the key.
-// @code
-//  +--rw prefix?                  inet:ipv6-prefix
-//  +--rw delegated-len?           uint8
-//  +--rw excluded-prefix?         inet:ipv6-prefix
-//  +--rw option-data-list         option-data*
-//  +--rw client-class?            string
-//  +--rw require-client-classes*  string
-//  +--rw user-context?            string
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "prefix": "2001:db8:0:1000::",
-//         "prefix-len": 56,
-//         "delegated-len": 64
-//     }
-// ]
-// @endcode
-// @code
-//  /ietf-dhcpv6-server:server (container)
-//  /ietf-dhcpv6-server:server/server-config (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111'] (list instance)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/network-range-id = 111
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/network-prefix = 2001:db8::/48
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/pd-pools (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/pd-pools/
-//     pd-pool[pool-id='0'] (list instance)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     pd-pool[pool-id='0']/pool-id = 0
-//     network-range[network-range-id='111']/pd-pools/
-//     pd-pool[pool-id='0']/prefix = 2001:db8:0:1000::/56
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/pd-pools/
-//     pd-pool[pool-id='0']/prefix-length = 56
-//  /ietf-dhcpv6-server:server/server-config/network-ranges
-//     network-range[network-range-id='111']/pd-pools/
-//     pd-pool[pool-id='0']/max-pd-space-utilization = disabled
-// @endcode
-// @code
-//  /kea-dhcp6-server:config (container)
-//  /kea-dhcp6-server:config/subnet6 (container)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools (container)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
-//     pd-pool[prefix='2001:db8:0:1000::/56' (list instance)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
-//     pd-pool[prefix='2001:db8:0:1000::/56'/prefix = 2001:db8:0:1000::/56
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
-//     pd-pool[prefix='2001:db8:0:1000::/56'/delegated-len = 64
-// @endcode
+/// Prefix delegation pool translation between YANG and JSON
+///
+/// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
+/// @code
+/// {
+///     "prefix": <prefix base>,
+///     "prefix-len": <prefix length>,
+///     "delegated-len": <delegated length>,
+///     "excluded-prefix": <excluded prefix>,
+///     "excluded-prefix-len": <excluded prefix length>,
+///     "option-data": [ <list of option data> ],
+///     "client-class": "<guard class name>",
+///     "require-client-classes": [ <list of required class names> ],
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// YANG syntax for ietf-dhcpv6-server is with pool-id as the key.
+/// @code
+///  +--rw pool-id                     uint32
+///  +--rw prefix                      inet:ipv6-prefix
+///  +--rw prefix-length               uint8
+///  +--rw valid-lifetime              yang:timeticks
+///  +--rw renew-time                  yang:timeticks
+///  +--rw rebind-time                 yang:timeticks
+///  +--rw preferred-lifetime          yang:timeticks
+///  +--rw rapid-commit?               boolean
+///  +--rw client-class?               string
+///  +--rw max-pd-space-utilization?   threshold
+///  +--rw option-set-id?
+///     /server/server-config/option-sets/option-set/option-set-id
+/// @endcode
+///
+/// YANG syntax for kea-dhcp6 is with prefix as the key.
+/// @code
+///  +--rw prefix?                  inet:ipv6-prefix
+///  +--rw delegated-len?           uint8
+///  +--rw excluded-prefix?         inet:ipv6-prefix
+///  +--rw option-data-list         option-data*
+///  +--rw client-class?            string
+///  +--rw require-client-classes*  string
+///  +--rw user-context?            string
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "prefix": "2001:db8:0:1000::",
+///         "prefix-len": 56,
+///         "delegated-len": 64
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /ietf-dhcpv6-server:server (container)
+///  /ietf-dhcpv6-server:server/server-config (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111'] (list instance)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/network-range-id = 111
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/network-prefix = 2001:db8::/48
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/pd-pools (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/pd-pools/
+///     pd-pool[pool-id='0'] (list instance)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     pd-pool[pool-id='0']/pool-id = 0
+///     network-range[network-range-id='111']/pd-pools/
+///     pd-pool[pool-id='0']/prefix = 2001:db8:0:1000::/56
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/pd-pools/
+///     pd-pool[pool-id='0']/prefix-length = 56
+///  /ietf-dhcpv6-server:server/server-config/network-ranges
+///     network-range[network-range-id='111']/pd-pools/
+///     pd-pool[pool-id='0']/max-pd-space-utilization = disabled
+/// @endcode
+/// @code
+///  /kea-dhcp6-server:config (container)
+///  /kea-dhcp6-server:config/subnet6 (container)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools (container)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///     pd-pool[prefix='2001:db8:0:1000::/56' (list instance)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///     pd-pool[prefix='2001:db8:0:1000::/56'/prefix = 2001:db8:0:1000::/56
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///     pd-pool[prefix='2001:db8:0:1000::/56'/delegated-len = 64
+/// @endcode
 
-// @brief A translator class for converting a pd-pool between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// @brief A translator class for converting a pd-pool between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPdPool : virtual public TranslatorOptionDataList {
 public:
 
@@ -173,10 +173,10 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting a pd-pool list between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// @brief A translator class for converting a pd-pool list between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPdPools : virtual public TranslatorPdPool {
 public:
 
