@@ -240,7 +240,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
 
-// Test that all subnets can be fetched.
+// Test that all subnets can be fetched and then deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     // Insert test subnets into the database. Note that the second subnet will
     // overwrite the first subnet as they use the same ID.
@@ -257,6 +257,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
                   subnets[i]->toElement()->str());
     }
+
+    // Delete first subnet by id and verify that it is gone.
+    cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), test_subnets_[1]->getID());
+    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(test_subnets_.size() - 2, subnets.size());
+
+    // Delete second subnet by prefix and verify it is gone.
+    cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), test_subnets_[2]->toText());
+    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(test_subnets_.size() - 3, subnets.size());
+
+    // Delete all.
+    cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED());
+    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    ASSERT_TRUE(subnets.empty());
 }
 
 // Test that subnets modified after given time can be fetched.
@@ -342,6 +357,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
                   networks[i]->toElement()->str());
     }
+
+    // Delete first shared network and verify it is gone..
+    cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                 test_networks_[1]->getName());
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(test_networks_.size() - 2, networks.size());
+
+    // Delete all.
+    cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    ASSERT_TRUE(networks.empty());
 }
 
 // Test that shared networks modified after given time can be fetched.
@@ -431,6 +457,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
         ASSERT_TRUE(success) << "failed for option definition " << (*def)->getCode()
             << ", option space " << (*def)->getOptionSpaceName();
     }
+
+    // Delete one of the option definitions and see if it is gone.
+    cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
+                             test_option_defs_[2]->getCode(),
+                             test_option_defs_[2]->getOptionSpaceName());
+    ASSERT_FALSE(cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+                                       test_option_defs_[2]->getCode(),
+                                       test_option_defs_[2]->getOptionSpaceName()));
+
+    // Delete all remaining option definitions.
+    cbptr_->deleteAllOptionDefs4(ServerSelector::UNASSIGNED());
+    option_defs = cbptr_->getAllOptionDefs4(ServerSelector::UNASSIGNED());
+    ASSERT_TRUE(option_defs.empty());
 }
 
 // Test that option definitions modified after given time can be fetched.

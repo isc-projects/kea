@@ -59,7 +59,14 @@ public:
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
         UPDATE_OPTION_DEF4,
+        DELETE_SUBNET4_ID,
+        DELETE_SUBNET4_PREFIX,
+        DELETE_ALL_SUBNETS4,
         DELETE_POOLS4_SUBNET_ID,
+        DELETE_SHARED_NETWORK4_NAME,
+        DELETE_ALL_SHARED_NETWORKS4,
+        DELETE_OPTION_DEF4_CODE_NAME,
+        DELETE_ALL_OPTION_DEFS4,
         NUM_STATEMENTS
     };
 
@@ -392,6 +399,40 @@ public:
 
         // Run INSERT.
         conn_.insertQuery(INSERT_POOL4, in_bindings);
+    }
+
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @param index Index of the statement to be executed.
+    void deleteFromTable(const StatementIndex& index) {
+        MySqlBindingCollection in_bindings;
+        conn_.updateDeleteQuery(index, in_bindings);
+    }
+
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @param index Index of the statement to be executed.
+    /// @param key String value to be used as input binding to the delete
+    /// statement.
+    void deleteFromTable(const StatementIndex& index,
+                         const std::string& key) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(key)
+        };
+        conn_.updateDeleteQuery(index, in_bindings);
+    }
+
+    /// @brief Sends query to delete subnet by id.
+    ///
+    /// @param selector Server selector.
+    /// @param subnet_id Identifier of the subnet to be deleted.
+    void deleteSubnet4(const ServerSelector& selector,
+                       const SubnetID& subnet_id) {
+        MySqlBindingCollection in_bindings;
+        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
+
+        // Run DELETE.
+        conn_.updateDeleteQuery(DELETE_SUBNET4_ID, in_bindings);
     }
 
     /// @brief Deletes pools belonging to a subnet from the database.
@@ -753,6 +794,23 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
                               in_bindings);
         }
+    }
+
+    /// @brief Sends query to delete option definition by code and
+    /// option space name.
+    ///
+    /// @param selector Server selector.
+    /// @param code Option code.
+    /// @param name Option name. 
+    void deleteOptionDef4(const ServerSelector& selector, const uint16_t code,
+                          const std::string& space) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
+            MySqlBinding::createString(space)
+        };
+
+        // Run DELETE.
+        conn_.updateDeleteQuery(DELETE_OPTION_DEF4_CODE_NAME, in_bindings);
     }
 
     /// @brief Creates input binding for relay addresses.
@@ -1182,10 +1240,42 @@ TaggedStatementArray tagged_statements = { {
       "  user_context = ? "
       "WHERE code = ? AND space = ?" },
 
+    // Delete subnet by id.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID,
+      "DELETE FROM dhcp4_subnet "
+      "WHERE subnet_id = ?" },
+
+    // Delete subnet by prefix.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
+      "DELETE FROM dhcp4_subnet "
+      "WHERE subnet_prefix = ?" },
+
+    // Delete all subnets.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
+      "DELETE FROM dhcp4_subnet" },
+
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
       "DELETE FROM dhcp4_pool "
-      "WHERE subnet_id = ?" }
+      "WHERE subnet_id = ?" },
+
+    // Delete shared network by name.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
+      "DELETE FROM dhcp4_shared_network "
+      "WHERE name = ?" },
+
+    // Delete all shared networks.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
+      "DELETE FROM dhcp4_shared_network" },
+
+    // Delete option definition.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION_DEF4_CODE_NAME,
+      "DELETE FROM dhcp4_option_def "
+      "WHERE code = ? AND space = ?" },
+
+    // Delete all option definitions.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
+      "DELETE FROM dhcp4_option_def" }
 }
 };
 
@@ -1401,34 +1491,43 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& sel
 void
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& selector,
                                         const std::string& subnet_prefix) {
+    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
+                           subnet_prefix);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& selector,
                                         const SubnetID& subnet_id) {
+    impl_->deleteSubnet4(selector, subnet_id);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& selector) {
+    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& selector,
                                                const std::string& name) {
+    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
+                           name);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& selector) {
+    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& selector,
                                            const uint16_t code,
                                            const std::string& space) {
+    impl_->deleteOptionDef4(selector, code, space);
 }
 
 void
 MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& selector) {
+    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4);
 }
 
 void
