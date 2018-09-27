@@ -107,7 +107,7 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 /// This is class conveys the configuration control information
 /// described by the following JSON text:
 ///
-/// "ConfigCtl" :
+/// "config-ctl" :
 /// {
 ///     "config-databases":
 ///     [
