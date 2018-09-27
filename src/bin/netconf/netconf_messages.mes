@@ -6,14 +6,25 @@
 
 $NAMESPACE isc::netconf
 
-% NETCONF_STARTING Kea-netconf agent (version %1) is starting with process-id %2
-Describe it later.
+% NETCONF_CONFIG_CHECK_FAIL Netconf configuration check failed: %1
+This error message indicates that Netconf had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
 
-% NETCONF_STATED Kea-netconf agent (version %1) started
-Describe it later.
+% NETCONF_CONFIG_FAIL Netconf configuration failed: %1
+This error message indicates that Netconf had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
 
-% NETCONF_SHUTDOWN Kea-netconf agent shutting down.
-Describe it later.
+% NETCONF_FAILED application experienced a fatal error: %1
+This is a debug message issued when the Netconf application
+encounters an unrecoverable error from within the event loop.
 
-% NETCONF_EXCEPTION Exception encountered: %1
-Oops.
+% NETCONF_RUN_EXIT application is exiting the event loop
+This is a debug message issued when the Netconf application exits its
+event loop.
+
+% NETCONF_STARTED Netconf (version %1) started
+This informational message indicates that Netconf has processed
+all configuration information and is ready to begin processing.
+The version is also printed.
