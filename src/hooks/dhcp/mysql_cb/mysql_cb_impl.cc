@@ -81,7 +81,7 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     // statement.
     MySqlBindingCollection out_bindings = {
         MySqlBinding::createInteger<uint64_t>(), // id
-        MySqlBinding::createInteger<uint8_t>(), // code
+        MySqlBinding::createInteger<uint16_t>(), // code
         MySqlBinding::createString(128), // name
         MySqlBinding::createString(128), // space
         MySqlBinding::createInteger<uint8_t>(), // type
@@ -118,14 +118,14 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
             if (array_type) {
                 // Create array option.
                 last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
-                                                    out_bindings[1]->getInteger<uint8_t>(),
+                                                    out_bindings[1]->getInteger<uint16_t>(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
                                                     array_type));
             } else {
                 // Create non-array option.
                 last_def.reset(new OptionDefinition(out_bindings[2]->getString(),
-                                                    out_bindings[1]->getInteger<uint8_t>(),
+                                                    out_bindings[1]->getInteger<uint16_t>(),
                                                     static_cast<OptionDataType>
                                                     (out_bindings[4]->getInteger<uint8_t>()),
                                                     out_bindings[7]->getStringOrDefault("").c_str()));
