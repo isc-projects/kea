@@ -71,7 +71,12 @@ TEST_F(TranslatorOptionDefListTest, get) {
     ConstElementPtr def;
     EXPECT_NO_THROW(def = t_obj_->getOptionDef(xdef));
     ASSERT_TRUE(def);
-    EXPECT_EQ("{ \"array\": false, \"code\": 100, \"name\": \"foo\", \"space\": \"isc\", \"type\": \"string\" }",
+    EXPECT_EQ("{ "
+              "\"array\": false, "
+              "\"code\": 100, "
+              "\"name\": \"foo\", "
+              "\"space\": \"isc\", "
+              "\"type\": \"string\" }",
               def->str());
 
     // Get the option definition list.
