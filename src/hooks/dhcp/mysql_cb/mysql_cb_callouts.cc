@@ -19,7 +19,7 @@ extern "C" {
 ///
 /// @param handle library handle
 /// @return 0 when initialization is successful, 1 otherwise
-int load(LibraryHandle& handle) {
+int load(LibraryHandle& /* handle */) {
     return (0);
 }
 
