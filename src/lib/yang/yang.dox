@@ -101,9 +101,6 @@ sysrepoctl -l
 Make sure that keatest-module is on the list.
 */
 
-To install standard module dependency, look for ietf-inet-types and
-ietf-yang-types YANG files in the libyang distribution.
-
 Note as DHCP modules are still being developed it can be useful to
 deinstall them before reinstalling a more recent version vy:
 @verbatim
@@ -117,6 +114,9 @@ of keatest-module:
  - kea-dhcp-ddns
  - kea-dhcp4-server
  - kea-dhcp6-server
+Dependencies are:
+ - ietf-inet-types
+ - ietf-yang-types
 
 To finish the sysrepod daemon must run as root:
 @verbatim
