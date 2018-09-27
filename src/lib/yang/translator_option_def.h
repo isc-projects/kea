@@ -128,7 +128,7 @@ protected:
 //
 /// Currently supports kea-dhcp[46]-server models.
 /// @todo: Support for ietf-dhcpv6-server model.
-class TranslatorOptionDefList : public TranslatorOptionDef {
+class TranslatorOptionDefList : virtual public TranslatorOptionDef {
 public:
 
     /// @brief Constructor.
