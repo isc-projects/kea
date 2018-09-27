@@ -214,7 +214,7 @@ public:
     createUpdateGlobalParameter4(const db::ServerSelector& selector,
                                  const std::string& name,
                                  const int64_t value);
-    
+
     /// @brief Deletes subnet by prefix.
     ///
     /// @param selector Server selector.

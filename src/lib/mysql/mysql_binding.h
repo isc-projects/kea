@@ -51,7 +51,7 @@ struct MySqlBindingTraits<std::string> {
     static const bool am_unsigned = false;
 };
 
-/// @brief Specialization for MySQL TIMESTAMP type. 
+/// @brief Specialization for MySQL TIMESTAMP type.
 template<>
 struct MySqlBindingTraits<boost::posix_time::ptime> {
     static const enum_field_types column_type = MYSQL_TYPE_TIMESTAMP;
