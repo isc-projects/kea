@@ -13,83 +13,83 @@
 namespace isc {
 namespace yang {
 
-// Logger translation between YANG and JSON
-//
-// JSON syntax for all Kea servers with loggers is:
-// @code
-// {
-//     "name": <name>,
-//     "output_options": [ <output options> ],
-//     "severity": <severity>,
-//     "debuglevel": <debug level>,
-//     "user-context": { <json map> },
-//     "comment": <comment>
-// }
-// @endcode
-//
-// JSON syntax for all Kea server for output options is:
-// @code
-// {
-//    "output": <output, e.g. log file name>,
-//    "maxver": <maximum file version>,
-//    "maxsize": <maxium file size>,
-//    "flush": <flush flag>
-// }
-// @endcode
-//
-// YANG syntax for kea-logging is with name as the logger list key and
-// output as the output option list key.
-// @code
-//  +--rw logger               container
-//     |
-//     +--rw name?             string
-//     +--rw output-options    container
-//     |  +--rw option*        [output]
-//     |     +--rw output      string
-//     |     +--rw maxver?     uint32
-//     |     +--rw maxsize?    uint32
-//     |     +--rw flush?      boolean
-//     +--rw debuglevel?       uint8
-//     +--rw severity?         enumeration
-//     +--rw user-context?     string
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "name": "foo",
-//         "severity": "WARN",
-//         "output_options":
-//             [
-//                 {
-//                     "output": "/bar",
-//                     "maxver": 10
-//                 }
-//             ]
-//     }
-// ]
-// @endcode
-// @code
-//  /kea-dhcp4-server:logging (container)
-//  /kea-dhcp4-server:logging/loggers (container)
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo'] (list instance)
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/name = foo
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/
-//     output-options (container)
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
-//     option[output='/bar'] (list instance)
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
-//     option[output='/bar']/option = /bar
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
-//     option[output='/bar']/maxver = 10
-//  /kea-dhcp4-server:logging/loggers/logger[name='foo']/severity = WARN
-// @endcode
+/// Logger translation between YANG and JSON
+///
+/// JSON syntax for all Kea servers with loggers is:
+/// @code
+/// {
+///     "name": <name>,
+///     "output_options": [ <output options> ],
+///     "severity": <severity>,
+///     "debuglevel": <debug level>,
+///     "user-context": { <json map> },
+///     "comment": <comment>
+/// }
+/// @endcode
+///
+/// JSON syntax for all Kea server for output options is:
+/// @code
+/// {
+///    "output": <output, e.g. log file name>,
+///    "maxver": <maximum file version>,
+///    "maxsize": <maxium file size>,
+///    "flush": <flush flag>
+/// }
+/// @endcode
+///
+/// YANG syntax for kea-logging is with name as the logger list key and
+/// output as the output option list key.
+/// @code
+///  +--rw logger               container
+///     |
+///     +--rw name?             string
+///     +--rw output-options    container
+///     |  +--rw option*        [output]
+///     |     +--rw output      string
+///     |     +--rw maxver?     uint32
+///     |     +--rw maxsize?    uint32
+///     |     +--rw flush?      boolean
+///     +--rw debuglevel?       uint8
+///     +--rw severity?         enumeration
+///     +--rw user-context?     string
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "name": "foo",
+///         "severity": "WARN",
+///         "output_options":
+///             [
+///                 {
+///                     "output": "/bar",
+///                     "maxver": 10
+///                 }
+///             ]
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /kea-dhcp4-server:logging (container)
+///  /kea-dhcp4-server:logging/loggers (container)
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo'] (list instance)
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/name = foo
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/
+///     output-options (container)
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///     option[output='/bar'] (list instance)
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///     option[output='/bar']/option = /bar
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///     option[output='/bar']/maxver = 10
+///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/severity = WARN
+/// @endcode
 
-// @brief A translator class for converting a logger between
-// YANG and JSON.
-//
-// Currently supports all kea servers and agents. Speficic to Kea.
+/// @brief A translator class for converting a logger between
+/// YANG and JSON.
+///
+/// Currently supports all kea servers and agents. Speficic to Kea.
 class TranslatorLogger : virtual public TranslatorBasic {
 public:
 
@@ -163,10 +163,10 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting a logger list between
-// YANG and JSON.
-//
-// Currently supports all kea servers and agents. Speficic to Kea.
+/// @brief A translator class for converting a logger list between
+/// YANG and JSON.
+///
+/// Currently supports all kea servers and agents. Speficic to Kea.
 class TranslatorLoggers : virtual public TranslatorLogger {
 public:
 
