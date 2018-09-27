@@ -13,101 +13,101 @@
 namespace isc {
 namespace yang {
 
-// Host reservation translation between YANG and JSON
-//
-// JSON syntax for kea-dhcp4 is:
-// @code
-// {
-//     "hw-address": <hardware address>,
-//     "duid": <duid>,
-//     "circuit-id": <circuit id>,
-//     "client-id": <client id>,
-//     "flex-id": <flex id>,
-//     "ip-address": <ipv4 reserved address>,
-//     "hostname": <hostname>,
-//     "next-server": "<next server>",
-//     "server-hostname": "<server hostname>",
-//     "boot-file-name": "<boot file name>",
-//     "client-classes": "<client class names>",
-//     "option-data": [ <list of option data> ],
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// JSON syntax for kea-dhcp6 is:
-// @code
-// {
-//     "hw-address": <hardware address>,
-//     "duid": <duid>,
-//     "flex-id": <flex id>,
-//     "ip-addresses": <ipv6 reserved addresses>,
-//     "prefixes": <ipv6 reserved prefixes>,
-//     "hostname": <hostname>,
-//     "client-classes": "<client class names>",
-//     "option-data": [ <list of option data> ],
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// YANG syntax for kea-dhcp[46] is with identifier-type and identifier
-// as the list keys:
-// @code
-// +--rw identifier-type          enumeration
-// +--rw identifier               string
-// +--rw hostname?                string
-// +--rw option-data-list         option-data*
-// +--rw client-classes*          string
-// +--rw user-context?            string
-// (DHCPv4 only)
-// +--rw ip-address?              inet:ipv4-address
-// +--rw next-server?             inet:ipv4-address
-// +--rw server-hostname?         string
-// +--rw boot-file-name?          string
-// (DHCPv6 only)
-// +--rw ip-addresses*            inet:ipv6-address
-// +--rw prefixes*                inet:ipv6-prefix
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "flex-id": "00:ff",
-//         "ip-address": "10.0.0.1",
-//         "hostname": "foo"
-//     }
-// ]
-// @endcode
-// @code
-//  /kea-dhcp4-server:config (container)
-//  /kea-dhcp4-server:config/subnet4 (container)
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111'] (list instance)
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/id = 111
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/subnet = 10.0.0.0/24
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/
-//     reservations (container)
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
-//     host[identifier-type='flex-id'][identifier='00:ff'] (list instance)
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
-//     host[identifier-type='flex-id'][identifier='00:ff']/
-//     identifier-type = flex-id
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
-//     host[identifier-type='flex-id'][identifier='00:ff']/
-//     identifier = 00:ff
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
-//     host[identifier-type='flex-id'][identifier='00:ff']/
-//     hostname = foo
-//  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
-//     host[identifier-type='flex-id'][identifier='00:ff']/
-//     ip-address = 10.0.0.1
-// @endcode
+/// Host reservation translation between YANG and JSON
+///
+/// JSON syntax for kea-dhcp4 is:
+/// @code
+/// {
+///     "hw-address": <hardware address>,
+///     "duid": <duid>,
+///     "circuit-id": <circuit id>,
+///     "client-id": <client id>,
+///     "flex-id": <flex id>,
+///     "ip-address": <ipv4 reserved address>,
+///     "hostname": <hostname>,
+///     "next-server": "<next server>",
+///     "server-hostname": "<server hostname>",
+///     "boot-file-name": "<boot file name>",
+///     "client-classes": "<client class names>",
+///     "option-data": [ <list of option data> ],
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// JSON syntax for kea-dhcp6 is:
+/// @code
+/// {
+///     "hw-address": <hardware address>,
+///     "duid": <duid>,
+///     "flex-id": <flex id>,
+///     "ip-addresses": <ipv6 reserved addresses>,
+///     "prefixes": <ipv6 reserved prefixes>,
+///     "hostname": <hostname>,
+///     "client-classes": "<client class names>",
+///     "option-data": [ <list of option data> ],
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// YANG syntax for kea-dhcp[46] is with identifier-type and identifier
+/// as the list keys:
+/// @code
+/// +--rw identifier-type          enumeration
+/// +--rw identifier               string
+/// +--rw hostname?                string
+/// +--rw option-data-list         option-data*
+/// +--rw client-classes*          string
+/// +--rw user-context?            string
+/// (DHCPv4 only)
+/// +--rw ip-address?              inet:ipv4-address
+/// +--rw next-server?             inet:ipv4-address
+/// +--rw server-hostname?         string
+/// +--rw boot-file-name?          string
+/// (DHCPv6 only)
+/// +--rw ip-addresses*            inet:ipv6-address
+/// +--rw prefixes*                inet:ipv6-prefix
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "flex-id": "00:ff",
+///         "ip-address": "10.0.0.1",
+///         "hostname": "foo"
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /kea-dhcp4-server:config (container)
+///  /kea-dhcp4-server:config/subnet4 (container)
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111'] (list instance)
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/id = 111
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/subnet = 10.0.0.0/24
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/
+///     reservations (container)
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///     host[identifier-type='flex-id'][identifier='00:ff'] (list instance)
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///     host[identifier-type='flex-id'][identifier='00:ff']/
+///     identifier-type = flex-id
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///     host[identifier-type='flex-id'][identifier='00:ff']/
+///     identifier = 00:ff
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///     host[identifier-type='flex-id'][identifier='00:ff']/
+///     hostname = foo
+///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///     host[identifier-type='flex-id'][identifier='00:ff']/
+///     ip-address = 10.0.0.1
+/// @endcode
 
-// @brief A translator class for converting a host reservation between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// @brief A translator class for converting a host reservation between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorHost : virtual public TranslatorOptionDataList {
 public:
 
@@ -150,11 +150,11 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting host reservations between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
-//
+/// @brief A translator class for converting host reservations between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+///
 class TranslatorHosts : virtual public TranslatorHost {
 public:
 
