@@ -20,6 +20,7 @@ libkea_cfgclient_la_SOURCES += base_command_mgr.cc base_command_mgr.h
 libkea_cfgclient_la_SOURCES += client_connection.cc client_connection.h
 libkea_cfgclient_la_SOURCES += command_mgr.cc command_mgr.h
 libkea_cfgclient_la_SOURCES += config_ctl_info.h config_ctl_info.cc
+libkea_cfgclient_la_SOURCES += config_ctl_parser.h config_ctl_parser.cc
 libkea_cfgclient_la_SOURCES += config_log.h config_log.cc
 libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
 libkea_cfgclient_la_SOURCES += timeouts.h
