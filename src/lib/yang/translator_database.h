@@ -13,93 +13,93 @@
 namespace isc {
 namespace yang {
 
-// Database access translation between YANG and JSON
-//
-// JSON syntax for all Kea servers with database access is:
-// @code
-// {
-//     "type": <type>, // required
-//     "user": <user>,
-//     "password": <password>,
-//     "host": <host>,
-//     "name": <name>,
-//     "persist": <persist flag>,
-//     "port": <port>,
-//     "lfc-interval": <lfc interval>,
-//     "readonly": <readonly flag>,
-//     "connect-timeout": <connect timeout>,
-//     "contact-points": <contact points>,
-//     "keyspace": <keyspace>,
-//     "max-reconnect-tries": <maximum reconnect tries>,
-//     "reconnect-wait-time": <reconnect wait time>,
-//     "request-timeout": <request timeout>,
-//     "tcp-keepalive": <TCP keepalive>,
-//     "tcp-nodelay": <TCP nodelay flag>,
-//     "user-context": { <json map> },
-//     "comment": <comment>
-// }
-// @endcode
-//
-// YANG syntax for kea-dhcp[46] is using database-type as the list key:
-// @code
-//  +--rw database                container
-//    |
-//    +--rw database-type?        string
-//    +--rw user?                 string
-//    +--rw password?             string
-//    +--rw host?                 string
-//    +--rw name?                 string
-//    +--rw persist?              boolean
-//    +--rw port?                 uint16
-//    +--rw lfc-interval?         uint32
-//    +--rw readonly?             boolean
-//    +--rw connect-timeout?      uint32
-//    +--rw contact-points?       string
-//    +--rw keyspace?             string
-//    +--rw max-reconnect-tries?  uint32
-//    +--rw reconnect-wait-time?  uint32
-//    +--rw request-timeout?      uint32
-//    +--rw tcp-keepalive?        uint32
-//    +--rw tcp-nodelay?          boolean
-//    +--rw user-context?         string
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "type": "mysql",
-//         "name": "kea",
-//         "user": "kea",
-//         "password": "kea",
-//         "host": "localhost",
-//         "port": 3306
-//     }
-// ]
-// @endcode
-// @code
-// /kea-dhcp6-server:config (container)
-// /kea-dhcp6-server:config/hosts-databases (container)
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql'] (list instance)
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/type = mysql
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/name = kea
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/user = kea
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/password = kea
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/host = localhost
-// /kea-dhcp6-server:config/hosts-databases/
-//    hosts-database[database-type='mysql']/port = 3306
-// @endcode
+/// Database access translation between YANG and JSON
+///
+/// JSON syntax for all Kea servers with database access is:
+/// @code
+/// {
+///     "type": <type>, /// required
+///     "user": <user>,
+///     "password": <password>,
+///     "host": <host>,
+///     "name": <name>,
+///     "persist": <persist flag>,
+///     "port": <port>,
+///     "lfc-interval": <lfc interval>,
+///     "readonly": <readonly flag>,
+///     "connect-timeout": <connect timeout>,
+///     "contact-points": <contact points>,
+///     "keyspace": <keyspace>,
+///     "max-reconnect-tries": <maximum reconnect tries>,
+///     "reconnect-wait-time": <reconnect wait time>,
+///     "request-timeout": <request timeout>,
+///     "tcp-keepalive": <TCP keepalive>,
+///     "tcp-nodelay": <TCP nodelay flag>,
+///     "user-context": { <json map> },
+///     "comment": <comment>
+/// }
+/// @endcode
+///
+/// YANG syntax for kea-dhcp[46] is using database-type as the list key:
+/// @code
+///  +--rw database                container
+///    |
+///    +--rw database-type?        string
+///    +--rw user?                 string
+///    +--rw password?             string
+///    +--rw host?                 string
+///    +--rw name?                 string
+///    +--rw persist?              boolean
+///    +--rw port?                 uint16
+///    +--rw lfc-interval?         uint32
+///    +--rw readonly?             boolean
+///    +--rw connect-timeout?      uint32
+///    +--rw contact-points?       string
+///    +--rw keyspace?             string
+///    +--rw max-reconnect-tries?  uint32
+///    +--rw reconnect-wait-time?  uint32
+///    +--rw request-timeout?      uint32
+///    +--rw tcp-keepalive?        uint32
+///    +--rw tcp-nodelay?          boolean
+///    +--rw user-context?         string
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "type": "mysql",
+///         "name": "kea",
+///         "user": "kea",
+///         "password": "kea",
+///         "host": "localhost",
+///         "port": 3306
+///     }
+/// ]
+/// @endcode
+/// @code
+/// /kea-dhcp6-server:config (container)
+/// /kea-dhcp6-server:config/hosts-databases (container)
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql'] (list instance)
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/type = mysql
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/name = kea
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/user = kea
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/password = kea
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/host = localhost
+/// /kea-dhcp6-server:config/hosts-databases/
+///    hosts-database[database-type='mysql']/port = 3306
+/// @endcode
 
-// @brief A translator class for converting a database access between
-// YANG and JSON.
-//
-// Supports kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// @brief A translator class for converting a database access between
+/// YANG and JSON.
+///
+/// Supports kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorDatabase : virtual public TranslatorBasic {
 public:
 
@@ -152,10 +152,10 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting a database access list between
-// YANG and JSON.
-//
-// Supports kea-dhcp[46]-server, does not exist in ietf-dhcpv6-server.
+/// @brief A translator class for converting a database access list between
+/// YANG and JSON.
+///
+/// Supports kea-dhcp[46]-server, does not exist in ietf-dhcpv6-server.
 class TranslatorDatabases : virtual public TranslatorDatabase {
 public:
 
