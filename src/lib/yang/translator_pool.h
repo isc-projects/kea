@@ -13,118 +13,118 @@
 namespace isc {
 namespace yang {
 
-// Address pool translation between YANG and JSON
-//
-// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
-// @code
-// {
-//     "pool": "<pool prefix or start - end addresses>",
-//     "option-data": [ <list of option data> ],
-//     "client-class": "<guard class name>",
-//     "require-client-classes": [ <list of required class names> ],
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// YANG syntax is for ietf-dhcpv6-server is with pool-id as the key:
-// @code
-//  +--rw pool-id               uint32
-//  +--rw pool-prefix           inet:ipv6-prefix
-//  +--rw start-address         inet:ipv6-address-no-zone
-//  +--rw end-address           inet:ipv6-address-no-zone
-//  +--rw valid-lifetime        yang:timeticks
-//  +--rw renew-time            yang:timeticks
-//  +--rw rebind-time           yang:timeticks
-//  +--rw preferred-lifetime    yang:timeticks
-//  +--rw rapid-commit?         boolean
-//  +--rw client-class?         string
-//  +--rw max-address-count     threshold
-//  +--rw option-set-id
-//     /server/server-config/option-sets/option-set/option-set-id
-// @endcode
-//
-// YANG syntax for kea-dhcp[46] is with start-address and end-address
-// as the keys:
-// @code
-// +--rw prefix?                  inet:ipv[46]-prefix
-// +--rw start-address            inet:ipv[46]-address
-// +--rw end-address              inet:ipv[46]-address
-// +--rw option-data-list         option-data*
-// +--rw client-class?            string
-// +--rw require-client-classes*  string
-// +--rw user-context?            string
-// @endcode
-//
-// An example in JSON and YANG formats for the IETF model:
-// @code
-// [
-//     {
-//         "pool": "2001:db8::/112"
-//     }
-// ]
-// @endcode
-// @code
-//  /ietf-dhcpv6-server:server (container)
-//  /ietf-dhcpv6-server:server/server-config (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111'] (list instance)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/network-range-id = 111
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/network-prefix = 2001:db8::/48
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools (container)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0'] (list instance)
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0']/pool-id = 0
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0']/pool-prefix = 2001:db8::1:0/112
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0']/start-address = 2001:db8::1:0
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0']/end-address = 2001:db8::1:ffff
-//  /ietf-dhcpv6-server:server/server-config/network-ranges/
-//     network-range[network-range-id='111']/address-pools/
-//     address-pool[pool-id='0']/max-address-count = disabled
-// @endcode
-//
-// An example in JSON and YANG formats for the Kea model:
-// @code
-// [
-//     {
-//         "pool": "2001:db8::1 - 2001:db8::100"
-//     }
-// ]
-// @endcode
-// @code
-//  /kea-dhcp6-server:config (container)
-//  /kea-dhcp6-server:config/subnet6 (container)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools (container)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
-//     pool[start-address='2001:db8::1'][end-address='2001:db8::100']
-//     (list instance)
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
-//     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
-//     start-address = 2001:db8::1
-//  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
-//     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
-//     end-address = 2001:db8::100
-// @endcode
+/// Address pool translation between YANG and JSON
+///
+/// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
+/// @code
+/// {
+///     "pool": "<pool prefix or start - end addresses>",
+///     "option-data": [ <list of option data> ],
+///     "client-class": "<guard class name>",
+///     "require-client-classes": [ <list of required class names> ],
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// YANG syntax is for ietf-dhcpv6-server is with pool-id as the key:
+/// @code
+///  +--rw pool-id               uint32
+///  +--rw pool-prefix           inet:ipv6-prefix
+///  +--rw start-address         inet:ipv6-address-no-zone
+///  +--rw end-address           inet:ipv6-address-no-zone
+///  +--rw valid-lifetime        yang:timeticks
+///  +--rw renew-time            yang:timeticks
+///  +--rw rebind-time           yang:timeticks
+///  +--rw preferred-lifetime    yang:timeticks
+///  +--rw rapid-commit?         boolean
+///  +--rw client-class?         string
+///  +--rw max-address-count     threshold
+///  +--rw option-set-id
+///     /server/server-config/option-sets/option-set/option-set-id
+/// @endcode
+///
+/// YANG syntax for kea-dhcp[46] is with start-address and end-address
+/// as the keys:
+/// @code
+/// +--rw prefix?                  inet:ipv[46]-prefix
+/// +--rw start-address            inet:ipv[46]-address
+/// +--rw end-address              inet:ipv[46]-address
+/// +--rw option-data-list         option-data*
+/// +--rw client-class?            string
+/// +--rw require-client-classes*  string
+/// +--rw user-context?            string
+/// @endcode
+///
+/// An example in JSON and YANG formats for the IETF model:
+/// @code
+/// [
+///     {
+///         "pool": "2001:db8::/112"
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /ietf-dhcpv6-server:server (container)
+///  /ietf-dhcpv6-server:server/server-config (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111'] (list instance)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/network-range-id = 111
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/network-prefix = 2001:db8::/48
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools (container)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0'] (list instance)
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0']/pool-id = 0
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0']/pool-prefix = 2001:db8::1:0/112
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0']/start-address = 2001:db8::1:0
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0']/end-address = 2001:db8::1:ffff
+///  /ietf-dhcpv6-server:server/server-config/network-ranges/
+///     network-range[network-range-id='111']/address-pools/
+///     address-pool[pool-id='0']/max-address-count = disabled
+/// @endcode
+///
+/// An example in JSON and YANG formats for the Kea model:
+/// @code
+/// [
+///     {
+///         "pool": "2001:db8::1 - 2001:db8::100"
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /kea-dhcp6-server:config (container)
+///  /kea-dhcp6-server:config/subnet6 (container)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools (container)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']
+///     (list instance)
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
+///     start-address = 2001:db8::1
+///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
+///     end-address = 2001:db8::100
+/// @endcode
 
-// @brief A translator class for converting a pool between YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// @brief A translator class for converting a pool between YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPool : virtual public TranslatorOptionDataList {
 public:
 
@@ -195,9 +195,9 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting pools between YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// @brief A translator class for converting pools between YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPools : virtual public TranslatorPool {
 public:
 
