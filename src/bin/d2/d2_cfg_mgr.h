@@ -264,19 +264,14 @@ public:
 
 protected:
 
-    /// @brief Parses an element using alternate parsers
+    /// @brief Parses configuration of the D2.
     ///
-    /// Each element to be parsed is passed first into this method to allow
-    /// it to be processed by SimpleParser derivations if they've been
-    /// implemented. The method should return true if it has processed the
-    /// element or false if the element should be passed onto the original
-    /// DhcpConfigParser mechanisms.  This method is invoked in both
-    /// @c DCfgMgrBase::buildParams() and DCfgMgrBase::buildAndCommit().
-    ///
-    /// @param element_id name of the element as it is expected in the cfg
-    /// @param element value of the element as ElementPtr
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
+    /// @param config Pointer to a configuration specified for D2.
+    /// @param check_only Boolean flag indicating if this method should
+    /// only verify correctness of the provided configuration.
+    /// @return Pointer to a result of configuration parsing.
+    virtual isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only);
 
     /// @brief Adds default values to the given config
     ///
@@ -285,26 +280,6 @@ protected:
     ///
     /// @param mutable_config - configuration to which defaults should be added
     virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
-
-    /// @brief Performs the parsing of the given "params" element.
-    ///
-    /// Iterates over the set of parameters, creating a parser based on the
-    /// parameter's id and then invoking its build method passing in the
-    /// parameter's configuration value.
-    ///
-    /// It then fetches the parameters, validating their values and if
-    /// valid instantiates a D2Params instance.  Invalid values result in
-    /// a throw.
-    ///
-    /// @param params_config set of scalar configuration elements to parse
-    ///
-    /// @throw D2CfgError if any of the following are true:
-    /// -# ip_address is 0.0.0.0 or ::
-    /// -# port is 0
-    /// -# dns_server_timeout is < 1
-    /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
-    /// -# ncr_format is invalid, currently only FMT_JSON is supported
-    virtual void buildParams(isc::data::ConstElementPtr params_config);
 
     /// @brief Creates an new, blank D2CfgContext context
     ///

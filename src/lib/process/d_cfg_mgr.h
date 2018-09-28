@@ -116,9 +116,6 @@ private:
     DCfgContextBase& operator=(const DCfgContextBase& rhs);
 };
 
-/// @brief Defines a sequence of Element IDs used to specify a parsing order.
-typedef std::vector<std::string> ElementIdList;
-
 /// @brief Configuration Manager
 ///
 /// DCfgMgrBase is an abstract class that provides the mechanisms for managing
@@ -205,20 +202,6 @@ public:
     /// @brief Destructor
     virtual ~DCfgMgrBase();
 
-    /// @brief Acts as the receiver of new configurations and coordinates
-    /// the parsing as described in the class brief.
-    ///
-    /// @param config_set is a set of configuration elements to be parsed.
-    /// @param check_only true if the config is to be checked only, but not applied
-    ///
-    /// @return an Element that contains the results of configuration composed
-    /// of an integer status value (0 means successful, non-zero means failure),
-    /// and a string explanation of the outcome.
-    isc::data::ConstElementPtr
-    parseConfig(isc::data::ConstElementPtr config_set,
-                bool check_only = false);
-
-
     /// @brief Acts as the receiver of new configurations.
     ///
     /// This method is similar to what @ref parseConfig does, execept it employs
@@ -245,26 +228,6 @@ public:
     simpleParseConfig(isc::data::ConstElementPtr config,
                       bool check_only = false,
                       const std::function<void()>& post_config_cb = nullptr);
-
-    /// @brief Adds a given element id to the end of the parse order list.
-    ///
-    /// The order in which object elements are retrieved from this is the
-    /// order in which they are added to the list. Derivations should use this
-    /// method to populate the parse order as part of their constructor.
-    /// Scalar parameters should NOT be included in this list.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    void addToParseOrder(const std::string& element_id){
-        parse_order_.push_back(element_id);
-    }
-
-    /// @brief Fetches the parse order list.
-    ///
-    /// @return returns a const reference to the list.
-    const ElementIdList& getParseOrder() const {
-        return (parse_order_);
-    }
 
     /// @brief Fetches the configuration context.
     ///
@@ -293,33 +256,6 @@ protected:
     ///
     /// @param mutable_config - configuration to which defaults should be added
     virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
-
-    /// @brief Parses an individual element
-    ///
-    /// Each element to be parsed is passed into this method to be converted
-    /// into the requisite application object(s).
-    ///
-    /// @param element_id name of the element as it is expected in the cfg
-    /// @param element value of the element as ElementPtr
-    ///
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
-
-    /// @brief Parses a set of scalar configuration elements into global
-    /// parameters
-    ///
-    /// For each scalar element in the set:
-    /// - Invoke parseElement
-    /// - If it returns true go to the next element otherwise:
-    ///     - create a parser for the element
-    ///     - invoke the parser's build method
-    ///     - invoke the parser's commit method
-    ///
-    /// This will commit the values to context storage making them accessible
-    /// during object parsing.
-    ///
-    /// @param params_config set of scalar configuration elements to parse
-    virtual void buildParams(isc::data::ConstElementPtr params_config);
 
     /// @brief Abstract factory which creates a context instance.
     ///
@@ -361,29 +297,6 @@ protected:
                                              bool check_only);
 
 private:
-
-    /// @brief Parse a configuration element.
-    ///
-    /// Given an element_id and data value, invoke parseElement. If
-    /// it returns true the return, otherwise created the appropriate
-    /// parser, parse the data value, and commit the results.
-    ///
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param value is the data value to be parsed and associated with
-    /// element_id.
-    ///
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    void buildAndCommit(std::string& element_id,
-                        isc::data::ConstElementPtr value);
-
-    /// @brief A list of element ids which specifies the element parsing order.
-    ///
-    /// If the list is empty, the natural order in the configuration set
-    /// it used.
-    ElementIdList parse_order_;
-
     /// @brief Pointer to the configuration context instance.
     DCfgContextBasePtr context_;
 };

@@ -183,16 +183,16 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     EXPECT_EQ(0, rcode);
 
     // Use an invalid configuration to verify parsing error return.
-    std::string config = "{ \"bogus\": 1000 } ";
+    std::string config = "{ \"ip-address\": 1000 } ";
     config_set = isc::data::Element::fromJSON(config);
     answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(1, rcode);
+    EXPECT_EQ(2, rcode);
 
     // Use an invalid configuration to verify checking error return.
     answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(1, rcode);
+    EXPECT_EQ(2, rcode);
 }
 
 // Tests that the original configuration is retained after a SIGHUP triggered

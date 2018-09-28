@@ -144,7 +144,7 @@ public:
 
         // If this configuration fails to parse most tests will fail.
         ASSERT_TRUE(fromJSON(canned_config_));
-        answer_ = cfg_mgr_->parseConfig(config_set_);
+        answer_ = cfg_mgr_->simpleParseConfig(config_set_);
         ASSERT_TRUE(checkAnswer(0));
     }
 

@@ -202,9 +202,18 @@ TEST_F(D2ProcessTest, configure) {
     // Invoke configure() with the invalid configuration.
     answer = configure(config_set_, false);
 
-    // Verify that configure result is failure, the reconfigure flag is
-    // false, and that the queue manager is still running.
-    ASSERT_TRUE(checkAnswer(answer, 1));
+    // Verify that configure result is a success, as extra parameters are
+    // ignored. the reconfigure flag is false, and that the queue manager is
+    // still running.
+    ASSERT_TRUE(checkAnswer(answer, 0));
+    EXPECT_TRUE(getReconfQueueFlag());
+    EXPECT_EQ(D2QueueMgr::RUNNING, queue_mgr->getMgrState());
+
+    // Finally, try with an invalid configuration.
+    //  Create an invalid configuration set from text config.
+    ASSERT_TRUE(fromJSON("{ \"ip-address\": \"950 Charter St.\" } "));
+    answer = configure(config_set_, false);
+    ASSERT_TRUE(checkAnswer(answer, 2));
     EXPECT_FALSE(getReconfQueueFlag());
     EXPECT_EQ(D2QueueMgr::RUNNING, queue_mgr->getMgrState());
 }
