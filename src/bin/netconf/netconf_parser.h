@@ -882,7 +882,7 @@ namespace isc { namespace netconf {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 219,     ///< Last index in yytable_.
+      yylast_ = 221,     ///< Last index in yytable_.
       yynnts_ = 100,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
