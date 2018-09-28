@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <cc/dhcp_config_error.h>
-#include <config/config_ctl_parser.h>
+#include <process/config_ctl_parser.h>
 #include <database/dbaccess_parser.h>
 #include <string>
 
@@ -15,7 +15,7 @@ using namespace isc;
 using namespace isc::data;
 
 namespace isc {
-namespace config {
+namespace process {
 
 ConfigControlInfoPtr
 ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
@@ -38,7 +38,7 @@ ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
         }
 
 #if 0
-        // @todo, should it have user_context and what about comment?
+        // @todo Should it have user_context and what about comment?
         ConstElementPtr user_context = shared_network_data->get("user-context");
         if (user_context) {
             shared_network->setContext(user_context);
@@ -56,6 +56,6 @@ ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
     return (ctl_info);
 }
 
-} // end of namespace isc::config
+} // end of namespace isc::process
 } // end of namespace isc
 

@@ -6,7 +6,7 @@
 
 #include <config.h>
 #include <cc/dhcp_config_error.h>
-#include <config/config_ctl_parser.h>
+#include <process/config_ctl_parser.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -14,7 +14,7 @@
 #include <sstream>
 #include <iostream>
 
-using namespace isc::config;
+using namespace isc::process;
 using namespace isc::data;
 
 // Verifies valid configurations are parsed correctly.  The test

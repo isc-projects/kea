@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
