@@ -359,18 +359,18 @@ namespace isc { namespace netconf {
         TOKEN_CA_SERVER = 272,
         TOKEN_MODEL = 273,
         TOKEN_CONTROL_SOCKET = 274,
-        TOKEN_TYPE = 275,
+        TOKEN_SOCKET_TYPE = 275,
         TOKEN_UNIX = 276,
         TOKEN_HTTP = 277,
         TOKEN_STDOUT = 278,
-        TOKEN_NAME = 279,
-        TOKEN_HOST = 280,
-        TOKEN_PORT = 281,
-        TOKEN_HOOKS_LIBRARIES = 282,
-        TOKEN_LIBRARY = 283,
-        TOKEN_PARAMETERS = 284,
-        TOKEN_LOGGING = 285,
-        TOKEN_LOGGERS = 286,
+        TOKEN_SOCKET_NAME = 279,
+        TOKEN_SOCKET_URL = 280,
+        TOKEN_HOOKS_LIBRARIES = 281,
+        TOKEN_LIBRARY = 282,
+        TOKEN_PARAMETERS = 283,
+        TOKEN_LOGGING = 284,
+        TOKEN_LOGGERS = 285,
+        TOKEN_NAME = 286,
         TOKEN_OUTPUT_OPTIONS = 287,
         TOKEN_OUTPUT = 288,
         TOKEN_DEBUGLEVEL = 289,
@@ -378,17 +378,13 @@ namespace isc { namespace netconf {
         TOKEN_FLUSH = 291,
         TOKEN_MAXSIZE = 292,
         TOKEN_MAXVER = 293,
-        TOKEN_DHCP4 = 294,
-        TOKEN_DHCP6 = 295,
-        TOKEN_DHCPDDNS = 296,
-        TOKEN_CONTROL_AGENT = 297,
-        TOKEN_START_JSON = 298,
-        TOKEN_START_NETCONF = 299,
-        TOKEN_START_SUB_NETCONF = 300,
-        TOKEN_STRING = 301,
-        TOKEN_INTEGER = 302,
-        TOKEN_FLOAT = 303,
-        TOKEN_BOOLEAN = 304
+        TOKEN_START_JSON = 294,
+        TOKEN_START_NETCONF = 295,
+        TOKEN_START_SUB_NETCONF = 296,
+        TOKEN_STRING = 297,
+        TOKEN_INTEGER = 298,
+        TOKEN_FLOAT = 299,
+        TOKEN_BOOLEAN = 300
       };
     };
 
@@ -577,7 +573,7 @@ namespace isc { namespace netconf {
 
     static inline
     symbol_type
-    make_TYPE (const location_type& l);
+    make_SOCKET_TYPE (const location_type& l);
 
     static inline
     symbol_type
@@ -593,15 +589,11 @@ namespace isc { namespace netconf {
 
     static inline
     symbol_type
-    make_NAME (const location_type& l);
+    make_SOCKET_NAME (const location_type& l);
 
     static inline
     symbol_type
-    make_HOST (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PORT (const location_type& l);
+    make_SOCKET_URL (const location_type& l);
 
     static inline
     symbol_type
@@ -622,6 +614,10 @@ namespace isc { namespace netconf {
     static inline
     symbol_type
     make_LOGGERS (const location_type& l);
+
+    static inline
+    symbol_type
+    make_NAME (const location_type& l);
 
     static inline
     symbol_type
@@ -650,22 +646,6 @@ namespace isc { namespace netconf {
     static inline
     symbol_type
     make_MAXVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP4 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCPDDNS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONTROL_AGENT (const location_type& l);
 
     static inline
     symbol_type
@@ -753,7 +733,7 @@ namespace isc { namespace netconf {
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const short int yypact_ninf_;
+    static const signed char yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token number \a t to a symbol number.
@@ -902,12 +882,12 @@ namespace isc { namespace netconf {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 221,     ///< Last index in yytable_.
-      yynnts_ = 106,  ///< Number of nonterminal symbols.
+      yylast_ = 219,     ///< Last index in yytable_.
+      yynnts_ = 100,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 50  ///< Number of tokens.
+      yyntokens_ = 46  ///< Number of tokens.
     };
 
 
@@ -954,9 +934,9 @@ namespace isc { namespace netconf {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45,    46,    47,    48,    49
+      45
     };
-    const unsigned user_token_number_max_ = 304;
+    const unsigned user_token_number_max_ = 300;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -987,25 +967,25 @@ namespace isc { namespace netconf {
   {
     switch (other.type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1024,25 +1004,25 @@ namespace isc { namespace netconf {
     (void) v;
     switch (this->type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1120,25 +1100,25 @@ namespace isc { namespace netconf {
     // Type destructor.
   switch (yytype)
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1163,25 +1143,25 @@ namespace isc { namespace netconf {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1244,7 +1224,7 @@ namespace isc { namespace netconf {
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300,   301,   302,   303,   304
+     295,   296,   297,   298,   299,   300
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1358,9 +1338,9 @@ namespace isc { namespace netconf {
   }
 
   NetconfParser::symbol_type
-  NetconfParser::make_TYPE (const location_type& l)
+  NetconfParser::make_SOCKET_TYPE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TYPE, l);
+    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
   }
 
   NetconfParser::symbol_type
@@ -1382,21 +1362,15 @@ namespace isc { namespace netconf {
   }
 
   NetconfParser::symbol_type
-  NetconfParser::make_NAME (const location_type& l)
+  NetconfParser::make_SOCKET_NAME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_NAME, l);
+    return symbol_type (token::TOKEN_SOCKET_NAME, l);
   }
 
   NetconfParser::symbol_type
-  NetconfParser::make_HOST (const location_type& l)
+  NetconfParser::make_SOCKET_URL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_HOST, l);
-  }
-
-  NetconfParser::symbol_type
-  NetconfParser::make_PORT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_PORT, l);
+    return symbol_type (token::TOKEN_SOCKET_URL, l);
   }
 
   NetconfParser::symbol_type
@@ -1427,6 +1401,12 @@ namespace isc { namespace netconf {
   NetconfParser::make_LOGGERS (const location_type& l)
   {
     return symbol_type (token::TOKEN_LOGGERS, l);
+  }
+
+  NetconfParser::symbol_type
+  NetconfParser::make_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NAME, l);
   }
 
   NetconfParser::symbol_type
@@ -1469,30 +1449,6 @@ namespace isc { namespace netconf {
   NetconfParser::make_MAXVER (const location_type& l)
   {
     return symbol_type (token::TOKEN_MAXVER, l);
-  }
-
-  NetconfParser::symbol_type
-  NetconfParser::make_DHCP4 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP4, l);
-  }
-
-  NetconfParser::symbol_type
-  NetconfParser::make_DHCP6 (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCP6, l);
-  }
-
-  NetconfParser::symbol_type
-  NetconfParser::make_DHCPDDNS (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_DHCPDDNS, l);
-  }
-
-  NetconfParser::symbol_type
-  NetconfParser::make_CONTROL_AGENT (const location_type& l)
-  {
-    return symbol_type (token::TOKEN_CONTROL_AGENT, l);
   }
 
   NetconfParser::symbol_type
@@ -1540,7 +1496,7 @@ namespace isc { namespace netconf {
 
 #line 14 "netconf_parser.yy" // lalr1.cc:379
 } } // isc::netconf
-#line 1544 "netconf_parser.h" // lalr1.cc:379
+#line 1500 "netconf_parser.h" // lalr1.cc:379
 
 
 

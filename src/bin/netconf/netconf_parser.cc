@@ -244,25 +244,25 @@ namespace isc { namespace netconf {
   {
     switch (that.type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.copy< ElementPtr > (that.value);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.copy< bool > (that.value);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.copy< double > (that.value);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.copy< int64_t > (that.value);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.copy< std::string > (that.value);
         break;
 
@@ -277,25 +277,25 @@ namespace isc { namespace netconf {
   {
     switch (that.type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.move< ElementPtr > (that.value);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.move< bool > (that.value);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.move< double > (that.value);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.move< int64_t > (that.value);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.move< std::string > (that.value);
         break;
 
@@ -313,25 +313,25 @@ namespace isc { namespace netconf {
     state = that.state;
     switch (that.type_get ())
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         value.copy< ElementPtr > (that.value);
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         value.copy< bool > (that.value);
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         value.copy< double > (that.value);
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         value.copy< int64_t > (that.value);
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         value.copy< std::string > (that.value);
         break;
 
@@ -370,51 +370,51 @@ namespace isc { namespace netconf {
         << yysym.location << ": ";
     switch (yytype)
     {
-            case 46: // "constant string"
+            case 42: // "constant string"
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 378 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
 #line 385 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
 #line 392 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
 #line 399 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 58: // value
+      case 54: // value
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 406 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 61: // map_value
+      case 57: // map_value
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 413 "netconf_parser.cc" // lalr1.cc:635
         break;
 
-      case 116: // socket_type_value
+      case 113: // socket_type_value
 
-#line 108 "netconf_parser.yy" // lalr1.cc:635
+#line 103 "netconf_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 420 "netconf_parser.cc" // lalr1.cc:635
         break;
@@ -613,25 +613,25 @@ namespace isc { namespace netconf {
          when using variants.  */
       switch (yyr1_[yyn])
     {
-      case 58: // value
-      case 61: // map_value
-      case 116: // socket_type_value
+      case 54: // value
+      case 57: // map_value
+      case 113: // socket_type_value
         yylhs.value.build< ElementPtr > ();
         break;
 
-      case 49: // "boolean"
+      case 45: // "boolean"
         yylhs.value.build< bool > ();
         break;
 
-      case 48: // "floating point"
+      case 44: // "floating point"
         yylhs.value.build< double > ();
         break;
 
-      case 47: // "integer"
+      case 43: // "integer"
         yylhs.value.build< int64_t > ();
         break;
 
-      case 46: // "constant string"
+      case 42: // "constant string"
         yylhs.value.build< std::string > ();
         break;
 
@@ -654,25 +654,25 @@ namespace isc { namespace netconf {
           switch (yyn)
             {
   case 2:
-#line 119 "netconf_parser.yy" // lalr1.cc:856
+#line 114 "netconf_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.NO_KEYWORDS; }
 #line 660 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 4:
-#line 120 "netconf_parser.yy" // lalr1.cc:856
+#line 115 "netconf_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.CONFIG; }
 #line 666 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 6:
-#line 121 "netconf_parser.yy" // lalr1.cc:856
+#line 116 "netconf_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.NETCONF; }
 #line 672 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 8:
-#line 129 "netconf_parser.yy" // lalr1.cc:856
+#line 124 "netconf_parser.yy" // lalr1.cc:856
     {
     // Parse the Control-netconf map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
@@ -682,7 +682,7 @@ namespace isc { namespace netconf {
     break;
 
   case 9:
-#line 133 "netconf_parser.yy" // lalr1.cc:856
+#line 128 "netconf_parser.yy" // lalr1.cc:856
     {
     // parsing completed
 }
@@ -690,7 +690,7 @@ namespace isc { namespace netconf {
     break;
 
   case 10:
-#line 140 "netconf_parser.yy" // lalr1.cc:856
+#line 135 "netconf_parser.yy" // lalr1.cc:856
     {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
@@ -699,49 +699,49 @@ namespace isc { namespace netconf {
     break;
 
   case 11:
-#line 146 "netconf_parser.yy" // lalr1.cc:856
+#line 141 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
 #line 705 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 12:
-#line 147 "netconf_parser.yy" // lalr1.cc:856
+#line 142 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
 #line 711 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 13:
-#line 148 "netconf_parser.yy" // lalr1.cc:856
+#line 143 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
 #line 717 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 14:
-#line 149 "netconf_parser.yy" // lalr1.cc:856
+#line 144 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
 #line 723 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 15:
-#line 150 "netconf_parser.yy" // lalr1.cc:856
+#line 145 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
 #line 729 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 16:
-#line 151 "netconf_parser.yy" // lalr1.cc:856
+#line 146 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 735 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 17:
-#line 152 "netconf_parser.yy" // lalr1.cc:856
+#line 147 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 741 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 18:
-#line 156 "netconf_parser.yy" // lalr1.cc:856
+#line 151 "netconf_parser.yy" // lalr1.cc:856
     {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -752,7 +752,7 @@ namespace isc { namespace netconf {
     break;
 
   case 19:
-#line 161 "netconf_parser.yy" // lalr1.cc:856
+#line 156 "netconf_parser.yy" // lalr1.cc:856
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -762,13 +762,13 @@ namespace isc { namespace netconf {
     break;
 
   case 20:
-#line 167 "netconf_parser.yy" // lalr1.cc:856
+#line 162 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
 #line 768 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 23:
-#line 181 "netconf_parser.yy" // lalr1.cc:856
+#line 176 "netconf_parser.yy" // lalr1.cc:856
     {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
@@ -777,7 +777,7 @@ namespace isc { namespace netconf {
     break;
 
   case 24:
-#line 185 "netconf_parser.yy" // lalr1.cc:856
+#line 180 "netconf_parser.yy" // lalr1.cc:856
     {
                   // map consisting of a shorter map followed by
                   // comma and string:value
@@ -787,7 +787,7 @@ namespace isc { namespace netconf {
     break;
 
   case 25:
-#line 192 "netconf_parser.yy" // lalr1.cc:856
+#line 187 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
@@ -796,14 +796,14 @@ namespace isc { namespace netconf {
     break;
 
   case 26:
-#line 195 "netconf_parser.yy" // lalr1.cc:856
+#line 190 "netconf_parser.yy" // lalr1.cc:856
     {
 }
 #line 803 "netconf_parser.cc" // lalr1.cc:856
     break;
 
   case 29:
-#line 202 "netconf_parser.yy" // lalr1.cc:856
+#line 197 "netconf_parser.yy" // lalr1.cc:856
     {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
@@ -812,7 +812,7 @@ namespace isc { namespace netconf {
     break;
 
   case 30:
-#line 206 "netconf_parser.yy" // lalr1.cc:856
+#line 201 "netconf_parser.yy" // lalr1.cc:856
     {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
@@ -821,7 +821,7 @@ namespace isc { namespace netconf {
     break;
 
   case 31:
-#line 219 "netconf_parser.yy" // lalr1.cc:856
+#line 214 "netconf_parser.yy" // lalr1.cc:856
     {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as< std::string > ();
@@ -832,7 +832,7 @@ namespace isc { namespace netconf {
     break;
 
   case 32:
-#line 228 "netconf_parser.yy" // lalr1.cc:856
+#line 222 "netconf_parser.yy" // lalr1.cc:856
     {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -843,7 +843,7 @@ namespace isc { namespace netconf {
     break;
 
   case 33:
-#line 233 "netconf_parser.yy" // lalr1.cc:856
+#line 227 "netconf_parser.yy" // lalr1.cc:856
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -852,8 +852,8 @@ namespace isc { namespace netconf {
 #line 853 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 43:
-#line 255 "netconf_parser.yy" // lalr1.cc:856
+  case 39:
+#line 245 "netconf_parser.yy" // lalr1.cc:856
     {
 
     // Let's create a MapElement that will represent it, add it to the
@@ -868,8 +868,8 @@ namespace isc { namespace netconf {
 #line 869 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 44:
-#line 265 "netconf_parser.yy" // lalr1.cc:856
+  case 40:
+#line 255 "netconf_parser.yy" // lalr1.cc:856
     {
     // Ok, we're done with parsing control-netconf. Let's take the map
     // off the stack.
@@ -879,16 +879,16 @@ namespace isc { namespace netconf {
 #line 880 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 52:
-#line 285 "netconf_parser.yy" // lalr1.cc:856
+  case 50:
+#line 279 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 888 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 53:
-#line 287 "netconf_parser.yy" // lalr1.cc:856
+  case 51:
+#line 281 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as< ElementPtr > ();
@@ -914,16 +914,16 @@ namespace isc { namespace netconf {
 #line 915 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 54:
-#line 310 "netconf_parser.yy" // lalr1.cc:856
+  case 52:
+#line 304 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 923 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 55:
-#line 312 "netconf_parser.yy" // lalr1.cc:856
+  case 53:
+#line 306 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -951,8 +951,8 @@ namespace isc { namespace netconf {
 #line 952 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 56:
-#line 338 "netconf_parser.yy" // lalr1.cc:856
+  case 54:
+#line 332 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hooks-libraries", l);
@@ -962,8 +962,8 @@ namespace isc { namespace netconf {
 #line 963 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 57:
-#line 343 "netconf_parser.yy" // lalr1.cc:856
+  case 55:
+#line 337 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -971,8 +971,8 @@ namespace isc { namespace netconf {
 #line 972 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 62:
-#line 356 "netconf_parser.yy" // lalr1.cc:856
+  case 60:
+#line 350 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
@@ -981,24 +981,24 @@ namespace isc { namespace netconf {
 #line 982 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 63:
-#line 360 "netconf_parser.yy" // lalr1.cc:856
+  case 61:
+#line 354 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
 #line 990 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 69:
-#line 373 "netconf_parser.yy" // lalr1.cc:856
+  case 67:
+#line 367 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 998 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 70:
-#line 375 "netconf_parser.yy" // lalr1.cc:856
+  case 68:
+#line 369 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr lib(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
@@ -1007,16 +1007,16 @@ namespace isc { namespace netconf {
 #line 1008 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 71:
-#line 381 "netconf_parser.yy" // lalr1.cc:856
+  case 69:
+#line 375 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 1016 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 72:
-#line 383 "netconf_parser.yy" // lalr1.cc:856
+  case 70:
+#line 377 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
@@ -1024,8 +1024,8 @@ namespace isc { namespace netconf {
 #line 1025 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 73:
-#line 391 "netconf_parser.yy" // lalr1.cc:856
+  case 71:
+#line 385 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[2].location)));
     ctx.stack_.back()->set("managed-servers", m);
@@ -1035,8 +1035,8 @@ namespace isc { namespace netconf {
 #line 1036 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 74:
-#line 396 "netconf_parser.yy" // lalr1.cc:856
+  case 72:
+#line 390 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1044,8 +1044,8 @@ namespace isc { namespace netconf {
 #line 1045 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 84:
-#line 420 "netconf_parser.yy" // lalr1.cc:856
+  case 82:
+#line 414 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4", m);
@@ -1055,8 +1055,8 @@ namespace isc { namespace netconf {
 #line 1056 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 85:
-#line 425 "netconf_parser.yy" // lalr1.cc:856
+  case 83:
+#line 419 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1064,8 +1064,8 @@ namespace isc { namespace netconf {
 #line 1065 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 86:
-#line 431 "netconf_parser.yy" // lalr1.cc:856
+  case 84:
+#line 425 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp6", m);
@@ -1075,8 +1075,8 @@ namespace isc { namespace netconf {
 #line 1076 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 87:
-#line 436 "netconf_parser.yy" // lalr1.cc:856
+  case 85:
+#line 430 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1084,8 +1084,8 @@ namespace isc { namespace netconf {
 #line 1085 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 88:
-#line 442 "netconf_parser.yy" // lalr1.cc:856
+  case 86:
+#line 436 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("d2", m);
@@ -1095,8 +1095,8 @@ namespace isc { namespace netconf {
 #line 1096 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 89:
-#line 447 "netconf_parser.yy" // lalr1.cc:856
+  case 87:
+#line 441 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1104,8 +1104,8 @@ namespace isc { namespace netconf {
 #line 1105 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 90:
-#line 453 "netconf_parser.yy" // lalr1.cc:856
+  case 88:
+#line 447 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ca", m);
@@ -1115,8 +1115,8 @@ namespace isc { namespace netconf {
 #line 1116 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 91:
-#line 458 "netconf_parser.yy" // lalr1.cc:856
+  case 89:
+#line 452 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1124,16 +1124,16 @@ namespace isc { namespace netconf {
 #line 1125 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 99:
-#line 477 "netconf_parser.yy" // lalr1.cc:856
+  case 97:
+#line 471 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 1133 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 100:
-#line 479 "netconf_parser.yy" // lalr1.cc:856
+  case 98:
+#line 473 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr model(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("model", model);
@@ -1142,8 +1142,8 @@ namespace isc { namespace netconf {
 #line 1143 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 101:
-#line 486 "netconf_parser.yy" // lalr1.cc:856
+  case 99:
+#line 480 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
@@ -1153,8 +1153,8 @@ namespace isc { namespace netconf {
 #line 1154 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 102:
-#line 491 "netconf_parser.yy" // lalr1.cc:856
+  case 100:
+#line 485 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1162,324 +1162,265 @@ namespace isc { namespace netconf {
 #line 1163 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 112:
-#line 510 "netconf_parser.yy" // lalr1.cc:856
+  case 109:
+#line 503 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.SOCKET_TYPE);
 }
 #line 1171 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 113:
-#line 512 "netconf_parser.yy" // lalr1.cc:856
+  case 110:
+#line 505 "netconf_parser.yy" // lalr1.cc:856
     {
-    ctx.stack_.back()->set("type", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->set("socket-type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
 #line 1180 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 114:
-#line 518 "netconf_parser.yy" // lalr1.cc:856
+  case 111:
+#line 511 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("unix", ctx.loc2pos(yystack_[0].location))); }
 #line 1186 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 115:
-#line 519 "netconf_parser.yy" // lalr1.cc:856
+  case 112:
+#line 512 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("http", ctx.loc2pos(yystack_[0].location))); }
 #line 1192 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 116:
-#line 520 "netconf_parser.yy" // lalr1.cc:856
+  case 113:
+#line 513 "netconf_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("stdout", ctx.loc2pos(yystack_[0].location))); }
 #line 1198 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 117:
-#line 523 "netconf_parser.yy" // lalr1.cc:856
+  case 114:
+#line 516 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 1206 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 118:
-#line 525 "netconf_parser.yy" // lalr1.cc:856
+  case 115:
+#line 518 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("name", name);
+    ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
 #line 1216 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 119:
-#line 532 "netconf_parser.yy" // lalr1.cc:856
+  case 116:
+#line 525 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
 #line 1224 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 120:
-#line 534 "netconf_parser.yy" // lalr1.cc:856
+  case 117:
+#line 527 "netconf_parser.yy" // lalr1.cc:856
     {
-    ElementPtr host(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("host", host);
+    ElementPtr url(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("socket-url", url);
     ctx.leave();
 }
 #line 1234 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 121:
-#line 541 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ElementPtr port(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
-    ctx.stack_.back()->set("port", port);
-}
-#line 1243 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 122:
-#line 549 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.enter(ctx.NO_KEYWORDS);
-}
-#line 1251 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 123:
-#line 551 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as< ElementPtr > ());
-    ctx.leave();
-}
-#line 1260 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 124:
-#line 556 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.enter(ctx.NO_KEYWORDS);
-}
-#line 1268 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 125:
-#line 558 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as< ElementPtr > ());
-    ctx.leave();
-}
-#line 1277 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 126:
-#line 563 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.enter(ctx.NO_KEYWORDS);
-}
-#line 1285 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 127:
-#line 565 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as< ElementPtr > ());
-    ctx.leave();
-}
-#line 1294 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 128:
-#line 570 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.enter(ctx.NO_KEYWORDS);
-}
-#line 1302 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 129:
-#line 572 "netconf_parser.yy" // lalr1.cc:856
-    {
-    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as< ElementPtr > ());
-    ctx.leave();
-}
-#line 1311 "netconf_parser.cc" // lalr1.cc:856
-    break;
-
-  case 130:
-#line 583 "netconf_parser.yy" // lalr1.cc:856
+  case 118:
+#line 540 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1322 "netconf_parser.cc" // lalr1.cc:856
+#line 1245 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 131:
-#line 588 "netconf_parser.yy" // lalr1.cc:856
+  case 119:
+#line 545 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1331 "netconf_parser.cc" // lalr1.cc:856
+#line 1254 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 135:
-#line 605 "netconf_parser.yy" // lalr1.cc:856
+  case 123:
+#line 562 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1342 "netconf_parser.cc" // lalr1.cc:856
+#line 1265 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 136:
-#line 610 "netconf_parser.yy" // lalr1.cc:856
+  case 124:
+#line 567 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1351 "netconf_parser.cc" // lalr1.cc:856
+#line 1274 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 139:
-#line 622 "netconf_parser.yy" // lalr1.cc:856
+  case 127:
+#line 579 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1361 "netconf_parser.cc" // lalr1.cc:856
+#line 1284 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 140:
-#line 626 "netconf_parser.yy" // lalr1.cc:856
+  case 128:
+#line 583 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 1369 "netconf_parser.cc" // lalr1.cc:856
+#line 1292 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 150:
-#line 643 "netconf_parser.yy" // lalr1.cc:856
+  case 138:
+#line 600 "netconf_parser.yy" // lalr1.cc:856
+    {
+    ctx.enter(ctx.NO_KEYWORDS);
+}
+#line 1300 "netconf_parser.cc" // lalr1.cc:856
+    break;
+
+  case 139:
+#line 602 "netconf_parser.yy" // lalr1.cc:856
+    {
+    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ctx.stack_.back()->set("name", name);
+    ctx.leave();
+}
+#line 1310 "netconf_parser.cc" // lalr1.cc:856
+    break;
+
+  case 140:
+#line 608 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr dl(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1378 "netconf_parser.cc" // lalr1.cc:856
+#line 1319 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 151:
-#line 648 "netconf_parser.yy" // lalr1.cc:856
+  case 141:
+#line 613 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1386 "netconf_parser.cc" // lalr1.cc:856
+#line 1327 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 152:
-#line 650 "netconf_parser.yy" // lalr1.cc:856
+  case 142:
+#line 615 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1396 "netconf_parser.cc" // lalr1.cc:856
+#line 1337 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 153:
-#line 656 "netconf_parser.yy" // lalr1.cc:856
+  case 143:
+#line 621 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1407 "netconf_parser.cc" // lalr1.cc:856
+#line 1348 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 154:
-#line 661 "netconf_parser.yy" // lalr1.cc:856
+  case 144:
+#line 626 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1416 "netconf_parser.cc" // lalr1.cc:856
+#line 1357 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 157:
-#line 670 "netconf_parser.yy" // lalr1.cc:856
+  case 147:
+#line 635 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1426 "netconf_parser.cc" // lalr1.cc:856
+#line 1367 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 158:
-#line 674 "netconf_parser.yy" // lalr1.cc:856
+  case 148:
+#line 639 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 1434 "netconf_parser.cc" // lalr1.cc:856
+#line 1375 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 165:
-#line 688 "netconf_parser.yy" // lalr1.cc:856
+  case 155:
+#line 653 "netconf_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORDS);
 }
-#line 1442 "netconf_parser.cc" // lalr1.cc:856
+#line 1383 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 166:
-#line 690 "netconf_parser.yy" // lalr1.cc:856
+  case 156:
+#line 655 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1452 "netconf_parser.cc" // lalr1.cc:856
+#line 1393 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 167:
-#line 696 "netconf_parser.yy" // lalr1.cc:856
+  case 157:
+#line 661 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr flush(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1461 "netconf_parser.cc" // lalr1.cc:856
+#line 1402 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 168:
-#line 701 "netconf_parser.yy" // lalr1.cc:856
+  case 158:
+#line 666 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1470 "netconf_parser.cc" // lalr1.cc:856
+#line 1411 "netconf_parser.cc" // lalr1.cc:856
     break;
 
-  case 169:
-#line 706 "netconf_parser.yy" // lalr1.cc:856
+  case 159:
+#line 671 "netconf_parser.yy" // lalr1.cc:856
     {
     ElementPtr maxver(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1479 "netconf_parser.cc" // lalr1.cc:856
+#line 1420 "netconf_parser.cc" // lalr1.cc:856
     break;
 
 
-#line 1483 "netconf_parser.cc" // lalr1.cc:856
+#line 1424 "netconf_parser.cc" // lalr1.cc:856
             default:
               break;
             }
@@ -1733,42 +1674,40 @@ namespace isc { namespace netconf {
   }
 
 
-  const short int NetconfParser::yypact_ninf_ = -216;
+  const signed char NetconfParser::yypact_ninf_ = -71;
 
   const signed char NetconfParser::yytable_ninf_ = -1;
 
   const short int
   NetconfParser::yypact_[] =
   {
-      74,  -216,  -216,  -216,     8,     2,     3,    39,  -216,  -216,
-    -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,
-    -216,  -216,  -216,  -216,     2,   -13,    -5,    11,  -216,    52,
-      72,    79,    77,    84,  -216,  -216,  -216,  -216,  -216,  -216,
-     102,  -216,    23,  -216,  -216,  -216,  -216,  -216,  -216,  -216,
-    -216,  -216,   107,  -216,  -216,    53,  -216,  -216,  -216,  -216,
-    -216,  -216,     2,     2,  -216,    59,   111,   122,   123,   124,
-     125,   126,  -216,    -5,  -216,   127,   128,   129,   130,    11,
-    -216,  -216,  -216,   131,   132,   133,     2,     2,     2,     2,
-    -216,   134,    87,  -216,   137,  -216,     2,    11,   106,  -216,
-    -216,  -216,  -216,  -216,  -216,  -216,    -2,   136,  -216,    56,
-    -216,    62,  -216,  -216,  -216,  -216,  -216,  -216,  -216,   138,
-     135,  -216,  -216,  -216,  -216,  -216,  -216,   139,   141,  -216,
-    -216,   143,   106,  -216,   144,   145,   146,   147,  -216,    -2,
-      -1,  -216,   136,   148,  -216,   149,   150,   151,   155,  -216,
-    -216,  -216,  -216,    76,  -216,  -216,  -216,  -216,   157,    70,
-      70,    70,    70,   161,   162,   -11,  -216,  -216,    26,  -216,
-    -216,  -216,  -216,  -216,  -216,    90,  -216,  -216,  -216,    91,
-      92,    93,   108,     2,  -216,    28,   157,  -216,   163,   164,
-      70,  -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,   165,
-    -216,  -216,  -216,  -216,  -216,    94,  -216,  -216,  -216,  -216,
-    -216,   109,   166,  -216,   167,   168,   105,   170,    28,  -216,
-    -216,    66,   140,   171,  -216,   142,  -216,  -216,  -216,   173,
-    -216,  -216,  -216,   100,  -216,  -216,  -216,  -216,  -216,  -216,
-     172,  -216,   174,   176,   152,    66,  -216,  -216,   104,  -216,
-      99,   154,  -216,  -216,   -17,   172,  -216,  -216,  -216,  -216,
-    -216,  -216,  -216,   177,   178,   179,   101,  -216,  -216,  -216,
-    -216,  -216,  -216,   180,   121,   156,   158,   -17,  -216,   160,
-    -216,  -216,  -216,  -216,  -216
+      62,   -71,   -71,   -71,     8,     4,     3,     5,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,     4,   -11,    -3,    29,   -71,    26,
+      47,    58,    46,    75,   -71,   -71,    86,   -71,    65,   -71,
+     -71,   -71,   -71,   -71,   100,   -71,   -71,    81,    95,   -71,
+     -71,   -71,   -71,   -71,   -71,     4,     4,   -71,    70,   107,
+     109,   -71,    -3,   -71,   110,   111,   112,   113,   -71,    29,
+     -71,   -71,   114,   115,   116,   -71,   117,    74,   -71,   120,
+     -71,     4,    29,    90,   -71,   -71,   -71,    50,   119,   -71,
+     121,   -71,    66,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     122,   118,   -71,   -71,   -71,   -71,   -71,   -71,   125,   124,
+     -71,   -71,   128,    90,   -71,   129,   130,   131,   132,   -71,
+      50,   -12,   -71,   119,   123,   -71,   136,   137,   138,   140,
+     -71,   -71,   -71,   -71,    67,   -71,   -71,   -71,   -71,   141,
+      41,    41,    41,    41,   133,   134,    -5,   -71,   -71,    93,
+     -71,   -71,   -71,   -71,   -71,   -71,    69,   -71,   -71,   -71,
+      73,    76,    77,    97,     4,   -71,    -7,   141,   -71,   145,
+     146,    41,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     147,   -71,   -71,   -71,   -71,    79,   -71,   -71,   -71,   -71,
+     -71,   -71,   126,   148,   -71,   149,   150,   127,   152,    -7,
+     -71,   -71,     9,   139,   153,   -71,   142,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,    83,   -71,   -71,   -71,   -71,   -71,
+     154,   -71,   155,   156,   158,     9,   -71,   -71,    94,   -71,
+      84,   143,   144,   -71,   -19,   154,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   159,   160,   161,    85,   -71,   -71,
+     -71,   -71,   -71,   -71,   162,   135,   151,   163,   -19,   -71,
+     165,   -71,   -71,   -71,   -71,   -71
   };
 
   const unsigned char
@@ -1776,177 +1715,168 @@ namespace isc { namespace netconf {
   {
        0,     2,     4,     6,     0,     0,     0,     0,     1,    25,
       18,    15,    14,    11,    12,    13,     3,    10,    16,    17,
-      32,     5,     8,     7,    27,    21,     0,     0,    29,     0,
-      28,     0,     0,    22,    43,   130,   122,   124,   126,   128,
-       0,    42,     0,    34,    36,    38,    39,    40,    41,    37,
-      52,    54,     0,    56,    51,     0,    45,    49,    50,    48,
-      47,    26,     0,     0,    19,     0,     0,     0,     0,     0,
-       0,     0,    31,     0,    33,     0,     0,     0,     0,     0,
-       9,    30,    23,     0,     0,     0,     0,     0,     0,     0,
-      35,     0,     0,    73,     0,    46,     0,     0,     0,   123,
-     125,   127,   129,    20,    53,    55,    75,    58,    24,     0,
-     135,     0,   132,   134,    84,    86,    88,    90,    83,     0,
-      76,    77,    79,    80,    81,    82,    62,     0,    59,    60,
-      44,     0,     0,   131,     0,     0,     0,     0,    74,     0,
-       0,    57,     0,     0,   133,     0,     0,     0,     0,    78,
-      69,    71,    66,     0,    64,    67,    68,    61,     0,     0,
-       0,     0,     0,     0,     0,     0,    63,   139,     0,   137,
-      99,   101,    98,    96,    97,     0,    92,    94,    95,     0,
-       0,     0,     0,     0,    65,     0,     0,   136,     0,     0,
-       0,    85,    87,    89,    91,    70,    72,   117,   153,     0,
-     151,   149,   147,   148,   143,     0,   141,   145,   146,   144,
-     138,     0,     0,    93,     0,     0,     0,     0,     0,   140,
-     100,     0,     0,     0,   150,     0,   142,   112,   119,     0,
-     111,   109,   110,     0,   103,   105,   106,   107,   108,   118,
-       0,   152,     0,     0,     0,     0,   102,   157,     0,   155,
-       0,     0,   121,   104,     0,     0,   154,   114,   115,   116,
-     113,   120,   165,     0,     0,     0,     0,   159,   161,   162,
-     163,   164,   156,     0,     0,     0,     0,     0,   158,     0,
-     167,   168,   169,   160,   166
+      32,     5,     8,     7,    27,    21,     0,    41,    29,     0,
+      28,     0,     0,    22,    39,   118,     0,    38,     0,    34,
+      36,    37,    50,    52,     0,    54,    49,     0,    42,    43,
+      47,    48,    46,    45,    26,     0,     0,    19,     0,     0,
+       0,    31,     0,    33,     0,     0,     0,     0,     9,     0,
+      30,    23,     0,     0,     0,    35,     0,     0,    71,     0,
+      44,     0,    41,     0,    20,    51,    53,    73,    56,    24,
+       0,   123,     0,   120,   122,    82,    84,    86,    88,    81,
+       0,    74,    75,    77,    78,    79,    80,    60,     0,    57,
+      58,    40,     0,     0,   119,     0,     0,     0,     0,    72,
+       0,     0,    55,     0,     0,   121,     0,     0,     0,     0,
+      76,    67,    69,    64,     0,    62,    65,    66,    59,     0,
+       0,     0,     0,     0,     0,     0,     0,    61,   127,     0,
+     125,    97,    99,    96,    94,    95,     0,    90,    92,    93,
+       0,     0,     0,     0,     0,    63,     0,     0,   124,     0,
+       0,     0,    83,    85,    87,    89,    68,    70,   138,   143,
+       0,   141,   137,   135,   136,     0,   129,   131,   133,   134,
+     132,   126,     0,     0,    91,     0,     0,     0,     0,     0,
+     128,    98,     0,     0,     0,   140,     0,   130,   109,   114,
+     116,   108,   106,   107,     0,   101,   103,   104,   105,   139,
+       0,   142,     0,     0,     0,     0,   100,   147,     0,   145,
+       0,     0,     0,   102,     0,     0,   144,   111,   112,   113,
+     110,   115,   117,   155,     0,     0,     0,     0,   149,   151,
+     152,   153,   154,   146,     0,     0,     0,     0,     0,   148,
+       0,   157,   158,   159,   150,   156
   };
 
   const short int
   NetconfParser::yypgoto_[] =
   {
-    -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,   -20,    96,
-    -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,   -26,  -216,
-    -216,  -216,   112,  -216,  -216,    78,   110,   -25,  -216,   -24,
-    -216,  -216,  -216,  -216,  -216,    48,  -216,  -216,    33,  -216,
-    -216,  -216,  -216,  -216,  -216,  -216,  -216,    63,  -216,  -216,
-    -216,  -216,  -216,  -216,  -216,  -216,   -37,     1,  -216,  -216,
-    -216,  -216,  -216,   -44,  -216,  -216,  -216,  -215,  -216,  -216,
-    -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,  -216,
-    -216,  -216,  -216,    75,  -216,  -216,  -216,    18,  -216,  -216,
-     -10,  -216,  -216,  -216,  -216,  -216,  -216,   -46,  -216,  -216,
-     -67,  -216,  -216,  -216,  -216,  -216
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -18,    91,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,   -26,   -71,
+     -71,   -71,   157,   -71,   -71,    87,   -71,    88,   -25,   -71,
+     -24,   -71,   -71,   -71,   -71,   -71,    48,   -71,   -71,     6,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -71,    52,   -71,
+     -71,   -71,   -71,   -71,   -71,   -71,   -71,   -33,    11,   -71,
+     -71,   -71,   -71,   -71,   -46,   -71,   -71,   -71,   -71,   -71,
+     -71,   -71,   -71,   -71,   -71,    78,   -71,   -71,   -71,    16,
+     -71,   -71,   -10,   -71,   -71,   -71,   -71,   -71,   -71,   -71,
+     -71,   -48,   -71,   -71,   -70,   -71,   -71,   -71,   -71,   -71
   };
 
   const short int
   NetconfParser::yydefgoto_[] =
   {
       -1,     4,     5,     6,     7,    23,    27,    16,    17,    18,
-      25,   104,    32,    33,    19,    24,    29,    30,   172,    21,
-      26,    42,    43,    44,    66,    55,    56,   173,    75,   174,
-      76,    59,    78,   127,   128,   129,   140,   153,   154,   155,
-     163,   156,   164,    60,   106,   119,   120,   121,   122,   134,
-     123,   135,   124,   136,   125,   137,   175,   176,   177,   188,
-     178,   189,   233,   234,   235,   242,   260,   204,   214,   237,
-     243,   238,    45,    68,    46,    69,    47,    70,    48,    71,
-      49,    67,   111,   112,   113,   131,   168,   169,   185,   205,
-     206,   207,   208,   217,   209,   215,   248,   249,   254,   266,
-     267,   268,   273,   269,   270,   271
+      25,    85,    32,    33,    19,    24,    29,    30,   153,    21,
+      26,    38,    39,    40,    59,    47,    48,    49,   154,    64,
+     155,    65,    52,    67,   108,   109,   110,   121,   134,   135,
+     136,   144,   137,   145,    53,    87,   100,   101,   102,   103,
+     115,   104,   116,   105,   117,   106,   118,   156,   157,   158,
+     169,   159,   170,   214,   215,   216,   222,   240,   217,   223,
+     218,   224,    41,    60,    92,    93,    94,   112,   149,   150,
+     166,   185,   186,   187,   195,   188,   189,   198,   190,   196,
+     228,   229,   234,   247,   248,   249,   254,   250,   251,   252
   };
 
   const unsigned short int
   NetconfParser::yytable_[] =
   {
-      41,    54,    57,    58,    28,    34,   236,     9,     8,    10,
-      20,    11,   114,   115,   116,   117,   262,   150,   151,   263,
-     264,   265,    50,    51,    52,    35,    73,   150,   151,   186,
-     236,    74,   187,    31,    36,    37,    38,    39,    53,    50,
-      51,    40,    81,    82,    40,    40,    22,    41,    12,    13,
-      14,    15,   197,    54,    57,    58,    79,    40,    61,    79,
-     198,    80,   199,   200,   130,   132,    99,   100,   101,   102,
-     133,    54,    57,    58,    40,    62,   108,    50,    51,   165,
-     118,    50,    51,    63,   166,    64,   227,    65,   170,   171,
-     197,   228,   229,   190,   190,   190,   190,   218,   191,   192,
-     193,   194,   219,   245,   277,    83,    72,   255,   246,   278,
-     256,    77,    40,   118,   152,    84,    40,     1,     2,     3,
-     257,   258,   259,   179,   180,   181,    85,    86,    87,    88,
-      89,    91,    92,   105,    94,    96,    93,   110,   139,    97,
-      98,    10,   107,   126,   142,   141,   138,   143,   145,   146,
-     147,   148,   224,   158,   195,   220,   159,   160,   161,   201,
-     202,   203,   162,   196,   167,   182,   183,   211,   212,   216,
-     280,   222,   223,   221,   225,   109,   240,   244,   250,   247,
-     251,   274,   275,   276,   279,    90,   239,   103,   241,    95,
-     157,   213,   201,   202,   203,   230,   231,   232,   184,   252,
-     261,   253,   149,   281,   210,   282,   284,   144,   226,   272,
-     283,     0,     0,     0,     0,     0,     0,     0,     0,   230,
-     231,   232
+      37,    46,    50,    51,    42,    43,    28,    34,     8,     9,
+      20,    10,    22,    11,   243,   131,   132,   244,   245,   246,
+      42,    43,   131,   132,   178,   179,    35,   180,   181,   208,
+      36,    31,    54,   209,   210,    36,    37,    70,    71,    36,
+      42,    43,    44,    46,    50,    51,    12,    13,    14,    15,
+      55,    36,    42,    43,    57,    45,    46,    50,    51,   151,
+     152,    99,    56,    89,    95,    96,    97,    98,    62,   113,
+     146,    36,   171,    63,   114,   147,   171,   172,    58,   171,
+     171,   173,   199,    36,   174,   175,   225,   200,   258,    68,
+      61,   226,    36,   259,    99,   133,   167,   235,    69,   168,
+     236,     1,     2,     3,    66,   237,   238,   239,   160,   161,
+     162,    73,    72,    74,    76,    77,    86,    79,    81,    78,
+      91,   120,    82,    83,    10,    88,   107,   123,   139,   111,
+     119,   122,   124,   126,   127,   128,   129,   163,   164,   176,
+     182,   183,   184,   140,   141,   142,   177,   143,   148,   192,
+     193,   197,   165,   203,   204,   202,   206,    80,   220,   230,
+     231,   227,   232,   255,   256,   257,   260,    84,   201,    90,
+     205,   138,   130,   182,   183,   184,   211,   212,   213,   233,
+     261,   219,   194,   191,   221,   241,   242,   253,   264,   207,
+       0,   125,     0,     0,   262,     0,     0,     0,     0,   211,
+     212,   213,     0,     0,     0,     0,   263,   265,     0,     0,
+       0,     0,     0,     0,     0,     0,     0,     0,     0,    75
   };
 
   const short int
   NetconfParser::yycheck_[] =
   {
-      26,    27,    27,    27,    24,    10,   221,     5,     0,     7,
-       7,     9,    14,    15,    16,    17,    33,    28,    29,    36,
-      37,    38,    11,    12,    13,    30,     3,    28,    29,     3,
-     245,     8,     6,    46,    39,    40,    41,    42,    27,    11,
-      12,    46,    62,    63,    46,    46,     7,    73,    46,    47,
-      48,    49,    24,    79,    79,    79,     3,    46,     6,     3,
-      32,     8,    34,    35,     8,     3,    86,    87,    88,    89,
-       8,    97,    97,    97,    46,     3,    96,    11,    12,     3,
-     106,    11,    12,     4,     8,     8,    20,     3,    18,    19,
-      24,    25,    26,     3,     3,     3,     3,     3,     8,     8,
-       8,     8,     8,     3,     3,    46,     4,     3,     8,     8,
-       6,     4,    46,   139,   140,     4,    46,    43,    44,    45,
-      21,    22,    23,   160,   161,   162,     4,     4,     4,     4,
-       4,     4,     4,    46,     4,     4,     7,    31,     3,     7,
-       7,     7,     5,     7,     3,     6,     8,     4,     4,     4,
-       4,     4,    47,     5,    46,    46,     7,     7,     7,   185,
-     185,   185,     7,   183,     7,     4,     4,     4,     4,     4,
-      49,     4,     4,     7,     4,    97,     5,     4,     4,     7,
-       4,     4,     4,     4,     4,    73,    46,    91,    46,    79,
-     142,   190,   218,   218,   218,   221,   221,   221,   165,    47,
-      46,   245,   139,    47,   186,    47,    46,   132,   218,   255,
-     277,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,   245,
-     245,   245
+      26,    27,    27,    27,    11,    12,    24,    10,     0,     5,
+       7,     7,     7,     9,    33,    27,    28,    36,    37,    38,
+      11,    12,    27,    28,    31,    32,    29,    34,    35,    20,
+      42,    42,     6,    24,    25,    42,    62,    55,    56,    42,
+      11,    12,    13,    69,    69,    69,    42,    43,    44,    45,
+       3,    42,    11,    12,     8,    26,    82,    82,    82,    18,
+      19,    87,     4,    81,    14,    15,    16,    17,     3,     3,
+       3,    42,     3,     8,     8,     8,     3,     8,     3,     3,
+       3,     8,     3,    42,     8,     8,     3,     8,     3,     8,
+       4,     8,    42,     8,   120,   121,     3,     3,     3,     6,
+       6,    39,    40,    41,     4,    21,    22,    23,   141,   142,
+     143,     4,    42,     4,     4,     4,    42,     4,     4,     7,
+      30,     3,     7,     7,     7,     5,     7,     3,     5,     8,
+       8,     6,     4,     4,     4,     4,     4,     4,     4,    42,
+     166,   166,   166,     7,     7,     7,   164,     7,     7,     4,
+       4,     4,   146,     4,     4,     7,     4,    69,     5,     4,
+       4,     7,     4,     4,     4,     4,     4,    76,    42,    82,
+      43,   123,   120,   199,   199,   199,   202,   202,   202,   225,
+      45,    42,   171,   167,    42,    42,    42,   235,   258,   199,
+      -1,   113,    -1,    -1,    43,    -1,    -1,    -1,    -1,   225,
+     225,   225,    -1,    -1,    -1,    -1,    43,    42,    -1,    -1,
+      -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    -1,    62
   };
 
   const unsigned char
   NetconfParser::yystos_[] =
   {
-       0,    43,    44,    45,    51,    52,    53,    54,     0,     5,
-       7,     9,    46,    47,    48,    49,    57,    58,    59,    64,
-       7,    69,     7,    55,    65,    60,    70,    56,    58,    66,
-      67,    46,    62,    63,    10,    30,    39,    40,    41,    42,
-      46,    68,    71,    72,    73,   122,   124,   126,   128,   130,
-      11,    12,    13,    27,    68,    75,    76,    77,    79,    81,
-      93,     6,     3,     4,     8,     3,    74,   131,   123,   125,
-     127,   129,     4,     3,     8,    78,    80,     4,    82,     3,
-       8,    58,    58,    46,     4,     4,     4,     4,     4,     4,
-      72,     4,     4,     7,     4,    76,     4,     7,     7,    58,
-      58,    58,    58,    59,    61,    46,    94,     5,    58,    75,
-      31,   132,   133,   134,    14,    15,    16,    17,    68,    95,
-      96,    97,    98,   100,   102,   104,     7,    83,    84,    85,
-       8,   135,     3,     8,    99,   101,   103,   105,     8,     3,
-      86,     6,     3,     4,   133,     4,     4,     4,     4,    97,
-      28,    29,    68,    87,    88,    89,    91,    85,     5,     7,
-       7,     7,     7,    90,    92,     3,     8,     7,   136,   137,
-      18,    19,    68,    77,    79,   106,   107,   108,   110,   106,
-     106,   106,     4,     4,    88,   138,     3,     6,   109,   111,
-       3,     8,     8,     8,     8,    46,    58,    24,    32,    34,
-      35,    68,    77,    79,   117,   139,   140,   141,   142,   144,
-     137,     4,     4,   107,   118,   145,     4,   143,     3,     8,
-      46,     7,     4,     4,    47,     4,   140,    20,    25,    26,
-      68,    77,    79,   112,   113,   114,   117,   119,   121,    46,
-       5,    46,   115,   120,     4,     3,     8,     7,   146,   147,
-       4,     4,    47,   113,   148,     3,     6,    21,    22,    23,
-     116,    46,    33,    36,    37,    38,   149,   150,   151,   153,
-     154,   155,   147,   152,     4,     4,     4,     3,     8,     4,
-      49,    47,    47,   150,    46
+       0,    39,    40,    41,    47,    48,    49,    50,     0,     5,
+       7,     9,    42,    43,    44,    45,    53,    54,    55,    60,
+       7,    65,     7,    51,    61,    56,    66,    52,    54,    62,
+      63,    42,    58,    59,    10,    29,    42,    64,    67,    68,
+      69,   118,    11,    12,    13,    26,    64,    71,    72,    73,
+      74,    76,    78,    90,     6,     3,     4,     8,     3,    70,
+     119,     4,     3,     8,    75,    77,     4,    79,     8,     3,
+      54,    54,    42,     4,     4,    68,     4,     4,     7,     4,
+      73,     4,     7,     7,    55,    57,    42,    91,     5,    54,
+      71,    30,   120,   121,   122,    14,    15,    16,    17,    64,
+      92,    93,    94,    95,    97,    99,   101,     7,    80,    81,
+      82,     8,   123,     3,     8,    96,    98,   100,   102,     8,
+       3,    83,     6,     3,     4,   121,     4,     4,     4,     4,
+      94,    27,    28,    64,    84,    85,    86,    88,    82,     5,
+       7,     7,     7,     7,    87,    89,     3,     8,     7,   124,
+     125,    18,    19,    64,    74,    76,   103,   104,   105,   107,
+     103,   103,   103,     4,     4,    85,   126,     3,     6,   106,
+     108,     3,     8,     8,     8,     8,    42,    54,    31,    32,
+      34,    35,    64,    74,    76,   127,   128,   129,   131,   132,
+     134,   125,     4,     4,   104,   130,   135,     4,   133,     3,
+       8,    42,     7,     4,     4,    43,     4,   128,    20,    24,
+      25,    64,    74,    76,   109,   110,   111,   114,   116,    42,
+       5,    42,   112,   115,   117,     3,     8,     7,   136,   137,
+       4,     4,     4,   110,   138,     3,     6,    21,    22,    23,
+     113,    42,    42,    33,    36,    37,    38,   139,   140,   141,
+     143,   144,   145,   137,   142,     4,     4,     4,     3,     8,
+       4,    45,    43,    43,   140,    42
   };
 
   const unsigned char
   NetconfParser::yyr1_[] =
   {
-       0,    50,    52,    51,    53,    51,    54,    51,    56,    55,
-      57,    58,    58,    58,    58,    58,    58,    58,    60,    59,
-      61,    62,    62,    63,    63,    65,    64,    66,    66,    67,
-      67,    68,    70,    69,    71,    71,    72,    72,    72,    72,
-      72,    72,    72,    74,    73,    75,    75,    76,    76,    76,
-      76,    76,    78,    77,    80,    79,    82,    81,    83,    83,
-      84,    84,    86,    85,    87,    87,    87,    88,    88,    90,
-      89,    92,    91,    94,    93,    95,    95,    96,    96,    97,
-      97,    97,    97,    97,    99,    98,   101,   100,   103,   102,
-     105,   104,   106,   106,   107,   107,   107,   107,   107,   109,
-     108,   111,   110,   112,   112,   113,   113,   113,   113,   113,
-     113,   113,   115,   114,   116,   116,   116,   118,   117,   120,
-     119,   121,   123,   122,   125,   124,   127,   126,   129,   128,
-     131,   130,   132,   132,   133,   135,   134,   136,   136,   138,
-     137,   139,   139,   140,   140,   140,   140,   140,   140,   140,
-     141,   143,   142,   145,   144,   146,   146,   148,   147,   149,
-     149,   150,   150,   150,   150,   152,   151,   153,   154,   155
+       0,    46,    48,    47,    49,    47,    50,    47,    52,    51,
+      53,    54,    54,    54,    54,    54,    54,    54,    56,    55,
+      57,    58,    58,    59,    59,    61,    60,    62,    62,    63,
+      63,    64,    66,    65,    67,    67,    68,    68,    68,    70,
+      69,    71,    71,    72,    72,    73,    73,    73,    73,    73,
+      75,    74,    77,    76,    79,    78,    80,    80,    81,    81,
+      83,    82,    84,    84,    84,    85,    85,    87,    86,    89,
+      88,    91,    90,    92,    92,    93,    93,    94,    94,    94,
+      94,    94,    96,    95,    98,    97,   100,    99,   102,   101,
+     103,   103,   104,   104,   104,   104,   104,   106,   105,   108,
+     107,   109,   109,   110,   110,   110,   110,   110,   110,   112,
+     111,   113,   113,   113,   115,   114,   117,   116,   119,   118,
+     120,   120,   121,   123,   122,   124,   124,   126,   125,   127,
+     127,   128,   128,   128,   128,   128,   128,   128,   130,   129,
+     131,   133,   132,   135,   134,   136,   136,   138,   137,   139,
+     139,   140,   140,   140,   140,   142,   141,   143,   144,   145
   };
 
   const unsigned char
@@ -1955,18 +1885,17 @@ namespace isc { namespace netconf {
        0,     2,     0,     3,     0,     3,     0,     3,     0,     4,
        1,     1,     1,     1,     1,     1,     1,     1,     0,     4,
        1,     0,     1,     3,     5,     0,     4,     0,     1,     1,
-       3,     2,     0,     4,     1,     3,     1,     1,     1,     1,
-       1,     1,     1,     0,     6,     1,     3,     1,     1,     1,
-       1,     1,     0,     4,     0,     4,     0,     6,     0,     1,
-       1,     3,     0,     4,     1,     3,     1,     1,     1,     0,
-       4,     0,     4,     0,     6,     0,     1,     1,     3,     1,
-       1,     1,     1,     1,     0,     6,     0,     6,     0,     6,
-       0,     6,     1,     3,     1,     1,     1,     1,     1,     0,
-       4,     0,     6,     1,     3,     1,     1,     1,     1,     1,
-       1,     1,     0,     4,     1,     1,     1,     0,     4,     0,
-       4,     3,     0,     4,     0,     4,     0,     4,     0,     4,
-       0,     6,     1,     3,     1,     0,     6,     1,     3,     0,
-       4,     1,     3,     1,     1,     1,     1,     1,     1,     1,
+       3,     2,     0,     4,     1,     3,     1,     1,     1,     0,
+       6,     0,     1,     1,     3,     1,     1,     1,     1,     1,
+       0,     4,     0,     4,     0,     6,     0,     1,     1,     3,
+       0,     4,     1,     3,     1,     1,     1,     0,     4,     0,
+       4,     0,     6,     0,     1,     1,     3,     1,     1,     1,
+       1,     1,     0,     6,     0,     6,     0,     6,     0,     6,
+       1,     3,     1,     1,     1,     1,     1,     0,     4,     0,
+       6,     1,     3,     1,     1,     1,     1,     1,     1,     0,
+       4,     1,     1,     1,     0,     4,     0,     4,     0,     6,
+       1,     3,     1,     0,     6,     1,     3,     0,     4,     1,
+       3,     1,     1,     1,     1,     1,     1,     1,     0,     4,
        3,     0,     4,     0,     6,     1,     3,     0,     4,     1,
        3,     1,     1,     1,     1,     0,     4,     3,     3,     3
   };
@@ -1981,20 +1910,20 @@ namespace isc { namespace netconf {
   "\"end of file\"", "error", "$undefined", "\",\"", "\":\"", "\"[\"",
   "\"]\"", "\"{\"", "\"}\"", "\"null\"", "\"Netconf\"", "\"user-context\"",
   "\"comment\"", "\"managed-servers\"", "\"dhcp4\"", "\"dhcp6\"", "\"d2\"",
-  "\"ca\"", "\"model\"", "\"control-socket\"", "\"type\"", "\"unix\"",
-  "\"http\"", "\"stdout\"", "\"name\"", "\"host\"", "\"port\"",
-  "\"hooks-libraries\"", "\"library\"", "\"parameters\"", "\"Logging\"",
-  "\"loggers\"", "\"output_options\"", "\"output\"", "\"debuglevel\"",
-  "\"severity\"", "\"flush\"", "\"maxsize\"", "\"maxver\"", "\"Dhcp4\"",
-  "\"Dhcp6\"", "\"DhcpDdns\"", "\"Control-agent\"", "START_JSON",
-  "START_NETCONF", "START_SUB_NETCONF", "\"constant string\"",
-  "\"integer\"", "\"floating point\"", "\"boolean\"", "$accept", "start",
-  "$@1", "$@2", "$@3", "sub_netconf", "$@4", "json", "value", "map", "$@5",
-  "map_value", "map_content", "not_empty_map", "list_generic", "$@6",
-  "list_content", "not_empty_list", "unknown_map_entry",
-  "netconf_syntax_map", "$@7", "global_objects", "global_object",
-  "netconf_object", "$@8", "global_params", "global_param", "user_context",
-  "$@9", "comment", "$@10", "hooks_libraries", "$@11",
+  "\"ca\"", "\"model\"", "\"control-socket\"", "\"socket-type\"",
+  "\"unix\"", "\"http\"", "\"stdout\"", "\"socket-name\"",
+  "\"socket-url\"", "\"hooks-libraries\"", "\"library\"", "\"parameters\"",
+  "\"Logging\"", "\"loggers\"", "\"name\"", "\"output_options\"",
+  "\"output\"", "\"debuglevel\"", "\"severity\"", "\"flush\"",
+  "\"maxsize\"", "\"maxver\"", "START_JSON", "START_NETCONF",
+  "START_SUB_NETCONF", "\"constant string\"", "\"integer\"",
+  "\"floating point\"", "\"boolean\"", "$accept", "start", "$@1", "$@2",
+  "$@3", "sub_netconf", "$@4", "json", "value", "map", "$@5", "map_value",
+  "map_content", "not_empty_map", "list_generic", "$@6", "list_content",
+  "not_empty_list", "unknown_map_entry", "netconf_syntax_map", "$@7",
+  "global_objects", "global_object", "netconf_object", "$@8",
+  "global_params", "not_empty_global_params", "global_param",
+  "user_context", "$@9", "comment", "$@10", "hooks_libraries", "$@11",
   "hooks_libraries_list", "not_empty_hooks_libraries_list",
   "hooks_library", "$@12", "hooks_params", "hooks_param", "library",
   "$@13", "parameters", "$@14", "managed_servers", "$@15",
@@ -2003,14 +1932,12 @@ namespace isc { namespace netconf {
   "ca_server", "$@19", "managed_server_params", "managed_server_param",
   "model", "$@20", "control_socket", "$@21", "control_socket_params",
   "control_socket_param", "socket_type", "$@22", "socket_type_value",
-  "name", "$@23", "host", "$@24", "port", "dhcp4_json_object", "$@25",
-  "dhcp6_json_object", "$@26", "dhcpddns_json_object", "$@27",
-  "control_agent_object", "$@28", "logging_object", "$@29",
-  "logging_params", "logging_param", "loggers", "$@30", "loggers_entries",
-  "logger_entry", "$@31", "logger_params", "logger_param", "debuglevel",
-  "severity", "$@32", "output_options_list", "$@33",
-  "output_options_list_content", "output_entry", "$@34",
-  "output_params_list", "output_params", "output", "$@35", "flush",
+  "socket_name", "$@23", "socket_url", "$@24", "logging_object", "$@25",
+  "logging_params", "logging_param", "loggers", "$@26", "loggers_entries",
+  "logger_entry", "$@27", "logger_params", "logger_param", "name", "$@28",
+  "debuglevel", "severity", "$@29", "output_options_list", "$@30",
+  "output_options_list_content", "output_entry", "$@31",
+  "output_params_list", "output_params", "output", "$@32", "flush",
   "maxsize", "maxver", YY_NULLPTR
   };
 
@@ -2018,23 +1945,22 @@ namespace isc { namespace netconf {
   const unsigned short int
   NetconfParser::yyrline_[] =
   {
-       0,   119,   119,   119,   120,   120,   121,   121,   129,   129,
-     140,   146,   147,   148,   149,   150,   151,   152,   156,   156,
-     167,   172,   173,   181,   185,   192,   192,   198,   199,   202,
-     206,   219,   228,   228,   240,   241,   245,   246,   247,   248,
-     249,   250,   251,   255,   255,   272,   273,   278,   279,   280,
-     281,   282,   285,   285,   310,   310,   338,   338,   348,   349,
-     352,   353,   356,   356,   364,   365,   366,   369,   370,   373,
-     373,   381,   381,   391,   391,   401,   402,   405,   406,   412,
-     413,   414,   415,   416,   420,   420,   431,   431,   442,   442,
-     453,   453,   464,   465,   469,   470,   471,   472,   473,   477,
-     477,   486,   486,   497,   498,   501,   502,   503,   504,   505,
-     506,   507,   510,   510,   518,   519,   520,   523,   523,   532,
-     532,   541,   549,   549,   556,   556,   563,   563,   570,   570,
-     583,   583,   596,   597,   601,   605,   605,   617,   618,   622,
-     622,   630,   631,   634,   635,   636,   637,   638,   639,   640,
-     643,   648,   648,   656,   656,   666,   667,   670,   670,   678,
-     679,   682,   683,   684,   685,   688,   688,   696,   701,   706
+       0,   114,   114,   114,   115,   115,   116,   116,   124,   124,
+     135,   141,   142,   143,   144,   145,   146,   147,   151,   151,
+     162,   167,   168,   176,   180,   187,   187,   193,   194,   197,
+     201,   214,   222,   222,   234,   235,   239,   240,   241,   245,
+     245,   262,   263,   266,   267,   272,   273,   274,   275,   276,
+     279,   279,   304,   304,   332,   332,   342,   343,   346,   347,
+     350,   350,   358,   359,   360,   363,   364,   367,   367,   375,
+     375,   385,   385,   395,   396,   399,   400,   406,   407,   408,
+     409,   410,   414,   414,   425,   425,   436,   436,   447,   447,
+     458,   459,   463,   464,   465,   466,   467,   471,   471,   480,
+     480,   491,   492,   495,   496,   497,   498,   499,   500,   503,
+     503,   511,   512,   513,   516,   516,   525,   525,   540,   540,
+     553,   554,   558,   562,   562,   574,   575,   579,   579,   587,
+     588,   591,   592,   593,   594,   595,   596,   597,   600,   600,
+     608,   613,   613,   621,   621,   631,   632,   635,   635,   643,
+     644,   647,   648,   649,   650,   653,   653,   661,   666,   671
   };
 
   // Print the state stack on the debug stream.
@@ -2069,8 +1995,8 @@ namespace isc { namespace netconf {
 
 #line 14 "netconf_parser.yy" // lalr1.cc:1163
 } } // isc::netconf
-#line 2073 "netconf_parser.cc" // lalr1.cc:1163
-#line 711 "netconf_parser.yy" // lalr1.cc:1164
+#line 1999 "netconf_parser.cc" // lalr1.cc:1163
+#line 676 "netconf_parser.yy" // lalr1.cc:1164
 
 
 void
