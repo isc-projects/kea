@@ -131,11 +131,12 @@ SrvConfig::copy(SrvConfig& new_config) const {
 bool
 SrvConfig::equals(const SrvConfig& other) const {
 
+    // Checks common elements: logging & config control
     if (!ConfigBase::equals(other)) {
         return (false);
     }
 
-    // Logging information is equal between objects, so check other values.
+    // Common information is equal between objects, so check other values.
     if ((*cfg_iface_ != *other.cfg_iface_) ||
         (*cfg_option_def_ != *other.cfg_option_def_) ||
         (*cfg_option_ != *other.cfg_option_) ||
@@ -381,6 +382,13 @@ SrvConfig::toElement() const {
 
     ConstElementPtr cfg_consist = cfg_consist_->toElement();
     dhcp->set("sanity-checks", cfg_consist);
+
+    // Set config-control (if it exists)
+    ConstConfigControlInfoPtr info = getConfigControlInfo();
+    if (info) {
+        ConstElementPtr info_elem = info->toElement();
+        dhcp->set("config-control", info_elem);
+    }
 
     return (result);
 }

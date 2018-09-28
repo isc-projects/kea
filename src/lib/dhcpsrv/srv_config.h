@@ -62,6 +62,8 @@ public:
     static const uint32_t CFGSEL_SUBNET  = 0x00000003;
     /// Configured globals
     static const uint32_t CFGSEL_GLOBALS = 0x00000020;
+    /// Config control info
+    static const uint32_t CFGSEL_CFG_CTL = 0x00000040;
     /// IPv4 related config
     static const uint32_t CFGSEL_ALL4    = 0x00000035;
     /// IPv6 related config
