@@ -292,7 +292,13 @@ public:
         NCR_FORMAT,
 
         /// Used while parsing Dhcp4/dhcp-ddns/replace-client-name.
-        REPLACE_CLIENT_NAME
+        REPLACE_CLIENT_NAME,
+
+        /// Used while parsing Dhcp4/config-control
+        CONFIG_CONTROL,
+
+        /// Used while parsing config-control/config-databases
+        CONFIG_DATABASE
 
     } ParserContext;
 
