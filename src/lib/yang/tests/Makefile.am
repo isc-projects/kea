@@ -22,6 +22,7 @@ run_unittests_SOURCES += sysrepo_setup.h
 run_unittests_SOURCES += translator_unittests.cc
 run_unittests_SOURCES += translator_option_data_unittests.cc
 run_unittests_SOURCES += translator_option_def_unittests.cc
+run_unittests_SOURCES += translator_pd_pool_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
