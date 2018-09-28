@@ -59,6 +59,7 @@ nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
+nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 
 devel:
 	mkdir -p html

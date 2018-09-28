@@ -172,7 +172,7 @@ TEST(ParserTest, keywordNetconf) {
 TEST(ParserTest, keywordSubNetconf) {
 
     // This is similar to previous test, but note the lack of outer
-    // map and Netconf-agent.
+    // map and Netconf.
     string txt = "{\n"
         "    \"managed-servers\": {"
         "        \"dhcp4\": {"
@@ -348,6 +348,7 @@ TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("comments.json");
     configs.push_back("simple.json");
+    configs.push_back("simple-dhcp4.json");
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
