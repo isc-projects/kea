@@ -28,6 +28,7 @@
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <process/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -491,6 +492,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                     srv_cfg->getCfgHosts()->add(*h);
                 }
 
+                continue;
+            }
+
+            if (config_pair.first == "config-control") {
+                process::ConfigControlParser parser;
+                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
                 continue;
             }
 

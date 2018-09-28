@@ -196,6 +196,10 @@ Parser4Context::contextName()
         return ("shared-networks");
     case SANITY_CHECKS:
         return ("sanity-checks");
+    case CONFIG_CONTROL:
+        return ("config-control");
+    case CONFIG_DATABASE:
+        return ("config-database");
     default:
         return ("__unknown__");
     }
