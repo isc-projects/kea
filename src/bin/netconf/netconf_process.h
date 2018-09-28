@@ -84,6 +84,14 @@ public:
 
     /// @brief Returns a pointer to the configuration manager.
     NetconfCfgMgrPtr getNetconfCfgMgr();
+
+private:
+
+    /// @brief Polls all ready handlers and then runs one handler if none
+    /// handlers have been executed as a result of polling.
+    ///
+    /// @return Number of executed handlers.
+    size_t runIO();
 };
 
 /// @brief Defines a shared pointer to NetconfProcess.
