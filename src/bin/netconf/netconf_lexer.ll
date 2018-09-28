@@ -111,9 +111,9 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
     /* We currently have 3 points of entries defined:
        START_JSON - which expects any valid JSON
-       START_NETCONF - which expects full configuration (with outer map and Control-netconf
+       START_NETCONF - which expects full configuration (with outer map and Netconf
                      object in it.
-       START_SUB_NETCONF - which expects only content of the Control-netconf, this is
+       START_SUB_NETCONF - which expects only content of the Netconf, this is
                          primarily useful for testing. */
     if (start_token_flag) {
         start_token_flag = false;
