@@ -275,31 +275,6 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that the boolean parameter was parsed correctly by retrieving
-    // its value from the context.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    // Verify that the uint32 parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    // Verify that the string parameter was parsed correctly by retrieving
-    // its value from the context.
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
-
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
                     "  \"uint32_test\": 88 , "
@@ -313,38 +288,6 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
     ASSERT_TRUE(context);
-
-    // Verify that the boolean parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_bool = true;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_FALSE(actual_bool);
-
-    // Verify that the uint32 parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(88, actual_uint32);
-
-    // Verify that the string parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("ewww yuk!", actual_string);
-
-    // Verify previous objects are not there.
-    EXPECT_THROW(context->getObjectParam("map_test", object),
-                                         isc::dhcp::DhcpConfigError);
-    EXPECT_THROW(context->getObjectParam("list_test", object),
-                                         isc::dhcp::DhcpConfigError);
-
-    // Verify new map object is there.
-    EXPECT_NO_THROW(context->getObjectParam("map_test2", object));
-    EXPECT_TRUE(object);
-
-    // Verify new list object is there.
-    EXPECT_NO_THROW(context->getObjectParam("list_test2", object));
-    EXPECT_TRUE(object);
 }
 
 /// @brief Tests that the configuration context is preserved after failure
@@ -365,26 +308,6 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that all of parameters have the expected values.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
-
     // Create a configuration which "updates" all of the parameter values
     // plus one unknown at the end.
     string config2 = "{ \"bool_test\": false , "
@@ -401,25 +324,6 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     EXPECT_TRUE(checkAnswer(1));
     context = getStubContext();
     ASSERT_TRUE(context);
-
-    // Verify that all of parameters have the original values.
-    actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 }
 
 /// @brief Tests that the configuration context is preserved during
@@ -439,25 +343,6 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that all of parameters have the expected values.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
@@ -472,24 +357,6 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
     context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that all of parameters have the original values.
-    actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 }
 
 // Tests that configuration element position is returned by getParam variants.
@@ -507,34 +374,6 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that the boolean parameter was parsed correctly by retrieving
-    // its value from the context.
-    bool actual_bool = false;
-    isc::data::Element::Position pos;
-    EXPECT_NO_THROW(pos = context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-    EXPECT_EQ(1, pos.line_);
-
-    // Verify that the uint32 parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(pos = context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-    EXPECT_EQ(2, pos.line_);
-
-    // Verify that the string parameter was parsed correctly by retrieving
-    // its value from the context.
-    std::string actual_string = "";
-    EXPECT_NO_THROW(pos = context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-    EXPECT_EQ(3, pos.line_);
-
-    // Verify that an optional parameter that is not defined, returns the
-    // zero position.
-    pos = isc::data::Element::ZERO_POSITION();
-    EXPECT_NO_THROW(pos = context->getParam("bogus_value",
-                                            actual_string, true));
-    EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
 }
 
 // This tests if some aspects of simpleParseConfig are behaving properly.

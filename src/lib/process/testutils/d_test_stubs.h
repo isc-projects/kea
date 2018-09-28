@@ -580,19 +580,6 @@ public:
     /// @return returns a pointer to the new clone.
     virtual DCfgContextBasePtr clone();
 
-    /// @brief Fetches the value for a given "extra" configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter.
-    void getObjectParam(const std::string& name,
-                        isc::data::ConstElementPtr& value);
-
-    ObjectStoragePtr& getObjectStorage();
-
 protected:
     /// @brief Copy constructor
     DStubContext(const DStubContext& rhs);
@@ -600,9 +587,6 @@ protected:
 private:
     /// @brief Private assignment operator, not implemented.
     DStubContext& operator=(const DStubContext& rhs);
-
-    /// @brief Stores non-scalar configuration elements
-    ObjectStoragePtr object_values_;
 
     /// @brief Unparse a configuration object
     ///
