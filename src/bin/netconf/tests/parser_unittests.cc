@@ -120,78 +120,6 @@ TEST(ParserTest, keywordJSON) {
     testParser(txt, ParserContext::PARSER_JSON);
 }
 
-// This test checks that the DhcpDdns configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcpDdns) {
-    string txt =
-        "{ \"DhcpDdns\" : \n"
-           "{ \n"
-            " \"ip-address\": \"192.168.77.1\", \n"
-            " \"port\": 777 , \n "
-            " \"ncr-protocol\": \"UDP\", \n"
-            "\"tsig-keys\": [], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
-            "} \n"
-         "} \n";
-     testParser(txt, ParserContext::PARSER_NETCONF);
-}
-
-// This test checks that the Dhcp6 configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcp6) {
-     string txt = "{ \"Dhcp6\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"preferred-lifetime\": 3000,\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet6\": [ { "
-                  "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
-                  "    \"subnet\": \"2001:db8:1::/48\", "
-                  "    \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, ParserContext::PARSER_NETCONF);
-}
-
-// This test checks that the Dhcp4 configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordDhcp4) {
-    string txt = "{ \"Dhcp4\": { \"interfaces-config\": {"
-                  " \"interfaces\": [ \"type\", \"htype\" ] },\n"
-                  "\"rebind-timer\": 2000, \n"
-                  "\"renew-timer\": 1000, \n"
-                  "\"subnet4\": [ { "
-                  "  \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
-                  "  \"subnet\": \"192.0.2.0/24\", "
-                  "  \"interface\": \"test\" } ],\n"
-                   "\"valid-lifetime\": 4000 } }";
-     testParser(txt, ParserContext::PARSER_NETCONF);
-}
-
-// This test checks that the Control-agent configuration is accepted
-// by the parser.
-TEST(ParserTest, keywordControlAgent) {
-    string txt = "{ \"Control-agent\": {\n"
-        "    \"http-host\": \"localhost\",\n"
-        "    \"http-port\": 8000,\n"
-        "    \"control-sockets\": {"
-        "        \"dhcp4\": {"
-        "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/path/to/the/unix/socket-v4\""
-        "        },"
-        "        \"dhcp6\": {"
-        "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/path/to/the/unix/socket-v6\""
-        "        },"
-        "        \"d2\": {"
-        "            \"socket-type\": \"unix\","
-        "            \"socket-name\": \"/path/to/the/unix/socket-d2\""
-        "        }"
-        "    }"
-        "} }";
-    testParser(txt, ParserContext::PARSER_NETCONF);
-}
-
 // This test checks if full config (with top level and Netconf objects) can
 // be parsed with syntactic checking (and as pure JSON).
 TEST(ParserTest, keywordNetconf) {
@@ -200,28 +128,27 @@ TEST(ParserTest, keywordNetconf) {
         "        \"dhcp4\": {"
         "            \"model\": \"kea-dhcp4-server\","
         "            \"control-socket\": {"
-        "                \"type\": \"unix\","
-        "                \"name\": \"/path/to/the/unix/socket-v4\""
+        "                \"socket-type\": \"unix\","
+        "                \"socket-name\": \"/path/to/the/unix/socket-v4\""
         "            }"
         "        },"
         "        \"dhcp6\": {"
         "            \"model\": \"kea-dhcp6-server\","
         "            \"control-socket\": {"
-        "                \"type\": \"http\","
-        "                \"host\": \"127.0.0.1\","
-        "                \"port\": 12345"
+        "                \"socket-type\": \"http\","
+        "                \"socket-url\": \"http://127.0.0.1:12345/\""
         "            }"
         "        },"
         "        \"d2\": {"
         "            \"model\": \"kea-dhcp-ddns\","
         "            \"control-socket\": {"
-        "                \"type\": \"stdout\""
+        "                \"socket-type\": \"stdout\""
         "            }"
         "        },"
         "        \"ca\": {"
         "            \"model\": \"kea-ctrl-agent\","
         "            \"control-socket\": {"
-        "                \"type\": \"http\","
+        "                \"socket-type\": \"http\","
         "                \"user-context\": { \"use default\": true }"
         "            }"
         "        }"
@@ -251,29 +178,28 @@ TEST(ParserTest, keywordSubNetconf) {
         "        \"dhcp4\": {"
         "            \"model\": \"kea-dhcp4-server\","
         "            \"control-socket\": {"
-        "                \"type\": \"unix\","
-        "                \"name\": \"/path/to/the/unix/socket-v4\""
+        "                \"socket-type\": \"unix\","
+        "                \"socket-name\": \"/path/to/the/unix/socket-v4\""
         "            }"
         "        },"
         "        \"dhcp6\": {"
         "            \"model\": \"kea-dhcp6-server\","
         "            \"control-socket\": {"
-        "                \"type\": \"http\","
-        "                \"host\": \"127.0.0.1\","
-        "                \"port\": 12345"
+        "                \"socket-type\": \"http\","
+        "                \"socket-url\": \"http://127.0.0.1:12345/\""
         "            }"
         "        },"
         "        \"d2\": {"
         "            \"model\": \"kea-dhcp-ddns\","
         "            \"control-socket\": {"
-        "                \"type\": \"stdout\""
+        "                \"socket-type\": \"stdout\""
         "            }"
         "        },"
         "        \"ca\": {"
         "            \"model\": \"kea-ctrl-agent\","
         "            \"model\": \"kea-dhcp6-server\","
         "            \"control-socket\": {"
-        "                \"type\": \"http\","
+        "                \"socket-type\": \"http\","
         "                \"user-context\": { \"use default\": true }"
         "            }"
         "        }"
@@ -302,10 +228,10 @@ TEST(ParserTest, bashComments) {
                 "      \"model\": \"foo\",\n"
                 "      \"control-socket\": {\n"
                 "# this is a comment\n"
-                "\"type\": \"unix\", \n"
+                "\"socket-type\": \"unix\", \n"
                 "# This socket is mine. I can name it whatever\n"
                 "# I like, ok?\n"
-                "\"name\": \"Hector\" \n"
+                "\"socket-name\": \"Hector\" \n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF);
 }
@@ -319,8 +245,8 @@ TEST(ParserTest, cppComments) {
                 "    \"d2\": {\n"
                 "      \"model\": \"foo\",\n"
                 "      \"control-socket\": {\n"
-                "\"type\": \"unix\", \n"
-                "\"name\": \"Hector\" \n"
+                "\"socket-type\": \"unix\", \n"
+                "\"socket-name\": \"Hector\" \n"
                 "} } } } }";
 
     testParser(txt, ParserContext::PARSER_NETCONF, false);
@@ -333,8 +259,8 @@ TEST(ParserTest, bashCommentsInline) {
                 "    \"d2\": {\n"
                 "      \"model\": \"foo\",\n"
                 "      \"control-socket\": {\n"
-                "\"type\": \"unix\", # Maybe Hector is not really a \n"
-                "\"name\": \"Hector\" # Unix process?\n"
+                "\"socket-type\": \"unix\", # Maybe Hector is not really a \n"
+                "\"socket-name\": \"Hector\" # Unix process?\n"
                 "# Oh no! He's a windows one and just pretending!\n"
                 "} } } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
@@ -347,7 +273,7 @@ TEST(ParserTest, multilineComments) {
                 "    \"dhcp4\": {\n"
                 "        \"model\": \"foo\",\n"
                 "        \"control-socket\": {\n"
-                "            \"type\": \"stdout\"\n"
+                "            \"socket-type\": \"stdout\"\n"
                 "        }\n"
                 "    }\n"
                 "  /* Ok, forget about it. If Hector doesn't want to talk,\n"
@@ -355,8 +281,8 @@ TEST(ParserTest, multilineComments) {
                 "  /* \"d2\": {"
                 "  \"model\": \"bar\",\n"
                 "  \"control-socket\": {\n"
-                "  \"type\": \"unix\",\n"
-                "\"name\": \"Hector\"\n"
+                "  \"socket-type\": \"unix\",\n"
+                "\"socket-name\": \"Hector\"\n"
                 "} }*/ } } }";
     testParser(txt, ParserContext::PARSER_NETCONF, false);
 }
@@ -369,7 +295,7 @@ TEST(ParserTest, embbededComments) {
                 "    \"dhcp4\": {\n"
                 "      \"control-socket\": {\n"
                 "        \"user-context\": { \"comment\": \"indirect\" },\n"
-                "        \"type\": \"stdout\"\n"
+                "        \"socket-type\": \"stdout\"\n"
                 "    } } },\n"
                 "  \"user-context\": { \"compatible\": true }\n"
                 "} }";
