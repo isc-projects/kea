@@ -84,7 +84,7 @@ using namespace std;
 
   // Not real tokens, just a way to signal what the parser is expected to
   // parse. This define the starting point. It either can be full grammar
-  // (START_NETCONF), part of the grammar related to control-netconf (START_SUB_NETCONF)
+  // (START_NETCONF), part of the grammar related to Netconf (START_SUB_NETCONF)
   // or can be any valid JSON (START_JSON)
   START_JSON
   START_NETCONF
@@ -105,7 +105,7 @@ using namespace std;
 %%
 
 // The whole grammar starts with a map, because the config file
-// consists of Control-Netconf, DhcpX, Logger and DhcpDdns entries in one big { }.
+// consists of Netconf, DhcpX, Logger and DhcpDdns entries in one big { }.
 %start start;
 
 // The starting token can be one of those listed below. Note these are
@@ -118,11 +118,11 @@ start: START_JSON      { ctx.ctx_ = ctx.NO_KEYWORDS; } json
 
 // This rule defines a "shortcut". Instead of specifying the whole structure
 // expected by full grammar, we can tell the parser to start from content of
-// the Control-netconf. This is very useful for unit-testing, so we don't need
-// to repeat the outer map and "Control-netconf" map. We can simply provide
+// the Netconf. This is very useful for unit-testing, so we don't need
+// to repeat the outer map and "Netconf" map. We can simply provide
 // the contents of that map.
 sub_netconf: LCURLY_BRACKET {
-    // Parse the Control-netconf map
+    // Parse the Netconf map
     ElementPtr m(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.push_back(m);
 } global_params RCURLY_BRACKET {
@@ -230,7 +230,7 @@ netconf_syntax_map: LCURLY_BRACKET {
     // for it.
 };
 
-// This represents top-level entries: Control-netconf, Logging, possibly others
+// This represents top-level entries: Netconf, Logging, possibly others
 global_objects: global_object
               | global_objects COMMA global_object
               ;
@@ -240,7 +240,7 @@ global_object: netconf_object
              | logging_object
              ;
 
-// This define the Control-netconf object.
+// This define the Netconf object.
 netconf_object: NETCONF {
 
     // Let's create a MapElement that will represent it, add it to the
@@ -252,7 +252,7 @@ netconf_object: NETCONF {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.NETCONF);
 } COLON LCURLY_BRACKET global_params RCURLY_BRACKET {
-    // Ok, we're done with parsing control-netconf. Let's take the map
+    // Ok, we're done with parsing Netconf. Let's take the map
     // off the stack.
     ctx.stack_.pop_back();
     ctx.leave();
