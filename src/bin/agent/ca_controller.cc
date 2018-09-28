@@ -10,6 +10,7 @@
 #include <agent/ca_process.h>
 #include <agent/ca_command_mgr.h>
 #include <agent/parser_context.h>
+#include <boost/bind.hpp>
 
 using namespace isc::process;
 

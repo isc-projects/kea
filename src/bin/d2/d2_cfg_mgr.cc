@@ -36,7 +36,7 @@ D2CfgContext::D2CfgContext()
       keys_(new TSIGKeyInfoMap()) {
 }
 
-D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : DCfgContextBase(rhs) {
+D2CfgContext::D2CfgContext(const D2CfgContext& rhs) : ConfigBase(rhs) {
     d2_params_ = rhs.d2_params_;
     if (rhs.forward_mgr_) {
         forward_mgr_.reset(new DdnsDomainListMgr(rhs.forward_mgr_->getName()));
@@ -106,15 +106,15 @@ const char* D2CfgMgr::IPV4_REV_ZONE_SUFFIX = "in-addr.arpa.";
 
 const char* D2CfgMgr::IPV6_REV_ZONE_SUFFIX = "ip6.arpa.";
 
-D2CfgMgr::D2CfgMgr() : DCfgMgrBase(DCfgContextBasePtr(new D2CfgContext())) {
+D2CfgMgr::D2CfgMgr() : DCfgMgrBase(ConfigPtr(new D2CfgContext())) {
 }
 
 D2CfgMgr::~D2CfgMgr() {
 }
 
-DCfgContextBasePtr
+ConfigPtr
 D2CfgMgr::createNewContext() {
-    return (DCfgContextBasePtr(new D2CfgContext()));
+    return (ConfigPtr(new D2CfgContext()));
 }
 
 bool

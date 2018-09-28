@@ -10,6 +10,7 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/daemon.h>
 #include <cc/command_interpreter.h>
+#include <boost/bind.hpp>
 
 using namespace boost::asio;
 
@@ -245,9 +246,9 @@ DControllerTest::getCfgMgr() {
     return (p);
 }
 
-DCfgContextBasePtr
+ConfigPtr
 DControllerTest::getContext() {
-    DCfgContextBasePtr p;
+    ConfigPtr p;
     if (getCfgMgr()) {
         p = getCfgMgr()->getContext();
     }
@@ -269,12 +270,12 @@ DStubContext::DStubContext() {
 DStubContext::~DStubContext() {
 }
 
-DCfgContextBasePtr
+ConfigPtr
 DStubContext::clone() {
-    return (DCfgContextBasePtr(new DStubContext(*this)));
+    return (ConfigPtr(new DStubContext(*this)));
 }
 
-DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs) {
+DStubContext::DStubContext(const DStubContext& rhs): ConfigBase(rhs) {
 }
 
 isc::data::ElementPtr
@@ -285,15 +286,15 @@ DStubContext::toElement() const {
 //************************** DStubCfgMgr *************************
 
 DStubCfgMgr::DStubCfgMgr()
-    : DCfgMgrBase(DCfgContextBasePtr(new DStubContext())) {
+    : DCfgMgrBase(ConfigPtr(new DStubContext())) {
 }
 
 DStubCfgMgr::~DStubCfgMgr() {
 }
 
-DCfgContextBasePtr
+ConfigPtr
 DStubCfgMgr::createNewContext() {
-    return (DCfgContextBasePtr (new DStubContext()));
+    return (ConfigPtr (new DStubContext()));
 }
 
 isc::data::ConstElementPtr

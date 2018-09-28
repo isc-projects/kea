@@ -12,18 +12,10 @@
 #include <cc/user_context.h>
 #include <process/config_base.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <functional>
 
 #include <stdint.h>
 #include <string>
-
-// Undefine the macro OPTIONAL which is defined in some operating
-// systems but conflicts with class constant is the context base class.
-
-#ifdef OPTIONAL
-#undef OPTIONAL
-#endif
 
 namespace isc {
 namespace process {
@@ -38,9 +30,11 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-class DCfgContextBase;
+#if 0
 /// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
+// typedef boost::shared_ptr<ConfigBase> ConfigPtr;
+
+class ConfigBase;
 
 /// @brief Abstract class that implements a container for configuration context.
 /// It provides a single enclosure for the storage of configuration parameters
@@ -56,65 +50,25 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 /// the following:
 ///
 ///    // Make a backup copy
-///    DCfgContextBasePtr backup_copy(context_->clone());
+///    ConfigPtr backup_copy(context_->clone());
 ///    :
 ///    // Restore from backup
 ///    context_ = backup_copy;
 ///
-class DCfgContextBase : public ConfigBase {
+class ConfigBase : public ConfigBase {
 public:
 
     /// @brief Constructor
-    DCfgContextBase();
+    ConfigBase();
 
     /// @brief Destructor
-    virtual ~DCfgContextBase();
-
-    /// @brief Creates a clone of this context object.
-    ///
-    /// As mentioned in the the class brief, derivation must supply an
-    /// implementation that initializes the base class storage as well as its
-    /// own.  Typically the derivation's clone method would return the result
-    /// of passing  "*this" into its own copy constructor:
-    ///
-    /// @code
-    /// class DStubContext : public DCfgContextBase {
-    /// public:
-    ///  :
-    ///     // Clone calls its own copy constructor
-    ///     virtual DCfgContextBasePtr clone() {
-    ///         return (DCfgContextBasePtr(new DStubContext(*this)));
-    ///     }
-    ///
-    ///     // Note that the copy constructor calls the base class copy ctor
-    ///     // then initializes its additional storage.
-    ///     DStubContext(const DStubContext& rhs) : DCfgContextBase(rhs),
-    ///         extra_values_(new Uint32Storage(*(rhs.extra_values_))) {
-    ///     }
-    ///  :
-    ///    // Here's the derivation's additional storage.
-    ///    isc::dhcp::Uint32StoragePtr extra_values_;
-    ///  :
-    /// @endcode
-    ///
-    /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone() = 0;
-
-    /// @brief Unparse a configuration object
-    ///
-    /// Returns an element which must parse into the same object, i.e.
-    /// @code
-    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
-    /// @endcode
-    ///
-    /// @return a pointer to a configuration which can be parsed into
-    /// the initial configuration object
-    virtual isc::data::ElementPtr toElement() const = 0;
+    virtual ~ConfigBase();
 
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
-    DCfgContextBase& operator=(const DCfgContextBase& rhs);
+    ConfigBase& operator=(const ConfigBase& rhs);
 };
+#endif
 
 /// @brief Configuration Manager
 ///
@@ -197,7 +151,7 @@ public:
     /// will use for storing parsed results.
     ///
     /// @throw throws DCfgMgrBaseError if context is null
-    DCfgMgrBase(DCfgContextBasePtr context);
+    DCfgMgrBase(ConfigPtr context);
 
     /// @brief Destructor
     virtual ~DCfgMgrBase();
@@ -232,7 +186,7 @@ public:
     /// @brief Fetches the configuration context.
     ///
     /// @return returns a pointer reference to the configuration context.
-    DCfgContextBasePtr& getContext() {
+    ConfigPtr& getContext() {
         return (context_);
     }
 
@@ -265,8 +219,8 @@ protected:
     /// and will replace the existing context provided the configuration
     /// process completes without error.
     ///
-    /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual DCfgContextBasePtr createNewContext() = 0;
+    /// @return Returns a ConfigPtr to the new context instance.
+    virtual ConfigPtr createNewContext() = 0;
 
     /// @brief Replaces existing context with a new, empty context.
     void resetContext();
@@ -276,7 +230,7 @@ protected:
     /// Replaces the existing context with the given context.
     /// @param context Pointer to the new context.
     /// @throw DCfgMgrBaseError if context is NULL.
-    void setContext(DCfgContextBasePtr& context);
+    void setContext(ConfigPtr& context);
 
     /// @brief Parses actual configuration.
     ///
@@ -298,7 +252,7 @@ protected:
 
 private:
     /// @brief Pointer to the configuration context instance.
-    DCfgContextBasePtr context_;
+    ConfigPtr context_;
 };
 
 /// @brief Defines a shared pointer to DCfgMgrBase.

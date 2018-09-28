@@ -27,8 +27,8 @@ typedef boost::shared_ptr<CtrlAgentCfgContext> CtrlAgentCfgContextPtr;
 /// It provides a single enclosure for the storage of configuration parameters
 /// and any other Control Agent specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
-/// It is derived from the context base class, DCfgContextBase.
-class CtrlAgentCfgContext : public process::DCfgContextBase {
+/// It is derived from the context base class, ConfigBase.
+class CtrlAgentCfgContext : public process::ConfigBase {
 public:
 
     /// @brief Default constructor
@@ -40,8 +40,8 @@ public:
     /// That data is stored as ConstElementPtr (a shared pointer) to the actual data.
     ///
     /// @return A pointer to the new clone.
-    virtual process::DCfgContextBasePtr clone() {
-        return (process::DCfgContextBasePtr(new CtrlAgentCfgContext(*this)));
+    virtual process::ConfigPtr clone() {
+        return (process::ConfigPtr(new CtrlAgentCfgContext(*this)));
     }
 
     /// @brief Returns information about control socket
@@ -200,8 +200,8 @@ protected:
     /// existing context provided the configuration process completes without
     /// error.
     ///
-    /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual process::DCfgContextBasePtr createNewContext();
+    /// @return Returns a ConfigPtr to the new context instance.
+    virtual process::ConfigPtr createNewContext();
 };
 
 /// @brief Defines a shared pointer to CtrlAgentCfgMgr.

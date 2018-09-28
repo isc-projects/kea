@@ -32,7 +32,7 @@ class DCtorTestCfgMgr : public DCfgMgrBase {
 public:
     /// @brief Constructor - Note that is passes in an empty configuration
     /// pointer to the base class constructor.
-    DCtorTestCfgMgr() : DCfgMgrBase(DCfgContextBasePtr()) {
+    DCtorTestCfgMgr() : DCfgMgrBase(ConfigPtr()) {
     }
 
     /// @brief Destructor
@@ -40,8 +40,8 @@ public:
     }
 
     /// @brief Dummy implementation as this method is abstract.
-    virtual DCfgContextBasePtr createNewContext() {
-        return (DCfgContextBasePtr());
+    virtual ConfigPtr createNewContext() {
+        return (ConfigPtr());
     }
 
     /// @brief Returns summary of configuration in the textual format.
@@ -92,7 +92,7 @@ TEST(DCfgMgrBase, construction) {
     ASSERT_NO_THROW(cfg_mgr.reset(new DStubCfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
-    DCfgContextBasePtr context = cfg_mgr->getContext();
+    ConfigPtr context = cfg_mgr->getContext();
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.

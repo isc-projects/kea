@@ -701,7 +701,7 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 ///
 /// This class implements a concrete version of the base class by supplying a
 /// "clone" method.
-class DScalarContext : public process::DCfgContextBase {
+class DScalarContext : public process::ConfigBase {
 public:
 
     /// @brief Constructor
@@ -715,8 +715,8 @@ public:
     /// @brief Creates a clone of a DStubContext.
     ///
     /// @return returns a pointer to the new clone.
-    virtual process::DCfgContextBasePtr clone() {
-        return (process::DCfgContextBasePtr(new DScalarContext(*this)));
+    virtual process::ConfigPtr clone() {
+        return (process::ConfigPtr(new DScalarContext(*this)));
     }
 
     /// @brief Unparse a configuration object
@@ -728,7 +728,7 @@ public:
 
 protected:
     /// @brief Copy constructor
-    DScalarContext(const DScalarContext& rhs) : DCfgContextBase(rhs) {
+    DScalarContext(const DScalarContext& rhs) : ConfigBase(rhs) {
     }
 
 private:

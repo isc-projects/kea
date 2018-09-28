@@ -10,6 +10,7 @@
 #include <process/io_service_signal.h>
 #include <process/testutils/d_test_stubs.h>
 
+#include <boost/bind.hpp>
 #include <gtest/gtest.h>
 
 #include <queue>
