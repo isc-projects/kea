@@ -5,12 +5,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <config/config_ctl_info.h>
+#include <process/config_ctl_info.h>
 
 using namespace isc::data;
 
 namespace isc {
-namespace config {
+namespace process {
 
 void
 ConfigDbInfo::setAccessString(const std::string access_str) {
@@ -38,6 +38,14 @@ ConfigDbInfo::getParameterValue(const std::string& name, std::string& value) con
 
     value = param->second;
     return(true);
+}
+
+//********* ConfiControlInfo ************//
+
+ConfigControlInfo::ConfigControlInfo(const ConfigControlInfo& other) {
+    for (auto db : other.db_infos_) {
+        addConfigDatabase(db.getAccessString());
+    }
 }
 
 void
@@ -94,5 +102,10 @@ ConfigControlInfo::toElement() const {
     return(result);
 }
 
-} // end of namespace isc::config
+bool 
+ConfigControlInfo::equals(const ConfigControlInfo& other) const {
+   return (db_infos_ == other.db_infos_);
+}
+
+} // end of namespace isc::process
 } // end of namespace isc

@@ -9,6 +9,7 @@
 
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <process/config_ctl_info.h>
 #include <process/logging_info.h>
 
 namespace isc {
@@ -26,7 +27,7 @@ namespace process {
 /// DDNS update daemon, Control Agent, Netconf daemon, DHCP relay,
 /// DHCP client.
 ///
-/// This class currently holds information about logging configuration.
+/// This class currently holds information about common server configuration.
 class ConfigBase : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @name Modifiers and accesors for the configuration objects.
@@ -58,8 +59,42 @@ public:
 
     /// @brief Converts to Element representation
     ///
+    /// This creates a Map element with the following content (expressed
+    /// as JSON):
+    /// {{{
+    /// {
+    ///     "Logging": {
+    ///         :
+    ///     }
+    /// }
+    /// }}}
+    ///
+    /// Note that it will not contain the configuration control information
+    /// (i.e. "config-control"), as this is not a top-level element, rather
+    /// it belongs within the configured process element.
+    ///
     /// @return Element representation.
     virtual isc::data::ElementPtr toElement() const;
+
+    /// @brief Fetches a read-only copy of the configuration control
+    /// information
+    /// @return pointer to the const ConfigControlInfo
+    process::ConstConfigControlInfoPtr getConfigControlInfo() const {
+        return (config_ctl_info_);
+    }
+
+    /// @brief Set the configuration control information
+    ///
+    /// Updates the internal pointer to the configuration control
+    /// information with the given pointer value.  If the given pointer
+    /// is empty, the internal pointer will be reset.
+    ///
+    /// @param config_ctl_info pointer to the configuration value
+    /// to store.
+    void setConfigControlInfo(const process::ConfigControlInfoPtr&
+                              config_ctl_info) {
+        config_ctl_info_ = config_ctl_info;
+    }
 
 protected:
     /// @brief Copies the current configuration to a new configuration.
@@ -76,6 +111,8 @@ private:
     /// @brief Logging specific information.
     process::LoggingInfoStorage logging_info_;
 
+    /// @brief Configuration control information.
+    process::ConfigControlInfoPtr config_ctl_info_;
 };
 
 /// @brief Non-const pointer to the @c SrvConfig.
@@ -83,6 +120,5 @@ typedef boost::shared_ptr<ConfigBase> ConfigPtr;
 
 };
 };
-
 
 #endif /* CONFIG_BASE_H */
