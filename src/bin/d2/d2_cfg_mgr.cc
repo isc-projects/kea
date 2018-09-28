@@ -9,6 +9,7 @@
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_simple_parser.h>
+#include <cc/command_interpreter.h>
 #include <util/encode/hex.h>
 
 #include <boost/foreach.hpp>
@@ -106,11 +107,6 @@ const char* D2CfgMgr::IPV4_REV_ZONE_SUFFIX = "in-addr.arpa.";
 const char* D2CfgMgr::IPV6_REV_ZONE_SUFFIX = "ip6.arpa.";
 
 D2CfgMgr::D2CfgMgr() : DCfgMgrBase(DCfgContextBasePtr(new D2CfgContext())) {
-    // TSIG keys need to parse before the Domains, so we can catch Domains
-    // that specify undefined keys. Create the necessary parsing order now.
-    addToParseOrder("tsig-keys");
-    addToParseOrder("forward-ddns");
-    addToParseOrder("reverse-ddns");
 }
 
 D2CfgMgr::~D2CfgMgr() {
@@ -246,177 +242,58 @@ D2CfgMgr::getConfigSummary(const uint32_t) {
     return (getD2Params()->getConfigSummary());
 }
 
-namespace {
-
-template <typename int_type> int_type
-getInt(const std::string& name, ConstElementPtr value) {
-    int64_t val_int = value->intValue();
-    if ((val_int < std::numeric_limits<int_type>::min()) ||
-        (val_int > std::numeric_limits<int_type>::max())) {
-        isc_throw(D2CfgError, "out of range value (" << val_int
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
-    return (static_cast<int_type>(val_int));
-}
-
-isc::asiolink::IOAddress
-getIOAddress(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (isc::asiolink::IOAddress(str));
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "invalid address (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
-}
-
-dhcp_ddns::NameChangeProtocol
-getProtocol(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (dhcp_ddns::stringToNcrProtocol(str));
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError,
-                  "invalid NameChangeRequest protocol (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
-}
-
-dhcp_ddns::NameChangeFormat
-getFormat(const std::string& name, ConstElementPtr value) {
-    std::string str = value->stringValue();
-    try {
-        return (dhcp_ddns::stringToNcrFormat(str));
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError,
-                  "invalid NameChangeRequest format (" << str
-                  << ") specified for parameter '" << name
-                  << "' (" << value->getPosition() << ")");
-    }
-}
-
-} // anon
-
-void
-D2CfgMgr::parseElement(const std::string& element_id,
-                       ConstElementPtr element) {
-    try {
-        // Get D2 specific context.
-        D2CfgContextPtr context = getD2CfgContext();
-
-        if ((element_id == "ip-address") ||
-            (element_id == "ncr-protocol") ||
-            (element_id == "ncr-format") ||
-            (element_id == "port")  ||
-            (element_id == "dns-server-timeout"))  {
-            // global scalar params require nothing extra be done
-        } else if (element_id == "user-context") {
-            if (element->getType() == Element::map) {
-                context->setContext(element);
-            }
-        } else if (element_id == "tsig-keys") {
-            TSIGKeyInfoListParser parser;
-            context->setKeys(parser.parse(element));
-        } else if (element_id ==  "forward-ddns") {
-            DdnsDomainListMgrParser parser;
-            DdnsDomainListMgrPtr mgr = parser.parse(element, element_id,
-                                                    context->getKeys());
-            context->setForwardMgr(mgr);
-        } else if (element_id ==  "reverse-ddns") {
-            DdnsDomainListMgrParser parser;
-            DdnsDomainListMgrPtr mgr = parser.parse(element, element_id,
-                                                    context->getKeys());
-            context->setReverseMgr(mgr);
-        } else {
-            // Shouldn't occur if the JSON parser is doing its job.
-            isc_throw(D2CfgError, "Unsupported element: "
-                      << element_id << element->getPosition());
-        }
-    } catch (const D2CfgError& ex) {
-        // Should already have a specific error and position info
-        throw ex;
-    } catch (const std::exception& ex) {
-        isc_throw(D2CfgError, "element: " << element_id << " : "  << ex.what()
-                              << element->getPosition());
-    }
-};
-
 void
 D2CfgMgr::setCfgDefaults(ElementPtr mutable_config) {
     D2SimpleParser::setAllDefaults(mutable_config);
 }
 
-void
-D2CfgMgr::buildParams(ConstElementPtr params_config) {
-
-    // Base class build creates parses and invokes build on each parser.
-    // This populate the context scalar stores with all of the parameters.
-    DCfgMgrBase::buildParams(params_config);
-
-    // Fetch the parameters in the config, performing any logical
-    // validation required.
-    asiolink::IOAddress ip_address(0);
-    uint32_t port = 0;
-    uint32_t dns_server_timeout = 0;
-    dhcp_ddns::NameChangeProtocol ncr_protocol = dhcp_ddns::NCR_UDP;
-    dhcp_ddns::NameChangeFormat ncr_format = dhcp_ddns::FMT_JSON;
-
-    // Assumes that params_config has had defaults added
-    BOOST_FOREACH(isc::dhcp::ConfigPair param, params_config->mapValue()) {
-        std::string entry(param.first);
-        ConstElementPtr value(param.second);
-        try {
-            if (entry == "ip-address") {
-                ip_address = getIOAddress(entry, value);
-                if ((ip_address.toText() == "0.0.0.0") ||
-                    (ip_address.toText() == "::")) {
-                    isc_throw(D2CfgError, "IP address cannot be \""
-                              << ip_address << "\""
-                            << " (" << value->getPosition() << ")");
-                }
-            } else if (entry == "port") {
-                port = getInt<uint32_t>(entry, value);
-            } else if (entry == "dns-server-timeout") {
-                dns_server_timeout = getInt<uint32_t>(entry, value);
-            } else if (entry == "ncr-protocol") {
-                ncr_protocol = getProtocol(entry, value);
-                if (ncr_protocol != dhcp_ddns::NCR_UDP) {
-                    isc_throw(D2CfgError, "ncr-protocol : "
-                              << dhcp_ddns::ncrProtocolToString(ncr_protocol)
-                              << " is not yet supported "
-                              << " (" << value->getPosition() << ")");
-                }
-            } else if (entry == "ncr-format") {
-                ncr_format = getFormat(entry, value);
-                if (ncr_format != dhcp_ddns::FMT_JSON) {
-                    isc_throw(D2CfgError, "NCR Format:"
-                              << dhcp_ddns::ncrFormatToString(ncr_format)
-                              << " is not yet supported"
-                              << " (" << value->getPosition() << ")");
-                }
-            } else {
-                isc_throw(D2CfgError,
-                          "unsupported parameter '" << entry
-                          << " (" << value->getPosition() << ")");
-            }
-        } catch (const isc::data::TypeError&) {
-            isc_throw(D2CfgError,
-                      "invalid value type specified for parameter '" << entry
-                      << " (" << value->getPosition() << ")");
-        }
-
+isc::data::ConstElementPtr
+D2CfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
+    // Do a sanity check first.
+    if (!config_set) {
+        isc_throw(D2CfgError, "Mandatory config parameter not provided");
     }
 
-    // Attempt to create the new client config. This ought to fly as
-    // we already validated everything.
-    D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
-                                    ncr_protocol, ncr_format));
+    D2CfgContextPtr ctx = getD2CfgContext();
 
-    getD2CfgContext()->getD2Params() = params;
+    // Set the defaults
+    ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
+    D2SimpleParser::setAllDefaults(cfg);
+
+    // And parse the configuration.
+    ConstElementPtr answer;
+    std::string excuse;
+    try {
+        // Do the actual parsing
+        D2SimpleParser parser;
+        parser.parse(ctx, cfg, check_only);
+    } catch (const isc::Exception& ex) {
+        excuse = ex.what();
+        answer = isc::config::createAnswer(2, excuse);
+    } catch (...) {
+        excuse = "undefined configuration parsing error";
+        answer = isc::config::createAnswer(2, excuse);
+    }
+
+    // At this stage the answer was created only in case of exception.
+    if (answer) {
+        if (check_only) {
+            LOG_ERROR(d2_logger, DHCP_DDNS_CONFIG_CHECK_FAIL).arg(excuse);
+        } else {
+            LOG_ERROR(d2_logger, DHCP_DDNS_CONFIG_FAIL).arg(excuse);
+        }
+        return (answer);
+    }
+
+    if (check_only) {
+        answer = isc::config::createAnswer(0, "Configuration check successful");
+    } else {
+        answer = isc::config::createAnswer(0, "Configuration applied successfully.");
+    }
+
+    return (answer);
 }
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

@@ -622,30 +622,6 @@ public:
     /// @brief Destructor
     virtual ~DStubCfgMgr();
 
-    /// @brief Parses the given element into the appropriate object
-    ///
-    /// The method supports three named elements:
-    ///
-    /// -# "bool_test"
-    /// -# "uint32_test"
-    /// -# "string_test"
-    ///
-    /// which are parsed and whose value is then stored in the
-    /// the appropriate context value store.
-    ///
-    /// Any other element_id is treated generically and stored
-    /// in the context's object store, unless the simulated
-    /// error has been set to SimFailure::ftElementUnknown.
-    ///
-    /// @param element_id name of the element to parse
-    /// @param element Element to parse
-    ///
-    /// @throw DCfgMgrBaseError if simulated error is set
-    /// to ftElementUnknown and element_id is not one of
-    /// the named elements.
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
-
     /// @brief Pretends to parse the config
     ///
     /// This method pretends to parse the configuration specified on input
@@ -665,10 +641,6 @@ public:
     virtual std::string getConfigSummary(const uint32_t) {
         return ("");
     }
-
-    /// @brief A list for remembering the element ids in the order they were
-    /// parsed.
-    ElementIdList parsed_order_;
 
     /// @todo
     virtual DCfgContextBasePtr createNewContext();

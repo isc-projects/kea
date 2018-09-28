@@ -71,7 +71,7 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) 
                 "Simulated process configuration error."));
     }
 
-    return (getCfgMgr()->parseConfig(config_set, check_only));
+    return (getCfgMgr()->simpleParseConfig(config_set, check_only));
 }
 
 DStubProcess::~DStubProcess() {
@@ -294,24 +294,6 @@ DStubCfgMgr::~DStubCfgMgr() {
 DCfgContextBasePtr
 DStubCfgMgr::createNewContext() {
     return (DCfgContextBasePtr (new DStubContext()));
-}
-
-void
-DStubCfgMgr::parseElement(const std::string& element_id,
-                          isc::data::ConstElementPtr element) {
-    DStubContextPtr context
-        = boost::dynamic_pointer_cast<DStubContext>(getContext());
-
-    // Fail only if SimFailure dictates we should.  This makes it easier
-    // to test parse ordering, by permitting a wide range of element ids
-    // to "succeed" without specifically supporting them.
-    if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
-        isc_throw(DCfgMgrBaseError,
-                  "Configuration parameter not supported: " << element_id
-                  << element->getPosition());
-    }
-
-    parsed_order_.push_back(element_id);
 }
 
 isc::data::ConstElementPtr

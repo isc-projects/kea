@@ -114,140 +114,12 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse a simple configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
 
     // Verify that we can check a simple configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, true);
     EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that an unknown element error is caught and returns a failed
-    // parse result.
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that an error is caught too when the config is checked for.
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
-    EXPECT_TRUE(checkAnswer(1));
-}
-
-///@brief Tests ordered and non-ordered element parsing
-/// This test verifies that:
-/// 1. Non-ordered parsing parses elements in the order they are presented
-/// by the configuration set (as-they-come).
-/// 2. A parse order list with too few elements is detected.
-/// 3. Ordered parsing parses the elements in the order specified by the
-/// configuration manager's parse order list.
-/// 4. A parse order list with too many elements is detected.
-TEST_F(DStubCfgMgrTest, parseOrderTest) {
-    // Element ids used for test.
-    std::string charlie("charlie");
-    std::string bravo("bravo");
-    std::string alpha("alpha");
-    std::string string_test("string_test");
-    std::string uint32_test("uint32_test");
-    std::string bool_test("bool_test");
-
-    // Create the test configuration with the elements in "random" order.
-
-    // NOTE that element sets produced by  isc::data::Element::fromJSON(),
-    // are in lexical order by element_id. This means that iterating over
-    // such an element set, will present the elements in lexical order. Should
-    // this change, this test will need to be modified accordingly.
-    string config = "{"
-                    " \"string_test\": \"hoopla\", "
-                    " \"bravo\": [],  "
-                    " \"uint32_test\": 55, "
-                    " \"alpha\": {},  "
-                    " \"charlie\": [], "
-                    " \"bool_test\": true "
-                    "} ";
-
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that non-ordered parsing, results in an as-they-come parse order.
-    // Create an expected parse order.
-    // (NOTE that iterating over Element sets produced by fromJSON() will
-    // present the elements in lexical order.  Should this change, the expected
-    // order list below would need to be changed accordingly).
-    ElementIdList order_expected;
-
-    // scalar params should be first and lexically
-    order_expected.push_back(bool_test);
-    order_expected.push_back(string_test);
-    order_expected.push_back(uint32_test);
-
-    // objects second and lexically
-    order_expected.push_back(alpha);
-    order_expected.push_back(bravo);
-    order_expected.push_back(charlie);
-
-    // Verify that the manager has an EMPTY parse order list. (Empty list
-    // instructs the manager to parse them as-they-come.)
-    EXPECT_EQ(0, cfg_mgr_->getParseOrder().size());
-
-    // Parse the configuration, verify it parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that the parsed order matches what we expected.
-    EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
-
-    // Clear the manager's parse order "memory".
-    cfg_mgr_->parsed_order_.clear();
-
-    // Create a parse order list that has too few entries.  Verify that
-    // when parsing the test config, it fails.
-    cfg_mgr_->addToParseOrder(charlie);
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(1, cfg_mgr_->getParseOrder().size());
-
-    // Verify the configuration fails.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that the configuration parses correctly, when the parse order
-    // is correct.  Add the needed entries to the parse order
-    cfg_mgr_->addToParseOrder(bravo);
-    cfg_mgr_->addToParseOrder(alpha);
-
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(3, cfg_mgr_->getParseOrder().size());
-
-    // Clear the manager's parse order "memory".
-    cfg_mgr_->parsed_order_.clear();
-
-    // Verify the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(0));
-
-    // Build expected order
-    // primitives should be first and lexically
-    order_expected.clear();
-    order_expected.push_back(bool_test);
-    order_expected.push_back(string_test);
-    order_expected.push_back(uint32_test);
-
-    // objects second and by the parse order
-    order_expected.push_back(charlie);
-    order_expected.push_back(bravo);
-    order_expected.push_back(alpha);
-
-    // Verify that the parsed order is the order we configured.
-    EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
-
-    // Create a parse order list that has too many entries.  Verify that
-    // when parsing the test config, it fails.
-    cfg_mgr_->addToParseOrder("delta");
-
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(4, cfg_mgr_->getParseOrder().size());
-
-    // Verify the configuration fails.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
 }
 
 /// @brief Tests that element ids supported by the base class as well as those
@@ -270,7 +142,7 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
@@ -284,7 +156,7 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     ASSERT_TRUE(fromJSON(config2));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
     ASSERT_TRUE(context);
@@ -303,7 +175,7 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
@@ -317,13 +189,6 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
                     "  \"list_test2\": [] , "
                     "  \"zeta_unknown\": 33 } ";
     ASSERT_TRUE(fromJSON(config2));
-
-    // Force a failure on the last element
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-    context = getStubContext();
-    ASSERT_TRUE(context);
 }
 
 /// @brief Tests that the configuration context is preserved during
@@ -338,7 +203,7 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
@@ -352,7 +217,7 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
                     "  \"list_test2\": [] }";
     ASSERT_TRUE(fromJSON(config2));
 
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, true);
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
     ASSERT_TRUE(context);
@@ -369,7 +234,7 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);

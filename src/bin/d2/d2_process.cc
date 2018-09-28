@@ -198,7 +198,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         .arg(config_set->str());
 
     isc::data::ConstElementPtr answer;
-    answer = getCfgMgr()->parseConfig(config_set, check_only);;
+    answer = getCfgMgr()->simpleParseConfig(config_set, check_only);
     if (check_only) {
         return (answer);
     }
