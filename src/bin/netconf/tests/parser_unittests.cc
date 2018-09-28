@@ -543,7 +543,8 @@ TEST(ParserTest, errors) {
               "expecting }");
     testError("{ 123 }\n",
               ParserContext::PARSER_NETCONF,
-              "<string>:1.3-5: syntax error, unexpected integer");
+              "<string>:1.3-5: syntax error, unexpected integer, "
+              "expecting Netconf or Logging");
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_JSON,
               "<string>:1.9: syntax error, unexpected }, "

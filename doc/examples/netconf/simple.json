@@ -20,8 +20,8 @@
                 "model": "kea-dhcp4-server",
                 "control-socket":
                 {
-                    "type": "unix",
-                    "name": "/path/to/the/unix/socket-v4"
+                    "socket-type": "unix",
+                    "socket-name": "/path/to/the/unix/socket-v4"
                 }
             },
 
@@ -31,8 +31,8 @@
                 "model": "kea-dhcp6-server",
                 "control-socket":
                 {
-                    "type": "unix",
-                    "name": "/path/to/the/unix/socket-v6"
+                    "socket-type": "unix",
+                    "socket-name": "/path/to/the/unix/socket-v6"
                 }
             },
 
@@ -43,7 +43,7 @@
                 "model": "kea-dhcp-ddns",
                 "control-socket":
                 {
-                    "type": "stdout",
+                    "socket-type": "stdout",
                     "user-context": { "in-use": false }
                 }
             },
@@ -54,9 +54,8 @@
                 "model": "kea-ctrl-agent",
                 "control-socket":
                 {
-                    "type": "http",
-                    "host": "127.0.0.1",
-                    "port": 8000
+                    "socket-type": "http",
+                    "socket-url": "http://127.0.0.1:8000/"
                 }
             }
         },

@@ -235,10 +235,9 @@ global_objects: global_object
               | global_objects COMMA global_object
               ;
 
-// This represents a single top level entry, e.g. Control-netconf, Dhcp6 or DhcpDdns.
+// This represents a single top level entry, e.g. Netconf or Logging.
 global_object: netconf_object
              | logging_object
-             | unknown_map_entry
              ;
 
 // This define the Control-netconf object.
