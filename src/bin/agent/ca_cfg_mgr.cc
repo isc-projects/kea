@@ -24,13 +24,13 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
-    : DCfgContextBase(), ctrl_sockets_(orig.ctrl_sockets_),
+    : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
       hooks_config_(orig.hooks_config_) {
 }
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
-    : DCfgMgrBase(DCfgContextBasePtr(new CtrlAgentCfgContext())) {
+    : DCfgMgrBase(ConfigPtr(new CtrlAgentCfgContext())) {
 }
 
 CtrlAgentCfgMgr::~CtrlAgentCfgMgr() {
@@ -59,9 +59,9 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     return (s.str());
 }
 
-DCfgContextBasePtr
+ConfigPtr
 CtrlAgentCfgMgr::createNewContext() {
-    return (DCfgContextBasePtr(new CtrlAgentCfgContext()));
+    return (ConfigPtr(new CtrlAgentCfgContext()));
 }
 
 isc::data::ConstElementPtr

@@ -31,17 +31,9 @@ using namespace isc::asiolink;
 namespace isc {
 namespace process {
 
-// *********************** DCfgContextBase  *************************
-
-DCfgContextBase::DCfgContextBase() {
-    }
-
-DCfgContextBase::~DCfgContextBase() {
-}
-
 // *********************** DCfgMgrBase  *************************
 
-DCfgMgrBase::DCfgMgrBase(DCfgContextBasePtr context) {
+DCfgMgrBase::DCfgMgrBase(ConfigPtr context) {
     setContext(context);
 }
 
@@ -50,12 +42,12 @@ DCfgMgrBase::~DCfgMgrBase() {
 
 void
 DCfgMgrBase::resetContext() {
-    DCfgContextBasePtr context = createNewContext();
+    ConfigPtr context = createNewContext();
     setContext(context);
 }
 
 void
-DCfgMgrBase::setContext(DCfgContextBasePtr& context) {
+DCfgMgrBase::setContext(ConfigPtr& context) {
     if (!context) {
         isc_throw(DCfgMgrBaseError, "DCfgMgrBase: context cannot be NULL");
     }
@@ -80,7 +72,7 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
     // inconsistency if the parsing operation fails after the context has been
     // modified. We need to preserve the original context here
     // so as we can rollback changes when an error occurs.
-    DCfgContextBasePtr original_context = context_;
+    ConfigPtr original_context = context_;
     resetContext();
 
     // Answer will hold the result returned to the caller.

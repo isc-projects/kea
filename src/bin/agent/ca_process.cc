@@ -115,7 +115,7 @@ CtrlAgentProcess::configure(isc::data::ConstElementPtr config_set,
     ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
                                                             check_only,
                                                             [this]() {
-        DCfgContextBasePtr base_ctx = getCfgMgr()->getContext();
+        ConfigPtr base_ctx = getCfgMgr()->getContext();
         CtrlAgentCfgContextPtr
             ctx = boost::dynamic_pointer_cast<CtrlAgentCfgContext>(base_ctx);
 

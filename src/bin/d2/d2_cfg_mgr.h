@@ -29,8 +29,8 @@ typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 /// It provides a single enclosure for the storage of configuration parameters
 /// and any other DHCP-DDNS specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
-/// It is derived from the context base class, DCfgContextBase.
-class D2CfgContext : public process::DCfgContextBase {
+/// It is derived from the context base class, ConfigBase.
+class D2CfgContext : public process::ConfigBase {
 public:
     /// @brief Constructor
     D2CfgContext();
@@ -41,8 +41,8 @@ public:
     /// @brief Creates a clone of this context object.
     ///
     /// @return returns a pointer to the new clone.
-    virtual process::DCfgContextBasePtr clone() {
-        return (process::DCfgContextBasePtr(new D2CfgContext(*this)));
+    virtual process::ConfigPtr clone() {
+        return (process::ConfigPtr(new D2CfgContext(*this)));
     }
 
     /// @brief Fetches a reference to the D2Params
@@ -289,8 +289,8 @@ protected:
     /// existing context provided the configuration process completes without
     /// error.
     ///
-    /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual process::DCfgContextBasePtr createNewContext();
+    /// @return Returns a ConfigPtr to the new context instance.
+    virtual process::ConfigPtr createNewContext();
 };
 
 /// @brief Defines a shared pointer to D2CfgMgr.

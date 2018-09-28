@@ -542,7 +542,7 @@ public:
     ///
     /// @return A pointer to the context which may be null if it has not yet
     /// been instantiated.
-    DCfgContextBasePtr getContext();
+    ConfigPtr getContext();
 
     /// @brief Timer used for delayed configuration file writing.
     asiolink::IntervalTimerPtr write_timer_;
@@ -554,11 +554,7 @@ public:
     static const char* CFG_TEST_FILE;
 };
 
-/// @brief a collection of elements that store uint32 values
-typedef isc::dhcp::ValueStorage<isc::data::ConstElementPtr> ObjectStorage;
-typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
-
-/// @brief Test Derivation of the DCfgContextBase class.
+/// @brief Test Derivation of the ConfigBase class.
 ///
 /// This class is used to test basic functionality of configuration context.
 /// It adds an additional storage container "extra values" to mimic an
@@ -566,7 +562,7 @@ typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
 /// both the base class content as well as the application content is
 /// correctly copied during cloning.  This is vital to configuration backup
 /// and rollback during configuration parsing.
-class DStubContext : public DCfgContextBase {
+class DStubContext : public ConfigBase {
 public:
 
     /// @brief Constructor
@@ -578,7 +574,7 @@ public:
     /// @brief Creates a clone of a DStubContext.
     ///
     /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone();
+    virtual ConfigPtr clone();
 
 protected:
     /// @brief Copy constructor
@@ -643,7 +639,7 @@ public:
     }
 
     /// @todo
-    virtual DCfgContextBasePtr createNewContext();
+    virtual ConfigPtr createNewContext();
 };
 
 /// @brief Defines a pointer to DStubCfgMgr.
