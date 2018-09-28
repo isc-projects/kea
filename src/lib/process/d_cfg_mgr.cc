@@ -33,64 +33,8 @@ namespace process {
 
 // *********************** DCfgContextBase  *************************
 
-DCfgContextBase::DCfgContextBase():
-        boolean_values_(new BooleanStorage()),
-        uint32_values_(new Uint32Storage()),
-        string_values_(new StringStorage()) {
+DCfgContextBase::DCfgContextBase() {
     }
-
-DCfgContextBase::DCfgContextBase(const DCfgContextBase& rhs):
-        boolean_values_(new BooleanStorage(*(rhs.boolean_values_))),
-        uint32_values_(new Uint32Storage(*(rhs.uint32_values_))),
-        string_values_(new StringStorage(*(rhs.string_values_))) {
-}
-
-const data::Element::Position&
-DCfgContextBase::getParam(const std::string& name, bool& value, bool optional) {
-    try {
-        value = boolean_values_->getParam(name);
-        return (boolean_values_->getPosition(name));
-    } catch (DhcpConfigError& ex) {
-        // If the parameter is not optional, re-throw the exception.
-        if (!optional) {
-            throw;
-        }
-    }
-
-    return (data::Element::ZERO_POSITION());
-}
-
-const data::Element::Position&
-DCfgContextBase::getParam(const std::string& name, uint32_t& value,
-                          bool optional) {
-    try {
-        value = uint32_values_->getParam(name);
-        return (uint32_values_->getPosition(name));
-    } catch (DhcpConfigError& ex) {
-        // If the parameter is not optional, re-throw the exception.
-        if (!optional) {
-            throw;
-        }
-    }
-
-    return (data::Element::ZERO_POSITION());
-}
-
-const data::Element::Position&
-DCfgContextBase::getParam(const std::string& name, std::string& value,
-                          bool optional) {
-    try {
-        value = string_values_->getParam(name);
-        return (string_values_->getPosition(name));
-    } catch (DhcpConfigError& ex) {
-        // If the parameter is not optional, re-throw the exception.
-        if (!optional) {
-            throw;
-        }
-    }
-
-    return (data::Element::ZERO_POSITION());
-}
 
 DCfgContextBase::~DCfgContextBase() {
 }

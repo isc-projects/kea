@@ -63,96 +63,12 @@ typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
 ///
 class DCfgContextBase : public ConfigBase {
 public:
-    /// @brief Indicator that a configuration parameter is optional.
-    static const bool OPTIONAL = true;
-    static const bool REQUIRED = false;
 
     /// @brief Constructor
     DCfgContextBase();
 
     /// @brief Destructor
     virtual ~DCfgContextBase();
-
-    /// @brief Fetches the value for a given boolean configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    /// It defaults to false if not specified.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, bool& value, bool optional=false);
-
-    /// @brief Fetches the value for a given uint32_t configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, uint32_t& value,
-                 bool optional=false);
-
-    /// @brief Fetches the value for a given string configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, std::string& value,
-                  bool optional=false);
-
-    /// @brief Fetches the Boolean Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the Boolean Storage.
-    isc::dhcp::BooleanStoragePtr getBooleanStorage() {
-        return (boolean_values_);
-    }
-
-    /// @brief Fetches the uint32 Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the uint32 Storage.
-    isc::dhcp::Uint32StoragePtr getUint32Storage() {
-        return (uint32_values_);
-    }
-
-    /// @brief Fetches the string Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the string Storage.
-    isc::dhcp::StringStoragePtr getStringStorage() {
-        return (string_values_);
-    }
 
     /// @brief Creates a clone of this context object.
     ///
@@ -195,22 +111,9 @@ public:
     /// the initial configuration object
     virtual isc::data::ElementPtr toElement() const = 0;
 
-protected:
-    /// @brief Copy constructor for use by derivations in clone().
-    DCfgContextBase(const DCfgContextBase& rhs);
-
 private:
     /// @brief Private assignment operator to avoid potential for slicing.
     DCfgContextBase& operator=(const DCfgContextBase& rhs);
-
-    /// @brief Storage for boolean parameters.
-    isc::dhcp::BooleanStoragePtr boolean_values_;
-
-    /// @brief Storage for uint32 parameters.
-    isc::dhcp::Uint32StoragePtr uint32_values_;
-
-    /// @brief Storage for string parameters.
-    isc::dhcp::StringStoragePtr string_values_;
 };
 
 /// @brief Defines a sequence of Element IDs used to specify a parsing order.

@@ -263,21 +263,10 @@ const char* DControllerTest::CFG_TEST_FILE = "d2-test-config.json";
 
 //************************** DStubContext *************************
 
-DStubContext::DStubContext(): object_values_(new ObjectStorage()) {
+DStubContext::DStubContext() {
 }
 
 DStubContext::~DStubContext() {
-}
-
-void
-DStubContext::getObjectParam(const std::string& name,
-                             isc::data::ConstElementPtr& value) {
-    value = object_values_->getParam(name);
-}
-
-ObjectStoragePtr&
-DStubContext::getObjectStorage() {
-    return (object_values_);
 }
 
 DCfgContextBasePtr
@@ -285,8 +274,7 @@ DStubContext::clone() {
     return (DCfgContextBasePtr(new DStubContext(*this)));
 }
 
-DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
-    object_values_(new ObjectStorage(*(rhs.object_values_))) {
+DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs) {
 }
 
 isc::data::ElementPtr
@@ -314,32 +302,13 @@ DStubCfgMgr::parseElement(const std::string& element_id,
     DStubContextPtr context
         = boost::dynamic_pointer_cast<DStubContext>(getContext());
 
-    if (element_id == "bool_test") {
-        bool value = element->boolValue();
-        context->getBooleanStorage()->setParam(element_id, value,
-                                               element->getPosition()); 
-    } else if (element_id == "uint32_test") {
-        uint32_t value = element->intValue();
-        context->getUint32Storage()->setParam(element_id, value,
-                                              element->getPosition()); 
-
-    } else if (element_id == "string_test") {
-        std::string value = element->stringValue();
-        context->getStringStorage()->setParam(element_id, value,
-                                              element->getPosition()); 
-    } else {
-        // Fail only if SimFailure dictates we should.  This makes it easier
-        // to test parse ordering, by permitting a wide range of element ids
-        // to "succeed" without specifically supporting them.
-        if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
-            isc_throw(DCfgMgrBaseError,
-                      "Configuration parameter not supported: " << element_id
-                      << element->getPosition());
-        }
-
-        // Going to assume anything else is an object element.
-        context->getObjectStorage()->setParam(element_id, element,
-                                              element->getPosition()); 
+    // Fail only if SimFailure dictates we should.  This makes it easier
+    // to test parse ordering, by permitting a wide range of element ids
+    // to "succeed" without specifically supporting them.
+    if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
+        isc_throw(DCfgMgrBaseError,
+                  "Configuration parameter not supported: " << element_id
+                  << element->getPosition());
     }
 
     parsed_order_.push_back(element_id);

@@ -328,12 +328,6 @@ TEST_F(DStubControllerTest, invalidConfigReload) {
     time_duration elapsed_time;
     runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
 
-    // Context is still available post launch. Check to see that our
-    // configuration value is still the original value.
-    std::string  actual_value = "";
-    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
-    EXPECT_EQ("first value", actual_value);
-
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
     ASSERT_EQ(1, signals.size());
@@ -354,12 +348,6 @@ TEST_F(DStubControllerTest, alternateParsing) {
     // Next we process the SIGHUP signal which should cause us to reconfigure.
     time_duration elapsed_time;
     runWithConfig("{ \"string_test\": \"first value\" }", 500, elapsed_time);
-
-    // Context is still available post launch. Check to see that our
-    // configuration value is still the original value.
-    std::string  actual_value = "";
-    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
-    EXPECT_EQ("alt value", actual_value);
 
     // Verify that we saw the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
@@ -383,12 +371,6 @@ TEST_F(DStubControllerTest, validConfigReload) {
     // Write the config and then run launch() for 800 ms
     time_duration elapsed_time;
     runWithConfig("{ \"string_test\": \"first value\" }", 800, elapsed_time);
-
-    // Context is still available post launch.
-    // Check to see that our configuration value is what we expect.
-    std::string  actual_value = "";
-    ASSERT_NO_THROW(getContext()->getParam("string_test", actual_value));
-    EXPECT_EQ("second value", actual_value);
 
     // Verify that we saw two occurrences of the signal.
     std::vector<int>& signals = controller_->getProcessedSignals();
