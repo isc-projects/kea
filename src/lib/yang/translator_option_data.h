@@ -13,66 +13,66 @@
 namespace isc {
 namespace yang {
 
-// Option data translation between YANG and JSON
-//
-// JSON syntax for Kea DHCP with command channel is:
-// @code
-// {
-//     "code": <code>,
-//     "name": <name>,
-//     "space": <space>,
-//     "csv-format": <csv format flag>,
-//     "data": <value>,
-//     "always-send": <always send flag>,
-//     "user-context": { <json map> },
-//     "comment": "<comment>"
-// }
-// @endcode
-//
-// YANG syntax for kea-dhcp[46] with code and space as keys is:
-// @code
-//    +--rw name?          string
-//    +--rw data?          string
-//    +--rw code           uint8 / uint16
-//    +--rw space          string
-//    +--rw csv-format?    string
-//    +--rw always-send?   boolean
-//    +--rw user-context?  string
-// @endcode
-//
-// An example in JSON and YANG formats:
-// @code
-// [
-//     {
-//         "code": 100,
-//         "space": "dns",
-//         "csv-format": false,
-//         "data": "12121212",
-//         "always-send": false
-//     }
-// ]
-// @endcode
-// @code
-//  /kea-dhcp6-server:config (container)
-//  /kea-dhcp6-server:config/option-data-list (container)
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns'] (list instance)
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns']/code = 100
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns']/space = dns
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns']/data = 12121212
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns']/csv-format = false
-//  /kea-dhcp6-server:config/option-data-list/
-//     option-data[code='100'][space='dns']/always-send = false
-// @endcode
+/// Option data translation between YANG and JSON
+///
+/// JSON syntax for Kea DHCP with command channel is:
+/// @code
+/// {
+///     "code": <code>,
+///     "name": <name>,
+///     "space": <space>,
+///     "csv-format": <csv format flag>,
+///     "data": <value>,
+///     "always-send": <always send flag>,
+///     "user-context": { <json map> },
+///     "comment": "<comment>"
+/// }
+/// @endcode
+///
+/// YANG syntax for kea-dhcp[46] with code and space as keys is:
+/// @code
+///    +--rw name?          string
+///    +--rw data?          string
+///    +--rw code           uint8 / uint16
+///    +--rw space          string
+///    +--rw csv-format?    string
+///    +--rw always-send?   boolean
+///    +--rw user-context?  string
+/// @endcode
+///
+/// An example in JSON and YANG formats:
+/// @code
+/// [
+///     {
+///         "code": 100,
+///         "space": "dns",
+///         "csv-format": false,
+///         "data": "12121212",
+///         "always-send": false
+///     }
+/// ]
+/// @endcode
+/// @code
+///  /kea-dhcp6-server:config (container)
+///  /kea-dhcp6-server:config/option-data-list (container)
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns'] (list instance)
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns']/code = 100
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns']/space = dns
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns']/data = 12121212
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns']/csv-format = false
+///  /kea-dhcp6-server:config/option-data-list/
+///     option-data[code='100'][space='dns']/always-send = false
+/// @endcode
 
-// @brief A translator class for converting an option data between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// @brief A translator class for converting an option data between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorOptionData : virtual public TranslatorBasic {
 public:
 
@@ -119,10 +119,10 @@ protected:
     std::string model_;
 };
 
-// @brief A translator class for converting an option data list between
-// YANG and JSON.
-//
-// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// @brief A translator class for converting an option data list between
+/// YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
 class TranslatorOptionDataList : virtual public TranslatorOptionData {
 public:
 
