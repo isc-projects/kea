@@ -551,11 +551,12 @@ TEST(ParserTest, errors) {
               "expecting :");
     testError("{ \"foo\" }\n",
               ParserContext::PARSER_NETCONF,
-              "<string>:1.9: syntax error, unexpected }, expecting :");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Netconf or Logging");
     testError("{ \"foo\":null }\n",
               ParserContext::PARSER_NETCONF,
-              "<string>:1.3-7: got unexpected keyword "
-              "\"foo\" in toplevel map.");
+              "<string>:1.3-7: syntax error, unexpected constant string, "
+              "expecting Netconf or Logging");
     testError("{ \"Netconf\" }\n",
               ParserContext::PARSER_NETCONF,
               "<string>:1.13: syntax error, unexpected }, "
