@@ -184,7 +184,7 @@ public:
         ///< Used while parsing Netconf/manages-servers/*/control-socket
         CONTROL_SOCKET,
 
-        ///< Used while parsing Netconf/managed-servers/*/control-socket/type.
+        ///< Used while parsing Netconf/managed-servers/*/control-socket/socket-type.
         SOCKET_TYPE,
 
         ///< Used while parsing Netconf/hooks-libraries.

@@ -60,13 +60,12 @@ using namespace std;
   CA_SERVER "ca"
   MODEL "model"
   CONTROL_SOCKET "control-socket"
-  TYPE "type"
+  SOCKET_TYPE "socket-type"
   UNIX "unix"
   HTTP "http"
   STDOUT "stdout"
-  NAME "name"
-  HOST "host"
-  PORT "port"
+  SOCKET_NAME "socket-name"
+  SOCKET_URL "socket-url"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -74,6 +73,7 @@ using namespace std;
 
   LOGGING "Logging"
   LOGGERS "loggers"
+  NAME "name"
   OUTPUT_OPTIONS "output_options"
   OUTPUT "output"
   DEBUGLEVEL "debuglevel"
@@ -81,11 +81,6 @@ using namespace std;
   FLUSH "flush"
   MAXSIZE "maxsize"
   MAXVER "maxver"
-
-  DHCP4 "Dhcp4"
-  DHCP6 "Dhcp6"
-  DHCPDDNS "DhcpDdns"
-  CONTROL_AGENT "Control-agent"
 
   // Not real tokens, just a way to signal what the parser is expected to
   // parse. This define the starting point. It either can be full grammar
@@ -223,8 +218,7 @@ unknown_map_entry: STRING COLON {
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 };
 
-// This defines the top-level { } that holds Netconf, Dhcp6, Dhcp4,
-// DhcpDdns, Control-agent or Logging objects.
+// This defines the top-level { } that holds Netconf or Logging objects.
 netconf_syntax_map: LCURLY_BRACKET {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -244,10 +238,6 @@ global_objects: global_object
 // This represents a single top level entry, e.g. Control-netconf, Dhcp6 or DhcpDdns.
 global_object: netconf_object
              | logging_object
-             | dhcp4_json_object
-             | dhcp6_json_object
-             | dhcpddns_json_object
-             | control_agent_object
              | unknown_map_entry
              ;
 
@@ -269,9 +259,13 @@ netconf_object: NETCONF {
     ctx.leave();
 };
 
-global_params: global_param
-             | global_params COMMA global_param
+global_params: %empty
+             | not_empty_global_params
              ;
+
+not_empty_global_params: global_param
+                       | not_empty_global_params COMMA global_param
+                       ;
 
 // These are the parameters that are allowed in the top-level for
 // Netconf.
@@ -499,18 +493,17 @@ control_socket_params: control_socket_param
                      ;
 
 control_socket_param: socket_type
-                    | name
-                    | host
-                    | port
+                    | socket_name
+                    | socket_url
                     | user_context
                     | comment
                     | unknown_map_entry
                     ;
 
-socket_type: TYPE {
+socket_type: SOCKET_TYPE {
     ctx.enter(ctx.SOCKET_TYPE);
 } COLON socket_type_value {
-    ctx.stack_.back()->set("type", $4);
+    ctx.stack_.back()->set("socket-type", $4);
     ctx.leave();
 };
 
@@ -520,60 +513,24 @@ socket_type_value : UNIX { $$ = ElementPtr(new StringElement("unix", ctx.loc2pos
                   | STDOUT { $$ = ElementPtr(new StringElement("stdout", ctx.loc2pos(@1))); }
                   ;
 // Unix name.
-name: NAME {
+socket_name: SOCKET_NAME {
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("name", name);
+    ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 };
 
-// HTTP host.
-host: HOST {
+// HTTP url.
+socket_url: SOCKET_URL {
     ctx.enter(ctx.NO_KEYWORDS);
 } COLON STRING {
-    ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("host", host);
+    ElementPtr url(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("socket-url", url);
     ctx.leave();
-};
-
-// HTTP PORT
-port: PORT COLON INTEGER {
-    ElementPtr port(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("port", port);
 };
 
 // --- managed-servers end here ------------------------------------------------
-
-// JSON entries for other global objects (Dhcp4,Dhcp6 and DhcpDdns)
-dhcp4_json_object: DHCP4 {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp4", $4);
-    ctx.leave();
-};
-
-dhcp6_json_object: DHCP6 {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("Dhcp6", $4);
-    ctx.leave();
-};
-
-dhcpddns_json_object: DHCPDDNS {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("DhcpDdns", $4);
-    ctx.leave();
-};
-
-control_agent_object: CONTROL_AGENT {
-    ctx.enter(ctx.NO_KEYWORDS);
-} COLON value {
-    ctx.stack_.back()->set("Control-agent", $4);
-    ctx.leave();
-};
-
 
 // --- Logging starts here -----------------------------------------------------
 
@@ -639,6 +596,14 @@ logger_param: name
             | comment
             | unknown_map_entry
             ;
+
+name: NAME {
+    ctx.enter(ctx.NO_KEYWORDS);
+} COLON STRING {
+    ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("name", name);
+    ctx.leave();
+};
 
 debuglevel: DEBUGLEVEL COLON INTEGER {
     ElementPtr dl(new IntElement($3, ctx.loc2pos(@3)));

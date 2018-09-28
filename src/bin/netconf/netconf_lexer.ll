@@ -296,40 +296,30 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"name\" {
+\"socket-type\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKET:
-    case ParserContext::LOGGERS:
-        return NetconfParser::make_NAME(driver.loc_);
+        return NetconfParser::make_SOCKET_TYPE(driver.loc_);
     default:
-        return NetconfParser::make_STRING("name", driver.loc_);
+        return NetconfParser::make_STRING("socket-type", driver.loc_);
     }
 }
 
-\"type\" {
+\"socket-name\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKET:
-        return NetconfParser::make_TYPE(driver.loc_);
+        return NetconfParser::make_SOCKET_NAME(driver.loc_);
     default:
-        return NetconfParser::make_STRING("type", driver.loc_);
+        return NetconfParser::make_STRING("socket-name", driver.loc_);
     }
 }
 
-\"host\" {
+\"socket-url\" {
     switch(driver.ctx_) {
     case ParserContext::CONTROL_SOCKET:
-        return NetconfParser::make_HOST(driver.loc_);
+        return NetconfParser::make_SOCKET_URL(driver.loc_);
     default:
-        return NetconfParser::make_STRING("host", driver.loc_);
-    }
-}
-
-\"port\" {
-    switch(driver.ctx_) {
-    case ParserContext::CONTROL_SOCKET:
-        return NetconfParser::make_PORT(driver.loc_);
-    default:
-        return NetconfParser::make_STRING("port", driver.loc_);
+        return NetconfParser::make_STRING("socket-url", driver.loc_);
     }
 }
 
@@ -375,6 +365,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return NetconfParser::make_LOGGERS(driver.loc_);
     default:
         return NetconfParser::make_STRING("loggers", driver.loc_);
+    }
+}
+
+\"name\" {
+    switch(driver.ctx_) {
+    case ParserContext::LOGGERS:
+        return NetconfParser::make_NAME(driver.loc_);
+    default:
+        return NetconfParser::make_STRING("name", driver.loc_);
     }
 }
 
@@ -438,42 +437,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return NetconfParser::make_SEVERITY(driver.loc_);
     default:
         return NetconfParser::make_STRING("severity", driver.loc_);
-    }
-}
-
-\"Dhcp4\" {
-    switch(driver.ctx_) {
-    case ParserContext::CONFIG:
-        return NetconfParser::make_DHCP4(driver.loc_);
-    default:
-        return NetconfParser::make_STRING("Dhcp4", driver.loc_);
-    }
-}
-
-\"Dhcp6\" {
-    switch(driver.ctx_) {
-    case ParserContext::CONFIG:
-        return NetconfParser::make_DHCP6(driver.loc_);
-    default:
-        return NetconfParser::make_STRING("Dhcp6", driver.loc_);
-    }
-}
-
-\"DhcpDdns\" {
-    switch(driver.ctx_) {
-    case ParserContext::CONFIG:
-        return NetconfParser::make_DHCPDDNS(driver.loc_);
-    default:
-        return NetconfParser::make_STRING("DhcpDdns", driver.loc_);
-    }
-}
-
-\"Control-agent\" {
-    switch(driver.ctx_) {
-    case ParserContext::CONFIG:
-        return NetconfParser::make_CONTROL_AGENT(driver.loc_);
-    default:
-        return NetconfParser::make_STRING("Control-agent", driver.loc_);
     }
 }
 
