@@ -31,11 +31,8 @@ libkea_yang_include_HEADERS = \
 	sysrepo_error.h \
 	translator.h \
 	translator_option_data.h \
-<<<<<<< HEAD
-	translator_option_def.h
-=======
+	translator_option_def.h \
 	translator_pool.h
->>>>>>> 65-libyang-pool
 
 EXTRA_DIST = yang.dox
 # Distribute yang models.
