@@ -45,7 +45,7 @@ NetconfProcess::run() {
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
         while (!shouldShutdown()) {
-            getIoService()->get_io_service().poll();
+            runIO();
         }
         stopIOService();
     } catch (const std::exception& ex) {
@@ -60,6 +60,15 @@ NetconfProcess::run() {
     }
 
     LOG_DEBUG(netconf_logger, isc::log::DBGLVL_START_SHUT, NETCONF_RUN_EXIT);
+}
+
+size_t
+NetconfProcess::runIO() {
+    size_t cnt = getIoService()->get_io_service().poll();
+    if (!cnt) {
+        cnt = getIoService()->get_io_service().run_one();
+    }
+    return (cnt);
 }
 
 isc::data::ConstElementPtr
