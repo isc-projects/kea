@@ -590,7 +590,7 @@ TEST_F(SrvConfigTest, unparseHR) {
 
     // Add a v4 global host reservation to the plain subnet
     HostPtr ghost4(new Host("AA:01:02:03:04:05", "hw-address",
-                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED, 
+                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED,
                             IOAddress("192.0.3.1")));
     conf4.getCfgHosts()->add(ghost4);
 
@@ -751,7 +751,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     conf6.getCfgHosts()->add(phost6);
 
     // Add a host reservation to the shared subnet
-    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED, 
+    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED,
                             s_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "bar.example.org"));
     conf6.getCfgHosts()->add(shost6);
@@ -869,5 +869,50 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_EQ(Element::string, check->getType());
     EXPECT_EQ("bar.example.org", check->stringValue());
 }
+
+// Verifies that the toElement method does not miss config control info
+TEST_F(SrvConfigTest, unparseConfigControlInfo) {
+    // DHCPv4 version
+    CfgMgr::instance().setFamily(AF_INET);
+    SrvConfig conf4(32);
+
+    // Unparse the config
+    ConstElementPtr unparsed4 = conf4.toElement();
+    ASSERT_TRUE(unparsed4);
+    ASSERT_EQ(Element::map, unparsed4->getType());
+
+    // Get Dhcp4 entry
+    ConstElementPtr dhcp4;
+    ASSERT_NO_THROW(dhcp4 = unparsed4->get("Dhcp4"));
+    ASSERT_TRUE(dhcp4);
+    ASSERT_EQ(Element::map, dhcp4->getType());
+
+    // Config control should not be present.
+    ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp4->get("config-control"));
+    EXPECT_FALSE(check);
+
+    // Now let's create the info and add it to the configuration
+    ConfigControlInfoPtr info(new ConfigControlInfo());
+    ASSERT_NO_THROW(info->addConfigDatabase("type=mysql"));
+    ASSERT_NO_THROW(conf4.setConfigControlInfo(info));
+
+    // Unparse the config again
+    unparsed4 = conf4.toElement();
+    ASSERT_NO_THROW(dhcp4 = unparsed4->get("Dhcp4"));
+    ASSERT_TRUE(dhcp4);
+    ASSERT_EQ(Element::map, dhcp4->getType());
+
+    // Config control should be present.
+    ASSERT_NO_THROW(check = dhcp4->get("config-control"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Unparse the info object and compare its elements to
+    // that in unparsed config.  They should be equal.
+    ElementPtr info_elem = info->toElement();
+    EXPECT_TRUE(info_elem->equals(*check));
+}
+
 
 } // end of anonymous namespace
