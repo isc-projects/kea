@@ -19,8 +19,8 @@
                 "control-socket":
                 {
                     "comment": "using unix/local socket",
-                    "type": "unix",
-                    "name": "/path/to/the/unix/socket-v4"
+                    "socket-type": "unix",
+                    "socket-name": "/path/to/the/unix/socket-v4"
                 }
             }
         }
