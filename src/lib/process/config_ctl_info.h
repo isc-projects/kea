@@ -4,8 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef CONFIG_CONFIG_CTL_H
-#define CONFIG_CONFIG_CTL_H
+#ifndef PROCESS_CONFIG_CTL_INFO_H
+#define PROCESS_CONFIG_CTL_INFO_H
 
 #include <cc/cfg_to_element.h>
 #include <database/database_connection.h>
@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace isc {
-namespace config {
+namespace process {
 
 /// @brief Provides configuration information used during a server's
 /// configuration process
@@ -131,6 +131,9 @@ public:
     /// @brief Constructor.
     ConfigControlInfo() {};
 
+    /// @brief Copy Constructor.
+    ConfigControlInfo(const ConfigControlInfo& other);
+
     /// @brief Sets host database access string.
     ///
     /// @param host_db_access New host database access string.
@@ -166,6 +169,13 @@ public:
     /// @return a reference to the empty ConfigDBInfo
     static const ConfigDbInfo& EMPTY_DB();
 
+    /// @brief Compares two objects for equality.
+    ///
+    /// @param other An object to be compared with this object.
+    ///
+    /// @return true if objects are equal, false otherwise.
+    bool equals(const ConfigControlInfo& other) const;
+
 private:
 
     /// @brief List of configuration databases
@@ -174,8 +184,10 @@ private:
 
 /// @brief Defines a pointer to a ConfigControlInfo
 typedef boost::shared_ptr<ConfigControlInfo> ConfigControlInfoPtr;
+/// @brief Defines a pointer to a const ConfigControlInfo
+typedef boost::shared_ptr<const ConfigControlInfo> ConstConfigControlInfoPtr;
 
-} // namespace config
+} // namespace process
 } // end namespace isc
 
-#endif // CONFIG_CONFIG_CTL_H
+#endif // PROCESS_CONFIG_CTL_INFO_H

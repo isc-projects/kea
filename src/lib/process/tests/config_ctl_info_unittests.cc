@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <config/config_ctl_info.h>
+#include <process/config_ctl_info.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-using namespace isc::config;
+using namespace isc::process;
 using namespace isc::data;
 
 // Verifies initializing via an access string and unparsing into elements
@@ -140,4 +140,26 @@ TEST(ConfigControlInfo, basicOperation) {
     // Verify we can clear the list of dbs.
     ctl.clear();
     EXPECT_EQ(0, ctl.getConfigDatabases().size());
+}
+
+// Verifies the copy ctor and equality functions ConfigControlInfo
+TEST(ConfigControlInfo, copyAndEquality) {
+
+    // Make an instance with two dbs.
+    ConfigControlInfo ctl1;
+    ASSERT_NO_THROW(ctl1.addConfigDatabase("type=mysql host=mach1.org"));
+    ASSERT_NO_THROW(ctl1.addConfigDatabase("type=postgresql host=mach2.org"));
+
+    // Clone that instance.
+    ConfigControlInfo ctl2(ctl1);
+
+    // They should be equal.
+    EXPECT_TRUE(ctl1.equals(ctl2));
+
+    // Make a third instance with a different db.
+    ConfigControlInfo ctl3;
+    ASSERT_NO_THROW(ctl1.addConfigDatabase("type=cql host=other.org"));
+
+    // They should not equal.
+    EXPECT_FALSE(ctl3.equals(ctl1));
 }

@@ -39,6 +39,8 @@ DISTCLEANFILES = spec_config.h.pre
 
 lib_LTLIBRARIES = libkea-process.la
 libkea_process_la_SOURCES  = config_base.cc config_base.h
+libkea_process_la_SOURCES += config_ctl_info.cc config_control_info.h
+libkea_process_la_SOURCES += config_ctl_parser.cc config_control_parser.h
 libkea_process_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 libkea_process_la_SOURCES += d_controller.cc d_controller.h
 libkea_process_la_SOURCES += d_log.cc d_log.h

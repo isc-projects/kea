@@ -22,6 +22,9 @@ if HAVE_GTEST
 TESTS += libprocess_unittests
 
 libprocess_unittests_SOURCES  = d_cfg_mgr_unittests.cc
+libprocess_unittests_SOURCES += config_base_unittests.cc
+libprocess_unittests_SOURCES += config_ctl_info_unittests.cc
+libprocess_unittests_SOURCES += config_ctl_parser_unittests.cc
 libprocess_unittests_SOURCES += d_controller_unittests.cc
 libprocess_unittests_SOURCES += daemon_unittest.cc
 libprocess_unittests_SOURCES += io_service_signal_unittests.cc
