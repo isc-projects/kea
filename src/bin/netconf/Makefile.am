@@ -17,7 +17,6 @@ man_MANS = kea-netconf.8
 DISTCLEANFILES = $(man_MANS)
 EXTRA_DIST = $(man_MANS) kea-netconf.xml
 #EXTRA_DIST += netconf.dox netconf_hooks.dox
-#EXTRA_DIST += netconf_parser.yy
 
 if GENERATE_DOCS
 kea-netconf.8: kea-netconf.xml
