@@ -23,11 +23,11 @@ NetconfCfgContext::NetconfCfgContext() {
 }
 
 NetconfCfgContext::NetconfCfgContext(const NetconfCfgContext& orig)
-    : DCfgContextBase(), hooks_config_(orig.hooks_config_) {
+    : ConfigBase(), hooks_config_(orig.hooks_config_) {
 }
 
 NetconfCfgMgr::NetconfCfgMgr()
-    : DCfgMgrBase(DCfgContextBasePtr(new NetconfCfgContext())) {
+    : DCfgMgrBase(ConfigPtr(new NetconfCfgContext())) {
 }
 
 NetconfCfgMgr::~NetconfCfgMgr() {
@@ -50,9 +50,9 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     return (s.str());
 }
 
-DCfgContextBasePtr
+ConfigPtr
 NetconfCfgMgr::createNewContext() {
-    return (DCfgContextBasePtr(new NetconfCfgContext()));
+    return (ConfigPtr(new NetconfCfgContext()));
 }
 
 isc::data::ConstElementPtr
