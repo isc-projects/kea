@@ -19,7 +19,6 @@
 using namespace std;
 using namespace isc::netconf;
 using namespace isc::data;
-using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::process;
 
@@ -67,7 +66,7 @@ TEST(NetconfCfgMgr, contextCopy) {
     libs.add(exp_name, exp_param);
 
     // Make a copy.
-    DCfgContextBasePtr copy_base(ctx.clone());
+    ConfigPtr copy_base(ctx.clone());
     NetconfCfgContextPtr copy = boost::dynamic_pointer_cast<NetconfCfgContext>(copy_base);
     ASSERT_TRUE(copy);
 

@@ -93,7 +93,7 @@ NetconfProcess::configure(isc::data::ConstElementPtr config_set,
     ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
                                                             check_only,
                                                             [this]() {
-        DCfgContextBasePtr base_ctx = getCfgMgr()->getContext();
+        ConfigPtr base_ctx = getCfgMgr()->getContext();
         NetconfCfgContextPtr
             ctx = boost::dynamic_pointer_cast<NetconfCfgContext>(base_ctx);
 
