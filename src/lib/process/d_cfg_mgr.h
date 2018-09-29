@@ -30,46 +30,6 @@ public:
         isc::Exception(file, line, what) { };
 };
 
-#if 0
-/// @brief Pointer to a configuration context.
-// typedef boost::shared_ptr<ConfigBase> ConfigPtr;
-
-class ConfigBase;
-
-/// @brief Abstract class that implements a container for configuration context.
-/// It provides a single enclosure for the storage of configuration parameters
-/// and any other context specific information that needs to be accessible
-/// during configuration parsing as well as to the application as a whole.
-/// The base class supports storage for a small set of simple data types.
-/// Derivations simply add additional storage as needed.  Note that this class
-/// declares the pure virtual clone() method, its copy constructor is protected,
-/// and its copy operator is inaccessible.  Derivations must supply an
-/// implementation of clone that calls the base class copy constructor.
-/// This allows the management class to perform context backup and restoration
-/// without derivation specific knowledge using logic like
-/// the following:
-///
-///    // Make a backup copy
-///    ConfigPtr backup_copy(context_->clone());
-///    :
-///    // Restore from backup
-///    context_ = backup_copy;
-///
-class ConfigBase : public ConfigBase {
-public:
-
-    /// @brief Constructor
-    ConfigBase();
-
-    /// @brief Destructor
-    virtual ~ConfigBase();
-
-private:
-    /// @brief Private assignment operator to avoid potential for slicing.
-    ConfigBase& operator=(const ConfigBase& rhs);
-};
-#endif
-
 /// @brief Configuration Manager
 ///
 /// DCfgMgrBase is an abstract class that provides the mechanisms for managing
