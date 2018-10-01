@@ -6133,7 +6133,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     ConstElementPtr x;
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, \n"
-        "\"renew-timer\": 1000, \n"
+        "\"renew-timer\": 1000,\n"
         "\"reservations\": [\n"
         " {\n"
         "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\",\n"
@@ -6280,6 +6280,43 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
               dblist.front().getAccessString());
     EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", 
               dblist.back().getAccessString());
+}
+
+// Check whether it is possible to configure server-tag
+TEST_F(Dhcp4ParserTest, serverTag) {
+    // Config without server-tag
+    string config_no_tag = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with server-tag
+    string config_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": \"boo\", "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with an invalid server-tag
+    string bad_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": 777, "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Let's check the default. It should be empty.
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Configuration with no tag should default to an emtpy tag value.
+    configure(config_no_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Clear the config
+    CfgMgr::instance().clear();
+
+    // Configuration with the tag should have the tag value.
+    configure(config_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag());
+
+    // Make sure a invalid server-tag fails to parse.
+    ASSERT_THROW(parseDHCP4(bad_tag), std::exception);
 }
 
 }

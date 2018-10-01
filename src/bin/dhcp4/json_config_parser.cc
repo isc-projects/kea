@@ -99,6 +99,10 @@ public:
         if (user_context) {
             cfg->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        cfg->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -518,7 +522,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "match-client-id") ||
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||
-                 (config_pair.first == "boot-file-name")) {
+                 (config_pair.first == "boot-file-name") ||
+                 (config_pair.first == "server-tag")) {
                 continue;
             }
 

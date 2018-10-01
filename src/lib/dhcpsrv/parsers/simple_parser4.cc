@@ -65,7 +65,8 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "match-client-id",          Element::boolean, "true" },
     { "next-server",              Element::string,  "0.0.0.0" },
     { "server-hostname",          Element::string,  "" },
-    { "boot-file-name",           Element::string,  "" }
+    { "boot-file-name",           Element::string,  "" },
+    { "server-tag",               Element::string,  "" }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.

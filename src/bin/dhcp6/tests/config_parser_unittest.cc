@@ -6877,4 +6877,42 @@ TEST_F(Dhcp6ParserTest, configControlInfo) {
               dblist.back().getAccessString());
 }
 
+// Check whether it is possible to configure server-tag
+TEST_F(Dhcp6ParserTest, serverTag) {
+
+    // Config without server-tag
+    string config_no_tag = "{ " + genIfaceConfig() + "," +
+        "\"subnet6\": [  ] "
+        "}";
+
+    // Config with server-tag
+    string config_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": \"boo\", "
+        "\"subnet6\": [  ] "
+        "}";
+
+    // Config with an invalid server-tag
+    string bad_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": 777, "
+        "\"subnet6\": [  ] "
+        "}";
+
+    // Let's check the default. It should be empty.
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Configuration with no tag should default to an emtpy tag value.
+    configure(config_no_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Clear the config
+    CfgMgr::instance().clear();
+
+    // Configuration with the tag should have the tag value.
+    configure(config_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag());
+
+    // Make sure a invalid server-tag fails to parse.
+    ASSERT_THROW(parseDHCP6(bad_tag), std::exception);
+}
+
 };
