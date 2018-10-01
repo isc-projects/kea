@@ -80,28 +80,8 @@ NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
 isc::data::ConstElementPtr
 NetconfProcess::configure(isc::data::ConstElementPtr config_set,
                           bool check_only) {
-    // System reconfiguration often poses an interesting issue whereby the
-    // configuration parsing is successful, but an attempt to use a new
-    // configuration is not. This will leave us in the inconsistent state
-    // when the configuration is in fact only partially applied and the
-    // system's ability to operate is impaired. The use of C++ lambda is
-    // a way to resolve this problem by injecting the code to the
-    // simpleParseConfig which performs an attempt to open new instance
-    // of the listener (if required). The lambda code will throw an
-    // exception if it fails and cause the simpleParseConfig to rollback
-    // configuration changes and report an error.
-    ConstElementPtr answer = getCfgMgr()->simpleParseConfig(config_set,
-                                                            check_only,
-                                                            [this]() {
-        ConfigPtr base_ctx = getCfgMgr()->getContext();
-        NetconfCfgContextPtr
-            ctx = boost::dynamic_pointer_cast<NetconfCfgContext>(base_ctx);
-
-        if (!ctx) {
-            isc_throw(Unexpected, "Internal logic error: bad context type");
-        }
-    });
-
+    ConstElementPtr answer =
+        getCfgMgr()->simpleParseConfig(config_set, check_only);
     int rcode = 0;
     config::parseAnswer(rcode, answer);
     return (answer);

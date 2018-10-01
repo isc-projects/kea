@@ -465,7 +465,7 @@ managed_server_param: model
                     | comment
                     | unknown_map_entry
                     ;
-                    
+
 // YANG model
 model: MODEL {
     ctx.enter(ctx.NO_KEYWORDS);

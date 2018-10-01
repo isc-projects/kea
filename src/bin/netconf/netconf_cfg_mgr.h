@@ -34,13 +34,6 @@ public:
     /// @brief Default constructor
     NetconfCfgContext();
 
-    /// @brief Creates a clone of this context object.
-    ///
-    /// @return A pointer to the new clone.
-    virtual process::ConfigPtr clone() {
-        return (process::ConfigPtr(new NetconfCfgContext(*this)));
-    }
-
     /// @brief Returns non-const reference to configured hooks libraries.
     ///
     /// @return non-const reference to configured hooks libraries.
@@ -71,7 +64,6 @@ private:
     /// @brief Private copy constructor
     ///
     /// It is private to forbid anyone outside of this class to make copies.
-    /// The only legal way to copy a context is to call @ref clone().
     ///
     /// @param orig the original context to copy from
     NetconfCfgContext(const NetconfCfgContext& orig);

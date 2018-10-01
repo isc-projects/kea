@@ -8,9 +8,6 @@
 
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_process.h>
-#ifdef notyet
-#include <netconf/parser_context.h>
-#endif
 
 using namespace isc::process;
 
@@ -45,13 +42,8 @@ NetconfController::createProcess() {
 
 isc::data::ConstElementPtr
 NetconfController::parseFile(const std::string& name) {
-#ifdef notyet
-    ParserContext parser;
-    return (parser.parseFile(name, ParserContext::PARSER_NETCONF));
-#else
     isc_throw(NotImplemented, "NetconfController::parseFile("
               << name << ")");
-#endif
 }
 
 NetconfController::NetconfController()

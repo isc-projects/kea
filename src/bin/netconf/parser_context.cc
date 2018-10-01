@@ -111,7 +111,6 @@ ParserContext::require(const std::string& name,
     }
 }
 
-  
 void
 ParserContext::enter(const LexerContext& ctx)
 {
