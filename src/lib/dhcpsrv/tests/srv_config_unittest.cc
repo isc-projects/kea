@@ -288,6 +288,22 @@ TEST_F(SrvConfigTest, echoClientId) {
     EXPECT_TRUE(conf1.getEchoClientId());
 }
 
+// This test verifies that server-tag may be configured.
+TEST_F(SrvConfigTest, serverTag) {
+    SrvConfig conf;
+
+    // Check that the default is an empty string.
+    EXPECT_TRUE(conf.getServerTag().empty());
+
+    // Check that it can be modified.
+    conf.setServerTag("boo");
+    EXPECT_EQ("boo", conf.getServerTag());
+
+    // Check the other constructor has the same default
+    SrvConfig conf1(1);
+    EXPECT_EQ("boo", conf.getServerTag());
+}
+
 // This test checks if entire configuration can be copied and that the sequence
 // number is not affected.
 TEST_F(SrvConfigTest, copy) {
@@ -871,7 +887,7 @@ TEST_F(SrvConfigTest, unparseHR) {
 }
 
 // Verifies that the toElement method does not miss config control info
-TEST_F(SrvConfigTest, unparseConfigControlInfo) {
+TEST_F(SrvConfigTest, unparseConfigControlInfo4) {
     // DHCPv4 version
     CfgMgr::instance().setFamily(AF_INET);
     SrvConfig conf4(32);
@@ -914,5 +930,48 @@ TEST_F(SrvConfigTest, unparseConfigControlInfo) {
     EXPECT_TRUE(info_elem->equals(*check));
 }
 
+// Verifies that the toElement method does not miss config control info
+TEST_F(SrvConfigTest, unparseConfigControlInfo6) {
+    // DHCPv6 version
+    CfgMgr::instance().setFamily(AF_INET6);
+    SrvConfig conf6(32);
+
+    // Unparse the config
+    ConstElementPtr unparsed6 = conf6.toElement();
+    ASSERT_TRUE(unparsed6);
+    ASSERT_EQ(Element::map, unparsed6->getType());
+
+    // Get Dhcp4 entry
+    ConstElementPtr dhcp6;
+    ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
+    ASSERT_TRUE(dhcp6);
+    ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Config control should not be present.
+    ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp6->get("config-control"));
+    EXPECT_FALSE(check);
+
+    // Now let's create the info and add it to the configuration
+    ConfigControlInfoPtr info(new ConfigControlInfo());
+    ASSERT_NO_THROW(info->addConfigDatabase("type=mysql"));
+    ASSERT_NO_THROW(conf6.setConfigControlInfo(info));
+
+    // Unparse the config again
+    unparsed6 = conf6.toElement();
+    ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
+    ASSERT_TRUE(dhcp6);
+    ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Config control should be present.
+    ASSERT_NO_THROW(check = dhcp6->get("config-control"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Unparse the info object and compare its elements to
+    // that in unparsed config.  They should be equal.
+    ElementPtr info_elem = info->toElement();
+    EXPECT_TRUE(info_elem->equals(*check));
+}
 
 } // end of anonymous namespace

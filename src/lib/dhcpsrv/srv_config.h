@@ -559,6 +559,21 @@ public:
         configured_globals_->set(name, value);
     }
 
+    /// @brief Sets the server's logical name
+    ///
+    /// @param server_tag a unique string name which identifies this server
+    /// from any other configured servers
+    void setServerTag(const std::string& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns the server's logical name
+    ///
+    /// @return string containing the server's tag
+    std::string getServerTag() const {
+        return (server_tag_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -665,6 +680,9 @@ private:
 
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
+
+    /// @brief Logical name of the server
+    std::string server_tag_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

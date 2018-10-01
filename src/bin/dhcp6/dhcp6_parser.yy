@@ -85,6 +85,7 @@ using namespace std;
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
+  SERVER_TAG "server-tag"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -460,6 +461,7 @@ global_param: preferred_lifetime
             | sanity_checks
             | reservations
             | config_control
+            | server_tag
             | unknown_map_entry
             ;
 
@@ -486,6 +488,14 @@ rebind_timer: REBIND_TIMER COLON INTEGER {
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
+};
+
+server_tag: SERVER_TAG  {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-tag", stag);
+    ctx.leave();
 };
 
 interfaces_config: INTERFACES_CONFIG {

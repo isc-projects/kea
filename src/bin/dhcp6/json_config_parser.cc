@@ -169,6 +169,10 @@ public:
         if (user_context) {
             srv_config->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        srv_config->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -625,7 +629,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
-                 (config_pair.first == "user-context")) {
+                 (config_pair.first == "user-context") ||
+                 (config_pair.first == "server-tag")) {
                 continue;
             }
 
