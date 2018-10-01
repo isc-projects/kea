@@ -37,6 +37,7 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
+#include <process/config_ctl_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -603,6 +604,13 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                     srv_config->getCfgHosts()->add(*h);
                 }
 
+                continue;
+            }
+
+            if (config_pair.first == "config-control") {
+                process::ConfigControlParser parser;
+                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
                 continue;
             }
 
