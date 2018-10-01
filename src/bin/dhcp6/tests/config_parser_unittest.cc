@@ -25,6 +25,7 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
+#include <process/config_ctl_info.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -231,7 +232,31 @@ const char* PARSER_CONFIGS[] = {
     "    ]"
     "}",
 
-    // Last configuration for comments
+    // Configuration 8: config control
+    "{ \n"
+    "    \"interfaces-config\": { \n"
+    "        \"interfaces\": [\"*\" ] \n"
+    "    }, \n"
+    "    \"valid-lifetime\": 4000, \n"
+    "    \"rebind-timer\": 2000, \n"
+    "    \"renew-timer\": 1000, \n"
+    "    \"config-control\": { \n"
+    "       \"config-databases\": [ { \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest1\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"password\": \"keatest\" \n"
+    "           },{ \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest2\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"password\": \"keatest\" \n"
+    "           } \n"
+    "       ] \n"
+    "   } \n"
+    "} \n",
+
+    // Configuration 9 for comments
     "{"
     "    \"comment\": \"A DHCPv6 server\","
     "    \"server-id\": {"
@@ -6462,7 +6487,7 @@ TEST_F(Dhcp6ParserTest, hostsDatabases) {
 // This test checks comments. Please keep it last.
 TEST_F(Dhcp6ParserTest, comments) {
 
-    string config = PARSER_CONFIGS[8];
+    string config = PARSER_CONFIGS[9];
     extractConfig(config);
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
@@ -6826,6 +6851,30 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     opt_prf = retrieveOption<OptionUint8Ptr>(*host, D6O_PREFERENCE);
     ASSERT_TRUE(opt_prf);
     EXPECT_EQ(11, static_cast<int>(opt_prf->getValue()));
+}
+
+// This test verifies that configuration control info gets populated.
+TEST_F(Dhcp6ParserTest, configControlInfo) {
+    string config = PARSER_CONFIGS[8];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Make sure the config control info is there.
+    process::ConstConfigControlInfoPtr info =
+        CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
+    ASSERT_TRUE(info);
+
+    // Fetch the list of config dbs.  It should have two entries.
+    const process::ConfigDbInfoList& dblist = info->getConfigDatabases();
+    ASSERT_EQ(2, dblist.size());
+
+    // Make sure the entries are what we expect and in the right order.
+    // (DbAccessParser creates access strings with the keywords in
+    //  alphabetical order).
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest",
+              dblist.front().getAccessString());
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
+              dblist.back().getAccessString());
 }
 
 };

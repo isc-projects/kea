@@ -511,6 +511,25 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"config-control\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_CONFIG_CONTROL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("config-control", driver.loc_);
+    }
+}
+
+\"config-databases\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::CONFIG_CONTROL:
+        return isc::dhcp::Dhcp6Parser::make_CONFIG_DATABASES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("config-databases", driver.loc_);
+    }
+}
+
+
 \"readonly\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
@@ -526,6 +545,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::OPTION_DEF:
     case isc::dhcp::Parser6Context::SERVER_ID:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_TYPE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("type", driver.loc_);
@@ -572,6 +592,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_USER(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("user", driver.loc_);
@@ -582,6 +603,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_PASSWORD(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("password", driver.loc_);
@@ -592,6 +614,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_HOST(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("host", driver.loc_);
@@ -602,6 +625,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_PORT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("port", driver.loc_);
@@ -613,6 +637,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
     case isc::dhcp::Parser6Context::SERVER_ID:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_PERSIST(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("persist", driver.loc_);
@@ -623,6 +648,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_LFC_INTERVAL(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("lfc-interval", driver.loc_);
@@ -633,6 +659,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_CONNECT_TIMEOUT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("connect-timeout", driver.loc_);
@@ -643,6 +670,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_KEYSPACE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("keyspace", driver.loc_);
@@ -653,6 +681,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_RECONNECT_WAIT_TIME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("reconnect-wait-time", driver.loc_);
@@ -663,6 +692,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_REQUEST_TIMEOUT(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("request-timeout", driver.loc_);
@@ -673,6 +703,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_TCP_KEEPALIVE(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("tcp-keepalive", driver.loc_);
@@ -683,6 +714,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_TCP_NODELAY(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("tcp-nodelay", driver.loc_);
@@ -693,6 +725,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_CONTACT_POINTS(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("contact-points", driver.loc_);
@@ -703,6 +736,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::LEASE_DATABASE:
     case isc::dhcp::Parser6Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_MAX_RECONNECT_TRIES(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("max-reconnect-tries", driver.loc_);
@@ -814,6 +848,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser6Context::CLIENT_CLASSES:
     case isc::dhcp::Parser6Context::LOGGERS:
     case isc::dhcp::Parser6Context::SHARED_NETWORK:
+    case isc::dhcp::Parser6Context::CONFIG_DATABASE:
         return isc::dhcp::Dhcp6Parser::make_NAME(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("name", driver.loc_);
