@@ -1,1 +1,3 @@
 /netconf_tests.sh
+netconf_unittests
+test_libraries.h
