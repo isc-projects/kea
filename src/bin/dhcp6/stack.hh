@@ -1,10 +1,8 @@
-// Generated 201808161138
-// Generated 201808161137
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.0.4.
 
 // Stack handling for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -42,10 +40,9 @@
 
 # include <vector>
 
-#line 14 "dhcp6_parser.yy" // stack.hh:131
+#line 14 "dhcp6_parser.yy" // stack.hh:132
 namespace isc { namespace dhcp {
-#line 46 "stack.hh" // stack.hh:131
-  /// A stack with random access from its top.
+#line 46 "stack.hh" // stack.hh:132
   template <class T, class S = std::vector<T> >
   class stack
   {
@@ -60,24 +57,20 @@ namespace isc { namespace dhcp {
       seq_.reserve (200);
     }
 
-    stack (unsigned n)
+    stack (unsigned int n)
       : seq_ (n)
     {}
 
-    /// Random access.
-    ///
-    /// Index 0 returns the topmost element.
+    inline
     T&
-    operator[] (unsigned i)
+    operator[] (unsigned int i)
     {
       return seq_[seq_.size () - 1 - i];
     }
 
-    /// Random access.
-    ///
-    /// Index 0 returns the topmost element.
+    inline
     const T&
-    operator[] (unsigned i) const
+    operator[] (unsigned int i) const
     {
       return seq_[seq_.size () - 1 - i];
     }
@@ -85,6 +78,7 @@ namespace isc { namespace dhcp {
     /// Steal the contents of \a t.
     ///
     /// Close to move-semantics.
+    inline
     void
     push (T& t)
     {
@@ -92,8 +86,9 @@ namespace isc { namespace dhcp {
       operator[](0).move (t);
     }
 
+    inline
     void
-    pop (unsigned n = 1)
+    pop (unsigned int n = 1)
     {
       for (; n; --n)
         seq_.pop_back ();
@@ -105,18 +100,21 @@ namespace isc { namespace dhcp {
       seq_.clear ();
     }
 
+    inline
     typename S::size_type
     size () const
     {
       return seq_.size ();
     }
 
+    inline
     const_iterator
     begin () const
     {
       return seq_.rbegin ();
     }
 
+    inline
     const_iterator
     end () const
     {
@@ -135,24 +133,25 @@ namespace isc { namespace dhcp {
   class slice
   {
   public:
-    slice (const S& stack, unsigned range)
+    slice (const S& stack, unsigned int range)
       : stack_ (stack)
       , range_ (range)
     {}
 
+    inline
     const T&
-    operator [] (unsigned i) const
+    operator [] (unsigned int i) const
     {
       return stack_[range_ - i];
     }
 
   private:
     const S& stack_;
-    unsigned range_;
+    unsigned int range_;
   };
 
-#line 14 "dhcp6_parser.yy" // stack.hh:131
+#line 14 "dhcp6_parser.yy" // stack.hh:132
 } } // isc::dhcp
-#line 155 "stack.hh" // stack.hh:131
+#line 156 "stack.hh" // stack.hh:132
 
 #endif // !YY_PARSER6_STACK_HH_INCLUDED
