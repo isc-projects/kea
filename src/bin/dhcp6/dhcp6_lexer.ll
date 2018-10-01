@@ -796,6 +796,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"server-tag\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return isc::dhcp::Dhcp6Parser::make_SERVER_TAG(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("server-tag", driver.loc_);
+    }
+}
+
 \"subnet6\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:

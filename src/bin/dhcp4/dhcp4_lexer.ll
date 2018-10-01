@@ -590,6 +590,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"server-tag\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+        return isc::dhcp::Dhcp4Parser::make_SERVER_TAG(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("server-tag", driver.loc_);
+    }
+}
+
 \"subnet4\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
