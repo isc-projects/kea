@@ -69,7 +69,7 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     IntervalTimer timer(*getIoService());
     timer.setup(boost::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
-                2 * 1000);
+                200);
 
     // Record start time, and invoke run().
     ptime start = microsec_clock::universal_time();
@@ -82,8 +82,8 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     // timer duration.  This demonstrates that the shutdown was driven
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
-    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2200);
+    EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
+                elapsed.total_milliseconds() <= 400);
 }
 
 

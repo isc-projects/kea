@@ -40,8 +40,9 @@ const char* valid_agent_config =
     "  }"
     "}";
 
-/// @brief test fixture class for testing CtrlAgentController class. This
-/// class derives from DControllerTest and wraps CtrlAgentController. Much
+/// @brief test fixture class for testing CtrlAgentController class.
+///
+/// This class derives from DControllerTest and wraps CtrlAgentController. Much
 /// of the underlying functionality is in the DControllerBase class which
 /// has extensive set of unit tests that are independent from the Control
 /// Agent.
@@ -167,8 +168,8 @@ public:
 // Verifies that the controller singleton gets created and that the
 // basic derivation from the base class is intact.
 TEST_F(CtrlAgentControllerTest, basicInstanceTesting) {
-    // Verify the we can the singleton instance can be fetched and that
-    // it is the correct type.
+    // Verify the singleton instance can be fetched and that
+    // it has the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
     ASSERT_TRUE(controller);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<CtrlAgentController>(controller));

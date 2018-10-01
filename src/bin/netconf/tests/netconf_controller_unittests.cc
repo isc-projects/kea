@@ -21,25 +21,9 @@ using namespace boost::posix_time;
 
 namespace {
 
-#ifdef notyet
-/// @brief Valid Netconf Config used in tests.
-const char* valid_netconf_config =
-    "{"
-    "  \"control-sockets\": {"
-    "    \"dhcp4\": {"
-    "      \"socket-type\": \"unix\","
-    "      \"socket-name\": \"/first/dhcp4/socket\""
-    "    },"
-    "    \"dhcp6\": {"
-    "      \"socket-type\": \"unix\","
-    "      \"socket-name\": \"/first/dhcp6/socket\""
-    "    }"
-    "  }"
-    "}";
-#endif
-
-/// @brief test fixture class for testing NetconfController class. This
-/// class derives from DControllerTest and wraps NetconfController. Much
+/// @brief test fixture class for testing NetconfController class.
+///
+/// This class derives from DControllerTest and wraps NetconfController. Much
 /// of the underlying functionality is in the DControllerBase class which
 /// has extensive set of unit tests that are independent from Netconf.
 class NetconfControllerTest : public DControllerTest {
@@ -72,55 +56,14 @@ public:
         }
         return (p);
     }
-
-    /// @brief Compares the status in the given parse result to a given value.
-    ///
-    /// @param answer Element set containing an integer response and string
-    /// comment.
-    /// @param exp_status is an integer against which to compare the status.
-    /// @param exp_txt is expected text (not checked if "")
-    ///
-    void checkAnswer(isc::data::ConstElementPtr answer,
-                     int exp_status,
-                     string exp_txt = "") {
-
-        // Get rid of the outer list.
-        ASSERT_TRUE(answer);
-        ASSERT_EQ(Element::list, answer->getType());
-        ASSERT_LE(1, answer->size());
-        answer = answer->get(0);
-
-        int rcode = 0;
-        isc::data::ConstElementPtr comment;
-        comment = isc::config::parseAnswer(rcode, answer);
-
-        if (rcode != exp_status) {
-            ADD_FAILURE() << "Expected status code " << exp_status
-                          << " but received " << rcode << ", comment: "
-                          << (comment ? comment->str() : "(none)");
-        }
-
-        // Ok, parseAnswer interface is weird. If there are no arguments,
-        // it returns content of text. But if there is an argument,
-        // it returns the argument and it's not possible to retrieve
-        // "text" (i.e. comment).
-        if (comment->getType() != Element::string) {
-            comment = answer->get("text");
-        }
-
-        if (!exp_txt.empty()) {
-            EXPECT_EQ(exp_txt, comment->stringValue());
-        }
-    }
-
 };
 
 // Basic Controller instantiation testing.
 // Verifies that the controller singleton gets created and that the
 // basic derivation from the base class is intact.
 TEST_F(NetconfControllerTest, basicInstanceTesting) {
-    // Verify the we can the singleton instance can be fetched and that
-    // it is the correct type.
+    // Verify the singleton instance can be fetched and that
+    // it has the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
     ASSERT_TRUE(controller);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<NetconfController>(controller));
@@ -175,51 +118,5 @@ TEST_F(NetconfControllerTest, initProcessTesting) {
     ASSERT_NO_THROW(initProcess());
     EXPECT_TRUE(checkProcess());
 }
-
-#ifdef notyet
-// Tests launch and normal shutdown (stand alone mode).
-// This creates an interval timer to generate a normal shutdown and then
-// launches with a valid, stand-alone command line and no simulated errors.
-TEST_F(NetconfControllerTest, launchNormalShutdown) {
-    // Write valid_netconf_config and then run launch() for 1000 ms.
-    time_duration elapsed_time;
-    runWithConfig(valid_netconf_config, 1000, elapsed_time);
-
-    // Give a generous margin to accommodate slower test environs.
-    EXPECT_TRUE(elapsed_time.total_milliseconds() >= 800 &&
-                elapsed_time.total_milliseconds() <= 1300);
-}
-
-// Tests that the SIGINT triggers a normal shutdown.
-TEST_F(NetconfControllerTest, sigintShutdown) {
-    // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGINT, 1);
-
-    // Write valid_netconf_config and then run launch() for a maximum
-    // of 1000 ms.
-    time_duration elapsed_time;
-    runWithConfig(valid_netconf_config, 1000, elapsed_time);
-
-    // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accommodate slow
-    // test environs.
-    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
-}
-
-// Tests that the SIGTERM triggers a normal shutdown.
-TEST_F(NetconfControllerTest, sigtermShutdown) {
-    // Setup to raise SIGHUP in 1 ms.
-    TimedSignal sighup(*getIOService(), SIGTERM, 1);
-
-    // Write valid_netconf_config and then run launch() for a maximum of 1 s.
-    time_duration elapsed_time;
-    runWithConfig(valid_netconf_config, 1000, elapsed_time);
-
-    // Signaled shutdown should make our elapsed time much smaller than
-    // the maximum run time.  Give generous margin to accommodate slow
-    // test environs.
-    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
-}
-#endif
 
 }

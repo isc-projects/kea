@@ -64,7 +64,6 @@ NetconfSimpleParser::parse(const NetconfCfgContextPtr& ctx,
     }
 
     // Finally, let's get the hook libs!
-    
     using namespace isc::hooks;
     HooksConfig& libraries = ctx->getHooksConfig();
     ConstElementPtr hooks = config->get("hooks-libraries");

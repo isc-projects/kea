@@ -160,7 +160,7 @@ public:
     void require(const std::string& name,
                  isc::data::Element::Position open_loc,
                  isc::data::Element::Position close_loc);
-    
+
     /// @brief Defines syntactic contexts for lexical tie-ins
     typedef enum {
         ///< This one is used in pure JSON mode.

@@ -17,7 +17,7 @@ attempt. Details are provided. Additional details may be available
 in earlier log entries, possibly on lower levels.
 
 % NETCONF_FAILED application experienced a fatal error: %1
-This is a debug message issued when the Netconf application
+This is a fatal error message issued when the Netconf application
 encounters an unrecoverable error from within the event loop.
 
 % NETCONF_RUN_EXIT application is exiting the event loop
