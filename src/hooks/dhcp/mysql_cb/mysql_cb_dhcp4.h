@@ -169,7 +169,18 @@ public:
     /// @param option Option to be added or updated.
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
-                        const OptionPtr& option);
+                        const OptionDescriptorPtr& option);
+
+    /// @brief Creates or updates shared network level option.
+    ///
+    /// @param selector Server selector.
+    /// @param shared_network_name Name of a shared network to which option
+    /// belongs.
+    /// @param option Option to be added or updated.
+    virtual void
+    createUpdateOption4(const db::ServerSelector& selector,
+                        const std::string& shared_network_name,
+                        const OptionDescriptorPtr& option);
 
     /// @brief Creates or updates subnet level option.
     ///
@@ -179,7 +190,7 @@ public:
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const SubnetID& subnet_id,
-                        const OptionPtr& option);
+                        const OptionDescriptorPtr& option);
 
     /// @brief Creates or updates pool level option.
     ///
@@ -193,7 +204,7 @@ public:
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const asiolink::IOAddress& pool_start_address,
                         const asiolink::IOAddress& pool_end_address,
-                        const OptionPtr& option);
+                        const OptionDescriptorPtr& option);
 
     /// @brief Creates or updates global string parameter.
     ///
@@ -280,6 +291,19 @@ public:
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
+                  const std::string& space);
+
+    /// @brief Deletes shared network level option.
+    ///
+    /// @param selector Server selector.
+    /// @param shared_network_name Name of the shared network which deleted
+    /// option belongs to
+    /// @param code Code of the deleted option.
+    /// @param space Option space of the deleted option.
+    virtual void
+    deleteOption4(const db::ServerSelector& selector,
+                  const std::string& shared_network_name,
+                  const uint16_t code,
                   const std::string& space);
 
     /// @brief Deletes subnet level option.

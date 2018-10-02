@@ -8,7 +8,9 @@
 #define MYSQL_CONFIG_BACKEND_IMPL_H
 
 #include <database/database_connection.h>
+#include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/network.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_connection.h>
@@ -64,6 +66,47 @@ public:
                        const db::MySqlBindingCollection& in_bindings,
                        OptionDefContainer& option_defs);
 
+    /// @brief Sends query to the database to retrieve multiple options.
+    ///
+    /// Query should order by option_id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param [out] options Reference to the container where fetched options
+    /// will be inserted.
+    void getOptions(const int index,
+                    const db::MySqlBindingCollection& in_bindings,
+                    const Option::Universe& universe,
+                    OptionContainer& options);
+
+    /// @brief Returns DHCP option instance from output bindings.
+    ///
+    /// The following is the expected order of columns specified in the SELECT
+    /// query:
+    /// - option_id,
+    /// - code,
+    /// - value,
+    /// - formatted_value,
+    /// - space,
+    /// - persistent,
+    /// - dhcp4_subnet_id,
+    /// - scope_id,
+    /// - user_context,
+    /// - shared_network_name,
+    /// - pool_id,
+    /// - modification_ts
+    ///
+    /// @param universe V4 or V6.
+    /// @param first_binding Iterator of the output binding containing
+    /// option_id.
+    OptionDescriptorPtr
+    processOptionRow(const Option::Universe& universe,
+                     db::MySqlBindingCollection::iterator first_binding);
+
     /// @brief Creates input binding for relay addresses.
     ///
     /// @param network Pointer to a shared network or subnet for which binding
@@ -95,6 +138,13 @@ public:
                 db::MySqlBinding::createNull());
     }
 
+    /// @brief Creates input binding for option value parameter.
+    ///
+    /// @param option Option descriptor holding option for which binding is to
+    /// be created.
+    /// @return Pointer to the binding (possibly null binding if formatted
+    /// value is non-empty.
+    db::MySqlBindingPtr createOptionValueBinding(const OptionDescriptorPtr& option);
 
     /// @brief Represents connection to the MySQL database.
     db::MySqlConnection conn_;

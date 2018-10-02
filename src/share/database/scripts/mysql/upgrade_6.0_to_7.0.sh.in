@@ -112,6 +112,10 @@ UPDATE dhcp4_options SET dhcp4_subnet_id = NULL WHERE dhcp4_subnet_id = 0;
 UPDATE hosts SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
 UPDATE dhcp6_options SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
 
+# Add scope for shared network specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(4, "shared-network");
+
 # Create table modification
 CREATE TABLE IF NOT EXISTS modification (
   id TINYINT(3) NOT NULL,

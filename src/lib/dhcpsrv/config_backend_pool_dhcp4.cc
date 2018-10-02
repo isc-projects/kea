@@ -185,7 +185,7 @@ ConfigBackendPoolDHCPv4::createUpdateOptionDef4(const db::BackendSelector& backe
 void
 ConfigBackendPoolDHCPv4::createUpdateOption4(const db::BackendSelector& backend_selector,
                                              const db::ServerSelector& server_selector,
-                                             const OptionPtr& option) {
+                                             const OptionDescriptorPtr& option) {
     createUpdateDeleteProperty<void, const OptionPtr&>
         (&ConfigBackendDHCPv4::createUpdateOption4, backend_selector,
          server_selector, option);
@@ -194,8 +194,19 @@ ConfigBackendPoolDHCPv4::createUpdateOption4(const db::BackendSelector& backend_
 void
 ConfigBackendPoolDHCPv4::createUpdateOption4(const db::BackendSelector& backend_selector,
                                              const db::ServerSelector& server_selector,
+                                             const std::string& shared_network_name,
+                                             const OptionDescriptorPtr& option) {
+    createUpdateDeleteProperty<const std::string&, const OptionDescriptorPtr&>
+        (&ConfigBackendDHCPv4::createUpdateOption4, backend_selector,
+         server_selector, shared_network_name, option);
+}
+
+
+void
+ConfigBackendPoolDHCPv4::createUpdateOption4(const db::BackendSelector& backend_selector,
+                                             const db::ServerSelector& server_selector,
                                              const SubnetID& subnet_id,
-                                             const OptionPtr& option) {
+                                             const OptionDescriptorPtr& option) {
     createUpdateDeleteProperty<void, const SubnetID&, const OptionPtr&>
         (&ConfigBackendDHCPv4::createUpdateOption4, backend_selector,
          server_selector, subnet_id, option);
@@ -206,8 +217,9 @@ ConfigBackendPoolDHCPv4::createUpdateOption4(const db::BackendSelector& backend_
                                              const db::ServerSelector& server_selector,
                                              const IOAddress& pool_start_address,
                                              const IOAddress& pool_end_address,
-                                             const OptionPtr& option) {
+                                             const OptionDescriptorPtr& option) {
     createUpdateDeleteProperty<void, const IOAddress&, const IOAddress&, const OptionPtr&>
+                               const OptionDescriptorPtr&>
         (&ConfigBackendDHCPv4::createUpdateOption4, backend_selector,
          server_selector, pool_start_address, pool_end_address, option);
 }
@@ -298,6 +310,17 @@ ConfigBackendPoolDHCPv4::deleteOption4(const db::BackendSelector& backend_select
     return (createUpdateDeleteProperty<uint64_t, uint16_t, const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
              code, space));
+}
+
+void
+ConfigBackendPoolDHCPv4::deleteOption4(const db::BackendSelector& backend_selector,
+                                       const db::ServerSelector& server_selector,
+                                       const std::string& shared_network_name,
+                                       const uint16_t code,
+                                       const std::string& space) {
+    createUpdateDeleteProperty<const std::string&, uint16_t, const std::string&>
+        (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
+         shared_network_name, code, space);
 }
 
 uint64_t

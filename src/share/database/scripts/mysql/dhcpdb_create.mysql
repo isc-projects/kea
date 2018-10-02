@@ -768,6 +768,11 @@ CREATE INDEX timestamp_index ON logs (timestamp);
 ALTER TABLE hosts
     ADD COLUMN auth_key VARCHAR(16) NULL;
 
+
+# Add scope for shared network specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(4, "shared-network");
+
 -- -----------------------------------------------------
 -- Table `modification`
 -- -----------------------------------------------------

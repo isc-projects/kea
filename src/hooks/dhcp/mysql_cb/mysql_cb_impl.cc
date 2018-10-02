@@ -6,6 +6,11 @@
 
 #include <mysql_cb_impl.h>
 #include <asiolink/io_address.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option_space.h>
+#include <util/buffer.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <cstdint>
@@ -13,6 +18,7 @@
 
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -162,6 +168,100 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     });
 }
 
+void
+MySqlConfigBackendImpl::getOptions(const int index,
+                                   const db::MySqlBindingCollection& in_bindings,
+                                   const Option::Universe& universe,
+                                   OptionContainer& options) {
+    // Create output bindings. The order must match that in the prepared
+    // statement.
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(), // option_id
+        MySqlBinding::createInteger<uint8_t>(), // code
+        MySqlBinding::createBlob(65536), // value
+        MySqlBinding::createString(8192), // formatted_value
+            MySqlBinding::createString(128), // space
+        MySqlBinding::createInteger<uint8_t>(), // persistent
+        MySqlBinding::createInteger<uint32_t>(), // dhcp4_subnet_id
+        MySqlBinding::createInteger<uint8_t>(), // scope_id
+        MySqlBinding::createString(65536), // user_context
+        MySqlBinding::createString(128), // shared_network_name
+        MySqlBinding::createInteger<uint64_t>(), // pool_id
+        MySqlBinding::createTimestamp() //modification_ts
+    };
+
+    uint64_t last_option_id = 0;
+
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [this, universe, &options, &last_option_id]
+                      (MySqlBindingCollection& out_bindings) {
+        // Parse option.
+        if (!out_bindings[0]->amNull() &&
+            ((last_option_id == 0) ||
+             (last_option_id < out_bindings[0]->getInteger<uint64_t>()))) {
+            last_option_id = out_bindings[0]->getInteger<uint64_t>();
+
+            OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
+            if (desc) {
+                options.push_back(*desc);
+            }
+        }
+    });
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
+                                         MySqlBindingCollection::iterator first_binding) {
+    std::string space = (*(first_binding + 4))->getStringOrDefault(DHCP4_OPTION_SPACE);
+    uint16_t code = (*(first_binding + 1))->getInteger<uint8_t>();
+
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
+    if (!def && (space != DHCP4_OPTION_SPACE) && (space != DHCP6_OPTION_SPACE)) {
+        uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
+        if (vendor_id > 0) {
+            def = LibDHCP::getVendorOptionDef(universe, vendor_id, code);
+        }
+    }
+
+    if (!def) {
+        def = LibDHCP::getRuntimeOptionDef(space, code);
+    }
+
+    std::vector<uint8_t> blob;
+    if (!(*(first_binding + 2))->amNull()) {
+        blob = (*(first_binding + 2))->getBlob();
+    }
+    OptionBuffer buf(blob.begin(), blob.end());
+
+    std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
+
+    OptionPtr option;
+    if (!def) {
+        option.reset(new Option(universe, code, buf.begin(), buf.end()));
+
+    } else {
+        if (formatted_value.empty()) {
+            option = def->optionFactory(universe, code, buf.begin(),
+                                        buf.end());
+        } else {
+            // Spit the value specified in comma separated values
+            // format.
+            std::vector<std::string> split_vec;
+            boost::split(split_vec, formatted_value, boost::is_any_of(","));
+            option = def->optionFactory(universe, code, split_vec);
+        }
+    }
+
+    bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));
+
+    OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
+    desc->space_name_ = space;
+
+    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+
+    return (desc);
+}
+
 MySqlBindingPtr
 MySqlConfigBackendImpl::createInputRelayBinding(const NetworkPtr& network) {
     ElementPtr relay_element = Element::createList();
@@ -191,6 +291,23 @@ MySqlConfigBackendImpl::createInputRequiredClassesBinding(const NetworkPtr& netw
             MySqlBinding::createString(required_classes_element->str()) :
             MySqlBinding::createNull());
 }
+
+MySqlBindingPtr
+MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& option) {
+    OptionPtr opt = option->option_;
+    if (option->formatted_value_.empty() && (opt->len() > opt->getHeaderLen())) {
+        OutputBuffer buf(opt->len());
+        opt->pack(buf);
+        const char* buf_ptr = static_cast<const char*>(buf.getData());
+        std::vector<uint8_t> blob(buf_ptr + opt->getHeaderLen(),
+                                  buf_ptr + buf.getLength());
+        return (MySqlBinding::createBlob(blob.begin(), blob.end()));
+
+    }
+
+    return (MySqlBinding::createNull());
+}
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
