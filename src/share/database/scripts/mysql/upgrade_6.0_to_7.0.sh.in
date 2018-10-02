@@ -116,6 +116,14 @@ UPDATE dhcp6_options SET dhcp6_subnet_id = NULL WHERE dhcp6_subnet_id = 0;
 INSERT INTO dhcp_option_scope (scope_id, scope_name)
     VALUES(4, "shared-network");
 
+# Add scope for pool specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(5, "pool");
+
+# Add scope for PD pool specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(6, "pd-pool");
+
 # Create table modification
 CREATE TABLE IF NOT EXISTS modification (
   id TINYINT(3) NOT NULL,
@@ -359,6 +367,17 @@ CREATE TABLE IF NOT EXISTS dhcp4_options_server (
         ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp4_pool_BDEL BEFORE DELETE ON dhcp4_pool FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM dhcp4_options WHERE scope_id = 5 AND pool_id = OLD.id;
+END
+$$
+DELIMITER ;
+
 # Create table dhcp6_server
 #
 CREATE TABLE IF NOT EXISTS dhcp6_server (
@@ -596,6 +615,17 @@ CREATE TABLE IF NOT EXISTS dhcp6_options_server (
         REFERENCES dhcp6_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
+
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp6_pool_BDEL BEFORE DELETE ON dhcp6_pool FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM dhcp6_options WHERE scope_id = 5 AND pool_id = OLD.id;
+END
+$$
+DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version

@@ -51,6 +51,7 @@ public:
         GET_SUBNET4_PREFIX,
         GET_ALL_SUBNETS4,
         GET_MODIFIED_SUBNETS4,
+        GET_POOL4_RANGE,
         GET_SHARED_NETWORK4_NAME,
         GET_ALL_SHARED_NETWORKS4,
         GET_MODIFIED_SHARED_NETWORKS4,
@@ -61,6 +62,7 @@ public:
         GET_ALL_OPTIONS4,
         GET_MODIFIED_OPTIONS4,
         GET_OPTION4_SUBNET_ID_CODE_SPACE,
+        GET_OPTION4_POOL_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
         INSERT_SUBNET4,
         INSERT_POOL4,
@@ -72,6 +74,7 @@ public:
         UPDATE_OPTION_DEF4,
         UPDATE_OPTION4,
         UPDATE_OPTION4_SUBNET_ID,
+        UPDATE_OPTION4_POOL_ID,
         UPDATE_OPTION4_SHARED_NETWORK,
         DELETE_SUBNET4_ID,
         DELETE_SUBNET4_PREFIX,
@@ -83,6 +86,7 @@ public:
         DELETE_ALL_OPTION_DEFS4,
         DELETE_OPTION4,
         DELETE_OPTION4_SUBNET_ID,
+        DELETE_OPTION4_POOL_RANGE,
         DELETE_OPTION4_SHARED_NETWORK,
         DELETE_OPTIONS4_SUBNET_ID,
         DELETE_OPTIONS4_SHARED_NETWORK,
@@ -138,6 +142,18 @@ public:
             MySqlBinding::createInteger<uint32_t>(), // pool: end_address
             MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
             MySqlBinding::createTimestamp(), // pool: modification_ts
+            MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
+            MySqlBinding::createInteger<uint8_t>(), // pool option: code
+            MySqlBinding::createBlob(65536), // pool option: value
+            MySqlBinding::createString(8192), // pool option: formatted_value
+            MySqlBinding::createString(128), // pool option: space
+            MySqlBinding::createInteger<uint8_t>(), // pool option: persistent
+            MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id
+            MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id
+            MySqlBinding::createString(65536), // pool option: user_context
+            MySqlBinding::createString(128), // pool option: shared_network_name
+            MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
+            MySqlBinding::createTimestamp(), //pool option: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
             MySqlBinding::createInteger<uint8_t>(), // option: code
             MySqlBinding::createBlob(65536), // option: value
@@ -153,11 +169,15 @@ public:
         };
 
         uint64_t last_pool_id = 0;
+        uint64_t last_pool_option_id = 0;
         uint64_t last_option_id = 0;
+
+        Pool4Ptr last_pool;
 
         // Execute actual query.
         conn_.selectQuery(index, in_bindings, out_bindings,
-                          [this, &subnets, &last_pool_id, &last_option_id]
+                          [this, &subnets, &last_pool, &last_pool_id,
+                           &last_pool_option_id, &last_option_id]
                           (MySqlBindingCollection& out_bindings) {
             // Get pointer to the last subnet in the collection.
             Subnet4Ptr last_subnet;
@@ -284,18 +304,30 @@ public:
                 ((last_pool_id == 0) ||
                  (out_bindings[20]->getInteger<uint64_t>() > last_pool_id))) {
                 last_pool_id = out_bindings[20]->getInteger<uint64_t>();
-                Pool4Ptr pool(new Pool4(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
-                                        IOAddress(out_bindings[22]->getInteger<uint32_t>())));
-                last_subnet->addPool(pool);
+                last_pool.reset(new Pool4(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
+                                          IOAddress(out_bindings[22]->getInteger<uint32_t>())));
+                last_subnet->addPool(last_pool);
             }
 
-            // Parse option.
-            if (!out_bindings[25]->amNull() &&
-                ((last_option_id == 0) ||
-                (last_option_id < out_bindings[25]->getInteger<uint64_t>()))) {
-                last_option_id = out_bindings[25]->getInteger<uint64_t>();
+            // Parse pool specific option.
+            if (last_pool && !out_bindings[25]->amNull() &&
+                ((last_pool_option_id == 0) ||
+                (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>()))) {
+                last_pool_option_id = out_bindings[25]->getInteger<uint64_t>();
 
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 25);
+                if (desc) {
+                    last_pool->getCfgOption()->add(*desc, desc->space_name_);
+                }
+            }
+
+            // Parse subnet specific option.
+            if (!out_bindings[37]->amNull() &&
+                ((last_option_id == 0) ||
+                (last_option_id < out_bindings[37]->getInteger<uint64_t>()))) {
+                last_option_id = out_bindings[37]->getInteger<uint64_t>();
+
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 37);
                 if (desc) {
                     last_subnet->getCfgOption()->add(*desc, desc->space_name_);
                 }
@@ -340,6 +372,106 @@ public:
         getSubnets4(GET_SUBNET4_PREFIX, in_bindings, subnets);
 
         return (subnets.empty() ? Subnet4Ptr() : *subnets.begin());
+    }
+
+    /// @brief Sends query to retrieve multiple pools.
+    ///
+    /// Query should order pools by id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] pools Reference to the container where fetched pools
+    /// will be inserted.
+    /// @param [out] pool_ids Identifiers of the pools returned in @c pools
+    /// argument.
+    void getPools(const StatementIndex& index,
+                  const MySqlBindingCollection& in_bindings,
+                  PoolCollection& pools,
+                  std::vector<uint64_t>& pool_ids) {
+        MySqlBindingCollection out_bindings = {
+            MySqlBinding::createInteger<uint64_t>(), // pool: id
+            MySqlBinding::createInteger<uint32_t>(), // pool: start_address
+            MySqlBinding::createInteger<uint32_t>(), // pool: end_address
+            MySqlBinding::createInteger<uint32_t>(), // pool: subnet_id
+            MySqlBinding::createTimestamp(), // pool: modification_ts
+            MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
+            MySqlBinding::createInteger<uint8_t>(), // pool option: code
+            MySqlBinding::createBlob(65536), // pool option: value
+            MySqlBinding::createString(8192), // pool option: formatted_value
+            MySqlBinding::createString(128), // pool option: space
+            MySqlBinding::createInteger<uint8_t>(), // pool option: persistent
+            MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id
+            MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id
+            MySqlBinding::createString(65536), // pool option: user_context
+            MySqlBinding::createString(128), // pool option: shared_network_name
+            MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
+            MySqlBinding::createTimestamp(), //pool option: modification_ts
+        };
+
+        uint64_t last_pool_id = 0;
+        uint64_t last_pool_option_id = 0;
+        Pool4Ptr last_pool;
+
+        conn_.selectQuery(index, in_bindings, out_bindings,
+                          [this, &last_pool_id, &last_pool_option_id, &last_pool,
+                           &pools, &pool_ids]
+                          (MySqlBindingCollection& out_bindings) {
+            if ((last_pool_id == 0) ||
+                (out_bindings[0]->getInteger<uint64_t>() > last_pool_id)) {
+
+                last_pool_id = out_bindings[0]->getInteger<uint64_t>();
+
+                last_pool.reset(new Pool4(IOAddress(out_bindings[1]->getInteger<uint32_t>()),
+                                          IOAddress(out_bindings[2]->getInteger<uint32_t>())));
+                pools.push_back(last_pool);
+                pool_ids.push_back(last_pool_id);
+            }
+
+            // Parse pool specific option.
+            if (last_pool && !out_bindings[5]->amNull() &&
+                ((last_pool_option_id == 0) ||
+                (last_pool_option_id < out_bindings[5]->getInteger<uint64_t>()))) {
+                last_pool_option_id = out_bindings[5]->getInteger<uint64_t>();
+
+                OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 5);
+                if (desc) {
+                    last_pool->getCfgOption()->add(*desc, desc->space_name_);
+                }
+            }
+        });
+    }
+
+    /// @brief Sends query to retrieve single pool by address range.
+    ///
+    /// @param selector Server selector.
+    /// @param pool_start_address Lower bound pool address.
+    /// @param pool_end_address Upper bound pool address.
+    /// @param pool_id Pool identifier for the returned pool.
+    /// @return Pointer to the pool or null if no such pool found.
+    Pool4Ptr getPool4(const ServerSelector& /* selector */,
+                      const IOAddress& pool_start_address,
+                      const IOAddress& pool_end_address,
+                      uint64_t& pool_id) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
+        };
+
+        PoolCollection pools;
+        std::vector<uint64_t> pool_ids;
+        getPools(GET_POOL4_RANGE, in_bindings, pools, pool_ids);
+
+        if (!pools.empty()) {
+            pool_id = pool_ids[0];
+            return (boost::dynamic_pointer_cast<Pool4>(*pools.begin()));
+        }
+
+        pool_id = 0;
+
+        return (Pool4Ptr());
     }
 
     /// @brief Sends query to insert or update subnet.
@@ -428,7 +560,7 @@ public:
 
         // (Re)create pools.
         for (auto pool : subnet->getPools(Lease::TYPE_V4)) {
-            createPool4(boost::dynamic_pointer_cast<Pool4>(pool), subnet);
+            createPool4(selector, boost::dynamic_pointer_cast<Pool4>(pool), subnet);
         }
 
         // (Re)create options.
@@ -447,9 +579,11 @@ public:
 
     /// @brief Inserts new IPv4 pool to the database.
     ///
+    /// @param server_selector Server selector.
     /// @param pool Pointer to the pool to be inserted.
     /// @param subnet Pointer to the subnet that this pool belongs to.
-    void createPool4(const Pool4Ptr& pool, const Subnet4Ptr& subnet) {
+    void createPool4(const ServerSelector& selector, const Pool4Ptr& pool,
+                     const Subnet4Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(pool->getFirstAddress().toUint32()),
             MySqlBinding::createInteger<uint32_t>(pool->getLastAddress().toUint32()),
@@ -459,6 +593,17 @@ public:
 
         // Run INSERT.
         conn_.insertQuery(INSERT_POOL4, in_bindings);
+
+        uint64_t pool_id = mysql_insert_id(conn_.mysql_);
+        auto option_spaces = pool->getCfgOption()->getOptionSpaceNames();
+        for (auto option_space : option_spaces) {
+            OptionContainerPtr options = pool->getCfgOption()->getAll(option_space);
+            for (auto desc = options->begin(); desc != options->end(); ++desc) {
+                OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
+                desc_copy->space_name_ = option_space;
+                createUpdateOption4(selector, pool_id, desc_copy);
+            }
+        }
     }
 
     /// @brief Sends query to delete subnet by id.
@@ -791,6 +936,63 @@ public:
         }
     }
 
+    void createUpdateOption4(const ServerSelector& selector,
+                             const IOAddress& pool_start_address,
+                             const IOAddress& pool_end_address,
+                             const OptionDescriptorPtr& option) {
+        uint64_t pool_id = 0;
+        Pool4Ptr pool = getPool4(selector, pool_start_address, pool_end_address,
+                                 pool_id);
+        if (!pool) {
+            isc_throw(BadValue, "no pool found for range of "
+                      << pool_start_address << " : "
+                      << pool_end_address);
+        }
+
+        createUpdateOption4(selector, pool_id, option);
+    }
+
+
+    /// @brief Sends query to insert or update DHCP option in a pool.
+    ///
+    /// @param selector Server selector.
+    /// @param pool_id Identifier of the pool the option belongs to.
+    /// @param option Pointer to the option descriptor encapsulating the option.
+    void createUpdateOption4(const ServerSelector& selector,
+                             const uint64_t pool_id,
+                             const OptionDescriptorPtr& option) {
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
+            createOptionValueBinding(option),
+            MySqlBinding::condCreateString(option->formatted_value_),
+            MySqlBinding::condCreateString(option->space_name_),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+            MySqlBinding::createInteger<uint8_t>(5),
+            createInputContextBinding(option),
+            MySqlBinding::createNull(),
+            MySqlBinding::createInteger<uint64_t>(pool_id),
+            MySqlBinding::createTimestamp(option->getModificationTime())
+        };
+
+        OptionDescriptorPtr existing_option = getOption4(selector, pool_id,
+                                                         option->option_->getType(),
+                                                         option->space_name_);
+        if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
+            in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
+            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_POOL_ID,
+                                    in_bindings);
+
+        } else {
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
+                              in_bindings);
+        }
+    }
+
     /// @brief Sends query to insert or update DHCP option in a shared network.
     ///
     /// @param selector Server selector.
@@ -960,6 +1162,32 @@ public:
     }
 
     /// @brief Sends query to retrieve single option by code and option space
+    /// for a given pool id.
+    ///
+    /// @param selector Server selector.
+    /// @param pool_id Pool identifier in the database.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option descriptor or NULL if such
+    /// option doesn't exist.
+    OptionDescriptorPtr getOption4(const ServerSelector& /* selector */,
+                                   const uint64_t pool_id,
+                                   const uint16_t code,
+                                   const std::string& space) {
+        OptionContainer options;
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint64_t>(pool_id),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
+            MySqlBinding::createString(space)
+        };
+        getOptions(GET_OPTION4_POOL_ID_CODE_SPACE, in_bindings, Option::V4,
+                   options);
+        return (options.empty() ? OptionDescriptorPtr() :
+                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+    }
+
+    /// @brief Sends query to retrieve single option by code and option space
     /// for a given shared network.
     ///
     /// @param selector Server selector.
@@ -1098,6 +1326,29 @@ public:
         conn_.updateDeleteQuery(DELETE_OPTION4_SUBNET_ID, in_bindings);
     }
 
+    /// @brief Deletes pool level option.
+    ///
+    /// @param selector Server selector.
+    /// @param pool_start_address Lower bound pool address.
+    /// @param pool_end_address  Upper bound pool address.
+    /// @param code Code of the deleted option.
+    /// @param space Option space of the deleted option.
+    void deleteOption4(const db::ServerSelector& /* selector */,
+                       const IOAddress& pool_start_address,
+                       const IOAddress& pool_end_address,
+                       const uint16_t code,
+                       const std::string& space) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32()),
+            MySqlBinding::createInteger<uint8_t>(code),
+            MySqlBinding::createString(space)
+        };
+
+        // Run DELETE.
+        conn_.updateDeleteQuery(DELETE_OPTION4_POOL_RANGE, in_bindings);
+    }
+
     /// @brief Deletes shared network level option.
     ///
     /// @param selector Server selector.
@@ -1181,6 +1432,18 @@ TaggedStatementArray tagged_statements = { {
       "  p.end_address,"
       "  p.subnet_id,"
       "  p.modification_ts,"
+      "  x.option_id,"
+      "  x.code,"
+      "  x.value,"
+      "  x.formatted_value,"
+      "  x.space,"
+      "  x.persistent,"
+      "  x.dhcp4_subnet_id,"
+      "  x.scope_id,"
+      "  x.user_context,"
+      "  x.shared_network_name,"
+      "  x.pool_id,"
+      "  x.modification_ts,"
       "  o.option_id,"
       "  o.code,"
       "  o.value,"
@@ -1195,9 +1458,10 @@ TaggedStatementArray tagged_statements = { {
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
       "WHERE s.subnet_id = ? "
-      "ORDER BY s.subnet_id, p.id, o.option_id" },
+      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select subnet by prefix.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX,
@@ -1227,6 +1491,18 @@ TaggedStatementArray tagged_statements = { {
       "  p.end_address,"
       "  p.subnet_id,"
       "  p.modification_ts,"
+      "  x.option_id,"
+      "  x.code,"
+      "  x.value,"
+      "  x.formatted_value,"
+      "  x.space,"
+      "  x.persistent,"
+      "  x.dhcp4_subnet_id,"
+      "  x.scope_id,"
+      "  x.user_context,"
+      "  x.shared_network_name,"
+      "  x.pool_id,"
+      "  x.modification_ts,"
       "  o.option_id,"
       "  o.code,"
       "  o.value,"
@@ -1241,9 +1517,10 @@ TaggedStatementArray tagged_statements = { {
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
       "WHERE s.subnet_prefix = ? "
-      "ORDER BY s.subnet_id, p.id, o.option_id" },
+      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select all subnets.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
@@ -1273,6 +1550,18 @@ TaggedStatementArray tagged_statements = { {
       "  p.end_address,"
       "  p.subnet_id,"
       "  p.modification_ts,"
+      "  x.option_id,"
+      "  x.code,"
+      "  x.value,"
+      "  x.formatted_value,"
+      "  x.space,"
+      "  x.persistent,"
+      "  x.dhcp4_subnet_id,"
+      "  x.scope_id,"
+      "  x.user_context,"
+      "  x.shared_network_name,"
+      "  x.pool_id,"
+      "  x.modification_ts,"
       "  o.option_id,"
       "  o.code,"
       "  o.value,"
@@ -1287,8 +1576,9 @@ TaggedStatementArray tagged_statements = { {
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "ORDER BY s.subnet_id, p.id, o.option_id" },
+      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
@@ -1318,6 +1608,18 @@ TaggedStatementArray tagged_statements = { {
       "  p.end_address,"
       "  p.subnet_id,"
       "  p.modification_ts,"
+      "  x.option_id,"
+      "  x.code,"
+      "  x.value,"
+      "  x.formatted_value,"
+      "  x.space,"
+      "  x.persistent,"
+      "  x.dhcp4_subnet_id,"
+      "  x.scope_id,"
+      "  x.user_context,"
+      "  x.shared_network_name,"
+      "  x.pool_id,"
+      "  x.modification_ts,"
       "  o.option_id,"
       "  o.code,"
       "  o.value,"
@@ -1332,9 +1634,36 @@ TaggedStatementArray tagged_statements = { {
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
       "WHERE s.modification_ts > ? "
-      "ORDER BY s.subnet_id, p.id, o.option_id" },
+      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
+
+    // Select pool by address range.
+    { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE,
+      "SELECT"
+      "  p.id,"
+      "  p.start_address,"
+      "  p.end_address,"
+      "  p.subnet_id,"
+      "  p.modification_ts,"
+      "  x.option_id,"
+      "  x.code,"
+      "  x.value,"
+      "  x.formatted_value,"
+      "  x.space,"
+      "  x.persistent,"
+      "  x.dhcp4_subnet_id,"
+      "  x.scope_id,"
+      "  x.user_context,"
+      "  x.shared_network_name,"
+      "  x.pool_id,"
+      "  x.modification_ts "
+      "FROM dhcp4_pool AS p "
+      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
+      "WHERE p.start_address = ? AND p.end_address = ? "
+      "ORDER BY p.id, x.option_id"
+    },
 
     // Select shared network by name.
     { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME,
@@ -1564,6 +1893,26 @@ TaggedStatementArray tagged_statements = { {
       "  code = ? AND space = ? "
       "ORDER BY option_id" },
 
+    // Retrieves an option for a given pool, option code and space.
+    { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_POOL_ID_CODE_SPACE,
+      "SELECT"
+      "  option_id,"
+      "  code,"
+      "  value,"
+      "  formatted_value,"
+      "  space,"
+      "  persistent,"
+      "  dhcp4_subnet_id,"
+      "  scope_id,"
+      "  user_context,"
+      "  shared_network_name,"
+      "  pool_id,"
+      "  modification_ts "
+      "FROM dhcp4_options "
+      "WHERE scope_id = 5 AND pool_id = ? AND"
+      "  code = ? AND space = ? "
+      "ORDER BY option_id" },
+
     // Retrieves an option for a given shared network, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
       "SELECT"
@@ -1759,6 +2108,24 @@ TaggedStatementArray tagged_statements = { {
       "WHERE scope_id = 1 AND dhcp4_subnet_id = ? AND code = ? AND space = ?"
     },
 
+    // Update existing pool level option.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_POOL_ID,
+      "UPDATE dhcp4_options SET"
+      "  code = ?,"
+      "  value = ?,"
+      "  formatted_value = ?,"
+      "  space = ?,"
+      "  persistent = ?,"
+      "  dhcp_client_class = ?,"
+      "  dhcp4_subnet_id = ?,"
+      "  scope_id = ?,"
+      "  user_context = ?,"
+      "  shared_network_name = ?,"
+      "  pool_id = ?,"
+      "  modification_ts = ? "
+      "WHERE scope_id = 5 AND pool_id = ? AND code = ? AND space = ?"
+    },
+
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SHARED_NETWORK,
       "UPDATE dhcp4_options SET"
@@ -1824,6 +2191,13 @@ TaggedStatementArray tagged_statements = { {
       "DELETE FROM dhcp4_options "
       "WHERE scope_id = 1 AND dhcp4_subnet_id = ?"
       "  AND code = ? AND space = ?" },
+
+    // Delete single option from a pool.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_POOL_RANGE,
+      "DELETE FROM dhcp4_options "
+      "WHERE scope_id = 5 AND pool_id = "
+      "  (SELECT id FROM dhcp4_pool"
+      "   WHERE start_address = ? AND end_address = ?)" },
 
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
@@ -2014,10 +2388,12 @@ MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& selector,
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* server_selector */,
-                                              const asiolink::IOAddress& /* pool_start_address */,
-                                              const asiolink::IOAddress& /* pool_end_address */,
-                                              const OptionDescriptorPtr& /* option */) {
+MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& selector,
+                                              const asiolink::IOAddress& pool_start_address,
+                                              const asiolink::IOAddress& pool_end_address,
+                                              const OptionDescriptorPtr& option) {
+    impl_->createUpdateOption4(selector, pool_start_address, pool_end_address,
+                               option);
 }
 
 void
@@ -2098,12 +2474,13 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector&  selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
-                                        const asiolink::IOAddress& /* pool_start_address */,
-                                        const asiolink::IOAddress& /* pool_end_address */,
-                                        const uint16_t /* code */,
-                                        const std::string& /* space */) {
-    return (0);
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& selector,
+                                        const asiolink::IOAddress& pool_start_address,
+                                        const asiolink::IOAddress& pool_end_address,
+                                        const uint16_t code,
+                                        const std::string& space) {
+    impl_->deleteOption4(selector, pool_start_address, pool_end_address,
+                         code, space);
 }
 
 uint64_t

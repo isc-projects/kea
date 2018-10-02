@@ -127,6 +127,14 @@ public:
         pool1.reset(new Pool4(IOAddress("10.0.0.10"), IOAddress("10.0.0.20")));
         subnet->addPool(pool1);
 
+        pool1->getCfgOption()->add(test_options_[3]->option_,
+                                   test_options_[3]->persistent_,
+                                   test_options_[3]->space_name_);
+
+        pool1->getCfgOption()->add(test_options_[4]->option_,
+                                   test_options_[4]->persistent_,
+                                   test_options_[4]->space_name_);
+
         pool2.reset(new Pool4(IOAddress("10.0.0.50"), IOAddress("10.0.0.60")));
         subnet->addPool(pool2);
 
@@ -801,6 +809,80 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_TRUE(returned_subnet);
 
     EXPECT_FALSE(returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+}
+
+// This test verifies that option can be inserted, updated and deleted
+// from the pool.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
+    // Insert new subnet.
+    Subnet4Ptr subnet = test_subnets_[1];
+    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+
+    // Add an option into the pool.
+    const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
+    ASSERT_TRUE(pool);
+    OptionDescriptorPtr opt_boot_file_name = test_options_[0];
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                pool->getFirstAddress(),
+                                pool->getLastAddress(),
+                                opt_boot_file_name);
+
+    // Query for a subnet.
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // The returned subnet should include our pool.
+    const PoolPtr returned_pool = returned_subnet->getPool(Lease::TYPE_V4,
+                                                           IOAddress("192.0.2.10"));
+    ASSERT_TRUE(returned_pool);
+
+    // The pool should contain option we added earlier.
+    OptionDescriptor returned_opt_boot_file_name =
+        returned_pool->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    // Modify the option and update it in the database.
+    opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                pool->getFirstAddress(),
+                                pool->getLastAddress(),
+                                opt_boot_file_name);
+
+    // Fetch the subnet and the corresponding pool.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    const PoolPtr returned_pool1 = returned_subnet->getPool(Lease::TYPE_V4,
+                                                            IOAddress("192.0.2.10"));
+    ASSERT_TRUE(returned_pool1);
+
+    // Test that the option has been correctly updated in the database.
+    returned_opt_boot_file_name =
+        returned_pool1->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    // Delete option from the pool.
+    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+                          pool->getFirstAddress(),
+                          pool->getLastAddress(),
+                          opt_boot_file_name->option_->getType(),
+                          opt_boot_file_name->space_name_);
+
+    // Fetch the subnet and the pool from the database again to make sure
+    // that the option is really gone.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    const PoolPtr returned_pool2 = returned_subnet->getPool(Lease::TYPE_V4,
+                                                            IOAddress("192.0.2.10"));
+    ASSERT_TRUE(returned_pool2);
+
+    // Option should be gone.
+    EXPECT_FALSE(returned_pool2->getCfgOption()->get(DHCP4_OPTION_SPACE,
+                                                     DHO_BOOT_FILE_NAME).option_);
 }
 
 // This test verifies that shared network level option can be added,
