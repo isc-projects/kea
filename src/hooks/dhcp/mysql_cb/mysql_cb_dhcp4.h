@@ -116,6 +116,33 @@ public:
     getModifiedOptionDefs4(const db::ServerSelector& server_selector,
                            const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves single option by code and space.
+    ///
+    /// @param selector Server selector.
+    /// @return Pointer to the retrieved option descriptor or null if
+    /// no option was found.
+    virtual OptionDescriptorPtr
+    getOption4(const db::ServerSelector& selector, const uint16_t code,
+               const std::string& space) const;
+
+    /// @brief Retrieves all global options.
+    ///
+    /// @param selector Server selector.
+    /// @return Collection of global options or empty collection if no
+    /// option found.
+    virtual OptionContainer
+    getAllOptions4(const db::ServerSelector& selector) const;
+
+    /// @brief Retrieves option modified after specified time.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Lower bound option modification time.
+    /// @return Collection of global options or empty collection if no
+    /// option found.
+    virtual OptionContainer
+    getModifiedOptions4(const db::ServerSelector& selector,
+                        const boost::posix_time::ptime& modification_time) const;
+
     /// @brief Retrieves global string parameter value.
     ///
     /// @param server_selector Server selector.
