@@ -74,11 +74,20 @@ guide:
 clean:
 	rm -rf html
 
-templates:
+# This target will generate templates. There's no need to run it, unless
+# new commands have been added or there are existing commands that are
+# still not documented.
+templates: docgen
 	docgen/generate-templates docgen/cmds-list
 
-api: templates
+# This will generate the api.xml file using docgen generator. It will
+# read the JSON files from api/ directory. Make sure they're up to date.
+api: templates docgen
 	docgen/kea-docgen api/*.json
+
+# This convenience target makes sure the docgen tool is built properly
+docgen:
+	$(MAKE) -C docgen
 
 # That's a bit of a hack, but we are making sure that devel target
 # is always valid. The alternative is to make devel depend on all
