@@ -1468,6 +1468,7 @@ AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
+                 doc/docgen/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
                  kea_version.h
@@ -1648,7 +1649,6 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
                  tools/Makefile
                  tools/path_replacer.sh
-                 tools/cmd-docgen/Makefile
 ])
 
 AC_CONFIG_COMMANDS([permissions], [
