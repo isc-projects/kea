@@ -1,18 +1,44 @@
 #!/bin/bash
-while read -r LINE; do
-    F=$LINE.json
+
+# This script generates API documentation templates.
+# Usage:
+#
+# ./generate-templates file
+#
+# File is expected to have a list of commands, one per line.
+# The templates will be created in api/ directory.
+
+if (( $# != 1 )); then
+    echo "Usage: ./generate-templates file"
+    echo
+    echo "File specifies a plain text file with each line having name of a command"
+    exit
+fi
+
+
+mkdir -p api/
+
+while read -r CMD; do
+    F=api/$CMD.json
+
+    if [ -e $F ]; then
+        echo "$F exists, skipping"
+        continue;
+    fi
     echo "{" > $F
-    echo "    \"name\": \"$LINE\",\n" >> $F
-    echo "    \"brief\": \"a sentence or two explaining what this command does\",\n" >> $F
-    echo "    \"support\": [ \"kea-dhcp4\", \"kea-dhcp6\" ],\n" >> $F
-    echo "    \"avail\": \"first version, possible a hook library name and (premium) if applicable\",\n" >> $F
+    echo "    \"name\": \"$CMD\"," >> $F
+    echo "    \"brief\": \"a sentence or two explaining what this command does\"," >> $F
+    echo "    \"description\": \"See <xref linkend=\\\"cmd-$LINE\\\"/>\"," >> $F
+    echo "    \"support\": [ \"undocumented\" ]," >> $F
+    echo "    \"avail\": \"first Kea version this command appeared in\"," >> $F
+    echo "    \"hook\": \"\"," >> $F
 
-    echo "    \"cmd-syntax\": \"Syntax of the command\",\n" >> $F
-    echo "    \"cmd-comment\": \"Possibly some extra comments after the syntax.\",\n" >> $F
+    echo "    \"cmd-syntax\": \"Syntax of the command\"," >> $F
+    echo "    \"cmd-comment\": \"Possibly some extra comments after the syntax.\"," >> $F
 
-    echo "    \"resp-syntax\": \"Syntax of the response\",\n" >> $F
-    echo "    \"resp-comment\": \"Optional extra comments after the respone syntax.\"\n" >> $F
+    echo "    \"resp-syntax\": \"Syntax of the response\"," >> $F
+    echo "    \"resp-comment\": \"Optional extra comments after the resposne syntax.\"" >> $F
     echo "}" >> $F
 
-    echo "$LINE generated."
-done < cmds-list
+    echo "$CMD generated."
+done < $1
