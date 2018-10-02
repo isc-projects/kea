@@ -92,8 +92,6 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="netconf.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
-
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
 
   <chapter xml:id="acknowledgments">
@@ -120,7 +118,7 @@
       within the BIND 10 framework. We thank the founding sponsors of the BIND10 project:
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.afilias.info/">Afilias</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.iis.se/">IIS.SE</link>,
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, 
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://jprs.co.jp/">JPRS</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cira.ca/">CIRA</link>; and additional sponsors
@@ -137,6 +135,8 @@
 
     </chapter>
 
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
 
