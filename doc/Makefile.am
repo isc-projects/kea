@@ -92,4 +92,4 @@ docgen:
 # That's a bit of a hack, but we are making sure that devel target
 # is always valid. The alternative is to make devel depend on all
 # *.cc *.h files in the whole tree.
-.PHONY: devel guide
+.PHONY: devel guide docgen

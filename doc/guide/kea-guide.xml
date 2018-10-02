@@ -92,9 +92,12 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="netconf.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude"
+              href="faq.xml"/>
 
-  <chapter xml:id="acknowledgments">
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
+
+  <appendix xml:id="acknowledgments">
       <title>Acknowledgments</title>
 
       <para>Kea is an open source project designed, developed, and maintained by Internet Systems
@@ -133,10 +136,7 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.tcinet.ru/">Technical Center of Internet</link>
       .</para>
 
-    </chapter>
-
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
+    </appendix>
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
 
