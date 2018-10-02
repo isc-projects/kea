@@ -1,0 +1,16 @@
+{
+    "name": "build-report",
+    "brief": "returns a list of compilition options that this particular binary was built with",
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
+    "avail": "1.2.0",
+
+    "cmd-syntax": "{
+    \"command\": \"build-report\"
+}",
+
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": <string with build details>
+}",
+    "resp-comment": ""
+}
