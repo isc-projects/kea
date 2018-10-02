@@ -177,8 +177,8 @@ public:
         for (auto cmd : cmds_) {
             if (!first) {
                 f << ", ";
-                generateCmdLink(f, cmd.first);
             }
+            generateCmdLink(f, cmd.first);
 
             first = false;
         }
@@ -215,7 +215,6 @@ public:
             bool first = true;
             for (auto cmd : cmds_) {
 
-                first = true;
                 auto daemons = cmd.second->get("support");
                 for (auto d : daemons->listValue()) {
                     if (d->stringValue() == daemon) {
@@ -239,7 +238,6 @@ public:
             bool first = true;
             for (auto cmd : cmds_) {
 
-                first = true;
                 auto daemon_hook = cmd.second->get("hook");
                 if (!daemon_hook || daemon_hook->stringValue() != hook) {
                     continue;
@@ -263,7 +261,7 @@ public:
 
         generateCopyright(f);
 
-        f << "<chapter xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\" xml:id=\"api\">"
+        f << "<appendix xmlns=\"http://docbook.org/ns/docbook\" version=\"5.0\" xml:id=\"api\">"
           << endl;
         f << "  <title>API Reference</title>" << endl;
 
@@ -273,7 +271,7 @@ public:
         // Generate actual commands references.
         generateCommands(f);
 
-        f << "</chapter>" << endl;
+        f << "</appendix>" << endl;
 
         ofstream file(OUTPUT.c_str(), ofstream::trunc);
         file << f.str();
