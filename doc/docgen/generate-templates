@@ -30,8 +30,8 @@ while read -r CMD; do
     echo "    \"brief\": \"a sentence or two explaining what this command does\"," >> $F
     echo "    \"description\": \"See <xref linkend=\\\"cmd-$LINE\\\"/>\"," >> $F
     echo "    \"support\": [ \"undocumented\" ]," >> $F
-    echo "    \"avail\": \"first Kea version this command appeared in\"," >> $F
-    echo "    \"hook\": \"\"," >> $F
+    echo "    \"avail\": \"0.0.0\"," >> $F
+    echo "    \"hook\": \"undocumented\"," >> $F
 
     echo "    \"cmd-syntax\": \"Syntax of the command\"," >> $F
     echo "    \"cmd-comment\": \"Possibly some extra comments after the syntax.\"," >> $F
