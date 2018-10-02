@@ -5,10 +5,16 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <mysql_cb_dhcp4.h>
 #include <dhcp/dhcp6.h>
+#include <dhcp/libdhcp++.h>
+#include <dhcp/option4_addrlst.h>
+#include <dhcp/option_int.h>
+#include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
-#include <mysql_cb_dhcp4.h>
+#include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -19,11 +25,12 @@ using namespace isc::db;
 using namespace isc::db::test;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv4.
-class MySqlConfigBackendDHCPv4Test : public ::testing::Test {
+class MySqlConfigBackendDHCPv4Test : public GenericBackendTest {
 public:
 
     /// @brief Constructor.
@@ -49,6 +56,7 @@ public:
         }
 
         // Create test data.
+        initTestOptions();
         initTestSubnets();
         initTestSharedNetworks();
         initTestOptionDefs();
@@ -96,6 +104,19 @@ public:
         Pool4Ptr pool2(new Pool4(IOAddress("192.0.2.50"), IOAddress("192.0.2.60")));
         subnet->addPool(pool2);
 
+        // Add several options to the subnet.
+        subnet->getCfgOption()->add(test_options_[0]->option_,
+                                    test_options_[0]->persistent_,
+                                    test_options_[0]->space_name_);
+
+        subnet->getCfgOption()->add(test_options_[1]->option_,
+                                    test_options_[1]->persistent_,
+                                    test_options_[1]->space_name_);
+
+        subnet->getCfgOption()->add(test_options_[2]->option_,
+                                    test_options_[2]->persistent_,
+                                    test_options_[2]->space_name_);
+
         test_subnets_.push_back(subnet);
 
         // Adding another subnet with the same subnet id to test
@@ -136,6 +157,19 @@ public:
         shared_network->setHostReservationMode(Subnet4::HR_DISABLED);
         shared_network->setContext(user_context);
         shared_network->setValid(5555);
+
+        // Add several options to the shared network.
+        shared_network->getCfgOption()->add(test_options_[2]->option_,
+                                            test_options_[2]->persistent_,
+                                            test_options_[2]->space_name_);
+
+        shared_network->getCfgOption()->add(test_options_[3]->option_,
+                                            test_options_[3]->persistent_,
+                                            test_options_[3]->space_name_);
+
+        shared_network->getCfgOption()->add(test_options_[4]->option_,
+                                            test_options_[4]->persistent_,
+                                            test_options_[4]->space_name_);
 
         test_networks_.push_back(shared_network);
 
@@ -178,6 +212,58 @@ public:
         test_option_defs_.push_back(option_def);
     }
 
+    /// @brief Creates several DHCP options used in tests.
+    void initTestOptions() {
+        ElementPtr user_context = Element::createMap();
+        user_context->set("foo", Element::create("bar"));
+
+        OptionDefSpaceContainer defs;
+
+        OptionDescriptor desc =
+            createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                       true, false, "my-boot-file");
+        desc.space_name_ = DHCP4_OPTION_SPACE;
+        desc.setContext(user_context);
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
+                                         false, true, 64);
+        desc.space_name_ = DHCP4_OPTION_SPACE;
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createOption<OptionUint32>(Option::V4, 1, false, false, 312131),
+        desc.space_name_ = "vendor-encapsulated-options";
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createAddressOption<Option4AddrLst>(254, true, true,
+                                                   "192.0.2.3");
+        desc.space_name_ = DHCP4_OPTION_SPACE;
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createEmptyOption(Option::V4, 1, true);
+        desc.space_name_ = "isc";
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        desc = createAddressOption<Option4AddrLst>(2, false, true, "10.0.0.5",
+                                                   "10.0.0.3", "10.0.3.4");
+        desc.space_name_ = "isc";
+        test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
+
+        // Add definitions for DHCPv4 non-standard options.
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "vendor-encapsulated-1", 1, "uint32")),
+                     "vendor-encapsulated-options");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition(
+                         "option-254", 254, "ipv4-address", true)),
+                     DHCP4_OPTION_SPACE);
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
+                     "isc");
+
+        // Register option definitions.
+        LibDHCP::setRuntimeOptionDefs(defs);
+    }
+
     /// @brief Initialize posix time values used in tests.
     void initTimestamps() {
         // Current time minus 1 hour to make sure it is in the past.
@@ -197,6 +283,9 @@ public:
 
     /// @brief Holds pointers to option definitions used in tests.
     std::vector<OptionDefinitionPtr> test_option_defs_;
+
+    /// @brief Holds pointers to options used in tests.
+    std::vector<OptionDescriptorPtr> test_options_;
 
     /// @brief Holds timestamp values used in tests.
     std::map<std::string, boost::posix_time::ptime> timestamps_;
@@ -565,6 +654,104 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefinitions4) {
     ASSERT_TRUE(option_defs.empty());
 }
 
+// This test verifies that subnet level option can be added, updated and
+// deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
+    // Insert new subnet.
+    Subnet4Ptr subnet = test_subnets_[1];
+    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    OptionDescriptorPtr opt_boot_file_name = test_options_[0];
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+                                opt_boot_file_name);
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    OptionDescriptor returned_opt_boot_file_name =
+        returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+                                opt_boot_file_name);
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+    returned_opt_boot_file_name =
+        returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+                          opt_boot_file_name->option_->getType(),
+                          opt_boot_file_name->space_name_);
+
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                         subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_FALSE(returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+}
+
+// This test verifies that shared network level option can be added,
+// updated and deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
+    // Insert new shared network.
+    SharedNetwork4Ptr shared_network = test_networks_[1];
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                       shared_network);
+
+    // Fetch this shared network by name.
+    SharedNetwork4Ptr returned_network =
+        cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                  shared_network->getName());
+    ASSERT_TRUE(returned_network);
+
+    OptionDescriptorPtr opt_boot_file_name = test_options_[0];
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                shared_network->getName(),
+                                opt_boot_file_name);
+
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                shared_network->getName());
+    ASSERT_TRUE(returned_network);
+
+    OptionDescriptor returned_opt_boot_file_name =
+        returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                shared_network->getName(),
+                                opt_boot_file_name);
+
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                 shared_network->getName());
+    ASSERT_TRUE(returned_network);
+    returned_opt_boot_file_name =
+        returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(returned_opt_boot_file_name.option_);
+    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+                          shared_network->getName(),
+                          opt_boot_file_name->option_->getType(),
+                          opt_boot_file_name->space_name_);
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                                 shared_network->getName());
+    ASSERT_TRUE(returned_network);
+    EXPECT_FALSE(returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+}
 
 
 }

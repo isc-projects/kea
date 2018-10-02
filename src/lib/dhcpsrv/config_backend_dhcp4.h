@@ -11,6 +11,7 @@
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
+#include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <util/optional_value.h>
@@ -170,7 +171,18 @@ public:
     /// @param option Option to be added or updated.
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
-                        const OptionPtr& option) = 0;
+                        const OptionDescriptorPtr& option) = 0;
+
+    /// @brief Creates or updates shared network level option.
+    ///
+    /// @param selector Server selector.
+    /// @param shared_network_name Name of a shared network to which option
+    /// belongs.
+    /// @param option Option to be added or updated.
+    virtual void
+    createUpdateOption4(const db::ServerSelector& selector,
+                        const std::string& shared_network_name,
+                        const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates subnet level option.
     ///
@@ -180,7 +192,7 @@ public:
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const SubnetID& subnet_id,
-                        const OptionPtr& option) = 0;
+                        const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates pool level option.
     ///
@@ -194,7 +206,7 @@ public:
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const asiolink::IOAddress& pool_start_address,
                         const asiolink::IOAddress& pool_end_address,
-                        const OptionPtr& option) = 0;
+                        const OptionDescriptorPtr& option) = 0;
 
     /// @brief Creates or updates global string parameter.
     ///
@@ -281,6 +293,19 @@ public:
     /// @return Number of deleted options.
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
+                  const std::string& space) = 0;
+
+    /// @brief Deletes shared network level option.
+    ///
+    /// @param selector Server selector.
+    /// @param shared_network_name Name of the shared network which option
+    /// belongs to.
+    /// @param code Code of the option to be deleted.
+    /// @param space Option space of the option to be deleted.
+    virtual void
+    deleteOption4(const db::ServerSelector& selector,
+                  const std::string& shared_network_name,
+                  const uint16_t code,
                   const std::string& space) = 0;
 
     /// @brief Deletes subnet level option.

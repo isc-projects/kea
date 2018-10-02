@@ -10,6 +10,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_space_container.h>
 #include <cc/cfg_to_element.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcpsrv/key_from_key.h>
 #include <boost/multi_index_container.hpp>
@@ -31,7 +32,7 @@ namespace dhcp {
 /// for this option. This information comprises whether this option is sent
 /// to DHCP client only on request (persistent = false) or always
 /// (persistent = true).
-class OptionDescriptor : public data::UserContext {
+class OptionDescriptor : public data::StampedElement, public data::UserContext {
 public:
     /// @brief Option instance.
     OptionPtr option_;
@@ -57,6 +58,17 @@ public:
     /// for the option which carries IPv6 address, a number and a text.
     std::string formatted_value_;
 
+    /// @brief Option space name.
+    ///
+    /// Options are associated with option spaces. Typically, such association
+    /// is made when the option is stored in the @c OptionContainer. However,
+    /// in some cases it is also required to associate option with the particular
+    /// option space outside of the container. In particular, when the option
+    /// is fetched from a database. The database configuration backend will
+    /// set option space upon return of the option. In other cases this value
+    /// won't be set.
+    std::string space_name_;
+
     /// @brief Constructor.
     ///
     /// @param opt option
@@ -68,7 +80,8 @@ public:
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
         : option_(opt), persistent_(persist),
-          formatted_value_(formatted_value) {
+          formatted_value_(formatted_value),
+          space_name_() {
         setContext(user_context);
     };
 
@@ -77,14 +90,15 @@ public:
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
         : option_(OptionPtr()), persistent_(persist),
-          formatted_value_() {};
+          formatted_value_(), space_name_() {};
 
     /// @brief Constructor.
     ///
     /// @param desc descriptor
     OptionDescriptor(const OptionDescriptor& desc)
         : option_(desc.option_), persistent_(desc.persistent_),
-          formatted_value_(desc.formatted_value_) {
+          formatted_value_(desc.formatted_value_),
+          space_name_(desc.space_name_) {
         setContext(desc.getContext());
     };
 

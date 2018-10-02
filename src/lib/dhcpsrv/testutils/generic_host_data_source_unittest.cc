@@ -43,12 +43,11 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-GenericHostDataSourceTest::GenericHostDataSourceTest() : hdsptr_() {
-    LibDHCP::clearRuntimeOptionDefs();
+GenericHostDataSourceTest::GenericHostDataSourceTest()
+    : GenericBackendTest(), hdsptr_() {
 }
 
 GenericHostDataSourceTest::~GenericHostDataSourceTest() {
-    LibDHCP::clearRuntimeOptionDefs();
     hdsptr_.reset();
 }
 
@@ -86,34 +85,6 @@ GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
     }
 
     return (HWAddrPtr(new HWAddr(duid->getDuid(), HTYPE_ETHER)));
-}
-
-
-OptionDescriptor
-GenericHostDataSourceTest::createEmptyOption(const Option::Universe& universe,
-                                             const uint16_t option_type,
-                                             const bool persist) const {
-    OptionPtr option(new Option(universe, option_type));
-    OptionDescriptor desc(option, persist);
-    return (desc);
-}
-
-OptionDescriptor
-GenericHostDataSourceTest::createVendorOption(const Option::Universe& universe,
-                                              const bool persist,
-                                              const bool formatted,
-                                              const uint32_t vendor_id) const {
-    OptionVendorPtr option(new OptionVendor(universe, vendor_id));
-
-    std::ostringstream s;
-    if (formatted) {
-        // Vendor id comprises vendor-id field, for which we need to
-        // assign a value in the textual (formatted) format.
-        s << vendor_id;
-    }
-
-    OptionDescriptor desc(option, persist, s.str());
-    return (desc);
 }
 
 void
