@@ -1,9 +1,8 @@
-// Generated 201809161042
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.0.4.
 
 // Locations for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -41,9 +40,9 @@
 
 # include "position.hh"
 
-#line 14 "parser.yy" // location.cc:292
+#line 14 "parser.yy" // location.cc:296
 namespace isc { namespace eval {
-#line 46 "location.hh" // location.cc:292
+#line 46 "location.hh" // location.cc:296
   /// Abstract a location.
   class location
   {
@@ -53,27 +52,30 @@ namespace isc { namespace eval {
     location (const position& b, const position& e)
       : begin (b)
       , end (e)
-    {}
+    {
+    }
 
     /// Construct a 0-width location in \a p.
     explicit location (const position& p = position ())
       : begin (p)
       , end (p)
-    {}
+    {
+    }
 
     /// Construct a 0-width location in \a f, \a l, \a c.
     explicit location (std::string* f,
-                       unsigned l = 1u,
-                       unsigned c = 1u)
+                       unsigned int l = 1u,
+                       unsigned int c = 1u)
       : begin (f, l, c)
       , end (f, l, c)
-    {}
+    {
+    }
 
 
     /// Initialization.
     void initialize (std::string* f = YY_NULLPTR,
-                     unsigned l = 1u,
-                     unsigned c = 1u)
+                     unsigned int l = 1u,
+                     unsigned int c = 1u)
     {
       begin.initialize (f, l, c);
       end = begin;
@@ -171,7 +173,7 @@ namespace isc { namespace eval {
   inline std::basic_ostream<YYChar>&
   operator<< (std::basic_ostream<YYChar>& ostr, const location& loc)
   {
-    unsigned end_col = 0 < loc.end.column ? loc.end.column - 1 : 0;
+    unsigned int end_col = 0 < loc.end.column ? loc.end.column - 1 : 0;
     ostr << loc.begin;
     if (loc.end.filename
         && (!loc.begin.filename
@@ -184,7 +186,7 @@ namespace isc { namespace eval {
     return ostr;
   }
 
-#line 14 "parser.yy" // location.cc:292
+#line 14 "parser.yy" // location.cc:296
 } } // isc::eval
-#line 189 "location.hh" // location.cc:292
+#line 192 "location.hh" // location.cc:296
 #endif // !YY_EVAL_LOCATION_HH_INCLUDED
