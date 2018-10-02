@@ -57,6 +57,9 @@ public:
         GET_OPTION_DEF4_CODE_SPACE,
         GET_ALL_OPTION_DEFS4,
         GET_MODIFIED_OPTION_DEFS4,
+        GET_OPTION4_CODE_SPACE,
+        GET_ALL_OPTIONS4,
+        GET_MODIFIED_OPTIONS4,
         GET_OPTION4_SUBNET_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
         INSERT_SUBNET4,
@@ -67,6 +70,7 @@ public:
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
         UPDATE_OPTION_DEF4,
+        UPDATE_OPTION4,
         UPDATE_OPTION4_SUBNET_ID,
         UPDATE_OPTION4_SHARED_NETWORK,
         DELETE_SUBNET4_ID,
@@ -77,6 +81,7 @@ public:
         DELETE_ALL_SHARED_NETWORKS4,
         DELETE_OPTION_DEF4_CODE_NAME,
         DELETE_ALL_OPTION_DEFS4,
+        DELETE_OPTION4,
         DELETE_OPTION4_SUBNET_ID,
         DELETE_OPTION4_SHARED_NETWORK,
         DELETE_OPTIONS4_SUBNET_ID,
@@ -709,6 +714,43 @@ public:
         transaction.commit();
     }
 
+    /// @brief Sends query to insert or update global DHCP option.
+    ///
+    /// @param selector Server selector.
+    /// @param option Pointer to the option descriptor encapsulating the option.
+    void createUpdateOption4(const ServerSelector& selector,
+                             const OptionDescriptorPtr& option) {
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
+            createOptionValueBinding(option),
+            MySqlBinding::condCreateString(option->formatted_value_),
+            MySqlBinding::condCreateString(option->space_name_),
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+            MySqlBinding::createInteger<uint8_t>(0),
+            createInputContextBinding(option),
+            MySqlBinding::createNull(),
+            MySqlBinding::createNull(),
+            MySqlBinding::createTimestamp(option->getModificationTime())
+        };
+
+        OptionDescriptorPtr existing_option = getOption4(selector,
+                                                         option->option_->getType(),
+                                                         option->space_name_);
+        if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
+            in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
+                                    in_bindings);
+
+        } else {
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
+                              in_bindings);
+        }
+    }
+
     /// @brief Sends query to insert or update DHCP option in a subnet.
     ///
     /// @param selector Server selector.
@@ -839,6 +881,58 @@ public:
         return (option_defs);
     }
 
+    /// @brief Sends query to retrieve single global option by code and
+    /// option space.
+    ///
+    /// @param selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option or NULL if such option
+    /// doesn't exist.
+    OptionDescriptorPtr
+    getOption4(const ServerSelector& selector, const uint16_t code,
+               const std::string& space) {
+        OptionContainer options;
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
+            MySqlBinding::createString(space)
+        };
+        getOptions(GET_OPTION4_CODE_SPACE, in_bindings, Option::V4, options);
+        return (options.empty() ? OptionDescriptorPtr() :
+                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+    }
+
+    /// @brief Sends query to retrieve all global options.
+    ///
+    /// @param selector Server selector.
+    /// @return Container holding returned options.
+    OptionContainer
+    getAllOptions4(const ServerSelector& selector) {
+        OptionContainer options;
+        MySqlBindingCollection in_bindings;
+        getOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
+                   in_bindings, Option::V4, options);
+        return (options);
+    }
+
+    /// @brief Sends query to retrieve global options with modification
+    /// time later than specified timestamp.
+    ///
+    /// @param selector Server selector.
+    /// @return Container holding returned options.
+    OptionContainer
+    getModifiedOptions4(const ServerSelector& selector,
+                        const boost::posix_time::ptime& modification_time) {
+        OptionContainer options;
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createTimestamp(modification_time)
+        };
+        getOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+                   in_bindings, Option::V4, options);
+        return (options);
+    }
+
     /// @brief Sends query to retrieve single option by code and option space
     /// for a giben subnet id.
     ///
@@ -964,6 +1058,23 @@ public:
 
         // Run DELETE.
         return (conn_.updateDeleteQuery(DELETE_OPTION_DEF4_CODE_NAME, in_bindings));
+    }
+
+    /// @brief Deletes global option.
+    ///
+    /// @param selector Server selector.
+    /// @param code Code of the deleted option.
+    /// @param space Option space of the deleted option.
+    void deleteOption4(const db::ServerSelector& /* selector */,
+                       const uint16_t code,
+                       const std::string& space) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createInteger<uint8_t>(code),
+            MySqlBinding::createString(space)
+        };
+
+        // Run DELETE.
+        conn_.updateDeleteQuery(DELETE_OPTION4, in_bindings);
     }
 
     /// @brief Deletes subnet level option.
@@ -1373,6 +1484,66 @@ TaggedStatementArray tagged_statements = { {
       "WHERE modification_ts > ? "
       "ORDER BY d.id" },
 
+    // Retrieves global option by code and space.
+    { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
+      "SELECT"
+      "  option_id,"
+      "  code,"
+      "  value,"
+      "  formatted_value,"
+      "  space,"
+      "  persistent,"
+      "  dhcp4_subnet_id,"
+      "  scope_id,"
+      "  user_context,"
+      "  shared_network_name,"
+      "  pool_id,"
+      "  modification_ts "
+      "FROM dhcp4_options "
+      "WHERE scope_id = 0 AND code = ? AND space = ? "
+      "ORDER BY option_id"
+    },
+
+    // Retrieves all global options.
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4, 
+      "SELECT"
+      "  option_id,"
+      "  code,"
+      "  value,"
+      "  formatted_value,"
+      "  space,"
+      "  persistent,"
+      "  dhcp4_subnet_id,"
+      "  scope_id,"
+      "  user_context,"
+      "  shared_network_name,"
+      "  pool_id,"
+      "  modification_ts "
+      "FROM dhcp4_options "
+      "WHERE scope_id = 0 "
+      "ORDER BY option_id"
+    },
+
+    // Retrieves modified options.
+    { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+      "SELECT"
+      "  option_id,"
+      "  code,"
+      "  value,"
+      "  formatted_value,"
+      "  space,"
+      "  persistent,"
+      "  dhcp4_subnet_id,"
+      "  scope_id,"
+      "  user_context,"
+      "  shared_network_name,"
+      "  pool_id,"
+      "  modification_ts "
+      "FROM dhcp4_options "
+      "WHERE scope_id = 0 AND modification_ts > ? "
+      "ORDER BY option_id"
+    },
+
     // Retrieves an option for a given subnet, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SUBNET_ID_CODE_SPACE,
       "SELECT"
@@ -1552,6 +1723,24 @@ TaggedStatementArray tagged_statements = { {
       "  user_context = ? "
       "WHERE code = ? AND space = ?" },
 
+    // Update existing global option.
+    { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
+      "UPDATE dhcp4_options SET"
+      "  code = ?,"
+      "  value = ?,"
+      "  formatted_value = ?,"
+      "  space = ?,"
+      "  persistent = ?,"
+      "  dhcp_client_class = ?,"
+      "  dhcp4_subnet_id = ?,"
+      "  scope_id = ?,"
+      "  user_context = ?,"
+      "  shared_network_name = ?,"
+      "  pool_id = ?,"
+      "  modification_ts = ? "
+      "WHERE scope_id = 0 AND code = ? AND space = ?"
+    },
+
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SUBNET_ID,
       "UPDATE dhcp4_options SET"
@@ -1624,6 +1813,11 @@ TaggedStatementArray tagged_statements = { {
     // Delete all option definitions.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
       "DELETE FROM dhcp4_option_def" },
+
+    // Delete single global option.
+    { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
+      "DELETE FROM dhcp4_options "
+      "WHERE scope_id = 0  AND code = ? AND space = ?" },
 
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SUBNET_ID,
@@ -1745,6 +1939,25 @@ getModifiedOptionDefs4(const ServerSelector& server_selector,
     return (impl_->getModifiedOptionDefs4(server_selector, modification_time));
 }
 
+OptionDescriptorPtr
+MySqlConfigBackendDHCPv4::getOption4(const ServerSelector& selector,
+                                     const uint16_t code,
+                                     const std::string& space) const {
+    return (impl_->getOption4(selector, code, space));
+}
+
+OptionContainer
+MySqlConfigBackendDHCPv4::getAllOptions4(const ServerSelector& selector) const {
+    return (impl_->getAllOptions4(selector));
+}
+
+OptionContainer
+MySqlConfigBackendDHCPv4::
+getModifiedOptions4(const ServerSelector& selector,
+                    const boost::posix_time::ptime& modification_time) const {
+    return (impl_->getModifiedOptions4(selector, modification_time));
+}
+
 util::OptionalValue<std::string>
 MySqlConfigBackendDHCPv4::getGlobalStringParameter4(const ServerSelector& /* server_selector */,
                                                     const std::string& /* name */) const {
@@ -1781,8 +1994,9 @@ MySqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& server_se
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* server_selector */,
-                                              const OptionDescriptorPtr& /* option */) {
+MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& selector,
+                                              const OptionDescriptorPtr& option) {
+    impl_->createUpdateOption4(selector, option);
 }
 
 void
@@ -1861,10 +2075,10 @@ MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* server_s
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
-                                        const uint16_t /* code */,
-                                        const std::string& /* space */) {
-    return (0);
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& selector,
+                                        const uint16_t code,
+                                        const std::string& space) {
+    impl_->deleteOption4(selector, code, space);
 }
 
 uint64_t

@@ -618,7 +618,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
 }
 
 // Test that option definitions modified after given time can be fetched.
-TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefinitions4) {
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefs4) {
     // Explicitly set timestamps of option definitions. First option
     // definition has a timestamp pointing to the future. Second option
     // definition has timestamp pointing to the past (yesterday).
@@ -652,6 +652,107 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefinitions4) {
     option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
                                               timestamps_["tomorrow"]);
     ASSERT_TRUE(option_defs.empty());
+}
+
+// This test verifies that global option can be added, updated and deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
+    // Add option to the database.
+    OptionDescriptorPtr opt_boot_file_name = test_options_[0];
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                opt_boot_file_name);
+
+    // Make sure we can retrieve this option and that it is equal to the
+    // option we have inserted into the database.
+    OptionDescriptorPtr returned_opt_boot_file_name =
+        cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+                           opt_boot_file_name->option_->getType(),
+                           opt_boot_file_name->space_name_);
+    ASSERT_TRUE(returned_opt_boot_file_name);
+    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    // Modify option and update it in the database.
+    opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                opt_boot_file_name);
+
+    // Retrieve the option again and make sure that updates were
+    // properly propagated to the database.
+    returned_opt_boot_file_name = cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+                                                     opt_boot_file_name->option_->getType(),
+                                                     opt_boot_file_name->space_name_);
+    ASSERT_TRUE(returned_opt_boot_file_name);
+    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    // Delete option from the database and make sure it is gone.
+    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+                          opt_boot_file_name->option_->getType(),
+                          opt_boot_file_name->space_name_);
+    EXPECT_FALSE(cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+                                    opt_boot_file_name->option_->getType(),
+                                    opt_boot_file_name->space_name_));
+}
+
+// This test verifies that all global options can be retrieved.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
+    // Add three global options to the database.
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[0]);
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[1]);
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[5]);
+
+    // Retrieve all these options.
+    OptionContainer returned_options = cbptr_->getAllOptions4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(3, returned_options.size());
+
+    // Get the container index used to search options by option code.
+    const OptionContainerTypeIndex& index = returned_options.get<1>();
+
+    // Verify that all options we put into the database were
+    // returned.
+    auto option0 = index.find(test_options_[0]->option_->getType());
+    ASSERT_FALSE(option0 == index.end());
+    EXPECT_TRUE(option0->equals(*test_options_[0]));
+
+    auto option1 = index.find(test_options_[1]->option_->getType());
+    ASSERT_FALSE(option1 == index.end());
+    EXPECT_TRUE(option1->equals(*test_options_[1]));
+
+    auto option5 = index.find(test_options_[5]->option_->getType());
+    ASSERT_FALSE(option5 == index.end());
+    EXPECT_TRUE(option5->equals(*test_options_[5]));
+}
+
+// This test verifies that modified global options can be retrieved.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
+    // Assign timestamps to the options we're going to store in the
+    // database.
+    test_options_[0]->setModificationTime(timestamps_["tomorrow"]);
+    test_options_[1]->setModificationTime(timestamps_["yesterday"]);
+    test_options_[5]->setModificationTime(timestamps_["today"]);
+
+    // Put options into the database.
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[0]);
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[1]);
+    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+                                test_options_[5]);
+
+    // Get options with the timestamp later than today. Only
+    // one option should be returned.
+    OptionContainer returned_options =
+        cbptr_->getModifiedOptions4(ServerSelector::UNASSIGNED(),
+                                    timestamps_["today"]);
+    ASSERT_EQ(1, returned_options.size());
+
+    // The returned option should be the one with the timestamp
+    // set to tomorrow.
+    const OptionContainerTypeIndex& index = returned_options.get<1>();
+    auto option0 = index.find(test_options_[0]->option_->getType());
+    ASSERT_FALSE(option0 == index.end());
+    EXPECT_TRUE(option0->equals(*test_options_[0]));
 }
 
 // This test verifies that subnet level option can be added, updated and
