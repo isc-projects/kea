@@ -188,12 +188,12 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     config_set = isc::data::Element::fromJSON(config);
     answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(2, rcode);
+    EXPECT_EQ(1, rcode);
 
     // Use an invalid configuration to verify checking error return.
     answer = checkConfig(config_set);
     isc::config::parseAnswer(rcode, answer);
-    EXPECT_EQ(2, rcode);
+    EXPECT_EQ(1, rcode);
 }
 
 // Tests that the original configuration is retained after a SIGHUP triggered

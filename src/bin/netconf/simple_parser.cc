@@ -53,7 +53,7 @@ size_t NetconfSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) 
 }
 
 void
-NetconfSimpleParser::parse(const NetconfCfgContextPtr& ctx,
+NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
                            const isc::data::ConstElementPtr& config,
                            bool check_only) {
 

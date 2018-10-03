@@ -29,7 +29,7 @@ public:
     NetconfProcessTest() :
         NetconfProcess("netconf-test",
 		       IOServicePtr(new isc::asiolink::IOService())) {
-        NetconfCfgContextPtr ctx = getNetconfCfgMgr()->getNetconfCfgContext();
+        NetconfConfigPtr ctx = getNetconfCfgMgr()->getNetconfConfig();
     }
 
     /// @brief Destructor

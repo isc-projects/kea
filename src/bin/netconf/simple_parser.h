@@ -37,7 +37,7 @@ public:
     /// @param check_only - if true the configuration is verified only, not applied
     ///
     /// @throw ConfigError if any issues are encountered.
-    void parse(const NetconfCfgContextPtr& ctx,
+    void parse(const NetconfConfigPtr& ctx,
                const isc::data::ConstElementPtr& config,
                bool check_only);
 
