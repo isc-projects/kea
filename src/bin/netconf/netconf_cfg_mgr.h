@@ -17,9 +17,9 @@
 namespace isc {
 namespace netconf {
 
-class NetconfCfgContext;
+class NetconfConfig;
 /// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<NetconfCfgContext> NetconfCfgContextPtr;
+typedef boost::shared_ptr<NetconfConfig> NetconfConfigPtr;
 
 /// @brief Netconf Configuration Context.
 ///
@@ -28,11 +28,11 @@ typedef boost::shared_ptr<NetconfCfgContext> NetconfCfgContextPtr;
 /// and any other Netconf specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
 /// It is derived from the context base class, ConfigBase.
-class NetconfCfgContext : public process::ConfigBase {
+class NetconfConfig : public process::ConfigBase {
 public:
 
     /// @brief Default constructor
-    NetconfCfgContext();
+    NetconfConfig();
 
     /// @brief Returns non-const reference to configured hooks libraries.
     ///
@@ -66,12 +66,12 @@ private:
     /// It is private to forbid anyone outside of this class to make copies.
     ///
     /// @param orig the original context to copy from
-    NetconfCfgContext(const NetconfCfgContext& orig);
+    NetconfConfig(const NetconfConfig& orig);
 
     /// @brief Private assignment operator to avoid potential for slicing.
     ///
     /// @param rhs Context to be assigned.
-    NetconfCfgContext& operator=(const NetconfCfgContext& rhs);
+    NetconfConfig& operator=(const NetconfConfig& rhs);
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
@@ -94,8 +94,8 @@ public:
     /// context.
     ///
     /// @return returns a pointer to the configuration context.
-    NetconfCfgContextPtr getNetconfCfgContext() {
-        return (boost::dynamic_pointer_cast<NetconfCfgContext>(getContext()));
+    NetconfConfigPtr getNetconfConfig() {
+        return (boost::dynamic_pointer_cast<NetconfConfig>(getContext()));
     }
 
     /// @brief Returns configuration summary in the textual format.
@@ -117,11 +117,11 @@ protected:
     virtual isc::data::ConstElementPtr
     parse(isc::data::ConstElementPtr config, bool check_only);
 
-    /// @brief Creates a new, blank NetconfCfgContext context.
+    /// @brief Creates a new, blank NetconfConfig context.
     ///
     ///
     /// This method is used at the beginning of configuration process to
-    /// create a fresh, empty copy of a NetconfCfgContext. This new context
+    /// create a fresh, empty copy of a NetconfConfig. This new context
     /// will be populated during the configuration process and will replace the
     /// existing context provided the configuration process completes without
     /// error.

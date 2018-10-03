@@ -35,8 +35,8 @@ TEST(NetconfCfgMgr, construction) {
     ASSERT_NO_THROW(cfg_mgr.reset(new NetconfCfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
-    NetconfCfgContextPtr context;
-    ASSERT_NO_THROW(context = cfg_mgr->getNetconfCfgContext());
+    NetconfConfigPtr context;
+    ASSERT_NO_THROW(context = cfg_mgr->getNetconfConfig());
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
@@ -47,14 +47,14 @@ TEST(NetconfCfgMgr, construction) {
 TEST(NetconfCfgMgr, getContext) {
     NetconfCfgMgr cfg_mgr;
 
-    NetconfCfgContextPtr ctx;
-    ASSERT_NO_THROW(ctx = cfg_mgr.getNetconfCfgContext());
+    NetconfConfigPtr ctx;
+    ASSERT_NO_THROW(ctx = cfg_mgr.getNetconfConfig());
     ASSERT_TRUE(ctx);
 }
 
 // Tests if the context can store and retrieve hook libs information.
 TEST(NetconfCfgMgr, contextHookParams) {
-    NetconfCfgContext ctx;
+    NetconfConfig ctx;
 
     // By default there should be no hooks.
     HooksConfig& libs = ctx.getHooksConfig();

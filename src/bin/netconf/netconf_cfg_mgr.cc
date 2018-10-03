@@ -12,6 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
 
+using namespace isc::config;
 using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::data;
@@ -19,15 +20,15 @@ using namespace isc::data;
 namespace isc {
 namespace netconf {
 
-NetconfCfgContext::NetconfCfgContext() {
+NetconfConfig::NetconfConfig() {
 }
 
-NetconfCfgContext::NetconfCfgContext(const NetconfCfgContext& orig)
+NetconfConfig::NetconfConfig(const NetconfConfig& orig)
     : ConfigBase(), hooks_config_(orig.hooks_config_) {
 }
 
 NetconfCfgMgr::NetconfCfgMgr()
-    : DCfgMgrBase(ConfigPtr(new NetconfCfgContext())) {
+    : DCfgMgrBase(ConfigPtr(new NetconfConfig())) {
 }
 
 NetconfCfgMgr::~NetconfCfgMgr() {
@@ -36,7 +37,7 @@ NetconfCfgMgr::~NetconfCfgMgr() {
 std::string
 NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
-    NetconfCfgContextPtr ctx = getNetconfCfgContext();
+    NetconfConfigPtr ctx = getNetconfConfig();
 
     std::ostringstream s;
 
@@ -52,7 +53,7 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
 ConfigPtr
 NetconfCfgMgr::createNewContext() {
-    return (ConfigPtr(new NetconfCfgContext()));
+    return (ConfigPtr(new NetconfConfig()));
 }
 
 isc::data::ConstElementPtr
@@ -63,7 +64,7 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
         isc_throw(DhcpConfigError, "Mandatory config parameter not provided");
     }
 
-    NetconfCfgContextPtr ctx = getNetconfCfgContext();
+    NetconfConfigPtr ctx = getNetconfConfig();
 
     // Set the defaults
     ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
@@ -78,10 +79,10 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
         parser.parse(ctx, cfg, check_only);
     } catch (const isc::Exception& ex) {
         excuse = ex.what();
-        answer = isc::config::createAnswer(2, excuse);
+        answer = createAnswer(CONTROL_RESULT_ERROR, excuse);
     } catch (...) {
         excuse = "undefined configuration parsing error";
-        answer = isc::config::createAnswer(2, excuse);
+        answer = createAnswer(CONTROL_RESULT_ERROR, excuse);
     }
 
     // At this stage the answer was created only in case of exception.
@@ -95,16 +96,18 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     }
 
     if (check_only) {
-        answer = isc::config::createAnswer(0, "Configuration check successful");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS,
+                              "Configuration check successful");
     } else {
-        answer = isc::config::createAnswer(0, "Configuration applied successfully.");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS,
+                              "Configuration applied successfully.");
     }
 
     return (answer);
 }
 
 ElementPtr
-NetconfCfgContext::toElement() const {
+NetconfConfig::toElement() const {
     ElementPtr netconf = Element::createMap();
     // Set user-context
     contextToElement(netconf);

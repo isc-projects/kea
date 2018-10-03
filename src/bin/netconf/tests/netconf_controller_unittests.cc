@@ -49,10 +49,10 @@ public:
     }
 
     /// @brief Returns a pointer to the configuration context.
-    NetconfCfgContextPtr getNetconfCfgContext() {
-        NetconfCfgContextPtr p;
+    NetconfConfigPtr getNetconfConfig() {
+        NetconfConfigPtr p;
         if (getNetconfCfgMgr()) {
-            p = getNetconfCfgMgr()->getNetconfCfgContext();
+            p = getNetconfCfgMgr()->getNetconfConfig();
         }
         return (p);
     }

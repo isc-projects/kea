@@ -213,7 +213,7 @@ TEST_F(D2ProcessTest, configure) {
     //  Create an invalid configuration set from text config.
     ASSERT_TRUE(fromJSON("{ \"ip-address\": \"950 Charter St.\" } "));
     answer = configure(config_set_, false);
-    ASSERT_TRUE(checkAnswer(answer, 2));
+    ASSERT_TRUE(checkAnswer(answer, 1));
     EXPECT_FALSE(getReconfQueueFlag());
     EXPECT_EQ(D2QueueMgr::RUNNING, queue_mgr->getMgrState());
 }
