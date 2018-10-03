@@ -26,13 +26,13 @@
     "hook": "name of the hook that provides this command. remove if provided by
              the core code",
 
-    // This defines a syntax of the command.
+    // This defines the syntax of the command.
     "cmd-syntax": "Syntax of the command",
 
     // This defines a description printed immediately below the command syntax.
     "cmd-comment": "Possibly some extra comments after the syntax.",
 
-    // This defines a syntax of the response.
+    // This defines the syntax of the response.
     "resp-syntax": "Syntax of the response",
 
     // This defines a description printed immediately below the response syntax.
