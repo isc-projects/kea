@@ -20,6 +20,7 @@ run_unittests_SOURCES += data_file_unittests.cc
 run_unittests_SOURCES += json_feed_unittests.cc
 run_unittests_SOURCES += simple_parser_unittest.cc
 run_unittests_SOURCES += stamped_element_unittest.cc
+run_unittests_SOURCES += stamped_value_unittest.cc
 run_unittests_SOURCES += user_context_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)

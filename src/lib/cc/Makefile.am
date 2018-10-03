@@ -11,6 +11,7 @@ libkea_cc_la_SOURCES += command_interpreter.cc command_interpreter.h
 libkea_cc_la_SOURCES += json_feed.cc json_feed.h
 libkea_cc_la_SOURCES += simple_parser.cc simple_parser.h
 libkea_cc_la_SOURCES += stamped_element.cc stamped_element.h
+libkea_cc_la_SOURCES += stamped_value.cc stamped_value.h
 libkea_cc_la_SOURCES += user_context.cc user_context.h
 
 libkea_cc_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
