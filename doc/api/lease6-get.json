@@ -12,4 +12,5 @@
     \"type\": \"IA_PD\"
   }
 }",
+    "cmd-comment": "lease6-get returns a result that indicates a result of the operation and lease details, if found. It has one of the following values: 0 (success), 1 (error) or 2 (empty)."
 }
