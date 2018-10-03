@@ -10,8 +10,8 @@
     // we provide links to specific section.
     "description": "See <xref linkend=\"anchor-in-the-docs\"/>",
 
-    // This enumerates the daemons that are able to handle specific command.
-    // Usually this will be a subset of those specifeid below as there are very
+    // This enumerates the daemons that are able to handle specific commands.
+    // Usually this will be a subset of those specified below as there are very
     // few commands that are supported by every daemon.
     "support": [ "kea-dhcp4", "kea-dhcp6", "dhcp-ddns", "ca", "netconf" ],
 
