@@ -1,0 +1,15 @@
+{
+    "name": "lease6-get",
+    "brief": "lease6-get can be used to query the lease database and retrieve existing leases.",
+    "description": "See <xref linkend=\"lease6-get\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.3.0",
+    "hook": "lease_cmds",
+    "cmd-syntax": "{
+  \"command\": \"lease6-get\",
+  \"arguments\": {
+    \"ip-address\": \"2001:db8:1234:ab::\",
+    \"type\": \"IA_PD\"
+  }
+}",
+}
