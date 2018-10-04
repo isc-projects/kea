@@ -220,7 +220,8 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be deleted.
-    virtual void
+    /// @return Number of deleted subnets.
+    virtual uint64_t
     deleteSubnet4(const db::ServerSelector& server_selector,
                   const std::string& subnet_prefix) = 0;
 
@@ -228,27 +229,31 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
-    virtual void
+    /// @return Number of deleted subnets.
+    virtual uint64_t
     deleteSubnet4(const db::ServerSelector& server_selector, const SubnetID& subnet_id) = 0;
 
     /// @brief Deletes all subnets.
     ///
     /// @param server_selector Server selector.
-    virtual void
+    /// @return Number of deleted subnets.
+    virtual uint64_t
     deleteAllSubnets4(const db::ServerSelector& server_selector) = 0;
 
     /// @brief Deletes shared network by name.
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the shared network to be deleted.
-    virtual void
+    /// @return Number of deleted shared networks..
+    virtual uint64_t
     deleteSharedNetwork4(const db::ServerSelector& server_selector,
                          const std::string& name) = 0;
 
     /// @brief Deletes all shared networks.
     ///
     /// @param server_selector Server selector.
-    virtual void
+    /// @return Number of deleted shared networks.
+    virtual uint64_t
     deleteAllSharedNetworks4(const db::ServerSelector& server_selector) = 0;
 
     /// @brief Deletes option definition.
@@ -256,14 +261,16 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
-    virtual void
+    /// @return Number of deleted option definitions.
+    virtual uint64_t
     deleteOptionDef4(const db::ServerSelector& server_selector, const uint16_t code,
                      const std::string& space) = 0;
 
     /// @brief Deletes all option definitions.
     ///
     /// @param server_selector Server selector.
-    virtual void
+    /// @return Number of deleted option definitions.
+    virtual uint64_t
     deleteAllOptionDefs4(const db::ServerSelector& server_selector) = 0;
 
     /// @brief Deletes global option.
@@ -271,7 +278,8 @@ public:
     /// @param server_selector Server selector.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
-    virtual void
+    /// @return Number of deleted options.
+    virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
                   const std::string& space) = 0;
 
@@ -282,7 +290,8 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    virtual void
+    /// @return Number of deleted options.
+    virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const SubnetID& subnet_id,
                   const uint16_t code, const std::string& space) = 0;
 
@@ -295,7 +304,8 @@ public:
     /// deleted option belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    virtual void
+    /// @return Number of deleted options.
+    virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const asiolink::IOAddress& pool_start_address,
                   const asiolink::IOAddress& pool_end_address,
@@ -306,14 +316,16 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be deleted.
-    virtual void
+    /// @return Number of deleted global parameters.
+    virtual uint64_t
     deleteGlobalParameter4(const db::ServerSelector& server_selector,
                            const std::string& name) = 0;
 
     /// @brief Deletes all global parameters.
     ///
     /// @param server_selector Server selector.
-    virtual void
+    /// @return Number of deleted global parameters.
+    virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector) = 0;
 };
 

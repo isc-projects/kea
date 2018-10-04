@@ -59,18 +59,18 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
     }
 }
 
-void
+uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index) {
     MySqlBindingCollection in_bindings;
-    conn_.updateDeleteQuery(index, in_bindings);
+    return (conn_.updateDeleteQuery(index, in_bindings));
 }
 
-void
+uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index, const std::string& key) {
     MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(key)
     };
-    conn_.updateDeleteQuery(index, in_bindings);
+    return (conn_.updateDeleteQuery(index, in_bindings));
 }
 
 void

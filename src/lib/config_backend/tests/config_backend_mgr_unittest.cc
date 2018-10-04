@@ -314,7 +314,7 @@ public:
                                 const BackendSelector& backend_selector,
                                 const ServerSelector& server_selector =
                                 ServerSelector::ALL()) {
-        createUpdateDeleteProperty<const std::pair<std::string, int>&>
+        createUpdateDeleteProperty<void, const std::pair<std::string, int>&>
             (&TestConfigBackend::createProperty, backend_selector, server_selector,
              new_property);
     }
