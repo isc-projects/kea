@@ -34,7 +34,7 @@ public:
     /// ensuring the validity of the string content is placed upon the caller.
     ///
     /// @param access_str string of name=value pairs seperated by spaces
-    void setAccessString(const std::string access_str);
+    void setAccessString(const std::string& access_str);
 
     /// @brief Retrieves the database access string.
     ///
@@ -107,7 +107,7 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 /// This is class conveys the configuration control information
 /// described by the following JSON text:
 ///
-/// "config-ctl" :
+/// "config-control" :
 /// {
 ///     "config-databases":
 ///     [
@@ -124,7 +124,6 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 ///     }
 ///     ]
 /// }
-
 class ConfigControlInfo : public isc::data::CfgToElement {
 public:
 
@@ -134,15 +133,18 @@ public:
     /// @brief Copy Constructor.
     ConfigControlInfo(const ConfigControlInfo& other);
 
-    /// @brief Sets host database access string.
+    /// @brief Sets configuration database access string.
     ///
-    /// @param host_db_access New host database access string.
-    /// @param front Add at front if true, at back if false (default).
+    /// @param access_str database access string.
+    ///
     /// @throw BadValue if an entry exists that matches the parameters
     /// in the given access string, or if the access string is invalid.
     void addConfigDatabase(const std::string& access_str);
 
     /// @brief Retrieves the list of databases
+    ///
+    /// The entries in the list are stored in the order they were
+    /// added to it (FIFO).
     ///
     /// @return a reference to a const list of databases
     const ConfigDbInfoList& getConfigDatabases() const {
@@ -153,8 +155,8 @@ public:
     ///
     /// @return A reference to the matching database or the not-found value
     /// available via @c EMPTY_DB()
-    const ConfigDbInfo& findConfigDb(const std::string param_name,
-                                     const std::string param_value);
+    const ConfigDbInfo& findConfigDb(const std::string& param_name,
+                                     const std::string& param_value);
 
     /// @brief Empties the contents of the class, including the database list
     void clear();
