@@ -13,7 +13,7 @@ namespace isc {
 namespace process {
 
 void
-ConfigDbInfo::setAccessString(const std::string access_str) {
+ConfigDbInfo::setAccessString(const std::string& access_str) {
     access_str_ = access_str;
     access_params_.clear();
     access_params_ = db::DatabaseConnection::parse(access_str_);
@@ -65,8 +65,8 @@ ConfigControlInfo::addConfigDatabase(const std::string& access_str) {
 }
 
 const ConfigDbInfo&
-ConfigControlInfo::findConfigDb(const std::string param_name,
-                                const std::string param_value) {
+ConfigControlInfo::findConfigDb(const std::string& param_name,
+                                const std::string& param_value) {
     for (ConfigDbInfoList::iterator db = db_infos_.begin();
          db != db_infos_.end(); ++db) {
         std::string db_value;
