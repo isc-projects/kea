@@ -6,5 +6,5 @@
     "avail": "1.4.0",
     "cmd-syntax": "{
     \"command\": \"dhcp-enable\"
-}",
+}"
 }

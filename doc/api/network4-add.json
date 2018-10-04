@@ -41,6 +41,6 @@
         \"shared-networks\": [ { \"name\": \"floor13\" } ]
     },
     \"result\": 0,
-    \"text\": \"A new IPv4 shared network \'floor13\' added\"
-}",
+    \"text\": \"A new IPv4 shared network 'floor13' added\"
+}"
 }

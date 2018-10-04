@@ -8,5 +8,5 @@
     \"command\": \"statistic-remove-all\",
     \"arguments\": { }
 }",
-    "cmd-comment": "If the removal of all statistics was successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description.",
+    "cmd-comment": "If the removal of all statistics was successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
 }

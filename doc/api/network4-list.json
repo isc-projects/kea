@@ -7,7 +7,7 @@
     "hook": "subnet_cmds",
     "cmd-syntax": "{
     \"command\": \"network4-list\"
-}d",
+}",
     "resp-syntax": "{
     \"arguments\": {
         \"shared-networks\": [
@@ -17,5 +17,5 @@
     },
     \"result\": 0,
     \"text\": \"2 IPv4 network(s) found\"
-}",
+}"
 }

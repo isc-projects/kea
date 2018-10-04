@@ -7,5 +7,5 @@
     "cmd-syntax": "{
     \"command\": \"shutdown\"
 }",
-    "cmd-comment": "The server will respond with a confirmation that the shutdown procedure has been initiated.",
+    "cmd-comment": "The server will respond with a confirmation that the shutdown procedure has been initiated."
 }
