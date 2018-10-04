@@ -21,6 +21,25 @@ using namespace boost::posix_time;
 
 namespace {
 
+/// @brief Valid Netconf Config used in tests.
+const char* valid_netconf_config =
+    "{"
+    "  \"managed-servers\": {"
+    "    \"dhcp4\": {"
+    "      \"control-socket\": {"
+    "        \"socket-type\": \"unix\","
+    "        \"socket-name\": \"/first/dhcp4/socket\""
+    "      }"
+    "    },"
+    "    \"dhcp6\": {"
+    "      \"control-socket\": {"
+    "        \"socket-type\": \"unix\","
+    "        \"socket-name\": \"/first/dhcp4/socket\""
+    "      }"
+    "    }"
+    "  }"
+    "}";
+
 /// @brief test fixture class for testing NetconfController class.
 ///
 /// This class derives from DControllerTest and wraps NetconfController. Much
@@ -117,6 +136,51 @@ TEST_F(NetconfControllerTest, commandLineArgs) {
 TEST_F(NetconfControllerTest, initProcessTesting) {
     ASSERT_NO_THROW(initProcess());
     EXPECT_TRUE(checkProcess());
+}
+
+// Tests launch and normal shutdown (stand alone mode).
+// This creates an interval timer to generate a normal shutdown and then
+// launches with a valid, stand-alone command line and no simulated errors.
+TEST_F(NetconfControllerTest, launchNormalShutdown) {
+    // Write valid_netconf_config and then run launch() for 200 ms.
+    time_duration elapsed_time;
+    runWithConfig(valid_netconf_config, 200, elapsed_time);
+
+    // Give a generous margin to accommodate slower test environs.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() >= 100 &&
+                elapsed_time.total_milliseconds() <= 500);
+}
+
+// Tests that the SIGINT triggers a normal shutdown.
+TEST_F(NetconfControllerTest, sigintShutdown) {
+    // Setup to raise SIGHUP in 1 ms.
+    TimedSignal sighup(*getIOService(), SIGINT, 1);
+
+    // Write valid_netconf_config and then run launch() for a maximum
+    // of 500 ms.
+    time_duration elapsed_time;
+    runWithConfig(valid_netconf_config, 500, elapsed_time);
+
+    // Signaled shutdown should make our elapsed time much smaller than
+    // the maximum run time.  Give generous margin to accommodate slow
+    // test environs.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
+}
+
+// Tests that the SIGTERM triggers a normal shutdown.
+TEST_F(NetconfControllerTest, sigtermShutdown) {
+    // Setup to raise SIGHUP in 1 ms.
+    TimedSignal sighup(*getIOService(), SIGTERM, 1);
+
+    // Write valid_netconf_config and then run launch() for a maximum
+    // of 500 ms.
+    time_duration elapsed_time;
+    runWithConfig(valid_netconf_config, 500, elapsed_time);
+
+    // Signaled shutdown should make our elapsed time much smaller than
+    // the maximum run time.  Give generous margin to accommodate slow
+    // test environs.
+    EXPECT_TRUE(elapsed_time.total_milliseconds() < 300);
 }
 
 }

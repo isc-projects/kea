@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <netconf/simple_parser.h>
+#include <netconf/netconf_config.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
 #include <hooks/hooks_parser.h>
@@ -37,6 +38,33 @@ namespace netconf {
 const SimpleDefaults NetconfSimpleParser::NETCONF_DEFAULTS = {
 };
 
+/// Supplies defaults for control-socket elements
+const SimpleDefaults NetconfSimpleParser::CTRL_SOCK_DEFAULTS = {
+    { "socket-type", Element::string, "stdout" },
+    { "socket-name", Element::string, "" },
+    { "socket-url" , Element::string, "http://127.0.0.1:8000/" }
+};
+
+/// Supplies defaults for dhcp4 managed server
+const SimpleDefaults NetconfSimpleParser::DHCP4_DEFAULTS = {
+    { "model", Element::string, "kea-dhcp4-server" }
+};
+
+/// Supplies defaults for dhcp6 managed server
+const SimpleDefaults NetconfSimpleParser::DHCP6_DEFAULTS = {
+    { "model", Element::string, "kea-dhcp6-server" }
+};
+
+/// Supplies defaults for d2 managed server
+const SimpleDefaults NetconfSimpleParser::D2_DEFAULTS = {
+    { "model", Element::string, "kea-dhcp-ddns" }
+};
+
+/// Supplies defaults for ca managed server
+const SimpleDefaults NetconfSimpleParser::CA_DEFAULTS = {
+    { "model", Element::string, "kea-ctrl-agent" }
+};
+
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -48,6 +76,41 @@ size_t NetconfSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) 
 
     // Set global defaults first.
     cnt = setDefaults(global, NETCONF_DEFAULTS);
+
+    ConstElementPtr servers = global->get("managed-servers");
+    if (servers) {
+        for (auto it : servers->mapValue()) {
+            cnt += setServerDefaults(it.first, it.second);
+        }
+    }
+
+    return (cnt);
+}
+
+size_t
+NetconfSimpleParser::setServerDefaults(const std::string name,
+                                       isc::data::ConstElementPtr server) {
+    size_t cnt = 0;
+
+    isc::data::ElementPtr mutable_server =
+        boost::const_pointer_cast<Element>(server);
+    if (name == "dhcp4") {
+        cnt += setDefaults(mutable_server, DHCP4_DEFAULTS);
+    } else if (name == "dhcp6") {
+        cnt += setDefaults(mutable_server, DHCP6_DEFAULTS);
+    } else if (name == "d2") {
+        cnt += setDefaults(mutable_server, D2_DEFAULTS);
+    } else if (name == "ca") {
+        cnt += setDefaults(mutable_server, CA_DEFAULTS);
+    }
+
+    isc::data::ConstElementPtr ctrl_sock = server->get("control-socket");
+    if (!ctrl_sock) {
+        return (cnt);
+    }
+    isc::data::ElementPtr mutable_ctrl_sock =
+        boost::const_pointer_cast<Element>(ctrl_sock);
+    cnt += setDefaults(mutable_ctrl_sock, CTRL_SOCK_DEFAULTS);
 
     return (cnt);
 }
@@ -61,6 +124,16 @@ NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
     ConstElementPtr user_context = config->get("user-context");
     if (user_context) {
         ctx->setContext(user_context);
+    }
+
+    // get managed servers.
+    ConstElementPtr servers = config->get("managed-servers");
+    if (servers) {
+        for (auto it : servers->mapValue()) {
+            ServerParser server_parser;
+            ServerPtr server = server_parser.parse(it.second);
+            ctx->getServersMap()->insert(make_pair(it.first, server));
+        }
     }
 
     // Finally, let's get the hook libs!

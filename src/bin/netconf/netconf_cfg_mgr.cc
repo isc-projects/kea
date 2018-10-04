@@ -20,11 +20,13 @@ using namespace isc::data;
 namespace isc {
 namespace netconf {
 
-NetconfConfig::NetconfConfig() {
+NetconfConfig::NetconfConfig()
+    : servers_map_(new ServersMap()) {
 }
 
 NetconfConfig::NetconfConfig(const NetconfConfig& orig)
-    : ConfigBase(), hooks_config_(orig.hooks_config_) {
+    : ConfigBase(), servers_map_(orig.servers_map_),
+      hooks_config_(orig.hooks_config_) {
 }
 
 NetconfCfgMgr::NetconfCfgMgr()
@@ -39,7 +41,20 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
 
     NetconfConfigPtr ctx = getNetconfConfig();
 
+    // No globals to print.
     std::ostringstream s;
+
+    // Then print managed servers.
+    for (auto serv : *ctx->getServersMap()) {
+        if (s.tellp() != 0) {
+            s << " ";
+        }
+        s << serv.first;
+    }
+
+    if (s.tellp() == 0) {
+        s << "none";
+    }
 
     // Finally, print the hook libraries names
     const isc::hooks::HookLibsCollection libs = ctx->getHooksConfig().get();
@@ -106,6 +121,8 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     return (answer);
 }
 
+
+
 ElementPtr
 NetconfConfig::toElement() const {
     ElementPtr netconf = Element::createMap();
@@ -113,6 +130,13 @@ NetconfConfig::toElement() const {
     contextToElement(netconf);
     // Set hooks-libraries
     netconf->set("hooks-libraries", hooks_config_.toElement());
+    // Set managed-servers
+    ElementPtr servers = Element::createMap();
+    for (auto serv : *servers_map_) {
+        ConstElementPtr server = serv.second->toElement();
+        servers->set(serv.first, server);
+    }
+    netconf->set("managed-servers", servers);
     // Set Netconf
     ElementPtr result = Element::createMap();
     result->set("Netconf", netconf);

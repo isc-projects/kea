@@ -30,6 +30,16 @@ public:
     /// @return number of default values added
     static size_t setAllDefaults(const isc::data::ElementPtr& global);
 
+    /// @brief Adds default values to a Managed server entry.
+    ///
+    /// Adds server specific defaults, e.g. the default model.
+    ///
+    /// @param name server name / entry key
+    /// @param server server element / entry value
+    /// @return returns the number of default values added
+    static size_t setServerDefaults(const std::string name,
+                                    isc::data::ConstElementPtr server);
+
     /// @brief Parses the netconf configuration
     ///
     /// @param ctx - parsed information will be stored here
@@ -43,6 +53,11 @@ public:
 
     // see simple_parser.cc for comments for those parameters
     static const isc::data::SimpleDefaults NETCONF_DEFAULTS;
+    static const isc::data::SimpleDefaults CTRL_SOCK_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP4_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP6_DEFAULTS;
+    static const isc::data::SimpleDefaults D2_DEFAULTS;
+    static const isc::data::SimpleDefaults CA_DEFAULTS;
 };
 
 };

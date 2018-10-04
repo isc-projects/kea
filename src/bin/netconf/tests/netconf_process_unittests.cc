@@ -28,7 +28,7 @@ public:
     /// @brief Constructor
     NetconfProcessTest() :
         NetconfProcess("netconf-test",
-		       IOServicePtr(new isc::asiolink::IOService())) {
+                       IOServicePtr(new isc::asiolink::IOService())) {
         NetconfConfigPtr ctx = getNetconfCfgMgr()->getNetconfConfig();
     }
 
@@ -61,7 +61,7 @@ TEST(NetconfProcess, construction) {
 }
 
 // Verifies that en external call to shutdown causes the run method to
-// exit gracefully. 
+// exit gracefully.
 TEST_F(NetconfProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
