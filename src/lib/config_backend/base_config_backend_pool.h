@@ -389,7 +389,7 @@ protected:
     /// void createUpdateSubnet6(const Subnet6Ptr& subnet,
     ///                          const BackendSelector& backend_selector,
     ///                          const ServerSelector& server_selector) {
-    ///     createUpdateDeleteProperty<const Subnet6Ptr&>
+    ///     createUpdateDeleteProperty<void, const Subnet6Ptr&>
     ///         (&ConfigBackendDHCPv6::createUpdateSubnet6, backend_selector,
     ///          server_selector, subnet, selector);
     /// }
@@ -406,6 +406,7 @@ protected:
     /// backend is selected, an exception is thrown. If no backend is selected
     /// an exception is thrown either.
     ///
+    /// @tparam ReturnValue Returned value, typically void or uint64_t.
     /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
     /// method to be invoked.
     /// @tparam Args Parameter pack holding types of the arguments provided
@@ -421,12 +422,13 @@ protected:
     /// was found.
     /// @throw db::AmbiguousDatabase if multiple databases matching the selector
     /// were found.
-    template<typename... FnPtrArgs, typename... Args>
-    void createUpdateDeleteProperty(void (ConfigBackendType::*MethodPointer)
-                                    (const db::ServerSelector&, FnPtrArgs...),
-                                    const db::BackendSelector& backend_selector,
-                                    const db::ServerSelector& server_selector,
-                                    Args... input) {
+    /// @return Number of affected properties, if the value is non void.
+    template<typename ReturnValue, typename... FnPtrArgs, typename... Args>
+    ReturnValue createUpdateDeleteProperty(ReturnValue (ConfigBackendType::*MethodPointer)
+                                           (const db::ServerSelector&, FnPtrArgs...),
+                                           const db::BackendSelector& backend_selector,
+                                           const db::ServerSelector& server_selector,
+                                           Args... input) {
         auto backends = selectBackends(backend_selector);
         if (backends.empty()) {
             isc_throw(db::NoSuchDatabase, "no database found for selector: "
@@ -437,7 +439,7 @@ protected:
                       "selector: " << backend_selector.toText());
         }
 
-        (*(*(backends.begin())).*MethodPointer)(server_selector, input...);
+        return ((*(*(backends.begin())).*MethodPointer)(server_selector, input...));
     }
 
     /// @brief Selects existing backends matching the selector.

@@ -407,26 +407,27 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
-    void deleteSubnet4(const ServerSelector& /* server_selector */,
+    /// @return Number of deleted subnets.
+    uint64_t deleteSubnet4(const ServerSelector& /* server_selector */,
                        const SubnetID& subnet_id) {
         MySqlBindingCollection in_bindings;
         in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_SUBNET4_ID, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_SUBNET4_ID, in_bindings));
     }
 
     /// @brief Deletes pools belonging to a subnet from the database.
     ///
     /// @param subnet Pointer to the subnet for which pools should be
     /// deleted.
-    void deletePools4(const Subnet4Ptr& subnet) {
+    uint64_t deletePools4(const Subnet4Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID())
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_POOLS4_SUBNET_ID, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_POOLS4_SUBNET_ID, in_bindings));
     }
 
     /// @brief Sends query to the database to retrieve multiple shared
@@ -728,8 +729,9 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param code Option code.
-    /// @param name Option name. 
-    void deleteOptionDef4(const ServerSelector& /* server_selector */,
+    /// @param name Option name.
+    /// @return Number of deleted option definitions.
+    uint64_t deleteOptionDef4(const ServerSelector& /* server_selector */,
                           const uint16_t code,
                           const std::string& space) {
         MySqlBindingCollection in_bindings = {
@@ -738,7 +740,7 @@ public:
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTION_DEF4_CODE_NAME, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTION_DEF4_CODE_NAME, in_bindings));
     }
 };
 
@@ -1311,76 +1313,81 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& /* 
                                                        const int64_t /* value */) {
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& /* server_selector */,
                                         const std::string& subnet_prefix) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-                           subnet_prefix);
+    return(impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
+                                  subnet_prefix));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const SubnetID& subnet_id) {
-    impl_->deleteSubnet4(server_selector, subnet_id);
+    return (impl_->deleteSubnet4(server_selector, subnet_id));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& /* server_selector */) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& /* server_selector */,
                                                const std::string& name) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-                           name);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
+                                   name));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& /* server_selector */) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector,
                                            const uint16_t code,
                                            const std::string& space) {
-    impl_->deleteOptionDef4(server_selector, code, space);
+    return (impl_->deleteOptionDef4(server_selector, code, space));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* server_selector */) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const uint16_t /* code */,
                                         const std::string& /* space */) {
+    return (0);
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const SubnetID& /* subnet_id */,
                                         const uint16_t /* code */,
                                         const std::string& /* space */) {
+    return (0);
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const asiolink::IOAddress& /* pool_start_address */,
                                         const asiolink::IOAddress& /* pool_end_address */,
                                         const uint16_t /* code */,
                                         const std::string& /* space */) {
+    return (0);
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /* server_selector */,
                                                  const std::string& /* name */) {
+    return (0);
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& /* server_selector */) {
+    return (0);
 }
 
 std::string

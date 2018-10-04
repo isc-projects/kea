@@ -36,15 +36,17 @@ public:
     /// @brief Sends query to delete rows from a table.
     ///
     /// @param index Index of the statement to be executed.
-    void deleteFromTable(const int index);
+    /// @return Number of deleted rows.
+    uint64_t deleteFromTable(const int index);
 
     /// @brief Sends query to delete rows from a table.
     ///
     /// @param index Index of the statement to be executed.
     /// @param key String value to be used as input binding to the delete
     /// statement
-    void deleteFromTable(const int index,
-                         const std::string& key);
+    /// @return number of deleted rows.
+    uint64_t deleteFromTable(const int index,
+                             const std::string& key);
 
     /// @brief Sends query to the database to retrieve multiple option
     /// definitions.
