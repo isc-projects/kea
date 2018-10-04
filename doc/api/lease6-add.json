@@ -16,5 +16,5 @@
 }",
     "cmd-comment": "lease6-add can be also used to add leases for IPv6 prefixes..",
     "resp-syntax": "{ \"result\": 0, \"text\": \"Lease added.\" }
-    { \"result\": 1, \"text\": \"missing parameter 'ip-address' (<string>:3:19)\" }",
+    { \"result\": 1, \"text\": \"missing parameter 'ip-address' (<string>:3:19)\" }"
 }

@@ -11,5 +11,5 @@
     \"subnet-id\": 66
   }
 }",
-    "cmd-comment": "Note: not all backends support this command.",
+    "cmd-comment": "Note: not all backends support this command."
 }

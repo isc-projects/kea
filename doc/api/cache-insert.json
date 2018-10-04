@@ -17,7 +17,7 @@
         \"client-classes6\": [ ],
         \"option-data4\": [ ],
         \"option-data6\": [ ],
-        \"next-server\": "192.0.0.2",
+        \"next-server\": \"192.0.0.2\",
         \"server-hostname\": \"server-hostname.example.org\",
         \"boot-file-name\": \"bootfile.efi\",
         \"host-id\": 0
@@ -36,10 +36,10 @@
         \"client-classes6\": [ ],
         \"option-data4\": [ ],
         \"option-data6\": [ ],
-        \"next-server\": "0.0.0.0",
+        \"next-server\": \"0.0.0.0\",
         \"server-hostname\": \"\",
         \"boot-file-name\": \"\",
         \"host-id\": 0
     }
-}",
+}"
 }

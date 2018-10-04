@@ -8,5 +8,5 @@
     "cmd-syntax": "{
     \"command\": \"lease4-get-all\"
 }",
-    "cmd-comment": "The lease4-get-all command may result in very large responses.",
+    "cmd-comment": "The lease4-get-all command may result in very large responses."
 }

@@ -6,5 +6,5 @@
     "avail": "1.2.0",
     "cmd-syntax": "{
     \"command\": \"config-reload\"
-}",
+}"
 }

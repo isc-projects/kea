@@ -16,7 +16,7 @@
             { \"name\": \"office\" }
         ]
     },
-    "result": 0,
-    "text": "2 IPv4 network(s) found"
-}",
+    \"result\": 0,
+    \"text\": \"2 IPv4 network(s) found\"
+}"
 }

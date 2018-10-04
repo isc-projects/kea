@@ -8,5 +8,5 @@
     "cmd-syntax": "{
     \"command\": \"cache-load\",
     \"arguments\": \"/tmp/kea-host-cache.json\"
-}",
+}"
 }

@@ -11,5 +11,5 @@
         \"ip-address\": \"192.0.2.202\"
     }
 }",
-    "cmd-comment": "leaseX-del returns a result that indicates a outcome of the operation. It has one of the following values: 0 (success), 1 (error) or 3 (empty). The empty result means that a query has been completed properly, but the object (a lease in this case) has not been found.",
+    "cmd-comment": "leaseX-del returns a result that indicates a outcome of the operation. It has one of the following values: 0 (success), 1 (error) or 3 (empty). The empty result means that a query has been completed properly, but the object (a lease in this case) has not been found."
 }

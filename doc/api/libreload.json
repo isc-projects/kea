@@ -8,5 +8,5 @@
     \"command\": \"libreload\",
     \"arguments\": { }
 }",
-    "cmd-comment": "The server will respond with a result of 0 indicating success, or 1 indicating a failure.",
+    "cmd-comment": "The server will respond with a result of 0 indicating success, or 1 indicating a failure."
 }

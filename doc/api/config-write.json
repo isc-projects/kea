@@ -7,7 +7,7 @@
     "cmd-syntax": "{
     \"command\": \"config-write\",
     \"arguments\": {
-        \"filename": \"config-modified-2017-03-15.json\"
+        \"filename\": \"config-modified-2017-03-15.json\"
     }
-}",
+}"
 }
