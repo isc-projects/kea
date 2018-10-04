@@ -24,7 +24,6 @@ libkea_cfgclient_la_SOURCES += hooked_command_mgr.cc hooked_command_mgr.h
 libkea_cfgclient_la_SOURCES += timeouts.h
 
 libkea_cfgclient_la_LIBADD = $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

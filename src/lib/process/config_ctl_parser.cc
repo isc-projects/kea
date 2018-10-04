@@ -23,28 +23,24 @@ ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
 
     try {
         if (config_control->contains("config-databases")) {
-            const std::vector<data::ElementPtr>& db_list =
-                config_control->get("config-databases")->listValue();
 
+            auto elem = config_control->get("config-databases");
+            if (elem->getType() != Element::list) {
+                isc_throw (ConfigError, "config-databases must be a list ("
+                           << elem->getPosition() << ")");
+            }
+
+            const std::vector<data::ElementPtr>& db_list = elem->listValue();
             for (auto db = db_list.cbegin(); db != db_list.end(); ++db) {
                 db::DbAccessParser parser;
                 std::string access_string;
                 parser.parse(access_string, *db);
-                // @todo do we still need access_string for this at all?
-                // can't we just use params directly and get rid of the
-                // string now that DatabaseConnection::toElement(map) exists?
+                /// @todo do we still need access_string for this at all?
+                /// can't we just use params directly and get rid of the
+                /// string now that DatabaseConnection::toElement(map) exists?
                 ctl_info->addConfigDatabase(access_string);
             }
         }
-
-#if 0
-        // @todo Should it have user_context and what about comment?
-        ConstElementPtr user_context = shared_network_data->get("user-context");
-        if (user_context) {
-            shared_network->setContext(user_context);
-        }
-#endif
-
     } catch (const isc::ConfigError&) {
         // Position was already added
         throw;
