@@ -242,6 +242,9 @@ public:
                 subnets.push_back(last_subnet);
             }
 
+            // If the row contains information about the pool and it appears to be
+            // new pool entry (checked by comparing pool id), let's create the new
+            // pool and add it to the subnet.
             if (!out_bindings[20]->amNull() &&
                 (out_bindings[21]->getInteger<uint32_t>() != 0) &&
                 (out_bindings[22]->getInteger<uint32_t>() != 0) &&
@@ -257,12 +260,12 @@ public:
 
     /// @brief Sends query to retrieve single subnet by id.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& /* selector */,
+    Subnet4Ptr getSubnet4(const ServerSelector& /* server_selector */,
                           const SubnetID& subnet_id) {
         MySqlBindingCollection in_bindings;
         in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
@@ -277,12 +280,12 @@ public:
     ///
     /// The prefix should be in the following format: "192.0.2.0/24".
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet_id Subnet identifier.
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& /* selector */,
+    Subnet4Ptr getSubnet4(const ServerSelector& /* server_selector */,
                           const std::string& subnet_prefix) {
         MySqlBindingCollection in_bindings;
         in_bindings.push_back(MySqlBinding::createString(subnet_prefix));
@@ -295,9 +298,9 @@ public:
 
     /// @brief Sends query to insert or update subnet.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet Pointer to the subnet to be inserted or updated.
-    void createUpdateSubnet4(const ServerSelector& selector,
+    void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
         // Convert DHCPv4o6 interface id to text.
         OptionPtr dhcp4o6_interface_id = subnet->get4o6().getInterfaceId();
@@ -359,7 +362,7 @@ public:
         };
 
         // Check if the subnet already exists.
-        Subnet4Ptr existing_subnet = getSubnet4(selector, subnet->getID());
+        Subnet4Ptr existing_subnet = getSubnet4(server_selector, subnet->getID());
 
         // If the subnet exists we are going to update this subnet.
         if (existing_subnet) {
@@ -402,9 +405,9 @@ public:
 
     /// @brief Sends query to delete subnet by id.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
-    void deleteSubnet4(const ServerSelector& /* selector */,
+    void deleteSubnet4(const ServerSelector& /* server_selector */,
                        const SubnetID& subnet_id) {
         MySqlBindingCollection in_bindings;
         in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
@@ -468,6 +471,9 @@ public:
                 last_network = *shared_networks.rbegin();
             }
 
+            // If this is the first shared network or the shared network id in this
+            // row points to the next shared network we use the data in the
+            // row to create the new shared network instance.
             if ((last_network_id == 0) ||
                 (last_network_id != out_bindings[0]->getInteger<uint64_t>())) {
 
@@ -553,12 +559,12 @@ public:
 
     /// @brief Sends query to retrieve single shared network by name.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param name Shared network name.
     ///
     /// @return Pointer to the returned shared network or NULL if such shared
     /// network doesn't exist.
-    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& /* selector */,
+    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& /* server_selector */,
                                         const std::string& name) {
         MySqlBindingCollection in_bindings;
         in_bindings.push_back(MySqlBinding::createString(name));
@@ -571,9 +577,9 @@ public:
 
     /// @brief Sends query to insert or update shared network.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet Pointer to the shared network to be inserted or updated.
-    void createUpdateSharedNetwork4(const ServerSelector& selector,
+    void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
@@ -592,7 +598,7 @@ public:
         };
 
         // Check if the shared network already exists.
-        SharedNetwork4Ptr existing_network = getSharedNetwork4(selector,
+        SharedNetwork4Ptr existing_network = getSharedNetwork4(server_selector,
                                                                shared_network->getName());
 
         // If the shared network exists we are going to update this network.
@@ -625,13 +631,13 @@ public:
     /// @brief Sends query to retrieve single option definition by code and
     /// option space.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space name.
     ///
     /// @return Pointer to the returned option definition or NULL if such
     /// option definition doesn't exist.
-    OptionDefinitionPtr getOptionDef4(const ServerSelector& /* selector */,
+    OptionDefinitionPtr getOptionDef4(const ServerSelector& /* server_selector */,
                                       const uint16_t code,
                                       const std::string& space) {
         OptionDefContainer option_defs;
@@ -645,9 +651,9 @@ public:
 
     /// @brief Sends query to retrieve all option definitions.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Container holding returned option definitions.
-    OptionDefContainer getAllOptionDefs4(const ServerSelector& /* selector */) {
+    OptionDefContainer getAllOptionDefs4(const ServerSelector& /* server_selector */) {
         OptionDefContainer option_defs;
         MySqlBindingCollection in_bindings;
         getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
@@ -658,11 +664,11 @@ public:
     /// @brief Sends query to retrieve option definitions with modification
     /// time later than specified timestamp.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param modification_time Lower bound subnet modification time.
     /// @return Container holding returned option definitions.
     OptionDefContainer
-    getModifiedOptionDefs4(const ServerSelector& /* selector */,
+    getModifiedOptionDefs4(const ServerSelector& /* server_selector */,
                            const boost::posix_time::ptime& modification_time) {
         OptionDefContainer option_defs;
         MySqlBindingCollection in_bindings = {
@@ -675,9 +681,9 @@ public:
 
     /// @brief Sends query to insert or update option definition.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param option_def Pointer to the option definition to be inserted or updated.
-    void createUpdateOptionDef4(const ServerSelector& selector,
+    void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
         ElementPtr record_types = Element::createList();
         for (auto field : option_def->getRecordFields()) {
@@ -700,7 +706,7 @@ public:
         };
 
         // If the shared network exists we are going to update this network.
-        OptionDefinitionPtr existing_definition = getOptionDef4(selector,
+        OptionDefinitionPtr existing_definition = getOptionDef4(server_selector,
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
         if (existing_definition) {
@@ -720,10 +726,11 @@ public:
     /// @brief Sends query to delete option definition by code and
     /// option space name.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param name Option name. 
-    void deleteOptionDef4(const ServerSelector& /* selector */, const uint16_t code,
+    void deleteOptionDef4(const ServerSelector& /* server_selector */,
+                          const uint16_t code,
                           const std::string& space) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
@@ -1160,19 +1167,19 @@ MySqlConfigBackendDHCPv4(const DatabaseConnection::ParameterMap& parameters)
 }
 
 Subnet4Ptr
-MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
                                      const std::string& subnet_prefix) const {
-    return (impl_->getSubnet4(selector, subnet_prefix));
+    return (impl_->getSubnet4(server_selector, subnet_prefix));
 }
 
 Subnet4Ptr
-MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
                                      const SubnetID& subnet_id) const {
-    return (impl_->getSubnet4(selector, subnet_id));
+    return (impl_->getSubnet4(server_selector, subnet_id));
 }
 
 Subnet4Collection
-MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& /* selector */) const {
+MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& /* server_selector */) const {
     Subnet4Collection subnets;
     MySqlBindingCollection in_bindings;
     impl_->getSubnets4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
@@ -1181,7 +1188,7 @@ MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& /* selector */) c
 }
 
 Subnet4Collection
-MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& /* server_selector */,
                                               const boost::posix_time::ptime& modification_time) const {
     Subnet4Collection subnets;
     MySqlBindingCollection in_bindings = {
@@ -1193,13 +1200,13 @@ MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& /* selector 
 }
 
 SharedNetwork4Ptr
-MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& server_selector,
                                             const std::string& name) const {
-    return (impl_->getSharedNetwork4(selector, name));
+    return (impl_->getSharedNetwork4(server_selector, name));
 }
 
 SharedNetwork4Collection
-MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& /* selector */) const {
+MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& /* server_selector */) const {
     SharedNetwork4Collection shared_networks;
     MySqlBindingCollection in_bindings;
     impl_->getSharedNetworks4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
@@ -1209,7 +1216,7 @@ MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& /* selecto
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::
-getModifiedSharedNetworks4(const ServerSelector& /* selector */,
+getModifiedSharedNetworks4(const ServerSelector& /* server_selector */,
                            const boost::posix_time::ptime& modification_time) const {
     SharedNetwork4Collection shared_networks;
     MySqlBindingCollection in_bindings = {
@@ -1221,146 +1228,146 @@ getModifiedSharedNetworks4(const ServerSelector& /* selector */,
 }
 
 OptionDefinitionPtr
-MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) const {
-    return (impl_->getOptionDef4(selector, code, space));
+    return (impl_->getOptionDef4(server_selector, code, space));
 }
 
 OptionDefContainer
-MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& selector) const {
-    return (impl_->getAllOptionDefs4(selector));
+MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
+    return (impl_->getAllOptionDefs4(server_selector));
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::
-getModifiedOptionDefs4(const ServerSelector& selector,
+getModifiedOptionDefs4(const ServerSelector& server_selector,
                        const boost::posix_time::ptime& modification_time) const {
-    return (impl_->getModifiedOptionDefs4(selector, modification_time));
+    return (impl_->getModifiedOptionDefs4(server_selector, modification_time));
 }
 
 util::OptionalValue<std::string>
-MySqlConfigBackendDHCPv4::getGlobalStringParameter4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::getGlobalStringParameter4(const ServerSelector& /* server_selector */,
                                                     const std::string& /* name */) const {
     isc_throw(NotImplemented, "not implemented");
 }
 
 util::OptionalValue<int64_t>
-MySqlConfigBackendDHCPv4::getGlobalNumberParameter4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::getGlobalNumberParameter4(const ServerSelector& /* server_selector */,
                                                     const std::string& /* name */) const {
     isc_throw(NotImplemented, "not implemented");
 }
 
 std::map<std::string, std::string>
-MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* selector */) const {
+MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* server_selector */) const {
     isc_throw(NotImplemented, "not implemented");
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::createUpdateSubnet4(const ServerSelector& server_selector,
                                               const Subnet4Ptr& subnet) {
-    impl_->createUpdateSubnet4(selector, subnet);
+    impl_->createUpdateSubnet4(server_selector, subnet);
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateSharedNetwork4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                                      const SharedNetwork4Ptr& shared_network) {
-    impl_->createUpdateSharedNetwork4(selector, shared_network);
+    impl_->createUpdateSharedNetwork4(server_selector, shared_network);
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::createUpdateOptionDef4(const ServerSelector& server_selector,
                                                  const OptionDefinitionPtr& option_def) {
-    impl_->createUpdateOptionDef4(selector, option_def);
+    impl_->createUpdateOptionDef4(server_selector, option_def);
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* server_selector */,
                                               const OptionPtr& /* option */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* server_selector */,
                                               const SubnetID& /* subnet_id */,
                                               const OptionPtr& /* option */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& /* server_selector */,
                                               const asiolink::IOAddress& /* pool_start_address */,
                                               const asiolink::IOAddress& /* pool_end_address */,
                                               const OptionPtr& /* option */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& /* server_selector */,
                                                        const std::string& /* name */, 
                                                        const std::string& /* value */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& /* server_selector */,
                                                        const std::string& /* name */,
                                                        const int64_t /* value */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& /* server_selector */,
                                         const std::string& subnet_prefix) {
     impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
                            subnet_prefix);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const SubnetID& subnet_id) {
-    impl_->deleteSubnet4(selector, subnet_id);
+    impl_->deleteSubnet4(server_selector, subnet_id);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& /* selector */) {
+MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& /* server_selector */) {
     impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& /* server_selector */,
                                                const std::string& name) {
     impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
                            name);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& /* selector */) {
+MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& /* server_selector */) {
     impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector,
                                            const uint16_t code,
                                            const std::string& space) {
-    impl_->deleteOptionDef4(selector, code, space);
+    impl_->deleteOptionDef4(server_selector, code, space);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* selector */) {
+MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* server_selector */) {
     impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4);
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const uint16_t /* code */,
                                         const std::string& /* space */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const SubnetID& /* subnet_id */,
                                         const uint16_t /* code */,
                                         const std::string& /* space */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* server_selector */,
                                         const asiolink::IOAddress& /* pool_start_address */,
                                         const asiolink::IOAddress& /* pool_end_address */,
                                         const uint16_t /* code */,
@@ -1368,12 +1375,12 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& /* selector */,
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /* selector */,
+MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /* server_selector */,
                                                  const std::string& /* name */) {
 }
 
 void
-MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& /* selector */) {
+MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& /* server_selector */) {
 }
 
 std::string

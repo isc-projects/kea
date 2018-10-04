@@ -99,7 +99,9 @@ public:
 
         test_subnets_.push_back(subnet);
 
-        // Other subnets include mostly null values except for mandatory parameters.
+        // Adding another subnet with the same subnet id to test
+        // cases that this second instance can override existing
+        // subnet instance.
         subnet.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 20, 30, 40, 1024));
 
         pool1.reset(new Pool4(IOAddress("10.0.0.10"), IOAddress("10.0.0.20")));
@@ -138,9 +140,13 @@ public:
 
         test_networks_.push_back(shared_network);
 
+        // Adding another shared network called "level1" to test
+        // cases that this second instance can override existing
+        // "level1" instance.
         shared_network.reset(new SharedNetwork4("level1"));
         test_networks_.push_back(shared_network);
 
+        // Add more shared networks.
         shared_network.reset(new SharedNetwork4("level2"));
         test_networks_.push_back(shared_network);
 
@@ -407,7 +413,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
     ASSERT_TRUE(networks.empty());
 }
 
-// Test that subnet can be inserted, fetched, updated and then fetched again.
+// Test that option definition can be inserted, fetched, updated and then
+// fetched again.
 TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
     // Insert new option definition.
     OptionDefinitionPtr option_def = test_option_defs_[0];
@@ -433,7 +440,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
     EXPECT_TRUE(returned_option_def->equals(*option_def2));
 }
 
-// Test that all shared networks can be fetched.
+// Test that all option definitions can be fetched.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
     // Insert test option definitions into the database. Note that the second
     // option definition will overwrite the first option definition as they use
