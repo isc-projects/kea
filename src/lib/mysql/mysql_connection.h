@@ -354,6 +354,7 @@ public:
         if (!in_bind_vec.empty()) {
             // Bind parameters to the prepared statement.
             status = mysql_stmt_bind_param(statements_[index], &in_bind_vec[0]);
+            checkError(status, index, "unable to bind parameters for select");
         }
 
         // Bind variables that will receive results as well.
@@ -363,6 +364,7 @@ public:
         }
         if (!out_bind_vec.empty()) {
             status = mysql_stmt_bind_result(statements_[index], &out_bind_vec[0]);
+            checkError(status, index, "unable to bind result parameters for select");
         }
 
         // Execute query.
