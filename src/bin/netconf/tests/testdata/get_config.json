@@ -1,0 +1,50 @@
+{
+    "Netconf": {
+        "hooks-libraries": [
+            {
+                "library": "/tmp/ky/src/bin/netconf/tests/.libs/libbasic.so",
+                "parameters": {
+                    "param1": "foo"
+                }
+            }
+        ],
+        "managed-servers": {
+            "ca": {
+                "control-socket": {
+                    "socket-name": "",
+                    "socket-type": "http",
+                    "socket-url": "http://127.0.0.1:8000/"
+                },
+                "model": "kea-ctrl-agent"
+            },
+            "d2": {
+                "control-socket": {
+                    "socket-name": "",
+                    "socket-type": "stdout",
+                    "socket-url": "http://127.0.0.1:8000/",
+                    "user-context": {
+                        "in-use": false
+                    }
+                },
+                "model": "kea-dhcp-ddns"
+            },
+            "dhcp4": {
+                "comment": "DHCP4 server",
+                "control-socket": {
+                    "socket-name": "/path/to/the/unix/socket-v4",
+                    "socket-type": "unix",
+                    "socket-url": "http://127.0.0.1:8000/"
+                },
+                "model": "kea-dhcp4-server"
+            },
+            "dhcp6": {
+                "control-socket": {
+                    "socket-name": "/path/to/the/unix/socket-v6",
+                    "socket-type": "unix",
+                    "socket-url": "http://127.0.0.1:8000/"
+                },
+                "model": "kea-dhcp6-server"
+            }
+        }
+    }
+}

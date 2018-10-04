@@ -5,6 +5,7 @@ SHTESTS += netconf_tests.sh
 noinst_SCRIPTS = netconf_tests.sh
 
 EXTRA_DIST = netconf_tests.sh.in
+EXTRA_DIST += testdata/get_config.json
 
 # test using command-line arguments, so use check-local target instead of TESTS
 check-local:
@@ -19,12 +20,13 @@ AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
-AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DCFG_EXAMPLES=\"$(abs_top_srcdir)/doc/examples/netconf\"
+AM_CPPFLAGS += -DTEST_DATA_BUILDDIR=\"$(abs_top_builddir)/src/bin/netconf/tests\"
+AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 CLEANFILES = *.json *.log
 
-DISTCLEANFILES = netconf_tests.sh test_libraries.h
+DISTCLEANFILES = netconf_tests.sh test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -42,7 +44,8 @@ noinst_LTLIBRARIES = libbasic.la
 
 TESTS += netconf_unittests
 
-netconf_unittests_SOURCES  = netconf_cfg_mgr_unittests.cc
+netconf_unittests_SOURCES  = get_config_unittest.cc
+netconf_unittests_SOURCES += netconf_cfg_mgr_unittests.cc
 netconf_unittests_SOURCES += netconf_controller_unittests.cc
 netconf_unittests_SOURCES += netconf_process_unittests.cc
 netconf_unittests_SOURCES += parser_unittests.cc
@@ -61,8 +64,9 @@ netconf_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+##netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/testutils/libyangtest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
-netconf_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+#netconf_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
@@ -89,7 +93,7 @@ libbasic_la_LIBADD  += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 libbasic_la_LIBADD  += $(top_builddir)/src/lib/log/libkea-log.la
 libbasic_la_LDFLAGS  = -avoid-version -export-dynamic -module -rpath /nowhere
 
-nodist_netconf_unittests_SOURCES = test_libraries.h
+nodist_netconf_unittests_SOURCES = test_data_files_config.h test_libraries.h
 endif
 
 noinst_EXTRA_DIST = configs-list.txt

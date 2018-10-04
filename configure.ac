@@ -1513,6 +1513,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/netconf/Makefile
                  src/bin/netconf/tests/Makefile
                  src/bin/netconf/tests/netconf_tests.sh
+                 src/bin/netconf/tests/test_data_files_config.h
                  src/bin/netconf/tests/test_libraries.h
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile

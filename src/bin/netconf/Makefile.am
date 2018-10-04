@@ -45,6 +45,7 @@ BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 noinst_LTLIBRARIES = libnetconf.la
 
 libnetconf_la_SOURCES  = netconf_cfg_mgr.cc netconf_cfg_mgr.h
+libnetconf_la_SOURCES += netconf_config.cc netconf_config.h
 libnetconf_la_SOURCES += netconf_controller.cc netconf_controller.h
 libnetconf_la_SOURCES += netconf_log.cc netconf_log.h
 libnetconf_la_SOURCES += netconf_parser.cc netconf_parser.h
@@ -86,7 +87,7 @@ kea_netconfdir = $(pkgdatadir)
 if GENERATE_PARSER
 
 parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h
-#	@echo "Flex/bison files regenerated"
+	@echo "Flex/bison files regenerated"
 
 # --- Flex/Bison stuff below --------------------------------------------------
 # When debugging grammar issues, it's useful to add -v to bison parameters.

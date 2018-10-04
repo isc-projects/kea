@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <hooks/hooks_config.h>
 #include <process/d_cfg_mgr.h>
+#include <netconf/netconf_config.h>
 #include <boost/pointer_cast.hpp>
 #include <map>
 #include <string>
@@ -33,6 +34,20 @@ public:
 
     /// @brief Default constructor
     NetconfConfig();
+
+    /// @brief Returns non-const reference to the managed servers map.
+    ///
+    /// @return non-const reference to the managed servers map.
+    ServersMapPtr& getServersMap() {
+        return (servers_map_);
+    }
+
+    /// @brief Returns const reference to the managed servers map.
+    ///
+    /// @return const reference to the managed servers map.
+    const ServersMapPtr& getServersMap() const {
+        return (servers_map_);
+    }
 
     /// @brief Returns non-const reference to configured hooks libraries.
     ///
@@ -72,6 +87,9 @@ private:
     ///
     /// @param rhs Context to be assigned.
     NetconfConfig& operator=(const NetconfConfig& rhs);
+
+    /// @brief Servers map.
+    ServersMapPtr servers_map_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;
