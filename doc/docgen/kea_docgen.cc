@@ -38,6 +38,8 @@ public:
 
         int cnt = 0;
 
+        int errors = 0; // number of errors encountered
+
         try {
             for (auto f : files) {
                 string cmd = f;
@@ -52,14 +54,24 @@ public:
                     continue;
                 }
 
-                cout << "Loading description of command " << cmd << "... ";
-                ElementPtr x = Element::fromJSONFile(f, false);
-                cout << "loaded, sanity check...";
+                try {
+                    cout << "Loading description of command " << cmd << "... ";
+                    ElementPtr x = Element::fromJSONFile(f, false);
+                    cout << "loaded, sanity check...";
 
-                sanityCheck(f, x);
+                    sanityCheck(f, x);
 
-                cmds_.insert(make_pair(cmd, x));
-                cout << " looks ok." << endl;
+                    cmds_.insert(make_pair(cmd, x));
+                    cout << " looks ok." << endl;
+
+                } catch (const exception& e) {
+                    cout << "ERROR: " << e.what() << endl;
+                    errors++;
+                }
+
+                if (errors) {
+                    continue;
+                }
 
                 cnt++;
             }
@@ -69,7 +81,10 @@ public:
         }
 
         cout << "Loaded " << cmds_.size() << " commands out of " << files.size()
-             << " file(s)" << endl;
+             << " file(s), " << errors << " error(s) detected." << endl;
+        if (errors) {
+            isc_throw(Unexpected, errors << " error(s) detected while loading JSON files");
+        }
     }
 
     /// @brief checks if mandatory string parameter is specified
@@ -412,7 +427,7 @@ public:
               << "}</screen>" << endl;
         }
         if (cmd->contains("cmd-comment")) {
-            f << cmd->get("cmd-comment")->stringValue();
+            f << escapeString(cmd->get("cmd-comment")->stringValue());
         }
         f << "</para>" << endl << endl;
 
