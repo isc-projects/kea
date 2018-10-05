@@ -107,6 +107,7 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 /// This is class conveys the configuration control information
 /// described by the following JSON text:
 ///
+/// @code
 /// "config-control" :
 /// {
 ///     "config-databases":
@@ -123,7 +124,10 @@ typedef std::vector<ConfigDbInfo> ConfigDbInfoList;
 ///         # next config db
 ///     }
 ///     ]
+///
 /// }
+/// @endcode
+///
 class ConfigControlInfo : public isc::data::CfgToElement {
 public:
 
