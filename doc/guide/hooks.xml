@@ -1432,7 +1432,7 @@ Requirements </link> document.</para>
         </para>
         </section>
 
-        <section xml:id="cmd-reservation-add">
+        <section xml:id="command-reservation-add">
           <title>reservation-add command</title>
         <para>
           <command>reservation-add</command> allows for the insertion of a new host.  It
@@ -1766,7 +1766,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
         </itemizedlist>
         </para>
 
-        <section>
+        <section id="command-subnet4-list">
           <title>subnet4-list command</title>
           <para>
             This command is used to list all currently configured subnets. The
@@ -1810,7 +1810,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           </para>
         </section>
 
-        <section>
+        <section id="command-subnet6-list">
           <title>subnet6-list command</title>
           <para>
             This command is used to list all currently configured subnets. The
@@ -1854,7 +1854,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           </para>
         </section>
 
-      <section>
+      <section id="command-subnet4-get">
         <title>subnet4-get command</title>
         <para>This command is used to retrieve detailed information about the
         specified subnet. This command usually follows the
@@ -1906,7 +1906,7 @@ or
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-get">
         <title>subnet6-get command</title>
         <para>This command is used to retrieve detailed information about the
         specified subnet. This command usually follows the
@@ -1955,7 +1955,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet4-add">
         <title>subnet4-add</title>
         <para>
           This command is used to create and add new subnet to the existing
@@ -2004,7 +2004,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-add">
         <title>subnet6-add</title>
         <para>
           This command is used to create and add new subnet to the existing
@@ -2083,7 +2083,7 @@ If the subnet exists the response will be similar to this:
 
       </section>
 
-      <section>
+      <section id="command-subnet4-del">
         <title>subnet4-del command</title>
         <para>
           This command is used to remove a subnet from the server's configuration.
@@ -2143,7 +2143,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-del">
         <title>subnet6-del command</title>
         <para>
           This command is used to remove a subnet from the server's configuration.
@@ -2201,9 +2201,9 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-network4-list">
         <title>network4-list, network6-list commands</title>
-        <para>
+        <para id="command-network6-list">
           These commands are used to retrieve full list of currently configured
           shared networks. The list contains only very basic information about
           each shared network. If more details are needed, please use
@@ -2232,9 +2232,9 @@ both the query and the response.
         </para>
     </section>
 
-    <section>
+    <section id="command-network4-get">
         <title>network4-get, network6-get commands</title>
-        <para>
+        <para id="command-network6-get">
           These commands are used to retrieve detailed information
           about shared networks, including subnets currently
           being part of a given network. Both commands take one
@@ -2291,9 +2291,9 @@ shared networks information.
         </para>
     </section>
 
-    <section>
+    <section id="command-network4-add">
         <title>network4-add, network6-add commands</title>
-        <para>
+        <para id="command-network6-add">
           These commands are used to add a new shared network. New
           network has to have unique name. This command requires one parameter
           <command>shared-networks</command>, which is a list and
@@ -2366,9 +2366,9 @@ the response. However, there are some parameters that are IPv4-only
 applies to subnets within the network.
         </para>
     </section>
-    <section>
+    <section id="command-network4-del">
         <title>network4-del, network6-del commands</title>
-        <para>
+        <para id="command-network6-del">
           These commands are used to delete existing shared
           networks. Both commands take exactly one parameter 'name' that
           specifies the name of the network to be removed. An example invocation
@@ -2424,9 +2424,9 @@ both the command and the response.
         <command>subnet6-del</command> commands.</para>
 
     </section>
-    <section>
+    <section id="command-network4-subnet-add">
         <title>network4-subnet-add, network6-subnet-add commands</title>
-        <para>
+        <para id="command-network6-subnet-add">
           These commands are used to add existing subnets to existing shared
           networks. There are several ways to add new shared network. System
           administrator can add the whole shared network at once, either by
@@ -2483,9 +2483,9 @@ both the command and the response.
           filled with default values, rather than inherited from
           global scope or from the shared network.</para></note>
     </section>
-    <section>
+    <section id="command-network4-subnet-del">
         <title>network4-subnet-del, network6-subnet-del commands</title>
-        <para>
+        <para id="command-network6-subnet-del">
           These commands are used to remove a subnet that is part of existing shared
           network and demote it to a plain, stand-alone subnet. If you want to
           remove a subnet completely, use <command>subnet4-del</command> or

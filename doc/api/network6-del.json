@@ -1,7 +1,7 @@
 {
     "name": "network6-del",
     "brief": "The network6-del command is used to delete existing shared networks.",
-    "description": "See <xref linkend=\"idp76\"/>",
+    "description": "See <xref linkend=\"command-network6-del\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "subnet_cmds",
@@ -11,7 +11,8 @@
         \"name\": \"floor13\"
     }
 }",
-    "cmd-comment": "The network6-del command uses exactly the same syntax for both the command and the response.",
+    "cmd-comment": "The network6-del command uses exactly the same syntax for
+                    both the command and the response.",
     "resp-syntax": "{
     \"command\": \"network4-del\",
     \"arguments\": {

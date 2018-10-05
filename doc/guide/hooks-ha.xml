@@ -139,7 +139,8 @@
 
       <section xml:id="ha-server-states">
         <title>Server States</title>
-        <para>The DHCP server operating within an HA setup runs a state machine
+        <para id="command-ha-heartbeat">The DHCP server operating
+        within an HA setup runs a state machine
         and the state of the server can be retrieved by its peers using the
         <command>ha-heartbeat</command> command sent over the RESTful API. If
         the partner server doesn't respond to the <command>ha-heartbeat</command>
@@ -1292,7 +1293,7 @@
         HA hook library which are available for the administrator.
         </para>
 
-        <section xml:id="ha-sync-command">
+        <section xml:id="command-ha-sync">
           <title>ha-sync command</title>
           <para>The <command>ha-sync</command> is issued to instruct the
           server to synchronize its local lease database with the
@@ -1346,7 +1347,7 @@
           </para>
         </section> <!-- ha-sync-command -->
 
-        <section xml:id="ha-scopes-command">
+        <section xml:id="command-ha-scopes">
           <title>ha-scopes command</title>
           <para>This command allows for modifying the HA scopes that the
           server is serving. Consult <xref linkend="ha-load-balancing-config"/>
@@ -1357,7 +1358,7 @@
 <screen>
 {
     "command": "ha-scopes",
-    "service": [ "dhcp4 "],
+    "service": [ "dhcp4" ],
     "arguments": {
         "scopes": [ "HA_server1", "HA_server2" ]
     }
@@ -1381,7 +1382,7 @@
           </para>
         </section> <!-- ha-scopes-command -->
 
-        <section xml:id="ha-continue-command">
+        <section xml:id="command-ha-continue">
         <title>ha-continue command</title>
         <para>This command is used to resume the operation of the paused HA
         state machine as described in the <xref linkend="ha-pause-state-machine"/>.

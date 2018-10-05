@@ -1,10 +1,12 @@
 {
     "name": "version-get",
-    "brief": "The version-get command returns on the control channel what the command line -v argument displays with in arguments the extended version, i.e., what the command line -V argument displays.",
+    "brief": "The version-get command returns on the control channel what the
+              command line -v argument displays with in arguments the extended
+              version, i.e., what the command line -V argument displays.",
     "description": "See <xref linkend=\"command-version-get\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
     "avail": "1.2.0",
     "cmd-syntax": "{
     \"command\": \"version-get\"
-}",
+}"
 }

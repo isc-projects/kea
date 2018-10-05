@@ -1,6 +1,6 @@
 {
     "name": "subnet4-del",
-    "brief": "This command is used to remove a subnet from the server\'s configuration. This command has no effect on other configured subnets but removing a subnet has certain implications which the server\'s administrator should be aware of.",
+    "brief": "This command is used to remove a subnet from the server's configuration. This command has no effect on other configured subnets but removing a subnet has certain implications which the server's administrator should be aware of.",
     "description": "See <xref linkend=\"idp71\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.3.0",
@@ -22,5 +22,5 @@
             }
         ]
     }
-}",
+}"
 }
