@@ -62,6 +62,8 @@ public:
     static const uint32_t CFGSEL_SUBNET  = 0x00000003;
     /// Configured globals
     static const uint32_t CFGSEL_GLOBALS = 0x00000020;
+    /// Config control info
+    static const uint32_t CFGSEL_CFG_CTL = 0x00000040;
     /// IPv4 related config
     static const uint32_t CFGSEL_ALL4    = 0x00000035;
     /// IPv6 related config
@@ -557,6 +559,21 @@ public:
         configured_globals_->set(name, value);
     }
 
+    /// @brief Sets the server's logical name
+    ///
+    /// @param server_tag a unique string name which identifies this server
+    /// from any other configured servers
+    void setServerTag(const std::string& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns the server's logical name
+    ///
+    /// @return string containing the server's tag
+    std::string getServerTag() const {
+        return (server_tag_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -663,6 +680,9 @@ private:
 
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
+
+    /// @brief Logical name of the server
+    std::string server_tag_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

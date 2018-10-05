@@ -114,7 +114,7 @@ public:
     /// @param keyval Array of "const char*" strings in the order keyword,
     ///        value, keyword, value ...  A NULL entry terminates the list.
     void checkAccessString(const char* trace_string,
-                           const DbAccessParser::StringPairMap& parameters,
+                           const DatabaseConnection::ParameterMap& parameters,
                            const char* keyval[]) {
         SCOPED_TRACE(trace_string);
 
@@ -183,7 +183,7 @@ class TestDbAccessParser : public DbAccessParser {
 public:
 
     /// @brief Constructor
-    TestDbAccessParser() 
+    TestDbAccessParser()
         : DbAccessParser()
     {}
 
@@ -206,7 +206,7 @@ public:
     ///
     /// @return Map of keyword/value pairs representing database access
     ///         information.
-    const StringPairMap& getDbAccessParameters() const {
+    const DatabaseConnection::ParameterMap& getDbAccessParameters() const {
         return (DbAccessParser::getDbAccessParameters());
     }
 
@@ -664,7 +664,7 @@ TEST_F(DbAccessParserTest, multipleHost) {
     string json_config2 = toJson(config2);
     ConstElementPtr json_elements1 = Element::fromJSON(json_config1);
     ConstElementPtr json_elements2 = Element::fromJSON(json_config2);
-    
+
     TestDbAccessParser parser1;
     TestDbAccessParser parser2;
     EXPECT_NO_THROW(parser1.parse(json_elements1));

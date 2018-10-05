@@ -37,6 +37,7 @@
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
+#include <process/config_ctl_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -168,6 +169,10 @@ public:
         if (user_context) {
             srv_config->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        srv_config->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -606,6 +611,13 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "config-control") {
+                process::ConfigControlParser parser;
+                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port and user-context
@@ -617,7 +629,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
-                 (config_pair.first == "user-context")) {
+                 (config_pair.first == "user-context") ||
+                 (config_pair.first == "server-tag")) {
                 continue;
             }
 

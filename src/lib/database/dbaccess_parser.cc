@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -45,7 +46,7 @@ DbAccessParser::parse(std::string& access_string,
     // a flex/bison parser.
 
     // 1. Take a copy of the stored keyword/value pairs.
-    std::map<string, string> values_copy = values_;
+    DatabaseConnection::ParameterMap values_copy = values_;
 
     int64_t lfc_interval = 0;
     int64_t timeout = 0;
@@ -112,7 +113,7 @@ DbAccessParser::parse(std::string& access_string,
     // 3. Perform validation checks on the updated set of keyword/values.
     //
     // a. Check if the "type" keyword exists and thrown an exception if not.
-    StringPairMap::const_iterator type_ptr = values_copy.find("type");
+    auto type_ptr = values_copy.find("type");
     if (type_ptr == values_copy.end()) {
         isc_throw(DbConfigError,
                   "database access parameters must "
@@ -214,7 +215,7 @@ DbAccessParser::getDbAccessString() const {
     // Construct the database access string from all keywords and values in the
     // parameter map where the value is not null.
     string dbaccess;
-    for (StringPair keyval : values_) {
+    for (auto keyval : values_) {
         if (!keyval.second.empty()) {
 
             // Separate keyword/value pair from predecessor (if there is one).

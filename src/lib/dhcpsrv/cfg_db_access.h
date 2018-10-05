@@ -78,13 +78,6 @@ public:
     /// according to the configuration specified.
     void createManagers() const;
 
-    /// @brief Unparse an access string
-    ///
-    /// @param dbaccess the database access string
-    /// @return a pointer to configuration
-    static
-    isc::data::ElementPtr toElementDbAccessString(const std::string& dbaccess);
-
 protected:
 
     /// @brief Returns lease or host database access string.
@@ -121,7 +114,7 @@ struct CfgLeaseDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
     ///
     /// @result a pointer to a configuration
     virtual isc::data::ElementPtr toElement() const {
-        return (CfgDbAccess::toElementDbAccessString(lease_db_access_));
+        return (db::DatabaseConnection::toElementDbAccessString(lease_db_access_));
     }
 };
 
@@ -138,7 +131,7 @@ struct CfgHostDbAccess : public CfgDbAccess, public isc::data::CfgToElement {
         isc::data::ElementPtr result = isc::data::Element::createList();
         for (const std::string& dbaccess : host_db_access_) {
             isc::data::ElementPtr entry =
-                CfgDbAccess::toElementDbAccessString(dbaccess);
+                db::DatabaseConnection::toElementDbAccessString(dbaccess);
             if (entry->size() > 0) {
                 result->add(entry);
             }

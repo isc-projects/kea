@@ -25,6 +25,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
 
 #include "marker_file.h"
@@ -153,7 +154,7 @@ const char* PARSER_CONFIGS[] = {
     "    ]"
     "}",
 
-    // Last Configuration for comments
+    // Configuration 5 for comments
     "{"
     "    \"comment\": \"A DHCPv4 server\","
     "    \"interfaces-config\": {"
@@ -227,7 +228,31 @@ const char* PARSER_CONFIGS[] = {
     "        \"comment\": \"No dynamic DNS\","
     "        \"enable-updates\": false"
     "    }"
-    "}"
+    "}",
+
+    // Configuration 6: config databases
+    "{ \n"
+    "    \"interfaces-config\": { \n"
+    "        \"interfaces\": [\"*\" ] \n"
+    "    }, \n"
+    "    \"valid-lifetime\": 4000, \n"
+    "    \"rebind-timer\": 2000, \n"
+    "    \"renew-timer\": 1000, \n"
+    "    \"config-control\": { \n"
+    "       \"config-databases\": [ { \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest1\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"password\": \"keatest\" \n"
+    "           },{ \n"
+    "               \"type\": \"mysql\", \n"
+    "               \"name\": \"keatest2\", \n"
+    "               \"user\": \"keatest\", \n"
+    "               \"password\": \"keatest\" \n"
+    "           } \n"
+    "       ] \n"
+    "   } \n"
+    "} \n"
 };
 
 class Dhcp4ParserTest : public ::testing::Test {
@@ -6108,7 +6133,7 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     ConstElementPtr x;
     string config = "{ " + genIfaceConfig() + "," +
         "\"rebind-timer\": 2000, \n"
-        "\"renew-timer\": 1000, \n"
+        "\"renew-timer\": 1000,\n"
         "\"reservations\": [\n"
         " {\n"
         "        \"duid\": \"01:02:03:04:05:06:07:08:09:0A\",\n"
@@ -6231,6 +6256,67 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     // either subnet
     EXPECT_FALSE(hosts_cfg->get4(123, Host::IDENT_DUID, &duid[0], duid.size()));
     EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_DUID, &duid[0], duid.size()));
+}
+
+// This test verifies that configuration control info gets populated.
+TEST_F(Dhcp4ParserTest, configControlInfo) {
+    string config = PARSER_CONFIGS[6];
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    // Make sure the config control info is there.
+    process::ConstConfigControlInfoPtr info =
+        CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
+    ASSERT_TRUE(info);
+
+    // Fetch the list of config dbs.  It should have two entries.
+    const process::ConfigDbInfoList& dblist = info->getConfigDatabases();
+    ASSERT_EQ(2, dblist.size());
+
+    // Make sure the entries are what we expect and in the right order. 
+    // (DbAccessParser creates access strings with the keywords in 
+    //  alphabetical order).
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", 
+              dblist.front().getAccessString());
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", 
+              dblist.back().getAccessString());
+}
+
+// Check whether it is possible to configure server-tag
+TEST_F(Dhcp4ParserTest, serverTag) {
+    // Config without server-tag
+    string config_no_tag = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with server-tag
+    string config_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": \"boo\", "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Config with an invalid server-tag
+    string bad_tag = "{ " + genIfaceConfig() + "," +
+        "\"server-tag\": 777, "
+        "\"subnet4\": [  ] "
+        "}";
+
+    // Let's check the default. It should be empty.
+    ASSERT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Configuration with no tag should default to an emtpy tag value.
+    configure(config_no_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_TRUE(CfgMgr::instance().getStagingCfg()->getServerTag().empty());
+
+    // Clear the config
+    CfgMgr::instance().clear();
+
+    // Configuration with the tag should have the tag value.
+    configure(config_tag, CONTROL_RESULT_SUCCESS, "");
+    EXPECT_EQ("boo", CfgMgr::instance().getStagingCfg()->getServerTag());
+
+    // Make sure a invalid server-tag fails to parse.
+    ASSERT_THROW(parseDHCP4(bad_tag), std::exception);
 }
 
 }

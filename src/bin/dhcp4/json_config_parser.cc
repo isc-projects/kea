@@ -28,6 +28,7 @@
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <process/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -98,6 +99,10 @@ public:
         if (user_context) {
             cfg->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        cfg->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -494,6 +499,13 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "config-control") {
+                process::ConfigControlParser parser;
+                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port, echo-client-id,
@@ -510,7 +522,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "match-client-id") ||
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||
-                 (config_pair.first == "boot-file-name")) {
+                 (config_pair.first == "boot-file-name") ||
+                 (config_pair.first == "server-tag")) {
                 continue;
             }
 

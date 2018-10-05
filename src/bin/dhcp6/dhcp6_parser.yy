@@ -50,6 +50,8 @@ using namespace std;
   NULL_TYPE "null"
 
   DHCP6 "Dhcp6"
+  CONFIG_CONTROL "config-control"
+  CONFIG_DATABASES "config-databases"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   RE_DETECT "re-detect"
@@ -83,6 +85,7 @@ using namespace std;
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
+  SERVER_TAG "server-tag"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -224,6 +227,7 @@ using namespace std;
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
   SUB_LOGGING
+  SUB_CONFIG_CONTROL
 ;
 
 %token <std::string> STRING "constant string"
@@ -262,6 +266,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
      | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
+     | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -455,6 +460,8 @@ global_param: preferred_lifetime
             | comment
             | sanity_checks
             | reservations
+            | config_control
+            | server_tag
             | unknown_map_entry
             ;
 
@@ -481,6 +488,14 @@ rebind_timer: REBIND_TIMER COLON INTEGER {
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
+};
+
+server_tag: SERVER_TAG  {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-tag", stag);
+    ctx.leave();
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -2106,6 +2121,56 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.leave();
 };
 
+// Config control information element
+
+config_control: LCURLY_BRACKET {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(m);
+    ctx.stack_.push_back(m);
+} config_control_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+};
+
+
+config_control: CONFIG_CONTROL {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-control", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.CONFIG_CONTROL);
+} COLON LCURLY_BRACKET config_control_params RCURLY_BRACKET {
+    // No config control params are required
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_config_control: LCURLY_BRACKET {
+    // Parse the config-control map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} config_control_params RCURLY_BRACKET {
+    // No config_control params are required
+    // parsing completed
+};
+
+// This defines that subnet can have one or more parameters.
+config_control_params: config_control_param
+              | config_control_params COMMA config_control_param
+              ;
+
+// This defines a list of allowed parameters for each subnet.
+config_control_param: config_databases
+            | unknown_map_entry
+            ;
+
+config_databases: CONFIG_DATABASES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-databases", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CONFIG_DATABASE);
+} COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
 
 // --- logging entry -----------------------------------------
 
