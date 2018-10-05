@@ -225,7 +225,7 @@ protected:
     ///
     /// @param xpath The xpath of the pool list.
     /// @param elem The JSON element.
-    void setPoolsbyId(const std::string& xpath,
+    void setPoolsById(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
 
     /// @brief setPools using address pair.
@@ -233,7 +233,7 @@ protected:
     /// @param xpath The xpath of the pool list.
     /// @param elem The JSON element.
     /// @throw BadValue on a pool without a prefix.
-    void setPoolsbyAddresses(const std::string& xpath,
+    void setPoolsByAddresses(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
 
     /// @brief The model.

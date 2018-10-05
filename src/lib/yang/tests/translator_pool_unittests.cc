@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_pool.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -38,7 +39,7 @@ public:
 // This test verifies that an empty pool list can be properly
 // translated from YANG to JSON using IETF model.
 TEST_F(TranslatorPoolsTest, getEmptyIetf) {
-    useModel("ietf-dhcpv6-server");
+    useModel(IETF_DHCPV6_SERVER);
 
     // Get the pool list and checks it is empty.
     const string& xpath = "/ietf-dhcpv6-server:server/server-config/"
@@ -53,7 +54,7 @@ TEST_F(TranslatorPoolsTest, getEmptyIetf) {
 // This test verifies that an empty pool list can be properly
 // translated from YANG to JSON using Kea ad hoc model.
 TEST_F(TranslatorPoolsTest, getEmptyKea) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Get the pool list and checks it is empty.
     const string& xpath =
@@ -68,7 +69,7 @@ TEST_F(TranslatorPoolsTest, getEmptyKea) {
 // This test verifies that one pool can be properly
 // translated from YANG to JSON using IETF model.
 TEST_F(TranslatorPoolsTest, getIetf) {
-    useModel("ietf-dhcpv6-server");
+    useModel(IETF_DHCPV6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
@@ -101,7 +102,7 @@ TEST_F(TranslatorPoolsTest, getIetf) {
 // This test verifies that one pool can be properly
 // translated from YANG to JSON using Kea ad hoc model.
 TEST_F(TranslatorPoolsTest, getKea) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =
@@ -146,7 +147,7 @@ TEST_F(TranslatorPoolsTest, getKea) {
 // This test verifies that an empty pool list can be properly
 // translated from JSON to YANG using IETF model.
 TEST_F(TranslatorPoolsTest, setEmptyIetf) {
-    useModel("ietf-dhcpv6-server");
+    useModel(IETF_DHCPV6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
@@ -171,7 +172,7 @@ TEST_F(TranslatorPoolsTest, setEmptyIetf) {
 // This test verifies that an empty pool list can be properly
 // translated from JSON to YANG using Kea ad hoc model.
 TEST_F(TranslatorPoolsTest, setEmptyKea) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =
@@ -196,7 +197,7 @@ TEST_F(TranslatorPoolsTest, setEmptyKea) {
 // This test verifies that one pool can be properly
 // translated from JSON to YANG using IETF model.
 TEST_F(TranslatorPoolsTest, setIetf) {
-    useModel("ietf-dhcpv6-server");
+    useModel(IETF_DHCPV6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet = "/ietf-dhcpv6-server:server/server-config/"
@@ -257,7 +258,7 @@ TEST_F(TranslatorPoolsTest, setIetf) {
 // This test verifies that one pool can be properly
 // translated from JSON to YANG using Kea ad hoc model.
 TEST_F(TranslatorPoolsTest, setKea) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
     const string& subnet =

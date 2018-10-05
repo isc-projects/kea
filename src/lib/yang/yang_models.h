@@ -7,6 +7,8 @@
 #ifndef ISC_YANG_MODELS
 #define ISC_YANG_MODELS 1
 
+#include <string>
+
 namespace isc {
 namespace yang {
 
@@ -18,9 +20,16 @@ static const std::string IETF_DHCPV6_SERVER = "ietf-dhcpv6-server";
 /// This model is being developed by ISC and is dedicated to Kea.
 static const std::string KEA_DHCP4_SERVER = "kea-dhcp4-server";
 
+/// This model is being developed by ISC and is dedicated to Kea.
+static const std::string KEA_DHCP6_SERVER = "kea-dhcp6-server";
+
 /// This model is currently in prototype phase. It will be developed
 /// by ISC in the near future.
-static const std::string KEA_DHCP6_SERVER = "kea-dhcp6-server";
+static const std::string KEA_DHCP_DDNS = "kea-dhcp-ddns";
+
+/// This model is currently in prototype phase. It will be developed
+/// by ISC in the near future.
+ static const std::string KEA_CTRL_AGENT = "kea-ctrl-agent";
 
 }; // end of namespace isc::yang
 }; // end of namespace isc

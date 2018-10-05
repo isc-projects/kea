@@ -54,7 +54,7 @@ TranslatorPool::getPoolIetf6(const string& xpath) {
     // Skip pool-id which exists but is not used.
     ConstElementPtr pool = getItem(xpath + "/pool-prefix");
     if (!pool) {
-        isc_throw(BadValue, "getPoolIetf6 requires pool prefix");
+        isc_throw(BadValue, "getPoolIetf6 requires pool prefix at " << xpath);
     }
     result->set("pool", pool);
     // Ignore start-address - end-address as prefix form is mandatory?
@@ -97,7 +97,7 @@ TranslatorPool::getPoolKea(const string& xpath) {
         ConstElementPtr end_addr = getItem(xpath + "/end-address");
         if (!start_addr || !end_addr) {
             isc_throw(BadValue, "getPoolKea requires either prefix or "
-                      "both start and end addresses");
+                      "both start and end addresses at " << xpath);
         }
         ostringstream range;
         range << start_addr->stringValue() << " - "
@@ -161,7 +161,7 @@ TranslatorPool::setPoolIetf6(const string& xpath, ConstElementPtr elem) {
     const IOAddress& base(addr);
     setItem(xpath + "/start-address",
             Element::create(firstAddrInPrefix(base, plen).toText()),
-            SR_STRING_T);    
+            SR_STRING_T);
     setItem(xpath + "/end-address",
             Element::create(lastAddrInPrefix(base, plen).toText()),
             SR_STRING_T);
@@ -301,10 +301,10 @@ void
 TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
-            setPoolsbyId(xpath, elem);
+            setPoolsById(xpath, elem);
         } else if ((model_ == KEA_DHCP4_SERVER) ||
                    (model_ == KEA_DHCP6_SERVER)) {
-            setPoolsbyAddresses(xpath, elem);
+            setPoolsByAddresses(xpath, elem);
         } else {
             isc_throw(NotImplemented,
                       "setPools not implemented for the model: " << model_);
@@ -317,7 +317,7 @@ TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorPools::setPoolsbyId(const string& xpath, ConstElementPtr elem) {
+TranslatorPools::setPoolsById(const string& xpath, ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr pool = elem->get(i);
         ostringstream prefix;
@@ -327,12 +327,12 @@ TranslatorPools::setPoolsbyId(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorPools::setPoolsbyAddresses(const string& xpath,
+TranslatorPools::setPoolsByAddresses(const string& xpath,
                                      ConstElementPtr elem) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr pool = elem->get(i);
         if (!pool->contains("pool")) {
-            isc_throw(BadValue, "setPoolsbyAddresses: missing required pool: "
+            isc_throw(BadValue, "setPoolsByAddresses: missing required pool: "
                       << pool->str());
         }
         string pref = pool->get("pool")->stringValue();

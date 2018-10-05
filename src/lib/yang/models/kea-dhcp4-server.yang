@@ -115,7 +115,7 @@ module kea-dhcp4-server {
     uses server-hostname;
     uses boot-file-name;
     uses dhcp:host-user-context;
-  }    
+  }
 
   grouping reservations {
     description "Host reservations grouping.";
