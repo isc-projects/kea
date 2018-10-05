@@ -264,18 +264,27 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
                   subnets[i]->toElement()->str());
     }
 
+    // Attempt to remove the non existing subnet should  return 0.
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), 22));
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+                                       "155.0.3.0/24"));
+    // All subnets should be still there.
+    ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
+
     // Delete first subnet by id and verify that it is gone.
-    cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), test_subnets_[1]->getID());
+    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+                                       test_subnets_[1]->getID()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
     ASSERT_EQ(test_subnets_.size() - 2, subnets.size());
 
     // Delete second subnet by prefix and verify it is gone.
-    cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), test_subnets_[2]->toText());
+    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+                                       test_subnets_[2]->toText()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
     ASSERT_EQ(test_subnets_.size() - 3, subnets.size());
 
     // Delete all.
-    cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(1, cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
     ASSERT_TRUE(subnets.empty());
 }
@@ -364,14 +373,20 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                   networks[i]->toElement()->str());
     }
 
+    // Deleting non-existing shared network should return 0.
+    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                              "big-fish"));
+    // All shared networks should be still there.
+    ASSERT_EQ(test_networks_.size() - 1, networks.size());
+
     // Delete first shared network and verify it is gone..
-    cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
-                                 test_networks_[1]->getName());
+    EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                              test_networks_[1]->getName()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
 
     // Delete all.
-    cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(2, cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
     ASSERT_TRUE(networks.empty());
 }
@@ -465,16 +480,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
             << ", option space " << (*def)->getOptionSpaceName();
     }
 
+    // Deleting non-existing option definition should return 0.
+    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
+                                          99, "non-exiting-space"));
+    // All option definitions should be still there.
+    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+
     // Delete one of the option definitions and see if it is gone.
-    cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
-                             test_option_defs_[2]->getCode(),
-                             test_option_defs_[2]->getOptionSpaceName());
+    EXPECT_EQ(1, cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
+                                          test_option_defs_[2]->getCode(),
+                                          test_option_defs_[2]->getOptionSpaceName()));
     ASSERT_FALSE(cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
                                        test_option_defs_[2]->getCode(),
                                        test_option_defs_[2]->getOptionSpaceName()));
 
     // Delete all remaining option definitions.
-    cbptr_->deleteAllOptionDefs4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(2, cbptr_->deleteAllOptionDefs4(ServerSelector::UNASSIGNED()));
     option_defs = cbptr_->getAllOptionDefs4(ServerSelector::UNASSIGNED());
     ASSERT_TRUE(option_defs.empty());
 }
