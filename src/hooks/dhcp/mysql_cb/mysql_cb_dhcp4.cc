@@ -363,24 +363,22 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Check if the subnet already exists.
-        Subnet4Ptr existing_subnet = getSubnet4(server_selector, subnet->getID());
-
-        // If the subnet exists we are going to update this subnet.
-        if (existing_subnet) {
-            // Delete existing pools in case the updated subnet contains different
-            // set of pools.
-            deletePools4(existing_subnet);
-
-            // Need to add one more binding for WHERE clause.
-            in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(existing_subnet->getID()));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
-                                    in_bindings);
-
-        } else {
-            // If the subnet doesn't exist, let's insert it.
+        try {
+            // Try to insert subnet. If this duplicates primary key, i.e. this
+            // subnet already exists it will throw DuplicateEntry exception in
+            // which case we'll try an update.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
                               in_bindings);
+
+        } catch (const DuplicateEntry&) {
+            // Delete existing pools in case the updated subnet contains different
+            // set of pools.
+            deletePools4(subnet);
+
+            // Need to add one more binding for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
+                                    in_bindings);
         }
 
         // (Re)create pools.
@@ -604,21 +602,18 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Check if the shared network already exists.
-        SharedNetwork4Ptr existing_network = getSharedNetwork4(server_selector,
-                                                               shared_network->getName());
-
-        // If the shared network exists we are going to update this network.
-        if (existing_network) {
-            // Need to add one more binding for WHERE clause.
-            in_bindings.push_back(MySqlBinding::createString(existing_network->getName()));
-            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
-                                    in_bindings);
-
-        } else {
-            // If the shared network doesn't exist, let's insert it.
+        try {
+            // Try to insert shared network. The shared network name must be unique,
+            // so if inserting fails with DuplicateEntry exception we'll need to
+            // update existing shared network entry.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
                               in_bindings);
+
+        } catch (const DuplicateEntry&) {
+            // Need to add one more binding for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createString(shared_network->getName()));
+            conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
+                                    in_bindings);
         }
 
         transaction.commit();
@@ -714,7 +709,17 @@ public:
             createInputContextBinding(option_def)
         };
 
-        // If the shared network exists we are going to update this network.
+        MySqlTransaction transaction(conn_);
+
+        // Need to check if this definition already exists. We can't follow
+        // the same pattern as for shared networks and subnets, to try to insert
+        // the definition first and fall back to update if the DuplicateEntry
+        // exception is thrown, because the option code/space is not unique
+        // within the dhcp4_option_def table. Inserting another option definition
+        // with existing option code/name would not violate the key and the
+        // option definition instance would be inserted successfully. Therefore,
+        // we first fetch the option definition for the given server, code and
+        // space name. If it exists, we simply update it.
         OptionDefinitionPtr existing_definition = getOptionDef4(server_selector,
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
@@ -730,6 +735,8 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
                               in_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to delete option definition by code and
