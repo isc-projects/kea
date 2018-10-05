@@ -601,11 +601,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       <section xml:id="command-version-get">
         <title>version-get</title>
         <para>
-          The <emphasis>version-get</emphasis> command returns on the control
-          channel what the command line <command>-v</command> argument
-          displays with in arguments the extended version, i.e., what
-          the command line <command>-V</command> argument displays. This command
-          does not take any parameters.
+          The <emphasis>version-get</emphasis> command returns an
+          extended information about Kea version. It is the same
+          information as Kea caled with <command>-V</command> command
+          line argument. This command does not take any parameters.
         </para>
 <screen>
 {
