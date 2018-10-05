@@ -124,9 +124,9 @@
 </screen>
         </para>
 
-        <section>
+        <section id="command-lease4-add">
           <title>lease4-add, lease6-add commands</title>
-        <para>
+        <para id="command-lease6-add">
           <command>lease4-add</command> and <command>lease6-add</command>
           commands allow for the creation of a new lease. Typically Kea creates
           a lease on its own, when it first sees a new device. However,
@@ -284,9 +284,10 @@ The commands can take a number of additional optional parameters:
         </para>
 
 
-        <section>
+        <section id="command-lease4-get">
           <title>lease4-get, lease6-get commands</title>
-          <para><command>lease4-get</command> or <command>lease6-get</command>
+          <para  id="command-lease6-get">
+            <command>lease4-get</command> or <command>lease6-get</command>
           can be used to query the lease database and retrieve existing
           leases. There are two types of parameters the
           <command>lease4-get</command> supports: (address) or (subnet-id,
@@ -401,9 +402,9 @@ An example result returned when the host was found:
 
         </section>
 
-        <section>
+        <section id="command-lease4-get-all">
           <title>lease4-get-all, lease6-get-all commands</title>
-          <para><command>lease4-get-all</command> and
+          <para id="command-lease6-get-all"><command>lease4-get-all</command> and
           <command>lease6-get-all</command> are used to retrieve all
           IPv4 or IPv6 leases or all leases for the specified set of
           subnets. All leases are returned when there are no arguments
@@ -610,9 +611,10 @@ An example result returned when the host was found:
 
         </section>
 
-        <section>
+        <section id="command-lease4-del">
           <title>lease4-del, lease6-del commands</title>
-          <para><command>leaseX-del</command> can be used to delete a lease from
+          <para id="command-lease6-del">
+            <command>leaseX-del</command> can be used to delete a lease from
           the lease database. There are two types of parameters this command
           supports, similar to leaseX-get commands: (address) for both v4 and
           v6, (subnet-id, identifier-type, identifier) for v4 and (subnet-id,
@@ -658,9 +660,9 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           </para>
         </section>
 
-        <section>
+        <section id="command-lease4-update">
           <title>lease4-update, lease6-update commands</title>
-          <para><command>lease4-update</command> and
+          <para id="command-lease6-update"><command>lease4-update</command> and
           <command>lease6-update</command> commands can be used to update
           existing leases. Since all lease database backends are indexed by IP
           addresses, it is not possible to update an address. All other fields
@@ -713,9 +715,9 @@ An example IPv4 lease deletion by "hw-address" looks as follows:
           </para>
         </section>
 
-        <section>
+        <section id="command-lease4-wipe">
           <title>lease4-wipe, lease6-wipe commands</title>
-          <para><command>lease4-wipe</command> and
+          <para id="command-lease6-wipe"><command>lease4-wipe</command> and
           <command>lease6-wipe</command> are designed to remove all
           leases associated with a given subnet. This administrative
           task is expected to be used when existing subnet is being

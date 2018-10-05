@@ -12,6 +12,7 @@ config-test
 config-write
 dhcp-disable
 dhcp-enable
+ha-continue
 ha-heartbeat
 ha-scopes
 ha-sync

@@ -1,8 +1,9 @@
 {
     "name": "config-write",
-    "brief": "The config-write command instructs the Kea server to write its current configuration to a file on disk.",
+    "brief": "The config-write command instructs the Kea server to write its
+              current configuration to a file on disk.",
     "description": "See <xref linkend=\"command-config-write\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
     "avail": "1.2.0",
     "cmd-syntax": "{
     \"command\": \"config-write\",

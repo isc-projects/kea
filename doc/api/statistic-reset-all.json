@@ -8,5 +8,5 @@
     \"command\": \"statistic-reset-all\",
     \"arguments\": { }
 }",
-    "cmd-comment": "If the operation is successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description.",
+    "cmd-comment": "If the operation is successful, the server will respond with a status of 0, indicating success and an empty parameters field. If an error is encountered, the server will return a status code of 1 (error) and the text field will contain the error description."
 }

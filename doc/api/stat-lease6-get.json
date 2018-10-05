@@ -1,7 +1,8 @@
 {
     "name": "stat-lease6-get",
-    "brief": "The stat-lease6-get command fetches lease statistics for a range of known subnets.",
-    "description": "See <xref linkend=\"idp81\"/>",
+    "brief": "The stat-lease6-get command fetches lease statistics for a range
+              of known IPv6 subnets.",
+    "description": "See <xref linkend=\"command-stat-lease6-get\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
     "hook": "stat_cmds",
