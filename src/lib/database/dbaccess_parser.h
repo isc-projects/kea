@@ -9,6 +9,7 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
+#include <database/database_connection.h>
 #include <exceptions/exceptions.h>
 
 #include <string>
@@ -24,13 +25,6 @@ namespace db {
 ///
 class DbAccessParser: public isc::data::SimpleParser {
 public:
-
-    /// @brief Keyword and associated value
-    typedef std::pair<std::string, std::string> StringPair;
-
-    /// @brief Keyword/value collection of database access parameters
-    typedef std::map<std::string, std::string> StringPairMap;
-
     /// @brief Constructor
     DbAccessParser();
 
@@ -60,8 +54,6 @@ public:
     void parse(std::string& access_string,
                isc::data::ConstElementPtr database_config);
 
-
-protected:
     /// @brief Get database access parameters
     ///
     /// Used in testing to check that the configuration information has been
@@ -70,10 +62,10 @@ protected:
     /// @return Reference to the internal map of keyword/value pairs
     ///         representing database access information.  This is valid only
     ///         for so long as the the parser remains in existence.
-    const StringPairMap& getDbAccessParameters() const {
+    const DatabaseConnection::ParameterMap& getDbAccessParameters() const {
         return (values_);
     }
-
+protected:
 
     /// @brief Construct database access string
     ///
@@ -84,7 +76,7 @@ protected:
 
 private:
 
-    std::map<std::string, std::string> values_; ///< Stored parameter values
+    DatabaseConnection::ParameterMap values_; ///< Stored parameter values
 };
 
 };  // namespace db

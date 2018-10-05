@@ -1,3 +1,9 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
 #include <process/config_base.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
@@ -48,6 +54,14 @@ ConfigBase::equals(const ConfigBase& other) const {
         }
     }
 
+    // Check config control info for equality.
+    if ((config_ctl_info_ && !other.config_ctl_info_) ||
+        (!config_ctl_info_ && other.config_ctl_info_) ||
+        ((config_ctl_info_ && other.config_ctl_info_) &&
+         (!config_ctl_info_->equals(*(other.config_ctl_info_))))) {
+        return (false);
+    }
+
     return (true);
 }
 
@@ -58,6 +72,13 @@ ConfigBase::copy(ConfigBase& other) const {
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
          it != logging_info_.end(); ++it) {
         other.addLoggingInfo(*it);
+    }
+
+    // Clone the config control info
+    if (config_ctl_info_) {
+        other.config_ctl_info_.reset(new ConfigControlInfo(*config_ctl_info_));
+    } else {
+        other.config_ctl_info_.reset();
     }
 }
 
@@ -78,6 +99,10 @@ ConfigBase::toElement() const {
         logging->set("loggers", loggers);
         result->set("Logging", logging);
     }
+
+    // We do NOT output ConfigControlInfo here, as it is not a
+    // top level element, but rather belongs within the process
+    // element.
 
     return (result);
 }
