@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_option_data.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -38,7 +39,7 @@ public:
 // This test verifies that an empty option data list can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorOptionDataListTest, getEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Get the option data list and checks it is empty.
     const string& xpath = "/kea-dhcp4-server:config/option-data-list";
@@ -52,7 +53,7 @@ TEST_F(TranslatorOptionDataListTest, getEmpty) {
 // This test verifies that one option data can be properly translated
 // from YANG to JSON.
 TEST_F(TranslatorOptionDataListTest, get) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the option code 100.
     const string& xpath = "/kea-dhcp6-server:config/option-data-list";
@@ -65,7 +66,7 @@ TEST_F(TranslatorOptionDataListTest, get) {
     S_Val s_data(new Val("12121212"));
     ASSERT_NO_THROW(sess_->set_item(xdata.c_str(), s_data));
     ASSERT_NO_THROW(sess_->set_item(xsend.c_str(), s_false));
-    
+
     // Get the option data.
     ConstElementPtr option;
     EXPECT_NO_THROW(option = t_obj_->getOptionData(xoption));
@@ -91,7 +92,7 @@ TEST_F(TranslatorOptionDataListTest, get) {
 // This test verifies that an empty option data list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorOptionDataListTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config/option-data-list";
@@ -113,7 +114,7 @@ TEST_F(TranslatorOptionDataListTest, setEmpty) {
 // This test verifies that one option data can be properly translated
 // from JSON to YANG.
 TEST_F(TranslatorOptionDataListTest, set) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Set one option data.
     const string& xpath = "/kea-dhcp6-server:config/option-data-list";
