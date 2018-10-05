@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_option_def.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -38,7 +39,7 @@ public:
 // This test verifies that an empty option definition list can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorOptionDefListTest, getEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Get the option definition list and checks it is empty.
     const string& xpath = "/kea-dhcp4-server:config/option-def-list";
@@ -52,7 +53,7 @@ TEST_F(TranslatorOptionDefListTest, getEmpty) {
 // This test verifies that one option definition can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorOptionDefListTest, get) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the option code 100.
     const string& xpath = "/kea-dhcp6-server:config/option-def-list";
@@ -66,7 +67,7 @@ TEST_F(TranslatorOptionDefListTest, get) {
     ASSERT_NO_THROW(sess_->set_item(xtype.c_str(), s_type));
     S_Val s_array(new Val(false));
     ASSERT_NO_THROW(sess_->set_item(xarray.c_str(), s_array));
-    
+
     // Get the option def.
     ConstElementPtr def;
     EXPECT_NO_THROW(def = t_obj_->getOptionDef(xdef));
@@ -91,7 +92,7 @@ TEST_F(TranslatorOptionDefListTest, get) {
 // This test verifies that an empty option definition list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorOptionDefListTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config/option-def-list";
@@ -113,7 +114,7 @@ TEST_F(TranslatorOptionDefListTest, setEmpty) {
 // This test verifies that one option definition can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorOptionDefListTest, set) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Set one option def.
     const string& xpath = "/kea-dhcp6-server:config/option-def-list";

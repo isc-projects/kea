@@ -11,6 +11,8 @@
 
 using namespace std;
 
+/// Not using libyang headers, e.g. yang_models.h.
+
 const string TEST_MODULE = "keatest-module";
 const string IETF_TYPES = "ietf-inet-types";
 const string YANG_TYPES = "ietf-yang-types";

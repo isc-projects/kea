@@ -6,6 +6,7 @@
 
 #include <yang/translator_option_data.h>
 #include <yang/adaptor.h>
+#include <yang/yang_models.h>
 #include <sstream>
 
 using namespace std;
@@ -25,8 +26,8 @@ TranslatorOptionData::~TranslatorOptionData() {
 ElementPtr
 TranslatorOptionData::getOptionData(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDataKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -77,8 +78,8 @@ void
 TranslatorOptionData::setOptionData(const string& xpath,
                                     ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setOptionDataKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -131,8 +132,8 @@ TranslatorOptionDataList::~TranslatorOptionDataList() {
 ConstElementPtr
 TranslatorOptionDataList::getOptionDataList(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDataListKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -167,8 +168,8 @@ void
 TranslatorOptionDataList::setOptionDataList(const string& xpath,
                                             ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setOptionDataListKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
