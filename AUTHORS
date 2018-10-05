@@ -180,9 +180,13 @@ We have received the following contributions:
 
  - Vicky Risk
    2018-08: Documentation clean up
+   2018-10: API documentation clean ups
 
  - Franciszek Gorski
    2018-10: Makefile bug fixed
+
+ - Suzanne Goldlust
+   2018-10: API documentation
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
