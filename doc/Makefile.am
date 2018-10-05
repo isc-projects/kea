@@ -82,7 +82,7 @@ templates: docgen
 
 # This will generate the api.xml file using docgen generator. It will
 # read the JSON files from api/ directory. Make sure they're up to date.
-api: templates docgen
+api: docgen
 	docgen/kea-docgen api/*.json
 
 # This convenience target makes sure the docgen tool is built properly
