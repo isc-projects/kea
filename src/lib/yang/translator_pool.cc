@@ -8,6 +8,7 @@
 #include <asiolink/addr_utilities.h>
 #include <yang/adaptor.h>
 #include <yang/translator_pool.h>
+#include <yang/yang_models.h>
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 
@@ -32,10 +33,10 @@ TranslatorPool::~TranslatorPool() {
 ElementPtr
 TranslatorPool::getPool(const string& xpath) {
     try {
-        if (model_ == "ietf-dhcpv6-server") {
+        if (model_ == IETF_DHCPV6_SERVER) {
             return (getPoolIetf6(xpath));
-        } else if ((model_ == "kea-dhcp4-server") ||
-                   (model_ == "kea-dhcp6-server")) {
+        } else if ((model_ == KEA_DHCP4_SERVER) ||
+                   (model_ == KEA_DHCP6_SERVER)) {
             return (getPoolKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -125,10 +126,10 @@ TranslatorPool::getPoolKea(const string& xpath) {
 void
 TranslatorPool::setPool(const string& xpath, ConstElementPtr elem) {
     try {
-        if (model_ == "ietf-dhcpv6-server") {
+        if (model_ == IETF_DHCPV6_SERVER) {
             setPoolIetf6(xpath, elem);
-        } else if ((model_ == "kea-dhcp4-server") ||
-                   (model_ == "kea-dhcp6-server")) {
+        } else if ((model_ == KEA_DHCP4_SERVER) ||
+                   (model_ == KEA_DHCP6_SERVER)) {
             setPoolKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -299,10 +300,10 @@ TranslatorPools::getPools(const string& xpath) {
 void
 TranslatorPools::setPools(const string& xpath, ConstElementPtr elem) {
     try {
-        if (model_ == "ietf-dhcpv6-server") {
+        if (model_ == IETF_DHCPV6_SERVER) {
             setPoolsbyId(xpath, elem);
-        } else if ((model_ == "kea-dhcp4-server") ||
-                   (model_ == "kea-dhcp6-server")) {
+        } else if ((model_ == KEA_DHCP4_SERVER) ||
+                   (model_ == KEA_DHCP6_SERVER)) {
             setPoolsbyAddresses(xpath, elem);
         } else {
             isc_throw(NotImplemented,
