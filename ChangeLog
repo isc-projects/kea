@@ -1,3 +1,9 @@
+1457.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6 configuration parsing support new, 
+	server-level configuration elements "server-tag" and "config-control". 
+	While these elements will parse, they are not yet used by the servers.
+	(Gitlab #32,!23, git c0727407da8d749d9fb51d873a725369800c967b)
+
 1456.	[build]		tomek
 	Extended Kea version is now stored in a separate file for
 	build performance reasons.
