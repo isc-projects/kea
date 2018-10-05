@@ -13,7 +13,9 @@
 namespace isc {
 namespace yang {
 
-/// Address pool translation between YANG and JSON
+/// @brief A translator class for converting a pool between YANG and JSON.
+///
+/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 ///
 /// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
 /// @code
@@ -121,10 +123,6 @@ namespace yang {
 ///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
 ///     end-address = 2001:db8::100
 /// @endcode
-
-/// @brief A translator class for converting a pool between YANG and JSON.
-///
-/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
 class TranslatorPool : virtual public TranslatorOptionDataList {
 public:
 
