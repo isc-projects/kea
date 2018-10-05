@@ -63,6 +63,41 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 
+EXTRA_DIST += api/build-report.json
+EXTRA_DIST += api/cache-clear.json api/cache-get.json
+EXTRA_DIST += api/cache-insert.json api/cache-load.json
+EXTRA_DIST += api/cache-remove.json api/cache-write.json
+EXTRA_DIST += api/config-get.json api/config-reload.json
+EXTRA_DIST += api/config-set.json api/config-test.json
+EXTRA_DIST += api/config-write.json api/dhcp-disable.json
+EXTRA_DIST += api/dhcp-enable.json api/ha-continue.json
+EXTRA_DIST += api/ha-heartbeat.json api/ha-scopes.json
+EXTRA_DIST += api/ha-sync.json api/lease4-add.json
+EXTRA_DIST += api/lease4-del.json api/lease4-get-all.json
+EXTRA_DIST += api/lease4-get.json api/lease4-update.json
+EXTRA_DIST += api/lease4-wipe.json api/lease6-add.json
+EXTRA_DIST += api/lease6-del.json api/lease6-get-all.json
+EXTRA_DIST += api/lease6-get.json api/lease6-update.json
+EXTRA_DIST += api/lease6-wipe.json api/leases-reclaim.json
+EXTRA_DIST += api/libreload.json api/list-commands.json
+EXTRA_DIST += api/network4-add.json api/network4-del.json
+EXTRA_DIST += api/network4-get.json api/network4-list.json
+EXTRA_DIST += api/network4-subnet-add.json api/network4-subnet-del.json
+EXTRA_DIST += api/network6-add.json api/network6-del.json
+EXTRA_DIST += api/network6-get.json api/network6-list.json
+EXTRA_DIST += api/network6-subnet-add.json api/network6-subnet-del.json
+EXTRA_DIST += api/reservation-add.json api/reservation-del.json
+EXTRA_DIST += api/reservation-get.json api/shutdown.json
+EXTRA_DIST += api/statistic-get-all.json api/statistic-get.json
+EXTRA_DIST += api/statistic-remove-all.json api/statistic-remove.json
+EXTRA_DIST += api/statistic-reset-all.json api/statistic-reset.json
+EXTRA_DIST += api/stat-lease4-get.json api/stat-lease6-get.json
+EXTRA_DIST += api/subnet4-add.json api/subnet4-del.json
+EXTRA_DIST += api/subnet4-get.json api/subnet4-list.json
+EXTRA_DIST += api/subnet6-add.json api/subnet6-del.json
+EXTRA_DIST += api/subnet6-get.json api/subnet6-list.json
+EXTRA_DIST += api/_template.json api/version-get.json
+
 devel:
 	mkdir -p html
 	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
