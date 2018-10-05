@@ -88,7 +88,6 @@ public:
         subnet->setHostReservationMode(Subnet4::HR_DISABLED);
         subnet->setSname("server-hostname");
         subnet->setContext(user_context);
-        // shared-network?
         subnet->setValid(555555);
 
         Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
@@ -229,6 +228,35 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+}
+
+// Test that subnet can be associated with a shared network.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4SharedNetwork) {
+    Subnet4Ptr subnet = test_subnets_[0];
+    SharedNetwork4Ptr shared_network = test_networks_[0];
+
+    // Add subnet to a shared network.
+    shared_network->add(subnet);
+
+    // Store shared network in the database.
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+                                       shared_network);
+
+    // Store subnet associated with the shared network in the database.
+    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+                                                    test_subnets_[0]->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    // The easiest way to verify whether the returned subnet matches the inserted
+    // subnet is to convert both to text.
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
+    // However, the check above doesn't verify whether shared network name was
+    // correctly returned from the database.
+    EXPECT_EQ(shared_network->getName(), returned_subnet->getSharedNetworkName());
 }
 
 // Test that subnet can be fetched by prefix.

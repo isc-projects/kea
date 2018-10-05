@@ -267,6 +267,29 @@ private:
         shared_network_ = shared_network;
     }
 
+public:
+
+    /// @brief Returns shared network name.
+    std::string getSharedNetworkName() const {
+        return (shared_network_name_);
+    }
+
+    /// @brief Sets new shared network name.
+    ///
+    /// In certain cases the subnet must be associated with the shared network
+    /// but the shared network object is not available. In particular, subnets
+    /// are returned from the configuration database with only names of the
+    /// shared networks. The actual shared networks must be fetched from the
+    /// database using a separate query. In order to not loose associations
+    /// of subnets with shared networks, the configuration backends will use
+    /// this method to store the shared network names. The servers will later
+    /// use those names to associate subnets with shared network instances.
+    ///
+    /// @param shared_network_name New shared network name.
+    void setSharedNetworkName(const std::string& shared_network_name) {
+        shared_network_name_ = shared_network_name;
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -423,6 +446,9 @@ protected:
 
     /// @brief Pointer to a shared network that subnet belongs to.
     WeakNetworkPtr shared_network_;
+
+    /// @brief Shared network name.
+    std::string shared_network_name_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
