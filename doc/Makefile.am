@@ -63,6 +63,9 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 
+# These are files that document our APIs. They're not really needed as the
+# content is included in the api.xml, but may be useful for people who
+# want to document the API.
 EXTRA_DIST += api/build-report.json
 EXTRA_DIST += api/cache-clear.json api/cache-get.json
 EXTRA_DIST += api/cache-insert.json api/cache-load.json
@@ -108,6 +111,29 @@ guide:
 
 clean:
 	rm -rf html
+
+# There are several steps needed to document new API command:
+#
+# 1. edit docgen/cmds-list and add the new command
+# 2. ./configure --enable-generate-docs
+# 3. make - you need to build the sources first, am afraid. The reason why you
+#    need to do this is that the tool kea-docgen depends on libkea-cc as it
+#    loads JSON files. This means that the libs need to be built first.
+# 4. (optional) run: make templates
+#    This will go through the list of commands listed in cmds-list
+#    and will check if there are corresponding JSON files in api/name.json
+#    If the file is missing, a new JSON will be created using template.
+#    If you dislike this generator, you can always use api/_template.json
+#    and copy it over under the name of a new command.
+# 5. Edit api/command-name.json. If the command is provided by the daemon
+#    out of its own (and not via hook), simply delete the hook entry.
+#    If you don't want to provide command syntax (cmd-syntax key),
+#    any comments about the syntax (cmd-comment key) or response syntax
+#    (resp-syntax) or any comment about response (resp-comment), simply
+#    remove those unused keys. The generator will attempt to gerate
+#    boilerplates for it.
+# 6. Generate api.xml: make api
+# 7. Rebuild User's Guide as usual: make guide
 
 # This target will generate templates. There's no need to run it, unless
 # new commands have been added or there are existing commands that are
