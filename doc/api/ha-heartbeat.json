@@ -1,0 +1,12 @@
+{
+    "name": "ha-heartbeat",
+    "brief": "This command is sent internally by Kea partner when operating
+              in High Availability (HA) mode. It should not be used by users,
+              unless you want to implement complete HA replacement.",
+    "description": "See <xref linkend=\"ha-server-states\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.4.0",
+    "hook": "high_availability",
+    "cmd-syntax": "tbd",
+    "resp-syntax": "tbd"
+}
