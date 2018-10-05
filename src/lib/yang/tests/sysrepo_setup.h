@@ -59,7 +59,7 @@ public:
     /// @brief Shared pointer to the transaction object.
     boost::shared_ptr<Type> t_obj_;
 };
-            
+
 } // namespace test
 } // namespace yang
 } // namespace isc

@@ -6,6 +6,7 @@
 
 #include <yang/translator_option_def.h>
 #include <yang/adaptor.h>
+#include <yang/yang_models.h>
 #include <sstream>
 
 using namespace std;
@@ -25,8 +26,8 @@ TranslatorOptionDef::~TranslatorOptionDef() {
 ElementPtr
 TranslatorOptionDef::getOptionDef(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDefKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -80,8 +81,8 @@ TranslatorOptionDef::getOptionDefKea(const string& xpath) {
 void
 TranslatorOptionDef::setOptionDef(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setOptionDefKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -140,8 +141,8 @@ TranslatorOptionDefList::~TranslatorOptionDefList() {
 ConstElementPtr
 TranslatorOptionDefList::getOptionDefList(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getOptionDefListKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -176,8 +177,8 @@ void
 TranslatorOptionDefList::setOptionDefList(const string& xpath,
                                           ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setOptionDefListKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
