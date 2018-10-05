@@ -232,6 +232,8 @@ public:
                     (out_bindings[15]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
                 // server_hostname
                 last_subnet->setSname(out_bindings[16]->getStringOrDefault(""));
+                // shared_network_name
+                last_subnet->setSharedNetworkName(out_bindings[17]->getStringOrDefault(""));
                 // user_context
                 ElementPtr user_context = out_bindings[18]->getJSON();
                 if (user_context) {
