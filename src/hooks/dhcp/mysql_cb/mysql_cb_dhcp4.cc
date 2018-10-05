@@ -361,6 +361,8 @@ public:
             MySqlBinding::createInteger<uint32_t>(subnet->getValid())
         };
 
+        MySqlTransaction transaction(conn_);
+
         // Check if the subnet already exists.
         Subnet4Ptr existing_subnet = getSubnet4(server_selector, subnet->getID());
 
@@ -385,6 +387,8 @@ public:
         for (auto pool : subnet->getPools(Lease::TYPE_V4)) {
             createPool4(boost::dynamic_pointer_cast<Pool4>(pool), subnet);
         }
+
+        transaction.commit();
     }
 
     /// @brief Inserts new IPv4 pool to the database.
@@ -598,6 +602,8 @@ public:
             MySqlBinding::condCreateInteger<uint32_t>(shared_network->getValid())
         };
 
+        MySqlTransaction transaction(conn_);
+
         // Check if the shared network already exists.
         SharedNetwork4Ptr existing_network = getSharedNetwork4(server_selector,
                                                                shared_network->getName());
@@ -614,6 +620,8 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
                               in_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to the database to retrieve multiple option
