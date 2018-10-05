@@ -246,6 +246,7 @@ public:
             f << ".</para>" << endl;
         }
 
+
         for (auto hook : all_hooks) {
             f << "<para xml:id=\"commands-" << hook << "-lib\">"
               << "Commands supported by " << hook << " hook library: ";
@@ -405,7 +406,7 @@ public:
         auto hook = cmd->get("hook");
         if (hook) {
             f << " (<link linkend=\"commands-" << hook->stringValue() << "-lib\">"
-              << hook->stringValue() << "</link>)";
+              << hook->stringValue() << "</link>  hook)";
         } else {
             f << " (built-in)";
         }
