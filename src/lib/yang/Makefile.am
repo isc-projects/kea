@@ -8,6 +8,7 @@ lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES  = adaptor.cc adaptor.h
 libkea_yang_la_SOURCES += sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
+libkea_yang_la_SOURCES += translator_logger.cc translator_logger.h
 libkea_yang_la_SOURCES += translator_option_data.cc
 libkea_yang_la_SOURCES += translator_option_data.h
 libkea_yang_la_SOURCES += translator_option_def.cc
@@ -31,9 +32,11 @@ libkea_yang_include_HEADERS = \
 	adaptor.h \
 	sysrepo_error.h \
 	translator.h \
+	translator_logger.h \
 	translator_option_data.h \
 	translator_option_def.h \
-	translator_pool.h
+	translator_pool.h \
+	yang_models.h
 
 EXTRA_DIST = yang.dox
 # Distribute yang models.
