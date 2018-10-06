@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_database.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -37,7 +38,7 @@ public:
 // This test verifies that an empty database can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorDatabaseTest, getEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
@@ -49,7 +50,7 @@ TEST_F(TranslatorDatabaseTest, getEmpty) {
 // This test verifies that a database can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorDatabaseTest, get) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
@@ -79,7 +80,7 @@ TEST_F(TranslatorDatabaseTest, get) {
 // This test verifies that a database can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorDatabaseTest, set) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
@@ -107,7 +108,7 @@ TEST_F(TranslatorDatabaseTest, set) {
 // This test verifies that an empty database can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorDatabaseTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/lease-database";
@@ -146,7 +147,7 @@ public:
 // This test verifies that an empty database list can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorDatabasesTest, getEmpty) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Get empty.
     const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
@@ -158,7 +159,7 @@ TEST_F(TranslatorDatabasesTest, getEmpty) {
 // This test verifies that a database list can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorDatabasesTest, get) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
@@ -218,7 +219,7 @@ TEST_F(TranslatorDatabasesTest, get) {
 // This test verifies that a database list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorDatabasesTest, set) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
@@ -255,7 +256,7 @@ TEST_F(TranslatorDatabasesTest, set) {
 // This test verifies that an emptied database list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorDatabasesTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
@@ -290,7 +291,7 @@ TEST_F(TranslatorDatabasesTest, setEmpty) {
 // This test verifies that an empty database list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorDatabasesTest, setEmpties) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
