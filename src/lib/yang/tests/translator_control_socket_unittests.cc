@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_control_socket.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -37,7 +38,7 @@ public:
 // This test verifies that an empty control socket can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorControlSocketTest, getEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Get empty.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
@@ -45,11 +46,11 @@ TEST_F(TranslatorControlSocketTest, getEmpty) {
     EXPECT_NO_THROW(sock = t_obj_->getControlSocket(xpath));
     EXPECT_FALSE(sock);
 }
-    
+
 // This test verifies that a not empty control socket can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorControlSocketTest, get) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp6-server:config/control-socket";
@@ -85,7 +86,7 @@ TEST_F(TranslatorControlSocketTest, get) {
 // This test verifies that a not empty control socket can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorControlSocketTest, set) {
-    useModel("kea-ctrl-agent");
+    useModel(KEA_CTRL_AGENT);
 
     // Set a value.
     const string& xpath =
@@ -126,7 +127,7 @@ TEST_F(TranslatorControlSocketTest, set) {
 // This test verifies that an empty control socket can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorControlSocketTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
     const string& xpath = "/kea-dhcp4-server:config/control-socket";
