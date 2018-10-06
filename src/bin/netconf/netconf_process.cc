@@ -9,6 +9,7 @@
 #include <netconf/netconf_process.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_log.h>
+#include <netconf/fd_watcher.h>
 #include <asiolink/io_address.h>
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
@@ -42,6 +43,9 @@ NetconfProcess::run() {
     LOG_INFO(netconf_logger, NETCONF_STARTED).arg(VERSION);
 
     try {
+        // Initialize file descriptor watcher.
+        FdWatcher::instance()->init(getIoService());
+
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
         while (!shouldShutdown()) {
@@ -51,6 +55,7 @@ NetconfProcess::run() {
     } catch (const std::exception& ex) {
         LOG_FATAL(netconf_logger, NETCONF_FAILED).arg(ex.what());
         try {
+            FdWatcher::instance()->clear();
             stopIOService();
         } catch (...) {
             // Ignore double errors
@@ -59,6 +64,7 @@ NetconfProcess::run() {
                   "Process run method failed: " << ex.what());
     }
 
+    FdWatcher::instance()->clear();
     LOG_DEBUG(netconf_logger, isc::log::DBGLVL_START_SHUT, NETCONF_RUN_EXIT);
 }
 
