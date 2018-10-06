@@ -38,14 +38,14 @@ public:
     /// @brief Returns non-const reference to the managed servers map.
     ///
     /// @return non-const reference to the managed servers map.
-    ServersMapPtr& getServersMap() {
+    CfgServersMapPtr& getCfgServersMap() {
         return (servers_map_);
     }
 
     /// @brief Returns const reference to the managed servers map.
     ///
     /// @return const reference to the managed servers map.
-    const ServersMapPtr& getServersMap() const {
+    const CfgServersMapPtr& getCfgServersMap() const {
         return (servers_map_);
     }
 
@@ -88,8 +88,8 @@ private:
     /// @param rhs Context to be assigned.
     NetconfConfig& operator=(const NetconfConfig& rhs);
 
-    /// @brief Servers map.
-    ServersMapPtr servers_map_;
+    /// @brief CfgServers map.
+    CfgServersMapPtr servers_map_;
 
     /// @brief Configured hooks libraries.
     isc::hooks::HooksConfig hooks_config_;

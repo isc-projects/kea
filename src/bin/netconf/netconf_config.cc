@@ -26,43 +26,45 @@ using namespace isc::http;
 namespace isc {
 namespace netconf {
 
-// *********************** ControlSocket  *************************
+// *********************** CfgControlSocket  *************************
 
-ControlSocket::ControlSocket(Type type, const string& name, const Url& url)
+CfgControlSocket::CfgControlSocket(Type type, const string& name,
+                                   const Url& url)
     : type_(type), name_(name), url_(url) {
 }
 
-ControlSocket::~ControlSocket() {
+CfgControlSocket::~CfgControlSocket() {
 }
 
-ControlSocket::Type
-ControlSocket::stringToType(const string& type) {
+CfgControlSocket::Type
+CfgControlSocket::stringToType(const string& type) {
     if (type == "unix") {
-        return (ControlSocket::Type::UNIX);
+        return (CfgControlSocket::Type::UNIX);
     } else if (type == "http") {
-        return (ControlSocket::Type::HTTP);
+        return (CfgControlSocket::Type::HTTP);
     } else if (type == "stdout") {
-        return (ControlSocket::Type::STDOUT);
+        return (CfgControlSocket::Type::STDOUT);
     }
 
     isc_throw(BadValue, "Unknown control socket type: " << type);
 }
 
 const string
-ControlSocket::typeToString(ControlSocket::Type type) {
+CfgControlSocket::typeToString(CfgControlSocket::Type type) {
     switch (type) {
-    case ControlSocket::Type::UNIX:
+    case CfgControlSocket::Type::UNIX:
         return ("unix");
-    case ControlSocket::Type::HTTP:
+    case CfgControlSocket::Type::HTTP:
         return ("http");
-    case ControlSocket::Type::STDOUT:
+    case CfgControlSocket::Type::STDOUT:
         return ("stdout");
+    default:
+        isc_throw(BadValue, "Unknown control socket type: " << type);
     }
-    /*UNREACHED*/
 }
 
 ElementPtr
-ControlSocket::toElement() const {
+CfgControlSocket::toElement() const {
     ElementPtr result = Element::createMap();
     // Set user-context
     contextToElement(result);
@@ -75,29 +77,29 @@ ControlSocket::toElement() const {
     return (result);
 }
 
-// *********************** Server  *************************
-Server::Server(const string& model, ControlSocketPtr ctrl_sock)
+// *********************** CfgServer  *************************
+CfgServer::CfgServer(const string& model, CfgControlSocketPtr ctrl_sock)
     : model_(model), control_socket_(ctrl_sock) {
 }
 
-Server::~Server() {
+CfgServer::~CfgServer() {
 }
 
 string
-Server::toText() const {
+CfgServer::toText() const {
     ostringstream s;
     s << "model: " << model_ << ", control socker: ";
     if (!control_socket_) {
         s << "none";
     } else {
         switch (control_socket_->getType()) {
-        case ControlSocket::Type::UNIX:
+        case CfgControlSocket::Type::UNIX:
             s << "UNIX:'" << control_socket_->getName() << "'";
             break;
-        case ControlSocket::Type::HTTP:
+        case CfgControlSocket::Type::HTTP:
           s << "HTTP:'" << control_socket_->getUrl().toText() << "'";
             break;
-        case ControlSocket::Type::STDOUT:
+        case CfgControlSocket::Type::STDOUT:
             s << "STDOUT";
             break;
         }
@@ -106,7 +108,7 @@ Server::toText() const {
 }
 
 ElementPtr
-Server::toElement() const {
+CfgServer::toElement() const {
     ElementPtr result = Element::createMap();
     // Set user-context
     contextToElement(result);
@@ -120,45 +122,45 @@ Server::toElement() const {
 }
 
 ostream&
-operator<<(ostream& os, const Server& server) {
+operator<<(ostream& os, const CfgServer& server) {
     os << server.toText();
     return (os);
 }
 
 // *************************** PARSERS ***********************************
 
-// *********************** ControlSocketParser  *************************
+// *********************** ControlSocketConfigParser  *************************
 
-ControlSocketPtr
-ControlSocketParser::parse(ConstElementPtr ctrl_sock_config) {
-    ControlSocketPtr result;
+CfgControlSocketPtr
+ControlSocketConfigParser::parse(ConstElementPtr ctrl_sock_config) {
+    CfgControlSocketPtr result;
     string type_str = getString(ctrl_sock_config, "socket-type");
     string name = getString(ctrl_sock_config, "socket-name");
     string url_str = getString(ctrl_sock_config, "socket-url");
     ConstElementPtr user_context = ctrl_sock_config->get("user-context");
 
     // Type must be valid.
-    ControlSocket::Type type;
+    CfgControlSocket::Type type;
     try {
-        type = ControlSocket::stringToType(type_str);
+        type = CfgControlSocket::stringToType(type_str);
     } catch (const std::exception& ex) {
-        isc_throw(NetconfCfgError, ex.what() << " '" << type_str << "' ("
+        isc_throw(ConfigError, ex.what() << " '" << type_str << "' ("
                   << getPosition("socket-type", ctrl_sock_config)  << ")");
     }
 
     // Url must be valid.
     Url url(url_str);
     if (!url.isValid()) {
-        isc_throw(NetconfCfgError, "invalid control socket url: "
+        isc_throw(ConfigError, "invalid control socket url: "
                   << url.getErrorMessage() << " '" << url_str << "' ("
                   << getPosition("socket-url", ctrl_sock_config)  << ")");
     }
 
     // Create the control socket.
     try {
-        result.reset(new ControlSocket(type, name, url));
+        result.reset(new CfgControlSocket(type, name, url));
     } catch (const std::exception& ex) {
-        isc_throw(NetconfCfgError, ex.what() << " ("
+        isc_throw(ConfigError, ex.what() << " ("
                   << ctrl_sock_config->getPosition() << ")");
     }
 
@@ -170,23 +172,23 @@ ControlSocketParser::parse(ConstElementPtr ctrl_sock_config) {
     return (result);
 }
 
-// *********************** ServerParser  *************************
+// *********************** ServerConfigParser  *************************
 
-ServerPtr
-ServerParser::parse(ConstElementPtr server_config) {
-    ServerPtr result;
+CfgServerPtr
+ServerConfigParser::parse(ConstElementPtr server_config) {
+    CfgServerPtr result;
     string model = getString(server_config, "model");
     ConstElementPtr user_context = server_config->get("user-context");
     ConstElementPtr ctrl_sock_config = server_config->get("control-socket");
-    ControlSocketPtr ctrl_sock;
+    CfgControlSocketPtr ctrl_sock;
     if (ctrl_sock_config) {
-        ControlSocketParser parser;
+        ControlSocketConfigParser parser;
         ctrl_sock = parser.parse(ctrl_sock_config);
     }
     try {
-        result.reset(new Server(model, ctrl_sock));
+        result.reset(new CfgServer(model, ctrl_sock));
     } catch (const std::exception& ex) {
-        isc_throw(NetconfCfgError, ex.what() << " ("
+        isc_throw(ConfigError, ex.what() << " ("
                   << server_config->getPosition() << ")");
     }
 

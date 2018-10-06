@@ -35,11 +35,11 @@ namespace netconf {
 ///
 /// The parsing class hierarchy reflects this same scheme.  Working top down:
 ///
-/// A ServerMapParser handles the managed servers map invoking a ServerParser
-/// to parse each server.
+/// A ServerMapParser handles the managed servers map invoking a
+/// ServerConfigParser to parse each server.
 ///
-/// A ServerParser handles the scalars which belong to the server as well as
-/// creating and invoking a CtrlSocketParser to parse its control socket.
+/// A ServerConfigParser handles the scalars which belong to the server as well
+/// as creating and invoking a CtrlSocketParser to parse its control socket.
 ///
 /// A CtrlSocketParser handles the scalars which belong to the control socket.
 ///
@@ -63,19 +63,11 @@ namespace netconf {
 /// }
 /// @endcode
 
-/// @brief Exception thrown when the error during configuration handling
-/// occurs.
-class NetconfCfgError : public isc::Exception {
-public:
-    NetconfCfgError(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) { };
-};
-
 /// @brief Represents a Control Socket.
 ///
 /// Acts as a storage class containing the basic attributes which
 /// describe a Control Socket.
-class ControlSocket : public isc::data::UserContext,
+class CfgControlSocket : public isc::data::UserContext,
     public isc::data::CfgToElement {
 public:
     /// @brief Defines the list of possible constrol socket types.
@@ -90,15 +82,15 @@ public:
     /// @param type The socket type.
     /// @param name The Unix socket name.
     /// @param url The HTTP server URL.
-    ControlSocket(Type type, const std::string& name,
-                  const isc::http::Url& url);
+    CfgControlSocket(Type type, const std::string& name,
+                     const isc::http::Url& url);
 
     /// @brief Destructor (doing nothing).
-    virtual ~ControlSocket();
+    virtual ~CfgControlSocket();
 
     /// @brief Getter which returns the socket type.
     ///
-    /// @return returns the socket type as a ControlSocket::Type.
+    /// @return returns the socket type as a CfgControlSocket::Type.
     Type getType() const {
         return (type_);
     }
@@ -117,20 +109,20 @@ public:
         return (url_);
     }
 
-    /// @brief Converts socket type name to ControlSocket::Type.
+    /// @brief Converts socket type name to CfgControlSocket::Type.
     ///
     /// @param type The type name.
     /// Currently supported values are "unix", "http" and "stdout".
     ///
-    /// @return The ControlSocket::Type corresponding to the type name.
+    /// @return The CfgControlSocket::Type corresponding to the type name.
     /// @throw BadValue if the type name isn't recognized.
     static Type stringToType(const std::string& type);
 
-    /// @brief Converts ControlSocket::Type to string.
+    /// @brief Converts CfgControlSocket::Type to string.
     ///
-    /// @param type The ControlSocket::Type type.
+    /// @param type The CfgControlSocket::Type type.
     /// @return The type name corresponding to the enumeration element.
-    static const std::string typeToString(ControlSocket::Type type);
+    static const std::string typeToString(CfgControlSocket::Type type);
 
     /// @brief Unparse a configuration object
     ///
@@ -148,23 +140,23 @@ private:
     const isc::http::Url url_;
 };
 
-/// @brief Defines a pointer for ControlSocket instances.
-typedef boost::shared_ptr<ControlSocket> ControlSocketPtr;
+/// @brief Defines a pointer for CfgControlSocket instances.
+typedef boost::shared_ptr<CfgControlSocket> CfgControlSocketPtr;
 
-/// @brief Represents a Managed Server.
+/// @brief Represents a Managed CfgServer.
 ///
 /// Acts as a storage class containing the basic attributes and
-/// the Control Socket which describe a Managed Server.
-class Server : public isc::data::UserContext, public isc::data::CfgToElement {
+/// the Control Socket which describe a Managed CfgServer.
+class CfgServer : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor.
     ///
     /// @param model The model name.
     /// @param ctrl_sock The control socket.
-    Server(const std::string& model, ControlSocketPtr ctrl_sock);
+    CfgServer(const std::string& model, CfgControlSocketPtr ctrl_sock);
 
     /// @brief Destructor (doing nothing).
-    virtual ~Server();
+    virtual ~CfgServer();
 
     /// @brief Getter which returns the model name.
     ///
@@ -175,8 +167,8 @@ public:
 
     /// @brief Getter which returns the control socket.
     ///
-    /// @return returns the control socket as a ControlSocketPtr.
-    const ControlSocketPtr& getControlSocket() const {
+    /// @return returns the control socket as a CfgControlSocketPtr.
+    const CfgControlSocketPtr& getCfgControlSocket() const {
         return (control_socket_);
     }
 
@@ -193,60 +185,60 @@ private:
     const std::string model_;
 
     /// @brief The control socket.
-    ControlSocketPtr control_socket_;
+    CfgControlSocketPtr control_socket_;
 };
 
-/// @brief Defines a pointer for Server instances.
-typedef boost::shared_ptr<Server> ServerPtr;
+/// @brief Defines a pointer for CfgServer instances.
+typedef boost::shared_ptr<CfgServer> CfgServerPtr;
 
-/// @brief Defines a map of Servers, keyed by the name.
-typedef std::map<std::string, ServerPtr> ServersMap;
+/// @brief Defines a map of CfgServers, keyed by the name.
+typedef std::map<std::string, CfgServerPtr> CfgServersMap;
 
-/// @brief Defines a iterator pairing of name and Server
-typedef std::pair<std::string, ServerPtr> ServersMapPair;
+/// @brief Defines a iterator pairing of name and CfgServer
+typedef std::pair<std::string, CfgServerPtr> CfgServersMapPair;
 
-/// @brief Defines a pointer to map of Servers.
-typedef boost::shared_ptr<ServersMap> ServersMapPtr;
+/// @brief Defines a pointer to map of CfgServers.
+typedef boost::shared_ptr<CfgServersMap> CfgServersMapPtr;
 
-/// @brief Dumps the contents of a Server as text to a output stream.
+/// @brief Dumps the contents of a CfgServer as text to a output stream.
 ///
 /// @param os The output stream to which text should be sent.
-/// @param server The Server instance to dump.
-std::ostream& operator<<(std::ostream& os, const Server& server);
+/// @param server The CfgServer instance to dump.
+std::ostream& operator<<(std::ostream& os, const CfgServer& server);
 
-/// @brief Parser for ControlSocket.
+/// @brief Parser for CfgControlSocket.
 ///
 /// This class parses the configuration element "control-socket"
-/// and creates an instance of a ControlSocket.
-class ControlSocketParser : public data::SimpleParser {
+/// and creates an instance of a CfgControlSocket.
+class ControlSocketConfigParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given "control-socket" element.
     ///
     /// Parses a configuration for the elements needed to instantiate a
-    /// ControlSocket, validates those entries, creates a ControlSocket
+    /// CfgControlSocket, validates those entries, creates a CfgControlSocket
     /// instance.
     ///
     /// @param ctrl_sock_config is the "control-socket" configuration to parse.
     ///
-    /// @return pointer to the new ControlSocket instance.
-    ControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config);
+    /// @return pointer to the new CfgControlSocket instance.
+    CfgControlSocketPtr parse(data::ConstElementPtr ctrl_sock_config);
 };
 
-/// @brief Parser for Server.
+/// @brief Parser for CfgServer.
 ///
 /// This class parses the configuration value from the "managed-servers" map
-/// and creates an instance of a Server.
-class ServerParser : public data::SimpleParser {
+/// and creates an instance of a CfgServer.
+class ServerConfigParser : public data::SimpleParser {
 public:
     /// @brief Performs the actual parsing of the given value from
     /// the "managed-servers" map.
     ///
     /// Parses a configuration for the elements needed to instantiate a
-    /// Server, validates those entries, creates a Server instance.
+    /// CfgServer, validates those entries, creates a CfgServer instance.
     ///
     /// @param server_config is the value from the "managed-servers" map to parse.
-    /// @return pointer to the new Server instance.
-    ServerPtr parse(data::ConstElementPtr server_config);
+    /// @return pointer to the new CfgServer instance.
+    CfgServerPtr parse(data::ConstElementPtr server_config);
 };
 
 }; // end of isc::netconf namespace

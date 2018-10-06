@@ -71,7 +71,7 @@ const SimpleDefaults NetconfSimpleParser::CA_DEFAULTS = {
 /// --- end of default values -------------------------------------------------
 /// ---------------------------------------------------------------------------
 
-size_t NetconfSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) {
+size_t NetconfSimpleParser::setAllDefaults(const ElementPtr& global) {
     size_t cnt = 0;
 
     // Set global defaults first.
@@ -89,10 +89,10 @@ size_t NetconfSimpleParser::setAllDefaults(const isc::data::ElementPtr& global) 
 
 size_t
 NetconfSimpleParser::setServerDefaults(const std::string name,
-                                       isc::data::ConstElementPtr server) {
+                                       ConstElementPtr server) {
     size_t cnt = 0;
 
-    isc::data::ElementPtr mutable_server =
+    ElementPtr mutable_server =
         boost::const_pointer_cast<Element>(server);
     if (name == "dhcp4") {
         cnt += setDefaults(mutable_server, DHCP4_DEFAULTS);
@@ -104,11 +104,11 @@ NetconfSimpleParser::setServerDefaults(const std::string name,
         cnt += setDefaults(mutable_server, CA_DEFAULTS);
     }
 
-    isc::data::ConstElementPtr ctrl_sock = server->get("control-socket");
+    ConstElementPtr ctrl_sock = server->get("control-socket");
     if (!ctrl_sock) {
         return (cnt);
     }
-    isc::data::ElementPtr mutable_ctrl_sock =
+    ElementPtr mutable_ctrl_sock =
         boost::const_pointer_cast<Element>(ctrl_sock);
     cnt += setDefaults(mutable_ctrl_sock, CTRL_SOCK_DEFAULTS);
 
@@ -117,7 +117,7 @@ NetconfSimpleParser::setServerDefaults(const std::string name,
 
 void
 NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
-                           const isc::data::ConstElementPtr& config,
+                           const ConstElementPtr& config,
                            bool check_only) {
 
     // User context can be done at anytime.
@@ -130,9 +130,9 @@ NetconfSimpleParser::parse(const NetconfConfigPtr& ctx,
     ConstElementPtr servers = config->get("managed-servers");
     if (servers) {
         for (auto it : servers->mapValue()) {
-            ServerParser server_parser;
-            ServerPtr server = server_parser.parse(it.second);
-            ctx->getServersMap()->insert(make_pair(it.first, server));
+            ServerConfigParser server_parser;
+            CfgServerPtr server = server_parser.parse(it.second);
+            ctx->getCfgServersMap()->insert(make_pair(it.first, server));
         }
     }
 

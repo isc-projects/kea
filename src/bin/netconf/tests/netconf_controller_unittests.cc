@@ -34,7 +34,7 @@ const char* valid_netconf_config =
     "    \"dhcp6\": {"
     "      \"control-socket\": {"
     "        \"socket-type\": \"unix\","
-    "        \"socket-name\": \"/first/dhcp4/socket\""
+    "        \"socket-name\": \"/first/dhcp6/socket\""
     "      }"
     "    }"
     "  }"
@@ -153,7 +153,7 @@ TEST_F(NetconfControllerTest, launchNormalShutdown) {
 
 // Tests that the SIGINT triggers a normal shutdown.
 TEST_F(NetconfControllerTest, sigintShutdown) {
-    // Setup to raise SIGHUP in 1 ms.
+    // Setup to raise SIGINT in 1 ms.
     TimedSignal sighup(*getIOService(), SIGINT, 1);
 
     // Write valid_netconf_config and then run launch() for a maximum
@@ -169,7 +169,7 @@ TEST_F(NetconfControllerTest, sigintShutdown) {
 
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(NetconfControllerTest, sigtermShutdown) {
-    // Setup to raise SIGHUP in 1 ms.
+    // Setup to raise SIGTERM in 1 ms.
     TimedSignal sighup(*getIOService(), SIGTERM, 1);
 
     // Write valid_netconf_config and then run launch() for a maximum
