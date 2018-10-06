@@ -44,7 +44,8 @@ noinst_LTLIBRARIES = libbasic.la
 
 TESTS += netconf_unittests
 
-netconf_unittests_SOURCES  = get_config_unittest.cc
+netconf_unittests_SOURCES  = fd_watcher_unittests.cc
+netconf_unittests_SOURCES += get_config_unittest.cc
 netconf_unittests_SOURCES += netconf_cfg_mgr_unittests.cc
 netconf_unittests_SOURCES += netconf_controller_unittests.cc
 netconf_unittests_SOURCES += netconf_process_unittests.cc
