@@ -6,6 +6,7 @@
 
 #include <yang/translator_database.h>
 #include <yang/adaptor.h>
+#include <yang/yang_models.h>
 #include <sstream>
 
 using namespace std;
@@ -24,8 +25,8 @@ TranslatorDatabase::~TranslatorDatabase() {
 ElementPtr
 TranslatorDatabase::getDatabase(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getDatabaseKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -121,8 +122,8 @@ TranslatorDatabase::setDatabase(const string& xpath,
                                 ConstElementPtr elem,
                                 bool skip) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setDatabaseKea(xpath, elem, skip);
         } else {
             isc_throw(NotImplemented,
@@ -235,8 +236,8 @@ TranslatorDatabases::~TranslatorDatabases() {
 ConstElementPtr
 TranslatorDatabases::getDatabases(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getDatabasesKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -273,8 +274,8 @@ TranslatorDatabases::getDatabasesKea(const string& xpath) {
 void
 TranslatorDatabases::setDatabases(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setDatabasesKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
