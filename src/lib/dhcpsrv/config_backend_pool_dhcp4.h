@@ -400,7 +400,7 @@ public:
     /// belongs to.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
-    virtual void
+    virtual uint64_t
     deleteOption4(const db::BackendSelector& backend_selector,
                   const db::ServerSelector& selector,
                   const std::string& shared_network_name,

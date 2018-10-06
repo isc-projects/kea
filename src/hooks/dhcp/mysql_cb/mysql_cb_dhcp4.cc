@@ -550,7 +550,7 @@ public:
 
         } catch (const DuplicateEntry&) {
             deletePools4(subnet);
-            deleteOptions4(existing_subnet);
+            deleteOptions4(subnet);
 
             // Need to add one more binding for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
@@ -560,7 +560,8 @@ public:
 
         // (Re)create pools.
         for (auto pool : subnet->getPools(Lease::TYPE_V4)) {
-            createPool4(selector, boost::dynamic_pointer_cast<Pool4>(pool), subnet);
+            createPool4(server_selector, boost::dynamic_pointer_cast<Pool4>(pool),
+                        subnet);
         }
 
         // (Re)create options.
@@ -570,7 +571,7 @@ public:
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
-                createUpdateOption4(selector, subnet->getID(), desc_copy);
+                createUpdateOption4(server_selector, subnet->getID(), desc_copy);
             }
         }
 
@@ -852,7 +853,8 @@ public:
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
-                createUpdateOption4(selector, shared_network->getName(), desc_copy);
+                createUpdateOption4(server_selector, shared_network->getName(),
+                                    desc_copy);
             }
         }
 
@@ -1277,8 +1279,8 @@ public:
     /// @param name Option name.
     /// @return Number of deleted option definitions.
     uint64_t deleteOptionDef4(const ServerSelector& /* server_selector */,
-                          const uint16_t code,
-                          const std::string& space) {
+                              const uint16_t code,
+                              const std::string& space) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
@@ -1293,16 +1295,17 @@ public:
     /// @param selector Server selector.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    void deleteOption4(const db::ServerSelector& /* selector */,
-                       const uint16_t code,
-                       const std::string& space) {
+    /// @return Number of deleted options.
+    uint64_t deleteOption4(const ServerSelector& /* selector */,
+                           const uint16_t code,
+                           const std::string& space) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTION4, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTION4, in_bindings));
     }
 
     /// @brief Deletes subnet level option.
@@ -1312,10 +1315,11 @@ public:
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    void deleteOption4(const db::ServerSelector& /* selector */,
-                       const SubnetID& subnet_id,
-                       const uint16_t code,
-                       const std::string& space) {
+    /// @return Number of deleted options.
+    uint64_t deleteOption4(const ServerSelector& /* selector */,
+                           const SubnetID& subnet_id,
+                           const uint16_t code,
+                           const std::string& space) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(code),
@@ -1323,7 +1327,7 @@ public:
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTION4_SUBNET_ID, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTION4_SUBNET_ID, in_bindings));
     }
 
     /// @brief Deletes pool level option.
@@ -1333,11 +1337,12 @@ public:
     /// @param pool_end_address  Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    void deleteOption4(const db::ServerSelector& /* selector */,
-                       const IOAddress& pool_start_address,
-                       const IOAddress& pool_end_address,
-                       const uint16_t code,
-                       const std::string& space) {
+    /// @return Number of deleted options.
+    uint64_t deleteOption4(const db::ServerSelector& /* selector */,
+                           const IOAddress& pool_start_address,
+                           const IOAddress& pool_end_address,
+                           const uint16_t code,
+                           const std::string& space) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
             MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32()),
@@ -1346,7 +1351,8 @@ public:
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTION4_POOL_RANGE, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTION4_POOL_RANGE,
+                                        in_bindings));
     }
 
     /// @brief Deletes shared network level option.
@@ -1356,7 +1362,8 @@ public:
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
-    void deleteOption4(const db::ServerSelector& /* selector */,
+    /// @return Number of deleted options.
+    uint64_t deleteOption4(const db::ServerSelector& /* selector */,
                        const std::string& shared_network_name,
                        const uint16_t code,
                        const std::string& space) {
@@ -1367,33 +1374,38 @@ public:
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTION4_SHARED_NETWORK, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTION4_SHARED_NETWORK,
+                                        in_bindings));
     }
 
     /// @brief Deletes options belonging to a subnet from the database.
     ///
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
-    void deleteOptions4(const Subnet4Ptr& subnet) {
+    /// @return Number of deleted options.
+    uint64_t deleteOptions4(const Subnet4Ptr& subnet) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint32_t>(subnet->getID())
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTIONS4_SUBNET_ID, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTIONS4_SUBNET_ID,
+                                        in_bindings));
     }
 
     /// @brief Deletes options belonging to a shared network from the database.
     ///
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
-    void deleteOptions4(const SharedNetwork4Ptr& shared_network) {
+    /// @return Number of deleted options.
+    uint64_t deleteOptions4(const SharedNetwork4Ptr& shared_network) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName())
         };
 
         // Run DELETE.
-        conn_.updateDeleteQuery(DELETE_OPTIONS4_SHARED_NETWORK, in_bindings);
+        return (conn_.updateDeleteQuery(DELETE_OPTIONS4_SHARED_NETWORK,
+                                        in_bindings));
     }
 };
 
@@ -2377,7 +2389,7 @@ void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                               const std::string& shared_network_name,
                                               const OptionDescriptorPtr& option) {
-    impl_->createUpdateOption4(selector, shared_network_name, option);
+    impl_->createUpdateOption4(server_selector, shared_network_name, option);
 }
 
 void
@@ -2451,10 +2463,10 @@ MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* server_s
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& selector,
+MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) {
-    impl_->deleteOption4(selector, code, space);
+    return (impl_->deleteOption4(server_selector, code, space));
 }
 
 uint64_t
@@ -2462,15 +2474,16 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
                                         const std::string& shared_network_name,
                                         const uint16_t code,
                                         const std::string& space) {
-    impl_->deleteOption4(selector, shared_network_name, code, space);
+    return (impl_->deleteOption4(server_selector, shared_network_name,
+                                 code, space));
 }
 
-void
+uint64_t
 MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector&  selector,
                                         const SubnetID& subnet_id,
                                         const uint16_t code,
                                         const std::string& space) {
-    impl_->deleteOption4(selector, subnet_id, code, space);
+    return (impl_->deleteOption4(selector, subnet_id, code, space));
 }
 
 uint64_t
@@ -2479,8 +2492,8 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& selector,
                                         const asiolink::IOAddress& pool_end_address,
                                         const uint16_t code,
                                         const std::string& space) {
-    impl_->deleteOption4(selector, pool_start_address, pool_end_address,
-                         code, space);
+    return (impl_->deleteOption4(selector, pool_start_address, pool_end_address,
+                                 code, space));
 }
 
 uint64_t
