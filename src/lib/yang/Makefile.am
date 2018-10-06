@@ -33,7 +33,8 @@ libkea_yang_include_HEADERS = \
 	translator.h \
 	translator_option_data.h \
 	translator_option_def.h \
-	translator_pool.h
+	translator_pool.h \
+	yang_models.h
 
 EXTRA_DIST = yang.dox
 # Distribute yang models.
