@@ -8,12 +8,14 @@ lib_LTLIBRARIES = libkea-yang.la
 libkea_yang_la_SOURCES  = adaptor.cc adaptor.h
 libkea_yang_la_SOURCES += sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
+libkea_yang_la_SOURCES += translator_database.cc translator_database.h
 libkea_yang_la_SOURCES += translator_option_data.cc
 libkea_yang_la_SOURCES += translator_option_data.h
 libkea_yang_la_SOURCES += translator_option_def.cc
 libkea_yang_la_SOURCES += translator_option_def.h
 libkea_yang_la_SOURCES += translator_pool.cc translator_pool.h
 libkea_yang_la_SOURCES += yang_models.h
+
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
@@ -31,6 +33,7 @@ libkea_yang_include_HEADERS = \
 	adaptor.h \
 	sysrepo_error.h \
 	translator.h \
+	translator_database.h \
 	translator_option_data.h \
 	translator_option_def.h \
 	translator_pool.h
