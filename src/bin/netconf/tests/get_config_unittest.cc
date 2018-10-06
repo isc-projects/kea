@@ -221,7 +221,7 @@ public:
         EXPECT_TRUE(executeConfiguration(config, "reset config"));
     }
 
-    boost::scoped_ptr<NakedNetconfCfgMgr> srv_; ///< CA server under test
+    boost::scoped_ptr<NakedNetconfCfgMgr> srv_; ///< Netconf server under test
     int rcode_;                       ///< Return code from element parsing
     ConstElementPtr comment_;         ///< Reason for parse fail
 };

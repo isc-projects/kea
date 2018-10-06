@@ -21,7 +21,7 @@ namespace isc {
 namespace netconf {
 
 NetconfConfig::NetconfConfig()
-    : servers_map_(new ServersMap()) {
+    : servers_map_(new CfgServersMap()) {
 }
 
 NetconfConfig::NetconfConfig(const NetconfConfig& orig)
@@ -45,7 +45,7 @@ NetconfCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     std::ostringstream s;
 
     // Then print managed servers.
-    for (auto serv : *ctx->getServersMap()) {
+    for (auto serv : *ctx->getCfgServersMap()) {
         if (s.tellp() != 0) {
             s << " ";
         }
