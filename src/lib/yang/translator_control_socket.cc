@@ -6,6 +6,7 @@
 
 #include <yang/translator_control_socket.h>
 #include <yang/adaptor.h>
+#include <yang/yang_models.h>
 #include <sstream>
 
 using namespace std;
@@ -25,10 +26,10 @@ TranslatorControlSocket::~TranslatorControlSocket() {
 ConstElementPtr
 TranslatorControlSocket::getControlSocket(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server") ||
-            (model_ == "kea-dhcp-ddns") ||
-            (model_ == "kea-ctrl-agent")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER) ||
+            (model_ == KEA_DHCP_DDNS) ||
+            (model_ == KEA_CTRL_AGENT)) {
             return (getControlSocketKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -62,10 +63,10 @@ void
 TranslatorControlSocket::setControlSocket(const string& xpath,
                                           ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server") ||
-            (model_ == "kea-dhcp-ddns") ||
-            (model_ == "kea-ctrl-agent")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER) ||
+            (model_ == KEA_DHCP_DDNS) ||
+            (model_ == KEA_CTRL_AGENT)) {
             setControlSocketKea(xpath, elem);
         } else {
           isc_throw(NotImplemented,
