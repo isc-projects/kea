@@ -56,6 +56,10 @@ constexpr unsigned long GLOBAL_PARAMETER_NAME_BUF_LENGTH = 128;
 
 constexpr unsigned long GLOBAL_PARAMETER_VALUE_BUF_LENGTH = 65536;
 
+constexpr unsigned long GLOBAL_PARAMETER_NAME_BUF_LENGTH = 128;
+
+constexpr unsigned long GLOBAL_PARAMETER_VALUE_BUF_LENGTH = 65536;
+
 //*}
 
 } // end of namespace isc::cb
