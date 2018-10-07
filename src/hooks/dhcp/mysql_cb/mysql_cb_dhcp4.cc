@@ -878,6 +878,8 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
+        MySqlTransaction transaction(conn_);
+
         OptionDescriptorPtr existing_option = getOption4(selector,
                                                          option->option_->getType(),
                                                          option->space_name_);
@@ -891,6 +893,8 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
                               in_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to insert or update DHCP option in a subnet.
@@ -917,6 +921,9 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
+
+        MySqlTransaction transaction(conn_);
+
         OptionDescriptorPtr existing_option = getOption4(selector, subnet_id,
                                                          option->option_->getType(),
                                                          option->space_name_);
@@ -931,6 +938,8 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
                               in_bindings);
         }
+
+        transaction.commit();
     }
 
     void createUpdateOption4(const ServerSelector& selector,
@@ -974,6 +983,8 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
+        MySqlTransaction transaction(conn_);
+
         OptionDescriptorPtr existing_option = getOption4(selector, pool_id,
                                                          option->option_->getType(),
                                                          option->space_name_);
@@ -988,6 +999,8 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
                               in_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to insert or update DHCP option in a shared network.
@@ -1014,6 +1027,8 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
+        MySqlTransaction transaction(conn_);
+
         OptionDescriptorPtr existing_option = getOption4(selector, shared_network_name,
                                                          option->option_->getType(),
                                                          option->space_name_);
@@ -1027,6 +1042,8 @@ public:
         } else {
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4, in_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to retrieve single option definition by code and
