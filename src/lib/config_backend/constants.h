@@ -52,6 +52,9 @@ constexpr unsigned long OPTION_ENCAPSULATE_BUF_LENGTH = 128;
 
 constexpr unsigned long OPTION_RECORD_TYPES_BUF_LENGTH = 512;
 
+constexpr unsigned long GLOBAL_PARAMETER_NAME_BUF_LENGTH = 128;
+
+constexpr unsigned long GLOBAL_PARAMETER_VALUE_BUF_LENGTH = 65536;
 
 //*}
 

@@ -21,6 +21,13 @@ namespace data {
 /// which stores configuration in the database and must be able
 /// to recognize recently modified objects to fetch incremental
 /// changes.
+///
+/// @note This class is not derived from @c Element and should not
+/// be confused with the classes being derived from @c Element class.
+/// Those classes are used to represent JSON structures, whereas this
+/// class represents data fetched from the database.
+///
+/// @todo Find a better name for @c StamepedElement.
 class StampedElement {
 public:
 
