@@ -121,11 +121,17 @@ public:
     void getGlobalParameters4(const StatementIndex& index,
                               const MySqlBindingCollection& in_bindings,
                               StampedValueCollection& parameters) {
+        // The following parameters from the dhcp4_global_parameter table are
+        // returned:
+        // - id
+        // - name - parameter name
+        // - value - parameter value
+        // - modification_ts - modification timestamp.
         MySqlBindingCollection out_bindings = {
-            MySqlBinding::createInteger<uint64_t>(),
-            MySqlBinding::createString(128),
-            MySqlBinding::createString(65536),
-            MySqlBinding::createTimestamp()
+            MySqlBinding::createInteger<uint64_t>(), // id
+            MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
+            MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
+            MySqlBinding::createTimestamp() // modification_ts
         };
 
         conn_.selectQuery(index, in_bindings, out_bindings,
@@ -1974,7 +1980,7 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Retrieves all global options.
-    { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4, 
+    { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
       "SELECT"
       "  option_id,"
       "  code,"
