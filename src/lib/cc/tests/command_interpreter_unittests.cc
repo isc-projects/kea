@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,6 +105,7 @@ TEST(CommandInterpreterTest, answerToText) {
 TEST(CommandInterpreterTest, createCommand) {
     ConstElementPtr command;
     ConstElementPtr arg;
+    string service;
 
     command = createCommand("my_command");
     ASSERT_EQ("{ \"command\": \"my_command\" }", command->str());
@@ -122,6 +123,31 @@ TEST(CommandInterpreterTest, createCommand) {
     arg = el("{ \"a\": \"map\" }");
     command = createCommand("foo", arg);
     ASSERT_EQ("{ \"arguments\": { \"a\": \"map\" }, \"command\": \"foo\" }",
+              command->str());
+
+    command = createCommand("my_command", "my_service");
+    ASSERT_EQ("{ \"command\": \"my_command\", "
+              "\"service\": [ \"my_service\" ] }",
+              command->str());
+
+    arg = el("1");
+    command = createCommand("my_command", arg, "my_service");
+    ASSERT_EQ("{ \"arguments\": 1, \"command\": \"my_command\", "
+              "\"service\": [ \"my_service\" ] }",
+              command->str());
+
+    arg = el("[ \"a\", \"b\" ]");
+    command = createCommand("my_cmd", arg, "my_server");
+    ASSERT_EQ("{ \"arguments\": [ \"a\", \"b\" ], "
+              "\"command\": \"my_cmd\", "
+              "\"service\": [ \"my_server\" ] }",
+              command->str());
+
+    arg = el("{ \"a\": \"map\" }");
+    command = createCommand("foo", arg, "bar");
+    ASSERT_EQ("{ \"arguments\": { \"a\": \"map\" }, "
+              "\"command\": \"foo\", "
+              "\"service\": [ \"bar\" ] }",
               command->str());
 }
 
