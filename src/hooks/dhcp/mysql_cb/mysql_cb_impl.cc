@@ -212,10 +212,18 @@ MySqlConfigBackendImpl::getOptions(const int index,
 OptionDescriptorPtr
 MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
                                          MySqlBindingCollection::iterator first_binding) {
-    std::string space = (*(first_binding + 4))->getStringOrDefault(DHCP4_OPTION_SPACE);
+    // Some of the options have standard or custom definitions.
+    // Depending whether the option has a definition or not a different
+    // C++ class may be used to represent the option. Therefore, the
+    // first thing to do is to see if there is a definition for our
+    // parsed option. The option code and space is needed for it.
+    std::string space = (*(first_binding + 4))->getString();
     uint16_t code = (*(first_binding + 1))->getInteger<uint8_t>();
 
+    // See if the option has standard definition.
     OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
+    // If there is no definition but the option is vendor specific,
+    // we should search the definition within the vendor option space.
     if (!def && (space != DHCP4_OPTION_SPACE) && (space != DHCP6_OPTION_SPACE)) {
         uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
         if (vendor_id > 0) {
@@ -223,23 +231,30 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         }
     }
 
+    // Still haven't found the definition. Check if user has specified
+    // option definition in the server configuration.
     if (!def) {
         def = LibDHCP::getRuntimeOptionDef(space, code);
     }
 
+    // Option can be stored as a blob or formatted value in the configuration.
     std::vector<uint8_t> blob;
     if (!(*(first_binding + 2))->amNull()) {
         blob = (*(first_binding + 2))->getBlob();
     }
     OptionBuffer buf(blob.begin(), blob.end());
 
+    // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
 
     OptionPtr option;
     if (!def) {
+        // No option definition. Create generic option instance.
         option.reset(new Option(universe, code, buf.begin(), buf.end()));
 
     } else {
+        // Option definition found. Use formatted value if available or
+        // a blob.
         if (formatted_value.empty()) {
             option = def->optionFactory(universe, code, buf.begin(),
                                         buf.end());
@@ -252,11 +267,14 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         }
     }
 
+    // Check if the option is persistent.
     bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));
 
+    // Create option descriptor which encapsulates our option and adds
+    // additional information, i.e. whether the option is persistent,
+    // its option space and timestamp.
     OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
     desc->space_name_ = space;
-
     desc->setModificationTime((*(first_binding + 11))->getTimestamp());
 
     return (desc);

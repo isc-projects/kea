@@ -301,8 +301,7 @@ public:
             if (!out_bindings[20]->amNull() &&
                 (out_bindings[21]->getInteger<uint32_t>() != 0) &&
                 (out_bindings[22]->getInteger<uint32_t>() != 0) &&
-                ((last_pool_id == 0) ||
-                 (out_bindings[20]->getInteger<uint64_t>() > last_pool_id))) {
+                (out_bindings[20]->getInteger<uint64_t>() > last_pool_id)) {
                 last_pool_id = out_bindings[20]->getInteger<uint64_t>();
                 last_pool.reset(new Pool4(IOAddress(out_bindings[21]->getInteger<uint32_t>()),
                                           IOAddress(out_bindings[22]->getInteger<uint32_t>())));
@@ -311,8 +310,7 @@ public:
 
             // Parse pool specific option.
             if (last_pool && !out_bindings[25]->amNull() &&
-                ((last_pool_option_id == 0) ||
-                (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>()))) {
+                (last_pool_option_id < out_bindings[25]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[25]->getInteger<uint64_t>();
 
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 25);
@@ -323,8 +321,7 @@ public:
 
             // Parse subnet specific option.
             if (!out_bindings[37]->amNull() &&
-                ((last_option_id == 0) ||
-                (last_option_id < out_bindings[37]->getInteger<uint64_t>()))) {
+                (last_option_id < out_bindings[37]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[37]->getInteger<uint64_t>();
 
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 37);
@@ -419,8 +416,7 @@ public:
                           [this, &last_pool_id, &last_pool_option_id, &last_pool,
                            &pools, &pool_ids]
                           (MySqlBindingCollection& out_bindings) {
-            if ((last_pool_id == 0) ||
-                (out_bindings[0]->getInteger<uint64_t>() > last_pool_id)) {
+            if (out_bindings[0]->getInteger<uint64_t>() > last_pool_id) {
 
                 last_pool_id = out_bindings[0]->getInteger<uint64_t>();
 
@@ -432,8 +428,7 @@ public:
 
             // Parse pool specific option.
             if (last_pool && !out_bindings[5]->amNull() &&
-                ((last_pool_option_id == 0) ||
-                (last_pool_option_id < out_bindings[5]->getInteger<uint64_t>()))) {
+                (last_pool_option_id < out_bindings[5]->getInteger<uint64_t>())) {
                 last_pool_option_id = out_bindings[5]->getInteger<uint64_t>();
 
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 5);
@@ -693,8 +688,7 @@ public:
             // If this is the first shared network or the shared network id in this
             // row points to the next shared network we use the data in the
             // row to create the new shared network instance.
-            if ((last_network_id == 0) ||
-                (last_network_id != out_bindings[0]->getInteger<uint64_t>())) {
+            if (last_network_id != out_bindings[0]->getInteger<uint64_t>()) {
 
                 last_network_id = out_bindings[0]->getInteger<uint64_t>();
                 last_network.reset(new SharedNetwork4(out_bindings[1]->getString()));
@@ -776,8 +770,7 @@ public:
 
             // Parse option.
             if (!out_bindings[13]->amNull() &&
-                ((last_option_id == 0) ||
-                (last_option_id < out_bindings[13]->getInteger<uint64_t>()))) {
+                (last_option_id < out_bindings[13]->getInteger<uint64_t>())) {
                 last_option_id = out_bindings[13]->getInteger<uint64_t>();
 
                 OptionDescriptorPtr desc = processOptionRow(Option::V4, out_bindings.begin() + 13);
