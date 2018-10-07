@@ -18,6 +18,10 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = adaptor_unittests.cc
+run_unittests_SOURCES += adaptor_option_unittests.cc
+run_unittests_SOURCES += adaptor_pool_unittests.cc
+run_unittests_SOURCES += adaptor_host_unittests.cc
+run_unittests_SOURCES += adaptor_subnet_unittests.cc
 run_unittests_SOURCES += sysrepo_setup.h
 run_unittests_SOURCES += translator_unittests.cc
 run_unittests_SOURCES += translator_control_socket_unittests.cc
