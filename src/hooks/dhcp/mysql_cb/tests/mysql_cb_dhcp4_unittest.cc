@@ -302,6 +302,99 @@ public:
     boost::shared_ptr<ConfigBackendDHCPv4> cbptr_;
 };
 
+// This test verifies that the global parameter can be added, updated and
+// deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
+    StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
+    // Explicitly set modification time to make sure that the time
+    // returned from the database is correct.
+    server_tag->setModificationTime(timestamps_["yesterday"]);
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         server_tag);
+
+    // Verify returned parameter and the modification time.
+    StampedValuePtr returned_server_tag =
+        cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(), "server-tag");
+    ASSERT_TRUE(returned_server_tag);
+    EXPECT_EQ("server-tag", returned_server_tag->getName());
+    EXPECT_EQ("whale", returned_server_tag->getValue());
+    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
+                server_tag->getModificationTime());
+
+    // Check that the parameter is udpated when it already exists in
+    // the database.
+    server_tag = StampedValue::create("server-tag", "fish");
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         server_tag);
+    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                             "server-tag");
+    ASSERT_TRUE(returned_server_tag);
+    EXPECT_EQ("server-tag", returned_server_tag->getName());
+    EXPECT_EQ("fish", returned_server_tag->getValue());
+    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
+                server_tag->getModificationTime());
+
+    // Delete parameter and make sure it is gone.
+    cbptr_->deleteGlobalParameter4(ServerSelector::UNASSIGNED(), "server-tag");
+    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                                      "server-tag");
+    EXPECT_FALSE(returned_server_tag);
+}
+
+// This test verifies that all global parameters can be retrieved and deleted.
+TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
+    // Create 3 parameters and put them into the database.
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         StampedValue::create("name1", "value1"));
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         StampedValue::create("name2", 65));
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         StampedValue::create("name3", "value3"));
+
+    // Fetch all parameters.
+    auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::UNASSIGNED());
+    ASSERT_EQ(3, parameters.size());
+
+    // Verify their values.
+    EXPECT_EQ("value1", parameters[0]->getValue());
+    EXPECT_EQ(65, parameters[1]->getSignedIntegerValue());
+    EXPECT_EQ("value3", parameters[2]->getValue());
+
+    // Delete all parameters and make sure they are gone.
+    cbptr_->deleteAllGlobalParameters4(ServerSelector::UNASSIGNED());
+    parameters = cbptr_->getAllGlobalParameters4(ServerSelector::UNASSIGNED());
+    EXPECT_TRUE(parameters.empty());
+}
+
+// This test verifies that modified global parameters can be retrieved.
+TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
+    // Create 3 global parameters and assign modification times:
+    // "yesterday", "today" and "tomorrow" respectively.
+    StampedValuePtr value = StampedValue::create("name1", "value1");
+    value->setModificationTime(timestamps_["yesterday"]);
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         value);
+
+    value = StampedValue::create("name2", 65);
+    value->setModificationTime(timestamps_["today"]);
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         value);
+
+    value = StampedValue::create("name3", "value3");
+    value->setModificationTime(timestamps_["tomorrow"]);
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+                                         value);
+
+    // Get parameters modified after "today".
+    auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::UNASSIGNED(),
+                                                           timestamps_["today"]);
+
+    // It should be the one modified "tomorrow". 
+    ASSERT_EQ(1, parameters.size());
+    ASSERT_TRUE(parameters[0]);
+    EXPECT_EQ("value3", parameters[0]->getValue());
+}
+
 // Test that subnet can be inserted, fetched, updated and then fetched again.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // Insert new subnet.

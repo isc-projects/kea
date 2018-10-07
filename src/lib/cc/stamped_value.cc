@@ -11,12 +11,15 @@
 namespace isc {
 namespace data {
 
-StampedValue::StampedValue(const std::string& value)
-    : StampedElement(), value_(value) {
+StampedValue::StampedValue(const std::string& name,
+                           const std::string& value)
+    : StampedElement(), name_(name), value_(value) {
 }
 
-StampedValue::StampedValue(const int64_t value)
-    : StampedElement(), value_() {
+StampedValue::StampedValue(const std::string& name,
+                           const int64_t value)
+    : StampedElement(), name_(name), value_() {
+
     try {
         value_ = boost::lexical_cast<std::string>(value);
     } catch (...) {
@@ -24,6 +27,19 @@ StampedValue::StampedValue(const int64_t value)
                   << " to a string");
     }
 }
+
+StampedValuePtr
+StampedValue::create(const std::string& name,
+                     const std::string& value) {
+    return (StampedValuePtr(new StampedValue(name, value)));
+}
+
+StampedValuePtr
+StampedValue::create(const std::string& name,
+                     const int64_t value) {
+    return (StampedValuePtr(new StampedValue(name, value)));
+}
+
 
 int64_t
 StampedValue::getSignedIntegerValue() const {

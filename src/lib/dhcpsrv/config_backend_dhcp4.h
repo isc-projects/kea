@@ -7,6 +7,7 @@
 #ifndef CONFIG_BACKEND_DHCP4_H
 #define CONFIG_BACKEND_DHCP4_H
 
+#include <cc/stamped_value.h>
 #include <config_backend/base_config_backend.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
@@ -14,9 +15,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
-#include <util/optional_value.h>
 #include <boost/date_time/posix_time/ptime.hpp>
-#include <map>
 #include <string>
 
 namespace isc {
@@ -120,20 +119,20 @@ public:
 
     /// @brief Retrieves single option by code and space.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
-    getOption4(const db::ServerSelector& selector, const uint16_t code,
+    getOption4(const db::ServerSelector& server_selector, const uint16_t code,
                const std::string& space) const = 0;
 
     /// @brief Retrieves all global options.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Collection of global options or empty collection if no
     /// option found.
     virtual OptionContainer
-    getAllOptions4(const db::ServerSelector& selector) const = 0;
+    getAllOptions4(const db::ServerSelector& server_selector) const = 0;
 
     /// @brief Retrieves option modified after specified time.
     ///
@@ -145,28 +144,27 @@ public:
     getModifiedOptions4(const db::ServerSelector& selector,
                         const boost::posix_time::ptime& modification_time) const = 0;
 
-    /// @brief Retrieves global string parameter value.
+    /// @brief Retrieves global parameter value.
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
-    /// @return Value of the global string parameter.
-    virtual util::OptionalValue<std::string>
-    getGlobalStringParameter4(const db::ServerSelector& server_selector,
-                              const std::string& name) const = 0;
+    /// @return Value of the global parameter or null if parameter doesn't
+    /// exist.
+    virtual data::StampedValuePtr
+    getGlobalParameter4(const db::ServerSelector& selector,
+                        const std::string& name) const = 0;
 
-    /// @brief Retrieves global number parameter.
-    ///
-    /// @param server_selector Server selector.
-    /// @param name Name of the parameter to be retrieved.
-    virtual util::OptionalValue<int64_t>
-    getGlobalNumberParameter4(const db::ServerSelector& server_selector,
-                              const std::string& name) const = 0;
+    /// @return Collection of global parameters.
+    virtual data::StampedValueCollection
+    getAllGlobalParameters4(const db::ServerSelector& selector) const = 0;
 
-    /// @brief Retrieves all global parameters as strings.
+    /// @brief Retrieves global parameters modified after specified time.
     ///
-    /// @param server_selector Server selector.
-    virtual std::map<std::string, std::string>
-    getAllGlobalParameters4(const db::ServerSelector& server_selector) const = 0;
+    /// @param selector Server selector.
+    /// @return Collection of modified global parameters.
+    virtual data::StampedValueCollection
+    getModifiedGlobalParameters4(const db::ServerSelector& selector,
+                                 const boost::posix_time::ptime& modification_time) const = 0;
 
     /// @brief Creates or updates a subnet.
     ///
@@ -235,26 +233,14 @@ public:
                         const asiolink::IOAddress& pool_end_address,
                         const OptionDescriptorPtr& option) = 0;
 
-    /// @brief Creates or updates global string parameter.
+    /// @brief Creates or updates global parameter.
     ///
     /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const std::string& value) = 0;
+                                 const data::StampedValuePtr& value) = 0;
 
-    /// @brief Creates or updates global number parameter.
-    ///
-    /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
-    /// @param value Value of the global parameter.
-    virtual void
-    createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const int64_t value) = 0;
-    
     /// @brief Deletes subnet by prefix.
     ///
     /// @param server_selector Server selector.
