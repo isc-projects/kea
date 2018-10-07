@@ -8,6 +8,7 @@ AM_CXXFLAGS = $(KEA_CXXFLAGS)
 EXTRA_DIST  = base_config_backend.h
 EXTRA_DIST += base_config_backend_mgr.h
 EXTRA_DIST += base_config_backend_pool.h
+EXTRA_DIST += constants.h
 
 # The message file should be in the distribution.
 #EXTRA_DIST += config_backend.dox
@@ -19,5 +20,6 @@ libkea_cb_includedir = $(pkgincludedir)/config_backend
 libkea_cb_include_HEADERS = \
 	base_config_backend.h \
 	base_config_backend_mgr.h \
-	base_config_backend_pool.h
+	base_config_backend_pool.h \
+	constants.h
 

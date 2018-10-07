@@ -7,6 +7,7 @@
 #include <mysql_cb_dhcp4.h>
 #include <mysql_cb_impl.h>
 #include <cc/data.h>
+#include <config_backend/constants.h>
 #include <database/db_exceptions.h>
 #include <dhcp/classify.h>
 #include <dhcp/dhcp6.h>
@@ -28,6 +29,7 @@
 #include <utility>
 #include <vector>
 
+using namespace isc::cb;
 using namespace isc::db;
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -118,24 +120,24 @@ public:
         // statement.
         MySqlBindingCollection out_bindings = {
             MySqlBinding::createInteger<uint32_t>(), // subnet_id
-            MySqlBinding::createString(32), // subnet_prefix
-            MySqlBinding::createString(128), // 4o6_interface
-            MySqlBinding::createString(128), // 4o6_interface_id
-            MySqlBinding::createString(64), // 4o6_subnet
-            MySqlBinding::createString(512), // boot_file_name
-            MySqlBinding::createString(128), // client_class
-            MySqlBinding::createString(128), // interface
+            MySqlBinding::createString(SUBNET_PREFIX_BUF_LENGTH), // subnet_prefix
+            MySqlBinding::createString(DHCP4O6_INTERFACE_BUF_LENGTH), // 4o6_interface
+            MySqlBinding::createString(DHCP4O6_INTERFACE_ID_BUF_LENGTH), // 4o6_interface_id
+            MySqlBinding::createString(DHCP4O6_SUBNET_BUF_LENGTH), // 4o6_subnet
+            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class
+            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface
             MySqlBinding::createInteger<uint8_t>(), // match_client_id
             MySqlBinding::createTimestamp(), // modification_ts
             MySqlBinding::createInteger<uint32_t>(), // next_server
             MySqlBinding::createInteger<uint32_t>(), // rebind_timer
-            MySqlBinding::createString(65536), // relay
+            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(65536), // require_client_classes
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
             MySqlBinding::createInteger<uint8_t>(), // reservation_mode
-            MySqlBinding::createString(512), // server_hostname
-            MySqlBinding::createString(128), // shared_network_name
-            MySqlBinding::createString(65536), // user_context
+            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH), // server_hostname
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
             MySqlBinding::createInteger<uint64_t>(), // pool: id
             MySqlBinding::createInteger<uint32_t>(), // pool: start_address
@@ -144,26 +146,26 @@ public:
             MySqlBinding::createTimestamp(), // pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
             MySqlBinding::createInteger<uint8_t>(), // pool option: code
-            MySqlBinding::createBlob(65536), // pool option: value
-            MySqlBinding::createString(8192), // pool option: formatted_value
-            MySqlBinding::createString(128), // pool option: space
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // pool option: value
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // pool option: formatted_value
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // pool option: space
             MySqlBinding::createInteger<uint8_t>(), // pool option: persistent
             MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id
             MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id
-            MySqlBinding::createString(65536), // pool option: user_context
-            MySqlBinding::createString(128), // pool option: shared_network_name
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool option: user_context
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
             MySqlBinding::createTimestamp(), //pool option: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
             MySqlBinding::createInteger<uint8_t>(), // option: code
-            MySqlBinding::createBlob(65536), // option: value
-            MySqlBinding::createString(8192), // option: formatted_value
-            MySqlBinding::createString(128), // option: space
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
             MySqlBinding::createInteger<uint8_t>(), // option: persistent
             MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
             MySqlBinding::createInteger<uint8_t>(), // option: scope_id
-            MySqlBinding::createString(65536), // option: user_context
-            MySqlBinding::createString(128), // option: shared_network_name
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp() //option: modification_ts
         };
@@ -396,14 +398,14 @@ public:
             MySqlBinding::createTimestamp(), // pool: modification_ts
             MySqlBinding::createInteger<uint64_t>(), // pool option: option_id
             MySqlBinding::createInteger<uint8_t>(), // pool option: code
-            MySqlBinding::createBlob(65536), // pool option: value
-            MySqlBinding::createString(8192), // pool option: formatted_value
-            MySqlBinding::createString(128), // pool option: space
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // pool option: value
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // pool option: formatted_value
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // pool option: space
             MySqlBinding::createInteger<uint8_t>(), // pool option: persistent
             MySqlBinding::createInteger<uint32_t>(), // pool option: dhcp4_subnet_id
             MySqlBinding::createInteger<uint8_t>(), // pool option: scope_id
-            MySqlBinding::createString(65536), // pool option: user_context
-            MySqlBinding::createString(128), // pool option: shared_network_name
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // pool option: user_context
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // pool option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // pool option: pool_id
             MySqlBinding::createTimestamp(), //pool option: modification_ts
         };
@@ -648,28 +650,28 @@ public:
         // statement.
         MySqlBindingCollection out_bindings = {
             MySqlBinding::createInteger<uint64_t>(), // id
-            MySqlBinding::createString(128), // name
-            MySqlBinding::createString(128), // client_class
-            MySqlBinding::createString(128), // interface
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // name
+            MySqlBinding::createString(CLIENT_CLASS_BUF_LENGTH), // client_class
+            MySqlBinding::createString(INTERFACE_BUF_LENGTH), // interface
             MySqlBinding::createInteger<uint8_t>(), // match_client_id
             MySqlBinding::createTimestamp(), // modification_ts
             MySqlBinding::createInteger<uint32_t>(), // rebind_timer
-            MySqlBinding::createString(65536), // relay
+            MySqlBinding::createString(RELAY_BUF_LENGTH), // relay
             MySqlBinding::createInteger<uint32_t>(), // renew_timer
-            MySqlBinding::createString(65536), // require_client_classes
+            MySqlBinding::createString(REQUIRE_CLIENT_CLASSES_BUF_LENGTH), // require_client_classes
             MySqlBinding::createInteger<uint8_t>(), // reservation_mode
-            MySqlBinding::createString(65536), // user_context
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
             MySqlBinding::createInteger<uint32_t>(), // valid_lifetime
             MySqlBinding::createInteger<uint64_t>(), // option: option_id
             MySqlBinding::createInteger<uint8_t>(), // option: code
-            MySqlBinding::createBlob(65536), // option: value
-            MySqlBinding::createString(8192), // option: formatted_value
-            MySqlBinding::createString(128), // option: space
+            MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // option: value
+            MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // option: formatted_value
+            MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // option: space
             MySqlBinding::createInteger<uint8_t>(), // option: persistent
             MySqlBinding::createInteger<uint32_t>(), // option: dhcp4_subnet_id
             MySqlBinding::createInteger<uint8_t>(), // option: scope_id
-            MySqlBinding::createString(65536), // option: user_context
-            MySqlBinding::createString(128), // option: shared_network_name
+            MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
+            MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
             MySqlBinding::createTimestamp() //option: modification_ts
         };
