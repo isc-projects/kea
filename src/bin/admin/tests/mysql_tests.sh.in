@@ -382,7 +382,8 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
-    assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
+    # verify that dhcp_option_scope table contains correct number of entries.
+    assert_eq 7 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
 
     #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0)
     # verify that dhcp4_options table includes scope_id
