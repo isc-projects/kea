@@ -1,0 +1,104 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#ifndef ISC_ADAPTOR_OPTION_H
+#define ISC_ADAPTOR_OPTION_H 1
+
+#include <yang/adaptor.h>
+#include <map>
+#include <list>
+
+namespace isc {
+
+namespace dhcp {
+/// @brief Forward declaration of option definition parameters.
+struct OptionDefParams;
+};
+
+namespace yang {
+
+/// @brief Map for DHCP option definitions handling code and
+/// an index built from space and name.
+typedef std::map<std::string, uint16_t> OptionCodes;
+
+/// @brief JSON adaptor for option data or definition setting defaults.
+///
+/// Both option data and option definition lists are keyed by the code
+/// and space pair so both must be available in setOptionXXX methods.
+/// For space there is an implicit default so setSpace must be called
+/// to add this default to option entries without space.
+/// Note remaining adaptors assume this was done first.
+///
+/// checkCode and checkType can be used to check if code or type is present
+/// (type is mandatory in option definitions).
+///
+/// A missing code can be found in standard definitions (loaded by initCodes)
+/// or in configuration option definitions (at global and client classes
+/// scopes). setCode uses the space+name to code map to set missing codes
+/// and raises an error when it can't.
+class AdaptorOption {
+public:
+
+    /// @brief Constructor.
+    AdaptorOption();
+
+    /// @brief Destructor.
+    virtual ~AdaptorOption();
+
+    /// @brief Set space.
+    ///
+    /// @param option The option.
+    /// @param space The default space name.
+    static void setSpace(isc::data::ElementPtr option,
+                         const std::string& space);
+
+    /// @brief Check type (option definition).
+    ///
+    /// @param option The option.
+    /// @throw MissingKey if the type is not present.
+    static void checkType(isc::data::ConstElementPtr option);
+
+    /// @brief Check code.
+    ///
+    /// @param option The option.
+    /// @throw MissingKey if the code is not present.
+    static void checkCode(isc::data::ConstElementPtr option);
+
+    /// @brief Collect definition.
+    ///
+    /// @param option The option definition.
+    /// @param codes The reference to option definitions.
+    static void collect(isc::data::ConstElementPtr option, OptionCodes& codes);
+
+    /// @brief Set code from name and definitions.
+    ///
+    /// @param option The option data.
+    /// @param codes Option definitions.
+    static void setCode(isc::data::ElementPtr option,
+                        const OptionCodes& codes);
+
+    /// @brief Initialize code map.
+    ///
+    /// @param codes The reference to option definitions.
+    /// @param space The space name.
+    static void initCodes(OptionCodes& codes, const std::string& space);
+
+protected:
+    /// @brief Initialize code map from option definition parameters.
+    ///
+    /// @param codes The reference to option definitions.
+    /// @param space The space name.
+    /// @param params Array of option definition parameters
+    /// @param params_size The size of the array.
+    static void initCodesInternal(OptionCodes& codes, const std::string& space,
+                                  const isc::dhcp::OptionDefParams* params,
+                                  size_t params_size);
+};
+
+}; // end of namespace isc::yang
+}; // end of namespace isc
+
+#endif // ISC_ADAPTOR_OPTION_H
