@@ -118,53 +118,53 @@ public:
 
     /// @brief Retrieves single option by code and space.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
-    getOption4(const db::ServerSelector& selector, const uint16_t code,
+    getOption4(const db::ServerSelector& server_selector, const uint16_t code,
                const std::string& space) const;
 
     /// @brief Retrieves all global options.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Collection of global options or empty collection if no
     /// option found.
     virtual OptionContainer
-    getAllOptions4(const db::ServerSelector& selector) const;
+    getAllOptions4(const db::ServerSelector& server_selector) const;
 
     /// @brief Retrieves option modified after specified time.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param modification_time Lower bound option modification time.
     /// @return Collection of global options or empty collection if no
     /// option found.
     virtual OptionContainer
-    getModifiedOptions4(const db::ServerSelector& selector,
+    getModifiedOptions4(const db::ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) const;
 
-    /// @brief Retrieves global string parameter value.
+    /// @brief Retrieves global parameter value.
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
-    /// @return Value of the global string parameter.
-    virtual util::OptionalValue<std::string>
-    getGlobalStringParameter4(const db::ServerSelector& server_selector,
-                              const std::string& name) const;
+    /// @return Value of the global parameter.
+    virtual data::StampedValuePtr
+    getGlobalParameter4(const db::ServerSelector& server_selector,
+                        const std::string& name) const;
 
-    /// @brief Retrieves global number parameter.
+    /// @brief Retrieves all global parameters.
     ///
     /// @param server_selector Server selector.
-    /// @param name Name of the parameter to be retrieved.
-    virtual util::OptionalValue<int64_t>
-    getGlobalNumberParameter4(const db::ServerSelector& server_selector,
-                              const std::string& name) const;
-
-    /// @brief Retrieves all global parameters as strings.
-    ///
-    /// @param server_selector Server selector.
-    virtual std::map<std::string, std::string>
+    virtual data::StampedValueCollection
     getAllGlobalParameters4(const db::ServerSelector& server_selector) const;
+
+    /// @brief Retrieves global parameters modified after specified time.
+    ///
+    /// @param modification_time Lower bound modification time.
+    /// @return Collection of modified global parameters.
+    virtual data::StampedValueCollection
+    getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
+                                 const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Creates or updates a subnet.
     ///
@@ -200,12 +200,12 @@ public:
 
     /// @brief Creates or updates shared network level option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param shared_network_name Name of a shared network to which option
     /// belongs.
     /// @param option Option to be added or updated.
     virtual void
-    createUpdateOption4(const db::ServerSelector& selector,
+    createUpdateOption4(const db::ServerSelector& server_selector,
                         const std::string& shared_network_name,
                         const OptionDescriptorPtr& option);
 
@@ -233,25 +233,14 @@ public:
                         const asiolink::IOAddress& pool_end_address,
                         const OptionDescriptorPtr& option);
 
-    /// @brief Creates or updates global string parameter.
+    /// @brief Creates or updates global parameter.
     ///
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const std::string& value);
-
-    /// @brief Creates or updates global number parameter.
-    ///
-    /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
-    /// @param value Value of the global parameter.
-    virtual void
-    createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const int64_t value);
+                                 const data::StampedValuePtr& value);
 
     /// @brief Deletes subnet by prefix.
     ///
@@ -322,13 +311,13 @@ public:
 
     /// @brief Deletes shared network level option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network which deleted
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     virtual uint64_t
-    deleteOption4(const db::ServerSelector& selector,
+    deleteOption4(const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
                   const std::string& space);

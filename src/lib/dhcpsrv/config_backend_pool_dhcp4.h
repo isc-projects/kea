@@ -7,6 +7,7 @@
 #ifndef CONFIG_BACKEND_POOL_DHCP4_H
 #define CONFIG_BACKEND_POOL_DHCP4_H
 
+#include <cc/stamped_value.h>
 #include <config_backend/base_config_backend_pool.h>
 #include <database/backend_selector.h>
 #include <database/server_selector.h>
@@ -16,7 +17,6 @@
 #include <dhcpsrv/config_backend_dhcp4.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
-#include <util/optional_value.h>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <string>
 
@@ -172,34 +172,35 @@ public:
                         const db::ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) const;
 
-    /// @brief Retrieves global string parameter value.
+    /// @brief Retrieves global parameter value.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
-    /// @return Value of the global string parameter.
-    virtual util::OptionalValue<std::string>
-    getGlobalStringParameter4(const db::BackendSelector& backend_selector,
-                              const db::ServerSelector& server_selector,
-                              const std::string& name) const;
+    /// @return Value of the global parameter.
+    virtual data::StampedValuePtr
+    getGlobalParameter4(const db::BackendSelector& backend_selector,
+                        const db::ServerSelector& server_selector,
+                        const std::string& name) const;
 
-    /// @brief Retrieves global number parameter.
+    /// @brief Retrieves all global parameters.
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
-    /// @param name Name of the parameter to be retrieved.
-    virtual util::OptionalValue<int64_t>
-    getGlobalNumberParameter4(const db::BackendSelector& backend_selector,
-                              const db::ServerSelector& server_selector,
-                              const std::string& name) const;
-
-    /// @brief Retrieves all global parameters as strings.
-    ///
-    /// @param backend_selector Backend selector.
-    /// @param server_selector Server selector.
-    virtual std::map<std::string, std::string>
+    virtual data::StampedValueCollection
     getAllGlobalParameters4(const db::BackendSelector& backend_selector,
                             const db::ServerSelector& server_selector) const;
+
+    /// @brief Retrieves global parameters modified after specified time.
+    ///
+    /// @param backend_selector Backend selector.
+    /// @param server_selector Server selector.
+    /// @param modification_time Lower bound subnet modification time.
+    /// @return Collection of modified global parameters.
+   virtual data::StampedValueCollection
+   getModifiedGlobalParameters4(const db::BackendSelector& backend_selector,
+                                const db::ServerSelector& server_selector,
+                                const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Creates or updates a subnet.
     ///
@@ -291,21 +292,8 @@ public:
     virtual void
     createUpdateGlobalParameter4(const db::BackendSelector& backend_selector,
                                  const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const std::string& value);
+                                 const data::StampedValuePtr& value);
 
-    /// @brief Creates or updates global number parameter.
-    ///
-    /// @param backend_selector Backend selector.
-    /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
-    /// @param value Value of the global parameter.
-    virtual void
-    createUpdateGlobalParameter4(const db::BackendSelector& backend_selector,
-                                 const db::ServerSelector& server_selector,
-                                 const std::string& name,
-                                 const int64_t value);
-    
     /// @brief Deletes subnet by prefix.
     ///
     /// @param backend_selector Backend selector.
@@ -395,14 +383,14 @@ public:
     /// @brief Deletes shared network level option.
     ///
     /// @param backend_selector Backend selector.
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network which option
     /// belongs to.
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
     virtual uint64_t
     deleteOption4(const db::BackendSelector& backend_selector,
-                  const db::ServerSelector& selector,
+                  const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
                   const std::string& space) = 0;

@@ -12,7 +12,6 @@
 #include <database/backend_selector.h>
 #include <database/db_exceptions.h>
 #include <database/server_selector.h>
-#include <util/optional_value.h>
 #include <functional>
 #include <list>
 #include <string>
@@ -136,87 +135,6 @@ protected:
                 for (auto backend : backends) {
                     property = ((*backend).*MethodPointer)(server_selector, input...);
                     if (property) {
-                        break;
-                    }
-                }
-
-            } else {
-                isc_throw(db::NoSuchDatabase, "no such database found for selector: "
-                          << backend_selector.toText());
-            }
-        }
-    }
-
-    /// @brief Retrieve a single value encapsulated in the @c OptionalValue
-    /// template.
-    ///
-    /// This is common method for retrieving a single configuration property
-    /// from the databases. The property is encapsulated in the @c OptionalValue
-    /// class. The value is set to "unspecified" if it is null in the database.
-    /// The following is the example implementation of the method retrieving
-    /// global conifguration value:
-    ///
-    /// @code
-    /// OptionalValue<std::string>
-    /// getGlobalParameter4(const std::string& parameter_name,
-    ///                     const BackendSelector& backend_selector,
-    ///                     const ServerSelector& server_selector) const {
-    ///     std::string parameter;
-    ///     getOptionalPropertyConst<std::string, const std::string&>
-    ///         (&ConfigBackendDHCPv4::getGlobalParameter4, backend_selector,
-    ///          server_selector, parameter, parameter_name);
-    ///     return (parameter);
-    /// }
-    /// @endcode
-    ///
-    /// where @c ConfigBackendDHCPv4::getGlobalParameter has the following signature:
-    ///
-    /// @code
-    /// std::string getGlobalParameter4(const ServerSelector&, const std::string&) const;
-    /// @endcode
-    ///
-    ///
-    /// @tparam PropertyType Type of the object returned by the backend call.
-    /// @tparam FnPtrArgs Parameter pack holding argument types of the backend
-    /// method to be invoked.
-    /// @tparam Args Parameter pack holding types of the arguments provided
-    /// in the call to this method.
-    ///
-    /// @param MethodPointer Pointer to the backend method to be called.
-    /// @param backend_selector Backend selector.
-    /// @param server_selector Server selector.
-    /// @param [out] property Reference to the shared pointer where retrieved
-    /// property should be assigned.
-    /// @param input Values to be used as input to the backend call.
-    ///
-    /// @throw db::NoSuchDatabase if no database matching the given selector
-    /// was found.
-    template<typename PropertyType, typename... FnPtrArgs, typename... Args>
-    void getOptionalPropertyConst(util::OptionalValue<PropertyType>
-                                  (ConfigBackendType::*MethodPointer)
-                                  (const db::ServerSelector&, FnPtrArgs...) const,
-                                  const db::BackendSelector& backend_selector,
-                                  const db::ServerSelector& server_selector,
-                                  util::OptionalValue<PropertyType>& property,
-                                  Args... input) const {
-
-        // If no particular backend is selected, call each backend and return
-        // the first non-null (non zero) value.
-        if (backend_selector.amUnspecified()) {
-            for (auto backend : backends_) {
-                property = ((*backend).*MethodPointer)(server_selector, input...);
-                if (property.isSpecified()) {
-                    break;
-                }
-            }
-
-        } else {
-            // Backend selected, find the one that matches selection.
-            auto backends = selectBackends(backend_selector);
-            if (!backends.empty()) {
-                for (auto backend : backends) {
-                    property = ((*backend).*MethodPointer)(server_selector, input...);
-                    if (property.isSpecified()) {
                         break;
                     }
                 }

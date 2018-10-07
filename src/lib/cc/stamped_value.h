@@ -15,6 +15,14 @@
 namespace isc {
 namespace data {
 
+class StampedValue;
+
+/// @brief Pointer to the stamped value.
+typedef boost::shared_ptr<StampedValue> StampedValuePtr;
+
+/// @brief Collection of pointers to values.
+typedef std::vector<StampedValuePtr> StampedValueCollection;
+
 /// @brief This class represents string or signed integer configuration
 /// element associated with the modification timestamp.
 ///
@@ -33,17 +41,38 @@ public:
     ///
     /// Creates stamped value from a string.
     ///
+    /// @param name Name of the value.
     /// @param value Value to be set.
-    explicit StampedValue(const std::string& value);
+    StampedValue(const std::string& name, const std::string& value);
 
     /// @brief Constructor.
     ///
     /// Creates stamped value from the signed integer.
     ///
+    /// @param name Name of the value.
     /// @param value Value to be set.
-    explicit StampedValue(const int64_t value);
+    explicit StampedValue(const std::string& name, const int64_t value);
 
-    /// @brief Returns value as string.
+    /// @brief Convenience function creating shared pointer to the object.
+    ///
+    /// @param name Name of the value.
+    /// @param value String value to be encapsulated by this object.
+    static StampedValuePtr create(const std::string& name,
+                                  const std::string& value);
+
+    /// @brief Convenience function creating shared Pointer to the object.
+    ///
+    /// @param name Name of the value.
+    /// @param value Integer value to be encapsulated by this object.
+    static StampedValuePtr create(const std::string& name,
+                                  const int64_t value);
+
+    /// @brief Returns value name.
+    std::string getName() const {
+        return (name_);
+    }
+
+    /// @Brief Returns value as string.
     std::string getValue() const {
         return (value_);
     }
@@ -54,6 +83,9 @@ public:
     int64_t getSignedIntegerValue() const;
 
 private:
+
+    /// @brief Name of the value.
+    std::string name_;
 
     /// @brief Holds value as a string.
     std::string value_;

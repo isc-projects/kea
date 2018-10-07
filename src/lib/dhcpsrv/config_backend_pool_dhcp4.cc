@@ -8,8 +8,8 @@
 #include <dhcpsrv/config_backend_pool_dhcp4.h>
 
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::db;
-using namespace isc::util;
 
 namespace isc {
 namespace dhcp {
@@ -156,35 +156,36 @@ ConfigBackendPoolDHCPv4::getModifiedOptions4(const BackendSelector& backend_sele
     return (options);
 }
 
-util::OptionalValue<std::string>
-ConfigBackendPoolDHCPv4::getGlobalStringParameter4(const BackendSelector& backend_selector,
-                                                   const ServerSelector& server_selector,
-                                                   const std::string& name) const {
-    OptionalValue<std::string> parameter;
-    getOptionalPropertyConst<std::string, const std::string&>
-        (&ConfigBackendDHCPv4::getGlobalStringParameter4, backend_selector,
-         server_selector, parameter, name);
-    return (parameter);
+StampedValuePtr
+ConfigBackendPoolDHCPv4::getGlobalParameter4(const BackendSelector& backend_selector,
+                                             const ServerSelector& server_selector,
+                                             const std::string& name) const {
+    StampedValuePtr parameter;
+    getPropertyPtrConst<StampedValuePtr, const std::string&>
+        (&ConfigBackendDHCPv4::getGlobalParameter4, backend_selector,
+          server_selector, parameter, name);
+     return (parameter);
 }
 
-util::OptionalValue<int64_t>
-ConfigBackendPoolDHCPv4::getGlobalNumberParameter4(const BackendSelector& backend_selector,
-                                                   const ServerSelector& server_selector,
-                                                   const std::string& name) const {
-    OptionalValue<int64_t> parameter;
-    getOptionalPropertyConst<int64_t, const std::string&>
-        (&ConfigBackendDHCPv4::getGlobalNumberParameter4, backend_selector,
-         server_selector, parameter, name);
-    return (parameter);
-}
-
-std::map<std::string, std::string>
+StampedValueCollection
 ConfigBackendPoolDHCPv4::getAllGlobalParameters4(const BackendSelector& backend_selector,
                                                  const ServerSelector& server_selector) const {
-    std::map<std::string, std::string> parameters;
-    getAllPropertiesConst<std::map<std::string, std::string> >
+    StampedValueCollection parameters;
+    getAllPropertiesConst<StampedValueCollection>
         (&ConfigBackendDHCPv4::getAllGlobalParameters4, backend_selector,
          server_selector, parameters);
+    return (parameters);
+}
+
+StampedValueCollection
+ConfigBackendPoolDHCPv4::
+getModifiedGlobalParameters4(const db::BackendSelector& backend_selector,
+                             const db::ServerSelector& server_selector,
+                             const boost::posix_time::ptime& modification_time) const {
+    StampedValueCollection parameters;
+    getMultiplePropertiesConst<StampedValueCollection, const boost::posix_time::ptime&>
+        (&ConfigBackendDHCPv4::getModifiedGlobalParameters4, backend_selector,
+         server_selector, parameters, modification_time);
     return (parameters);
 }
 
@@ -260,23 +261,12 @@ ConfigBackendPoolDHCPv4::createUpdateOption4(const BackendSelector& backend_sele
 void
 ConfigBackendPoolDHCPv4::createUpdateGlobalParameter4(const BackendSelector& backend_selector,
                                                       const ServerSelector& server_selector,
-                                                      const std::string& name,
-                                                      const std::string& value) {
-    createUpdateDeleteProperty<void, const std::string&, const std::string&>
+                                                      const StampedValuePtr& value) {
+    createUpdateDeleteProperty<void, const StampedValuePtr&>
         (&ConfigBackendDHCPv4::createUpdateGlobalParameter4, backend_selector,
-         server_selector, name, value);
+         server_selector, value);
 }
 
-void
-ConfigBackendPoolDHCPv4::createUpdateGlobalParameter4(const BackendSelector& backend_selector,
-                                                      const ServerSelector& server_selector,
-                                                      const std::string& name,
-                                                      const int64_t value) {
-    createUpdateDeleteProperty<void, const std::string&, int64_t>
-        (&ConfigBackendDHCPv4::createUpdateGlobalParameter4, backend_selector,
-         server_selector, name, value);
-}
-    
 uint64_t
 ConfigBackendPoolDHCPv4::deleteSubnet4(const BackendSelector& backend_selector,
                                        const ServerSelector& server_selector,
