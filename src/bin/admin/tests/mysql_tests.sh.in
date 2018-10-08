@@ -482,6 +482,10 @@ EOF
     qry="select id, tag, description, modification_ts from dhcp4_server"
     run_statement "dhcp4_server" "$qry"
 
+    # table: dhcp4_server - check if it contains default entries
+    qry="select count(*) from dhcp4_server"
+    run_statement "dhcp4_server" "$qry" 2
+
     # table: dhcp4_audit
     qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp4_audit"
     run_statement "dhcp4_audit" "$qry"
@@ -533,6 +537,10 @@ EOF
     # table: dhcp6_server
     qry="select id, tag, description, modification_ts from dhcp6_server"
     run_statement "dhcp6_server" "$qry"
+
+    # table: dhcp6_server - check if it contains default entries
+    qry="select count(*) from dhcp6_server"
+    run_statement "dhcp6_server" "$qry" 2
 
     # table: dhcp6_audit
     qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp6_audit"
