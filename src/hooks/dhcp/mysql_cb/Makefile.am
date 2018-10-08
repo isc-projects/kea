@@ -16,7 +16,6 @@ BUILT_SOURCES = mysql_cb_messages.h mysql_cb_messages.cc
 
 # Ensure that the message file is included in the distribution
 EXTRA_DIST = mysql_cb_messages.mes
-EXTRA_DIST += ha.dox
 
 # Get rid of generated message files on a clean
 CLEANFILES = *.gcno *.gcda mysql_cb_messages.h mysql_cb_messages.cc s-messages
