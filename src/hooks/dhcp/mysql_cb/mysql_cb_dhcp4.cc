@@ -2665,13 +2665,13 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-                           name);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
+                                   name));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& selector) {
-    impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4);
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4));
 }
 
 std::string
