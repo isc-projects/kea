@@ -205,7 +205,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
     KEY key_dhcp4_global_parameter_server (modification_ts),
     CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
         REFERENCES dhcp4_global_parameter (id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -241,7 +241,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
     KEY key_dhcp4_option_def_server_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp4_option_def_server_option_def_id FOREIGN KEY (option_def_id)
         REFERENCES dhcp4_option_def (id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_option_def_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
@@ -281,7 +281,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_shared_network_server (
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
-        REFERENCES dhcp4_shared_network (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+        REFERENCES dhcp4_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
 # Create table dhcp4_subnet
@@ -347,7 +347,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
         ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
         REFERENCES dhcp4_subnet (subnet_id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION
+        ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
 
@@ -373,7 +373,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_options_server (
     KEY key_dhcp4_options_server_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp4_options_server_option_id FOREIGN KEY (option_id)
         REFERENCES dhcp4_options (option_id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp4_options_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp4_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -455,7 +455,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
     KEY key_dhcp6_global_parameter_server (modification_ts),
     CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
         REFERENCES dhcp6_global_parameter (id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
@@ -491,7 +491,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
     KEY key_dhcp6_option_def_server_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp6_option_def_server_option_def_id FOREIGN KEY (option_def_id)
         REFERENCES dhcp6_option_def (id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_option_def_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
@@ -533,7 +533,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
         ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
         REFERENCES dhcp6_shared_network (id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION
+        ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
 # Create table dhcp6_subnet
@@ -578,7 +578,7 @@ CREATE TABLE dhcp6_subnet_server (
         ON DELETE NO ACTION ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
         REFERENCES dhcp6_subnet (subnet_id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION
+        ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB;
 
 # Create table dhcp6_pd_pool
@@ -634,7 +634,7 @@ CREATE TABLE IF NOT EXISTS dhcp6_options_server (
     KEY key_dhcp6_options_server_modification_ts (modification_ts),
     CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id)
         REFERENCES dhcp6_options (option_id)
-        ON DELETE NO ACTION ON UPDATE NO ACTION,
+        ON DELETE CASCADE ON UPDATE NO ACTION,
     CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id)
         REFERENCES dhcp6_server (id)
         ON DELETE NO ACTION ON UPDATE NO ACTION
