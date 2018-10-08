@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+gg// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -351,7 +351,7 @@ ConfigBackendPoolDHCPv4::deleteOption4(const BackendSelector& backend_selector,
                                        const std::string& shared_network_name,
                                        const uint16_t code,
                                        const std::string& space) {
-    return (createUpdateDeleteProperty<uint64_t, const std::string&, const uint16_t,
+    return (createUpdateDeleteProperty<uint64_t, const std::string&, uint16_t,
                                        const std::string&>
             (&ConfigBackendDHCPv4::deleteOption4, backend_selector, server_selector,
              shared_network_name, code, space));
