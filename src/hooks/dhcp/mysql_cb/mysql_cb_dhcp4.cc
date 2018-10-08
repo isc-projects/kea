@@ -71,6 +71,7 @@ public:
         GET_OPTION4_POOL_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
         INSERT_GLOBAL_PARAMETER4,
+        INSERT_GLOBAL_PARAMETER4_SERVER,
         INSERT_SUBNET4,
         INSERT_POOL4,
         INSERT_SHARED_NETWORK4,
@@ -156,12 +157,17 @@ public:
     /// doesn't exist.
     StampedValuePtr getGlobalParameter4(const ServerSelector& /* server_selector */,
                                         const std::string& name) {
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(name)
-        };
-
         StampedValueCollection parameters;
-        getGlobalParameters4(GET_GLOBAL_PARAMETER4, in_bindings, parameters);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createString(name)
+            };
+
+            getGlobalParameters4(GET_GLOBAL_PARAMETER4, in_bindings, parameters);
+        }
 
         return (parameters.empty() ? StampedValuePtr() : *parameters.begin());
     }
@@ -173,10 +179,27 @@ public:
     /// @param value Value of the global parameter.
     void createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
                                       const StampedValuePtr& value) {
+        MySqlTransaction transaction(conn_);
+
+        auto tags = getServerTags(server_selector);
+
+        /// @todo Currently we allow only one server tag for creation and update
+        /// of the global parameters. If we allow more, this is getting very tricky,
+        /// because we combine updates and insertions. We have to define how we
+        /// want to update an object shared by multiple servers. What if selector
+        /// contains one tag, but the parameter is shared by multiple? Should it
+        /// update one or all?.
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while creating or updating global configuration"
+                      " parameter. Got: " << getServerTagsAsText(server_selector));
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(value->getName()),
             MySqlBinding::createString(value->getValue()),
             MySqlBinding::createTimestamp(value->getModificationTime()),
+            MySqlBinding::createString(*tags.begin()),
             MySqlBinding::createString(value->getName())
         };
 
@@ -189,7 +212,27 @@ public:
             in_bindings.pop_back();
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
                               in_bindings);
+
+            // Successfully inserted global parameter. Now, we have to associate it
+            // with the server tag.
+
+            // Let's first get the primary key of the global parameter.
+            uint64_t id = mysql_insert_id(conn_.mysql_);
+
+            // Create bindings for inserting the association into
+            // dhcp4_global_parameter_server table.
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createInteger<uint64_t>(id), // parameter_id
+                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createTimestamp(value->getModificationTime()), // modification_ts
+            };
+
+            // Insert association.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
+                              in_server_bindings);
         }
+
+        transaction.commit();
     }
 
     /// @brief Sends query to the database to retrieve multiple subnets.
@@ -1519,36 +1562,49 @@ TaggedStatementArray tagged_statements = { {
     // Select global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::GET_GLOBAL_PARAMETER4,
       "SELECT"
-      "  id,"
-      "  name,"
-      "  value,"
-      "  modification_ts "
-      "FROM dhcp4_global_parameter "
-      "WHERE name = ? "
-      "ORDER BY id"
+      "  g.id,"
+      "  g.name,"
+      "  g.value,"
+      "  g.modification_ts "
+      "FROM dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a "
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ? AND g.name = ? "
+      "ORDER BY g.id"
     },
 
     // Select all global parameters.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
       "SELECT"
-      "  id,"
-      "  name,"
-      "  value,"
-      "  modification_ts "
-      "FROM dhcp4_global_parameter "
-      "ORDER BY id"
+      "  g.id,"
+      "  g.name,"
+      "  g.value,"
+      "  g.modification_ts "
+      "FROM dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a "
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ? "
+      "ORDER BY g.id"
     },
 
     // Select modified global parameters.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
       "SELECT"
-      "  id,"
-      "  name,"
-      "  value,"
-      "  modification_ts "
-      "FROM dhcp4_global_parameter "
-      "WHERE modification_ts > ? "
-      "ORDER BY id"
+      "  g.id,"
+      "  g.name,"
+      "  g.value,"
+      "  g.modification_ts "
+      "FROM dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a "
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ? AND g.modification_ts > ? "
+      "ORDER BY g.id"
     },
 
     // Select subnet by id.
@@ -2088,6 +2144,14 @@ TaggedStatementArray tagged_statements = { {
       "  modification_ts"
       ") VALUES (?, ?, ?)" },
 
+    // Insert association of the global parameter with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
+      "INSERT INTO dhcp4_global_parameter_server("
+      "  parameter_id,"
+      "  server_id,"
+      "  modification_ts"
+      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
+
     // Insert a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
       "INSERT INTO dhcp4_subnet("
@@ -2173,11 +2237,17 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing global parameter.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
-      "UPDATE dhcp4_global_parameter SET"
-      "  name = ?,"
-      "  value = ?,"
-      "  modification_ts = ? "
-      "WHERE name = ?" },
+      "UPDATE dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a"
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON a.server_id = s.id "
+      "SET"
+      "  g.name = ?,"
+      "  g.value = ?,"
+      "  g.modification_ts = ? "
+      "WHERE s.tag = ? AND g.name = ?"
+    },
 
     // Update existing subnet.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
@@ -2514,10 +2584,14 @@ MySqlConfigBackendDHCPv4::getGlobalParameter4(const ServerSelector& server_selec
 
 StampedValueCollection
 MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* server_selector */) const {
-    MySqlBindingCollection in_bindings;
     StampedValueCollection parameters;
-    impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
-                                in_bindings, parameters);
+
+    auto tags = impl_->getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag) };
+        impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
+                                    in_bindings, parameters);
+    }
     return (parameters);
 }
 
@@ -2525,12 +2599,18 @@ StampedValueCollection
 MySqlConfigBackendDHCPv4::
 getModifiedGlobalParameters4(const db::ServerSelector& /* server_selector */,
                              const boost::posix_time::ptime& modification_time) const {
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createTimestamp(modification_time)
-    };
     StampedValueCollection parameters;
-    impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
-                                in_bindings, parameters);
+
+    auto tags = impl_->getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
+            MySqlBinding::createTimestamp(modification_time)
+        };
+        impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
+                                    in_bindings, parameters);
+    }
+
     return (parameters);
 }
 

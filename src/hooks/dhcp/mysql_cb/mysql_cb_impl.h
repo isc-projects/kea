@@ -8,12 +8,14 @@
 #define MYSQL_CONFIG_BACKEND_IMPL_H
 
 #include <database/database_connection.h>
+#include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/network.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_connection.h>
+#include <set>
 #include <string>
 
 namespace isc {
@@ -34,6 +36,18 @@ public:
 
     /// @brief Destructor.
     ~MySqlConfigBackendImpl();
+
+    /// @brief Returns server tags associated with the particular selector.
+    ///
+    /// @param server_selector Server selector.
+    /// @return Set of server tags.
+    std::set<std::string> getServerTags(const db::ServerSelector& server_selector) const;
+
+    /// @brief Returns server tags associated with the particular selector
+    /// as text.
+    ///
+    /// This method is useful for logging purposes.
+    std::string getServerTagsAsText(const db::ServerSelector& server_selector) const;
 
     /// @brief Sends query to delete rows from a table.
     ///

@@ -306,6 +306,8 @@ public:
 // deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
+    StampedValuePtr original_server_tag = server_tag;
+
     // Explicitly set modification time to make sure that the time
     // returned from the database is correct.
     server_tag->setModificationTime(timestamps_["yesterday"]);
@@ -320,6 +322,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_EQ("whale", returned_server_tag->getValue());
     EXPECT_TRUE(returned_server_tag->getModificationTime() ==
                 server_tag->getModificationTime());
+
+    // Check that the parameter is not returned when the server tag is not
+    // matching.
+    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::ALL(),
+                                                      "server-tag");
+    EXPECT_FALSE(returned_server_tag);
+
+    // Check that the parameter is not updated when the server tag is not
+    // matching.
+    server_tag = StampedValue::create("server-tag", "fish");
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
+                                         server_tag);
+    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED()
+                                                      , "server-tag");
+    ASSERT_TRUE(returned_server_tag);
+    EXPECT_EQ("server-tag", returned_server_tag->getName());
+    EXPECT_EQ("whale", returned_server_tag->getValue());
+    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
+                original_server_tag->getModificationTime());
 
     // Check that the parameter is udpated when it already exists in
     // the database.
