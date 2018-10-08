@@ -45,6 +45,14 @@ constexpr unsigned long OPTION_VALUE_BUF_LENGTH = 65536;
 constexpr unsigned long FORMATTED_OPTION_VALUE_BUF_LENGTH = 8192;
 
 constexpr unsigned long OPTION_SPACE_BUF_LENGTH = 128;
+
+constexpr unsigned long OPTION_NAME_BUF_LENGTH = 128;
+
+constexpr unsigned long OPTION_ENCAPSULATE_BUF_LENGTH = 128;
+
+constexpr unsigned long OPTION_RECORD_TYPES_BUF_LENGTH = 512;
+
+
 //*}
 
 } // end of namespace isc::cb
