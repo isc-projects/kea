@@ -165,12 +165,14 @@ TEST(FdWatcherTest, subscribe) {
     ASSERT_NO_THROW(subs->module_change_subscribe(model.c_str(), cb));
 
     // Check some file descriptors were opened.
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(3, fw->readFds.size());
     EXPECT_EQ(0, fw->writeFds.size());
 
     // Reset subscription and check file descriptors are closed.
     subs.reset();
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(1, fw->readFds.size());
 
@@ -205,6 +207,7 @@ TEST(FdWatcherTest, subscribeNoThread) {
     ASSERT_NO_THROW(subs->module_change_subscribe(model.c_str(), cb));
 
     // Check some file descriptors were opened.
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(3, fw->readFds.size());
     EXPECT_EQ(0, fw->writeFds.size());
@@ -221,6 +224,7 @@ TEST(FdWatcherTest, subscribeNoThread) {
 
     // Reset subscription and check file descriptors are closed.
     subs.reset();
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(1, fw->readFds.size());
 
@@ -257,24 +261,28 @@ TEST(FdWatcherTest, unsubscribe) {
     ASSERT_NO_THROW(subs1->module_change_subscribe(model.c_str(), cb));
 
     // Check some file descriptors were opened.
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(3, fw->readFds.size());
     EXPECT_EQ(0, fw->writeFds.size());
 
     // Reset subscription and check file descriptors are closed.
     subs1.reset();
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(1, fw->readFds.size());
 
     // Try again to subscribe.
     S_Subscribe subs2(new Subscribe(sess));
     ASSERT_NO_THROW(subs2->module_change_subscribe(model.c_str(), cb));
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(3, fw->readFds.size());
     EXPECT_EQ(0, fw->writeFds.size());
 
     // Unsubscribe.
     subs2.reset();
+    io_service->run_one();
     io_service->poll();
     EXPECT_EQ(1, fw->readFds.size());
 
