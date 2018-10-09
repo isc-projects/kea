@@ -10,6 +10,7 @@
 #include <config.h>
 
 #include <netconf/fd_watcher.h>
+#include <netconf/netconf_log.h>
 
 #include <boost/function.hpp>
 #include <sys/select.h>
@@ -197,8 +198,14 @@ FdWatcher::postHandler() {
             // sr_fd_event_process is C code.
             sr_fd_change_t* change_set = 0;
             size_t cnt = 0;
-            // ignore return because we don't know what to do on error.
-            sr_fd_event_process(fd, SR_FD_INPUT_READY, &change_set, &cnt);
+            int ret = sr_fd_event_process(fd, SR_FD_INPUT_READY,
+                                          &change_set, &cnt);
+            if (ret != SR_ERR_OK) {
+                // We don't know what to do on error...
+                // which BTW should never happen.
+                LOG_WARN(netconf_logger, NETCONF_FD_WATCHER_ERROR)
+                    .arg(string(sr_strerror(ret)));
+            }
             for (size_t i = 0; i < cnt; ++i) {
                 if (change_set[i].action == SR_FD_START_WATCHING) {
                     watcher->addFd(change_set[i].fd,

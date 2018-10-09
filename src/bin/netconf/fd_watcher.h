@@ -37,6 +37,9 @@ typedef boost::shared_ptr<isc::util::thread::Thread> ThreadPtr;
 /// The alternative is to leave sysrepo to create its own thread to
 /// handle suscriptions with an independent and likely incompatible
 /// event loop and of course locking issues.
+/// Reference:
+///     http://www.sysrepo.org/static/doc/html/subscribtions.html#callbacks
+///
 /// To simplify callbacks this class is implemented as a singleton.
 class FdWatcher : public boost::noncopyable {
 public:
@@ -59,9 +62,14 @@ public:
     int init(const asiolink::IOServicePtr& io_service);
 
     /// @brief Clear the fd watcher.
+    ///
+    /// Uses the terminate watch socket to wake up and terminate the thread
+    /// if it exists.
     void clear();
 
     /// @brief Add a file descriptor to watch.
+    ///
+    /// The file descriptor is given by sysrepo for reading and/or writing.
     ///
     /// @param fd The file descriptor to add.
     /// @param reading Boolean flag: true to watch for reading.
@@ -69,6 +77,8 @@ public:
     void addFd(int fd, bool reading, bool writing);
 
     /// @brief Delete a file descriptor to watch.
+    ///
+    /// The file descriptor is given by sysrepo for reading and/or writing.
     ///
     /// @param fd The file descriptor to delete.
     /// @param reading Boolean flag: true to watch for reading.
@@ -78,13 +88,16 @@ public:
     /// @brief Post handler.
     ///
     /// The thread posts this handler on the IO service when there
-    /// should be a file descriptor available for IO.
+    /// should be a file descriptor available for IO. This handler
+    /// will be called by the process run loop in the main thread.
     static void postHandler();
 
     /// @brief Thread body.
     ///
     /// The thread body: select() on file descriptors, when one is
-    /// available posts fdAvailable and returns.
+    /// available posts fdAvailable and returns. As the file descriptors
+    /// include the terminate watch socket the thread can be triggered
+    /// from Kea too (vs only by sysrepo).
     static void threadBody();
 
     /// @brief Shared pointer to the IOService object where to post callbacks.
@@ -92,7 +105,7 @@ public:
 
     /// @brief Terminate watch socket.
     ///
-    /// Used to wake up the thread.
+    /// Used to wake up and terminate the thread from Kea.
     isc::util::WatchSocket watch_terminate_;
 
     /// @brief Polling thread.

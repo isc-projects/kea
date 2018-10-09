@@ -20,6 +20,10 @@ in earlier log entries, possibly on lower levels.
 This is a fatal error message issued when the Netconf application
 encounters an unrecoverable error from within the event loop.
 
+% NETCONF_FD_WATCHER_ERROR sysrepo file descriptor watcher event process returned an error: %1
+This is a warning message when the sysrepo event process routine of the file
+descriptor watcher returns an error. This error is displayed and ignored.
+
 % NETCONF_RUN_EXIT application is exiting the event loop
 This is a debug message issued when the Netconf application exits its
 event loop.
