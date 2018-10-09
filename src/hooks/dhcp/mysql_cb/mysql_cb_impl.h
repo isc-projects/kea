@@ -64,6 +64,18 @@ public:
     uint64_t deleteFromTable(const int index,
                              const std::string& key);
 
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @param index Index of the statement to be executed.
+    /// @param server_selector Server selector.
+    /// @param key String value to be used as input binding to the delete
+    /// statement. The default value is empty which indicates that the
+    /// key should not be used in the query.
+    /// @return number of deleted rows.
+    uint64_t deleteFromTable(const int index,
+                             const db::ServerSelector& server_selector,
+                             const std::string& key = "");
+
     /// @brief Sends query to the database to retrieve multiple option
     /// definitions.
     ///

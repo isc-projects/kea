@@ -305,75 +305,69 @@ public:
 // This test verifies that the global parameter can be added, updated and
 // deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
-    StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
-    StampedValuePtr original_server_tag = server_tag;
+    StampedValuePtr global_parameter = StampedValue::create("global", "whale");
 
     // Explicitly set modification time to make sure that the time
     // returned from the database is correct.
-    server_tag->setModificationTime(timestamps_["yesterday"]);
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
-                                         server_tag);
+    global_parameter->setModificationTime(timestamps_["yesterday"]);
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
+                                         global_parameter);
 
     // Verify returned parameter and the modification time.
-    StampedValuePtr returned_server_tag =
-        cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(), "server-tag");
-    ASSERT_TRUE(returned_server_tag);
-    EXPECT_EQ("server-tag", returned_server_tag->getName());
-    EXPECT_EQ("whale", returned_server_tag->getValue());
-    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
-                server_tag->getModificationTime());
+    StampedValuePtr returned_global_parameter =
+        cbptr_->getGlobalParameter4(ServerSelector::ALL(), "global");
+    ASSERT_TRUE(returned_global_parameter);
+    EXPECT_EQ("global", returned_global_parameter->getName());
+    EXPECT_EQ("whale", returned_global_parameter->getValue());
+    EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
+                global_parameter->getModificationTime());
 
-    // Check that the parameter is not returned when the server tag is not
-    // matching.
-    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::ALL(),
-                                                      "server-tag");
-    EXPECT_FALSE(returned_server_tag);
+    // Because we have added the global parameter for all servers, it
+    // should be also returned for the explicitly specified server.
+    returned_global_parameter = cbptr_->getGlobalParameter4(ServerSelector::ONE("server1"),
+                                                            "global");
+    ASSERT_TRUE(returned_global_parameter);
+    EXPECT_EQ("global", returned_global_parameter->getName());
+    EXPECT_EQ("whale", returned_global_parameter->getValue());
+    EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
+                global_parameter->getModificationTime());
 
-    // Check that the parameter is not updated when the server tag is not
-    // matching.
-    server_tag = StampedValue::create("server-tag", "fish");
+    // Check that the parameter is udpated when selector is specified correctly.
+    global_parameter = StampedValue::create("global", "fish");
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
-                                         server_tag);
-    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED()
-                                                      , "server-tag");
-    ASSERT_TRUE(returned_server_tag);
-    EXPECT_EQ("server-tag", returned_server_tag->getName());
-    EXPECT_EQ("whale", returned_server_tag->getValue());
-    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
-                original_server_tag->getModificationTime());
+                                         global_parameter);
+    returned_global_parameter = cbptr_->getGlobalParameter4(ServerSelector::ALL(),
+                                                            "global");
+    ASSERT_TRUE(returned_global_parameter);
+    EXPECT_EQ("global", returned_global_parameter->getName());
+    EXPECT_EQ("fish", returned_global_parameter->getValue());
+    EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
+                global_parameter->getModificationTime());
 
-    // Check that the parameter is udpated when it already exists in
-    // the database.
-    server_tag = StampedValue::create("server-tag", "fish");
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
-                                         server_tag);
-    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(),
-                                             "server-tag");
-    ASSERT_TRUE(returned_server_tag);
-    EXPECT_EQ("server-tag", returned_server_tag->getName());
-    EXPECT_EQ("fish", returned_server_tag->getValue());
-    EXPECT_TRUE(returned_server_tag->getModificationTime() ==
-                server_tag->getModificationTime());
+    // Should not delete parameter specified for all servers if explicit
+    // server name is provided.
+    EXPECT_EQ(0, cbptr_->deleteGlobalParameter4(ServerSelector::ONE("server1"),
+                                                "global"));
 
     // Delete parameter and make sure it is gone.
-    cbptr_->deleteGlobalParameter4(ServerSelector::UNASSIGNED(), "server-tag");
-    returned_server_tag = cbptr_->getGlobalParameter4(ServerSelector::UNASSIGNED(),
-                                                      "server-tag");
-    EXPECT_FALSE(returned_server_tag);
+    cbptr_->deleteGlobalParameter4(ServerSelector::ALL(), "global");
+    returned_global_parameter = cbptr_->getGlobalParameter4(ServerSelector::ALL(),
+                                                            "global");
+    EXPECT_FALSE(returned_global_parameter);
 }
 
 // This test verifies that all global parameters can be retrieved and deleted.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     // Create 3 parameters and put them into the database.
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          StampedValue::create("name1", "value1"));
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          StampedValue::create("name2", 65));
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          StampedValue::create("name3", "value3"));
 
     // Fetch all parameters.
-    auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::UNASSIGNED());
+    auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     ASSERT_EQ(3, parameters.size());
 
     // Verify their values.
@@ -381,9 +375,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     EXPECT_EQ(65, parameters[1]->getSignedIntegerValue());
     EXPECT_EQ("value3", parameters[2]->getValue());
 
+    // Should be able to fetct these parameters when explicitly providing
+    // the server tag.
+    parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ONE("server1"));
+    EXPECT_EQ(3, parameters.size());
+
+    // Deleting global parameters with non-matching server selector
+    // should fail.
+    EXPECT_EQ(0, cbptr_->deleteAllGlobalParameters4(ServerSelector::ONE("server1")));
+
     // Delete all parameters and make sure they are gone.
-    cbptr_->deleteAllGlobalParameters4(ServerSelector::UNASSIGNED());
-    parameters = cbptr_->getAllGlobalParameters4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(3, cbptr_->deleteAllGlobalParameters4(ServerSelector::ALL()));
+    parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     EXPECT_TRUE(parameters.empty());
 }
 
@@ -393,37 +396,43 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
     // "yesterday", "today" and "tomorrow" respectively.
     StampedValuePtr value = StampedValue::create("name1", "value1");
     value->setModificationTime(timestamps_["yesterday"]);
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          value);
 
     value = StampedValue::create("name2", 65);
     value->setModificationTime(timestamps_["today"]);
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          value);
 
     value = StampedValue::create("name3", "value3");
     value->setModificationTime(timestamps_["tomorrow"]);
-    cbptr_->createUpdateGlobalParameter4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          value);
 
     // Get parameters modified after "today".
-    auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::UNASSIGNED(),
+    auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ALL(),
                                                            timestamps_["today"]);
 
     // It should be the one modified "tomorrow". 
     ASSERT_EQ(1, parameters.size());
     ASSERT_TRUE(parameters[0]);
     EXPECT_EQ("value3", parameters[0]->getValue());
+
+    // Should be able to fetct these parameters when explicitly providing
+    // the server tag.
+    parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ONE("server1"),
+                                                      timestamps_["today"]);
+    EXPECT_EQ(1, parameters.size());
 }
 
 // Test that subnet can be inserted, fetched, updated and then fetched again.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // Insert new subnet.
     Subnet4Ptr subnet = test_subnets_[0];
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Fetch this subnet by subnet identifier.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
 
@@ -433,10 +442,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
 
     // Update the subnet in the database (both use the same ID).
     Subnet4Ptr subnet2 = test_subnets_[1];
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet2);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet2);
 
     // Fetch updated subnet and see if it matches.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 }
@@ -450,14 +459,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4SharedNetwork) {
     shared_network->add(subnet);
 
     // Store shared network in the database.
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
                                        shared_network);
 
     // Store subnet associated with the shared network in the database.
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Fetch this subnet by subnet identifier.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     test_subnets_[0]->getID());
     ASSERT_TRUE(returned_subnet);
 
@@ -474,10 +483,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4SharedNetwork) {
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
     // Insert subnet to the database.
     Subnet4Ptr subnet = test_subnets_[0];
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Fetch the subnet by prefix.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     "192.0.2.0/24");
     ASSERT_TRUE(returned_subnet);
 
@@ -490,11 +499,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     // Insert test subnets into the database. Note that the second subnet will
     // overwrite the first subnet as they use the same ID.
     for (auto subnet : test_subnets_) {
-        cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+        cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
     }
 
     // Fetch all subnets.
-    Subnet4Collection subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    Subnet4Collection subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
     // See if the subnets are returned ok.
@@ -504,27 +513,27 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     }
 
     // Attempt to remove the non existing subnet should  return 0.
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(), 22));
-    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(), 22));
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ALL(),
                                        "155.0.3.0/24"));
     // All subnets should be still there.
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
     // Delete first subnet by id and verify that it is gone.
-    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
                                        test_subnets_[1]->getID()));
-    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 2, subnets.size());
 
     // Delete second subnet by prefix and verify it is gone.
-    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
                                        test_subnets_[2]->toText()));
-    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 3, subnets.size());
 
     // Delete all.
-    EXPECT_EQ(1, cbptr_->deleteAllSubnets4(ServerSelector::UNASSIGNED()));
-    subnets = cbptr_->getAllSubnets4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(1, cbptr_->deleteAllSubnets4(ServerSelector::ALL()));
+    subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_TRUE(subnets.empty());
 }
 
@@ -540,26 +549,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
 
     // Insert subnets into the database.
     for (int i = 1; i < test_subnets_.size(); ++i) {
-        cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(),
+        cbptr_->createUpdateSubnet4(ServerSelector::ALL(),
                                     test_subnets_[i]);
     }
 
     // Fetch subnets with timestamp later than today. Only one subnet
     // should be returned.
     Subnet4Collection
-        subnets = cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
+        subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                               timestamps_["today"]);
     ASSERT_EQ(1, subnets.size());
 
     // Fetch subnets with timestamp later than yesterday. We should get
     // two subnets.
-    subnets = cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
+    subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                           timestamps_["yesterday"]);
     ASSERT_EQ(2, subnets.size());
 
     // Fetch subnets with timestamp later than tomorrow. Nothing should
     // be returned.
-    subnets = cbptr_->getModifiedSubnets4(ServerSelector::UNASSIGNED(),
+    subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                           timestamps_["tomorrow"]);
     ASSERT_TRUE(subnets.empty());
 }
@@ -569,11 +578,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
     // Insert new shared network.
     SharedNetwork4Ptr shared_network = test_networks_[0];
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), shared_network);
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network);
 
     // Fetch this shared network by name.
     SharedNetwork4Ptr
-        returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+        returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                      test_networks_[0]->getName());
     ASSERT_TRUE(returned_network);
 
@@ -584,10 +593,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
 
     // Update shared network in the database.
     SharedNetwork4Ptr shared_network2 = test_networks_[1];
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), shared_network2);
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network2);
 
     // Fetch updated subnet and see if it matches.
-    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[1]->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
               returned_network->toElement()->str());
@@ -598,12 +607,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     // Insert test shared networks into the database. Note that the second shared
     // network will overwrite the first shared network as they use the same name.
     for (auto network : test_networks_) {
-        cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(), network);
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
     }
 
     // Fetch all shared networks.
     SharedNetwork4Collection networks =
-        cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+        cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
     // See if shared networks are returned ok.
@@ -613,20 +622,20 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     }
 
     // Deleting non-existing shared network should return 0.
-    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               "big-fish"));
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
     // Delete first shared network and verify it is gone..
-    EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
-    networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
 
     // Delete all.
-    EXPECT_EQ(2, cbptr_->deleteAllSharedNetworks4(ServerSelector::UNASSIGNED()));
-    networks = cbptr_->getAllSharedNetworks4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(2, cbptr_->deleteAllSharedNetworks4(ServerSelector::ALL()));
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_TRUE(networks.empty());
 }
 
@@ -643,26 +652,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
 
     // Insert shared networks into the database.
     for (int i = 1; i < test_networks_.size(); ++i) {
-        cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+        cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
                                            test_networks_[i]);
     }
 
     // Fetch shared networks with timestamp later than today. Only one
     // shared network  should be returned.
     SharedNetwork4Collection
-        networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+        networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                       timestamps_["today"]);
     ASSERT_EQ(1, networks.size());
 
     // Fetch shared networks with timestamp later than yesterday. We
     // should get two shared networks.
-    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                  timestamps_["yesterday"]);
     ASSERT_EQ(2, networks.size());
 
     // Fetch shared networks with timestamp later than tomorrow. Nothing
     // should be returned.
-    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::UNASSIGNED(),
+    networks = cbptr_->getModifiedSharedNetworks4(ServerSelector::ALL(),
                                                   timestamps_["tomorrow"]);
     ASSERT_TRUE(networks.empty());
 }
@@ -672,11 +681,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSharedNetworks4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
     // Insert new option definition.
     OptionDefinitionPtr option_def = test_option_defs_[0];
-    cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def);
+    cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def);
 
     // Fetch this option_definition by subnet identifier.
     OptionDefinitionPtr returned_option_def =
-        cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+        cbptr_->getOptionDef4(ServerSelector::ALL(),
                               test_option_defs_[0]->getCode(),
                               test_option_defs_[0]->getOptionSpaceName());
     ASSERT_TRUE(returned_option_def);
@@ -685,10 +694,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
 
     // Update the option definition in the database.
     OptionDefinitionPtr option_def2 = test_option_defs_[1];
-    cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def2);
+    cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def2);
 
     // Fetch updated option definition and see if it matches.
-    returned_option_def = cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+    returned_option_def = cbptr_->getOptionDef4(ServerSelector::ALL(),
                                                 test_option_defs_[1]->getCode(),
                                                 test_option_defs_[1]->getOptionSpaceName());
     EXPECT_TRUE(returned_option_def->equals(*option_def2));
@@ -700,11 +709,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
     // option definition will overwrite the first option definition as they use
     // the same code and space.
     for (auto option_def : test_option_defs_) {
-        cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(), option_def);
+        cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def);
     }
 
     // Fetch all option_definitions.
-    OptionDefContainer option_defs = cbptr_->getAllOptionDefs4(ServerSelector::UNASSIGNED());
+    OptionDefContainer option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
     ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
 
     // See if option definitions are returned ok.
@@ -720,22 +729,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
     }
 
     // Deleting non-existing option definition should return 0.
-    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                           99, "non-exiting-space"));
     // All option definitions should be still there.
     ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
 
     // Delete one of the option definitions and see if it is gone.
-    EXPECT_EQ(1, cbptr_->deleteOptionDef4(ServerSelector::UNASSIGNED(),
+    EXPECT_EQ(1, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
                                           test_option_defs_[2]->getCode(),
                                           test_option_defs_[2]->getOptionSpaceName()));
-    ASSERT_FALSE(cbptr_->getOptionDef4(ServerSelector::UNASSIGNED(),
+    ASSERT_FALSE(cbptr_->getOptionDef4(ServerSelector::ALL(),
                                        test_option_defs_[2]->getCode(),
                                        test_option_defs_[2]->getOptionSpaceName()));
 
     // Delete all remaining option definitions.
-    EXPECT_EQ(2, cbptr_->deleteAllOptionDefs4(ServerSelector::UNASSIGNED()));
-    option_defs = cbptr_->getAllOptionDefs4(ServerSelector::UNASSIGNED());
+    EXPECT_EQ(2, cbptr_->deleteAllOptionDefs4(ServerSelector::ALL()));
+    option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
     ASSERT_TRUE(option_defs.empty());
 }
 
@@ -752,26 +761,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefs4) {
 
     // Insert option definitions into the database.
     for (int i = 1; i < test_networks_.size(); ++i) {
-        cbptr_->createUpdateOptionDef4(ServerSelector::UNASSIGNED(),
+        cbptr_->createUpdateOptionDef4(ServerSelector::ALL(),
                                        test_option_defs_[i]);
     }
 
     // Fetch option definitions with timestamp later than today. Only one
     // option definition should be returned.
     OptionDefContainer
-        option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+        option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
                                                      timestamps_["today"]);
     ASSERT_EQ(1, option_defs.size());
 
     // Fetch option definitions with timestamp later than yesterday. We
     // should get two option definitions.
-    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
                                                  timestamps_["yesterday"]);
     ASSERT_EQ(2, option_defs.size());
 
     // Fetch option definitions with timestamp later than tomorrow. Nothing
     // should be returned.
-    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::UNASSIGNED(),
+    option_defs = cbptr_->getModifiedOptionDefs4(ServerSelector::ALL(),
                                               timestamps_["tomorrow"]);
     ASSERT_TRUE(option_defs.empty());
 }
@@ -780,13 +789,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptionDefs4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
     // Add option to the database.
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 opt_boot_file_name);
 
     // Make sure we can retrieve this option and that it is equal to the
     // option we have inserted into the database.
     OptionDescriptorPtr returned_opt_boot_file_name =
-        cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+        cbptr_->getOption4(ServerSelector::ALL(),
                            opt_boot_file_name->option_->getType(),
                            opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
@@ -794,22 +803,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
 
     // Modify option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 opt_boot_file_name);
 
     // Retrieve the option again and make sure that updates were
     // properly propagated to the database.
-    returned_opt_boot_file_name = cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+    returned_opt_boot_file_name = cbptr_->getOption4(ServerSelector::ALL(),
                                                      opt_boot_file_name->option_->getType(),
                                                      opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
     EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
 
     // Delete option from the database and make sure it is gone.
-    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->deleteOption4(ServerSelector::ALL(),
                           opt_boot_file_name->option_->getType(),
                           opt_boot_file_name->space_name_);
-    EXPECT_FALSE(cbptr_->getOption4(ServerSelector::UNASSIGNED(),
+    EXPECT_FALSE(cbptr_->getOption4(ServerSelector::ALL(),
                                     opt_boot_file_name->option_->getType(),
                                     opt_boot_file_name->space_name_));
 }
@@ -817,15 +826,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
 // This test verifies that all global options can be retrieved.
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
     // Add three global options to the database.
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[0]);
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[1]);
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[5]);
 
     // Retrieve all these options.
-    OptionContainer returned_options = cbptr_->getAllOptions4(ServerSelector::UNASSIGNED());
+    OptionContainer returned_options = cbptr_->getAllOptions4(ServerSelector::ALL());
     ASSERT_EQ(3, returned_options.size());
 
     // Get the container index used to search options by option code.
@@ -855,17 +864,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
     test_options_[5]->setModificationTime(timestamps_["today"]);
 
     // Put options into the database.
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[0]);
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[1]);
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 test_options_[5]);
 
     // Get options with the timestamp later than today. Only
     // one option should be returned.
     OptionContainer returned_options =
-        cbptr_->getModifiedOptions4(ServerSelector::UNASSIGNED(),
+        cbptr_->getModifiedOptions4(ServerSelector::ALL(),
                                     timestamps_["today"]);
     ASSERT_EQ(1, returned_options.size());
 
@@ -882,18 +891,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     // Insert new subnet.
     Subnet4Ptr subnet = test_subnets_[1];
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Fetch this subnet by subnet identifier.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
                                 opt_boot_file_name);
 
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
@@ -903,10 +912,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
                                 opt_boot_file_name);
 
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
     returned_opt_boot_file_name =
@@ -914,11 +923,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
-    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(), subnet->getID(),
+    cbptr_->deleteOption4(ServerSelector::ALL(), subnet->getID(),
                           opt_boot_file_name->option_->getType(),
                           opt_boot_file_name->space_name_);
 
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
@@ -930,19 +939,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     // Insert new subnet.
     Subnet4Ptr subnet = test_subnets_[1];
-    cbptr_->createUpdateSubnet4(ServerSelector::UNASSIGNED(), subnet);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
     // Add an option into the pool.
     const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
     ASSERT_TRUE(pool);
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_boot_file_name);
 
     // Query for a subnet.
-    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                                     subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
@@ -959,13 +968,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
 
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 pool->getFirstAddress(),
                                 pool->getLastAddress(),
                                 opt_boot_file_name);
 
     // Fetch the subnet and the corresponding pool.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
     const PoolPtr returned_pool1 = returned_subnet->getPool(Lease::TYPE_V4,
@@ -979,7 +988,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
     // Delete option from the pool.
-    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->deleteOption4(ServerSelector::ALL(),
                           pool->getFirstAddress(),
                           pool->getLastAddress(),
                           opt_boot_file_name->option_->getType(),
@@ -987,7 +996,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
 
     // Fetch the subnet and the pool from the database again to make sure
     // that the option is really gone.
-    returned_subnet = cbptr_->getSubnet4(ServerSelector::UNASSIGNED(),
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
     ASSERT_TRUE(returned_subnet);
     const PoolPtr returned_pool2 = returned_subnet->getPool(Lease::TYPE_V4,
@@ -1004,21 +1013,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     // Insert new shared network.
     SharedNetwork4Ptr shared_network = test_networks_[1];
-    cbptr_->createUpdateSharedNetwork4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(),
                                        shared_network);
 
     // Fetch this shared network by name.
     SharedNetwork4Ptr returned_network =
-        cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+        cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                   shared_network->getName());
     ASSERT_TRUE(returned_network);
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 shared_network->getName(),
                                 opt_boot_file_name);
 
-    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                 shared_network->getName());
     ASSERT_TRUE(returned_network);
 
@@ -1028,11 +1037,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
-    cbptr_->createUpdateOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 shared_network->getName(),
                                 opt_boot_file_name);
 
-    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);
     returned_opt_boot_file_name =
@@ -1040,11 +1049,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
-    cbptr_->deleteOption4(ServerSelector::UNASSIGNED(),
+    cbptr_->deleteOption4(ServerSelector::ALL(),
                           shared_network->getName(),
                           opt_boot_file_name->option_->getType(),
                           opt_boot_file_name->space_name_);
-    returned_network = cbptr_->getSharedNetwork4(ServerSelector::UNASSIGNED(),
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);
     EXPECT_FALSE(returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);

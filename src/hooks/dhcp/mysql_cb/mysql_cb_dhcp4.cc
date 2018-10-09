@@ -179,6 +179,7 @@ public:
     /// @param value Value of the global parameter.
     void createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
                                       const StampedValuePtr& value) {
+
         MySqlTransaction transaction(conn_);
 
         auto tags = getServerTags(server_selector);
@@ -1570,8 +1571,8 @@ TaggedStatementArray tagged_statements = { {
       "INNER JOIN dhcp4_global_parameter_server AS a "
       "  ON g.id = a.parameter_id "
       "INNER JOIN dhcp4_server AS s "
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ? AND g.name = ? "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id = 1) AND g.name = ? "
       "ORDER BY g.id"
     },
 
@@ -1586,8 +1587,8 @@ TaggedStatementArray tagged_statements = { {
       "INNER JOIN dhcp4_global_parameter_server AS a "
       "  ON g.id = a.parameter_id "
       "INNER JOIN dhcp4_server AS s "
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ? "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id = 1)"
       "ORDER BY g.id"
     },
 
@@ -1602,8 +1603,8 @@ TaggedStatementArray tagged_statements = { {
       "INNER JOIN dhcp4_global_parameter_server AS a "
       "  ON g.id = a.parameter_id "
       "INNER JOIN dhcp4_server AS s "
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ? AND g.modification_ts > ? "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id=1) AND g.modification_ts > ? "
       "ORDER BY g.id"
     },
 
@@ -2379,13 +2380,22 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-      "DELETE FROM dhcp4_global_parameter "
-      "WHERE name = ?"
+      "DELETE g FROM dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a "
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON (a.server_id = s.id) "
+      "WHERE s.tag = ? AND g.name = ? "
     },
 
     // Delete all global parameters.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
-      "DELETE FROM dhcp4_global_parameter"
+      "DELETE g FROM dhcp4_global_parameter AS g "
+      "INNER JOIN dhcp4_global_parameter_server AS a "
+      "  ON g.id = a.parameter_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON (a.server_id = s.id) "
+      "WHERE s.tag = ?"
     },
 
     // Delete subnet by id.
@@ -2747,12 +2757,13 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /*server_selector*/,
                                                  const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-                                   name));
+                                   server_selector, name));
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& /* server_selector */) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4));
+MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& server_selector) {
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
+                                   server_selector));
 }
 
 std::string
