@@ -812,17 +812,10 @@ CREATE TABLE IF NOT EXISTS dhcp4_server (
     KEY key_dhcp4_server_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
-# Special server entry meaning "unassigned server". This refers
-# to configuration entries that shouldn't be used by any of the
-# servers, e.g. when configuration entry is created but an
-# administrator doesn't want the servers to start using it yet.
-INSERT INTO dhcp4_server(id, tag, description, modification_ts)
-    VALUES(1, "unassigned", "special type: unassigned server", NOW());
-
 # Special server entry meaning "all servers". This refers to
 # the configuration entries owned by all servers.
 INSERT INTO dhcp4_server(id, tag, description, modification_ts)
-    VALUES(2, "all", "special type: all servers", NOW());
+    VALUES(1, "all", "special type: all servers", NOW());
 
 -- -----------------------------------------------------
 -- Table `dhcp4_audit`
@@ -1077,17 +1070,10 @@ CREATE TABLE IF NOT EXISTS dhcp6_server (
     KEY key_dhcp6_server_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
-# Special server entry meaning "unassigned server". This refers
-# to configuration entries that shouldn't be used by any of the
-# servers, e.g. when configuration entry is created but an
-# administrator doesn't want the servers to start using it yet.
-INSERT INTO dhcp6_server(id, tag, description, modification_ts)
-    VALUES(1, "unassigned", "special type: unassigned server", NOW());
-
 # Special server entry meaning "all servers". This refers to
 # the configuration entries owned by all servers.
 INSERT INTO dhcp6_server(id, tag, description, modification_ts)
-    VALUES(2, "all", "special type: all servers", NOW());
+    VALUES(1, "all", "special type: all servers", NOW());
 
 -- -----------------------------------------------------
 -- Table `dhcp6_audit`

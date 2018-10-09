@@ -72,10 +72,6 @@ std::set<std::string>
 MySqlConfigBackendImpl::getServerTags(const ServerSelector& server_selector) const {
     std::set<std::string> tags;
     switch (server_selector.getType()) {
-    case ServerSelector::Type::UNASSIGNED:
-        tags.insert("unassigned");
-        return (tags);
-
     case ServerSelector::Type::ALL:
         tags.insert("all");
         return (tags);
@@ -84,7 +80,7 @@ MySqlConfigBackendImpl::getServerTags(const ServerSelector& server_selector) con
         return (server_selector.getTags());
     }
 
-    // Impossible condition.
+    // Unassigned server case.
     return (tags);
 }
 
@@ -114,6 +110,29 @@ MySqlConfigBackendImpl::deleteFromTable(const int index, const std::string& key)
             MySqlBinding::createString(key)
     };
     return (conn_.updateDeleteQuery(index, in_bindings));
+}
+
+uint64_t
+MySqlConfigBackendImpl::deleteFromTable(const int index,
+                                        const ServerSelector& server_selector,
+                                        const std::string& key) {
+    uint64_t deleted_entries = 0;
+
+    auto tags = getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag)
+        };
+
+        // Optionally add the key.
+        if (!key.empty()) {
+            in_bindings.push_back(MySqlBinding::createString(key));
+        }
+
+        deleted_entries += conn_.updateDeleteQuery(index, in_bindings);
+    }
+
+    return (deleted_entries);
 }
 
 void
