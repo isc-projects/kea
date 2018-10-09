@@ -684,7 +684,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(proc);
     ConstElementPtr answer = proc->configure(config, false);
     ASSERT_TRUE(answer);
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration committed.\" }",
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
               answer->str());
     
     // Check that the config was indeed applied.
@@ -717,7 +717,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     sendUnixCommand(os.str(), response);
 
     // Should fail with a syntax error.
-    EXPECT_EQ("{ \"result\": 1, \"text\": \"element: tsig-keys : missing parameter 'name' (<wire>:9:14)<wire>:8:23\" }",
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"missing parameter 'name' (<wire>:9:14)\" }",
               response);
 
     // Check that the config was not lost.
@@ -748,7 +748,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     EXPECT_TRUE(test::fileExists(socket_path_));
 
     // Verify the configuration was successful.
-    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration seems sane.\" }",
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration check successful\" }",
               response);
 
     // Check that the config was not applied.
