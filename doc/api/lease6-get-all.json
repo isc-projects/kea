@@ -2,7 +2,7 @@
     "name": "lease6-get-all",
     "brief": "lease6-get-all is used to retrieve all IPv6 leases or all leases for the specified set of subnets.",
     "description": "See <xref linkend=\"idp59\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "lease_cmds",
     "cmd-syntax": "{
