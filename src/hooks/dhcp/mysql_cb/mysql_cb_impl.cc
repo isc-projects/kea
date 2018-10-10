@@ -114,8 +114,7 @@ MySqlConfigBackendImpl::deleteFromTable(const int index, const std::string& key)
 
 uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
-                                        const ServerSelector& server_selector,
-                                        const std::string& key) {
+                                        const ServerSelector& server_selector) {
     uint64_t deleted_entries = 0;
 
     auto tags = getServerTags(server_selector);
@@ -123,11 +122,6 @@ MySqlConfigBackendImpl::deleteFromTable(const int index,
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(tag)
         };
-
-        // Optionally add the key.
-        if (!key.empty()) {
-            in_bindings.push_back(MySqlBinding::createString(key));
-        }
 
         deleted_entries += conn_.updateDeleteQuery(index, in_bindings);
     }

@@ -73,6 +73,7 @@ public:
         INSERT_GLOBAL_PARAMETER4,
         INSERT_GLOBAL_PARAMETER4_SERVER,
         INSERT_SUBNET4,
+        INSERT_SUBNET4_SERVER,
         INSERT_POOL4,
         INSERT_SHARED_NETWORK4,
         INSERT_OPTION_DEF4,
@@ -476,13 +477,19 @@ public:
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& /* server_selector */,
+    Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
                           const SubnetID& subnet_id) {
-        MySqlBindingCollection in_bindings;
-        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
-
         Subnet4Collection subnets;
-        getSubnets4(GET_SUBNET4_ID, in_bindings, subnets);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createInteger<uint32_t>(subnet_id)
+            };
+
+            getSubnets4(GET_SUBNET4_ID, in_bindings, subnets);
+        }
 
         return (subnets.empty() ? Subnet4Ptr() : *subnets.begin());
     }
@@ -496,15 +503,60 @@ public:
     ///
     /// @return Pointer to the returned subnet or NULL if such subnet
     /// doesn't exist.
-    Subnet4Ptr getSubnet4(const ServerSelector& /* server_selector */,
+    Subnet4Ptr getSubnet4(const ServerSelector& server_selector,
                           const std::string& subnet_prefix) {
-        MySqlBindingCollection in_bindings;
-        in_bindings.push_back(MySqlBinding::createString(subnet_prefix));
-
         Subnet4Collection subnets;
-        getSubnets4(GET_SUBNET4_PREFIX, in_bindings, subnets);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createString(subnet_prefix)
+            };
+
+            getSubnets4(GET_SUBNET4_PREFIX, in_bindings, subnets);
+        }
 
         return (subnets.empty() ? Subnet4Ptr() : *subnets.begin());
+    }
+
+    /// @brief Sends query to retrieve all subnets.
+    ///
+    /// @param server_selector Server selector.
+    /// @param [out] subnets Reference to the subnet collection structure where
+    /// subnets should be inserted.
+    void getAllSubnets4(const ServerSelector& server_selector,
+                        Subnet4Collection& subnets) {
+        auto tags = getServerTags(server_selector);
+
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag)
+            };
+
+            getSubnets4(GET_ALL_SUBNETS4, in_bindings, subnets);
+        }
+    }
+
+    /// @brief Sends query to retrieve modified subnets.
+    ///
+    /// @param server_selector Server selector.
+    /// @param modification_ts Lower bound modification timestamp.
+    /// @param [out] subnets Reference to the subnet collection structure where
+    /// subnets should be inserted.
+    void getModifiedSubnets4(const ServerSelector& server_selector,
+                             const boost::posix_time::ptime& modification_ts,
+                             Subnet4Collection& subnets) {
+        auto tags = getServerTags(server_selector);
+
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createTimestamp(modification_ts)
+            };
+
+            getSubnets4(GET_MODIFIED_SUBNETS4, in_bindings, subnets);
+        }
     }
 
     /// @brief Sends query to retrieve multiple pools.
@@ -611,6 +663,16 @@ public:
     /// @param subnet Pointer to the subnet to be inserted or updated.
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
+
+        auto tags = getServerTags(server_selector);
+
+        /// @todo Extend support to multiple server tags.
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while creating or updating subnet configuration."
+                      " Got: " << getServerTagsAsText(server_selector));
+        }
+
         // Convert DHCPv4o6 interface id to text.
         OptionPtr dhcp4o6_interface_id = subnet->get4o6().getInterfaceId();
         std::string dhcp4o6_interface_id_text;
@@ -679,6 +741,19 @@ public:
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
                               in_bindings);
 
+            // Create bindings for inserting the association into
+            // dhcp4_subnet_server table.
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createInteger<uint32_t>(subnet->getID()), // subnet_id
+                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createTimestamp(subnet->getModificationTime()), // modification_ts
+            };
+
+            // Insert association.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
+                              in_server_bindings);
+
+
         } catch (const DuplicateEntry&) {
             deletePools4(subnet);
             deleteOptions4(subnet);
@@ -743,13 +818,10 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
     /// @return Number of deleted subnets.
-    uint64_t deleteSubnet4(const ServerSelector& /* server_selector */,
+    uint64_t deleteSubnet4(const ServerSelector& server_selector,
                        const SubnetID& subnet_id) {
-        MySqlBindingCollection in_bindings;
-        in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet_id));
-
-        // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_SUBNET4_ID, in_bindings));
+        return (deleteFromTable<uint32_t>(DELETE_SUBNET4_ID, server_selector,
+                                          subnet_id));
     }
 
     /// @brief Deletes pools belonging to a subnet from the database.
@@ -1604,7 +1676,7 @@ TaggedStatementArray tagged_statements = { {
       "  ON g.id = a.parameter_id "
       "INNER JOIN dhcp4_server AS s "
       "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id=1) AND g.modification_ts > ? "
+      "WHERE (s.tag = ? OR s.id = 1) AND (g.modification_ts > ?) "
       "ORDER BY g.id"
     },
 
@@ -1661,10 +1733,14 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv "
+      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE s.subnet_id = ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) AND s.subnet_id = ? "
       "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select subnet by prefix.
@@ -1720,10 +1796,14 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv "
+      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE s.subnet_prefix = ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) AND s.subnet_prefix = ? "
       "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select all subnets.
@@ -1779,9 +1859,14 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv "
+      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
+      "WHERE (srv.tag = ? OR srv.id = 1) "
       "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select subnets having modification time later than X.
@@ -1837,10 +1922,14 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv "
+      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
       "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE s.modification_ts > ? "
+      "WHERE (srv.tag = ? OR srv.id = 1) AND s.modification_ts > ? "
       "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
 
     // Select pool by address range.
@@ -2179,6 +2268,14 @@ TaggedStatementArray tagged_statements = { {
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
       "?, ?, ?, ?, ?, ?, ?, ?)" },
 
+    // Insert association of the subnet with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
+      "INSERT INTO dhcp4_subnet_server("
+      "  subnet_id,"
+      "  server_id,"
+      "  modification_ts"
+      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
+
     // Insert pool for a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_POOL4,
       "INSERT INTO dhcp4_pool("
@@ -2400,17 +2497,30 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete subnet by id.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID,
-      "DELETE FROM dhcp4_subnet "
-      "WHERE subnet_id = ?" },
+      "DELETE s FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv"
+      "  ON a.server_id = srv.id "
+      "WHERE srv.tag = ? AND s.subnet_id = ?" },
 
     // Delete subnet by prefix.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-      "DELETE FROM dhcp4_subnet "
-      "WHERE subnet_prefix = ?" },
+      "DELETE s FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv"
+      "  ON a.server_id = srv.id "
+      "WHERE srv.tag = ? AND s.subnet_prefix = ?" },
 
     // Delete all subnets.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-      "DELETE FROM dhcp4_subnet" },
+      "DELETE s FROM dhcp4_subnet AS s "
+      "INNER JOIN dhcp4_subnet_server AS a "
+      "  ON s.subnet_id = a.subnet_id "
+      "INNER JOIN dhcp4_server AS srv"
+      "  ON a.server_id = srv.id "
+      "WHERE srv.tag = ?" },
 
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
@@ -2500,23 +2610,17 @@ MySqlConfigBackendDHCPv4::getSubnet4(const ServerSelector& server_selector,
 }
 
 Subnet4Collection
-MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& /* server_selector */) const {
+MySqlConfigBackendDHCPv4::getAllSubnets4(const ServerSelector& server_selector) const {
     Subnet4Collection subnets;
-    MySqlBindingCollection in_bindings;
-    impl_->getSubnets4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
-                      in_bindings, subnets);
+    impl_->getAllSubnets4(server_selector, subnets);
     return (subnets);
 }
 
 Subnet4Collection
-MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& /* server_selector */,
+MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time) const {
     Subnet4Collection subnets;
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createTimestamp(modification_time)
-    };
-    impl_->getSubnets4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
-                       in_bindings, subnets);
+    impl_->getModifiedSubnets4(server_selector, modification_time, subnets);
     return (subnets);
 }
 
@@ -2678,10 +2782,10 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& /* server_selector */,
+MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
     return(impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-                                  subnet_prefix));
+                                  server_selector, subnet_prefix));
 }
 
 uint64_t
@@ -2691,8 +2795,9 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& /* server_selector */) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4));
+MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selector) {
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
+                                   server_selector));
 }
 
 uint64_t
