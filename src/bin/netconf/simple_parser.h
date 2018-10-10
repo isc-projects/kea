@@ -30,6 +30,14 @@ public:
     /// @return number of default values added
     static size_t setAllDefaults(const isc::data::ElementPtr& global);
 
+    /// @brief Derives (inherits) all parameters from global to more specific scopes.
+    ///
+    /// This method currently does the following:
+    /// - derives global parameters to managed servers (flags for now)
+    /// @param global scope to be modified if needed
+    /// @return number of default values derived
+    static size_t deriveParameters(isc::data::ConstElementPtr global);
+
     /// @brief Adds default values to a Managed server entry.
     ///
     /// Adds server specific defaults, e.g. the default model.
@@ -58,6 +66,7 @@ public:
     static const isc::data::SimpleDefaults DHCP6_DEFAULTS;
     static const isc::data::SimpleDefaults D2_DEFAULTS;
     static const isc::data::SimpleDefaults CA_DEFAULTS;
+    static const isc::data::ParamsList INHERIT_TO_SERVERS;
 };
 
 };
