@@ -428,7 +428,7 @@ public:
               << "}</screen>" << endl;
         }
         if (cmd->contains("cmd-comment")) {
-            f << escapeString(cmd->get("cmd-comment")->stringValue());
+            f << cmd->get("cmd-comment")->stringValue();
         }
         f << "</para>" << endl << endl;
 

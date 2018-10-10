@@ -13,7 +13,7 @@
         }
      }
 }",
-    "cmd-comment": "where <server> is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\"",
+    "cmd-comment": "where &gt;server&lt; is the configuration element name for a given server such as \"Dhcp4\" or \"Dhcp6\"",
     "resp-syntax": "{\"result\": 0, \"text\": \"Configuration seems sane...\" }
 
     or
