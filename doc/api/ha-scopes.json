@@ -1,7 +1,6 @@
 {
     "name": "ha-scopes",
-    "brief": "This command allows for modifying the High Availability (HA) scopes
-              that the server is serving.a sentence or two explaining what this command does",
+    "brief": "This command modifies the scope that the server is responsible for serving when operating in High Availability (HA) mode.",
     "description": "See <xref linkend=\"command-ha-scopes\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
@@ -12,6 +11,5 @@
     \"arguments\": {
         \"scopes\": [ \"HA_server1\", \"HA_server2\" ]
     }
-}
-"
+    "cmd-comment": " In the example given, the arguments configure the server to handle traffic from both HA_server1 and HA_server2 scopes.",
 }
