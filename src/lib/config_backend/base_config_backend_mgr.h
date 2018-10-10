@@ -9,6 +9,7 @@
 
 #include <config_backend/base_config_backend.h>
 #include <database/database_connection.h>
+#include <database/backend_selector.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
 #include <functional>
@@ -104,6 +105,32 @@ public:
         return (true);
     }
 
+    /// @brief Unregisters the backend factory function for a given backend type.
+    ///
+    /// The typical usage of this function is remove the factory function
+    /// when its type of backend is no longer supported (i.e hook lib is unloaded).
+    /// It should mirror the use @c registerBackendFactory and be called from the
+    /// hooks library @c unload function.
+    ///
+    /// @param db_type Backend type, e.g. "mysql".
+    ///
+    /// @return false if no factory for the given type was not registered, true
+    /// true if the factory was removed.
+    bool unregisterBackendFactory(const std::string& db_type) {
+        // Look for it.
+        auto index = factories_.find(db_type);
+
+        // If it's there remove it
+        if (index != factories_.end()) {
+            factories_.erase(index);
+            pool_->delAllBackends(db_type);
+            return (true);
+
+        }
+
+        return (false);
+    }
+
     /// @brief Create an instance of a configuration backend.
     ///
     /// This method uses provided @c dbaccess string representing database
@@ -137,7 +164,7 @@ public:
         if (index == factories_.end()) {
             isc_throw(db::InvalidType, "The type of the configuration backend: '" <<
                       db_type << "' is not supported");
-    }
+        }
 
         // Call the factory and push the pointer on sources.
         auto backend = index->second(parameters);
