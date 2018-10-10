@@ -79,7 +79,8 @@ CfgControlSocket::toElement() const {
 
 // *********************** CfgServer  *************************
 CfgServer::CfgServer(const string& model, CfgControlSocketPtr ctrl_sock)
-    : model_(model), control_socket_(ctrl_sock) {
+    : model_(model), boot_update_(true), subscribe_changes_(true),
+      validate_changes_(true), control_socket_(ctrl_sock) {
 }
 
 CfgServer::~CfgServer() {
@@ -114,6 +115,12 @@ CfgServer::toElement() const {
     contextToElement(result);
     // Set model
     result->set("model", Element::create(model_));
+    // Set boot-update
+    result->set("boot-update", Element::create(boot_update_));
+    // Set subscribe-changes
+    result->set("subscribe-changes", Element::create(subscribe_changes_));
+    // Set validate-changes
+    result->set("validate-changes", Element::create(validate_changes_));
     // Set control-socket
     if (control_socket_) {
         result->set("control-socket", control_socket_->toElement());
@@ -191,6 +198,11 @@ ServerConfigParser::parse(ConstElementPtr server_config) {
         isc_throw(ConfigError, ex.what() << " ("
                   << server_config->getPosition() << ")");
     }
+
+    // Add flags.
+    result->setBootUpdate(getBoolean(server_config, "boot-update"));
+    result->setSubscribeChanges(getBoolean(server_config, "subscribe-changes"));
+    result->setValidateChanges(getBoolean(server_config, "validate-changes"));
 
     // Add user-context.
     if (user_context) {

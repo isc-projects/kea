@@ -53,6 +53,10 @@ using namespace std;
   USER_CONTEXT "user-context"
   COMMENT "comment"
 
+  BOOT_UPDATE "boot-update"
+  SUBSCRIBE_CHANGES "subscribe-changes"
+  VALIDATE_CHANGES "validate-changes"
+
   MANAGED_SERVERS "managed-servers"
   DHCP4_SERVER "dhcp4"
   DHCP6_SERVER "dhcp6"
@@ -268,12 +272,30 @@ not_empty_global_params: global_param
 
 // These are the parameters that are allowed in the top-level for
 // Netconf.
-global_param: managed_servers
+global_param: boot_update
+            | subscribe_changes
+            | validate_changes
+            | managed_servers
             | hooks_libraries
             | user_context
             | comment
             | unknown_map_entry
             ;
+
+boot_update: BOOT_UPDATE COLON BOOLEAN {
+    ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("boot-update", flag);
+};
+
+subscribe_changes: SUBSCRIBE_CHANGES COLON BOOLEAN {
+    ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("subscribe-changes", flag);
+};
+
+validate_changes: VALIDATE_CHANGES COLON BOOLEAN {
+    ElementPtr flag(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("validate-changes", flag);
+};
 
 user_context: USER_CONTEXT {
     ctx.enter(ctx.NO_KEYWORDS);
@@ -460,6 +482,9 @@ managed_server_params: managed_server_param
 
 // We currently support two server parameters: model and control-socket.
 managed_server_param: model
+                    | boot_update
+                    | subscribe_changes
+                    | validate_changes
                     | control_socket
                     | user_context
                     | comment

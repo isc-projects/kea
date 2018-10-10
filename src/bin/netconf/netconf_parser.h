@@ -352,39 +352,42 @@ namespace isc { namespace netconf {
         TOKEN_NETCONF = 265,
         TOKEN_USER_CONTEXT = 266,
         TOKEN_COMMENT = 267,
-        TOKEN_MANAGED_SERVERS = 268,
-        TOKEN_DHCP4_SERVER = 269,
-        TOKEN_DHCP6_SERVER = 270,
-        TOKEN_D2_SERVER = 271,
-        TOKEN_CA_SERVER = 272,
-        TOKEN_MODEL = 273,
-        TOKEN_CONTROL_SOCKET = 274,
-        TOKEN_SOCKET_TYPE = 275,
-        TOKEN_UNIX = 276,
-        TOKEN_HTTP = 277,
-        TOKEN_STDOUT = 278,
-        TOKEN_SOCKET_NAME = 279,
-        TOKEN_SOCKET_URL = 280,
-        TOKEN_HOOKS_LIBRARIES = 281,
-        TOKEN_LIBRARY = 282,
-        TOKEN_PARAMETERS = 283,
-        TOKEN_LOGGING = 284,
-        TOKEN_LOGGERS = 285,
-        TOKEN_NAME = 286,
-        TOKEN_OUTPUT_OPTIONS = 287,
-        TOKEN_OUTPUT = 288,
-        TOKEN_DEBUGLEVEL = 289,
-        TOKEN_SEVERITY = 290,
-        TOKEN_FLUSH = 291,
-        TOKEN_MAXSIZE = 292,
-        TOKEN_MAXVER = 293,
-        TOKEN_START_JSON = 294,
-        TOKEN_START_NETCONF = 295,
-        TOKEN_START_SUB_NETCONF = 296,
-        TOKEN_STRING = 297,
-        TOKEN_INTEGER = 298,
-        TOKEN_FLOAT = 299,
-        TOKEN_BOOLEAN = 300
+        TOKEN_BOOT_UPDATE = 268,
+        TOKEN_SUBSCRIBE_CHANGES = 269,
+        TOKEN_VALIDATE_CHANGES = 270,
+        TOKEN_MANAGED_SERVERS = 271,
+        TOKEN_DHCP4_SERVER = 272,
+        TOKEN_DHCP6_SERVER = 273,
+        TOKEN_D2_SERVER = 274,
+        TOKEN_CA_SERVER = 275,
+        TOKEN_MODEL = 276,
+        TOKEN_CONTROL_SOCKET = 277,
+        TOKEN_SOCKET_TYPE = 278,
+        TOKEN_UNIX = 279,
+        TOKEN_HTTP = 280,
+        TOKEN_STDOUT = 281,
+        TOKEN_SOCKET_NAME = 282,
+        TOKEN_SOCKET_URL = 283,
+        TOKEN_HOOKS_LIBRARIES = 284,
+        TOKEN_LIBRARY = 285,
+        TOKEN_PARAMETERS = 286,
+        TOKEN_LOGGING = 287,
+        TOKEN_LOGGERS = 288,
+        TOKEN_NAME = 289,
+        TOKEN_OUTPUT_OPTIONS = 290,
+        TOKEN_OUTPUT = 291,
+        TOKEN_DEBUGLEVEL = 292,
+        TOKEN_SEVERITY = 293,
+        TOKEN_FLUSH = 294,
+        TOKEN_MAXSIZE = 295,
+        TOKEN_MAXVER = 296,
+        TOKEN_START_JSON = 297,
+        TOKEN_START_NETCONF = 298,
+        TOKEN_START_SUB_NETCONF = 299,
+        TOKEN_STRING = 300,
+        TOKEN_INTEGER = 301,
+        TOKEN_FLOAT = 302,
+        TOKEN_BOOLEAN = 303
       };
     };
 
@@ -542,6 +545,18 @@ namespace isc { namespace netconf {
     static inline
     symbol_type
     make_COMMENT (const location_type& l);
+
+    static inline
+    symbol_type
+    make_BOOT_UPDATE (const location_type& l);
+
+    static inline
+    symbol_type
+    make_SUBSCRIBE_CHANGES (const location_type& l);
+
+    static inline
+    symbol_type
+    make_VALIDATE_CHANGES (const location_type& l);
 
     static inline
     symbol_type
@@ -882,12 +897,12 @@ namespace isc { namespace netconf {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 221,     ///< Last index in yytable_.
-      yynnts_ = 100,  ///< Number of nonterminal symbols.
+      yylast_ = 238,     ///< Last index in yytable_.
+      yynnts_ = 103,  ///< Number of nonterminal symbols.
       yyfinal_ = 8, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 46  ///< Number of tokens.
+      yyntokens_ = 49  ///< Number of tokens.
     };
 
 
@@ -934,9 +949,9 @@ namespace isc { namespace netconf {
       15,    16,    17,    18,    19,    20,    21,    22,    23,    24,
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44,
-      45
+      45,    46,    47,    48
     };
-    const unsigned user_token_number_max_ = 300;
+    const unsigned user_token_number_max_ = 303;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -967,25 +982,25 @@ namespace isc { namespace netconf {
   {
     switch (other.type_get ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 113: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.copy< ElementPtr > (other.value);
         break;
 
-      case 45: // "boolean"
+      case 48: // "boolean"
         value.copy< bool > (other.value);
         break;
 
-      case 44: // "floating point"
+      case 47: // "floating point"
         value.copy< double > (other.value);
         break;
 
-      case 43: // "integer"
+      case 46: // "integer"
         value.copy< int64_t > (other.value);
         break;
 
-      case 42: // "constant string"
+      case 45: // "constant string"
         value.copy< std::string > (other.value);
         break;
 
@@ -1004,25 +1019,25 @@ namespace isc { namespace netconf {
     (void) v;
     switch (this->type_get ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 113: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.copy< ElementPtr > (v);
         break;
 
-      case 45: // "boolean"
+      case 48: // "boolean"
         value.copy< bool > (v);
         break;
 
-      case 44: // "floating point"
+      case 47: // "floating point"
         value.copy< double > (v);
         break;
 
-      case 43: // "integer"
+      case 46: // "integer"
         value.copy< int64_t > (v);
         break;
 
-      case 42: // "constant string"
+      case 45: // "constant string"
         value.copy< std::string > (v);
         break;
 
@@ -1100,25 +1115,25 @@ namespace isc { namespace netconf {
     // Type destructor.
   switch (yytype)
     {
-      case 54: // value
-      case 57: // map_value
-      case 113: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 45: // "boolean"
+      case 48: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 44: // "floating point"
+      case 47: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 43: // "integer"
+      case 46: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 42: // "constant string"
+      case 45: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -1143,25 +1158,25 @@ namespace isc { namespace netconf {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 54: // value
-      case 57: // map_value
-      case 113: // socket_type_value
+      case 57: // value
+      case 60: // map_value
+      case 119: // socket_type_value
         value.move< ElementPtr > (s.value);
         break;
 
-      case 45: // "boolean"
+      case 48: // "boolean"
         value.move< bool > (s.value);
         break;
 
-      case 44: // "floating point"
+      case 47: // "floating point"
         value.move< double > (s.value);
         break;
 
-      case 43: // "integer"
+      case 46: // "integer"
         value.move< int64_t > (s.value);
         break;
 
-      case 42: // "constant string"
+      case 45: // "constant string"
         value.move< std::string > (s.value);
         break;
 
@@ -1224,7 +1239,7 @@ namespace isc { namespace netconf {
      265,   266,   267,   268,   269,   270,   271,   272,   273,   274,
      275,   276,   277,   278,   279,   280,   281,   282,   283,   284,
      285,   286,   287,   288,   289,   290,   291,   292,   293,   294,
-     295,   296,   297,   298,   299,   300
+     295,   296,   297,   298,   299,   300,   301,   302,   303
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
@@ -1293,6 +1308,24 @@ namespace isc { namespace netconf {
   NetconfParser::make_COMMENT (const location_type& l)
   {
     return symbol_type (token::TOKEN_COMMENT, l);
+  }
+
+  NetconfParser::symbol_type
+  NetconfParser::make_BOOT_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_BOOT_UPDATE, l);
+  }
+
+  NetconfParser::symbol_type
+  NetconfParser::make_SUBSCRIBE_CHANGES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUBSCRIBE_CHANGES, l);
+  }
+
+  NetconfParser::symbol_type
+  NetconfParser::make_VALIDATE_CHANGES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_VALIDATE_CHANGES, l);
   }
 
   NetconfParser::symbol_type
@@ -1496,7 +1529,7 @@ namespace isc { namespace netconf {
 
 #line 14 "netconf_parser.yy" // lalr1.cc:379
 } } // isc::netconf
-#line 1500 "netconf_parser.h" // lalr1.cc:379
+#line 1533 "netconf_parser.h" // lalr1.cc:379
 
 
 
