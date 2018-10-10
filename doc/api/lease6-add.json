@@ -1,8 +1,8 @@
 {
     "name": "lease6-add",
-    "brief": "The lease6-add command allows for the creation of a new lease.",
+    "brief": "The lease6-add command creates a new lease administratively.",
     "description": "See <xref linkend=\"idp64\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "lease_cmds",
     "cmd-syntax": "{
