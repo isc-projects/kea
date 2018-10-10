@@ -445,7 +445,7 @@ TEST_F(CtrlChannelD2Test, configure) {
 
     int status = 0;
     ConstElementPtr txt = parseAnswer(status, answer);
-    EXPECT_EQ(2, status);
+    EXPECT_EQ(1, status);
     ASSERT_TRUE(txt);
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("Mandatory 'socket-type' parameter missing", txt->stringValue());
@@ -471,7 +471,7 @@ TEST_F(CtrlChannelD2Test, configure) {
 
     status = 0;
     txt = parseAnswer(status, answer);
-    EXPECT_EQ(2, status);
+    EXPECT_EQ(1, status);
     ASSERT_TRUE(txt);
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("Invalid 'socket-type' parameter value bogus",
@@ -497,7 +497,7 @@ TEST_F(CtrlChannelD2Test, configure) {
 
     status = 0;
     txt = parseAnswer(status, answer);
-    EXPECT_EQ(2, status);
+    EXPECT_EQ(1, status);
     ASSERT_TRUE(txt);
     ASSERT_EQ(Element::string, txt->getType());
     EXPECT_EQ("Mandatory 'socket-name' parameter missing",

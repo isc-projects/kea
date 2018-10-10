@@ -14,6 +14,7 @@
 #include <d2/d2_process.h>
 
 using namespace isc::process;
+using namespace isc::config;
 
 namespace isc {
 namespace d2 {
@@ -225,7 +226,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         staging_socket = getD2CfgMgr()->getControlSocketInfo();
         configureCommandChannel(current_socket, staging_socket);
     } catch (const isc::Exception& ex) {
-        answer = isc::config::createAnswer(2, ex.what());
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
         return (answer);
     }
 
@@ -250,25 +251,25 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
 
 void
 D2Process::configureCommandChannel(isc::data::ConstElementPtr current_cfg,
-                                   isc::data::ConstElementPtr staging_cfg) {
+                                   isc::data::ConstElementPtr socket_info) {
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
     bool sock_changed = (current_cfg && (current_cfg->size() > 0) &&
-                         staging_cfg && (staging_cfg->size() > 0) &&
-                         !staging_cfg->equals(*current_cfg));
+                         socket_info && (socket_info->size() > 0) &&
+                         !socket_info->equals(*current_cfg));
     if (current_cfg && (current_cfg->size() > 0) &&
-        (!staging_cfg || (staging_cfg->size() == 0) || sock_changed)) {
+        (!socket_info || (socket_info->size() == 0) || sock_changed)) {
         // Close the existing socket.
         isc::config::CommandMgr::instance().closeCommandSocket();
     }
-    if (staging_cfg && (staging_cfg->size() > 0) &&
+    if (socket_info && (socket_info->size() > 0) &&
         (!current_cfg || (current_cfg->size() == 0) || sock_changed)) {
         // Assume that CommandMgr works with D2 I/O.
         D2ControllerPtr ctrl =
             boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
         ctrl->registerCommands();
-        isc::config::CommandMgr::instance().openCommandSocket(staging_cfg, true);
+        isc::config::CommandMgr::instance().openCommandSocket(socket_info, true);
     }
 }
 

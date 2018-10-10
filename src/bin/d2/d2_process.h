@@ -257,9 +257,9 @@ protected:
     /// @brief Configure the command channel.
     ///
     /// @param current_cfg current configuration of the control socket.
-    /// @param staging_cfg staging configuration of the control socket.
+    /// @param socket_info parameters of the control socket.
     void configureCommandChannel(isc::data::ConstElementPtr current_cfg,
-                                 isc::data::ConstElementPtr staging_cfg);
+                                 isc::data::ConstElementPtr socket_info);
 
 public:
     /// @brief Returns a pointer to the configuration manager.
