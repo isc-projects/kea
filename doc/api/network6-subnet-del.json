@@ -2,7 +2,7 @@
     "name": "network6-subnet-del",
     "brief": "The network6-subnet-del command is used to remove a subnet that is part of existing shared network and demote it to a plain, stand-alone subnet.",
     "description": "See <xref linkend=\"idp78\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "subnet_cmds",
     "cmd-syntax": "{
