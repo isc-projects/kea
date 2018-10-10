@@ -24,7 +24,7 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Implementation of the Configuration Backend Pool for DHCPv4.
-class ConfigBackendPoolDHCPv4 : cb::BaseConfigBackendPool<ConfigBackendDHCPv4> {
+class ConfigBackendPoolDHCPv4 : public cb::BaseConfigBackendPool<ConfigBackendDHCPv4> {
 public:
 
     /// @brief Retrieves a single subnet by subnet_prefix.
@@ -393,7 +393,7 @@ public:
                   const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
-                  const std::string& space) = 0;
+                  const std::string& space);
 
     /// @brief Deletes subnet level option.
     ///
