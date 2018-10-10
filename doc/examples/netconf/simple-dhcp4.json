@@ -4,6 +4,16 @@
 {
     "Netconf":
     {
+        // Three flags control netconf (default values are true):
+        // - "boot-update" about the YANG configuration load when
+        //   netconf boots.
+        // - "subscribe-changes" about the subscription to notifications
+        //   when the running YANG module is changed.
+        // - "validate-changes" alloes to validate or not changes.
+        "boot-update": true,
+        "subscribe-changes": true,
+        "validate-changes": true,
+
         // This map specifies how each server is managed:
         // the YANG model to use and the control channel.
         "managed-servers":
@@ -15,6 +25,12 @@
                 // models. However, for the time being the only choice for
                 // DHCPv4 server is kea-dhcp4-server model.
                 "model": "kea-dhcp4-server",
+
+                // The three control flags can be defined in this scope too
+                // and takes precedence over global and default values.
+                "boot-update": false,
+                "subscribe-changes": false,
+                "validate-changes": false,
 
                 // Currently three control channel types are supported:
                 // - "stdout" which output the configuration on the standard

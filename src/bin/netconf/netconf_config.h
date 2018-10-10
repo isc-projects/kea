@@ -172,6 +172,48 @@ public:
         return (control_socket_);
     }
 
+    /// @brief Getter which returns the boot-update flag.
+    ///
+    /// @return returns the boot-update flag as a bool.
+    bool getBootUpdate() const {
+        return (boot_update_);
+    }
+
+    /// @brief Set the boot-update flag.
+    ///
+    /// @param boot_update The boot-update flag.
+    void setBootUpdate(bool boot_update) {
+        boot_update_ = boot_update;
+    }
+
+    /// @brief Getter which returns the subscribe-changes flag.
+    ///
+    /// @return returns the subscribe-changes flag as a bool.
+    bool getSubscribeChanges() const {
+        return (subscribe_changes_);
+    }
+
+    /// @brief Set the subscribe-changes flag.
+    ///
+    /// @param subscribe_changes The subscribe-changes flag.
+    void setSubscribeChanges(bool subscribe_changes) {
+        subscribe_changes_ = subscribe_changes;
+    }
+
+    /// @brief Getter which returns the validate-changes flag.
+    ///
+    /// @return returns the validate-changes flag as a bool.
+    bool getValidateChanges() const {
+        return (validate_changes_);
+    }
+
+    /// @brief Set the validate-changes flag.
+    ///
+    /// @param validate_changes The validate-changes flag.
+    void setValidateChanges(bool validate_changes) {
+        validate_changes_ = validate_changes;
+    }
+
     /// @brief Returns a text representation for the server.
     std::string toText() const;
 
@@ -183,6 +225,24 @@ public:
 private:
     /// @brief The model name.
     const std::string model_;
+
+    /// @brief The boot-update flag.
+    ///
+    /// If true (the defaul) Kea server configuration is updated at (netconf
+    /// agent) boot time.
+    bool boot_update_;
+
+    /// @brief The subscribe-changes flag.
+    ///
+    /// If true (the deault) the netconf agent subscribes module changes
+    /// so will be notified when the YANG running configuration is changed.
+    bool subscribe_changes_;
+
+    /// @brief The validate-changes flag.
+    ///
+    /// If true (the deault) the netconf agent validates module changes
+    /// and can reject bad configurations.
+    bool validate_changes_;
 
     /// @brief The control socket.
     CfgControlSocketPtr control_socket_;

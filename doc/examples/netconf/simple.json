@@ -3,6 +3,14 @@
 {
     "Netconf":
     {
+        // Control flags can be defined in the global scope or
+        // in a managed server scope. Precedence are:
+        // - use the default value (true)
+        // - use the global value
+        // - use the local value.
+        // So this overwrites the default value:
+        "boot-update": false,
+
         // This map specifies how each server is managed:
         // the YANG model to use and the control channel.
         // Currently three control channel types are supported:
