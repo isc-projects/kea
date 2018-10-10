@@ -9,7 +9,7 @@
     "cmd-syntax": "{
     \"command\": \"config-get\"
 }",
-    "cmd-comment": "<command>config-get</command> takes no parameters.",
+    "This command takes no parameters.",
 
     "resp-syntax": "{
     \"result\": <integer>,
