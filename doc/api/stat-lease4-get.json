@@ -3,7 +3,7 @@
     "brief": "The stat-lease4-get command fetches lease statistics for a range
               of known IPv4 subnets.",
     "description": "See <xref linkend=\"command-stat-lease4-get\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp4" ],
     "avail": "1.4.0",
     "hook": "stat_cmds",
     "cmd-syntax": "{
