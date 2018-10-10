@@ -574,6 +574,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
+            // if we have config-control DBs attempt to create them here,
+            // if that fails, rollback?
 
             // Setup the command channel.
             configureCommandChannel();
@@ -592,6 +594,9 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
+
+            // now that we have config-db and hooks, merge in config from DB
+            // databaseConfigFetch(srv_config, mutable_cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -605,6 +610,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             rollback = true;
         }
     }
+
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
