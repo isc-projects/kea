@@ -12,11 +12,13 @@
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 #include <yang/yang_models.h>
+#include <testutils/test_to_element.h>
 #include <netconf/tests/test_libraries.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace std;
+using namespace isc;
 using namespace isc::netconf;
 using namespace isc::config;
 using namespace isc::data;
@@ -135,6 +137,59 @@ TEST(NetconfCfgMgr, contextHookParams) {
     EXPECT_EQ(libs.get(), stored_libs.get());
 }
 
+// Tests if the context can store and retrieve globals.
+TEST(NetconfCfgMgr, contextGlobals) {
+    NetconfConfig ctx;
+
+    // By default there should be no globals.
+    ConstElementPtr globals = ctx.getConfiguredGlobals();
+    ASSERT_TRUE(globals);
+    ASSERT_EQ(Element::map, globals->getType());
+    EXPECT_EQ(0, globals->mapValue().size());
+
+    // Attempting to extract globals from a non-map should throw.
+    ASSERT_THROW(ctx.extractConfiguredGlobals(Element::create(777)), BadValue);
+
+    // Now let's create a configuration from which to extract global scalars.
+    // Extraction (currently) has no business logic, so the elements we use
+    // can be arbitrary.
+    ConstElementPtr global_cfg;
+    string global_cfg_str =
+    "{\n"
+    " \"astring\": \"okay\",\n"
+    " \"amap\": { \"not-this\":777, \"not-that\": \"poo\" },\n"
+    " \"anint\": 444,\n"
+    " \"alist\": [ 1, 2, 3 ],\n"
+    " \"abool\": true\n"
+        "}\n";
+    ASSERT_NO_THROW(global_cfg = Element::fromJSON(global_cfg_str));
+
+    // Extract globals from the config.
+    ASSERT_NO_THROW(ctx.extractConfiguredGlobals(global_cfg));
+
+    // Now see if the extract was correct.
+    globals = ctx.getConfiguredGlobals();
+    ASSERT_TRUE(globals);
+    ASSERT_EQ(Element::map, globals->getType());
+    EXPECT_NE(0, globals->mapValue().size());
+
+    // Maps and lists should be excluded.
+    for (auto it : globals->mapValue()) {
+        if (it.first == "astring") {
+            ASSERT_EQ(Element::string, it.second->getType());
+            EXPECT_EQ("okay", it.second->stringValue());
+        } else if (it.first == "anint") {
+            ASSERT_EQ(Element::integer, it.second->getType());
+            EXPECT_EQ(444, it.second->intValue());
+        } else if (it.first == "abool") {
+            ASSERT_EQ(Element::boolean, it.second->getType());
+            EXPECT_TRUE(it.second->boolValue());
+        } else {
+            ADD_FAILURE() << "unexpected element found:" << it.first;
+        }
+    }
+}
+
 /// Netconf configurations used in tests.
 const char* NETCONF_CONFIGS[] = {
 
@@ -143,12 +198,17 @@ const char* NETCONF_CONFIGS[] = {
 
     // Configuration 1: global parameters only (no server, not hooks)
     "{\n"
+    "    \"boot-update\": false,\n"
+    "    \"subscribe-changes\": false,\n"
+    "    \"validate-changes\": false\n"
     "}",
 
     // Configuration 2: 1 server
     "{\n"
+    "    \"boot-update\": false,\n"
     "    \"managed-servers\": {\n"
     "        \"dhcp4\": {\n"
+    "            \"boot-update\": true,\n"
     "            \"control-socket\": {\n"
     "                \"socket-name\": \"/tmp/socket-v4\"\n"
     "            }\n"
@@ -158,8 +218,10 @@ const char* NETCONF_CONFIGS[] = {
 
     // Configuration 3: all 4 servers
     "{\n"
+    "    \"boot-update\": false,\n"
     "    \"managed-servers\": {\n"
     "        \"dhcp4\": {\n"
+    "            \"boot-update\": true,\n"
     "            \"control-socket\": {\n"
     "                \"socket-name\": \"/tmp/socket-v4\"\n"
     "            }\n"
@@ -170,6 +232,7 @@ const char* NETCONF_CONFIGS[] = {
     "            }\n"
     "        },\n"
     "        \"d2\": {\n"
+    "            \"subscribe-changes\": false,\n"
     "            \"control-socket\": {\n"
     "                \"socket-name\": \"/tmp/socket-d2\"\n"
     "            }\n"
@@ -207,6 +270,7 @@ const char* NETCONF_CONFIGS[] = {
     "{\n"
     "    \"managed-servers\": {\n"
     "        \"d2\": {\n"
+    "            \"subscribe-changes\": false,\n"
     "            \"control-socket\": {\n"
     "                \"socket-name\": \"/tmp/socket-d2\"\n"
     "            }\n"
@@ -255,6 +319,9 @@ const char* NETCONF_CONFIGS[] = {
 
     // Configuration 9: empty control socket
     "{\n"
+    "    \"boot-update\": false,\n"
+    "    \"subscribe-changes\": false,\n"
+    "    \"validate-changes\": false,\n"
     "    \"managed-servers\": {\n"
     "        \"dhcp4\": {\n"
     "            \"control-socket\": {\n"
@@ -354,6 +421,13 @@ TEST_F(NetconfParserTest, configParseGlobalOnly) {
     ASSERT_TRUE(ctx);
     ASSERT_TRUE(ctx->getCfgServersMap());
     EXPECT_EQ(0, ctx->getCfgServersMap()->size());
+    ConstElementPtr globals = ctx->getConfiguredGlobals();
+    ASSERT_TRUE(globals);
+    string expected = "{ "
+        "\"boot-update\": false, "
+        "\"subscribe-changes\": false, "
+        "\"validate-changes\": false }";
+    EXPECT_EQ(expected, globals->str());
 }
 
 // Tests if an empty (i.e. without a control socket) can be configured.
@@ -369,6 +443,10 @@ TEST_F(NetconfParserTest, configParseEmptyCfgServer) {
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
+    // Defaults.
+    EXPECT_TRUE(server->getBootUpdate());
+    EXPECT_TRUE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     EXPECT_FALSE(socket);
 }
@@ -386,6 +464,10 @@ TEST_F(NetconfParserTest, configParseDefaults) {
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
+    // Globals overwrite defaults.
+    EXPECT_FALSE(server->getBootUpdate());
+    EXPECT_FALSE(server->getSubscribeChanges());
+    EXPECT_FALSE(server->getValidateChanges());
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
 
@@ -407,6 +489,10 @@ TEST_F(NetconfParserTest, configParseServerDhcp4) {
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
+    // Locals overwrite globals.
+    EXPECT_TRUE(server->getBootUpdate());
+    EXPECT_TRUE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
@@ -426,6 +512,9 @@ TEST_F(NetconfParserTest, configParseServerD2) {
     CfgServerPtr server = ctx->getCfgServersMap()->at("d2");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP_DDNS, server->getModel());
+    EXPECT_TRUE(server->getBootUpdate());
+    EXPECT_FALSE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
@@ -466,6 +555,9 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     CfgServerPtr server = ctx->getCfgServersMap()->at("dhcp4");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP4_SERVER, server->getModel());
+    EXPECT_TRUE(server->getBootUpdate());
+    EXPECT_TRUE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     CfgControlSocketPtr socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
@@ -477,6 +569,9 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP6_SERVER, server->getModel());
     socket = server->getCfgControlSocket();
+    EXPECT_FALSE(server->getBootUpdate());
+    EXPECT_TRUE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
     EXPECT_EQ("/tmp/socket-v6", socket->getName());
@@ -486,6 +581,9 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     server = ctx->getCfgServersMap()->at("d2");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_DHCP_DDNS, server->getModel());
+    EXPECT_FALSE(server->getBootUpdate());
+    EXPECT_FALSE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
@@ -496,11 +594,69 @@ TEST_F(NetconfParserTest, configParse4Servers) {
     server = ctx->getCfgServersMap()->at("ca");
     ASSERT_TRUE(server);
     EXPECT_EQ(KEA_CTRL_AGENT, server->getModel());
+    EXPECT_FALSE(server->getBootUpdate());
+    EXPECT_TRUE(server->getSubscribeChanges());
+    EXPECT_TRUE(server->getValidateChanges());
     socket = server->getCfgControlSocket();
     ASSERT_TRUE(socket);
     EXPECT_EQ(CfgControlSocket::Type::STDOUT, socket->getType());
     EXPECT_EQ("/tmp/socket-ca", socket->getName());
     EXPECT_EQ("http://127.0.0.1:8000/", socket->getUrl().toText());
+
+    // Check unparsing.
+    string expected =  "{\n"
+        "    \"Netconf\": {\n"
+        "        \"boot-update\": false,\n"
+        "        \"managed-servers\": {\n"
+        "            \"dhcp4\": {\n"
+        "                \"model\": \"kea-dhcp4-server\",\n"
+        "                \"boot-update\": true,\n"
+        "                \"subscribe-changes\": true,\n"
+        "                \"validate-changes\": true,\n"
+        "                \"control-socket\": {\n"
+        "                    \"socket-type\": \"stdout\",\n"
+        "                    \"socket-name\": \"/tmp/socket-v4\",\n"
+        "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
+        "                }\n"
+        "            },\n"
+        "            \"dhcp6\": {\n"
+        "                \"model\": \"kea-dhcp6-server\",\n"
+        "                \"boot-update\": false,\n"
+        "                \"subscribe-changes\": true,\n"
+        "                \"validate-changes\": true,\n"
+        "                \"control-socket\": {\n"
+        "                    \"socket-type\": \"stdout\",\n"
+        "                    \"socket-name\": \"/tmp/socket-v6\",\n"
+        "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
+        "                }\n"
+        "            },\n"
+        "            \"d2\": {\n"
+        "                \"model\": \"kea-dhcp-ddns\",\n"
+        "                \"boot-update\": false,\n"
+        "                \"subscribe-changes\": false,\n"
+        "                \"validate-changes\": true,\n"
+        "                \"control-socket\": {\n"
+        "                    \"socket-type\": \"stdout\",\n"
+        "                    \"socket-name\": \"/tmp/socket-d2\",\n"
+        "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
+        "                }\n"
+        "            },\n"
+        "            \"ca\": {\n"
+        "                \"model\": \"kea-ctrl-agent\",\n"
+        "                \"boot-update\": false,\n"
+        "                \"subscribe-changes\": true,\n"
+        "                \"validate-changes\": true,\n"
+        "                \"control-socket\": {\n"
+        "                    \"socket-type\": \"stdout\",\n"
+        "                    \"socket-name\": \"/tmp/socket-ca\",\n"
+        "                    \"socket-url\": \"http://127.0.0.1:8000/\"\n"
+        "                }\n"
+        "            }\n"
+        "        },\n"
+        "        \"hooks-libraries\": [ ]\n"
+        "    }\n"
+        "}";
+    isc::test::runToElementTest<NetconfConfig>(expected, *ctx);
 }
 
 // Tests the handling of invalid socket URL.
