@@ -25,14 +25,16 @@ using namespace std;
 int main(int argc, char* argv[]) {
     int ret = EXIT_SUCCESS;
 
-    // Instantiate/fetch the DHCP-DDNS application controller singleton.
-    DControllerBasePtr& controller = D2Controller::instance();
-
     // Launch the controller passing in command line arguments.
     // Exit program with the controller's return code.
     try  {
+        // Instantiate/fetch the DHCP-DDNS application controller singleton.
+        DControllerBasePtr& controller = D2Controller::instance();
+
         // 'false' value disables test mode.
         controller->launch(argc, argv, false);
+
+        boost::dynamic_pointer_cast<D2Controller>(controller)->d2ShutdownHandler();
     } catch (const VersionMessage& ex) {
         std::string msg(ex.what());
         if (!msg.empty()) {
@@ -49,7 +51,6 @@ int main(int argc, char* argv[]) {
         ret = EXIT_FAILURE;
     }
 
-    boost::dynamic_pointer_cast<D2Controller>(controller)->d2ShutdownHandler();
 
     return (ret);
 }
