@@ -1,7 +1,7 @@
 {
     "name": "lease4-del",
     "brief": "lease4-del can be used to delete a lease from the lease database.",
-    "description": "See <xref linkend=\"idp61\"/>",
+    "description": "See <xref linkend=\"command-lease4-del\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "lease_cmds",
