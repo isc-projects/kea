@@ -448,6 +448,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Fetching the subnet for an explicitly specified server tag should
+    // succeeed too.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
+                                         SubnetID(1024));
+    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 }
 
 // Test that subnet can be associated with a shared network.
@@ -492,6 +498,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4ByPrefix) {
 
     // Verify subnet contents.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Fetching the subnet for an explicitly specified server tag should
+    // succeeed too.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
+                                         "192.0.2.0/24");
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 }
 
 // Test that all subnets can be fetched and then deleted.
@@ -506,6 +518,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     Subnet4Collection subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
+    // All subnets should also be returned for explicitly specified server tag.
+    subnets = cbptr_->getAllSubnets4(ServerSelector::ONE("server1"));
+    ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
+
     // See if the subnets are returned ok.
     for (auto i = 0; i < subnets.size(); ++i) {
         EXPECT_EQ(test_subnets_[i + 1]->toElement()->str(),
@@ -518,6 +534,18 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
                                        "155.0.3.0/24"));
     // All subnets should be still there.
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
+
+    // Should not delete the subnet for explicit server tag because
+    // out subnet is for all servers.
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
+                                       test_subnets_[1]->getID()));
+
+    // Also, verify that behavior when deleting by prefix.
+    EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
+                                       test_subnets_[2]->toText()));
+
+    // Same for all subnets.
+    EXPECT_EQ(0, cbptr_->deleteAllSubnets4(ServerSelector::ONE("server1")));
 
     // Delete first subnet by id and verify that it is gone.
     EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
@@ -558,6 +586,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
     Subnet4Collection
         subnets = cbptr_->getModifiedSubnets4(ServerSelector::ALL(),
                                               timestamps_["today"]);
+    ASSERT_EQ(1, subnets.size());
+
+    // All subnets should also be returned for explicitly specified server tag.
+    subnets = cbptr_->getModifiedSubnets4(ServerSelector::ONE("server1"),
+                                          timestamps_["today"]);
     ASSERT_EQ(1, subnets.size());
 
     // Fetch subnets with timestamp later than yesterday. We should get

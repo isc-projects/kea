@@ -60,7 +60,7 @@ public:
     /// @param index Index of the statement to be executed.
     /// @param key String value to be used as input binding to the delete
     /// statement
-    /// @return number of deleted rows.
+    /// @return Number of deleted rows.
     uint64_t deleteFromTable(const int index,
                              const std::string& key);
 
@@ -68,13 +68,45 @@ public:
     ///
     /// @param index Index of the statement to be executed.
     /// @param server_selector Server selector.
-    /// @param key String value to be used as input binding to the delete
+    /// @return Number of deleted rows.
+    uint64_t deleteFromTable(const int index,
+                             const db::ServerSelector& server_selector);
+
+    /// @brief Sends query to delete rows from a table.
+    ///
+    /// @tparam KeyType Type of the key used as the second binding. The
+    /// server tag is used as first binding.
+    ///
+    /// @param index Index of the statement to be executed.
+    /// @param server_selector Server selector.
+    /// @param key Value to be used as input binding to the delete
     /// statement. The default value is empty which indicates that the
     /// key should not be used in the query.
-    /// @return number of deleted rows.
+    /// @return Number of deleted rows.
+    template<typename KeyType>
     uint64_t deleteFromTable(const int index,
                              const db::ServerSelector& server_selector,
-                             const std::string& key = "");
+                             KeyType key) {
+        uint64_t deleted_entries = 0;
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            db::MySqlBindingCollection in_bindings = {
+                db::MySqlBinding::createString(tag)
+            };
+
+            if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
+                in_bindings.push_back(db::MySqlBinding::createString(key));
+
+            } else {
+                in_bindings.push_back(db::MySqlBinding::createInteger<KeyType>(key));
+            }
+
+            deleted_entries += conn_.updateDeleteQuery(index, in_bindings);
+        }
+
+        return (deleted_entries);
+    }
 
     /// @brief Sends query to the database to retrieve multiple option
     /// definitions.
