@@ -2,7 +2,7 @@
     "name": "subnet6-get",
     "brief": "This command is used to retrieve detailed information about the specified subnet. This command usually follows the subnet6-list, which is used to discover available subnets with their respective subnet identifiers and prefixes.",
     "description": "See <xref linkend=\"idp68\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp6" ],
     "avail": "1.3.0",
     "hook": "subnet_cmds",
     "cmd-syntax": "{
