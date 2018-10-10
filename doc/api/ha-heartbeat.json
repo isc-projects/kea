@@ -1,8 +1,7 @@
 {
     "name": "ha-heartbeat",
     "brief": "This command is sent internally by Kea partner when operating
-              in High Availability (HA) mode. It should not be used by users,
-              unless you want to implement complete HA replacement.",
+              in High Availability (HA) mode. It will retrieve the server HA state and clock value.",
     "description": "See <xref linkend=\"ha-server-states\"/>",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "avail": "1.4.0",
@@ -10,5 +9,5 @@
     "cmd-syntax": "{
     \"command\": \"ha-heartbeat\"
 ,
-    "resp-syntax": The response to this command is different from the typical command response. The response will include server state (see <xref linkend=\"ha-server-states\"/>" plus the current clock value. 
+    "resp-syntax": "The response to this command is different from the typical command response. The response will include server state (see <xref linkend=\"ha-server-states\"/> plus the current clock value.",
 }
