@@ -7,7 +7,6 @@
     "avail": "1.4.0",
     "hook": "high_availability",
     "cmd-syntax": "{
-    \"command\": \"ha-heartbeat\"
-,
+    \"command\": \"ha-heartbeat\",
     "resp-syntax": "The response to this command is different from the typical command response. The response will include server state (see <xref linkend=\"ha-server-states\"/> plus the current clock value.",
 }
