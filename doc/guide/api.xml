@@ -573,7 +573,7 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "config-get"
 }</screen>
-&lt;command&gt;config-get&lt;/command&gt; takes no parameters.</para>
+<command>config-get</command> takes no parameters.</para>
 
 <para>Response syntax:
   <screen>{
@@ -691,7 +691,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
      }
 }</screen>
-where &lt;server&gt; is the configuration element name for a given server such as "Dhcp4" or "Dhcp6"</para>
+where &gt;server&lt; is the configuration element name for a given server such as "Dhcp4" or "Dhcp6"</para>
 
 <para>Response syntax:
   <screen>{"result": 0, "text": "Configuration seems sane..." }
@@ -3011,9 +3011,9 @@ If no IPv6 subnets are found, an error code is returned along with the error des
 <!-- start of version-get -->
 <section xml:id="reference-version-get">
 <title>version-get reference</title>
-<para xml:id="ref-version-get"><command>version-get</command> - The version-get command returns on the control channel what the
-              command line -v argument displays with in arguments the extended
-              version, i.e., what the command line -V argument displays.</para>
+<para xml:id="ref-version-get"><command>version-get</command> - The version-get command returns extended information about
+              Kea version. The returned string is the same as if Kea would
+              be run with -V command line option.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
