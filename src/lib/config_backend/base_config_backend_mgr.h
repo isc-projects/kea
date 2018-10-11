@@ -107,15 +107,15 @@ public:
 
     /// @brief Unregisters the backend factory function for a given backend type.
     ///
-    /// The typical usage of this function is remove the factory function
-    /// when its type of backend is no longer supported (i.e hook lib is unloaded).
-    /// It should mirror the use @c registerBackendFactory and be called from the
-    /// hooks library @c unload function.
+    /// This function is used to remove the factory function and all backend instances
+    /// for a given backend type.  Typically, it would be called when unloading the
+    /// a config backend hook library, and thus called by the library's @c unload
+    /// function.
     ///
     /// @param db_type Backend type, e.g. "mysql".
     ///
-    /// @return false if no factory for the given type was not registered, true
-    /// true if the factory was removed.
+    /// @return false if no factory for the given type was unregistered, true
+    /// if the factory was removed.
     bool unregisterBackendFactory(const std::string& db_type) {
         // Look for it.
         auto index = factories_.find(db_type);

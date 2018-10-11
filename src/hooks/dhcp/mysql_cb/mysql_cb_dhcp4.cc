@@ -2690,12 +2690,14 @@ MySqlConfigBackendDHCPv4::getPort() const {
     return (0);
 }
 
-void
+bool
 MySqlConfigBackendDHCPv4::registerBackendType() {
-    dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
-        [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
+    return (
+        dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
+            [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
             return (dhcp::MySqlConfigBackendDHCPv4Ptr(new dhcp::MySqlConfigBackendDHCPv4(params)));
-        });
+        })
+    );
 }
 
 void
