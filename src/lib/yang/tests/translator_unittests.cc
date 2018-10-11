@@ -150,11 +150,11 @@ TEST(TranslatorBasicTest, getItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/keatest-module:container/list";
+    string xpath = "/keaexample-module:container/list";
     S_Val s_val;
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     ConstElementPtr elem;
-    EXPECT_NO_THROW(elem = t_obj->getItem("/keatest-module:container"));
+    EXPECT_NO_THROW(elem = t_obj->getItem("/keaexample-module:containe"));
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -452,14 +452,14 @@ TEST(TranslatorBasicTest, setItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/keatest-module:container";
+    string xpath = "/keaexample-module:containe";
     ConstElementPtr elem = Element::createMap();
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_T), NotImplemented);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),
                  NotImplemented);
 
     // List.
-    xpath = "/keatest-module:container/list";
+    xpath = "/keaexample-module:container/list";
     elem = Element::createList();
     EXPECT_NO_THROW(t_obj->setItem(xpath, elem, SR_LIST_T));
     S_Val s_val;
@@ -657,20 +657,21 @@ TEST(TranslatorBasicTest, list) {
 
     // Empty list.
     S_Iter_Value iter;
-    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/keaexample-module:container/list"));
     ASSERT_TRUE(iter);
     string xpath;
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 
     // Retried with a filled list.
-    xpath = "/keatest-module:container/list[key1='key1'][key2='key2']/leaf";
+    xpath = "/keaexample-module:container/list[key1='key1'][key2='key2']/leaf";
     S_Val s_val(new Val("Leaf value"));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-    EXPECT_NO_THROW(iter = t_obj->getIter("/keatest-module:container/list"));
+    EXPECT_NO_THROW(iter = t_obj->getIter("/keaexample-module:container/list"));
     ASSERT_TRUE(iter);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
-    EXPECT_EQ("/keatest-module:container/list[key1='key1'][key2='key2']", xpath);
+    EXPECT_EQ("/keaexample-module:container/list[key1='key1'][key2='key2']",
+              xpath);
     EXPECT_NO_THROW(xpath = t_obj->getNext(iter));
     EXPECT_TRUE(xpath.empty());
 

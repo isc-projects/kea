@@ -9,26 +9,10 @@ module keatest-module {
 
   organization "Sysrepo and ISC";
   description
-    "ISC imported an example module from Sysrepo tests and adapted it
+    "ISC imported a test module from Sysrepo tests and adapted it
      to kea testing regime.";
   contact
     "kea-dev@lists.isc.org";
-
-   container container {
-      config true;
-      list list {
-         leaf leaf {
-            type string;
-         }
-         leaf key1 {
-            type string;
-         }
-         leaf key2 {
-            type string;
-         }
-         key "key1 key2";
-      }
-   }
 
   typedef threshold-power-dBm {
     type union {

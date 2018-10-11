@@ -114,8 +114,9 @@ For details, see Section 20 "YANG/NETCONF support" in the Kea User's Guide.
 
 You also need to install YANG schemas, so the unit-tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several production Kea models (src/lib/yang/models) and one test
-specific model (src/lib/yang/tests/keatest-module.yang).
+There are several production Kea models (src/lib/yang/models) and two test
+specific models (src/lib/yang/tests/keatest-module.yang and
+src/lib/yang/tests/keaexample-module.yang).
 
 To install the test module, issue the following command:
 
@@ -123,11 +124,18 @@ To install the test module, issue the following command:
 sudo sysrepoctl --install --yang=src/lib/yang/tests/keatest-module.yang
 @endverbatim
 
+To install the example module, issue the following command:
+
+@verbatim
+sudo sysrepoctl --install --yang=src/lib/yang/tests/keaexample-module.yang
+@endverbatim
+
 To verify that you have the schemas installed, do this:
 @verbatim
 sysrepoctl -l
 @endverbatim
-Make sure that keatest-module and other necessary modules are on the list.
+Make sure that keatest-module, keaexample-module and other necessary
+modules are on the list.
 
 Note as DHCP modules are still being developed it can be useful to
 deinstall them before reinstalling a more recent version:
@@ -136,7 +144,7 @@ sudo sysrepoctl --uninstall --module=<module-name>
 @endverbatim
 
 Tests use these modules you can find in src/lib/yang/models in addition
-of keatest-module:
+of keatest-module and keaexample-module:
  - ietf-dhcpv6-server
  - kea-ctrl-agent
  - kea-dhcp-ddns
