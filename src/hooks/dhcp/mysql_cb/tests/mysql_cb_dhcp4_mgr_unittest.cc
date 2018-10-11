@@ -9,18 +9,20 @@
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <mysql_cb_dhcp4.h>
 #include <mysql/testutils/mysql_schema.h>
+#include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 using namespace isc::db;
 using namespace isc::db::test;
 
 namespace {
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv4Mgr.
-class MySqlConfigBackendDHCPv4MgrTest : public ::testing::Test {
+class MySqlConfigBackendDHCPv4MgrTest : public GenericBackendTest {
 public:
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4MgrTest() {
@@ -34,6 +36,8 @@ public:
 
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv4MgrTest() {
+        // Destroy the mgr.
+        ConfigBackendDHCPv4Mgr::destroy();
         destroyMySQLSchema();
     }
 };

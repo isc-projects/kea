@@ -23,6 +23,11 @@ ConfigBackendDHCPv4Mgr::create() {
     getConfigBackendDHCPv4MgrPtr().reset(new ConfigBackendDHCPv4Mgr());
 }
 
+void
+ConfigBackendDHCPv4Mgr::destroy() {
+    getConfigBackendDHCPv4MgrPtr().reset(new ConfigBackendDHCPv4Mgr());
+}
+
 ConfigBackendDHCPv4Mgr&
 ConfigBackendDHCPv4Mgr::instance() {
     boost::scoped_ptr<ConfigBackendDHCPv4Mgr>& cb_dhcp4_mgr = getConfigBackendDHCPv4MgrPtr();
