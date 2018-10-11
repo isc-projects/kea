@@ -132,7 +132,7 @@ const string TEST_SOCKET = "test-socket";
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
-/// @brief Type definition for the pointer to Thread objects..
+/// @brief Type definition for the pointer to Thread objects.
 typedef boost::shared_ptr<Thread> ThreadPtr;
 
 /// @brief Test fixture class for unix control sockets.
@@ -247,7 +247,7 @@ UnixControlSocketTest::reflectServer() {
 
     // Receive command.
     string rbuf(1024, ' ');
-    size_t received;
+    size_t received = 0;
     socket.async_receive(boost::asio::buffer(&rbuf[0], rbuf.size()),
                          [&ec, &received]
                          (const boost::system::error_code& error, size_t cnt) {
@@ -266,7 +266,7 @@ UnixControlSocketTest::reflectServer() {
     string sbuf = map->str();
 
     // Send back.
-    size_t sent;
+    size_t sent = 0;
     socket.async_send(boost::asio::buffer(&sbuf[0], sbuf.size()),
                       [&ec, &sent]
                       (const boost::system::error_code& error, size_t cnt) {
@@ -566,8 +566,8 @@ public:
                     while (!done_) {
                         io_service_.run_one();
                     }
-                    io_service_.poll();
                     finished_ = true;
+                    io_service_.poll();
                 }));
         while (!ready_) {
             usleep(1000);
@@ -581,13 +581,13 @@ public:
     ///
     /// Post an empty action to finish current run_one.
     void stop() {
-        if (listener_) {
-            ASSERT_NO_THROW(listener_->stop());
-        }
         done_ = true;
         io_service_.post([]() { return; });
         while (!finished_) {
             usleep(1000);
+        }
+        if (listener_) {
+            ASSERT_NO_THROW(listener_->stop());
         }
     }
 
