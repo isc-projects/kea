@@ -14,6 +14,7 @@ using namespace std;
 /// Not using libyang headers, e.g. yang_models.h.
 
 const string TEST_MODULE = "keatest-module";
+const string EXAMPLE_MODULE = "keaexample-module";
 const string IETF_TYPES = "ietf-inet-types";
 const string YANG_TYPES = "ietf-yang-types";
 const string IETF_MODULE = "ietf-dhcpv6-server";
@@ -74,6 +75,7 @@ int main() {
     }
 
     bool found_test = false;
+    bool found_example = false;
     bool found_ietf_types = false;
     bool found_yang_types =false;
     bool found_ietf = false;
@@ -89,6 +91,8 @@ int main() {
         }
         if (module == TEST_MODULE) {
             found_test = true;
+        } else if (module == EXAMPLE_MODULE) {
+            found_example = true;
         } else if (module == IETF_TYPES) {
             found_ietf_types = true;
         } else if (module == YANG_TYPES) {
@@ -108,7 +112,8 @@ int main() {
 
     int exit_code = 0;
 
-    if (!found_test || !found_ietf_types || !found_yang_types ||
+    if (!found_test || !found_example ||
+        !found_ietf_types || !found_yang_types ||
         !found_ietf || !found_kea4 || !found_kea6 || !found_keaca ||
         !found_kea2) {
         exit_code = -4;
@@ -116,6 +121,11 @@ int main() {
 
     if (!found_test) {
         cerr << missingModuleText(TEST_MODULE);
+        --exit_code;
+    }
+
+    if (!found_example) {
+        cerr << missingModuleText(EXAMPLE_MODULE);
         --exit_code;
     }
 

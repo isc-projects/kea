@@ -8,7 +8,6 @@
 
 #include <yang/tests/yang_configs.h>
 
-#include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -64,7 +63,7 @@ TEST(YangReprTest, getExample) {
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
 
     // Create a list.
-    string xpath = "/example-module:container/list";
+    string xpath = "/keaexample-module:container/list";
     S_Val s_val;
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
@@ -87,54 +86,54 @@ TEST(YangReprTest, getTest) {
     string xpath;
     S_Val s_val;
 
-    xpath = "/test-module:main/string";
+    xpath = "/keatest-module:main/string";
     s_val.reset(new Val("str", SR_STRING_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/boolean";
+    xpath = "/keatest-module:main/boolean";
     s_val.reset(new Val(true, SR_BOOL_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/ui8";
+    xpath = "/keatest-module:main/ui8";
     uint8_t u8(8);
     s_val.reset(new Val(u8, SR_UINT8_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/ui16";
+    xpath = "/keatest-module:main/ui16";
     uint16_t u16(16);
     s_val.reset(new Val(u16, SR_UINT16_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/ui32";
+    xpath = "/keatest-module:main/ui32";
     uint32_t u32(32);
     s_val.reset(new Val(u32, SR_UINT32_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/i8";
+    xpath = "/keatest-module:main/i8";
     int8_t s8(8);
     s_val.reset(new Val(s8, SR_INT8_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/i16";
+    xpath = "/keatest-module:main/i16";
     int16_t s16(16);
     s_val.reset(new Val(s16, SR_INT16_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/i32";
+    xpath = "/keatest-module:main/i32";
     int32_t s32(32);
     s_val.reset(new Val(s32, SR_INT32_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/id_ref";
-    s_val.reset(new Val("test-module:id_1", SR_IDENTITYREF_T));
+    xpath = "/keatest-module:main/id_ref";
+    s_val.reset(new Val("keatest-module:id_1", SR_IDENTITYREF_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
-    xpath = "/test-module:main/enum";
+    xpath = "/keatest-module:main/enum";
     s_val.reset(new Val("maybe", SR_ENUM_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     // Binary.
-    xpath = "/test-module:main/raw";
+    xpath = "/keatest-module:main/raw";
     s_val.reset(new Val("Zm9vYmFy", SR_BINARY_T));
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
@@ -150,7 +149,7 @@ TEST(YangReprTest, getTest) {
 
     // Change a path.
     YRTree badpath = testTree;
-    badpath[20].xpath_ = "/test-module:kernel-module"; // removed final 's'
+    badpath[20].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
     EXPECT_FALSE(repr.verify(badpath, sess, cerr));
 
     // Change a value.
@@ -165,7 +164,7 @@ TEST(YangReprTest, getTest) {
 
     // Add a record at the end.
     YRTree badmissing = testTree;
-    const string& xpathpc = "/test-module:presence-container";
+    const string& xpathpc = "/keatest-module:presence-container";
     badmissing.push_back(YRItem(xpathpc, "", SR_CONTAINER_PRESENCE_T, false));
     EXPECT_FALSE(repr.verify(badmissing, sess, cerr));
 
