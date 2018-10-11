@@ -391,7 +391,8 @@ public:
     /// @brief Registers the MySQL backend factory with backend config manager
     ///
     /// This should be called by the hook lib load() function.
-    static void registerBackendType();
+    /// @return True if the factory was registered successfully, false otherwise.
+    static bool registerBackendType();
 
     /// @brief Unregisters the MySQL backend factory and discards MySQL backends
     ///

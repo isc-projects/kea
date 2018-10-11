@@ -18,33 +18,40 @@ namespace dhcp {
 /// @brief Configuration Backend Manager for DHPCv4 servers.
 ///
 /// Implements the "manager" class which holds information about the
-/// supported and configured backends and provides access to those 
-/// backends. This is similar to @c HostMgr and @c LeaseMgr singletons 
+/// supported and configured backends and provides access to those
+/// backends. This is similar to @c HostMgr and @c LeaseMgr singletons
 /// being used by the DHCP servers.
 ///
 /// It is implemented as a singleton that can be accessed from any place
-/// within the server code. This includes server configuration, data 
-/// fetching during normal server operation and data management, including 
+/// within the server code. This includes server configuration, data
+/// fetching during normal server operation and data management, including
 /// processing of control commands implemented within hooks libraries.
 ///
 /// Unlike @c HostMgr, the it does not directly expose the API to fetch and
 /// manipulate the data in the database. This is done via, the Configuration
-/// Backend Pool, see @c ConfigBackendPoolDHCPv4 for details. 
-class ConfigBackendDHCPv4Mgr : public cb::BaseConfigBackendMgr<ConfigBackendPoolDHCPv4>, 
+/// Backend Pool, see @c ConfigBackendPoolDHCPv4 for details.
+class ConfigBackendDHCPv4Mgr : public cb::BaseConfigBackendMgr<ConfigBackendPoolDHCPv4>,
                                public boost::noncopyable {
 public:
     /// @brief Creates new instance of the @c ConfigBackendDHCPv4Mgr.
     ///
-    /// If an instance of the @c ConfigBackendDHCPv4Mgr already exists, 
-    /// it will be replaced by the new instance. Thus, any instances of 
-    /// config databases will be dropped.
+    /// If an instance of the @c ConfigBackendDHCPv4Mgr already exists,
+    /// it will be replaced by the new instance. Thus, all factories
+    /// will be unregistered and config databases will be dropped.
     static void create();
+
+    /// @brief Destroys the instance of the @c ConfigBackendDHCPv4Mgr.
+    ///
+    /// If an instance of the @c ConfigBackendDHCPv4Mgr exists,
+    /// it will be destroyed.  Thus, all factories will be unregistered
+    /// and config databases will be dropped.
+    static void destroy();
 
     /// @brief Returns a sole instance of the @c ConfigBackendDHCPv4Mgr.
     ///
     /// This method should be used to retrieve an instance of the @c ConfigBackendDHCPv4Mgr
     /// to be used to gather/manage config backends. It returns an instance
-    /// of the @c ConfigBackendDHCPv4Mgr created by the @c create method. If 
+    /// of the @c ConfigBackendDHCPv4Mgr created by the @c create method. If
     /// the instance doesn't exist yet, it is created using the @c create method
     /// with the an empty set of configuration databases.
     static ConfigBackendDHCPv4Mgr& instance();
