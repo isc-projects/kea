@@ -51,6 +51,13 @@ public:
     isc::data::ConstElementPtr
     parseFile(const std::string& name);
 
+    /// @brief Redefined application-level signal processing method.
+    ///
+    /// This method ignores SIGHUP as configuration reloading is not yet
+    /// supported.
+    /// @param signum signal number to process.
+    virtual void processSignal(int signum);
+
 private:
 
     /// @brief Creates an instance of the Netconf application process.
