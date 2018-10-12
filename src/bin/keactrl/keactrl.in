@@ -427,10 +427,10 @@ fi
 
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
-dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
-dhcp6=$( printf "%s" ${dhcp6} | tr [:upper:] [:lower:] )
-dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr [:upper:] [:lower:] )
-ctrl_agent=$( printf "%s" ${ctrl_agent} | tr [:upper:] [:lower:] )
+dhcp4=$( printf "%s" ${dhcp4} | tr '[:upper:]' '[:lower:]' )
+dhcp6=$( printf "%s" ${dhcp6} | tr '[:upper:]' '[:lower:]' )
+dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr '[:upper:]' '[:lower:]' )
+ctrl_agent=$( printf "%s" ${ctrl_agent} | tr '[:upper:]' '[:lower:]' )
 
 
 case ${command} in
