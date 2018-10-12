@@ -525,5 +525,32 @@ TEST_F(ConfigBackendMgrTest, getAllProperties) {
                  NoSuchDatabase);
 }
 
+// Verify that unregistering a factory works.
+TEST_F(ConfigBackendMgrTest, unregister) {
+
+    // Verify we can't remove what is not there.
+    ASSERT_FALSE(config_mgr_.unregisterBackendFactory("mysql"));
+
+    // Add both MySQL and Postgresql backends
+    addTestBackends();
+
+    // Backend should be present.
+    EXPECT_NO_THROW(config_mgr_.getPool()->getProperties("cats",
+                                                         BackendSelector(BackendSelector::Type::MYSQL)));
+
+    // Verify that unregistering MySQL factory returns true.
+    ASSERT_TRUE(config_mgr_.unregisterBackendFactory("mysql"));
+
+    // Verify that the factory is actually gone.
+    ASSERT_THROW(config_mgr_.addBackend("type=mysql"), db::InvalidType);
+
+    // Verify we can't remove what is not there.
+    ASSERT_FALSE(config_mgr_.unregisterBackendFactory("mysql"));
+
+    // Try to use the backend that is not present.
+    EXPECT_THROW(config_mgr_.getPool()->getProperties("cats",
+                                                       BackendSelector(BackendSelector::Type::MYSQL)),
+                 NoSuchDatabase);
 }
 
+}

@@ -14,6 +14,7 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space.h>
+#include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/lease.h>
@@ -153,7 +154,7 @@ public:
     ///
     /// @return Pointer to the retrieved value or null if such parameter
     /// doesn't exist.
-    StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
+    StampedValuePtr getGlobalParameter4(const ServerSelector& /* server_selector */,
                                         const std::string& name) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(name)
@@ -170,7 +171,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
-    void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
+    void createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
                                       const StampedValuePtr& value) {
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(value->getName()),
@@ -1194,7 +1195,7 @@ public:
     /// @return Pointer to the returned option or NULL if such option
     /// doesn't exist.
     OptionDescriptorPtr
-    getOption4(const ServerSelector& server_selector, const uint16_t code,
+    getOption4(const ServerSelector& /* server_selector */, const uint16_t code,
                const std::string& space) {
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
@@ -1211,7 +1212,7 @@ public:
     /// @param selector Server selector.
     /// @return Container holding returned options.
     OptionContainer
-    getAllOptions4(const ServerSelector& server_selector) {
+    getAllOptions4(const ServerSelector& /* server_selector */) {
         OptionContainer options;
         MySqlBindingCollection in_bindings;
         getOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
@@ -1225,7 +1226,7 @@ public:
     /// @param selector Server selector.
     /// @return Container holding returned options.
     OptionContainer
-    getModifiedOptions4(const ServerSelector& server_selector,
+    getModifiedOptions4(const ServerSelector& /* server_selector */,
                         const boost::posix_time::ptime& modification_time) {
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
@@ -2512,7 +2513,7 @@ MySqlConfigBackendDHCPv4::getGlobalParameter4(const ServerSelector& server_selec
 }
 
 StampedValueCollection
-MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
+MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* server_selector */) const {
     MySqlBindingCollection in_bindings;
     StampedValueCollection parameters;
     impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
@@ -2522,7 +2523,7 @@ MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_s
 
 StampedValueCollection
 MySqlConfigBackendDHCPv4::
-getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
+getModifiedGlobalParameters4(const db::ServerSelector& /* server_selector */,
                              const boost::posix_time::ptime& modification_time) const {
     MySqlBindingCollection in_bindings = {
         MySqlBinding::createTimestamp(modification_time)
@@ -2663,14 +2664,14 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
+MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /*server_selector*/,
                                                  const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
                                    name));
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& selector) {
+MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& /* server_selector */) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4));
 }
 
@@ -2687,6 +2688,21 @@ MySqlConfigBackendDHCPv4::getHost() const {
 uint16_t
 MySqlConfigBackendDHCPv4::getPort() const {
     return (0);
+}
+
+bool
+MySqlConfigBackendDHCPv4::registerBackendType() {
+    return (
+        dhcp::ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("mysql",
+            [](const db::DatabaseConnection::ParameterMap& params) -> dhcp::ConfigBackendDHCPv4Ptr {
+            return (dhcp::MySqlConfigBackendDHCPv4Ptr(new dhcp::MySqlConfigBackendDHCPv4(params)));
+        })
+    );
+}
+
+void
+MySqlConfigBackendDHCPv4::unregisterBackendType() {
+    dhcp::ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("mysql");
 }
 
 } // end of namespace isc::dhcp
