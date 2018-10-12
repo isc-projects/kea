@@ -35,8 +35,8 @@ nodist_libstat_cmds_la_SOURCES = stat_cmds_messages.cc stat_cmds_messages.h
 libstat_cmds_la_CXXFLAGS = $(AM_CXXFLAGS)
 libstat_cmds_la_CPPFLAGS = $(AM_CPPFLAGS)
 
-# install the shared object into $(libdir)/hooks
-lib_hooksdir = $(libdir)/hooks
+# install the shared object into $(libdir)/kea/hooks
+lib_hooksdir = $(libdir)/kea/hooks
 lib_hooks_LTLIBRARIES = libdhcp_stat_cmds.la
 
 libdhcp_stat_cmds_la_SOURCES  =

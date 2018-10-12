@@ -36,8 +36,8 @@ nodist_liblease_cmds_la_SOURCES = lease_cmds_messages.cc lease_cmds_messages.h
 liblease_cmds_la_CXXFLAGS = $(AM_CXXFLAGS)
 liblease_cmds_la_CPPFLAGS = $(AM_CPPFLAGS)
 
-# install the shared object into $(libdir)/hooks
-lib_hooksdir = $(libdir)/hooks
+# install the shared object into $(libdir)/kea/hooks
+lib_hooksdir = $(libdir)/kea/hooks
 lib_hooks_LTLIBRARIES = libdhcp_lease_cmds.la
 
 libdhcp_lease_cmds_la_SOURCES  =

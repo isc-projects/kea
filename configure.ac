@@ -1753,7 +1753,7 @@ Package:
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
 
-  Hooks directory:   ${prefix}/lib/hooks
+  Hooks directory:   ${libdir}/kea/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
