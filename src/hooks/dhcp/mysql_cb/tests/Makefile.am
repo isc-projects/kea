@@ -24,6 +24,7 @@ if HAVE_GTEST
 TESTS += mysql_cb_unittests
 
 mysql_cb_unittests_SOURCES  = mysql_cb_dhcp4_unittest.cc
+mysql_cb_unittests_SOURCES += mysql_cb_dhcp4_mgr_unittest.cc
 mysql_cb_unittests_SOURCES += run_unittests.cc
 
 mysql_cb_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)

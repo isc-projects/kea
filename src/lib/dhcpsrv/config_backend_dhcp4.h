@@ -15,6 +15,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
+#include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <string>
 
@@ -366,6 +367,9 @@ public:
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector) = 0;
 };
+
+/// @brief Shared pointer to the @c ConfigBackendDHCPv4 instance.
+typedef boost::shared_ptr<ConfigBackendDHCPv4> ConfigBackendDHCPv4Ptr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

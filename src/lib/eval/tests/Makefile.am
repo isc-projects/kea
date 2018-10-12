@@ -29,6 +29,7 @@ libeval_unittests_CXXFLAGS = $(AM_CXXFLAGS)
 libeval_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libeval_unittests_LDFLAGS  = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS) $(GTEST_LDFLAGS)
 libeval_unittests_LDADD    = $(top_builddir)/src/lib/eval/libkea-eval.la
+libeval_unittests_LDADD   += $(top_builddir)/src/lib/cc/libkea-cc.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libeval_unittests_LDADD   += $(top_builddir)/src/lib/dns/libkea-dns++.la

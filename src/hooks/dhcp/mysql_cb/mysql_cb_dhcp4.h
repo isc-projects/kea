@@ -388,6 +388,17 @@ public:
     /// @return Port number on which database service is available.
     virtual uint16_t getPort() const;
 
+    /// @brief Registers the MySQL backend factory with backend config manager
+    ///
+    /// This should be called by the hook lib load() function.
+    /// @return True if the factory was registered successfully, false otherwise.
+    static bool registerBackendType();
+
+    /// @brief Unregisters the MySQL backend factory and discards MySQL backends
+    ///
+    /// This should be called by the hook lib unload() function.
+    static void unregisterBackendType();
+
 private:
 
     /// @brief Pointer to the implementation of the @c MySqlConfigBackendDHCPv4
