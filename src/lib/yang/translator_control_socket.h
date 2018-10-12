@@ -62,8 +62,11 @@ namespace yang {
 /// @brief A translator class for converting a control socket between
 /// YANG and JSON.
 ///
-/// Supports all kea-* models at the exception of kea-dhcp-ddns.
-/// Specific to Kea so does not exists in ietf-dhcpv6-server.
+/// Supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
+/// - kea-dhcp-ddns
+/// - kea-ctrl-agent
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:
 
@@ -101,6 +104,8 @@ protected:
     /// @brief setControlSocket for kea models.
     ///
     /// Null elem argument removes the container.
+    /// Required parameters passed in elem are: socket-name, socket-type.
+    /// Optional parameters are: user-context.
     ///
     /// @param xpath The xpath of the control socket.
     /// @param elem The JSON element.
