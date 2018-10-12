@@ -222,9 +222,11 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
 
     // Set the command channel.
     try {
-        isc::data::ConstElementPtr staging_socket;
-        staging_socket = getD2CfgMgr()->getControlSocketInfo();
-        configureCommandChannel(current_socket, staging_socket);
+        isc::data::ConstElementPtr socket_info;
+        socket_info = getD2CfgMgr()->getControlSocketInfo();
+        if (socket_info) {
+            configureCommandChannel(current_socket, socket_info);
+        }
     } catch (const isc::Exception& ex) {
         answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
         return (answer);
