@@ -156,7 +156,7 @@ public:
     ///
     /// @return Pointer to the retrieved value or null if such parameter
     /// doesn't exist.
-    StampedValuePtr getGlobalParameter4(const ServerSelector& /* server_selector */,
+    StampedValuePtr getGlobalParameter4(const ServerSelector& server_selector,
                                         const std::string& name) {
         StampedValueCollection parameters;
 
@@ -178,7 +178,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
-    void createUpdateGlobalParameter4(const db::ServerSelector& /* server_selector */,
+    void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
 
         MySqlTransaction transaction(conn_);
@@ -2697,7 +2697,7 @@ MySqlConfigBackendDHCPv4::getGlobalParameter4(const ServerSelector& server_selec
 }
 
 StampedValueCollection
-MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* server_selector */) const {
+MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_selector) const {
     StampedValueCollection parameters;
 
     auto tags = impl_->getServerTags(server_selector);
@@ -2711,7 +2711,7 @@ MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& /* serve
 
 StampedValueCollection
 MySqlConfigBackendDHCPv4::
-getModifiedGlobalParameters4(const db::ServerSelector& /* server_selector */,
+getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                              const boost::posix_time::ptime& modification_time) const {
     StampedValueCollection parameters;
 
@@ -2859,7 +2859,7 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& /*server_selector*/,
+MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
                                    server_selector, name));

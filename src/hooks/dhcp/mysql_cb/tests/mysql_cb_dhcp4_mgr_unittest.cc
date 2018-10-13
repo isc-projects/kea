@@ -63,11 +63,11 @@ TEST_F(MySqlConfigBackendDHCPv4MgrTest, factoryRegistration) {
 
     // Should be able to create a global parameter.
     StampedValuePtr server_tag = StampedValue::create("server-tag", "whale");
-    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(mysql, ServerSelector::UNASSIGNED(),
+    ASSERT_NO_THROW(mgr.getPool()->createUpdateGlobalParameter4(mysql, ServerSelector::ALL(),
                                                                 server_tag));
     // Verify parameter can be fetched.
     server_tag.reset();
-    ASSERT_NO_THROW(server_tag = mgr.getPool()->getGlobalParameter4(mysql, ServerSelector::UNASSIGNED(),
+    ASSERT_NO_THROW(server_tag = mgr.getPool()->getGlobalParameter4(mysql, ServerSelector::ALL(),
                                                                     "server-tag"));
     ASSERT_TRUE(server_tag);
     EXPECT_EQ("server-tag", server_tag->getName());
@@ -80,7 +80,7 @@ TEST_F(MySqlConfigBackendDHCPv4MgrTest, factoryRegistration) {
     ASSERT_THROW(mgr.addBackend(validMySQLConnectionString()), InvalidType);
 
     // Attempting to read the global parameter should fail.
-    ASSERT_THROW(mgr.getPool()->getGlobalParameter4(mysql, ServerSelector::UNASSIGNED(), "server-tag"),
+    ASSERT_THROW(mgr.getPool()->getGlobalParameter4(mysql, ServerSelector::ALL(), "server-tag"),
                  NoSuchDatabase);
 }
 
