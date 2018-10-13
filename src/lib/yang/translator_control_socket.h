@@ -65,7 +65,7 @@ namespace yang {
 /// Supports the following models:
 /// - kea-dhcp4-server
 /// - kea-dhcp6-server
-/// - kea-dhcp-ddns
+/// - kea-dhcp-ddns (not yet supported by the server itself)
 /// - kea-ctrl-agent
 class TranslatorControlSocket : virtual public TranslatorBasic {
 public:
