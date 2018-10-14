@@ -21,6 +21,7 @@ run_unittests_SOURCES  = adaptor_unittests.cc
 run_unittests_SOURCES += sysrepo_setup.h
 run_unittests_SOURCES += translator_unittests.cc
 run_unittests_SOURCES += translator_control_socket_unittests.cc
+run_unittests_SOURCES += translator_logger_unittests.cc
 run_unittests_SOURCES += translator_option_data_unittests.cc
 run_unittests_SOURCES += translator_option_def_unittests.cc
 run_unittests_SOURCES += translator_pool_unittests.cc
