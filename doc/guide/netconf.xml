@@ -57,6 +57,10 @@ $ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-d
     <link xmlns:xlink="http://www.w3.org/1999/xlink"
           xlink:href="https://github.com/CESNET/libyang" /></para>
 
+    <para<Please note that libyang building requires a gcc version at
+    least 4.9 so on some environments like CentOS 7.5 the system
+    compiler cannot be used.</para>
+
     <para>STEP 3. Install syrepo. Download sysrepo from
     <link xmlns:xlink="http://www.w3.org/1999/xlink"
           xlink:href="https://github.com/sysrepo/sysrepo/releases" />.
