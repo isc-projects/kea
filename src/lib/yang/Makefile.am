@@ -15,6 +15,7 @@ libkea_yang_la_SOURCES += translator_option_data.h
 libkea_yang_la_SOURCES += translator_option_def.cc
 libkea_yang_la_SOURCES += translator_option_def.h
 libkea_yang_la_SOURCES += translator_pool.cc translator_pool.h
+libkea_yang_la_SOURCES += translator_host.cc translator_host.h
 libkea_yang_la_SOURCES += yang_models.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -34,6 +35,7 @@ libkea_yang_include_HEADERS = \
 	sysrepo_error.h \
 	translator.h \
 	translator_control_socket.h \
+	translator_host.h \
 	translator_option_data.h \
 	translator_option_def.h \
 	translator_pool.h \
