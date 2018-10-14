@@ -311,6 +311,19 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
     </para>
 
     <para>
+      When a module change callback is subscribed and the running
+      configuration is changed (using <command>sysrepocfg</command>)
+      the callback is called to validate the modified configuration
+      (if <command>validate-changes</command> was not set to false)
+      and a second time to apply it. If the validation failed the
+      callback is still called again but with an ABORT (vs APPLY) event
+      with rollback changes.
+
+      The returned code of the callback on an APPLY event is ignored,
+      i.e. it is too late to refuse a bad configuration.
+    </para>
+
+    <para>
       A modified YANG configuration has four ways to be incorrect:
       <orderedlist>
         <listitem>
