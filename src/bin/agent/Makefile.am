@@ -83,6 +83,7 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_ctrl_agent_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_ctrl_agent_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
