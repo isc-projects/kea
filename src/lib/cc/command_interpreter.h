@@ -157,6 +157,20 @@ isc::data::ConstElementPtr createCommand(const std::string& command,
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
 
+/// @brief Parses the given command with arguments.
+///
+/// This function parses provided command and expects that it contains
+/// arguments being a map.
+///
+/// @param [out] args Reference to the element where parsed arguments are stored.
+/// @param command The input command which must contains arguments.
+///
+/// @return Command name.
+/// @throw BadValue if the command is malformed, does not contain arguments or
+/// arguments are not a map.
+std::string parseCommandWithArgs(isc::data::ConstElementPtr& args,
+                                 const isc::data::ConstElementPtr& command);
+
 /// @brief Combines lists of commands carried in two responses.
 ///
 /// This method is used to combine list of commands returned by the

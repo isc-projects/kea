@@ -190,6 +190,21 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     return (cmd->stringValue());
 }
 
+std::string
+parseCommandWithArgs(ConstElementPtr& args, const ConstElementPtr& command) {
+    auto command_name = parseCommand(args, command);
+
+    if (!args) {
+        isc_throw(BadValue, "arguments in '" << command_name << "' are missing");
+    }
+
+    if (args->getType() != Element::map) {
+        isc_throw(BadValue, "arguments in '" << command_name << "' are not a map");
+    }
+
+    return (command_name);
+}
+
 ConstElementPtr
 combineCommandsLists(const ConstElementPtr& response1,
                      const ConstElementPtr& response2) {
