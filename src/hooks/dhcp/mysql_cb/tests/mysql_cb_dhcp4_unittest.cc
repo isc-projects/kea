@@ -536,7 +536,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     ASSERT_EQ(test_subnets_.size() - 1, subnets.size());
 
     // Should not delete the subnet for explicit server tag because
-    // out subnet is for all servers.
+    // our subnet is for all servers.
     EXPECT_EQ(0, cbptr_->deleteSubnet4(ServerSelector::ONE("server1"),
                                        test_subnets_[1]->getID()));
 
@@ -633,6 +633,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
                                                  test_networks_[1]->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
               returned_network->toElement()->str());
+
+    // Fetching the shared network for an explicitly specified server tag should
+    // succeed too.
+    returned_network = cbptr_->getSharedNetwork4(ServerSelector::ONE("server1"),
+                                                 shared_network2->getName());
+    EXPECT_EQ(shared_network2->toElement()->str(),
+              returned_network->toElement()->str());
 }
 
 // Test that all shared networks can be fetched.
@@ -648,6 +655,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
         cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
+    // All shared networks should also be returned for explicitly specified
+    // server tag.
+    networks = cbptr_->getAllSharedNetworks4(ServerSelector::ONE("server1"));
+    ASSERT_EQ(test_networks_.size() - 1, networks.size());
+
     // See if shared networks are returned ok.
     for (auto i = 0; i < networks.size(); ++i) {
         EXPECT_EQ(test_networks_[i + 1]->toElement()->str(),
@@ -660,7 +672,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
-    // Delete first shared network and verify it is gone..
+    // Should not delete the subnet for explicit server tag because
+    // our shared network is for all servers.
+    EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
+                                              test_networks_[1]->getName()));
+
+    // Same for all shared networks.
+    EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
+
+    // Delete first shared network and verify it is gone.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
