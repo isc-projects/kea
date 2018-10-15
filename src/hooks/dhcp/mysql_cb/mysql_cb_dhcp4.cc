@@ -78,6 +78,7 @@ public:
         INSERT_SHARED_NETWORK4,
         INSERT_SHARED_NETWORK4_SERVER,
         INSERT_OPTION_DEF4,
+        INSERT_OPTION_DEF4_SERVER,
         INSERT_OPTION4,
         UPDATE_GLOBAL_PARAMETER4,
         UPDATE_SUBNET4,
@@ -1331,11 +1332,19 @@ public:
     ///
     /// @return Pointer to the returned option definition or NULL if such
     /// option definition doesn't exist.
-    OptionDefinitionPtr getOptionDef4(const ServerSelector& /* server_selector */,
+    OptionDefinitionPtr getOptionDef4(const ServerSelector& server_selector,
                                       const uint16_t code,
                                       const std::string& space) {
+        auto tags = getServerTags(server_selector);
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while fetching an option definition. Got: "
+                      << getServerTagsAsText(server_selector));
+        }
+
         OptionDefContainer option_defs;
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(*tags.begin()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
@@ -1346,13 +1355,19 @@ public:
     /// @brief Sends query to retrieve all option definitions.
     ///
     /// @param server_selector Server selector.
-    /// @return Container holding returned option definitions.
-    OptionDefContainer getAllOptionDefs4(const ServerSelector& /* server_selector */) {
-        OptionDefContainer option_defs;
-        MySqlBindingCollection in_bindings;
-        getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-                      in_bindings, option_defs);
-        return (option_defs);
+    /// @param [out] option_defs Reference to the container where option
+    /// definitions are to be stored.
+    void
+    getAllOptionDefs4(const ServerSelector& server_selector,
+                      OptionDefContainer& option_defs) {
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag)
+            };
+            getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
+                          in_bindings, option_defs);
+        }
     }
 
     /// @brief Sends query to retrieve option definitions with modification
@@ -1360,17 +1375,21 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param modification_time Lower bound subnet modification time.
-    /// @return Container holding returned option definitions.
-    OptionDefContainer
-    getModifiedOptionDefs4(const ServerSelector& /* server_selector */,
-                           const boost::posix_time::ptime& modification_time) {
-        OptionDefContainer option_defs;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createTimestamp(modification_time)
-        };
-        getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-                      in_bindings, option_defs);
-        return (option_defs);
+    /// @param [out] option_defs Reference to the container where option
+    /// definitions are to be stored.
+    void
+    getModifiedOptionDefs4(const ServerSelector& server_selector,
+                           const boost::posix_time::ptime& modification_time,
+                           OptionDefContainer& option_defs) {
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createTimestamp(modification_time)
+            };
+            getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
+                          in_bindings, option_defs);
+        }
     }
 
     /// @brief Sends query to retrieve single global option by code and
@@ -1509,6 +1528,13 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
+        auto tags = getServerTags(server_selector);
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while creating or updating option definition."
+                      " Got: " << getServerTagsAsText(server_selector));
+        }
+
         ElementPtr record_types = Element::createList();
         for (auto field : option_def->getRecordFields()) {
             record_types->add(Element::create(static_cast<int>(field)));
@@ -1554,6 +1580,20 @@ public:
             // If the option definition doesn't exist, let's insert it.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
                               in_bindings);
+
+            // Fetch unique identifier of the inserted option definition and use it
+            // as input to the next query.
+            uint64_t id = mysql_insert_id(conn_.mysql_);
+
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createInteger<uint64_t>(id), // option_def_id
+                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createTimestamp(option_def->getModificationTime()), // modification_ts
+            };
+
+            // Insert association.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
+                              in_server_bindings);
         }
 
         transaction.commit();
@@ -1566,10 +1606,17 @@ public:
     /// @param code Option code.
     /// @param name Option name.
     /// @return Number of deleted option definitions.
-    uint64_t deleteOptionDef4(const ServerSelector& /* server_selector */,
+    uint64_t deleteOptionDef4(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
+        auto tags = getServerTags(server_selector);
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while deleting option definition. Got: "
+                      << getServerTagsAsText(server_selector));
+        }
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(*tags.begin()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
@@ -2155,7 +2202,11 @@ TaggedStatementArray tagged_statements = { {
       "  d.record_types,"
       "  d.user_context "
       "FROM dhcp4_option_def AS d "
-      "WHERE d.code = ? AND d.space = ? "
+      "INNER JOIN dhcp4_option_def_server AS a"
+      "  ON d.id = a.option_def_id "
+      "INNER JOIN  dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id = 1) AND (d.code = ? AND d.space = ?) "
       "ORDER BY d.id" },
 
     // Retrieves all option definitions.
@@ -2172,6 +2223,11 @@ TaggedStatementArray tagged_statements = { {
       "  d.record_types,"
       "  d.user_context "
       "FROM dhcp4_option_def AS d "
+      "INNER JOIN dhcp4_option_def_server AS a"
+      "  ON d.id = a.option_def_id "
+      "INNER JOIN  dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id = 1) "
       "ORDER BY d.id" },
 
     // Retrieves modified option definitions.
@@ -2188,7 +2244,11 @@ TaggedStatementArray tagged_statements = { {
       "  d.record_types,"
       "  d.user_context "
       "FROM dhcp4_option_def AS d "
-      "WHERE modification_ts > ? "
+      "INNER JOIN dhcp4_option_def_server AS a"
+      "  ON d.id = a.option_def_id "
+      "INNER JOIN  dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
+      "WHERE (s.tag = ? OR s.id = 1) AND d.modification_ts > ? "
       "ORDER BY d.id" },
 
     // Retrieves global option by code and space.
@@ -2411,6 +2471,14 @@ TaggedStatementArray tagged_statements = { {
       "record_types,"
       "user_context"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+
+    // Insert association of the option definition with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
+      "INSERT INTO dhcp4_option_def_server("
+      "  option_def_id,"
+      "  server_id,"
+      "  modification_ts"
+      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
 
     // Insert subnet specific option.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
@@ -2643,12 +2711,21 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete option definition.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION_DEF4_CODE_NAME,
-      "DELETE FROM dhcp4_option_def "
-      "WHERE code = ? AND space = ?" },
+      "DELETE d FROM dhcp4_option_def AS d "
+      "INNER JOIN dhcp4_option_def_server AS a"
+      "  ON d.id = a.option_def_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ? AND code = ? AND space = ?" },
 
     // Delete all option definitions.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-      "DELETE FROM dhcp4_option_def" },
+      "DELETE d FROM dhcp4_option_def AS d "
+      "INNER JOIN dhcp4_option_def_server AS a"
+      "  ON d.id = a.option_def_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ?" },
 
     // Delete single global option.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
@@ -2760,14 +2837,18 @@ MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& server_selector,
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
-    return (impl_->getAllOptionDefs4(server_selector));
+    OptionDefContainer option_defs;
+    impl_->getAllOptionDefs4(server_selector, option_defs);
+    return (option_defs);
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::
 getModifiedOptionDefs4(const ServerSelector& server_selector,
                        const boost::posix_time::ptime& modification_time) const {
-    return (impl_->getModifiedOptionDefs4(server_selector, modification_time));
+    OptionDefContainer option_defs;
+    impl_->getModifiedOptionDefs4(server_selector, modification_time, option_defs);
+    return (option_defs);
 }
 
 OptionDescriptorPtr
@@ -2920,8 +3001,9 @@ MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& /* server_selector */) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4));
+MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_selector) {
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
+                                   server_selector));
 }
 
 uint64_t
