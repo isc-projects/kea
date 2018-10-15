@@ -76,6 +76,7 @@ public:
         INSERT_SUBNET4_SERVER,
         INSERT_POOL4,
         INSERT_SHARED_NETWORK4,
+        INSERT_SHARED_NETWORK4_SERVER,
         INSERT_OPTION_DEF4,
         INSERT_OPTION4,
         UPDATE_GLOBAL_PARAMETER4,
@@ -996,15 +997,65 @@ public:
     ///
     /// @return Pointer to the returned shared network or NULL if such shared
     /// network doesn't exist.
-    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& /* server_selector */,
+    SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
-        MySqlBindingCollection in_bindings;
-        in_bindings.push_back(MySqlBinding::createString(name));
+        auto tags = getServerTags(server_selector);
+
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while fetching a shared network. Got: "
+                      << getServerTagsAsText(server_selector));
+        }
+
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(*tags.begin()),
+            MySqlBinding::createString(name)
+        };
 
         SharedNetwork4Collection shared_networks;
         getSharedNetworks4(GET_SHARED_NETWORK4_NAME, in_bindings, shared_networks);
 
         return (shared_networks.empty() ? SharedNetwork4Ptr() : *shared_networks.begin());
+    }
+
+    /// @brief Sends query to retrieve all shared networks.
+    ///
+    /// @param server_selector Server selector.
+    /// @param [out] shared_networks Reference to the shared networks collection
+    /// structure where shared networks should be inserted.
+    void getAllSharedNetworks4(const ServerSelector& server_selector,
+                               SharedNetwork4Collection& shared_networks) {
+        auto tags = getServerTags(server_selector);
+
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag)
+            };
+
+            getSharedNetworks4(GET_ALL_SHARED_NETWORKS4, in_bindings, shared_networks);
+        }
+    }
+
+    /// @brief Sends query to retrieve modified shared networks.
+    ///
+    /// @param server_selector Server selector.
+    /// @param modification_ts Lower bound modification timestamp.
+    /// @param [out] shared_networks Reference to the shared networks collection
+    /// structure where shared networks should be inserted.
+    void getModifiedSharedNetworks4(const ServerSelector& server_selector,
+                                    const boost::posix_time::ptime& modification_ts,
+                                    SharedNetwork4Collection& shared_networks) {
+        auto tags = getServerTags(server_selector);
+
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createTimestamp(modification_ts)
+            };
+
+            getSharedNetworks4(GET_MODIFIED_SHARED_NETWORKS4, in_bindings,
+                               shared_networks);
+        }
     }
 
     /// @brief Sends query to insert or update shared network.
@@ -1013,6 +1064,14 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
+        auto tags = getServerTags(server_selector);
+
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be"
+                      " specified while creating or updating shared network"
+                      " configuration. Got: " << getServerTagsAsText(server_selector));
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             MySqlBinding::condCreateString(shared_network->getClientClass()),
@@ -1037,6 +1096,19 @@ public:
             // update existing shared network entry.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
                               in_bindings);
+
+            // Create bindings for inserting association into dhcp4_shared_network_server
+            // table.
+            MySqlBindingCollection in_server_bindings = {
+                MySqlBinding::createString(shared_network->getName()), // shared network name
+                MySqlBinding::createString(*tags.begin()), // server tag
+                MySqlBinding::createTimestamp(shared_network->getModificationTime()), // modification_ts
+            };
+
+            // Insert association.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
+                              in_server_bindings);
+
 
         } catch (const DuplicateEntry&) {
             deleteOptions4(shared_network);
@@ -1987,8 +2059,12 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_shared_network AS n "
+      "INNER JOIN dhcp4_shared_network_server AS a "
+      "  ON n.id = a.shared_network_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
-      "WHERE n.name = ? "
+      "WHERE (s.tag = ? OR s.id = 1) AND n.name = ? "
       "ORDER BY n.id, o.option_id" },
 
     // Select all shared networks.
@@ -2020,7 +2096,12 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_shared_network AS n "
+      "INNER JOIN dhcp4_shared_network_server AS a "
+      "  ON n.id = a.shared_network_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
+      "WHERE s.tag = ? OR s.id = 1 "
       "ORDER BY n.id" },
 
     // Select modified shared networks.
@@ -2052,8 +2133,12 @@ TaggedStatementArray tagged_statements = { {
       "  o.pool_id,"
       "  o.modification_ts "
       "FROM dhcp4_shared_network AS n "
+      "INNER JOIN dhcp4_shared_network_server AS a "
+      "  ON n.id = a.shared_network_id "
+      "INNER JOIN dhcp4_server AS s "
+      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
       "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
-      "WHERE n.modification_ts > ? "
+      "WHERE (s.tag = ? OR s.id = 1) AND n.modification_ts > ? "
       "ORDER BY n.id" },
 
     // Retrieves option definition by code and space.
@@ -2302,6 +2387,17 @@ TaggedStatementArray tagged_statements = { {
       "valid_lifetime"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
+    // Insert association of the shared network with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
+      "INSERT INTO dhcp4_shared_network_server("
+      "  shared_network_id,"
+      "  server_id,"
+      "  modification_ts"
+      ") VALUES ("
+      "    (SELECT id FROM dhcp4_shared_network WHERE name = ?),"
+      "    (SELECT id FROM dhcp4_server WHERE tag = ?), ?"
+      ")" },
+
     // Insert option definition.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
       "INSERT INTO dhcp4_option_def ("
@@ -2529,12 +2625,21 @@ TaggedStatementArray tagged_statements = { {
 
     // Delete shared network by name.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-      "DELETE FROM dhcp4_shared_network "
-      "WHERE name = ?" },
+      "DELETE n FROM dhcp4_shared_network AS n "
+      "INNER JOIN dhcp4_shared_network_server AS a"
+      "  ON n.id = a.shared_network_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ? AND n.name = ?" },
 
     // Delete all shared networks.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-      "DELETE FROM dhcp4_shared_network" },
+      "DELETE n FROM dhcp4_shared_network AS n "
+      "INNER JOIN dhcp4_shared_network_server AS a"
+      "  ON n.id = a.shared_network_id "
+      "INNER JOIN dhcp4_server AS s"
+      "  ON a.server_id = s.id "
+      "WHERE s.tag = ?" },
 
     // Delete option definition.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION_DEF4_CODE_NAME,
@@ -2631,24 +2736,18 @@ MySqlConfigBackendDHCPv4::getSharedNetwork4(const ServerSelector& server_selecto
 }
 
 SharedNetwork4Collection
-MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& /* server_selector */) const {
+MySqlConfigBackendDHCPv4::getAllSharedNetworks4(const ServerSelector& server_selector) const {
     SharedNetwork4Collection shared_networks;
-    MySqlBindingCollection in_bindings;
-    impl_->getSharedNetworks4(MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
-                              in_bindings, shared_networks);
+    impl_->getAllSharedNetworks4(server_selector, shared_networks);
     return (shared_networks);
 }
 
 SharedNetwork4Collection
 MySqlConfigBackendDHCPv4::
-getModifiedSharedNetworks4(const ServerSelector& /* server_selector */,
+getModifiedSharedNetworks4(const ServerSelector& server_selector,
                            const boost::posix_time::ptime& modification_time) const {
     SharedNetwork4Collection shared_networks;
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createTimestamp(modification_time)
-    };
-    impl_->getSharedNetworks4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
-                              in_bindings, shared_networks);
+    impl_->getModifiedSharedNetworks4(server_selector, modification_time, shared_networks);
     return (shared_networks);
 }
 
@@ -2801,15 +2900,16 @@ MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selecto
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& /* server_selector */,
+MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_selector,
                                                const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-                                   name));
+                                   server_selector, name));
 }
 
 uint64_t
-MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& /* server_selector */) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4));
+MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
+    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
+                                   server_selector));
 }
 
 uint64_t
