@@ -754,6 +754,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
                                                 test_option_defs_[1]->getCode(),
                                                 test_option_defs_[1]->getOptionSpaceName());
     EXPECT_TRUE(returned_option_def->equals(*option_def2));
+
+    // Fetching option definition for an explicitly specified server tag
+    // should succeed too.
+    returned_option_def = cbptr_->getOptionDef4(ServerSelector::ONE("server1"),
+                                                test_option_defs_[1]->getCode(),
+                                                test_option_defs_[1]->getOptionSpaceName());
+    EXPECT_TRUE(returned_option_def->equals(*option_def2));
 }
 
 // Test that all option definitions can be fetched.
@@ -767,6 +774,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
 
     // Fetch all option_definitions.
     OptionDefContainer option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
+    ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+
+    // All option definitions should also be returned for explicitly specified
+    // server tag.
+    option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ONE("server1"));
     ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
 
     // See if option definitions are returned ok.
@@ -786,6 +798,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
                                           99, "non-exiting-space"));
     // All option definitions should be still there.
     ASSERT_EQ(test_option_defs_.size() - 1, option_defs.size());
+
+    // Should not delete option definition for explicit server tag
+    // because our option definition is for all servers.
+    EXPECT_EQ(0, cbptr_->deleteOptionDef4(ServerSelector::ONE("server1"),
+                                          test_option_defs_[1]->getCode(),
+                                          test_option_defs_[1]->getOptionSpaceName()));
+
+    // Same for all option definitions.
+    EXPECT_EQ(0, cbptr_->deleteAllOptionDefs4(ServerSelector::ONE("server1")));
 
     // Delete one of the option definitions and see if it is gone.
     EXPECT_EQ(1, cbptr_->deleteOptionDef4(ServerSelector::ALL(),
