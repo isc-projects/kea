@@ -63,7 +63,10 @@ public:
                                             const std::string& service);
 
 private:
-    /// @brief Preform the actual communication.
+    /// @brief Perform the actual communication.
+    ///
+    /// @note This method is synchronous, i.e. it blocks until it finishes
+    /// and returns.
     ///
     /// @param command The command to send.
     /// @return The answer.

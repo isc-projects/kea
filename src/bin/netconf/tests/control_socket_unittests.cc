@@ -119,8 +119,7 @@ TEST(StdoutControlSocketTest, configSet) {
     EXPECT_EQ("{ \"result\": 0 }", answer->str());
 
     // Check output.
-    string expected = "//////////////// foo configuration ////////////////\n"
-        "{\n  \"bar\": 1\n}\n";
+    string expected = "{\n  \"bar\": 1\n}\n";
     EXPECT_EQ(expected, os.str());
 }
 
