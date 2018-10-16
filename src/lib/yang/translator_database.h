@@ -96,10 +96,12 @@ namespace yang {
 ///    hosts-database[database-type='mysql']/port = 3306
 /// @endcode
 
-/// @brief A translator class for converting a database access between
-/// YANG and JSON.
+/// @brief A translator class for converting a database access parameters
+/// between YANG and JSON.
 ///
-/// Supports kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// Supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
 class TranslatorDatabase : virtual public TranslatorBasic {
 public:
 
@@ -131,14 +133,14 @@ public:
                      bool skip = false);
 
 protected:
-    /// @brief getDatabase JSON for kea-dhcp[46].
+    /// @brief getDatabase JSON for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the database.
     /// @return JSON representation of the database or null if none.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabaseKea(const std::string& xpath);
 
-    /// @brief setDatabase for kea-dhcp[46].
+    /// @brief setDatabase for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the database access.
     /// @param elem The JSON element.
@@ -185,14 +187,14 @@ public:
                       isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getDatabases JSON for kea-dhcp[46].
+    /// @brief getDatabases JSON for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of databases.
     /// @return JSON representation of  databases.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabasesKea(const std::string& xpath);
 
-    /// @brief setDatabases for kea-dhcp[46].
+    /// @brief setDatabases for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of databases.
     /// @param elem The JSON element.
