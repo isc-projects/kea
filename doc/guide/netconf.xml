@@ -193,6 +193,20 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
 
   </section>
 
+  <section xml:id="netconf-models">
+    <title>Supported YANG models</title>
+
+    <para>
+      The currently the only supported model is <command>kea-dhcp4-server</command>.
+      There is partial support for <command>kea-dhcp6-server</command>, but the
+      primary focus of testing was on DHCPv4. Several other models
+      (<command>ietf-dhcpv6-server</command>, <command>kea-dhcp-ddns</command>
+      and <command>kea-ctrl-agent</command>) are currently not supported. It is
+      envisaged the situation to change in the future.
+    </para>
+
+  </section>
+
   <section xml:id="using-netconf">
     <title>Using the Netconf agent</title>
 
@@ -216,7 +230,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             For each managed server get the YANG configuration from the
-            startup datastore, translate it to JSON and load it in the server.
+            startup datastore, translate it to JSON and load it onto the server
+            being configured.
           </simpara>
         </listitem>
 
@@ -236,7 +251,7 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         </listitem>
       </itemizedlist>
     </para>
-  </section>
+    </section>
 
   <section xml:id="netconf-configuration">
     <title>Configuration</title>
@@ -245,15 +260,18 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
       The behavior described in <xref linkend="using-netconf"/> is
       controlled by a few configuration flags which can be set in
       the global scope or in a specific managed server scope.
-      In the second case the value takes precedence.
+      In the second case the value defined in managed server scope takes precedence.
       These flags are:
       <itemizedlist>
         <listitem>
           <simpara>
             The <command>boot-update</command> controls the initial
             configuration phase: when true (the default) the initial
-            configuration is got from the server and the startup YANG
-            one is loaded, when false this phase is skipped.
+            configuration is retrieved from the classic Kea server JSON
+            configuration file is loaded first, then the startup YANG
+            model is loaded. This setting lets you define a control socket in
+            your local JSON file and then download the configuration from YANG.
+            When set to false, this phase is skipped.
           </simpara>
         </listitem>
 
@@ -263,7 +281,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
             module change subscription: when true (the default)
             a module change callback is subscribed, when false
             the phase is skipped and running configuration updates
-            are disabled.
+            are disabled. When set to true, running datastore is
+            used to subscribe for changes.
           </simpara>
         </listitem>
 
@@ -271,22 +290,24 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
           <simpara>
             The <command>validate-changes</command> controls the subscription
             option: when true (the default) a module change callback
-            is subscribed for both validation and application, when false
-            it is suscribed only for application.
+            is subscribed for both validation and application. This means
+            that the kea-netconf will call config-test first and then,
+            if it is successful, will call config-set to actually apply
+            the configuration. This approach is safer, but slower.
+            When false it is subscribed only for application.
           </simpara>
         </listitem>
       </itemizedlist>
-      Other configuration flags are under study, for instance for loading
-      updated configurations directly in the validation callback so
-      syntactically correct but invalid configurations can be rejected
-      as soon as possible.
+      Other configuration flags are under study and may appear in future Kea
+      versions. For instance for loading updated configurations directly in the
+      validation callback so syntactically correct, but invalid configurations
+      (such as overlapping subnets) can be rejected as soon as possible.
     </para>
 
     <para>
-      The idea behind the initial configuration phase is to boot
-      Kea servers with a minimal configuration which includes only
-      a control socket making them manageable.
-      For instance for the DHCPv4 server:
+      The idea behind the initial configuration phase is to boot Kea servers
+      with a minimal configuration which includes only a control socket making
+      them manageable. For instance for the DHCPv4 server:
 <screen>
 {
     "Dhcp4": {
@@ -298,8 +319,9 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
 }
 </screen>
       Note the alternative to boot with full configurations does not
-      allow an easy track of changes so it not really compatible with
-      the YANG / Netconf configuration management paradigm.
+      allow an easy track of changes, so it not really compatible with
+      the YANG / Netconf configuration management paradigm. However, the
+      solution attempts to provide maximum flexibility.
     </para>
 
     <para>
@@ -311,25 +333,29 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
     </para>
 
     <para>
-      When a module change callback is subscribed and the running
-      configuration is changed (using <command>sysrepocfg</command>)
-      the callback is called to validate the modified configuration
-      (if <command>validate-changes</command> was not set to false)
-      and a second time to apply it. If the validation failed the
-      callback is still called again but with an ABORT (vs APPLY) event
-      with rollback changes.
+      When a module change are tracked (using
+      <command>subscribe-changes</command> set to true) and the running
+      configuration has changed (e.g. using <command>sysrepocfg</command> or any
+      NETCONF client) the callback is called to validate the modified
+      configuration (if <command>validate-changes</command> was not set to
+      false) and a second time to apply it. If the validation failed the
+      callback is still called again but with an ABORT (vs APPLY) event with
+      rollback changes.
+    </para>
 
+    <para>
       The returned code of the callback on an APPLY event is ignored,
       i.e. it is too late to refuse a bad configuration.
     </para>
 
     <para>
-      A modified YANG configuration has four ways to be incorrect:
+      There are four ways in which a modified YANG configuration could possibly
+      be incorrect:
       <orderedlist>
         <listitem>
           <simpara>
-            It can be not schema compliant, e.g. unknown entry,
-            missing mandatory entry,  value with a bad type or
+            It can be not compliant with the schema, e.g. unknown entry,
+            missing mandatory entry, value with a bad type or
             not matching a constraint.
           </simpara>
         </listitem>
@@ -337,7 +363,7 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             It can fail to be translated from YANG to JSON, e.g.
-            invalid user context.
+            invalid user context or unsupported database type.
           </simpara>
         </listitem>
 
@@ -351,7 +377,9 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             Syntax is correct and pass server sanity checks but
-            the configuration fails to be run.
+            the configuration fails to be run, e.g. the configuration
+            specifies database credentials, but the database refuses
+            connection.
           </simpara>
         </listitem>
       </orderedlist>
@@ -367,8 +395,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
       <command>managed-servers</command> section. Each sub-section
       begins by the service name: <command>dhcp4</command>,
       <command>dhcp6</command>, <command>d2</command>
-      (the DHCP-DDNS server which not yet suppors the control channel
-      feature), and <command>ca</command> (the control agent).
+      (the DHCP-DDNS server does not support the control channel
+      feature yet), and <command>ca</command> (the control agent).
     </para>
 
     <para>
@@ -384,8 +412,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
 
         <listitem>
           <simpara>
-            <command>model</command> specifies the model / module name
-            (default the corresponding service Kea one).
+            <command>model</command> specifies the YANG model. Unless explicitly
+            specified, each Kea daemon has its own YANG model.
           </simpara>
         </listitem>
 
@@ -404,9 +432,13 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             <command>socket-type</command>: the socket type is either
-            <command>stdout</command> (the default, not really a socket),
-            <command>unix</command> (standard direct server control channel),
-            and <command>http</command> (using a control agent).
+            <command>stdout</command> (the default. It is not really a socket,
+            but it allows to run <command>kea-netconf</command> in debugging
+            mode where everything is printed on stdout. Can be also useful to
+            redirect the commands easily.), <command>unix</command> (standard
+            direct server control channel, which uses UNIX sockets), and
+            <command>http</command> (using a control agent, which accepts HTTP
+            connections).
           </simpara>
         </listitem>
 
@@ -433,16 +465,17 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
     <para>
       User contexts can store arbitrary data as long as it is valid JSON
       syntax and its top level element is a map (i.e. the data must be
-      enclosed in curly brackets). They are accepted at the Netconf,
+      enclosed in curly brackets). They are accepted as YANG model entry,
       managed service entry and control socket scopes.
     </para>
 
     <para>
-      Hooks libraries can be loaded by the Netconf agent just like to
-      other servers or agents. It currently supports no hook point.
-      The <command>hooks-libraries</command> list contains the list of hooks
-      libraries that should be loaded by netconf, along with their
-      configuration information specified with <command>parameters</command>.
+      Hooks libraries can be loaded by the Netconf agent just like other servers
+      or agents. It currently supports no hook point, however.  This is expected
+      to change in the upcoming Kea releases. The
+      <command>hooks-libraries</command> list contains the list of hooks
+      libraries that should be loaded by netconf, along with their configuration
+      information specified with <command>parameters</command>.
     </para>
 
     <para>
@@ -453,9 +486,11 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
   </section>
 
   <section xml:id="netconf-example">
-    <title>Example</title>
+    <title>Kea-netconf Configuration Example</title>
     <para>
-      The following example demonstrates the basic Netconf configuration.
+      The following example demonstrates the basic Netconf configuration. More
+      examples are available in <command>doc/examples/netconf</command>
+      directory in Kea sources.
     </para>
     <para>
 <screen>
@@ -472,14 +507,15 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         // So this overwrites the default value:
         "boot-update": false,
 
-        // This map specifies how each server is managed:
-        // the YANG model to use and the control channel.
+        // This map specifies how each server is managed. For each server there
+        // is a name of the YANG model to be used and the control channel.
+        //
         // Currently three control channel types are supported:
         // "stdout" which output the configuration on the standard output,
         // "unix" which uses the local control channel supported by
-        // "dhcp4" and "dhcp6" servers ("d2" support is not yet merged),
+        // "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
         // and "http" which uses the Control agent "ca" to manage itself or
-        // to forward commands to "dhcp4" or "dhcp6" (same comment about "d2").
+        // to forward commands to "dhcp4" or "dhcp6" (in the future also to d2).
         "managed-servers":
         {
             // This is how Netconf can communicate with the DHCPv4 server.
@@ -490,7 +526,7 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/path/to/the/unix/socket-v4"
+                    "socket-name": "/tmp/kea4-ctrl-socket"
                 }
             },
 
@@ -501,7 +537,7 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/path/to/the/unix/socket-v6"
+                    "socket-name": "/tmp/kea6-ctrl-socket"
                 }
             },
 
@@ -530,7 +566,7 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         },
 
         // Netconf is able to load hook libraries that augment its operation.
-        // The primary functionality is the ability to add new commands.
+        // Currently there are no hook points defined in kea-netconf processing.
         "hooks-libraries": [
             // Hook libraries list may contain more than one library.
             {
@@ -538,8 +574,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
                 "library": "/opt/local/netconf-commands.so",
 
                 // Some libraries may support parameters. Make sure you
-                // type this section carefully, as the CA does not validate
-                // it (because the format is library specific).
+                // type this section carefully, as the kea-netconf does not
+                // validate it (because the format is library specific).
                 "parameters": {
                     "param1": "foo"
                 }
