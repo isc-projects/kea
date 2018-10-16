@@ -3,14 +3,24 @@
 {
     "Netconf":
     {
-        // This map specifies how each server is managed:
-        // the YANG model to use and the control channel.
+        // Control flags can be defined in the global scope or
+        // in a managed server scope. Precedence are:
+        // - use the default value (true)
+        // - use the global value
+        // - use the local value.
+        // So this overwrites the default value:
+        "boot-update": false,
+
+        // This map specifies how each server is managed. For each server there
+        // is a name of the YANG model to be used and the control channel.
+        //
         // Currently three control channel types are supported:
         // "stdout" which output the configuration on the standard output,
         // "unix" which uses the local control channel supported by
-        // "dhcp4" and "dhcp6" servers ("d2" support is not yet merged),
+        // "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
         // and "http" which uses the Control agent "ca" to manage itself or
-        // to forward commands to "dhcp4" or "dhcp6" (same comment about "d2").
+        // to forward commands to "dhcp4" or "dhcp6" (in the future also
+        // to d2).
         "managed-servers":
         {
             // This is how Netconf can communicate with the DHCPv4 server.
@@ -21,7 +31,7 @@
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/path/to/the/unix/socket-v4"
+                    "socket-name": "/tmp/kea4-ctrl-socket"
                 }
             },
 
@@ -32,7 +42,7 @@
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/path/to/the/unix/socket-v6"
+                    "socket-name": "/tmp/kea6-ctrl-socket"
                 }
             },
 
@@ -61,7 +71,8 @@
         },
 
         // Netconf is able to load hook libraries that augment its operation.
-        // The primary functionality is the ability to add new commands.
+        // Currently there are no hook points defined in kea-netconf
+        // processing.
         "hooks-libraries": [
             // Hook libraries list may contain more than one library.
             {
@@ -69,8 +80,8 @@
                 "library": "/opt/local/netconf-commands.so",
 
                 // Some libraries may support parameters. Make sure you
-                // type this section carefully, as the CA does not validate
-                // it (because the format is library specific).
+                // type this section carefully, as the kea-netconf does not
+                // validate it (because the format is library specific).
                 "parameters": {
                     "param1": "foo"
                 }
@@ -88,12 +99,14 @@
                 "output_options": [
                     {
                         "output": "/var/log/kea-netconf.log",
-                        // Several additional parameters are possible in addition
-                        // to the typical output. Flush determines whether logger
-                        // flushes output to a file. Maxsize determines maximum
-                        // filesize before the file is being rotated. maxver
-                        // specifies the maximum number of rotated files being
-                        // kept.
+                        // Several additional parameters are possible in
+                        // addition to the typical output.
+                        // Flush determines whether logger flushes output
+                        //  to a file.
+                        // Maxsize determines maximum filesize before
+                        // the file is being rotated.
+                        // Maxver specifies the maximum number of
+                        //  rotated files being kept.
                         "flush": true,
                         "maxsize": 204800,
                         "maxver": 4
