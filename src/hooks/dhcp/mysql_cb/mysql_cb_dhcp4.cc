@@ -1604,12 +1604,7 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
-        auto tags = getServerTags(server_selector);
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while creating or updating option definition."
-                      " Got: " << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "creating or updating option definition");
 
         ElementPtr record_types = Element::createList();
         for (auto field : option_def->getRecordFields()) {
@@ -1646,7 +1641,8 @@ public:
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
         if (existing_definition) {
-            // Need to add two more bindings for WHERE clause.
+            // Need to add three more bindings for WHERE clause.
+            in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(existing_definition->getCode()));
             in_bindings.push_back(MySqlBinding::createString(existing_definition->getOptionSpaceName()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
@@ -1663,7 +1659,7 @@ public:
 
             MySqlBindingCollection in_server_bindings = {
                 MySqlBinding::createInteger<uint64_t>(id), // option_def_id
-                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createString(tag), // tag used to obtain server_id
                 MySqlBinding::createTimestamp(option_def->getModificationTime()), // modification_ts
             };
 
