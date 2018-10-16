@@ -109,13 +109,7 @@
 , <command><link linkend="ref-lease4-get-all">lease4-get-all</link></command>
 , <command><link linkend="ref-lease4-update">lease4-update</link></command>
 , <command><link linkend="ref-lease4-wipe">lease4-wipe</link></command>
-, <command><link linkend="ref-lease6-add">lease6-add</link></command>
-, <command><link linkend="ref-lease6-del">lease6-del</link></command>
-, <command><link linkend="ref-lease6-get">lease6-get</link></command>
-, <command><link linkend="ref-lease6-get-all">lease6-get-all</link></command>
-, <command><link linkend="ref-lease6-update">lease6-update</link></command>
 , <command><link linkend="ref-lease6-wipe">lease6-wipe</link></command>
-, <command><link linkend="ref-leases-reclaim">leases-reclaim</link></command>
 , <command><link linkend="ref-libreload">libreload</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
 , <command><link linkend="ref-network4-add">network4-add</link></command>
@@ -124,18 +118,11 @@
 , <command><link linkend="ref-network4-list">network4-list</link></command>
 , <command><link linkend="ref-network4-subnet-add">network4-subnet-add</link></command>
 , <command><link linkend="ref-network4-subnet-del">network4-subnet-del</link></command>
-, <command><link linkend="ref-network6-add">network6-add</link></command>
-, <command><link linkend="ref-network6-del">network6-del</link></command>
-, <command><link linkend="ref-network6-get">network6-get</link></command>
-, <command><link linkend="ref-network6-list">network6-list</link></command>
-, <command><link linkend="ref-network6-subnet-add">network6-subnet-add</link></command>
-, <command><link linkend="ref-network6-subnet-del">network6-subnet-del</link></command>
 , <command><link linkend="ref-reservation-add">reservation-add</link></command>
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
-, <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
 , <command><link linkend="ref-statistic-get-all">statistic-get-all</link></command>
 , <command><link linkend="ref-statistic-remove">statistic-remove</link></command>
@@ -146,10 +133,6 @@
 , <command><link linkend="ref-subnet4-del">subnet4-del</link></command>
 , <command><link linkend="ref-subnet4-get">subnet4-get</link></command>
 , <command><link linkend="ref-subnet4-list">subnet4-list</link></command>
-, <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
-, <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
-, <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
-, <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
 , <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-kea-dhcp6">Commands supported by kea-dhcp6 daemon: <command><link linkend="ref-build-report">build-report</link></command>
@@ -170,12 +153,6 @@
 , <command><link linkend="ref-ha-heartbeat">ha-heartbeat</link></command>
 , <command><link linkend="ref-ha-scopes">ha-scopes</link></command>
 , <command><link linkend="ref-ha-sync">ha-sync</link></command>
-, <command><link linkend="ref-lease4-add">lease4-add</link></command>
-, <command><link linkend="ref-lease4-del">lease4-del</link></command>
-, <command><link linkend="ref-lease4-get">lease4-get</link></command>
-, <command><link linkend="ref-lease4-get-all">lease4-get-all</link></command>
-, <command><link linkend="ref-lease4-update">lease4-update</link></command>
-, <command><link linkend="ref-lease4-wipe">lease4-wipe</link></command>
 , <command><link linkend="ref-lease6-add">lease6-add</link></command>
 , <command><link linkend="ref-lease6-del">lease6-del</link></command>
 , <command><link linkend="ref-lease6-get">lease6-get</link></command>
@@ -185,12 +162,6 @@
 , <command><link linkend="ref-leases-reclaim">leases-reclaim</link></command>
 , <command><link linkend="ref-libreload">libreload</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
-, <command><link linkend="ref-network4-add">network4-add</link></command>
-, <command><link linkend="ref-network4-del">network4-del</link></command>
-, <command><link linkend="ref-network4-get">network4-get</link></command>
-, <command><link linkend="ref-network4-list">network4-list</link></command>
-, <command><link linkend="ref-network4-subnet-add">network4-subnet-add</link></command>
-, <command><link linkend="ref-network4-subnet-del">network4-subnet-del</link></command>
 , <command><link linkend="ref-network6-add">network6-add</link></command>
 , <command><link linkend="ref-network6-del">network6-del</link></command>
 , <command><link linkend="ref-network6-get">network6-get</link></command>
@@ -201,7 +172,6 @@
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
-, <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
 , <command><link linkend="ref-statistic-get-all">statistic-get-all</link></command>
@@ -209,10 +179,6 @@
 , <command><link linkend="ref-statistic-remove-all">statistic-remove-all</link></command>
 , <command><link linkend="ref-statistic-reset">statistic-reset</link></command>
 , <command><link linkend="ref-statistic-reset-all">statistic-reset-all</link></command>
-, <command><link linkend="ref-subnet4-add">subnet4-add</link></command>
-, <command><link linkend="ref-subnet4-del">subnet4-del</link></command>
-, <command><link linkend="ref-subnet4-get">subnet4-get</link></command>
-, <command><link linkend="ref-subnet4-list">subnet4-list</link></command>
 , <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
 , <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
 , <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
@@ -493,6 +459,8 @@ Result is an integer representation of the status. Currently supported statuses 
         "subnet-id": 123
     }
 }
+
+Another example that removes IPv6 host identifier by DUID and specific subnet-id is:
 {
     "command": "cache-remove",
     "arguments": {
@@ -573,7 +541,7 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "config-get"
 }</screen>
-<command>config-get</command> takes no parameters.</para>
+This command takes no parameters.</para>
 
 <para>Response syntax:
   <screen>{
@@ -862,8 +830,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <section xml:id="reference-ha-heartbeat">
 <title>ha-heartbeat reference</title>
 <para xml:id="ref-ha-heartbeat"><command>ha-heartbeat</command> - This command is sent internally by Kea partner when operating
-              in High Availability (HA) mode. It should not be used by users,
-              unless you want to implement complete HA replacement.</para>
+              in High Availability (HA) mode. It will retrieve the server HA state and clock value.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -872,19 +839,18 @@ Result is an integer representation of the status. Currently supported statuses 
 <para>Description and examples: See <xref linkend="command-ha-heartbeat"/></para>
 
 <para>Command syntax:
-  <screen>tbd</screen>
+  <screen>{
+    "command": "ha-heartbeat",
+    }</screen>
 </para>
 
 <para>Response syntax:
-  <screen>tbd</screen>
-Result is an integer representation of the status. Currently supported statuses are:
-<itemizedlist>
-  <listitem><para>0 - success</para></listitem>
-  <listitem><para>1 - error</para></listitem>
-  <listitem><para>2 - unsupported</para></listitem>
-  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
-</itemizedlist>
-</para>
+  <screen>{
+    "result": &lt;integer&gt;,
+    "text": &lt;string&gt;
+}
+</screen>
+The response to this command is different from the typical command response. The response will include server state (see <xref linkend="ha-server-states"/> plus the current clock value.</para>
 
 </section>
 <!-- end of ha-heartbeat -->
@@ -892,8 +858,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of ha-scopes -->
 <section xml:id="reference-ha-scopes">
 <title>ha-scopes reference</title>
-<para xml:id="ref-ha-scopes"><command>ha-scopes</command> - This command allows for modifying the High Availability (HA) scopes
-              that the server is serving.a sentence or two explaining what this command does</para>
+<para xml:id="ref-ha-scopes"><command>ha-scopes</command> - This command modifies the scope that the server is responsible for serving when operating in High Availability (HA) mode.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -907,10 +872,8 @@ Result is an integer representation of the status. Currently supported statuses 
     "service": [ &lt;service, typically "dhcp4" or "dhcp6"&gt; ],
     "arguments": {
         "scopes": [ "HA_server1", "HA_server2" ]
-    }
-}
-</screen>
-</para>
+    }</screen>
+In the example given, the arguments configure the server to handle traffic from both HA_server1 and HA_server2 scopes.</para>
 
 <para>Response syntax:
   <screen>{
@@ -974,9 +937,9 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of lease4-add -->
 <section xml:id="reference-lease4-add">
 <title>lease4-add reference</title>
-<para xml:id="ref-lease4-add"><command>lease4-add</command> - The lease4-add command allows for the creation of a new lease.</para>
+<para xml:id="ref-lease4-add"><command>lease4-add</command> - The lease4-add command adds a new IPv4 lease administratively.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -990,7 +953,7 @@ Result is an integer representation of the status. Currently supported statuses 
         "hw-address": "1a:1b:1c:1d:1e:1f"
     }
 }</screen>
-</para>
+Note that Kea 1.4 requires an additional argument, subnet-ID, which is optional as of Kea 1.5. A number of other more detailed optional arguments are also supported.</para>
 
 <para>Response syntax:
   <screen>{
@@ -1015,7 +978,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease4-del reference</title>
 <para xml:id="ref-lease4-del"><command>lease4-del</command> - lease4-del can be used to delete a lease from the lease database.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1028,7 +991,7 @@ Result is an integer representation of the status. Currently supported statuses 
         "ip-address": "192.0.2.202"
     }
 }</screen>
-leaseX-del returns a result that indicates a outcome of the operation. It has one of the following values: 0 (success), 1 (error) or 3 (empty). The empty result means that a query has been completed properly, but the object (a lease in this case) has not been found.</para>
+Specify the lease to be deleted either by IP address, or by identifier-type and identifier value. Currently supported identifiers are "hw-address" and "client-id".</para>
 
 <para>Response syntax:
   <screen>{
@@ -1053,7 +1016,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease4-get reference</title>
 <para xml:id="ref-lease4-get"><command>lease4-get</command> - lease4-get can be used to query the lease database and retrieve existing leases.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1095,7 +1058,7 @@ lease4-get returns a result that indicates a result of the operation and lease d
 <title>lease4-get-all reference</title>
 <para xml:id="ref-lease4-get-all"><command>lease4-get-all</command> - lease4-get-all is used to retrieve all IPv4 leases or all leases for the specified set of subnets.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.4.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1104,6 +1067,7 @@ lease4-get returns a result that indicates a result of the operation and lease d
 <para>Command syntax:
   <screen>{
     "command": "lease4-get-all"
+    "arguments": "subnets"
 }</screen>
 The lease4-get-all command may result in very large responses.</para>
 
@@ -1130,7 +1094,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease4-update reference</title>
 <para xml:id="ref-lease4-update"><command>lease4-update</command> - The lease4-update command can be used to update existing leases.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1172,7 +1136,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease4-wipe reference</title>
 <para xml:id="ref-lease4-wipe"><command>lease4-wipe</command> - lease4-wipe is designed to remove all leases associated with a given subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1208,9 +1172,9 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of lease6-add -->
 <section xml:id="reference-lease6-add">
 <title>lease6-add reference</title>
-<para xml:id="ref-lease6-add"><command>lease6-add</command> - The lease6-add command allows for the creation of a new lease.</para>
+<para xml:id="ref-lease6-add"><command>lease6-add</command> - The lease6-add command creates a new lease administratively.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1248,7 +1212,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease6-del reference</title>
 <para xml:id="ref-lease6-del"><command>lease6-del</command> - lease6-del can be used to delete a lease from the lease database.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1256,7 +1220,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Command syntax:
   <screen>{
-    "command": "lease4-del",
+    "command": "lease6-del",
     "arguments": {
         "ip-address": "192.0.2.202"
     }
@@ -1286,7 +1250,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease6-get reference</title>
 <para xml:id="ref-lease6-get"><command>lease6-get</command> - lease6-get can be used to query the lease database and retrieve existing leases.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1325,7 +1289,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>lease6-get-all reference</title>
 <para xml:id="ref-lease6-get-all"><command>lease6-get-all</command> - lease6-get-all is used to retrieve all IPv6 leases or all leases for the specified set of subnets.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1389,7 +1353,7 @@ The lease6-get-all command may result in very large responses.</para>
 <title>lease6-update reference</title>
 <para xml:id="ref-lease6-update"><command>lease6-update</command> - The lease6-update command can be used to update existing leases.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
@@ -1471,7 +1435,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>leases-reclaim reference</title>
 <para xml:id="ref-leases-reclaim"><command>leases-reclaim</command> - The leases-reclaim command instructs the server to reclaim all expired leases immediately.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.0.0 (built-in)</para>
 
@@ -1581,7 +1545,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network4-add reference</title>
 <para xml:id="ref-network4-add"><command>network4-add</command> - The network4-add command is used to add a new shared network.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1646,7 +1610,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network4-del reference</title>
 <para xml:id="ref-network4-del"><command>network4-del</command> - The network4-del command is used to delete existing shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1690,7 +1654,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network4-get reference</title>
 <para xml:id="ref-network4-get"><command>network4-get</command> - The network4-get command is used to retrieve detailed information about shared networks, including subnets currently being part of a given network.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1748,7 +1712,7 @@ Note that the actual response contains many additional fields that are omitted h
 <title>network4-list reference</title>
 <para xml:id="ref-network4-list"><command>network4-list</command> - The network4-list command is used to retrieve full list of currently configured shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1788,7 +1752,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network4-subnet-add reference</title>
 <para xml:id="ref-network4-subnet-add"><command>network4-subnet-add</command> - The network4-subnet-add command is used to add existing subnets to existing shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1826,7 +1790,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network4-subnet-del reference</title>
 <para xml:id="ref-network4-subnet-del"><command>network4-subnet-del</command> - The network4-subnet-del command is used to remove a subnet that is part of an existing shared network and demote it to a plain, stand-alone subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1864,7 +1828,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network6-add reference</title>
 <para xml:id="ref-network6-add"><command>network6-add</command> - The network6-add command is used to add a new shared network.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1929,7 +1893,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network6-del reference</title>
 <para xml:id="ref-network6-del"><command>network6-del</command> - The network6-del command is used to delete existing shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -1970,7 +1934,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network6-get reference</title>
 <para xml:id="ref-network6-get"><command>network6-get</command> - The network6-get command is used to retrieve detailed information about shared networks, including subnets currently being part of a given network.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2028,7 +1992,7 @@ Note that the actual response contains many additional fields that are omitted h
 <title>network6-list reference</title>
 <para xml:id="ref-network6-list"><command>network6-list</command> - The network6-list command is used to retrieve full list of currently configured shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2068,7 +2032,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network6-subnet-add reference</title>
 <para xml:id="ref-network6-subnet-add"><command>network6-subnet-add</command> - The network6-subnet-add command is used to add existing subnets to existing shared networks.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2106,7 +2070,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>network6-subnet-del reference</title>
 <para xml:id="ref-network6-subnet-del"><command>network6-subnet-del</command> - The network6-subnet-del command is used to remove a subnet that is part of existing shared network and demote it to a plain, stand-alone subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2335,7 +2299,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <para xml:id="ref-stat-lease4-get"><command>stat-lease4-get</command> - The stat-lease4-get command fetches lease statistics for a range
               of known IPv4 subnets.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.4.0 (<link linkend="commands-stat_cmds-lib">stat_cmds</link>  hook)</para>
 
@@ -2383,7 +2347,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <para xml:id="ref-stat-lease6-get"><command>stat-lease6-get</command> - The stat-lease6-get command fetches lease statistics for a range
               of known IPv6 subnets.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.4.0 (<link linkend="commands-stat_cmds-lib">stat_cmds</link>  hook)</para>
 
@@ -2653,7 +2617,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet4-add reference</title>
 <para xml:id="ref-subnet4-add"><command>subnet4-add</command> - This command is used to create and add a new subnet to the existing server configuration.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2702,7 +2666,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet4-del reference</title>
 <para xml:id="ref-subnet4-del"><command>subnet4-del</command> - This command is used to remove a subnet from the server's configuration. This command has no effect on other configured subnets but removing a subnet has certain implications which the server's administrator should be aware of.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2747,7 +2711,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet4-get reference</title>
 <para xml:id="ref-subnet4-get"><command>subnet4-get</command> - This command is used to retrieve detailed information about the specified subnet. This command usually follows the subnet4-list, which is used to discover available subnets with their respective subnet identifiers and prefixes.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2796,7 +2760,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet4-list reference</title>
 <para xml:id="ref-subnet4-list"><command>subnet4-list</command> - This command is used to list all currently configured subnets. The subnets are returned in a brief form, i.e. a subnet identifier and subnet prefix is included for each subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2834,7 +2798,7 @@ If no IPv4 subnets are found, an error code is returned along with the error des
 <title>subnet6-add reference</title>
 <para xml:id="ref-subnet6-add"><command>subnet6-add</command> - This command is used to create and add new subnet to the existing server configuration. This operation has no impact on other subnets.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2883,7 +2847,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet6-del reference</title>
 <para xml:id="ref-subnet6-del"><command>subnet6-del</command> - This command is used to remove a subnet from the server's configuration. This command has no effect on other configured subnets but removing a subnet has certain implications which the server's administrator should be aware of.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2926,7 +2890,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet6-get reference</title>
 <para xml:id="ref-subnet6-get"><command>subnet6-get</command> - This command is used to retrieve detailed information about the specified subnet. This command usually follows the subnet6-list, which is used to discover available subnets with their respective subnet identifiers and prefixes.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
@@ -2975,7 +2939,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>subnet6-list reference</title>
 <para xml:id="ref-subnet6-list"><command>subnet6-list</command> - This command is used to list all currently configured subnets. The subnets are returned in a brief form, i.e. a subnet identifier and subnet prefix is included for each subnet.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
