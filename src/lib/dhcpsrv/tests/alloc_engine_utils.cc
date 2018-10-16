@@ -128,6 +128,10 @@ AllocEngine4Test::generateDeclinedLease(const std::string& addr,
 AllocEngine6Test::AllocEngine6Test() {
     CfgMgr::instance().clear();
 
+    // Reset the D2 client config too.
+    D2ClientConfigPtr d2_default_conf(new D2ClientConfig());
+    CfgMgr::instance().setD2ClientConfig(d2_default_conf);
+
     // This lease mgr needs to exist to before configuration commits.
     factory_.create("type=memfile universe=6 persist=false");
 
@@ -543,6 +547,10 @@ AllocEngine4Test::initSubnet(const asiolink::IOAddress& pool_start,
 AllocEngine4Test::AllocEngine4Test() {
 
     CfgMgr::instance().clear();
+
+    // Reset the D2 client config too.
+    D2ClientConfigPtr d2_default_conf(new D2ClientConfig());
+    CfgMgr::instance().setD2ClientConfig(d2_default_conf);
 
     // This lease mgr needs to exist to before configuration commits.
     factory_.create("type=memfile universe=4 persist=false");

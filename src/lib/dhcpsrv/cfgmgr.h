@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -141,6 +141,7 @@ public:
     /// This function removes all configurations, including current and
     /// staging configurations. It creates a new current configuration with
     /// default settings.
+    /// @note It does not reset the D2 client config.
     ///
     /// This function is exception safe.
     void clear();
