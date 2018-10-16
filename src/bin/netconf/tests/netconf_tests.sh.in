@@ -8,7 +8,6 @@
 CFG_FILE=@abs_top_builddir@/src/bin/netconf/tests/test_config.json
 # Path to the Kea log file.
 LOG_FILE=@abs_top_builddir@/src/bin/netconf/tests/test.log
-# Path to the Kea lease file.
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 
@@ -16,7 +15,7 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 CONFIG="{
     \"Netconf\":
     {
-       // some configuration will be stored here eventually.
+        \"comment\": \"some configuration will be stored here eventually.\"
     },
 
     \"Logging\":
@@ -32,6 +31,32 @@ CONFIG="{
             \"severity\": \"INFO\"
         }
         ]
+    }
+}"
+
+# Invalid configuration (syntax error) to check that Kea can check syntax.
+CONFIG_BAD_SYNTAX="{
+    \"Netconf\":
+    {
+        \"boot-update\": BOGUS
+    }
+}"
+
+# Invalid configuration (invalid url) to check that Kea can check syntax.
+CONFIG_BAD_VALUE="{
+    \"Netconf\":
+    {
+        \"managed-servers\":
+        {
+            \"dhcp4\":
+            {
+                \"control-socket\":
+                {
+                    \"socket-type\": \"http\",
+                    \"socket-url\": \"BOGUS\"
+                }
+            }
+        }
     }
 }"
 
@@ -67,14 +92,99 @@ usage_test() {
     test_finish 0
 }
 
+# This test verifies that syntax checking works properly. This function
+# requires 3 parameters:
+# testname
+# config - string with a content of the config (will be written to a file)
+# exp_code - expected exit code returned by kea (0 - success, 1 - failure)
+syntax_check_test() {
+    local TESTNAME="${1}"
+    local CONFIG="${2}"
+    local EXP_CODE="${3}"
+
+    # Log the start of the test and print test name.
+    test_start $TESTNAME
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+    # Create correct configuration file.
+    create_config "${CONFIG}"
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin} -t ${CFG_FILE}\""
+    ${bin_path}/${bin} -t ${CFG_FILE}
+    exit_code=$?
+    if [ ${exit_code} -ne $EXP_CODE ]; then
+        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    test_finish 0
+}
+
+# This test verifies that Netconf Agent is shut down gracefully when it
+# receives a SIGINT or SIGTERM signal.
+shutdown_test() {
+    test_name=${1}  # Test name
+    signum=${2}      # Signal number
+    # Log the start of the test and print test name.
+    test_start ${test_name}
+    # Remove dangling Netconf instances and remove log files.
+    cleanup
+    # Create new configuration file.
+    create_config "${CONFIG}"
+    # Instruct Netconf Agent to log to the specific file.
+    set_logger
+    # Start Netconf Agent.
+    start_kea ${bin_path}/${bin}
+    # Wait up to 20s for Netconf Agent to start.
+    wait_for_kea 20
+    if [ ${_WAIT_FOR_KEA} -eq 0 ]; then
+        printf "ERROR: timeout waiting for Netconf Agent to start.\n"
+        clean_exit 1
+    fi
+
+    # Check if it is still running. It could have terminated (e.g. as a result
+    # of configuration failure).
+    get_pid ${bin}
+    if [ ${_GET_PIDS_NUM} -ne 1 ]; then
+        printf "ERROR: expected one Netconf Agent process to be started. Found %d processes\
+ started.\n" ${_GET_PIDS_NUM}
+        clean_exit 1
+    fi
+
+    # Check in the log file, how many times server has been configured.
+    # It should be just once on startup.
+    get_reconfigs
+    if [ ${_GET_RECONFIGS} -ne 1 ]; then
+        printf "ERROR: server been configured ${_GET_RECONFIGS} time(s), but exactly 1 was expected.\n"
+        clean_exit 1
+    else
+        printf "Server successfully configured.\n"
+    fi
+
+    # Send signal to Netconf Agent (SIGTERM, SIGINT etc.)
+    send_signal ${signum} ${bin}
+
+    # Now wait for process to log that it is exiting.
+    wait_for_message 10 "DCTL_SHUTDOWN" 1
+    if [ ${_WAIT_FOR_MESSAGE} -eq 0 ]; then
+        printf "ERROR: Netconf Agent did not log shutdown.\n"
+        clean_exit 1
+    fi
+
+    # Make sure the server is down.
+    wait_for_server_down 5 ${bin}
+    assert_eq 1 ${_WAIT_FOR_SERVER_DOWN} \
+        "Expected wait_for_server_down return %d, returned %d"
+
+    test_finish 0
+}
 
 version_test "netconf.version"
 usage_test "netconf.invalid-param" "-f" 1
 usage_test "netconf.dash-h" "-h" 1
 usage_test "netconf.dash-v" "-v" 0
-
-# The following tests are currently disabled. Once we have a parser that is
-# able to understand logger configuration, those tests (imported from DHCPv4)
-# should work.
-#shutdown_test "netconf.sigterm_test" 15
-#shutdown_test "netconf.sigint_test" 2
+shutdown_test "netconf.sigterm_test" 15
+shutdown_test "netconf.sigint_test" 2
+logger_vars_test "netconf.variables"
+syntax_check_test "netconf.syntax_check_success" "${CONFIG}" 0
+syntax_check_test "netconf.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
+syntax_check_test "netconf.syntax_check_bad_values" "${CONFIG_BAD_VALUE}" 1
