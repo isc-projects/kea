@@ -888,10 +888,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name);
     EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
 
-    // Delete option from the database and make sure it is gone.
-    cbptr_->deleteOption4(ServerSelector::ALL(),
-                          opt_boot_file_name->option_->getType(),
-                          opt_boot_file_name->space_name_);
+    // Deleting an option with explicitly specified server tag should fail.
+    EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
+    // Deleting option for all servers should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
     EXPECT_FALSE(cbptr_->getOption4(ServerSelector::ALL(),
                                     opt_boot_file_name->option_->getType(),
                                     opt_boot_file_name->space_name_));
@@ -909,6 +915,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
 
     // Retrieve all these options.
     OptionContainer returned_options = cbptr_->getAllOptions4(ServerSelector::ALL());
+    ASSERT_EQ(3, returned_options.size());
+
+    // Fetching global options with explicitly specified server tag should return
+    // the same result.
+    returned_options = cbptr_->getAllOptions4(ServerSelector::ONE("server1"));
     ASSERT_EQ(3, returned_options.size());
 
     // Get the container index used to search options by option code.
@@ -950,6 +961,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
     OptionContainer returned_options =
         cbptr_->getModifiedOptions4(ServerSelector::ALL(),
                                     timestamps_["today"]);
+    ASSERT_EQ(1, returned_options.size());
+
+    // Fetching modified options with explicitly specified server selector
+    // should return the same result.
+    returned_options = cbptr_->getModifiedOptions4(ServerSelector::ONE("server1"),
+                                                   timestamps_["today"]);
     ASSERT_EQ(1, returned_options.size());
 
     // The returned option should be the one with the timestamp
@@ -997,9 +1014,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
-    cbptr_->deleteOption4(ServerSelector::ALL(), subnet->getID(),
-                          opt_boot_file_name->option_->getType(),
-                          opt_boot_file_name->space_name_);
+    // Deleting an option with explicitly specified server tag should fail.
+    EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
+                                       subnet->getID(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
+    // It should succeed for all servers.
+    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(), subnet->getID(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
 
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
                                          subnet->getID());
@@ -1061,12 +1085,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
-    // Delete option from the pool.
-    cbptr_->deleteOption4(ServerSelector::ALL(),
-                          pool->getFirstAddress(),
-                          pool->getLastAddress(),
-                          opt_boot_file_name->option_->getType(),
-                          opt_boot_file_name->space_name_);
+    // Deleting an option with explicitly specified server tag should fail.
+    EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
+                                       pool->getFirstAddress(),
+                                       pool->getLastAddress(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
+    // Delete option for all servers should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                       pool->getFirstAddress(),
+                                       pool->getLastAddress(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
 
     // Fetch the subnet and the pool from the database again to make sure
     // that the option is really gone.
@@ -1123,10 +1154,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
-    cbptr_->deleteOption4(ServerSelector::ALL(),
-                          shared_network->getName(),
-                          opt_boot_file_name->option_->getType(),
-                          opt_boot_file_name->space_name_);
+    // Deleting an option with explicitly specified server tag should fail.
+    EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
+                                       shared_network->getName(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
+
+    // Deleting an option for all servers should succeed.
+    EXPECT_EQ(1, cbptr_->deleteOption4(ServerSelector::ALL(),
+                                       shared_network->getName(),
+                                       opt_boot_file_name->option_->getType(),
+                                       opt_boot_file_name->space_name_));
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);

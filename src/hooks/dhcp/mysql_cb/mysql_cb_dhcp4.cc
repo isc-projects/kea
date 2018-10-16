@@ -6,6 +6,7 @@
 
 #include <mysql_cb_dhcp4.h>
 #include <mysql_cb_impl.h>
+#include <mysql_query_macros_dhcp.h>
 #include <cc/data.h>
 #include <config_backend/constants.h>
 #include <database/db_exceptions.h>
@@ -80,6 +81,7 @@ public:
         INSERT_OPTION_DEF4,
         INSERT_OPTION_DEF4_SERVER,
         INSERT_OPTION4,
+        INSERT_OPTION4_SERVER,
         UPDATE_GLOBAL_PARAMETER4,
         UPDATE_SUBNET4,
         UPDATE_SHARED_NETWORK4,
@@ -631,12 +633,12 @@ public:
 
     /// @brief Sends query to retrieve single pool by address range.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound pool address.
     /// @param pool_end_address Upper bound pool address.
     /// @param pool_id Pool identifier for the returned pool.
     /// @return Pointer to the pool or null if no such pool found.
-    Pool4Ptr getPool4(const ServerSelector& /* selector */,
+    Pool4Ptr getPool4(const ServerSelector& /* server_selector */,
                       const IOAddress& pool_start_address,
                       const IOAddress& pool_end_address,
                       uint64_t& pool_id) {
@@ -758,7 +760,7 @@ public:
 
         } catch (const DuplicateEntry&) {
             deletePools4(subnet);
-            deleteOptions4(subnet);
+            deleteOptions4(server_selector, subnet);
 
             // Need to add one more binding for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
@@ -823,6 +825,7 @@ public:
     uint64_t deleteSubnet4(const ServerSelector& server_selector,
                        const SubnetID& subnet_id) {
         return (deleteFromTable<uint32_t>(DELETE_SUBNET4_ID, server_selector,
+                                          "deleting a subnet",
                                           subnet_id));
     }
 
@@ -1112,7 +1115,7 @@ public:
 
 
         } catch (const DuplicateEntry&) {
-            deleteOptions4(shared_network);
+            deleteOptions4(server_selector, shared_network);
 
             // Need to add one more binding for WHERE clause.
             in_bindings.push_back(MySqlBinding::createString(shared_network->getName()));
@@ -1135,12 +1138,42 @@ public:
         transaction.commit();
     }
 
+
+    /// @brief Sends query to insert DHCP option.
+    ///
+    /// This method expects that the server selector contains exactly one
+    /// server tag.
+    ///
+    /// @param server_selector Server selector.
+    /// @param in_bindings Collection of bindings representing an option.
+    void insertOption4(const ServerSelector& server_selector,
+                       const MySqlBindingCollection& in_bindings) {
+        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
+                          in_bindings);
+
+        // Fetch unique identifier of the inserted option.
+        uint64_t id = mysql_insert_id(conn_.mysql_);
+
+        // Create bindings needed to insert association of that option with
+        // a server into the dhcp4_options_server table.
+        MySqlBindingCollection in_server_bindings = {
+            MySqlBinding::createInteger<uint64_t>(id), // option_id
+            MySqlBinding::createString(*getServerTags(server_selector).begin()), // server_tag
+            in_bindings[11] // copy modification timestamp from option
+        };
+
+        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4_SERVER,
+                          in_server_bindings);
+    }
+
     /// @brief Sends query to insert or update global DHCP option.
     ///
     /// @param server_selector Server selector.
     /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
+
+        auto tag = getServerTag(server_selector, "creating or updating global option");
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
@@ -1162,14 +1195,15 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
         if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
             in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
                                     in_bindings);
 
         } else {
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
-                              in_bindings);
+            insertOption4(server_selector, in_bindings);
+
         }
 
         transaction.commit();
@@ -1183,6 +1217,9 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option) {
+
+        auto tag = getServerTag(server_selector,
+                                "creating or updating subnet level option");
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
@@ -1206,6 +1243,7 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
         if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
             in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
@@ -1213,13 +1251,18 @@ public:
                                     in_bindings);
 
         } else {
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
-                              in_bindings);
+            insertOption4(server_selector, in_bindings);
         }
 
         transaction.commit();
     }
 
+    /// @brief Sends query to insert or update DHCP option in a pool.
+    ///
+    /// @param server_selector Server selector.
+    /// @param pool_start_address Lower bound address of the pool.
+    /// @param pool_end_address Upper bound address of the pool.
+    /// @param option Pointer to the option descriptor encapsulating the option.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const IOAddress& pool_start_address,
                              const IOAddress& pool_end_address,
@@ -1246,6 +1289,9 @@ public:
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option) {
 
+        auto tag = getServerTag(server_selector,
+                                "creating or updating pool level option");
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -1266,6 +1312,7 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
         if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
             in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
@@ -1273,8 +1320,7 @@ public:
                                     in_bindings);
 
         } else {
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
-                              in_bindings);
+            insertOption4(server_selector, in_bindings);
         }
 
         transaction.commit();
@@ -1289,6 +1335,9 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option) {
+        auto tag = getServerTag(server_selector, "creating or updating shared"
+                                " network level option");
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createInteger<uint8_t>(option->option_->getType()),
             createOptionValueBinding(option),
@@ -1310,6 +1359,7 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
         if (existing_option) {
+            in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createString(shared_network_name));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
             in_bindings.push_back(MySqlBinding::condCreateString(option->space_name_));
@@ -1317,7 +1367,7 @@ public:
                                     UPDATE_OPTION4_SHARED_NETWORK,
                                     in_bindings);
         } else {
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4, in_bindings);
+            insertOption4(server_selector, in_bindings);
         }
 
         transaction.commit();
@@ -1395,17 +1445,20 @@ public:
     /// @brief Sends query to retrieve single global option by code and
     /// option space.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param code Option code.
     /// @param space Option space name.
     ///
     /// @return Pointer to the returned option or NULL if such option
     /// doesn't exist.
     OptionDescriptorPtr
-    getOption4(const ServerSelector& /* server_selector */, const uint16_t code,
+    getOption4(const ServerSelector& server_selector, const uint16_t code,
                const std::string& space) {
+        auto tag = getServerTag(server_selector, "fetching global option");
+
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
@@ -1416,50 +1469,66 @@ public:
 
     /// @brief Sends query to retrieve all global options.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Container holding returned options.
     OptionContainer
-    getAllOptions4(const ServerSelector& /* server_selector */) {
+    getAllOptions4(const ServerSelector& server_selector) {
         OptionContainer options;
-        MySqlBindingCollection in_bindings;
-        getOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-                   in_bindings, Option::V4, options);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag)
+            };
+            getOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
+                       in_bindings, Option::V4, options);
+        }
+
         return (options);
     }
 
     /// @brief Sends query to retrieve global options with modification
     /// time later than specified timestamp.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @return Container holding returned options.
     OptionContainer
-    getModifiedOptions4(const ServerSelector& /* server_selector */,
+    getModifiedOptions4(const ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) {
         OptionContainer options;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createTimestamp(modification_time)
-        };
-        getOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-                   in_bindings, Option::V4, options);
+
+        auto tags = getServerTags(server_selector);
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createTimestamp(modification_time)
+            };
+            getOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+                       in_bindings, Option::V4, options);
+        }
+
         return (options);
     }
 
     /// @brief Sends query to retrieve single option by code and option space
     /// for a giben subnet id.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet_id Subnet identifier.
     /// @param code Option code.
     /// @param space Option space name.
     ///
     /// @return Pointer to the returned option descriptor or NULL if such
     /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& /* selector */,
+    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
                                    const SubnetID& subnet_id,
                                    const uint16_t code,
                                    const std::string& space) {
+        auto tag = getServerTag(server_selector, "fetching subnet level option");
+
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
@@ -1473,19 +1542,22 @@ public:
     /// @brief Sends query to retrieve single option by code and option space
     /// for a given pool id.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param pool_id Pool identifier in the database.
     /// @param code Option code.
     /// @param space Option space name.
     ///
     /// @return Pointer to the returned option descriptor or NULL if such
     /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& /* selector */,
+    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
                                    const uint64_t pool_id,
                                    const uint16_t code,
                                    const std::string& space) {
+        auto tag = getServerTag(server_selector, "fetching pool level option");
+
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint64_t>(pool_id),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
@@ -1499,19 +1571,23 @@ public:
     /// @brief Sends query to retrieve single option by code and option space
     /// for a given shared network.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param shared_network_name Shared network name.
     /// @param code Option code.
     /// @param space Option space name.
     ///
     /// @return Pointer to the returned option descriptor or NULL if such
     /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& /* selector */,
+    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
                                    const std::string& shared_network_name,
                                    const uint16_t code,
                                    const std::string& space) {
+        auto tag = getServerTag(server_selector, "fetching shared network"
+                                " level option");
+
         OptionContainer options;
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
@@ -1609,14 +1685,10 @@ public:
     uint64_t deleteOptionDef4(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
-        auto tags = getServerTags(server_selector);
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while deleting option definition. Got: "
-                      << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "deleting option definition");
+
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(*tags.begin()),
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
@@ -1627,14 +1699,17 @@ public:
 
     /// @brief Deletes global option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
-    uint64_t deleteOption4(const ServerSelector& /* selector */,
+    uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
                            const std::string& space) {
+        auto tag = getServerTag(server_selector, "deleting global option");
+
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
         };
@@ -1645,17 +1720,20 @@ public:
 
     /// @brief Deletes subnet level option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to which deleted option
     /// belongs.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
-    uint64_t deleteOption4(const ServerSelector& /* selector */,
+    uint64_t deleteOption4(const ServerSelector& server_selector,
                            const SubnetID& subnet_id,
                            const uint16_t code,
                            const std::string& space) {
+        auto tag = getServerTag(server_selector, "deleting option for a subnet");
+
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
@@ -1667,22 +1745,25 @@ public:
 
     /// @brief Deletes pool level option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param pool_start_address Lower bound pool address.
     /// @param pool_end_address  Upper bound pool address.
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
-    uint64_t deleteOption4(const db::ServerSelector& /* selector */,
+    uint64_t deleteOption4(const db::ServerSelector& server_selector,
                            const IOAddress& pool_start_address,
                            const IOAddress& pool_end_address,
                            const uint16_t code,
                            const std::string& space) {
+        auto tag = getServerTag(server_selector, "deleting option for a pool");
+
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
-            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32()),
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(code),
-            MySqlBinding::createString(space)
+            MySqlBinding::createString(space),
+            MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
+            MySqlBinding::createInteger<uint32_t>(pool_end_address.toUint32())
         };
 
         // Run DELETE.
@@ -1692,17 +1773,20 @@ public:
 
     /// @brief Deletes shared network level option.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param shared_network_name Name of the shared network which deleted
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
-    uint64_t deleteOption4(const db::ServerSelector& /* selector */,
-                       const std::string& shared_network_name,
-                       const uint16_t code,
-                       const std::string& space) {
+    uint64_t deleteOption4(const db::ServerSelector& server_selector,
+                           const std::string& shared_network_name,
+                           const uint16_t code,
+                           const std::string& space) {
+        auto tag = getServerTag(server_selector, "deleting option for a shared network");
+
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
@@ -1715,11 +1799,16 @@ public:
 
     /// @brief Deletes options belonging to a subnet from the database.
     ///
+    /// @param server_selector Server selector.
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
     /// @return Number of deleted options.
-    uint64_t deleteOptions4(const Subnet4Ptr& subnet) {
+    uint64_t deleteOptions4(const ServerSelector& server_selector,
+                            const Subnet4Ptr& subnet) {
+        auto tag = getServerTag(server_selector, "deleting options for a subnet");
+
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(subnet->getID())
         };
 
@@ -1730,11 +1819,16 @@ public:
 
     /// @brief Deletes options belonging to a shared network from the database.
     ///
+    /// @param server_selector Server selector.
     /// @param subnet Pointer to the subnet for which options should be
     /// deleted.
     /// @return Number of deleted options.
-    uint64_t deleteOptions4(const SharedNetwork4Ptr& shared_network) {
+    uint64_t deleteOptions4(const ServerSelector& server_selector,
+                            const SharedNetwork4Ptr& shared_network) {
+        auto tag = getServerTag(server_selector, "deleting options for a shared network");
+
         MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network->getName())
         };
 
@@ -1753,303 +1847,38 @@ TaggedStatementArray;
 TaggedStatementArray tagged_statements = { {
     // Select global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::GET_GLOBAL_PARAMETER4,
-      "SELECT"
-      "  g.id,"
-      "  g.name,"
-      "  g.value,"
-      "  g.modification_ts "
-      "FROM dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a "
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1) AND g.name = ? "
-      "ORDER BY g.id"
+      MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
     },
 
     // Select all global parameters.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
-      "SELECT"
-      "  g.id,"
-      "  g.name,"
-      "  g.value,"
-      "  g.modification_ts "
-      "FROM dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a "
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1)"
-      "ORDER BY g.id"
+      MYSQL_GET_GLOBAL_PARAMETER(dhcp4)
     },
 
     // Select modified global parameters.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
-      "SELECT"
-      "  g.id,"
-      "  g.name,"
-      "  g.value,"
-      "  g.modification_ts "
-      "FROM dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a "
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1) AND (g.modification_ts > ?) "
-      "ORDER BY g.id"
+      MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.modification_ts > ?)
     },
 
     // Select subnet by id.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_ID,
-      "SELECT"
-      "  s.subnet_id,"
-      "  s.subnet_prefix,"
-      "  s.4o6_interface,"
-      "  s.4o6_interface_id,"
-      "  s.4o6_subnet,"
-      "  s.boot_file_name,"
-      "  s.client_class,"
-      "  s.interface,"
-      "  s.match_client_id,"
-      "  s.modification_ts,"
-      "  s.next_server,"
-      "  s.rebind_timer,"
-      "  s.relay,"
-      "  s.renew_timer,"
-      "  s.require_client_classes,"
-      "  s.reservation_mode,"
-      "  s.server_hostname,"
-      "  s.shared_network_name,"
-      "  s.user_context,"
-      "  s.valid_lifetime,"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp4_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv "
-      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
-      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) AND s.subnet_id = ? "
-      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
+      MYSQL_GET_SUBNET4(AND s.subnet_id = ?)
+    },
 
     // Select subnet by prefix.
     { MySqlConfigBackendDHCPv4Impl::GET_SUBNET4_PREFIX,
-      "SELECT"
-      "  s.subnet_id,"
-      "  s.subnet_prefix,"
-      "  s.4o6_interface,"
-      "  s.4o6_interface_id,"
-      "  s.4o6_subnet,"
-      "  s.boot_file_name,"
-      "  s.client_class,"
-      "  s.interface,"
-      "  s.match_client_id,"
-      "  s.modification_ts,"
-      "  s.next_server,"
-      "  s.rebind_timer,"
-      "  s.relay,"
-      "  s.renew_timer,"
-      "  s.require_client_classes,"
-      "  s.reservation_mode,"
-      "  s.server_hostname,"
-      "  s.shared_network_name,"
-      "  s.user_context,"
-      "  s.valid_lifetime,"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp4_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv "
-      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
-      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) AND s.subnet_prefix = ? "
-      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
+      MYSQL_GET_SUBNET4(AND s.subnet_prefix = ?)
+    },
 
     // Select all subnets.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_SUBNETS4,
-      "SELECT"
-      "  s.subnet_id,"
-      "  s.subnet_prefix,"
-      "  s.4o6_interface,"
-      "  s.4o6_interface_id,"
-      "  s.4o6_subnet,"
-      "  s.boot_file_name,"
-      "  s.client_class,"
-      "  s.interface,"
-      "  s.match_client_id,"
-      "  s.modification_ts,"
-      "  s.next_server,"
-      "  s.rebind_timer,"
-      "  s.relay,"
-      "  s.renew_timer,"
-      "  s.require_client_classes,"
-      "  s.reservation_mode,"
-      "  s.server_hostname,"
-      "  s.shared_network_name,"
-      "  s.user_context,"
-      "  s.valid_lifetime,"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp4_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv "
-      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
-      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) "
-      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
+      MYSQL_GET_SUBNET4()
+    },
 
     // Select subnets having modification time later than X.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SUBNETS4,
-      "SELECT"
-      "  s.subnet_id,"
-      "  s.subnet_prefix,"
-      "  s.4o6_interface,"
-      "  s.4o6_interface_id,"
-      "  s.4o6_subnet,"
-      "  s.boot_file_name,"
-      "  s.client_class,"
-      "  s.interface,"
-      "  s.match_client_id,"
-      "  s.modification_ts,"
-      "  s.next_server,"
-      "  s.rebind_timer,"
-      "  s.relay,"
-      "  s.renew_timer,"
-      "  s.require_client_classes,"
-      "  s.reservation_mode,"
-      "  s.server_hostname,"
-      "  s.shared_network_name,"
-      "  s.user_context,"
-      "  s.valid_lifetime,"
-      "  p.id,"
-      "  p.start_address,"
-      "  p.end_address,"
-      "  p.subnet_id,"
-      "  p.modification_ts,"
-      "  x.option_id,"
-      "  x.code,"
-      "  x.value,"
-      "  x.formatted_value,"
-      "  x.space,"
-      "  x.persistent,"
-      "  x.dhcp4_subnet_id,"
-      "  x.scope_id,"
-      "  x.user_context,"
-      "  x.shared_network_name,"
-      "  x.pool_id,"
-      "  x.modification_ts,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv "
-      "  ON (a.server_id = srv.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_pool AS p ON s.subnet_id = p.subnet_id "
-      "LEFT JOIN dhcp4_options AS x ON x.scope_id = 5 AND p.id = x.pool_id "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp4_subnet_id "
-      "WHERE (srv.tag = ? OR srv.id = 1) AND s.modification_ts > ? "
-      "ORDER BY s.subnet_id, p.id, x.option_id, o.option_id" },
+      MYSQL_GET_SUBNET4(AND s.modification_ts > ?)
+    },
 
     // Select pool by address range.
     { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE,
@@ -2079,313 +1908,74 @@ TaggedStatementArray tagged_statements = { {
 
     // Select shared network by name.
     { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK4_NAME,
-      "SELECT"
-      "  n.id,"
-      "  n.name,"
-      "  n.client_class,"
-      "  n.interface,"
-      "  n.match_client_id,"
-      "  n.modification_ts,"
-      "  n.rebind_timer,"
-      "  n.relay,"
-      "  n.renew_timer,"
-      "  n.require_client_classes,"
-      "  n.reservation_mode,"
-      "  n.user_context,"
-      "  n.valid_lifetime,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_shared_network AS n "
-      "INNER JOIN dhcp4_shared_network_server AS a "
-      "  ON n.id = a.shared_network_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
-      "WHERE (s.tag = ? OR s.id = 1) AND n.name = ? "
-      "ORDER BY n.id, o.option_id" },
+      MYSQL_GET_SHARED_NETWORK4(AND n.name = ?)
+    },
 
     // Select all shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_SHARED_NETWORKS4,
-      "SELECT"
-      "  n.id,"
-      "  n.name,"
-      "  n.client_class,"
-      "  n.interface,"
-      "  n.match_client_id,"
-      "  n.modification_ts,"
-      "  n.rebind_timer,"
-      "  n.relay,"
-      "  n.renew_timer,"
-      "  n.require_client_classes,"
-      "  n.reservation_mode,"
-      "  n.user_context,"
-      "  n.valid_lifetime,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_shared_network AS n "
-      "INNER JOIN dhcp4_shared_network_server AS a "
-      "  ON n.id = a.shared_network_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
-      "WHERE s.tag = ? OR s.id = 1 "
-      "ORDER BY n.id" },
+      MYSQL_GET_SHARED_NETWORK4()
+    },
 
     // Select modified shared networks.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_SHARED_NETWORKS4,
-      "SELECT"
-      "  n.id,"
-      "  n.name,"
-      "  n.client_class,"
-      "  n.interface,"
-      "  n.match_client_id,"
-      "  n.modification_ts,"
-      "  n.rebind_timer,"
-      "  n.relay,"
-      "  n.renew_timer,"
-      "  n.require_client_classes,"
-      "  n.reservation_mode,"
-      "  n.user_context,"
-      "  n.valid_lifetime,"
-      "  o.option_id,"
-      "  o.code,"
-      "  o.value,"
-      "  o.formatted_value,"
-      "  o.space,"
-      "  o.persistent,"
-      "  o.dhcp4_subnet_id,"
-      "  o.scope_id,"
-      "  o.user_context,"
-      "  o.shared_network_name,"
-      "  o.pool_id,"
-      "  o.modification_ts "
-      "FROM dhcp4_shared_network AS n "
-      "INNER JOIN dhcp4_shared_network_server AS a "
-      "  ON n.id = a.shared_network_id "
-      "INNER JOIN dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "LEFT JOIN dhcp4_options AS o ON o.scope_id = 4 AND n.name = o.shared_network_name "
-      "WHERE (s.tag = ? OR s.id = 1) AND n.modification_ts > ? "
-      "ORDER BY n.id" },
+      MYSQL_GET_SHARED_NETWORK4(AND n.modification_ts > ?)
+    },
 
     // Retrieves option definition by code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
-      "SELECT"
-      "  d.id,"
-      "  d.code,"
-      "  d.name,"
-      "  d.space,"
-      "  d.type,"
-      "  d.modification_ts,"
-      "  d.array,"
-      "  d.encapsulate,"
-      "  d.record_types,"
-      "  d.user_context "
-      "FROM dhcp4_option_def AS d "
-      "INNER JOIN dhcp4_option_def_server AS a"
-      "  ON d.id = a.option_def_id "
-      "INNER JOIN  dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1) AND (d.code = ? AND d.space = ?) "
-      "ORDER BY d.id" },
+      MYSQL_GET_OPTION_DEF(dhcp4, AND d.code = ? AND d.space = ?)
+    },
 
     // Retrieves all option definitions.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-      "SELECT"
-      "  d.id,"
-      "  d.code,"
-      "  d.name,"
-      "  d.space,"
-      "  d.type,"
-      "  d.modification_ts,"
-      "  d.array,"
-      "  d.encapsulate,"
-      "  d.record_types,"
-      "  d.user_context "
-      "FROM dhcp4_option_def AS d "
-      "INNER JOIN dhcp4_option_def_server AS a"
-      "  ON d.id = a.option_def_id "
-      "INNER JOIN  dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1) "
-      "ORDER BY d.id" },
+      MYSQL_GET_OPTION_DEF(dhcp4)
+    },
 
     // Retrieves modified option definitions.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-      "SELECT"
-      "  d.id,"
-      "  d.code,"
-      "  d.name,"
-      "  d.space,"
-      "  d.type,"
-      "  d.modification_ts,"
-      "  d.array,"
-      "  d.encapsulate,"
-      "  d.record_types,"
-      "  d.user_context "
-      "FROM dhcp4_option_def AS d "
-      "INNER JOIN dhcp4_option_def_server AS a"
-      "  ON d.id = a.option_def_id "
-      "INNER JOIN  dhcp4_server AS s "
-      "  ON (a.server_id = s.id) OR (a.server_id = 1) "
-      "WHERE (s.tag = ? OR s.id = 1) AND d.modification_ts > ? "
-      "ORDER BY d.id" },
+      MYSQL_GET_OPTION_DEF(dhcp4, AND d.modification_ts > ?)
+    },
 
     // Retrieves global option by code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 0 AND code = ? AND space = ? "
-      "ORDER BY option_id"
+      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Retrieves all global options.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 0 "
-      "ORDER BY option_id"
+      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0)
     },
 
     // Retrieves modified options.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 0 AND modification_ts > ? "
-      "ORDER BY option_id"
+      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0 AND o.modification_ts > ?)
     },
 
     // Retrieves an option for a given subnet, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SUBNET_ID_CODE_SPACE,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 1 AND dhcp4_subnet_id = ? AND"
-      "  code = ? AND space = ? "
-      "ORDER BY option_id" },
+      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
+    },
 
     // Retrieves an option for a given pool, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_POOL_ID_CODE_SPACE,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 5 AND pool_id = ? AND"
-      "  code = ? AND space = ? "
-      "ORDER BY option_id" },
+      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+    },
 
     // Retrieves an option for a given shared network, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
-      "SELECT"
-      "  option_id,"
-      "  code,"
-      "  value,"
-      "  formatted_value,"
-      "  space,"
-      "  persistent,"
-      "  dhcp4_subnet_id,"
-      "  scope_id,"
-      "  user_context,"
-      "  shared_network_name,"
-      "  pool_id,"
-      "  modification_ts "
-      "FROM dhcp4_options "
-      "WHERE scope_id = 4 AND shared_network_name = ? AND"
-      "  code = ? AND space = ? "
-      "ORDER BY option_id" },
+      MYSQL_GET_OPTION(dhcp4,
+                       AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+    },
 
     // Insert global parameter.
     { MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
-      "INSERT INTO dhcp4_global_parameter("
-      "  name,"
-      "  value,"
-      "  modification_ts"
-      ") VALUES (?, ?, ?)" },
+      MYSQL_INSERT_GLOBAL_PARAMETER(dhcp4)
+    },
 
     // Insert association of the global parameter with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
-      "INSERT INTO dhcp4_global_parameter_server("
-      "  parameter_id,"
-      "  server_id,"
-      "  modification_ts"
-      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
+      MYSQL_INSERT_GLOBAL_PARAMETER_SERVER(dhcp4)
+    },
 
     // Insert a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
@@ -2415,100 +2005,59 @@ TaggedStatementArray tagged_statements = { {
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
-      "INSERT INTO dhcp4_subnet_server("
-      "  subnet_id,"
-      "  server_id,"
-      "  modification_ts"
-      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
+      MYSQL_INSERT_SUBNET_SERVER(dhcp4)
+    },
 
     // Insert pool for a subnet.
     { MySqlConfigBackendDHCPv4Impl::INSERT_POOL4,
-      "INSERT INTO dhcp4_pool("
-      "  start_address,"
-      "  end_address,"
-      "  subnet_id,"
-      "  modification_ts"
-      ") VALUES (?, ?, ?, ?)" },
+      MYSQL_INSERT_POOL(dhcp4)
+    },
 
     // Insert a shared network.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4,
       "INSERT INTO dhcp4_shared_network("
-      "name,"
-      "client_class,"
-      "interface,"
-      "match_client_id,"
-      "modification_ts,"
-      "rebind_timer,"
-      "relay,"
-      "renew_timer,"
-      "require_client_classes,"
-      "reservation_mode,"
-      "user_context,"
-      "valid_lifetime"
+      "  name,"
+      "  client_class,"
+      "  interface,"
+      "  match_client_id,"
+      "  modification_ts,"
+      "  rebind_timer,"
+      "  relay,"
+      "  renew_timer,"
+      "  require_client_classes,"
+      "  reservation_mode,"
+      "  user_context,"
+      "  valid_lifetime"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
-      "INSERT INTO dhcp4_shared_network_server("
-      "  shared_network_id,"
-      "  server_id,"
-      "  modification_ts"
-      ") VALUES ("
-      "    (SELECT id FROM dhcp4_shared_network WHERE name = ?),"
-      "    (SELECT id FROM dhcp4_server WHERE tag = ?), ?"
-      ")" },
+      MYSQL_INSERT_SHARED_NETWORK_SERVER(dhcp4)
+    },
 
     // Insert option definition.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4,
-      "INSERT INTO dhcp4_option_def ("
-      "code,"
-      "name,"
-      "space,"
-      "type,"
-      "modification_ts,"
-      "array,"
-      "encapsulate,"
-      "record_types,"
-      "user_context"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      MYSQL_INSERT_OPTION_DEF(dhcp4)
+    },
 
     // Insert association of the option definition with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION_DEF4_SERVER,
-      "INSERT INTO dhcp4_option_def_server("
-      "  option_def_id,"
-      "  server_id,"
-      "  modification_ts"
-      ") VALUES (?, (SELECT id FROM dhcp4_server WHERE tag = ?), ?)" },
+      MYSQL_INSERT_OPTION_DEF_SERVER(dhcp4)
+    },
 
     // Insert subnet specific option.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
-      "INSERT INTO dhcp4_options ("
-      "code,"
-      "value,"
-      "formatted_value,"
-      "space,"
-      "persistent,"
-      "dhcp_client_class,"
-      "dhcp4_subnet_id,"
-      "scope_id,"
-      "user_context,"
-      "shared_network_name,"
-      "pool_id,"
-      "modification_ts"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      MYSQL_INSERT_OPTION(dhcp4)
+    },
+
+    // Insert association of the DHCP option with a server.
+    { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4_SERVER,
+      MYSQL_INSERT_OPTION_SERVER(dhcp4)
+    },
 
     // Update existing global parameter.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
-      "UPDATE dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a"
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON a.server_id = s.id "
-      "SET"
-      "  g.name = ?,"
-      "  g.value = ?,"
-      "  g.modification_ts = ? "
-      "WHERE s.tag = ? AND g.name = ?"
+      MYSQL_UPDATE_GLOBAL_PARAMETER(dhcp4)
     },
 
     // Update existing subnet.
@@ -2555,211 +2104,112 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing option definition.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION_DEF4,
-      "UPDATE dhcp4_option_def SET"
-      "  code = ?,"
-      "  name = ?,"
-      "  space = ?,"
-      "  type = ?,"
-      "  modification_ts = ?,"
-      "  array = ?,"
-      "  encapsulate = ?,"
-      "  record_types = ?,"
-      "  user_context = ? "
-      "WHERE code = ? AND space = ?" },
+      MYSQL_UPDATE_OPTION_DEF(dhcp4)
+    },
 
     // Update existing global option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
-      "UPDATE dhcp4_options SET"
-      "  code = ?,"
-      "  value = ?,"
-      "  formatted_value = ?,"
-      "  space = ?,"
-      "  persistent = ?,"
-      "  dhcp_client_class = ?,"
-      "  dhcp4_subnet_id = ?,"
-      "  scope_id = ?,"
-      "  user_context = ?,"
-      "  shared_network_name = ?,"
-      "  pool_id = ?,"
-      "  modification_ts = ? "
-      "WHERE scope_id = 0 AND code = ? AND space = ?"
+      MYSQL_UPDATE_OPTION(dhcp4, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SUBNET_ID,
-      "UPDATE dhcp4_options SET"
-      "  code = ?,"
-      "  value = ?,"
-      "  formatted_value = ?,"
-      "  space = ?,"
-      "  persistent = ?,"
-      "  dhcp_client_class = ?,"
-      "  dhcp4_subnet_id = ?,"
-      "  scope_id = ?,"
-      "  user_context = ?,"
-      "  shared_network_name = ?,"
-      "  pool_id = ?,"
-      "  modification_ts = ? "
-      "WHERE scope_id = 1 AND dhcp4_subnet_id = ? AND code = ? AND space = ?"
+      MYSQL_UPDATE_OPTION(dhcp4,
+                          AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pool level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_POOL_ID,
-      "UPDATE dhcp4_options SET"
-      "  code = ?,"
-      "  value = ?,"
-      "  formatted_value = ?,"
-      "  space = ?,"
-      "  persistent = ?,"
-      "  dhcp_client_class = ?,"
-      "  dhcp4_subnet_id = ?,"
-      "  scope_id = ?,"
-      "  user_context = ?,"
-      "  shared_network_name = ?,"
-      "  pool_id = ?,"
-      "  modification_ts = ? "
-      "WHERE scope_id = 5 AND pool_id = ? AND code = ? AND space = ?"
+      MYSQL_UPDATE_OPTION(dhcp4, AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SHARED_NETWORK,
-      "UPDATE dhcp4_options SET"
-      "  code = ?,"
-      "  value = ?,"
-      "  formatted_value = ?,"
-      "  space = ?,"
-      "  persistent = ?,"
-      "  dhcp_client_class = ?,"
-      "  dhcp4_subnet_id = ?,"
-      "  scope_id = ?,"
-      "  user_context = ?,"
-      "  shared_network_name = ?,"
-      "  pool_id = ?,"
-      "  modification_ts = ? "
-      "WHERE scope_id = 4 AND shared_network_name = ? AND code = ? AND space = ?"
+      MYSQL_UPDATE_OPTION(dhcp4,
+                          AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
     // Delete global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-      "DELETE g FROM dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a "
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON (a.server_id = s.id) "
-      "WHERE s.tag = ? AND g.name = ? "
+      MYSQL_DELETE_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
     },
 
     // Delete all global parameters.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
-      "DELETE g FROM dhcp4_global_parameter AS g "
-      "INNER JOIN dhcp4_global_parameter_server AS a "
-      "  ON g.id = a.parameter_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON (a.server_id = s.id) "
-      "WHERE s.tag = ?"
+      MYSQL_DELETE_GLOBAL_PARAMETER(dhcp4)
     },
 
     // Delete subnet by id.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_ID,
-      "DELETE s FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv"
-      "  ON a.server_id = srv.id "
-      "WHERE srv.tag = ? AND s.subnet_id = ?" },
+      MYSQL_DELETE_SUBNET(dhcp4, AND s.subnet_id = ?)
+    },
 
     // Delete subnet by prefix.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-      "DELETE s FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv"
-      "  ON a.server_id = srv.id "
-      "WHERE srv.tag = ? AND s.subnet_prefix = ?" },
+      MYSQL_DELETE_SUBNET(dhcp4, AND s.subnet_prefix = ?)
+    },
 
     // Delete all subnets.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-      "DELETE s FROM dhcp4_subnet AS s "
-      "INNER JOIN dhcp4_subnet_server AS a "
-      "  ON s.subnet_id = a.subnet_id "
-      "INNER JOIN dhcp4_server AS srv"
-      "  ON a.server_id = srv.id "
-      "WHERE srv.tag = ?" },
+      MYSQL_DELETE_SUBNET(dhcp4)
+    },
 
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
-      "DELETE FROM dhcp4_pool "
-      "WHERE subnet_id = ?" },
+      MYSQL_DELETE_POOLS(dhcp4)
+    },
 
     // Delete shared network by name.
     { MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-      "DELETE n FROM dhcp4_shared_network AS n "
-      "INNER JOIN dhcp4_shared_network_server AS a"
-      "  ON n.id = a.shared_network_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ? AND n.name = ?" },
+      MYSQL_DELETE_SHARED_NETWORK(dhcp4, AND n.name = ?)
+    },
 
     // Delete all shared networks.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-      "DELETE n FROM dhcp4_shared_network AS n "
-      "INNER JOIN dhcp4_shared_network_server AS a"
-      "  ON n.id = a.shared_network_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ?" },
+      MYSQL_DELETE_SHARED_NETWORK(dhcp4)
+    },
 
     // Delete option definition.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION_DEF4_CODE_NAME,
-      "DELETE d FROM dhcp4_option_def AS d "
-      "INNER JOIN dhcp4_option_def_server AS a"
-      "  ON d.id = a.option_def_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ? AND code = ? AND space = ?" },
+      MYSQL_DELETE_OPTION_DEF(dhcp4, AND code = ? AND space = ?)
+    },
 
     // Delete all option definitions.
     { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-      "DELETE d FROM dhcp4_option_def AS d "
-      "INNER JOIN dhcp4_option_def_server AS a"
-      "  ON d.id = a.option_def_id "
-      "INNER JOIN dhcp4_server AS s"
-      "  ON a.server_id = s.id "
-      "WHERE s.tag = ?" },
+      MYSQL_DELETE_OPTION_DEF(dhcp4)
+    },
 
     // Delete single global option.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 0  AND code = ? AND space = ?" },
+      MYSQL_DELETE_OPTION(dhcp4, AND o.scope_id = 0  AND o.code = ? AND o.space = ?)
+    },
 
     // Delete single option from a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SUBNET_ID,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 1 AND dhcp4_subnet_id = ?"
-      "  AND code = ? AND space = ?" },
+      MYSQL_DELETE_OPTION(dhcp4,
+                          AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
+    },
 
     // Delete single option from a pool.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_POOL_RANGE,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 5 AND pool_id = "
-      "  (SELECT id FROM dhcp4_pool"
-      "   WHERE start_address = ? AND end_address = ?)" },
+      MYSQL_DELETE_OPTION_POOL_RANGE(dhcp4, AND o.scope_id = 5 AND o.code = ? AND o.space = ?)
+    },
 
     // Delete single option from a shared network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTION4_SHARED_NETWORK,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 4 AND shared_network_name = ?"
-      "  AND code = ? AND space = ?" },
+      MYSQL_DELETE_OPTION(dhcp4,
+                          AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+    },
 
     // Delete options belonging to a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_SUBNET_ID,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 1 AND dhcp4_subnet_id = ?" },
+      MYSQL_DELETE_OPTION(dhcp4, AND o.scope_id = 1 AND o.dhcp4_subnet_id = ?)
+    },
 
     // Delete options belonging to a shared_network.
     { MySqlConfigBackendDHCPv4Impl::DELETE_OPTIONS4_SHARED_NETWORK,
-      "DELETE FROM dhcp4_options "
-      "WHERE scope_id = 4 AND shared_network_name = ?" }
+      MYSQL_DELETE_OPTION(dhcp4, AND o.scope_id = 4 AND o.shared_network_name = ?)
+    }
 }
 };
 
@@ -2965,7 +2415,8 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
     return(impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-                                  server_selector, subnet_prefix));
+                                  server_selector, "deleting a subnet by prefix",
+                                  subnet_prefix));
 }
 
 uint64_t
@@ -2977,20 +2428,21 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selector) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-                                   server_selector));
+                                   server_selector, "deleting all subnets"));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_selector,
                                                const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-                                   server_selector, name));
+                                   server_selector, "deleting a shared network",
+                                   name));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-                                   server_selector));
+                                   server_selector, "deleting all shared networks"));
 }
 
 uint64_t
@@ -3003,7 +2455,7 @@ MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_selector) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-                                   server_selector));
+                                   server_selector, "deleting all option definitions"));
 }
 
 uint64_t
@@ -3044,13 +2496,14 @@ uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-                                   server_selector, name));
+                                   server_selector, "deleting global parameter",
+                                   name));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& server_selector) {
     return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
-                                   server_selector));
+                                   server_selector, "deleting all global parameters"));
 }
 
 std::string
