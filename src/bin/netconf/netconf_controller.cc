@@ -34,6 +34,15 @@ NetconfController::instance() {
     return (getController());
 }
 
+void
+NetconfController::processSignal(int signum) {
+    if (signum == SIGHUP) {
+        LOG_WARN(dctl_logger, DCTL_UNSUPPORTED_SIGNAL).arg(signum);
+    } else {
+        DControllerBase::processSignal(signum);
+    }
+}
+
 DProcessBase*
 NetconfController::createProcess() {
     // Instantiate and return an instance of the D2 application process. Note

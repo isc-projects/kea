@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -104,14 +104,14 @@ isc::data::ConstElementPtr parseAnswer(int &status_code,
 /// @return printable string
 std::string answerToText(const isc::data::ConstElementPtr& msg);
 
-/// @brief Creates a standard config/command command message with no
+/// @brief Creates a standard command message with no
 /// argument (of the form { "command": "my_command" })
 ///
 /// @param command The command string
 /// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command);
 
-/// @brief Creates a standard config/command command message with the
+/// @brief Creates a standard command message with the
 /// given argument (of the form { "command": "my_command", "arguments": arg }
 ///
 /// @param command The command string
@@ -120,6 +120,29 @@ isc::data::ConstElementPtr createCommand(const std::string& command);
 /// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command,
                                          isc::data::ConstElementPtr arg);
+
+/// @brief Creates a standard config/command command message with no
+/// argument and with the given service (of the form
+/// { "command": "my_command", "service": [ service ] })
+///
+/// @param command The command string
+/// @param service The target service. May be empty.
+/// @return The created message
+ isc::data::ConstElementPtr createCommand(const std::string& command,
+                                          const std::string& service);
+
+/// @brief Creates a standard config/command command message with the
+/// given argument and given service (of the form
+/// { "command": "my_command", "arguments": arg, "service": [ service ] }
+///
+/// @param command The command string
+/// @param arg The optional argument for the command. This can be of
+///        any Element type. May be NULL.
+/// @param service The target service. May be empty.
+/// @return The created message
+isc::data::ConstElementPtr createCommand(const std::string& command,
+                                         isc::data::ConstElementPtr arg,
+                                         const std::string& service);
 
 /// @brief Parses the given command into a string containing the actual
 ///        command and an ElementPtr containing the optional argument.
