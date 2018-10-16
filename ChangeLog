@@ -1,3 +1,9 @@
+1458.	[func]		fdupont
+	Control sockets for kea-netconf has been implemented. The code is
+	not functional yet, but the capability of the kea-netconf daemon
+	to communicate with CA, D2, DHCPv4 and DHCPv6 daemons is there.
+	(Gitlab #153,!60, git 11486e255aef704114645f8e7c5fee9c3abf9e76)
+
 1457.	[func]		tmark
 	Both kea-dhcp4 and kea-dhcp6 configuration parsing support new, 
 	server-level configuration elements "server-tag" and "config-control". 
