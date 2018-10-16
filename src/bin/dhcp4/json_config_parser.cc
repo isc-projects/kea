@@ -10,11 +10,12 @@
 #include <database/dbaccess_parser.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -50,6 +51,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::process;
 
 namespace {
 
@@ -318,9 +320,11 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // the parsers.  It is declared outside the loops so in case of an error,
     // the name of the failing parser can be retrieved in the "catch" clause.
     ConfigPair config_pair;
+    ElementPtr mutable_cfg;
+    SrvConfigPtr srv_cfg;
     try {
-
-        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+        // Get the staging configuration
+        srv_cfg = CfgMgr::instance().getStagingCfg();
 
         // Preserve all scalar global parameters
         srv_cfg->extractConfiguredGlobals(config_set);
@@ -328,7 +332,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
@@ -464,7 +468,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "subnet4") {
-                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
                 Subnets4ListConfigParser subnets_parser;
                 // parse() returns number of subnets parsed. We may log it one day.
                 subnets_parser.parse(srv_cfg, config_pair.second);
@@ -500,8 +503,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "config-control") {
-                process::ConfigControlParser parser;
-                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                ConfigControlParser parser;
+                ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
                 CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
                 continue;
             }
@@ -574,9 +577,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-            // if we have config-control DBs attempt to create them here,
-            // if that fails, rollback?
-
             // Setup the command channel.
             configureCommandChannel();
 
@@ -595,8 +595,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
 
-            // now that we have config-db and hooks, merge in config from DB
-            // databaseConfigFetch(srv_config, mutable_cfg);
+            // If there are config backends, fetch and merge into staging config
+            databaseConfigFetch(srv_cfg, mutable_cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -628,6 +628,48 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
 }
+
+bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
+    // We need to get rid of any existing backends.  These would be any
+    // opened by previous configuration cycle.
+    ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
+    mgr.delAllBackends();
+
+    // SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
+    ConstConfigControlInfoPtr config_ctl = srv_cfg->getConfigControlInfo();
+    if (!config_ctl || config_ctl->getConfigDatabases().empty()) {
+        // No config dbs, nothing to do.
+        return (false);
+    }
+
+    // First step is to create all of the backends.
+    for (auto db : config_ctl->getConfigDatabases()) {
+            // Good place for a log message?
+            mgr.addBackend(db.getAccessString());
+    }
+
+    return (true);
+}
+
+void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /*global_scope*/) {
+
+    // Close any existing CB databasess, then open all in srv_cfg (if any)
+    if (!databaseConfigConnect(srv_cfg)) {
+        // There are no CB databases so we're done
+        return;
+    }
+
+    // @todo Fetching and merging the configuration falls under #99
+    // ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
+    // Next we have to fetch the pieces we care about it and merge them
+    // probably in this order?
+    // globals
+    // shared networks
+    // subnets
+    // option defs
+    // options
+}
+
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

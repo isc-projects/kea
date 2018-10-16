@@ -19,6 +19,7 @@ libdhcpsrvtest_la_SOURCES += memory_host_data_source.cc memory_host_data_source.
 libdhcpsrvtest_la_SOURCES += generic_backend_unittest.cc generic_backend_unittest.h
 libdhcpsrvtest_la_SOURCES += generic_host_data_source_unittest.cc generic_host_data_source_unittest.h
 libdhcpsrvtest_la_SOURCES += lease_file_io.cc lease_file_io.h
+libdhcpsrvtest_la_SOURCES += test_config_backend_dhcp4.cc test_config_backend_dhcp4.h
 
 libdhcpsrvtest_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdhcpsrvtest_la_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
