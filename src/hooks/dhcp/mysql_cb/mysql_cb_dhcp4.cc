@@ -187,25 +187,13 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        auto tags = getServerTags(server_selector);
-
-        /// @todo Currently we allow only one server tag for creation and update
-        /// of the global parameters. If we allow more, this is getting very tricky,
-        /// because we combine updates and insertions. We have to define how we
-        /// want to update an object shared by multiple servers. What if selector
-        /// contains one tag, but the parameter is shared by multiple? Should it
-        /// update one or all?.
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while creating or updating global configuration"
-                      " parameter. Got: " << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "creating or updating global parameter");
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(value->getName()),
             MySqlBinding::createString(value->getValue()),
             MySqlBinding::createTimestamp(value->getModificationTime()),
-            MySqlBinding::createString(*tags.begin()),
+            MySqlBinding::createString(tag),
             MySqlBinding::createString(value->getName())
         };
 
@@ -229,7 +217,7 @@ public:
             // dhcp4_global_parameter_server table.
             MySqlBindingCollection in_server_bindings = {
                 MySqlBinding::createInteger<uint64_t>(id), // parameter_id
-                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createString(tag), // tag used to obtain server_id
                 MySqlBinding::createTimestamp(value->getModificationTime()), // modification_ts
             };
 
@@ -668,14 +656,7 @@ public:
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
 
-        auto tags = getServerTags(server_selector);
-
-        /// @todo Extend support to multiple server tags.
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while creating or updating subnet configuration."
-                      " Got: " << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "creating or updating subnet");
 
         // Convert DHCPv4o6 interface id to text.
         OptionPtr dhcp4o6_interface_id = subnet->get4o6().getInterfaceId();
@@ -749,7 +730,7 @@ public:
             // dhcp4_subnet_server table.
             MySqlBindingCollection in_server_bindings = {
                 MySqlBinding::createInteger<uint32_t>(subnet->getID()), // subnet_id
-                MySqlBinding::createString(*tags.begin()), // tag used to obtain server_id
+                MySqlBinding::createString(tag), // tag used to obtain server_id
                 MySqlBinding::createTimestamp(subnet->getModificationTime()), // modification_ts
             };
 
@@ -1003,16 +984,10 @@ public:
     /// network doesn't exist.
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
-        auto tags = getServerTags(server_selector);
-
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while fetching a shared network. Got: "
-                      << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "fetching shared network");
 
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(*tags.begin()),
+            MySqlBinding::createString(tag),
             MySqlBinding::createString(name)
         };
 
@@ -1068,13 +1043,7 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
-        auto tags = getServerTags(server_selector);
-
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while creating or updating shared network"
-                      " configuration. Got: " << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "creating or updating shared network");
 
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
@@ -1105,7 +1074,7 @@ public:
             // table.
             MySqlBindingCollection in_server_bindings = {
                 MySqlBinding::createString(shared_network->getName()), // shared network name
-                MySqlBinding::createString(*tags.begin()), // server tag
+                MySqlBinding::createString(tag), // server tag
                 MySqlBinding::createTimestamp(shared_network->getModificationTime()), // modification_ts
             };
 
@@ -1385,16 +1354,11 @@ public:
     OptionDefinitionPtr getOptionDef4(const ServerSelector& server_selector,
                                       const uint16_t code,
                                       const std::string& space) {
-        auto tags = getServerTags(server_selector);
-        if (tags.size() != 1) {
-            isc_throw(InvalidOperation, "expected exactly one server tag to be"
-                      " specified while fetching an option definition. Got: "
-                      << getServerTagsAsText(server_selector));
-        }
+        auto tag = getServerTag(server_selector, "fetching option definition");
 
         OptionDefContainer option_defs;
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(*tags.begin()),
+            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
