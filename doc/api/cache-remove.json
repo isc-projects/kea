@@ -1,4 +1,3 @@
-An example command to remove an IPv4 host with reserved address 192.0.2.1 from subnet with a subnet-id 123 looks as follows:
 {
     "name": "cache-remove",
     "brief": "The cache-remove command works similarly to reservation-get command.",
