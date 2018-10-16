@@ -10,6 +10,7 @@
 
 #include <config.h>
 #include <hooks/hooks.h>
+#include <mysql_cb_dhcp4.h>
 
 using namespace isc::hooks;
 
@@ -19,7 +20,12 @@ extern "C" {
 ///
 /// @param handle library handle
 /// @return 0 when initialization is successful, 1 otherwise
+
 int load(LibraryHandle& /* handle */) {
+
+    // Register MySQL CB factory with CB Manager
+    isc::dhcp::MySqlConfigBackendDHCPv4::registerBackendType();
+
     return (0);
 }
 
@@ -27,6 +33,9 @@ int load(LibraryHandle& /* handle */) {
 ///
 /// @return 0 if deregistration was successful, 1 otherwise
 int unload() {
+
+    // Unregister the factory and remove MySQL backends
+    isc::dhcp::MySqlConfigBackendDHCPv4::unregisterBackendType();
     return (0);
 }
 

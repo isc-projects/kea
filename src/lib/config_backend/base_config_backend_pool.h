@@ -61,6 +61,21 @@ public:
         backends_.clear();
     }
 
+    /// @brief Deletes all backends of the given type from the pool.
+    ///
+    /// @param db_type backend to remove
+    void delAllBackends(const std::string& db_type) {
+        typename std::list<ConfigBackendTypePtr>::iterator backend = backends_.begin();
+
+        while (backend != backends_.end()) {
+            if ((*backend)->getType() == db_type) {
+                backend = backends_.erase(backend);
+            } else {
+                ++backend;
+            }
+        }
+    }
+
 protected:
 
     /// @brief Retrieve a single configuration property from the pool.

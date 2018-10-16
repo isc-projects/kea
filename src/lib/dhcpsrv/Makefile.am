@@ -110,6 +110,7 @@ libkea_dhcpsrv_la_SOURCES += cfgmgr.cc cfgmgr.h
 libkea_dhcpsrv_la_SOURCES += client_class_def.cc client_class_def.h
 libkea_dhcpsrv_la_SOURCES += config_backend_dhcp4.h
 libkea_dhcpsrv_la_SOURCES += config_backend_pool_dhcp4.cc config_backend_pool_dhcp4.h
+libkea_dhcpsrv_la_SOURCES += config_backend_dhcp4_mgr.cc config_backend_dhcp4_mgr.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file4.cc csv_lease_file4.h
 libkea_dhcpsrv_la_SOURCES += csv_lease_file6.cc csv_lease_file6.h
 libkea_dhcpsrv_la_SOURCES += d2_client_cfg.cc d2_client_cfg.h

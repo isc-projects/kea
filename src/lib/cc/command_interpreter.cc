@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,7 @@ const char *CONTROL_COMMAND = "command";
 const char *CONTROL_RESULT = "result";
 const char *CONTROL_TEXT = "text";
 const char *CONTROL_ARGUMENTS = "arguments";
+const char *CONTROL_SERVICE = "service";
 
 // Full version, with status, text and arguments
 ConstElementPtr
@@ -134,16 +135,33 @@ answerToText(const ConstElementPtr& msg) {
 
 ConstElementPtr
 createCommand(const std::string& command) {
-    return (createCommand(command, ElementPtr()));
+    return (createCommand(command, ElementPtr(), ""));
 }
 
 ConstElementPtr
 createCommand(const std::string& command, ConstElementPtr arg) {
+    return (createCommand(command, arg, ""));
+}
+
+ConstElementPtr
+createCommand(const std::string& command, const std::string& service) {
+    return (createCommand(command, ElementPtr(), service));
+}
+
+ConstElementPtr
+createCommand(const std::string& command,
+              ConstElementPtr arg,
+              const std::string& service) {
     ElementPtr query = Element::createMap();
     ElementPtr cmd = Element::create(command);
     query->set(CONTROL_COMMAND, cmd);
     if (arg) {
         query->set(CONTROL_ARGUMENTS, arg);
+    }
+    if (!service.empty()) {
+        ElementPtr services = Element::createList();
+        services->add(Element::create(service));
+        query->set(CONTROL_SERVICE, services);
     }
     return (query);
 }
