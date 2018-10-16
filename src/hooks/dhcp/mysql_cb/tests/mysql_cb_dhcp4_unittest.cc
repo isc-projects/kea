@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <mysql_cb_dhcp4.h>
+#include <database/testutils/schema.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -301,6 +302,38 @@ public:
     /// @brief Holds pointer to the backend.
     boost::shared_ptr<ConfigBackendDHCPv4> cbptr_;
 };
+
+// This test verifies that the expected backend type is returned.
+TEST_F(MySqlConfigBackendDHCPv4Test, getType) {
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["password"] = "keatest";
+    params["user"] = "keatest";
+    ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
+    EXPECT_EQ("mysql", cbptr_->getType());
+}
+
+// This test verifies that by default localhost is returned as MySQL connection
+// host.
+TEST_F(MySqlConfigBackendDHCPv4Test, getHost) {
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["password"] = "keatest";
+    params["user"] = "keatest";
+    ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
+    EXPECT_EQ("localhost", cbptr_->getHost());
+}
+
+// This test verifies that by default port of 0 is returned as MySQL connection
+// port.
+TEST_F(MySqlConfigBackendDHCPv4Test, getPort) {
+    DatabaseConnection::ParameterMap params;
+    params["name"] = "keatest";
+    params["password"] = "keatest";
+    params["user"] = "keatest";
+    ASSERT_NO_THROW(cbptr_.reset(new MySqlConfigBackendDHCPv4(params)));
+    EXPECT_EQ(0, cbptr_->getPort());
+}
 
 // This test verifies that the global parameter can be added, updated and
 // deleted.

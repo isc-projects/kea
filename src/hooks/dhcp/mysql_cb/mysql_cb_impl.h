@@ -248,6 +248,27 @@ public:
                 db::MySqlBinding::createNull());
     }
 
+    /// @brief Returns backend type in the textual format.
+    ///
+    /// @return "mysql".
+    std::string getType() const;
+
+    /// @brief Returns backend host.
+    ///
+    /// This is used by the @c BaseConfigBackendPool to select backend
+    /// when @c BackendSelector is specified.
+    ///
+    /// @return host on which the database is located.
+    std::string getHost() const;
+
+    /// @brief Returns backend port number.
+    ///
+    /// This is used by the @c BaseConfigBackendPool to select backend
+    /// when @c BackendSelector is specified.
+    ///
+    /// @return Port number on which database service is available.
+    uint16_t getPort() const;
+
     /// @brief Creates input binding for option value parameter.
     ///
     /// @param option Option descriptor holding option for which binding is to

@@ -2468,17 +2468,17 @@ MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& serve
 
 std::string
 MySqlConfigBackendDHCPv4::getType() const {
-    return ("mysql");
+    return (impl_->getType());
 }
 
 std::string
 MySqlConfigBackendDHCPv4::getHost() const {
-    return ("");
+    return (impl_->getHost());
 }
 
 uint16_t
 MySqlConfigBackendDHCPv4::getPort() const {
-    return (0);
+    return (impl_->getPort());
 }
 
 bool
