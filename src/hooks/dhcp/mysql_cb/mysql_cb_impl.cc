@@ -341,6 +341,35 @@ MySqlConfigBackendImpl::createOptionValueBinding(const OptionDescriptorPtr& opti
     return (MySqlBinding::createNull());
 }
 
+std::string
+MySqlConfigBackendImpl::getType() const {
+    return ("mysql");
+}
+
+std::string
+MySqlConfigBackendImpl::getHost() const {
+    std::string host = "localhost";
+    try {
+        host = conn_.getParameter("host");
+    } catch (...) {
+        // No host parameter. Return localhost as a default.
+    }
+    return (host);
+}
+
+uint16_t
+MySqlConfigBackendImpl::getPort() const {
+    try {
+        std::string sport = conn_.getParameter("port");
+        return (boost::lexical_cast<uint16_t>(sport));
+
+    } catch (...) {
+        // No port parameter or parameter invalid.
+    }
+    return (0);
+}
+
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc
