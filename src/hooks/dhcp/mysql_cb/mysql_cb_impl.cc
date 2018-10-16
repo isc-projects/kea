@@ -15,7 +15,6 @@
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <cstdint>
-#include <sstream>
 #include <utility>
 
 using namespace isc::cb;
@@ -68,36 +67,6 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
     }
 }
 
-std::set<std::string>
-MySqlConfigBackendImpl::getServerTags(const ServerSelector& server_selector) const {
-    std::set<std::string> tags;
-    switch (server_selector.getType()) {
-    case ServerSelector::Type::ALL:
-        tags.insert("all");
-        return (tags);
-
-    default:
-        return (server_selector.getTags());
-    }
-
-    // Unassigned server case.
-    return (tags);
-}
-
-std::string
-MySqlConfigBackendImpl::getServerTagsAsText(const db::ServerSelector& server_selector) const {
-    std::ostringstream s;
-    auto server_tags = getServerTags(server_selector);
-    for (auto tag : server_tags) {
-        if (s.tellp() != 0) {
-            s << ", ";
-        }
-        s << tag;
-    }
-
-    return (s.str());
-}
-
 uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index) {
     MySqlBindingCollection in_bindings;
@@ -114,19 +83,15 @@ MySqlConfigBackendImpl::deleteFromTable(const int index, const std::string& key)
 
 uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
-                                        const ServerSelector& server_selector) {
-    uint64_t deleted_entries = 0;
+                                        const ServerSelector& server_selector,
+                                        const std::string& operation) {
+    auto tag = getServerTag(server_selector, operation);
 
-    auto tags = getServerTags(server_selector);
-    for (auto tag : tags) {
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag)
-        };
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(tag)
+    };
 
-        deleted_entries += conn_.updateDeleteQuery(index, in_bindings);
-    }
-
-    return (deleted_entries);
+    return (conn_.updateDeleteQuery(index, in_bindings));
 }
 
 void

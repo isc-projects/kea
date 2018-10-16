@@ -16,6 +16,7 @@
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_connection.h>
 #include <set>
+#include <sstream>
 #include <string>
 
 namespace isc {
@@ -41,13 +42,60 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @return Set of server tags.
-    std::set<std::string> getServerTags(const db::ServerSelector& server_selector) const;
+    std::set<std::string> getServerTags(const db::ServerSelector& server_selector) const {
+        std::set<std::string> tags;
+        switch (server_selector.getType()) {
+        case db::ServerSelector::Type::ALL:
+            tags.insert("all");
+            return (tags);
+
+        default:
+            return (server_selector.getTags());
+        }
+
+        // Unassigned server case.
+        return (tags);
+    }
+
+    /// @brief Returns server tag associated with the particular selector.
+    ///
+    /// This method expects that there is exactly one server tag associated with
+    /// the server selector.
+    ///
+    /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for error reporting purposes.
+    /// @return Server tag.
+    /// @throw InvalidOperation if the server selector is unassigned or if there
+    /// is more than one server tag associated with the selector.
+    std::string getServerTag(const db::ServerSelector& server_selector,
+                             const std::string& operation) const {
+        auto tags = getServerTags(server_selector);
+        if (tags.size() != 1) {
+            isc_throw(InvalidOperation, "expected exactly one server tag to be specified"
+                      " while " << operation << ". Got: "
+                      << getServerTagsAsText(server_selector));
+        }
+
+        return (*tags.begin());
+    }
 
     /// @brief Returns server tags associated with the particular selector
     /// as text.
     ///
     /// This method is useful for logging purposes.
-    std::string getServerTagsAsText(const db::ServerSelector& server_selector) const;
+    std::string getServerTagsAsText(const db::ServerSelector& server_selector) const {
+        std::ostringstream s;
+        auto server_tags = getServerTags(server_selector);
+        for (auto tag : server_tags) {
+            if (s.tellp() != 0) {
+                s << ", ";
+            }
+            s << tag;
+        }
+
+        return (s.str());
+    }
 
     /// @brief Sends query to delete rows from a table.
     ///
@@ -68,9 +116,12 @@ public:
     ///
     /// @param index Index of the statement to be executed.
     /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for error reporting purposes.
     /// @return Number of deleted rows.
     uint64_t deleteFromTable(const int index,
-                             const db::ServerSelector& server_selector);
+                             const db::ServerSelector& server_selector,
+                             const std::string& operation);
 
     /// @brief Sends query to delete rows from a table.
     ///
@@ -79,33 +130,34 @@ public:
     ///
     /// @param index Index of the statement to be executed.
     /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for error reporting purposes.
     /// @param key Value to be used as input binding to the delete
     /// statement. The default value is empty which indicates that the
     /// key should not be used in the query.
     /// @return Number of deleted rows.
+    /// @throw InvalidOperation if the server selector is unassigned or
+    /// if there are more than one server tags associated with the
+    /// server selector.
     template<typename KeyType>
     uint64_t deleteFromTable(const int index,
                              const db::ServerSelector& server_selector,
+                             const std::string& operation,
                              KeyType key) {
-        uint64_t deleted_entries = 0;
+        auto tag = getServerTag(server_selector, operation);
 
-        auto tags = getServerTags(server_selector);
-        for (auto tag : tags) {
-            db::MySqlBindingCollection in_bindings = {
-                db::MySqlBinding::createString(tag)
-            };
+        db::MySqlBindingCollection in_bindings = {
+            db::MySqlBinding::createString(tag)
+        };
 
-            if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
-                in_bindings.push_back(db::MySqlBinding::createString(key));
+        if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
+            in_bindings.push_back(db::MySqlBinding::createString(key));
 
-            } else {
-                in_bindings.push_back(db::MySqlBinding::createInteger<KeyType>(key));
-            }
-
-            deleted_entries += conn_.updateDeleteQuery(index, in_bindings);
+        } else {
+            in_bindings.push_back(db::MySqlBinding::createInteger<KeyType>(key));
         }
 
-        return (deleted_entries);
+        return (conn_.updateDeleteQuery(index, in_bindings));
     }
 
     /// @brief Sends query to the database to retrieve multiple option
