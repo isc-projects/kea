@@ -330,10 +330,6 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
       Note the alternative to boot with full configurations does not
       allow an easy track of changes, so it not really compatible with
       the YANG / Netconf configuration management paradigm.
-<!-- spurious statement
-      However, the
-      solution attempts to provide maximum flexibility.
--->
     </para>
 
     <para>
@@ -377,8 +373,6 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
           <simpara>
             It can fail to be translated from YANG to JSON, e.g.
             invalid user context.
-<!-- need another example but this one falls in the next case
- or unsupported database type. -->
           </simpara>
         </listitem>
 
