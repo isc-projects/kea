@@ -462,7 +462,7 @@ protected:
     /// @brief Creates HTTP response.
     ///
     /// Build a response with reflected request in a received JSON map.
-    /// When wanted reply with partial JSON.
+    /// It can be told to respond with a partial JSON.
     ///
     /// @param request Pointer to the HTTP request.
     /// @return Pointer to an object representing HTTP response.

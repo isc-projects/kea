@@ -104,14 +104,14 @@ isc::data::ConstElementPtr parseAnswer(int &status_code,
 /// @return printable string
 std::string answerToText(const isc::data::ConstElementPtr& msg);
 
-/// @brief Creates a standard config/command command message with no
+/// @brief Creates a standard command message with no
 /// argument (of the form { "command": "my_command" })
 ///
 /// @param command The command string
 /// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command);
 
-/// @brief Creates a standard config/command command message with the
+/// @brief Creates a standard command message with the
 /// given argument (of the form { "command": "my_command", "arguments": arg }
 ///
 /// @param command The command string
