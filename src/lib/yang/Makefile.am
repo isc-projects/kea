@@ -16,6 +16,7 @@ libkea_yang_la_SOURCES += translator_option_data.h
 libkea_yang_la_SOURCES += translator_option_def.cc
 libkea_yang_la_SOURCES += translator_option_def.h
 libkea_yang_la_SOURCES += translator_pool.cc translator_pool.h
+libkea_yang_la_SOURCES += translator_pd_pool.cc translator_pd_pool.h
 libkea_yang_la_SOURCES += yang_models.h
 
 
@@ -40,6 +41,7 @@ libkea_yang_include_HEADERS = \
 	translator_option_data.h \
 	translator_option_def.h \
 	translator_pool.h \
+	translator_pd_pool.h \
 	yang_models.h
 
 EXTRA_DIST = yang.dox
