@@ -56,6 +56,7 @@ UnixControlSocket::configSet(ConstElementPtr config,
 
 ConstElementPtr
 UnixControlSocket::sendCommand(ConstElementPtr command) {
+    // We are using our own IO service because this method is synchronous.
     IOServicePtr io_service(new IOService());
     ClientConnection conn(*io_service);
     boost::system::error_code received_ec;

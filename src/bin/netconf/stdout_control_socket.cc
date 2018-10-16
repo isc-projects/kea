@@ -50,9 +50,6 @@ StdoutControlSocket::configTest(ConstElementPtr /*config*/,
 ConstElementPtr
 StdoutControlSocket::configSet(ConstElementPtr config,
                                const string& service) {
-    output_ << "//////////////// "
-            << service << " configuration "
-            << "////////////////" << endl;
     prettyPrint(config, output_);
     output_ << endl;
     return (createAnswer());

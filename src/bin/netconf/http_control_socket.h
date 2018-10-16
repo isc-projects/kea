@@ -63,7 +63,10 @@ public:
                                             const std::string& service);
 
 private:
-    /// @brief Preform the actual communication.
+    /// @brief Perform the actual communication.
+    ///
+    /// @todo Use persistent connections (vs. a new connection per call)
+    /// as the HTTP library supports them.
     ///
     /// @param command The command to send.
     /// @return The answer.
