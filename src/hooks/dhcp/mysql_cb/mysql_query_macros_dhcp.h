@@ -307,17 +307,22 @@ namespace {
 
 #ifndef MYSQL_UPDATE_OPTION_DEF
 #define MYSQL_UPDATE_OPTION_DEF(table_prefix) \
-    "UPDATE " #table_prefix "_option_def SET" \
-    "  code = ?," \
-    "  name = ?," \
-    "  space = ?," \
-    "  type = ?," \
-    "  modification_ts = ?," \
-    "  array = ?," \
-    "  encapsulate = ?," \
-    "  record_types = ?," \
-    "  user_context = ? " \
-    "WHERE code = ? AND space = ?"
+    "UPDATE " #table_prefix "_option_def AS d " \
+    "INNER JOIN " #table_prefix "_option_def_server AS a" \
+    "  ON d.id = a.option_def_id " \
+    "INNER JOIN " #table_prefix "_server AS s" \
+    "  ON a.server_id = s.id " \
+    "SET" \
+    "  d.code = ?," \
+    "  d.name = ?," \
+    "  d.space = ?," \
+    "  d.type = ?," \
+    "  d.modification_ts = ?," \
+    "  d.array = ?," \
+    "  d.encapsulate = ?," \
+    "  d.record_types = ?," \
+    "  d.user_context = ? " \
+    "WHERE s.tag = ? AND d.code = ? AND d.space = ?"
 #endif
 
 #ifndef MYSQL_UPDATE_OPTION
