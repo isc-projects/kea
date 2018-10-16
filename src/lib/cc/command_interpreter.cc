@@ -26,7 +26,7 @@ const char *CONTROL_COMMAND = "command";
 const char *CONTROL_RESULT = "result";
 const char *CONTROL_TEXT = "text";
 const char *CONTROL_ARGUMENTS = "arguments";
-  const char *CONTROL_SERVICE = "service";
+const char *CONTROL_SERVICE = "service";
 
 // Full version, with status, text and arguments
 ConstElementPtr

@@ -27,7 +27,8 @@ public:
 ///
 /// This class is the base class for control socket communication.
 /// Derived classes implement config-get, config-test and config-set
-/// using control sockets of different types.
+/// using control sockets of different types. Those classes are used to
+/// communicate with other Kea daemons.
 class ControlSocketBase {
 public:
 
@@ -53,14 +54,14 @@ public:
         return (socket_cfg_->getType());
     }
 
-    /// @brief Getter which returns the Unix socket name.
+    /// @brief Returns the Unix socket name.
     ///
     /// @return returns the Unix socket name as a std::string.
     const std::string getName() const {
         return (socket_cfg_->getName());
     }
 
-    /// @brief Getter which returns the HTTP server URL.
+    /// @brief Returns the HTTP server URL.
     ///
     /// @return returns the HTTP server URL as an isc::http::Url.
     const isc::http::Url getUrl() const {
