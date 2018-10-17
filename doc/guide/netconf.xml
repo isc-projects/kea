@@ -292,18 +292,20 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
 
         <listitem>
           <simpara>
-            The <command>validate-changes</command> controls the subscription
-            option: when true (the default) a module change callback
-            is subscribed for both validation and application, when false
-            it is subscribed only for application.
-
-<!-- Incorrect change:
-            is subscribed for both validation and application. This means
-            that the kea-netconf will call config-test first and then,
-            if it is successful, will call config-set to actually apply
-            the configuration. This approach is safer, but slower.
-            When false it is subscribed only for application.
--->
+            The <command>validate-changes</command> controls how Kea monitors
+            the changes in Sysrepo configuration. Sysrepo offers two stages
+            where Kea could interact: validation and application. The first one
+            is called validation (or SR_EV_VERIFY in Sysrepo naming
+            convention). At this stage Kea will get the new configuration being
+            committed and will verify it. If the configuration is incorrect for
+            whatever reason, Kea servers will reject it, the error will be
+            propagated back to the Sysrepo, which in will return an error to
+            whoever tried to commit those changes. This step only takes place if
+            validate-changes is set to true. There is also a second step called
+            application (or SR_EV_APPLY in Sysrepo naming convention), where
+            the actual configuration is being applied. At this stage Kea can
+            receive the configuration, but it is too late to signal back any
+            errors, as the configuration has been comitted already.
           </simpara>
         </listitem>
       </itemizedlist>
@@ -333,11 +335,14 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
     </para>
 
     <para>
-      With module change subscriptions the <command>sysrepocfg</command>
-      command is used to modify YANG configurations in the running
-      datastore. Note committed configurations are only updated in
-      the running datastore: to keep them between server reboots
-      they must be copied to the startup datastore.
+      With module change subscriptions enabled, the kea-netconf daemon will
+      monitor any configuration changes as they appear in the sysrepo. Such
+      changes can be done using <command>sysrepocfg</command> tool or remotely
+      using any NETCONF client. For details, please see Sysrepo
+      documentation. Those tools can be used to modify YANG configurations in
+      the running datastore. Note committed configurations are only updated in
+      the running datastore: to keep them between server reboots they must be
+      copied to the startup datastore.
     </para>
 
     <para>
@@ -422,10 +427,11 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             <command>model</command> specifies the YANG model / module name.
-<!-- Two bad proposals
-(default the corresponding service Kea one).
-
-Unless explicitly specified, each Kea daemon has its own YANG model. -->
+            <!-- @todo: to give people a good out of the box experience, every
+                 server should have its own default, e.g. for dhcp4 the default
+                 should be kea-dhcp4-server. I understand this doesn't play
+                 well with the SimpleParser defaults mechanism, but we can
+                 figure it out some time later (after 1.5-beta?). -->
           </simpara>
         </listitem>
 
