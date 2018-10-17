@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,6 +98,14 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     if (!test_mode) {
         // Now that we know what the mode flags are, we can init logging.
         Daemon::loggerInit(bin_name_.c_str(), verbose_);
+    }
+
+    try {
+        checkConfigFile();
+    } catch (const std::exception& ex) {
+        LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
+            .arg(app_name_).arg(ex.what());
+        isc_throw (LaunchError, "Launch Failed: " << ex.what());
     }
 
     try {
