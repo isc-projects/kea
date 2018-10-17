@@ -34,7 +34,7 @@ TEST(ConfigBase, configControlInfoTests) {
     ctl_info1->addConfigDatabase("type=mysql host=example.com");
     ctl_info1->addConfigDatabase("type=mysql host=example2.com");
 
-    // Create a ConfigBase 
+    // Create a ConfigBase
     ConfigBaseImpl base1;
     base1.setConfigControlInfo(ctl_info1);
 

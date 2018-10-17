@@ -24,7 +24,7 @@ TEST(ConfigCtlInfoParser, validConfigs) {
     std::string configs[] = {
        "{}",
 
-       "{ \"config-databases\": [] }", 
+       "{ \"config-databases\": [] }",
 
        "{ \"config-databases\": [ \n"
        "    { \n"
@@ -37,7 +37,7 @@ TEST(ConfigCtlInfoParser, validConfigs) {
        "        \"user\":\"bob\", \n"
        "        \"password\":\"wonder\" \n"
        "    } \n"
-       "] } \n" 
+       "] } \n"
     };
 
     for (auto config : configs) {
@@ -59,7 +59,7 @@ TEST(ConfigCtlInfoParser, validConfigs) {
 
         // When the config is empty, ControlConfigInfo::toElement still
         // generates a map with an empty db list.  Replace source for
-        // element comparison below. 
+        // element comparison below.
         if (source_elem->size() == 0) {
             ASSERT_NO_THROW (source_elem = Element::fromJSON(
                             "{ \"config-databases\": [] }"));
@@ -74,12 +74,12 @@ TEST(ConfigCtlInfoParser, validConfigs) {
 TEST(ConfigCtlInfoParser, invalidConfigs) {
     // Note that configurations are must be valid JSON, but invalid logically.
     std::string configs[] = {
-       "{ \"config-databases\": \"not_list\" }", 
+       "{ \"config-databases\": \"not_list\" }",
        "{ \"config-databases\": [ \n"
        "    { \n"
        "        \"bogus\": \"param\" \n"
        "    } \n"
-       "] } \n" 
+       "] } \n"
     };
 
     for (auto config : configs) {
@@ -91,7 +91,7 @@ TEST(ConfigCtlInfoParser, invalidConfigs) {
                 " JSON error, test is broken: " << config;
 
         // Parse the Elements into a ConfigControlInfo.
-        ASSERT_THROW(parser.parse(source_elem), isc::ConfigError) 
+        ASSERT_THROW(parser.parse(source_elem), isc::ConfigError)
                      << "config: " << config;
     }
 }
