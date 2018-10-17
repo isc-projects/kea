@@ -77,8 +77,8 @@ public:
 /// This allows a derivation to specify the order in which its elements are
 /// parsed if there are dependencies between elements.
 ///
-/// To parse a given element, its id along with the element itself, 
-/// is passed into the virtual method, @c parseElement. Derivations are 
+/// To parse a given element, its id along with the element itself,
+/// is passed into the virtual method, @c parseElement. Derivations are
 /// expected to converts the element into application specific object(s),
 /// thereby isolating the CPL from application details.
 ///

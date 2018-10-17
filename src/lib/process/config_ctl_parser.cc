@@ -19,7 +19,7 @@ namespace process {
 
 ConfigControlInfoPtr
 ConfigControlParser::parse(const data::ConstElementPtr& config_control) {
-    ConfigControlInfoPtr ctl_info(new ConfigControlInfo()); 
+    ConfigControlInfoPtr ctl_info(new ConfigControlInfo());
 
     try {
         if (config_control->contains("config-databases")) {
