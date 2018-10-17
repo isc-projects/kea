@@ -102,6 +102,18 @@ TEST_F(DaemonTest, getSetConfigFile) {
 
     EXPECT_NO_THROW(instance.setConfigFile("test.txt"));
     EXPECT_EQ("test.txt", instance.getConfigFile());
+    EXPECT_NO_THROW(instance.checkConfigFile());
+}
+
+// Verify config file checker.
+TEST_F(DaemonTest, checkConfigFile) {
+    Daemon instance;
+
+    EXPECT_THROW(instance.checkConfigFile(), BadValue);
+    EXPECT_NO_THROW(instance.setConfigFile("/tmp/"));
+    EXPECT_THROW(instance.checkConfigFile(), BadValue);
+    EXPECT_NO_THROW(instance.setConfigFile("/tmp/test.txt"));
+    EXPECT_NO_THROW(instance.checkConfigFile());
 }
 
 // Verify process name accessors
