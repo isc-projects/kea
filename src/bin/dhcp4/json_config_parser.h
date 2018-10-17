@@ -86,7 +86,7 @@ databaseConfigConnect(const SrvConfigPtr& srv_cfg);
 /// @param srv_cfg Server configuration into which database configuration should be merged
 /// @param mutable_cfg parsed configuration from the configuration file plus default values
 void
-databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr /*mutable_scope*/);
+databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr /* mutable_cfg */);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

@@ -645,7 +645,7 @@ bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
 
     // Iterate over the configured DBs and instantiate them.
     for (auto db : config_ctl->getConfigDatabases()) {
-        LOG_INFO(dhcp4_logger, DHCP4_ADDING_CONFIG_DB)
+        LOG_INFO(dhcp4_logger, DHCP4_OPEN_CONFIG_DB)
                  .arg(db.redactedAccessString());
         mgr.addBackend(db.getAccessString());
     }

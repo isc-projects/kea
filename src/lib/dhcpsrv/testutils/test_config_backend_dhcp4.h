@@ -20,7 +20,7 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @brief Test backend for that implements all of the DHCPv4 API calls
+/// @brief Test backend that implements all of the DHCPv4 API calls
 ///
 /// Currently all API get calls which return a single entry, will return an
 /// empty pointer of appropriate type. API calls which return a collection of
