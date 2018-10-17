@@ -136,6 +136,10 @@ public:
     /// @param config_file pathname of the configuration file
     void setConfigFile(const std::string& config_file);
 
+    /// @brief Checks the configuration file name.
+    /// @throw BadValue when the configuration file name is bad.
+    void checkConfigFile() const;
+
     /// @brief Writes current configuration to specified file
     ///
     /// This method writes the current configuration to specified file.

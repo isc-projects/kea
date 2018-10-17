@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,7 +213,7 @@ TEST_F(DaemonTest, createPIDFileOverwrite) {
 
     if (pid == 0) {
         // This is the child, die right away. Tragic, no?
-        exit (0);
+        _exit (0);
     }
 
     // Back in the parent test, we need to wait for the child to die

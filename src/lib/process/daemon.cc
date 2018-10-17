@@ -111,6 +111,21 @@ Daemon::setConfigFile(const std::string& config_file) {
     config_file_ = config_file;
 }
 
+void
+Daemon::checkConfigFile() const {
+    if (config_file_.empty()) {
+        isc_throw(isc::BadValue, "config file name is not set");
+    }
+
+    // Create Filename instance from the config_file_ pathname, and
+    // check the file name component.
+    isc::util::Filename file(config_file_);
+    if (file.name().empty()) {
+        isc_throw(isc::BadValue, "config file:" << config_file_
+                  << " is missing file name");
+    }
+}
+
 std::string
 Daemon::getProcName() const {
     return (proc_name_);
@@ -162,17 +177,17 @@ Daemon::makePIDFileName() const {
                   "Daemon::makePIDFileName config file name is not set");
     }
 
-    if (proc_name_.empty()) {
-        isc_throw(isc::InvalidOperation,
-                  "Daemon::makePIDFileName process name is not set");
-    }
-
     // Create Filename instance from the config_file_ pathname, so we can
     // extract the fname component.
     isc::util::Filename file(config_file_);
     if (file.name().empty()) {
         isc_throw(isc::BadValue, "Daemon::makePIDFileName config file:"
                   << config_file_ << " is missing file name");
+    }
+
+    if (proc_name_.empty()) {
+        isc_throw(isc::InvalidOperation,
+                  "Daemon::makePIDFileName process name is not set");
     }
 
     // Make the pathname for the PID file from the runtime directory,
