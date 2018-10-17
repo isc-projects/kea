@@ -67,7 +67,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
     EXPECT_EQ(0, pools->size());
 }
 
-// This test verifies that one non-empty pd pool can be properly
+// This test verifies that one pd pool can be properly
 // translated from YANG to JSON using the IETF model.
 TEST_F(TranslatorPdPoolsTest, getIetf) {
     useModel(IETF_DHCPV6_SERVER);
@@ -108,7 +108,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 
-// This test verifies that one non-empty pd pool can be properly
+// This test verifies that one pd pool can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
 TEST_F(TranslatorPdPoolsTest, getKea) {
     useModel(KEA_DHCP6_SERVER);
@@ -319,7 +319,7 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
     EXPECT_NO_THROW(sess_->validate());
 }
 
-// This test verifies that a list of non-empty pd pools can be properly
+// This test verifies that a non-empty list of pd pools can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
 TEST_F(TranslatorPdPoolsTest, getListKea) {
     useModel(KEA_DHCP6_SERVER);
