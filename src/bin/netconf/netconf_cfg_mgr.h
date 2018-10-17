@@ -35,6 +35,25 @@ public:
     /// @brief Default constructor
     NetconfConfig();
 
+    /// @brief Returns pointer to configured global parameters.
+    ///
+    /// @todo revisit this at the toElement first use.
+    isc::data::ConstElementPtr getConfiguredGlobals() const {
+        return (isc::data::ConstElementPtr(configured_globals_));
+    }
+
+    /// @brief Saves scalar elements from the global scope of a configuration.
+    void extractConfiguredGlobals(isc::data::ConstElementPtr config);
+
+    /// @brief Adds a parameter to the collection configured globals.
+    ///
+    /// @param name std::string name of the global to add.
+    /// @param value ElementPtr containing the value of the global.
+    void addConfiguredGlobal(const std::string& name,
+                             isc::data::ConstElementPtr value) {
+        configured_globals_->set(name, value);
+    }
+
     /// @brief Returns non-const reference to the managed servers map.
     ///
     /// @return non-const reference to the managed servers map.
@@ -87,6 +106,9 @@ private:
     ///
     /// @param rhs Context to be assigned.
     NetconfConfig& operator=(const NetconfConfig& rhs);
+
+    /// @brief Stores the global parameters specified via configuration.
+    isc::data::ElementPtr configured_globals_;
 
     /// @brief CfgServers map.
     CfgServersMapPtr servers_map_;

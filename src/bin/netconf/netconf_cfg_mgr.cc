@@ -21,12 +21,29 @@ namespace isc {
 namespace netconf {
 
 NetconfConfig::NetconfConfig()
-    : servers_map_(new CfgServersMap()) {
+    : configured_globals_(Element::createMap()),
+      servers_map_(new CfgServersMap()) {
 }
 
 NetconfConfig::NetconfConfig(const NetconfConfig& orig)
-    : ConfigBase(), servers_map_(orig.servers_map_),
-      hooks_config_(orig.hooks_config_) {
+    : ConfigBase(), configured_globals_(orig.configured_globals_),
+      servers_map_(orig.servers_map_), hooks_config_(orig.hooks_config_) {
+}
+
+void
+NetconfConfig::extractConfiguredGlobals(ConstElementPtr config) {
+    if (config->getType() != Element::map) {
+        isc_throw(BadValue,
+                  "extractConfiguredGlobals must be given a map element");
+    }
+
+    const std::map<std::string, ConstElementPtr>& values = config->mapValue();
+    for (auto value = values.begin(); value != values.end(); ++value) {
+        if (value->second->getType() != Element::list &&
+            value->second->getType() != Element::map) {
+            addConfiguredGlobal(value->first, value->second);
+        }
+    }
 }
 
 NetconfCfgMgr::NetconfCfgMgr()
@@ -81,9 +98,13 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
 
     NetconfConfigPtr ctx = getNetconfConfig();
 
-    // Set the defaults
+    // Preserve all scalar global parameters.
+    ctx->extractConfiguredGlobals(config_set);
+
+    // Set the defaults and derive parameters.
     ElementPtr cfg = boost::const_pointer_cast<Element>(config_set);
     NetconfSimpleParser::setAllDefaults(cfg);
+    NetconfSimpleParser::deriveParameters(cfg);
 
     // And parse the configuration.
     ConstElementPtr answer;
@@ -121,13 +142,13 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
     return (answer);
 }
 
-
-
 ElementPtr
 NetconfConfig::toElement() const {
     ElementPtr netconf = Element::createMap();
     // Set user-context
     contextToElement(netconf);
+    // Add in explicitly configured globals.
+    netconf->setValue(configured_globals_->mapValue());
     // Set hooks-libraries
     netconf->set("hooks-libraries", hooks_config_.toElement());
     // Set managed-servers

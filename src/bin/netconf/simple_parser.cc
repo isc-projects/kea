@@ -36,6 +36,9 @@ namespace netconf {
 ///
 /// These are global Netconf parameters.
 const SimpleDefaults NetconfSimpleParser::NETCONF_DEFAULTS = {
+    { "boot-update",       Element::boolean, "true" },
+    { "subscribe-changes", Element::boolean, "true" },
+    { "validate-changes",  Element::boolean, "true" }
 };
 
 /// Supplies defaults for control-socket elements
@@ -65,6 +68,18 @@ const SimpleDefaults NetconfSimpleParser::CA_DEFAULTS = {
     { "model", Element::string, "kea-ctrl-agent" }
 };
 
+/// @brief List of parameters that can be inherited to managed-servers scope.
+///
+/// Some parameters may be defined on both global (directly in Netconf) and
+/// servers (Netconf/managed-servers/...) scope. If not defined in the
+/// managed-servers scope, the value is being inherited (derived) from
+/// the global scope. This array lists all of such parameters.
+const ParamsList NetconfSimpleParser::INHERIT_TO_SERVERS = {
+    "boot-update",
+    "subscribe-changes",
+    "validate-changes"
+};
+
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -81,6 +96,24 @@ size_t NetconfSimpleParser::setAllDefaults(const ElementPtr& global) {
     if (servers) {
         for (auto it : servers->mapValue()) {
             cnt += setServerDefaults(it.first, it.second);
+        }
+    }
+
+    return (cnt);
+}
+
+size_t NetconfSimpleParser::deriveParameters(ConstElementPtr global) {
+    size_t cnt = 0;
+
+    // Now derive global parameters into managed-servers.
+    ConstElementPtr servers = global->get("managed-servers");
+    if (servers) {
+        for (auto it : servers->mapValue()) {
+            ElementPtr mutable_server =
+                boost::const_pointer_cast<Element>(it.second);
+            cnt += SimpleParser::deriveParams(global,
+                                              mutable_server,
+                                              INHERIT_TO_SERVERS);
         }
     }
 
