@@ -6265,7 +6265,7 @@ TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
     extractConfig(config);
 
     // Should fail because "type=mysql" has no factories.
-    configure(config, CONTROL_RESULT_COMMAND_UNSUPPORTED,
+    configure(config, CONTROL_RESULT_ERROR,
               "The type of the configuration backend: 'mysql' is not supported");
 }
 
@@ -6275,7 +6275,7 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
     extractConfig(config);
 
     // Should be able to register a backend factory for "mysql".
-    ASSERT_TRUE(TestConfigBackendDHCPv4Impl::
+    ASSERT_TRUE(TestConfigBackendDHCPv4::
                 registerBackendType(ConfigBackendDHCPv4Mgr::instance(),
                                     "mysql"));
 

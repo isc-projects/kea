@@ -59,33 +59,34 @@ configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
-/// @brief Attempts to the configured CB databases  (if any)
+/// @brief Attempts to connect to configured CB databases
 ///
-/// This function will close all the existing CB backends. It
-/// then attempt to connect to all of the CB databases in the
-/// given SrvConfig (if any).
+/// First, this function will close all existing CB backends. It
+/// will then attempt to connect to all of the CB backends defined
+/// in the given SrvConfig (if any).
 ///
-/// It will return true if there are configured CB databases
-/// false, otherwise.  Any errors encountered along the way
+/// It will return true if there are configured CB databases,
+/// and false otherwise.  Any errors encountered along the way
 /// should generate throws.
 ///
 /// @param srv_cfg Server configuration from which to get
 /// the config-control information to use.
 ///
-/// @return True if are configured CB databases, false if not.
+/// @return True if there are configured CB databases, false if not.
 bool
 databaseConfigConnect(const SrvConfigPtr& srv_cfg);
 
 /// @brief Fetch configuration from CB databases and merge it into the given configuration
 ///
-/// It will call @c databaseConfigConnect passing in the given server configuration. If
-/// results in open CB databases it will proceed to fetch configuration components from
-/// those databases and merge them into the given server configuration.
+/// It will call @c databaseConfigConnect, passing in the given server configuration. If
+/// that call results in open CB databases, the function will then proceed to fetch
+/// configuration components from said databases and merge them into the given server
+/// configuration.
 ///
-/// @param srv_config Server configuration to merge into
-/// @param global_scope global configuration as elements
+/// @param srv_cfg Server configuration into which database configuration should be merged
+/// @param mutable_cfg parsed configuration from the configuration file plus default values
 void
-databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr /*global_scope*/);
+databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr /*mutable_scope*/);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace

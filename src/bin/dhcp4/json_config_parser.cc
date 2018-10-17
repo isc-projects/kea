@@ -52,6 +52,7 @@ using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
+using namespace isc::config;
 
 namespace {
 
@@ -284,7 +285,7 @@ isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
     if (!config_set) {
-        ConstElementPtr answer = isc::config::createAnswer(1,
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                  string("Can't parse NULL config"));
         return (answer);
     }
@@ -547,7 +548,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
-        answer = isc::config::createAnswer(1, ex.what());
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
 
         // An error occurred, so make sure that we restore original data.
         rollback = true;
@@ -555,7 +556,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     } catch (...) {
         // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(config_pair.first);
-        answer = isc::config::createAnswer(1, "undefined configuration"
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                            " processing error");
 
         // An error occurred, so make sure that we restore original data.
@@ -565,7 +566,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (check_only) {
         rollback = true;
         if (!answer) {
-            answer = isc::config::createAnswer(0,
+            answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
             "Configuration seems sane. Control-socket, hook-libraries, and D2 "
             "configuration were sanity checked, but not applied.");
         }
@@ -600,12 +601,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(2, ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(2, "undefined configuration"
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
             rollback = true;
         }
@@ -625,7 +626,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
              getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(0, "Configuration successful.");
+    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.");
     return (answer);
 }
 
@@ -635,23 +636,25 @@ bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
     ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
     mgr.delAllBackends();
 
-    // SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
+    // Fetch the config-control info.
     ConstConfigControlInfoPtr config_ctl = srv_cfg->getConfigControlInfo();
     if (!config_ctl || config_ctl->getConfigDatabases().empty()) {
         // No config dbs, nothing to do.
         return (false);
     }
 
-    // First step is to create all of the backends.
+    // Iterate over the configured DBs and instantiate them.
     for (auto db : config_ctl->getConfigDatabases()) {
-            // Good place for a log message?
-            mgr.addBackend(db.getAccessString());
+        LOG_INFO(dhcp4_logger, DHCP4_ADDING_CONFIG_DB)
+                 .arg(db.redactedAccessString());
+        mgr.addBackend(db.getAccessString());
     }
 
+    // Let the caller know we have opened DBs.
     return (true);
 }
 
-void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /*global_scope*/) {
+void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /* mutable_cfg */) {
 
     // Close any existing CB databasess, then open all in srv_cfg (if any)
     if (!databaseConfigConnect(srv_cfg)) {
@@ -664,10 +667,10 @@ void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /*global_scope*
     // Next we have to fetch the pieces we care about it and merge them
     // probably in this order?
     // globals
-    // shared networks
-    // subnets
     // option defs
     // options
+    // shared networks
+    // subnets
 }
 
 

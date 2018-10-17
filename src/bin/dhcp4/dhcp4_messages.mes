@@ -11,6 +11,11 @@ This message is printed when DHCPv4 server enabled an interface to be used
 to receive DHCPv4 traffic. IPv4 socket on this interface will be opened once
 Interface Manager starts up procedure of opening sockets.
 
+% DHCP4_ADDING_CONFIG_DB Opening configuration database: %1
+This message is printed when the DHCPv4 server is attempting to open a
+configuration database.  The database access string with password redacted
+is logged.
+
 % DHCP4_ALREADY_RUNNING %1 already running? %2
 This is an error message that occurs when the DHCPv4 server encounters
 a pre-existing PID file which contains the PID of a running process.
