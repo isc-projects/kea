@@ -206,6 +206,36 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"boot-update\" {
+    switch(driver.ctx_) {
+    case ParserContext::NETCONF:
+    case ParserContext::SERVER:
+        return NetconfParser::make_BOOT_UPDATE(driver.loc_);
+    default:
+        return NetconfParser::make_STRING("boot-update", driver.loc_);
+    }
+}
+
+\"subscribe-changes\" {
+    switch(driver.ctx_) {
+    case ParserContext::NETCONF:
+    case ParserContext::SERVER:
+        return NetconfParser::make_SUBSCRIBE_CHANGES(driver.loc_);
+    default:
+        return NetconfParser::make_STRING("subscribe-changes", driver.loc_);
+    }
+}
+
+\"validate-changes\" {
+    switch(driver.ctx_) {
+    case ParserContext::NETCONF:
+    case ParserContext::SERVER:
+        return NetconfParser::make_VALIDATE_CHANGES(driver.loc_);
+    default:
+        return NetconfParser::make_STRING("validate-changes", driver.loc_);
+    }
+}
+
 \"managed-servers\" {
     switch(driver.ctx_) {
     case ParserContext::NETCONF:

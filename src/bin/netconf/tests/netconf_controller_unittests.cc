@@ -24,6 +24,8 @@ namespace {
 /// @brief Valid Netconf Config used in tests.
 const char* valid_netconf_config =
     "{"
+    "  \"boot-update\": false,"
+    "  \"subscribe-changes\": false,"
     "  \"managed-servers\": {"
     "    \"dhcp4\": {"
     "      \"control-socket\": {"
