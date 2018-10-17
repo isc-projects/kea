@@ -1,0 +1,1228 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
+#include <netconf/netconf.h>
+#include <netconf/netconf_process.h>
+#include <netconf/parser_context.h>
+#include <netconf/simple_parser.h>
+#include <netconf/unix_control_socket.h>
+#include <asiolink/asio_wrapper.h>
+#include <asiolink/interval_timer.h>
+#include <asiolink/io_service.h>
+#include <cc/command_interpreter.h>
+#include <util/threads/thread.h>
+#include <yang/yang_models.h>
+#include <yang/translator_config.h>
+#include <yang/testutils/translator_test.h>
+#include <testutils/log_utils.h>
+#include <gtest/gtest.h>
+#include <sstream>
+
+using namespace std;
+using namespace isc;
+using namespace isc::netconf;
+using namespace isc::asiolink;
+using namespace isc::config;
+using namespace isc::data;
+using namespace isc::http;
+using namespace isc::util::thread;
+using namespace isc::yang;
+using namespace isc::yang::test;
+
+namespace {
+
+/// @brief Test unix socket file name.
+const string TEST_SOCKET = "test-socket";
+
+/// @brief Test timeout in ms.
+const long TEST_TIMEOUT = 10000;
+
+/// @brief Type definition for the pointer to Thread objects.
+typedef boost::shared_ptr<Thread> ThreadPtr;
+
+/// @brief Test version of the NetconfAgent class.
+class NakedNetconfAgent : public NetconfAgent {
+public:
+    /// @brief Constructor.
+    NakedNetconfAgent() {
+    }
+
+    /// @brief Destructor.
+    virtual ~NakedNetconfAgent() {
+    }
+
+    /// Export protected methods and fields.
+    using NetconfAgent::keaConfig;
+    using NetconfAgent::initSysrepo;
+    using NetconfAgent::yangConfig;
+    using NetconfAgent::subscribe;
+    using NetconfAgent::conn_;
+    using NetconfAgent::startup_sess_;
+    using NetconfAgent::running_sess_;
+    using NetconfAgent::subscriptions_;
+};
+
+/// @brief Type definition for the pointer to NakedNetconfAgent objects.
+typedef boost::shared_ptr<NakedNetconfAgent> NakedNetconfAgentPtr;
+
+/// @brief Clear YANG configuration.
+///
+/// @param agent The naked netconf agent (fr its startup datastore session).
+void clearYang(NakedNetconfAgentPtr agent) {
+    if (agent && (agent->startup_sess_)) {
+        string xpath = "/kea-dhcp4-server:config";
+        EXPECT_NO_THROW(agent->startup_sess_->delete_item(xpath.c_str()));
+        xpath = "/kea-dhcp4-server:logging";
+        EXPECT_NO_THROW(agent->startup_sess_->delete_item(xpath.c_str()));
+        EXPECT_NO_THROW(agent->startup_sess_->commit());
+    }
+}
+
+/// @brief Prune JSON configuration.
+///
+/// Typically remove defaults and other extra entries.
+///
+/// @param expected The expected configuration (the model).
+/// @param other The other configuration (the to be pruned).
+/// @return A copy of the other configuration with extra entries in maps
+/// removed so it can be directly compared to expected.
+ConstElementPtr prune(ConstElementPtr expected, ConstElementPtr other) {
+    if (!expected || !other) {
+        isc_throw(BadValue, "prune on null");
+    }
+    if ((expected->getType() == Element::list) &&
+        (other->getType() == Element::list)) {
+        // Handle ordered list.
+        ElementPtr result = Element::createList();
+        for (size_t i = 0; i < other->size(); ++i) {
+            if (i > expected->size()) {
+                // Add extra elements.
+                result->add(copy(other->get(i)));
+            } else {
+                // Add pruned element.
+                result->add(copy(prune(expected->get(i), other->get(i))));
+            }
+        }
+        return (result);
+    } else if ((expected->getType() == Element::map) &&
+               (other->getType() == Element::map)) {
+        // Handle map.
+        ElementPtr result = Element::createMap();
+        for (auto it : expected->mapValue()) {
+            ConstElementPtr item = other->get(it.first);
+            if (item) {
+                // Set pruned item.
+                result->set(it.first, copy(prune(it.second, item)));
+            }
+        }
+        return (result);
+    } else {
+        // Not list or map: just return it.
+        return (other);
+    }
+}
+
+/// @brief Test fixture class for netconf agent.
+class NetconfAgentTest : public ::testing::Test  {
+public:
+    /// @brief Constructor.
+    NetconfAgentTest()
+        : io_service_(new IOService()),
+          thread_(),
+          agent_(new NakedNetconfAgent),
+          requests_(),
+          responses_(),
+          ready_(false) {
+        NetconfProcess::global_shut_down_flag = false;
+        removeUnixSocketFile();
+    }
+
+    /// @brief Destructor.
+    virtual ~NetconfAgentTest() {
+        NetconfProcess::global_shut_down_flag = true;
+        io_service_->stop();
+        io_service_.reset();
+        if (thread_) {
+            thread_->wait();
+            thread_.reset();
+        }
+        if (agent_) {
+            clearYang(agent_);
+            agent_->clear();
+        }
+        agent_.reset();
+        requests_.clear();
+        responses_.clear();
+        removeUnixSocketFile();
+    }
+
+    /// @brief Returns socket file path.
+    ///
+    /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
+    /// socket file is created in the location pointed to by this variable.
+    /// Otherwise, it is created in the build directory.
+    static string unixSocketFilePath() {
+        ostringstream s;
+        const char* env = getenv("KEA_SOCKET_TEST_DIR");
+        if (env) {
+            s << string(env);
+        } else {
+            s << TEST_DATA_BUILDDIR;
+        }
+
+        s << "/" << TEST_SOCKET;
+        return (s.str());
+    }
+
+    /// @brief Removes unix socket descriptor.
+    void removeUnixSocketFile() {
+        static_cast<void>(remove(unixSocketFilePath().c_str()));
+    }
+
+    /// @brief Create configuration of the control socket.
+    ///
+    /// @return a pointer to a control socket configuration.
+    CfgControlSocketPtr createCfgControlSocket() {
+        CfgControlSocketPtr cfg;
+        cfg.reset(new CfgControlSocket(CfgControlSocket::Type::UNIX,
+                                       unixSocketFilePath(),
+                                       Url("http://127.0.0.1:8000/")));
+        return (cfg);
+    }
+
+    /// @brief Fake server (returns OK answer).
+    void fakeServer();
+
+    /// @brief IOService object.
+    IOServicePtr io_service_;
+
+    /// @brief Pointer to server thread.
+    ThreadPtr thread_;
+
+    /// @brief Test netconf agent.
+    NakedNetconfAgentPtr agent_;
+
+    /// @brief Request list.
+    vector<string> requests_;
+
+    /// @brief Response list.
+    vector<string> responses_;
+
+    /// @brief Ready flag.
+    bool ready_;
+};
+
+/// @brief Special test fixture for logging tests.
+class NetconfAgentLogTest : public dhcp::test::LogContentTest {
+public:
+    /// @brief Constructor.
+    NetconfAgentLogTest()
+        : io_service_(new IOService()),
+          thread_(),
+          agent_(new NakedNetconfAgent) {
+        NetconfProcess::global_shut_down_flag = false;
+    }
+
+    /// @brief Destructor.
+    virtual ~NetconfAgentLogTest() {
+        NetconfProcess::global_shut_down_flag = true;
+        io_service_->stop();
+        io_service_.reset();
+        if (thread_) {
+            thread_->wait();
+            thread_.reset();
+        }
+        if (agent_) {
+            clearYang(agent_);
+            agent_->clear();
+        }
+        agent_.reset();
+    }
+
+    /// @brief IOService object.
+    IOServicePtr io_service_;
+
+    /// @brief Pointer to server thread.
+    ThreadPtr thread_;
+
+    /// @brief Test netconf agent.
+    NakedNetconfAgentPtr agent_;
+};
+
+/// @brief Fake server (returns OK answer).
+void
+NetconfAgentTest::fakeServer() {
+    // Acceptor.
+    boost::asio::local::stream_protocol::acceptor
+        acceptor(io_service_->get_io_service());
+    EXPECT_NO_THROW(acceptor.open());
+    boost::asio::local::stream_protocol::endpoint
+        endpoint(unixSocketFilePath());
+    boost::asio::socket_base::reuse_address option(true);
+    acceptor.set_option(option);
+    EXPECT_NO_THROW(acceptor.bind(endpoint));
+    EXPECT_NO_THROW(acceptor.listen());
+    boost::asio::local::stream_protocol::socket
+        socket(io_service_->get_io_service());
+
+    // Ready.
+    ready_ = true;
+
+    // Timeout.
+    bool timeout = false;
+    IntervalTimer timer(*io_service_);
+    timer.setup([&timeout]() {
+            timeout = true;
+            FAIL() << "timeout";
+        }, 1500, IntervalTimer::ONE_SHOT);
+
+    // Accept.
+    boost::system::error_code ec;
+    bool accepted = false;
+    acceptor.async_accept(socket,
+                          [&ec, &accepted]
+                          (const boost::system::error_code& error) {
+                              ec = error;
+                              accepted = true;
+                          });
+    while (!accepted && !timeout) {
+        io_service_->run_one();
+    }
+    ASSERT_FALSE(ec);
+
+    // Receive command.
+    string rbuf(1024, ' ');
+    size_t received = 0;
+    socket.async_receive(boost::asio::buffer(&rbuf[0], rbuf.size()),
+                         [&ec, &received]
+                         (const boost::system::error_code& error, size_t cnt) {
+                             ec = error;
+                             received = cnt;
+                         });
+    while (!received && !timeout) {
+        io_service_->run_one();
+    }
+    ASSERT_FALSE(ec);
+    rbuf.resize(received);
+    requests_.push_back(rbuf);
+    ConstElementPtr json;
+    EXPECT_NO_THROW(json = Element::fromJSON(rbuf));
+    EXPECT_TRUE(json);
+    string command;
+    ConstElementPtr config;
+    if (json) {
+        ConstElementPtr arg;
+        EXPECT_NO_THROW(command = parseCommand(arg, json));
+        if (command == "config-get") {
+            config = Element::fromJSON("{ \"comment\": \"empty\" }");
+        }
+    }
+
+    // Send answer.
+    string sbuf = createAnswer(CONTROL_RESULT_SUCCESS, config)->str();
+    responses_.push_back(sbuf);
+    size_t sent = 0;
+    socket.async_send(boost::asio::buffer(&sbuf[0], sbuf.size()),
+                      [&ec, &sent]
+                      (const boost::system::error_code& error, size_t cnt) {
+                          ec = error;
+                          sent = cnt;
+                      });
+    while (!sent && !timeout) {
+        io_service_->run_one();
+    }
+    ASSERT_FALSE(ec);
+
+    // Stop timer.
+    timer.cancel();
+
+    /// Finished.
+    EXPECT_FALSE(timeout);
+    EXPECT_TRUE(accepted);
+    EXPECT_TRUE(received);
+    EXPECT_TRUE(sent);
+    EXPECT_EQ(sent, sbuf.size());
+
+    if (socket.is_open()) {
+        EXPECT_NO_THROW(socket.close());
+    }
+    EXPECT_NO_THROW(acceptor.close());
+    removeUnixSocketFile();
+
+    // Done.
+    ready_ = false;
+}
+
+/// Verifies the initSysrepo method opens sysrepo connection and sessions.
+TEST_F(NetconfAgentTest, initSysrepo) {
+    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_TRUE(agent_->conn_);
+    EXPECT_TRUE(agent_->startup_sess_);
+    EXPECT_TRUE(agent_->running_sess_);
+}
+
+/// @brief Default change callback (print changes and return OK).
+class TestCallback : public Callback {
+public:
+    int module_change(S_Session sess,
+                      const char* /*module_name*/,
+                      sr_notif_event_t /*event*/,
+                      void* /*private_ctx*/) {
+        NetconfAgent::logChanges(sess, "/kea-dhcp4-server:config");
+        NetconfAgent::logChanges(sess, "/kea-dhcp4-server:logging");
+        finished = true;
+        return (SR_ERR_OK);
+    }
+
+    // To know when the callback was called.
+    static bool finished;
+};
+
+bool TestCallback::finished = false;
+
+/// Verifies the logChanges method handles correctly changes.
+TEST_F(NetconfAgentLogTest, logChanges) {
+    // Initial YANG configuration.
+    const YRTree tree0 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    // Load initial YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Subscribe changes.
+    S_Subscribe subs(new Subscribe(agent_->running_sess_));
+    S_Callback cb(new TestCallback());
+    TestCallback::finished = false;
+    EXPECT_NO_THROW(subs->module_change_subscribe(KEA_DHCP4_SERVER.c_str(),
+                                                  cb, 0, 0,
+                                                  SR_SUBSCR_APPLY_ONLY));
+    thread_.reset(new Thread([this]() { io_service_->run(); }));
+
+    // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
+    const YRTree tree1 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
+    EXPECT_NO_THROW(agent_->running_sess_->commit());
+
+    // Check that the debug output was correct.
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "modified: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet = "
+              "10.0.0.0/24 => "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet = "
+              "10.0.1.0/24");
+
+    // logChanges is called in another thread so we can have to wait for it.
+    while (!TestCallback::finished) {
+        usleep(1000);
+    }
+    // Enable this for debugging.
+#if 0
+    logCheckVerbose(true);
+#endif
+    EXPECT_TRUE(checkFile());
+}
+
+/// Verifies the logChanges method handles correctly changes.
+/// Instead of the simple modified of the previous etst, now there will
+/// deleted, created and moved.
+TEST_F(NetconfAgentLogTest, logChanges2) {
+    // Initial YANG configuration.
+    const YRTree tree0 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    // Load initial YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Subscribe changes.
+    S_Subscribe subs(new Subscribe(agent_->running_sess_));
+    S_Callback cb(new TestCallback());
+    TestCallback::finished = false;
+    EXPECT_NO_THROW(subs->module_change_subscribe(KEA_DHCP4_SERVER.c_str(),
+                                                  cb, 0, 0,
+                                                  SR_SUBSCR_APPLY_ONLY));
+    thread_.reset(new Thread([this]() { io_service_->run(); }));
+
+    // Change configuration (subnet #1 moved to #10).
+    string xpath = "/kea-dhcp4-server:config/subnet4/subnet4[id='1']";
+    EXPECT_NO_THROW(agent_->running_sess_->delete_item(xpath.c_str()));
+    const YRTree tree1 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='10']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/id",
+          "10", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
+    EXPECT_NO_THROW(agent_->running_sess_->commit());
+
+    // Check that the debug output was correct.
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "deleted: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id = 1");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "deleted: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet = "
+              "10.0.0.0/24");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "deleted: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/"
+              "reservation-mode = all [default]");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "deleted: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/"
+              "match-client-id = true [default]");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "deleted: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='1'] "
+              "(list instance)");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "created: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10'] "
+              "(list instance)");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "created: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/id = 10");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "created: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/subnet = "
+              "10.0.0.0/24");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "created: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/"
+              "reservation-mode = all [default]");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "created: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/"
+              "match-client-id = true [default]");
+    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
+              "moved: "
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10'] first");
+
+    // logChanges is called in another thread so we can have to wait for it.
+    while (!TestCallback::finished) {
+        usleep(1000);
+    }
+    // Enable this for debugging.
+#if 0
+    logCheckVerbose(true);
+#endif
+    EXPECT_TRUE(checkFile());
+}
+
+/// Verifies the keaConfig method works as expected.
+TEST_F(NetconfAgentTest, keaConfig) {
+    // Netconf configuration.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Launch server.
+    thread_.reset(new Thread([this]() { fakeServer(); }));
+    while (!ready_) {
+        usleep(1000);
+    }
+
+    // Try keaConfig.
+    EXPECT_NO_THROW(agent_->keaConfig(service_pair));
+
+    // Wait server.
+    while (ready_) {
+        usleep(1000);
+    }
+
+    // Check request.
+    ASSERT_EQ(1, requests_.size());
+    const string& request_str = requests_[0];
+    ConstElementPtr request;
+    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    string expected_str = "{\n"
+        "\"command\": \"config-get\"\n"
+        "}";
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ConstElementPtr pruned = prune(expected, request);
+    EXPECT_TRUE(expected->equals(*pruned));
+    // Alternative showing more for debugging...
+#if 0
+    EXPECT_EQ(prettyPrint(expected), prettyPrint(pruned));
+#endif
+
+    // Check response.
+    ASSERT_EQ(1, responses_.size());
+    const string& response_str = responses_[0];
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    expected_str = "{\n"
+        "\"result\": 0,\n"
+        "\"arguments\": {\n"
+        "    \"comment\": \"empty\"\n"
+        "    }\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, response);
+    EXPECT_TRUE(expected->equals(*pruned));
+}
+
+/// Verifies the yangConfig method works as expected: apply YANG config
+/// to the server.
+TEST_F(NetconfAgentTest, yangConfig) {
+    // YANG configuration.
+    const YRTree tree = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    // Load YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Netconf configuration.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Launch server.
+    thread_.reset(new Thread([this]() { fakeServer(); }));
+    while (!ready_) {
+        usleep(1000);
+    }
+
+    // Try yangConfig.
+    EXPECT_NO_THROW(agent_->yangConfig(service_pair));
+
+    // Wait server.
+    while (ready_) {
+        usleep(1000);
+    }
+
+    // Check request.
+    ASSERT_EQ(1, requests_.size());
+    const string& request_str = requests_[0];
+    ConstElementPtr request;
+    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    string expected_str = "{\n"
+        "\"command\": \"config-set\",\n"
+        "\"arguments\": {\n"
+        "    \"Dhcp4\": {\n"
+        "        \"subnet4\": [\n"
+        "            {\n"
+        "                \"id\": 1,\n"
+        "                \"subnet\": \"10.0.0.0/24\"\n"
+        "            },\n"
+        "            {\n"
+        "                \"id\": 2,\n"
+        "                \"subnet\": \"10.0.2.0/24\"\n"
+        "            }\n"
+        "        ]\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ConstElementPtr pruned = prune(expected, request);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+    // Check response.
+    ASSERT_EQ(1, responses_.size());
+    const string& response_str = responses_[0];
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    expected_str = "{\n"
+        "\"result\": 0\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, response);
+    EXPECT_TRUE(expected->equals(*pruned));
+}
+
+/// Verifies the subscribe method works as expected.
+TEST_F(NetconfAgentTest, subscribe) {
+    // Netconf configuration.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Try subscribe.
+    EXPECT_EQ(0, agent_->subscriptions_.size());
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_EQ(1, agent_->subscriptions_.size());
+
+    /// Unsubscribe.
+    EXPECT_NO_THROW(agent_->subscriptions_.clear());
+}
+
+/// Verifies the update method works as expected: apply new YNAG configuration
+/// to the server. Note it is called by the subscription callback.
+TEST_F(NetconfAgentTest, update) {
+    // Initial YANG configuration.
+    const YRTree tree0 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    // Load initial YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Netconf configuration.
+    // Set validate-changes to false to avoid validate() to be called.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"validate-changes\": false,\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Subscribe YANG changes.
+    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_EQ(1, agent_->subscriptions_.size());
+
+    // Launch server.
+    thread_.reset(new Thread([this]() { fakeServer(); }));
+    while (!ready_) {
+        usleep(1000);
+    }
+
+    // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
+    const YRTree tree1 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
+    EXPECT_NO_THROW(agent_->running_sess_->commit());
+
+    // Wait server.
+    while (ready_) {
+        usleep(1000);
+    }
+
+    // Check request.
+    ASSERT_EQ(1, requests_.size());
+    const string& request_str = requests_[0];
+    ConstElementPtr request;
+    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    string expected_str = "{\n"
+        "\"command\": \"config-set\",\n"
+        "\"arguments\": {\n"
+        "    \"Dhcp4\": {\n"
+        "        \"subnet4\": [\n"
+        "            {\n"
+        "                \"id\": 1,\n"
+        "                \"subnet\": \"10.0.1.0/24\"\n"
+        "            },\n"
+        "            {\n"
+        "                \"id\": 2,\n"
+        "                \"subnet\": \"10.0.2.0/24\"\n"
+        "            }\n"
+        "        ]\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ConstElementPtr pruned = prune(expected, request);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+    // Check response.
+    ASSERT_EQ(1, responses_.size());
+    const string& response_str = responses_[0];
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    expected_str = "{\n"
+        "\"result\": 0\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, response);
+    EXPECT_TRUE(expected->equals(*pruned));
+}
+
+/// Verifies the validate method works as expected: test new YNAG configuration
+/// with the server. Note it is called by the subscription callback and
+/// update is called after.
+TEST_F(NetconfAgentTest, validate) {
+    // Initial YANG configuration.
+    const YRTree tree0 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    // Load initial YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Netconf configuration.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Subscribe YANG changes.
+    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_EQ(1, agent_->subscriptions_.size());
+
+    // Launch server twice.
+    thread_.reset(new Thread([this]() { fakeServer(); fakeServer(); }));
+    while (!ready_) {
+        usleep(1000);
+    }
+
+    // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
+    const YRTree tree1 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.1.0/24", SR_STRING_T, true }, // The change is here!
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/id",
+          "2", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='2']/subnet",
+          "10.0.2.0/24", SR_STRING_T, true }
+    };
+    EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
+    EXPECT_NO_THROW(agent_->running_sess_->commit());
+
+    // Wait servers.
+    while (ready_) {
+        usleep(1000);
+    }
+    usleep(1000);
+    while (ready_) {
+        usleep(1000);
+    }
+
+    // Check requests.
+    ASSERT_EQ(2, requests_.size());
+    string request_str = requests_[0];
+    ConstElementPtr request;
+    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    string expected_str = "{\n"
+        "\"command\": \"config-test\",\n"
+        "\"arguments\": {\n"
+        "    \"Dhcp4\": {\n"
+        "        \"subnet4\": [\n"
+        "            {\n"
+        "                \"id\": 1,\n"
+        "                \"subnet\": \"10.0.1.0/24\"\n"
+        "            },\n"
+        "            {\n"
+        "                \"id\": 2,\n"
+        "                \"subnet\": \"10.0.2.0/24\"\n"
+        "            }\n"
+        "        ]\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    ConstElementPtr expected;
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    ConstElementPtr pruned = prune(expected, request);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+    request_str = requests_[1];
+    ASSERT_NO_THROW(request = Element::fromJSON(request_str));
+    expected_str = "{\n"
+        "\"command\": \"config-set\",\n"
+        "\"arguments\": {\n"
+        "    \"Dhcp4\": {\n"
+        "        \"subnet4\": [\n"
+        "            {\n"
+        "                \"id\": 1,\n"
+        "                \"subnet\": \"10.0.1.0/24\"\n"
+        "            },\n"
+        "            {\n"
+        "                \"id\": 2,\n"
+        "                \"subnet\": \"10.0.2.0/24\"\n"
+        "            }\n"
+        "        ]\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, request);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+    // Check responses.
+    ASSERT_EQ(2, responses_.size());
+    string response_str = responses_[0];
+    ConstElementPtr response;
+    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    expected_str = "{\n"
+        "\"result\": 0\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, response);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+    response_str = responses_[1];
+    ASSERT_NO_THROW(response = Element::fromJSON(response_str));
+    expected_str = "{\n"
+        "\"result\": 0\n"
+        "}";
+    ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
+    pruned = prune(expected, response);
+    EXPECT_TRUE(expected->equals(*pruned));
+
+}
+
+/// Verifies what happens when the validate method returns an error.
+TEST_F(NetconfAgentTest, noValidate) {
+    // Initial YANG configuration.
+    const YRTree tree0 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true }
+    };
+    // Load initial YANG configuration.
+    ASSERT_NO_THROW(agent_->initSysrepo());
+    YangRepr repr(KEA_DHCP4_SERVER);
+    ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
+    EXPECT_NO_THROW(agent_->startup_sess_->commit());
+
+    // Netconf configuration.
+    string config_prefix = "{\n"
+        "  \"Netconf\": {\n"
+        "    \"managed-servers\": {\n"
+        "      \"dhcp4\": {\n"
+        "        \"control-socket\": {\n"
+        "          \"socket-type\": \"unix\",\n"
+        "          \"socket-name\": \"";
+    string config_trailer = "\"\n"
+        "        }\n"
+        "      }\n"
+        "    }\n"
+        "  }\n"
+        "}";
+    string config = config_prefix + unixSocketFilePath() + config_trailer;
+    NetconfConfigPtr ctx(new NetconfConfig());
+    ElementPtr json;
+    ParserContext parser_context;
+    EXPECT_NO_THROW(json =
+        parser_context.parseString(config, ParserContext::PARSER_NETCONF));
+    ASSERT_TRUE(json);
+    ASSERT_EQ(Element::map, json->getType());
+    ConstElementPtr netconf_json = json->get("Netconf");
+    ASSERT_TRUE(netconf_json);
+    json = boost::const_pointer_cast<Element>(netconf_json);
+    ASSERT_TRUE(json);
+    NetconfSimpleParser::setAllDefaults(json);
+    NetconfSimpleParser::deriveParameters(json);
+    NetconfSimpleParser parser;
+    EXPECT_NO_THROW(parser.parse(ctx, json, false));
+
+    // Get service pair.
+    CfgServersMapPtr servers_map = ctx->getCfgServersMap();
+    ASSERT_TRUE(servers_map);
+    ASSERT_EQ(1, servers_map->size());
+    CfgServersMapPair service_pair = *servers_map->begin();
+
+    // Subscribe YANG changes.
+    EXPECT_EQ(0, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_EQ(1, agent_->subscriptions_.size());
+
+    // Change configuration (add invalid user context).
+    const YRTree tree1 = {
+        { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']", "",
+          SR_LIST_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/id",
+          "1", SR_UINT32_T, false },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/subnet",
+          "10.0.0.0/24", SR_STRING_T, true },
+        { "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/user-context",
+          "BOGUS", SR_STRING_T, true }
+    };
+    EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
+    try {
+        agent_->running_sess_->commit();
+    } catch (const sysrepo_exception& ex) {
+        EXPECT_EQ("Validation of the changes failed", string(ex.what()));
+    } catch (const std::exception& ex) {
+        ADD_FAILURE() << "unexpected exception: " << ex.what();
+    } catch (...) {
+        ADD_FAILURE() << "unexpected exception";
+    }
+}
+
+}

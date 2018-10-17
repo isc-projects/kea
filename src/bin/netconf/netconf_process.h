@@ -7,8 +7,7 @@
 #ifndef NETCONF_PROCESS_H
 #define NETCONF_PROCESS_H
 
-#include <netconf/netconf_cfg_mgr.h>
-#include <http/listener.h>
+#include <netconf/netconf.h>
 #include <process/d_process.h>
 #include <vector>
 
@@ -85,6 +84,9 @@ public:
     /// @brief Returns a pointer to the configuration manager.
     NetconfCfgMgrPtr getNetconfCfgMgr();
 
+    /// @brief Global (globally visible) shutdown flag.
+    static bool global_shut_down_flag;
+
 private:
 
     /// @brief Polls all ready handlers and then runs one handler if none
@@ -92,6 +94,9 @@ private:
     ///
     /// @return Number of executed handlers.
     size_t runIO();
+
+    /// @brief Netconf agent.
+    NetconfAgent agent_;
 };
 
 /// @brief Defines a shared pointer to NetconfProcess.
