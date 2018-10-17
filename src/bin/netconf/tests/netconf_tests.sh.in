@@ -15,7 +15,13 @@ EXPECTED_VERSION="@PACKAGE_VERSION@"
 CONFIG="{
     \"Netconf\":
     {
-        \"comment\": \"some configuration will be stored here eventually.\"
+        \"managed-servers\":
+        {
+            \"dhcp4\":
+            {
+                \"comment\": \"simply use defaults...\"
+            }
+        }
     },
 
     \"Logging\":
