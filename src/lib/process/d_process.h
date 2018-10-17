@@ -76,7 +76,7 @@ public:
     /// configuration parsing.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DProcessBase(const char* app_name, asiolink::IOServicePtr io_service, 
+    DProcessBase(const char* app_name, asiolink::IOServicePtr io_service,
                  DCfgMgrBasePtr cfg_mgr)
         : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
         cfg_mgr_(cfg_mgr) {
@@ -103,20 +103,20 @@ public:
     /// @throw DProcessBaseError if an operational error is encountered.
     virtual void run() = 0;
 
-    /// @brief Initiates the process's shutdown process. 
-    /// 
-    /// This is last step in the shutdown event callback chain, that is 
+    /// @brief Initiates the process's shutdown process.
+    ///
+    /// This is last step in the shutdown event callback chain, that is
     /// intended to notify the process it is to begin its shutdown process.
     ///
     /// @param args an Element set of shutdown arguments (if any) that are
-    /// supported by the process derivation. 
-    /// 
+    /// supported by the process derivation.
+    ///
     /// @return an Element that contains the results of argument processing,
-    /// consisting of an integer status value (0 means successful, 
-    /// non-zero means failure), and a string explanation of the outcome. 
-    ///  
+    /// consisting of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual isc::data::ConstElementPtr 
+    virtual isc::data::ConstElementPtr
     shutdown(isc::data::ConstElementPtr args) = 0;
 
     /// @brief Processes the given configuration.

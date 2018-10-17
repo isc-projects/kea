@@ -20,10 +20,10 @@ public:
 
     /// @brief Parses a configuration control Element
     ///
-    /// @param config_control Element holding the config control content 
+    /// @param config_control Element holding the config control content
     /// to be parsed.
     ///
-    /// @return Pointer to newly created ConfigControlInfo instance 
+    /// @return Pointer to newly created ConfigControlInfo instance
     /// @throw DhcpConfigError when config control content is invalid.
     ConfigControlInfoPtr
     parse(const data::ConstElementPtr& config_control);

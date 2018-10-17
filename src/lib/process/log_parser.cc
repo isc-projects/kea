@@ -114,7 +114,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
     if (output_options) {
         parseOutputOptions(info.destinations_, output_options);
     }
-    
+
     config_->addLoggingInfo(info);
 }
 

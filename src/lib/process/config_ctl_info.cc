@@ -102,7 +102,7 @@ ConfigControlInfo::toElement() const {
     return(result);
 }
 
-bool 
+bool
 ConfigControlInfo::equals(const ConfigControlInfo& other) const {
    return (db_infos_ == other.db_infos_);
 }
