@@ -33,6 +33,7 @@ run_unittests_SOURCES += translator_class_unittests.cc
 run_unittests_SOURCES += translator_pool_unittests.cc
 run_unittests_SOURCES += translator_pd_pool_unittests.cc
 run_unittests_SOURCES += translator_host_unittests.cc
+run_unittests_SOURCES += translator_subnet_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)

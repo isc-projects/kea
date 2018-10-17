@@ -24,6 +24,7 @@ libkea_yang_la_SOURCES += translator_class.cc translator_class.h
 libkea_yang_la_SOURCES += translator_pool.cc translator_pool.h
 libkea_yang_la_SOURCES += translator_pd_pool.cc translator_pd_pool.h
 libkea_yang_la_SOURCES += translator_host.cc translator_host.h
+libkea_yang_la_SOURCES += translator_subnet.cc translator_subnet.h
 libkea_yang_la_SOURCES += yang_models.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
@@ -55,6 +56,7 @@ libkea_yang_include_HEADERS = \
 	translator_option_def.h \
 	translator_pool.h \
 	translator_pd_pool.h \
+	translator_subnet.h \
 	yang_models.h
 
 EXTRA_DIST = yang.dox
