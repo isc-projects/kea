@@ -25,6 +25,7 @@ run_unittests_SOURCES += translator_database_unittests.cc
 run_unittests_SOURCES += translator_option_data_unittests.cc
 run_unittests_SOURCES += translator_option_def_unittests.cc
 run_unittests_SOURCES += translator_pool_unittests.cc
+run_unittests_SOURCES += translator_pd_pool_unittests.cc
 run_unittests_SOURCES += translator_host_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
