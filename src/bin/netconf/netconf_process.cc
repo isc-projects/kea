@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
+#include <netconf/netconf.h>
 #include <netconf/netconf_process.h>
 #include <netconf/netconf_controller.h>
 #include <netconf/netconf_log.h>
@@ -13,6 +14,7 @@
 #include <asiolink/io_error.h>
 #include <cc/command_interpreter.h>
 #include <config/timeouts.h>
+#include <util/threads/thread.h>
 #include <boost/pointer_cast.hpp>
 
 using namespace isc::asiolink;
@@ -20,10 +22,12 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::process;
-
+using namespace isc::util::thread;
 
 namespace isc {
 namespace netconf {
+
+bool NetconfProcess::global_shut_down_flag = false;
 
 NetconfProcess::NetconfProcess(const char* name,
                                const asiolink::IOServicePtr& io_service)
@@ -42,6 +46,12 @@ NetconfProcess::run() {
     LOG_INFO(netconf_logger, NETCONF_STARTED).arg(VERSION);
 
     try {
+        // Initialize sysrepo.
+        agent_.initSysrepo();
+
+        // Initialize netconf agent in a thread.
+        Thread th([this]() { agent_.init(getNetconfCfgMgr()); });
+
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
         while (!shouldShutdown()) {
@@ -73,6 +83,7 @@ NetconfProcess::runIO() {
 
 isc::data::ConstElementPtr
 NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
+    global_shut_down_flag = true;
     setShutdownFlag(true);
     return (isc::config::createAnswer(0, "Netconf is shutting down"));
 }

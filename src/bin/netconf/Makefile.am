@@ -48,6 +48,7 @@ libnetconf_la_SOURCES  = control_socket.cc control_socket.h
 libnetconf_la_SOURCES += http_control_socket.cc http_control_socket.h
 libnetconf_la_SOURCES += stdout_control_socket.cc stdout_control_socket.h
 libnetconf_la_SOURCES += unix_control_socket.cc unix_control_socket.h
+libnetconf_la_SOURCES += netconf.cc netconf.h
 libnetconf_la_SOURCES += netconf_cfg_mgr.cc netconf_cfg_mgr.h
 libnetconf_la_SOURCES += netconf_config.cc netconf_config.h
 libnetconf_la_SOURCES += netconf_controller.cc netconf_controller.h

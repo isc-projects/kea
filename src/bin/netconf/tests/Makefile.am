@@ -49,6 +49,7 @@ netconf_unittests_SOURCES += get_config_unittest.cc
 netconf_unittests_SOURCES += netconf_cfg_mgr_unittests.cc
 netconf_unittests_SOURCES += netconf_controller_unittests.cc
 netconf_unittests_SOURCES += netconf_process_unittests.cc
+netconf_unittests_SOURCES += netconf_unittests.cc
 netconf_unittests_SOURCES += parser_unittests.cc
 netconf_unittests_SOURCES += run_unittests.cc
 
@@ -65,7 +66,7 @@ netconf_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
-##netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/testutils/libyangtest.la
+netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/testutils/libyangtest.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/yang/libkea-yang.la
 #netconf_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 netconf_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
