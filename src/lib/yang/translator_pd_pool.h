@@ -15,7 +15,7 @@ namespace yang {
 
 /// Prefix delegation pool translation between YANG and JSON
 ///
-/// JSON syntax for both kea-dhcp4 and kea-dhcp6 is:
+/// JSON syntax for kea-dhcp6-server is:
 /// @code
 /// {
 ///     "prefix": <prefix base>,
@@ -47,7 +47,7 @@ namespace yang {
 ///     /server/server-config/option-sets/option-set/option-set-id
 /// @endcode
 ///
-/// YANG syntax for kea-dhcp6 is with prefix as the key.
+/// YANG syntax for kea-dhcp6-server is with prefix as the key.
 /// @code
 ///  +--rw prefix?                  inet:ipv6-prefix
 ///  +--rw delegated-len?           uint8
@@ -112,7 +112,9 @@ namespace yang {
 /// @brief A translator class for converting a pd-pool between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// Currently supported models:
+/// - kea-dhcp6-server
+/// - ietf-dhcpv6-server (partial support)
 class TranslatorPdPool : virtual public TranslatorOptionDataList {
 public:
 
@@ -176,7 +178,9 @@ protected:
 /// @brief A translator class for converting a pd-pool list between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server and partially ietf-dhcpv6-server.
+/// Currently supports the following models:
+/// - kea-dhcp6-server
+/// - ietf-dhcpv6-server (partial support)
 class TranslatorPdPools : virtual public TranslatorPdPool {
 public:
 

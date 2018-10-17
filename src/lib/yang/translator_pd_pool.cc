@@ -101,7 +101,8 @@ TranslatorPdPool::getPdPoolKea(const string& xpath) {
     ElementPtr result = Element::createMap();
     ConstElementPtr pref = getItem(xpath + "/prefix");
     if (!pref) {
-        isc_throw(BadValue, "getPdPoolKea: prefix is required");
+        isc_throw(BadValue, "getPdPoolKea: no prefix defined at requested xpath("
+                  << xpath << "/prefix");
     }
     const string& prefix = pref->stringValue();
     size_t slash = prefix.find("/");
