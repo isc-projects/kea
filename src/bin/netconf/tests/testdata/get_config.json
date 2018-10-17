@@ -39,7 +39,7 @@
                 "comment": "DHCP4 server",
                 "boot-update": false,
                 "control-socket": {
-                    "socket-name": "/path/to/the/unix/socket-v4",
+                    "socket-name": "/tmp/kea4-ctrl-socket",
                     "socket-type": "unix",
                     "socket-url": "http://127.0.0.1:8000/"
                 },
@@ -50,7 +50,7 @@
             "dhcp6": {
                 "boot-update": false,
                 "control-socket": {
-                    "socket-name": "/path/to/the/unix/socket-v6",
+                    "socket-name": "/tmp/kea6-ctrl-socket",
                     "socket-type": "unix",
                     "socket-url": "http://127.0.0.1:8000/"
                 },
