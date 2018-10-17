@@ -179,4 +179,47 @@ TEST_F(TranslatorHostsTest, set) {
     EXPECT_NO_THROW(sess_->validate());
 }
 
+// This test verifies that several host reservations can be properly
+// translated from YANG to JSON.
+TEST_F(TranslatorHostsTest, getMany) {
+    useModel(KEA_DHCP6_SERVER);
+
+    // Create the subnet 2001:db8::/48 #111.
+    const string& subnet =
+        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    const string& xsubnet = subnet + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+
+    // Create the host reservation for 2001:db8::1.
+    const string& xpath = subnet + "/reservations";
+    ostringstream shost;
+    shost << xpath + "/host[identifier-type='hw-address']"
+          << "[identifier='00:01:02:03:04:05']";
+    const string& xaddr = shost.str() + "/ip-addresses";
+    S_Val s_addr(new Val("2001:db8::1"));
+    EXPECT_NO_THROW(sess_->set_item(xaddr.c_str(), s_addr));
+
+    // Create another reservation for 2001:db8::2
+    const string xpath2 = subnet + "/reservations";
+    ostringstream shost2;
+    shost2 << xpath + "/host[identifier-type='hw-address']"
+           << "[identifier='00:01:0a:0b:0c:0d']";
+    const string xaddr2 = shost2.str() + "/ip-addresses";
+    S_Val s_addr2(new Val("2001:db8::2"));
+    EXPECT_NO_THROW(sess_->set_item(xaddr2.c_str(), s_addr2));
+
+    // Get the host.
+    ConstElementPtr hosts;
+    string hosts_path = subnet + "/reservations";
+    EXPECT_NO_THROW(hosts = t_obj_->getHosts(hosts_path));
+    ASSERT_TRUE(hosts);
+
+    EXPECT_EQ(hosts->str(),
+              "[ { \"hw-address\": \"00:01:02:03:04:05\", "
+              "\"ip-addresses\": [ \"2001:db8::1\" ] }, "
+              "{ \"hw-address\": \"00:01:0a:0b:0c:0d\", "
+              "\"ip-addresses\": [ \"2001:db8::2\" ] } ]");
+}
+
 }; // end of anonymous namespace
