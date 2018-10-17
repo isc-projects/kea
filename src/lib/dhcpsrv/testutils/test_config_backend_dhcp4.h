@@ -4,81 +4,21 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifndef TEST_CONFIG_BACKEND_DHCP4
+#define TEST_CONFIG_BACKEND_DHCP4
+
 #include <config.h>
 
 #include <database/database_connection.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
+#include <dhcpsrv/testutils/test_config_backend.h>
+
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
 namespace isc {
 namespace dhcp {
 namespace test {
-
-/// @brief Base class for implementing fake backends
-class TestConfigBackendDHCPv4 : public ConfigBackendDHCPv4 {
-public:
-    /// @brief Constructor
-    ///
-    /// @param params database connection parameters
-    /// @throw BadValue if parameters do not include "type"
-    TestConfigBackendDHCPv4(const db::DatabaseConnection::ParameterMap& params)
-     : connection_(params) {
-        try {
-            db_type_ = connection_.getParameter("type");
-        } catch (...) {
-            isc_throw(BadValue, "Backend parameters must include \"type\"");
-        }
-
-        try {
-            db_type_ = connection_.getParameter("host");
-        } catch (...) {
-            host_ = "default_host";
-        }
-
-        try {
-            port_ = boost::lexical_cast<uint16_t>(connection_.getParameter("host"));
-        } catch (...) {
-            port_ = 0;
-        }
-    }
-
-    /// @brief virtual Destructor.
-    virtual ~TestConfigBackendDHCPv4(){};
-
-    /// @brief Returns backend type.
-    ///
-    /// @return string db_type name
-    virtual std::string getType() const {
-        return (db_type_);
-    }
-
-    /// @brief Returns backend host.
-    ///
-    /// @return string host
-    virtual std::string getHost() const {
-        return (host_);
-    }
-
-    /// @brief Returns backend port.
-    ///
-    /// @return uint16_t port
-    virtual uint16_t getPort() const {
-        return (port_);
-    }
-
-    /// @brief Fake database connection
-    db::DatabaseConnection connection_;
-
-    /// @brief  Back end type
-    std::string db_type_;
-
-    /// @brief  Back end host
-    std::string host_;
-
-    /// @brief  Back end port
-    uint16_t port_;
-};
 
 /// @brief Test backend for that implements all of the DHCPv4 API calls
 ///
@@ -88,17 +28,17 @@ public:
 ///
 /// In addition provides static register and unregister methods so it may be
 /// registered with a configuration backend manager.
-class TestConfigBackendDHCPv4Impl : public TestConfigBackendDHCPv4 {
+class TestConfigBackendDHCPv4 : public TestConfigBackend<ConfigBackendDHCPv4> {
 public:
     /// @brief Constructor
     ///
     ///
-    TestConfigBackendDHCPv4Impl(const db::DatabaseConnection::ParameterMap& params)
-        : TestConfigBackendDHCPv4(params) {
+    TestConfigBackendDHCPv4(const db::DatabaseConnection::ParameterMap& params)
+        : TestConfigBackend(params) {
     }
 
     /// @brief virtual Destructor.
-    virtual ~TestConfigBackendDHCPv4Impl(){};
+    virtual ~TestConfigBackendDHCPv4(){};
 
     /// @brief Registers the backend type with the given backend manager
     ///
@@ -229,7 +169,7 @@ public:
     /// @return Collection of global options or empty collection if no
     /// option found.
     virtual OptionContainer
-    getModifiedOptions4(const db::ServerSelector& selector,
+    getModifiedOptions4(const db::ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Retrieves global parameter value.
@@ -239,19 +179,19 @@ public:
     /// @return Value of the global parameter or null if parameter doesn't
     /// exist.
     virtual data::StampedValuePtr
-    getGlobalParameter4(const db::ServerSelector& selector,
+    getGlobalParameter4(const db::ServerSelector& server_selector,
                         const std::string& name) const;
 
     /// @return Collection of global parameters.
     virtual data::StampedValueCollection
-    getAllGlobalParameters4(const db::ServerSelector& selector) const;
+    getAllGlobalParameters4(const db::ServerSelector& server_selector) const;
 
     /// @brief Retrieves global parameters modified after specified time.
     ///
     /// @param selector Server selector.
     /// @return Collection of modified global parameters.
     virtual data::StampedValueCollection
-    getModifiedGlobalParameters4(const db::ServerSelector& selector,
+    getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                                  const boost::posix_time::ptime& modification_time) const;
 
     /// @brief Creates or updates a subnet.
@@ -293,7 +233,7 @@ public:
     /// belongs.
     /// @param option Option to be added or updated.
     virtual void
-    createUpdateOption4(const db::ServerSelector& selector,
+    createUpdateOption4(const db::ServerSelector& server_selector,
                         const std::string& shared_network_name,
                         const OptionDescriptorPtr& option);
 
@@ -404,7 +344,7 @@ public:
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
     virtual uint64_t
-    deleteOption4(const db::ServerSelector& selector,
+    deleteOption4(const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
                   const uint16_t code,
                   const std::string& space);
@@ -464,9 +404,11 @@ public:
 /// @}
 };
 
-/// @brief Shared pointer to the @c TestConfigBackendImpl.
-typedef boost::shared_ptr<TestConfigBackendDHCPv4Impl> TestConfigBackendDHCPv4ImplPtr;
+/// @brief Shared pointer to the @c TestConfigBackend.
+typedef boost::shared_ptr<TestConfigBackendDHCPv4> TestConfigBackendDHCPv4Ptr;
 
 } // namespace test
 } // namespace dhcp
 } // namespace isc
+
+#endif // TEST_CONFIG_BACKEND_DHCP4

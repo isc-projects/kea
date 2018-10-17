@@ -43,6 +43,13 @@ public:
         return (access_str_);
     }
 
+    /// @brief Retrieves the database access string with password redacted.
+    ///
+    /// @return database access string with password redacted
+    std::string redactedAccessString() const {
+        return(db::DatabaseConnection::redactedAccessString(access_params_));
+    }
+
     /// @brief Retrieve the map of parameter values.
     ///
     /// @return Constant reference to the database's parameter map.
