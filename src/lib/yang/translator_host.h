@@ -13,7 +13,7 @@
 namespace isc {
 namespace yang {
 
-/// Host reservation translation between YANG and JSON
+/// Translation between YANG and JSON for a single host reservation.
 ///
 /// JSON syntax for kea-dhcp4 is:
 /// @code
@@ -107,7 +107,11 @@ namespace yang {
 /// @brief A translator class for converting a host reservation between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// Currently supported models are:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
+///
+/// ietf-dhcpv6-server is not supported yet.
 class TranslatorHost : virtual public TranslatorOptionDataList {
 public:
 
@@ -134,13 +138,13 @@ public:
     void setHost(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getHost for kea-dhcp[46].
+    /// @brief getHost for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the host reservation.
     /// @return JSON representation of the host reservation.
     isc::data::ElementPtr getHostKea(const std::string& xpath);
 
-    /// @brief setHost for kea-dhcp[46].
+    /// @brief setHost for kea-dhcp[46]-server models.
     ///
     /// @param xpath The xpath of the host reservation.
     /// @param elem The JSON element.
@@ -150,11 +154,14 @@ protected:
     std::string model_;
 };
 
-/// @brief A translator class for converting host reservations between
+/// @brief A translator class for converting host reservations list between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server, not yet ietf-dhcpv6-server.
+/// Currently supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
 ///
+/// The ietf-dhcpv6-server model is not yet supported.
 class TranslatorHosts : virtual public TranslatorHost {
 public:
 

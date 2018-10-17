@@ -152,6 +152,8 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
             setItem(xpath + "/client-classes", cclass, SR_STRING_T);
         }
     }
+
+    // These are DHCPv4-specific parameters.
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr next = elem->get("next-server");
         if (next) {
@@ -166,6 +168,8 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
             setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
         }
     }
+
+    // User context is supported in both kea-dhcp4-server and kea-dhcp6-server.
     ConstElementPtr context = Adaptor::getContext(elem);
     if (context) {
         setItem(xpath + "/user-context", Element::create(context->str()),
