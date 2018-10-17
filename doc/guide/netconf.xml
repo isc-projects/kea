@@ -293,19 +293,22 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             The <command>validate-changes</command> controls how Kea monitors
-            the changes in Sysrepo configuration. Sysrepo offers two stages
-            where Kea could interact: validation and application. The first one
-            is called validation (or SR_EV_VERIFY in Sysrepo naming
-            convention). At this stage Kea will get the new configuration being
-            committed and will verify it. If the configuration is incorrect for
-            whatever reason, Kea servers will reject it, the error will be
-            propagated back to the Sysrepo, which in will return an error to
-            whoever tried to commit those changes. This step only takes place if
-            validate-changes is set to true. There is also a second step called
-            application (or SR_EV_APPLY in Sysrepo naming convention), where
-            the actual configuration is being applied. At this stage Kea can
-            receive the configuration, but it is too late to signal back any
-            errors, as the configuration has been comitted already.
+            the changes in Sysrepo configuration. Sysrepo offers two
+            stages where Kea could interact: validation and
+            application. The first one is called validation (or
+            SR_EV_VERIFY event in Sysrepo naming convention). At this
+            stage Kea will get the new configuration being committed
+            and will verify it. If the configuration is incorrect for
+            whatever reason, Kea servers will reject it, the error
+            will be propagated back to the Sysrepo, which in will
+            return an error to whoever tried to commit those
+            changes. This step only takes place if validate-changes is
+            set to true. There is also a second step called
+            application (or SR_EV_APPLY event in Sysrepo naming
+            convention), where the actual configuration is being
+            applied. At this stage Kea can receive the configuration,
+            but it is too late to signal back any errors, as the
+            configuration has been comitted already.
           </simpara>
         </listitem>
       </itemizedlist>
@@ -330,8 +333,10 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
 }
 </screen>
       Note the alternative to boot with full configurations does not
-      allow an easy track of changes, so it not really compatible with
-      the YANG / Netconf configuration management paradigm.
+      allow an easy track of changes or synchronization between the JSON
+      and YANG sources of configurations. So it not really compatible with
+      the YANG / Netconf configuration management paradigm where
+      everything should be performed in YANG.
     </para>
 
     <para>
@@ -427,11 +432,9 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         <listitem>
           <simpara>
             <command>model</command> specifies the YANG model / module name.
-            <!-- @todo: to give people a good out of the box experience, every
-                 server should have its own default, e.g. for dhcp4 the default
-                 should be kea-dhcp4-server. I understand this doesn't play
-                 well with the SimpleParser defaults mechanism, but we can
-                 figure it out some time later (after 1.5-beta?). -->
+            For each service the default is the corresponding Kea YANG model,
+            e.g. for <userinput>"dhcp4"</userinput> it is
+            <userinput>"kea-dhcp4-server"</userinput>.
           </simpara>
         </listitem>
 
@@ -481,7 +484,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
       User contexts can store arbitrary data as long as it is valid JSON
       syntax and its top level element is a map (i.e. the data must be
       enclosed in curly brackets). They are accepted at the Netconf entry,
-      managed service entry and control socket scopes.
+      i.e. below the toplevel, managed service entry and control socket
+      entry scopes.
     </para>
 
     <para>
