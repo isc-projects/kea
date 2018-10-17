@@ -67,7 +67,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
     EXPECT_EQ(0, pools->size());
 }
 
-// This test verifies that one empty pd pool can be properly
+// This test verifies that one non-empty pd pool can be properly
 // translated from YANG to JSON using the IETF model.
 TEST_F(TranslatorPdPoolsTest, getIetf) {
     useModel(IETF_DHCPV6_SERVER);
@@ -108,7 +108,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     EXPECT_TRUE(pool->equals(*pools->get(0)));
 }
 
-// This test verifies that one empty pd pool can be properly
+// This test verifies that one non-empty pd pool can be properly
 // translated from YANG to JSON using the Kea ad hoc model.
 TEST_F(TranslatorPdPoolsTest, getKea) {
     useModel(KEA_DHCP6_SERVER);
@@ -317,6 +317,51 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
 
     // Check it validates.
     EXPECT_NO_THROW(sess_->validate());
+}
+
+// This test verifies that a list of non-empty pd pools can be properly
+// translated from YANG to JSON using the Kea ad hoc model.
+TEST_F(TranslatorPdPoolsTest, getListKea) {
+    useModel(KEA_DHCP6_SERVER);
+
+    // Create the subnet 2001:db8::/48 #111.
+    const string& subnet =
+        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
+    const string& subnet_subnet = subnet + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+
+    // Create the first pd-pool 2001:db8:0:1000::/56.
+    const string& xpath = subnet + "/pd-pools";
+    const string& prefix = "2001:db8:0:1000::/56";
+    ostringstream spool;
+    spool << xpath + "/pd-pool[prefix='" << prefix << "']";
+    const string& x_delegated = spool.str() + "/delegated-len";
+    uint8_t dl = 64;
+    S_Val s_delegated(new Val(dl, SR_UINT8_T));
+    EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
+
+    // Create the second pd-pool 2001:db8:0:2000::/56
+    const string& xpath2 = subnet + "/pd-pools";
+    const string& prefix2 = "2001:db8:0:2000::/56";
+    ostringstream spool2;
+    spool2 << xpath2 + "/pd-pool[prefix='" << prefix2 << "']";
+    const string& x_delegated2 = spool2.str() + "/delegated-len";
+    uint8_t dl2 = 60;
+    S_Val s_delegated2(new Val(dl2, SR_UINT8_T));
+    EXPECT_NO_THROW(sess_->set_item(x_delegated2.c_str(), s_delegated2));
+
+
+    // Get the pools list.
+    ConstElementPtr pools;
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath2));
+    ASSERT_TRUE(pools);
+
+    // Check that both of them are returned properly.
+    EXPECT_EQ(pools->str(),
+              "[ { \"delegated-len\": 64, \"prefix\": \"2001:db8:0:1000::\", "
+              "\"prefix-len\": 56 }, { \"delegated-len\": 60, \"prefix\": "
+              "\"2001:db8:0:2000::\", \"prefix-len\": 56 } ]");
 }
 
 }; // end of anonymous namespace
