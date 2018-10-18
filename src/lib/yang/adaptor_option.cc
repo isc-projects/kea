@@ -45,10 +45,10 @@ AdaptorOption::checkCode(ConstElementPtr option) {
 
 void
 AdaptorOption::collect(ConstElementPtr option, OptionCodes& codes) {
-    ConstElementPtr space = option->get("space");
-    ConstElementPtr code = option->get("code");
     ConstElementPtr name = option->get("name");
     if (name) {
+        ConstElementPtr space = option->get("space");
+        ConstElementPtr code = option->get("code");
         string index = space->stringValue() + "@" + name->stringValue();
         uint16_t val = static_cast<uint16_t>(code->intValue());
         codes.insert(std::pair<string, uint16_t>(index, val));

@@ -70,9 +70,24 @@ from YANG to follow the Kea syntax, for instance by adding static
 components which are not in the model.
 
 Methods provided by adaptors are class methods (i.e. declared static).
-Specific adaptors are derived from the isc::yang::Adaptor base class.
+Specific adaptors can be derived from the isc::yang::Adaptor base class.
 
- @page unitTestsSysrepo Running unit-tests with Sysrepo
+There are a few basic adaptors and per structure adaptors. The second
+category of adaptors are divided into:
+ - from JSON to YANG adaptors or pre-processing which adapt a JSON
+  configuration to make it acceptable by a from JSON to YANG (setXXX)
+  translators. For a Kea model this kind of adaptors fill some required
+  but missing fields, or only transform a configuration into a canonical
+  form. Note for a Kea model and a configuration taken from config-get
+  or config-write it likely does nearly nothing but the code must
+  handle any hand written configuration so these adaptors are always
+  applied.
+
+ - from YANG to JSON adaptors or post-processing which adapt translated
+  YANG configuration (by getXXX) to make it acceptable by a Kea server.
+  By definition they are not defined for Kea models.
+
+@section unitTestsSysrepo Running unit-tests with Sysrepo
 
 To run YANG/NETCONF/Sysrepo tests you obviously need to compile Kea with
 Sysrepo support:

@@ -53,7 +53,7 @@ public:
 
     /// @brief Update relay.
     ///
-    /// Force the use of ip-addresses vs. ip-address.
+    /// Force the use of ip-addresses when it finds an ip-address entry.
     /// Can be used for shared networks too.
     ///
     /// @param subnet The subnet.
