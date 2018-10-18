@@ -89,7 +89,11 @@ namespace yang {
 /// @brief A translator class for converting a logger between
 /// YANG and JSON.
 ///
-/// Currently supports all kea servers and agents. Speficic to Kea.
+/// Currently supports all kea models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
+/// - kea-dhcp-ddns
+/// - kea-ctrl-agent
 class TranslatorLogger : virtual public TranslatorBasic {
 public:
 

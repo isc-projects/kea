@@ -176,4 +176,6 @@ TEST_F(TranslatorLoggersTest, set) {
     EXPECT_NO_THROW(sess_->validate());
 }
 
+/// @todo: Implement a test that will cover multiple loggers.
+
 }; // end of anonymous namespace
