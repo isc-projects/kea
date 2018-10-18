@@ -16,6 +16,7 @@ namespace {
 TEST(ServerSelectorTest, unassigned) {
     ServerSelector selector = ServerSelector::UNASSIGNED();
     EXPECT_EQ(ServerSelector::Type::UNASSIGNED, selector.getType());
+    EXPECT_TRUE(selector.amUnassigned());
     EXPECT_TRUE(selector.getTags().empty());
 }
 
@@ -23,6 +24,7 @@ TEST(ServerSelectorTest, unassigned) {
 TEST(ServerSelectorTest, all) {
     ServerSelector selector = ServerSelector::ALL();
     EXPECT_EQ(ServerSelector::Type::ALL, selector.getType());
+    EXPECT_FALSE(selector.amUnassigned());
     EXPECT_TRUE(selector.getTags().empty());
 }
 
@@ -30,6 +32,7 @@ TEST(ServerSelectorTest, all) {
 TEST(ServerSelectorTest, one) {
     ServerSelector selector = ServerSelector::ONE("some-tag");
     EXPECT_EQ(ServerSelector::Type::SUBSET, selector.getType());
+    EXPECT_FALSE(selector.amUnassigned());
 
     std::set<std::string> tags = selector.getTags();
     ASSERT_EQ(1, tags.size());
@@ -40,6 +43,7 @@ TEST(ServerSelectorTest, one) {
 TEST(ServerSelectorTest, multiple) {
     ServerSelector selector = ServerSelector::MULTIPLE({ "tag1", "tag2", "tag3" });
     EXPECT_EQ(ServerSelector::Type::SUBSET, selector.getType());
+    EXPECT_FALSE(selector.amUnassigned());
 
     std::set<std::string> tags = selector.getTags();
     ASSERT_EQ(3, tags.size());

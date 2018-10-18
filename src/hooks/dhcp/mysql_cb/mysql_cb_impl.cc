@@ -85,6 +85,12 @@ uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
                                         const ServerSelector& server_selector,
                                         const std::string& operation) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
     auto tag = getServerTag(server_selector, operation);
 
     MySqlBindingCollection in_bindings = {
