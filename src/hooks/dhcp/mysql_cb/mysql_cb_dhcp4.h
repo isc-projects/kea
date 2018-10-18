@@ -32,6 +32,7 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet4Ptr
     getSubnet4(const db::ServerSelector& server_selector,
                const std::string& subnet_prefix) const;
@@ -41,6 +42,7 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to be retrieved.
     /// @return Pointer to the retrieved subnet or NULL if not found.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual Subnet4Ptr
     getSubnet4(const db::ServerSelector& server_selector, const SubnetID& subnet_id) const;
 
@@ -65,6 +67,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the shared network to be retrieved.
     /// @return Pointer to the shared network or NULL if not found.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual SharedNetwork4Ptr
     getSharedNetwork4(const db::ServerSelector& server_selector,
                       const std::string& name) const;
@@ -93,6 +96,7 @@ public:
     /// @param code Code of the option to be retrieved.
     /// @param space Option space of the option to be retrieved.
     /// @return Pointer to the option definition or NULL if not found.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual OptionDefinitionPtr
     getOptionDef4(const db::ServerSelector& server_selector, const uint16_t code,
                   const std::string& space) const;
@@ -121,6 +125,7 @@ public:
     /// @param server_selector Server selector.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual OptionDescriptorPtr
     getOption4(const db::ServerSelector& server_selector, const uint16_t code,
                const std::string& space) const;
@@ -148,6 +153,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
     /// @return Value of the global parameter.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual data::StampedValuePtr
     getGlobalParameter4(const db::ServerSelector& server_selector,
                         const std::string& name) const;
@@ -170,6 +176,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param subnet Subnet to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateSubnet4(const db::ServerSelector& server_selector,
                         const Subnet4Ptr& subnet);
@@ -178,6 +185,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param shared_network Shared network to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateSharedNetwork4(const db::ServerSelector& server_selector,
                                const SharedNetwork4Ptr& shared_network);
@@ -186,6 +194,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param option_def Option definition to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateOptionDef4(const db::ServerSelector& server_selector,
                            const OptionDefinitionPtr& option_def);
@@ -194,6 +203,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @param option Option to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const OptionDescriptorPtr& option);
@@ -204,6 +214,7 @@ public:
     /// @param shared_network_name Name of a shared network to which option
     /// belongs.
     /// @param option Option to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const std::string& shared_network_name,
@@ -214,6 +225,7 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of a subnet to which option belongs.
     /// @param option Option to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const SubnetID& subnet_id,
@@ -227,6 +239,7 @@ public:
     /// @param pool_end_address Upper bound address of the pool to which the
     /// option belongs.
     /// @param option Option to be added or updated.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateOption4(const db::ServerSelector& server_selector,
                         const asiolink::IOAddress& pool_start_address,
@@ -238,6 +251,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual void
     createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                  const data::StampedValuePtr& value);
@@ -247,6 +261,7 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_prefix Prefix of the subnet to be deleted.
     /// @return Number of deleted subnets.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteSubnet4(const db::ServerSelector& server_selector,
                   const std::string& subnet_prefix);
@@ -256,6 +271,7 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet to be deleted.
     /// @return Number of deleted subnets.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteSubnet4(const db::ServerSelector& server_selector, const SubnetID& subnet_id);
 
@@ -263,6 +279,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @return Number of deleted subnets.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllSubnets4(const db::ServerSelector& server_selector);
 
@@ -271,6 +288,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the shared network to be deleted.
     /// @return Number of deleted shared networks.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteSharedNetwork4(const db::ServerSelector& server_selector,
                          const std::string& name);
@@ -288,6 +306,7 @@ public:
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
     /// @return Number of deleted option definitions.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOptionDef4(const db::ServerSelector& server_selector, const uint16_t code,
                      const std::string& space);
@@ -296,6 +315,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @return Number of deleted option definitions.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllOptionDefs4(const db::ServerSelector& server_selector);
 
@@ -305,6 +325,7 @@ public:
     /// @param code Code of the option to be deleted.
     /// @param space Option space of the option to be deleted.
     /// @return Number of deleted options.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const uint16_t code,
                   const std::string& space);
@@ -316,6 +337,7 @@ public:
     /// option belongs to
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const std::string& shared_network_name,
@@ -330,6 +352,7 @@ public:
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector, const SubnetID& subnet_id,
                   const uint16_t code, const std::string& space);
@@ -344,6 +367,7 @@ public:
     /// @param code Code of the deleted option.
     /// @param space Option space of the deleted option.
     /// @return Number of deleted options.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteOption4(const db::ServerSelector& server_selector,
                   const asiolink::IOAddress& pool_start_address,
@@ -356,6 +380,7 @@ public:
     /// @param server_selector Server selector.
     /// @param name Name of the global parameter to be deleted.
     /// @return Number of deleted global parameters.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteGlobalParameter4(const db::ServerSelector& server_selector,
                            const std::string& name);
@@ -364,6 +389,7 @@ public:
     ///
     /// @param server_selector Server selector.
     /// @return Number of deleted global parameters.
+    /// @throw NotImplemented if server selector is "unassigned".
     virtual uint64_t
     deleteAllGlobalParameters4(const db::ServerSelector& server_selector);
 

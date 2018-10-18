@@ -88,6 +88,13 @@ public:
         return (tags_);
     }
 
+    /// @brief Convenience method checking if the server selector is "unassigned".
+    ///
+    /// @return true if the selector is "unassigned", false otherwise.
+    bool amUnassigned() const {
+        return (getType() == Type::UNASSIGNED);
+    }
+
 private:
 
     /// @brief Constructor used for "unassigned" and "all" slection types.

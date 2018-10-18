@@ -185,7 +185,10 @@ public:
     void createUpdateGlobalParameter4(const db::ServerSelector& server_selector,
                                       const StampedValuePtr& value) {
 
-        MySqlTransaction transaction(conn_);
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
 
         auto tag = getServerTag(server_selector, "creating or updating global parameter");
 
@@ -196,6 +199,8 @@ public:
             MySqlBinding::createString(tag),
             MySqlBinding::createString(value->getName())
         };
+
+        MySqlTransaction transaction(conn_);
 
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
@@ -656,6 +661,11 @@ public:
     void createUpdateSubnet4(const ServerSelector& server_selector,
                              const Subnet4Ptr& subnet) {
 
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "creating or updating subnet");
 
         // Convert DHCPv4o6 interface id to text.
@@ -984,6 +994,12 @@ public:
     /// network doesn't exist.
     SharedNetwork4Ptr getSharedNetwork4(const ServerSelector& server_selector,
                                         const std::string& name) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching shared network");
 
         MySqlBindingCollection in_bindings = {
@@ -1043,6 +1059,12 @@ public:
     /// @param subnet Pointer to the shared network to be inserted or updated.
     void createUpdateSharedNetwork4(const ServerSelector& server_selector,
                                     const SharedNetwork4Ptr& shared_network) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "creating or updating shared network");
 
         MySqlBindingCollection in_bindings = {
@@ -1142,6 +1164,11 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const OptionDescriptorPtr& option) {
 
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "creating or updating global option");
 
         MySqlBindingCollection in_bindings = {
@@ -1186,6 +1213,11 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
 
         auto tag = getServerTag(server_selector,
                                 "creating or updating subnet level option");
@@ -1258,6 +1290,11 @@ public:
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option) {
 
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector,
                                 "creating or updating pool level option");
 
@@ -1304,6 +1341,12 @@ public:
     void createUpdateOption4(const ServerSelector& server_selector,
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "creating or updating shared"
                                 " network level option");
 
@@ -1354,6 +1397,12 @@ public:
     OptionDefinitionPtr getOptionDef4(const ServerSelector& server_selector,
                                       const uint16_t code,
                                       const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching option definition");
 
         OptionDefContainer option_defs;
@@ -1418,6 +1467,12 @@ public:
     OptionDescriptorPtr
     getOption4(const ServerSelector& server_selector, const uint16_t code,
                const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching global option");
 
         OptionContainer options;
@@ -1488,6 +1543,12 @@ public:
                                    const SubnetID& subnet_id,
                                    const uint16_t code,
                                    const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching subnet level option");
 
         OptionContainer options;
@@ -1517,6 +1578,12 @@ public:
                                    const uint64_t pool_id,
                                    const uint16_t code,
                                    const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching pool level option");
 
         OptionContainer options;
@@ -1546,6 +1613,12 @@ public:
                                    const std::string& shared_network_name,
                                    const uint16_t code,
                                    const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "fetching shared network"
                                 " level option");
 
@@ -1568,6 +1641,12 @@ public:
     /// @param option_def Pointer to the option definition to be inserted or updated.
     void createUpdateOptionDef4(const ServerSelector& server_selector,
                                 const OptionDefinitionPtr& option_def) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "creating or updating option definition");
 
         ElementPtr record_types = Element::createList();
@@ -1645,6 +1724,12 @@ public:
     uint64_t deleteOptionDef4(const ServerSelector& server_selector,
                               const uint16_t code,
                               const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting option definition");
 
         MySqlBindingCollection in_bindings = {
@@ -1666,6 +1751,12 @@ public:
     uint64_t deleteOption4(const ServerSelector& server_selector,
                            const uint16_t code,
                            const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting global option");
 
         MySqlBindingCollection in_bindings = {
@@ -1690,6 +1781,12 @@ public:
                            const SubnetID& subnet_id,
                            const uint16_t code,
                            const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting option for a subnet");
 
         MySqlBindingCollection in_bindings = {
@@ -1716,6 +1813,12 @@ public:
                            const IOAddress& pool_end_address,
                            const uint16_t code,
                            const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting option for a pool");
 
         MySqlBindingCollection in_bindings = {
@@ -1743,6 +1846,12 @@ public:
                            const std::string& shared_network_name,
                            const uint16_t code,
                            const std::string& space) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting option for a shared network");
 
         MySqlBindingCollection in_bindings = {
@@ -1765,6 +1874,12 @@ public:
     /// @return Number of deleted options.
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const Subnet4Ptr& subnet) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting options for a subnet");
 
         MySqlBindingCollection in_bindings = {
@@ -1785,6 +1900,12 @@ public:
     /// @return Number of deleted options.
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const SharedNetwork4Ptr& shared_network) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
         auto tag = getServerTag(server_selector, "deleting options for a shared network");
 
         MySqlBindingCollection in_bindings = {
