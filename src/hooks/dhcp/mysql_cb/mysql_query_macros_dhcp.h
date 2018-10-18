@@ -43,7 +43,7 @@ namespace {
 
 #endif
 
-#ifndef MYSQL_SUBNET_GET
+#ifndef MYSQL_GET_SUBNET4
 #define MYSQL_GET_SUBNET4(...) \
     "SELECT" \
     "  s.subnet_id," \
