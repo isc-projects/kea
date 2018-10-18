@@ -574,7 +574,7 @@ NetconfAgent::logChanges(S_Session sess, const string& model) {
                 break;
             }
             msg << "moved: " << new_val->xpath();
-            if (old_val) {
+            if (!old_val) {
                 msg << " first";
             } else {
                 msg << " after " << old_val->xpath();
