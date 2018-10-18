@@ -49,7 +49,7 @@ StdoutControlSocket::configTest(ConstElementPtr /*config*/,
 
 ConstElementPtr
 StdoutControlSocket::configSet(ConstElementPtr config,
-                               const string& service) {
+                               const string& /*service*/) {
     prettyPrint(config, output_);
     output_ << endl;
     return (createAnswer());
