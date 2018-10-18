@@ -1,3 +1,8 @@
+1459.	[func]		marcin
+	Implemented libdhcp_mysql_cb hooks library which provides
+	Configuration Backend functionality for MySQL.
+	(Gitlab #93, git 98456608056b3361352b3127767138845eeb5d00)
+
 1458.	[func]		fdupont
 	Control sockets for kea-netconf has been implemented. The code is
 	not functional yet, but the capability of the kea-netconf daemon
