@@ -22,6 +22,9 @@ namespace yang {
 
 /// @brief Map for DHCP option definitions handling code and
 /// an index built from space and name.
+///
+/// The map is used to store space+name to code mappings so for
+/// an option data without a code entry the code entry can be supplied.
 typedef std::map<std::string, uint16_t> OptionCodes;
 
 /// @brief JSON adaptor for option data or definition setting defaults.
@@ -68,6 +71,10 @@ public:
     static void checkCode(isc::data::ConstElementPtr option);
 
     /// @brief Collect definition.
+    ///
+    /// This method looks at an option definition and adds the
+    /// space+name to code maping into the OptionCodes codes store
+    /// aka definitions.
     ///
     /// @param option The option definition.
     /// @param codes The reference to option definitions.

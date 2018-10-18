@@ -12,6 +12,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 
+// NOTE:
+// When adding a new space, make sure you also update
+// src/lib/yang/adaptor_option.cc
+
 namespace isc {
 namespace dhcp {
 

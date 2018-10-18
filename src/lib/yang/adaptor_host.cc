@@ -34,8 +34,9 @@ AdaptorHost::quoteIdentifier(ElementPtr host) {
         return;
     }
     const string& id = flex_id->stringValue();
+    // Empty is allowed.
     if (id.empty()) {
-        isc_throw(BadValue, "empty flexible identifier in " << host->str());
+        return;
     }
     // No special and no not printable characters?
     if (id.find_first_not_of(STD_CHARACTERS) == string::npos) {
