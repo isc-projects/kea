@@ -25,6 +25,7 @@
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
 
@@ -6258,10 +6259,27 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
     EXPECT_FALSE(hosts_cfg->get4(542, Host::IDENT_DUID, &duid[0], duid.size()));
 }
 
+// This test verifies that configuration control with unsupported type fails
+TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
+    string config = PARSER_CONFIGS[6];
+    extractConfig(config);
+
+    // Should fail because "type=mysql" has no factories.
+    configure(config, CONTROL_RESULT_ERROR,
+              "The type of the configuration backend: 'mysql' is not supported");
+}
+
 // This test verifies that configuration control info gets populated.
 TEST_F(Dhcp4ParserTest, configControlInfo) {
     string config = PARSER_CONFIGS[6];
     extractConfig(config);
+
+    // Should be able to register a backend factory for "mysql".
+    ASSERT_TRUE(TestConfigBackendDHCPv4::
+                registerBackendType(ConfigBackendDHCPv4Mgr::instance(),
+                                    "mysql"));
+
+    // Should parse ok, now that the factory has been registered.
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
     // Make sure the config control info is there.
@@ -6273,12 +6291,12 @@ TEST_F(Dhcp4ParserTest, configControlInfo) {
     const process::ConfigDbInfoList& dblist = info->getConfigDatabases();
     ASSERT_EQ(2, dblist.size());
 
-    // Make sure the entries are what we expect and in the right order. 
-    // (DbAccessParser creates access strings with the keywords in 
+    // Make sure the entries are what we expect and in the right order.
+    // (DbAccessParser creates access strings with the keywords in
     //  alphabetical order).
-    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest", 
+    EXPECT_EQ("name=keatest1 password=keatest type=mysql user=keatest",
               dblist.front().getAccessString());
-    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest", 
+    EXPECT_EQ("name=keatest2 password=keatest type=mysql user=keatest",
               dblist.back().getAccessString());
 }
 

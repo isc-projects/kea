@@ -22,6 +22,7 @@ using namespace isc::data;
 TEST(ConfigDbInfo, basicOperation) {
     ConfigDbInfo db;
     std::string access = "type=mysql user=tom password=terrific";
+    std::string redacted_access = "password=***** type=mysql user=tom";
     std::string access_json = "{\n"
         " \"type\":\"mysql\", \n"
         " \"user\":\"tom\", \n"
@@ -36,6 +37,8 @@ TEST(ConfigDbInfo, basicOperation) {
     // Initialize the db from an the access string
     db.setAccessString(access);
     EXPECT_EQ(access, db.getAccessString());
+
+    EXPECT_EQ(redacted_access, db.redactedAccessString());
 
     // Convert the db into Elements and make sure they are as expected.
     ElementPtr db_elems;
