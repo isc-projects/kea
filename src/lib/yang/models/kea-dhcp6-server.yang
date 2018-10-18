@@ -389,6 +389,7 @@ module kea-dhcp6-server {
     uses dhcp:expired-leases-processing;
 
     container server-id {
+      presence "Have server ID.";
       description "Server DUID.";
       leaf type {
         type enumeration {
