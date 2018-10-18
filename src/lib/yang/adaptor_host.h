@@ -15,7 +15,7 @@ namespace yang {
 /// @brief JSON adaptor for host reservations quoting identifiers.
 ///
 /// The identifier type and identifier value are used as keys in YANG
-/// host reservation lists so soem constraints were put on their contents.
+/// host reservation lists so some constraints were put on their contents.
 /// For instance a quoted flex-id identifier raises an error (keys
 /// are between quotes in setItem commands).
 class AdaptorHost {
