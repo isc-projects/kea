@@ -163,6 +163,12 @@ int main() {
              << endl
              << "Sysrepo daemon is required or actions will be local to "
              << "the local library instance." << endl;
+        cerr << "Please make sure the sysrepod daemon is running." << endl;
+        cerr << "The following command should do the trick:" << endl;
+        cerr << endl;
+        cerr << "$ sudo sysrepod" << endl;
+        cerr << endl;
+
         exit_code -= 100;
     }
 
