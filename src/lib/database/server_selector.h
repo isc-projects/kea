@@ -37,6 +37,11 @@ namespace db {
 /// @c BaseConfigBackendPool and in objects derived from
 /// @c BaseConfigBackend to indicate which servers the specific calls
 /// exposed by these objects refer to.
+///
+/// @todo Add server selector for selecting only those configuration
+/// elements that are associated with all servers (and not with any
+/// particular server tags). Translating this to SQL queries it would
+/// probably be an empty or non-existing server tag.
 class ServerSelector {
 public:
 
