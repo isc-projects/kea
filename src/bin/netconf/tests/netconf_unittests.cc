@@ -556,7 +556,8 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
               "match-client-id = true [default]");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
               "moved: "
-              "/kea-dhcp4-server:config/subnet4/subnet4[id='10'] first");
+              "/kea-dhcp4-server:config/subnet4/subnet4[id='10'] "
+              "after /kea-dhcp4-server:config/subnet4/subnet4[id='2']");
 
     // logChanges is called in another thread so we can have to wait for it.
     while (!TestCallback::finished) {
