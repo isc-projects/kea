@@ -40,9 +40,11 @@ public:
     /// @param pool The pool.
     static void canonizePool(isc::data::ElementPtr pool);
 
-    /// @brief From subnets.
+    /// @brief Moves parameters from subnets to pools.
     ///
-    /// Move parameters from the subnet to each pool.
+    /// Move parameters from the subnet to each pool. Currently the only
+    /// supported model is ietf-dhcpv6-server. The parameters moved are
+    /// valid-lifetime, preferred-lifetime, renew-timer, renbind-timer.
     ///
     /// @param model Model name.
     /// @param subnet The subnet element.
@@ -52,9 +54,11 @@ public:
                            isc::data::ConstElementPtr subnet,
                            isc::data::ConstElementPtr pools);
 
-    /// @brief To subnet.
+    /// @brief Move parameters from pools to the subnet.
     ///
-    /// Move parameters from pools to the subnet.
+    /// Move parameters from pool to its partent subnet. Currently the only
+    /// supported model is ietf-dhcpv6-server. The parameters moved are
+    /// valid-lifetime, preferred-lifetime, renew-timer, renbind-timer.
     ///
     /// @param model Model name.
     /// @param subnet The subnet element.

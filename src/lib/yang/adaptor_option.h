@@ -55,13 +55,13 @@ public:
     static void setSpace(isc::data::ElementPtr option,
                          const std::string& space);
 
-    /// @brief Check type (option definition).
+    /// @brief Checks if type is specified in option definition.
     ///
     /// @param option The option.
     /// @throw MissingKey if the type is not present.
     static void checkType(isc::data::ConstElementPtr option);
 
-    /// @brief Check code.
+    /// @brief Check if code is specified in option defintion.
     ///
     /// @param option The option.
     /// @throw MissingKey if the code is not present.

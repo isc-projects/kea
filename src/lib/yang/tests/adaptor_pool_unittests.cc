@@ -108,13 +108,16 @@ TEST(AdaptorPoolTest, fromSubnetKea) {
     ASSERT_NO_THROW(json = Element::fromJSON(config));
     ConstElementPtr copied = copy(json);
     ConstElementPtr pools = json->get("pools");
+
+    // This should be no-op for kea-dhcp4-server and kea-dhcp6-server models
     EXPECT_NO_THROW(AdaptorPool::fromSubnet(KEA_DHCP4_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
     // The model is checked first.
     EXPECT_NO_THROW(AdaptorPool::fromSubnet(KEA_DHCP6_SERVER, json, pools));
     EXPECT_TRUE(copied->equals(*json));
-    // Model name is not free: an error is raised if it is not expected.
-    EXPECT_THROW(AdaptorPool::fromSubnet("keatest-module", json, pools),
+
+    // Check that the model name is actually checked.
+    EXPECT_THROW(AdaptorPool::fromSubnet("non-existent-module", json, pools),
                  NotImplemented);
 }
 
