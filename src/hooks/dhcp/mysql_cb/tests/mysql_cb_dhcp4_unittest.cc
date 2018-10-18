@@ -31,6 +31,15 @@ using namespace isc::dhcp::test;
 namespace {
 
 /// @brief Test fixture class for @c MySqlConfigBackendDHCPv4.
+///
+/// @todo The tests we're providing here only test cases when the
+/// server selector is set to 'ALL' (configuration elements belong to
+/// all servers). Currently we have no API to insert servers into
+/// the database, and therefore we can't test the case when
+/// configuration elements are assigned to particular servers by
+/// server tags. We will have to expand existing tests when
+/// the API is extended allowing for inserting servers to the
+/// database.
 class MySqlConfigBackendDHCPv4Test : public GenericBackendTest {
 public:
 
