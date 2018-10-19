@@ -113,11 +113,10 @@ To verify that you have the schemas installed, do this:
 @verbatim
 sysrepoctl -l
 @endverbatim
-Make sure that keatest-module is on the list.
-*/
+Make sure that keatest-module and other necessary modules are on the list.
 
 Note as DHCP modules are still being developed it can be useful to
-deinstall them before reinstalling a more recent version vy:
+deinstall them before reinstalling a more recent version:
 @verbatim
 sudo sysrepoctl --uninstall --module=<module-name>
 @endverbatim
@@ -129,11 +128,24 @@ of keatest-module:
  - kea-dhcp-ddns
  - kea-dhcp4-server
  - kea-dhcp6-server
-Dependencies are:
+
+Those models depend on the following models:
  - ietf-inet-types
  - ietf-yang-types
 
-To finish the sysrepod daemon must run as root:
+Finally, sysrepod daemon must run be running (as root):
 @verbatim
 sudo sysrepod
 @endverbatim
+
+You can run this tool:
+
+@verbatim
+src/lib/yang/pretests/sysrepo_setup_tests
+@endverbatim
+
+to verify that your environment is ready. If there is anything
+wrong, it will enumerate the problems and will suggest how to solve
+them.
+
+*/
