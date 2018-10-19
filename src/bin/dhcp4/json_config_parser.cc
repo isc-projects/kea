@@ -515,7 +515,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             // decline-probation-period, dhcp4o6-port, echo-client-id,
             // user-context are handled in global_parser.parse() which
             // sets global parameters.
-            // match-client-id is derived to subnet scope level.
+            // match-client-id and authoritative are derived to subnet scope
+            // level.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "valid-lifetime") ||
@@ -524,6 +525,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "echo-client-id") ||
                  (config_pair.first == "user-context") ||
                  (config_pair.first == "match-client-id") ||
+                 (config_pair.first == "authoritative") ||
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||
                  (config_pair.first == "boot-file-name") ||
