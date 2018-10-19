@@ -1,9 +1,8 @@
-// Generated 201804111444
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.1.
 
 // Positions for Bison parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -51,28 +50,27 @@
 #  endif
 # endif
 
-#line 14 "agent_parser.yy" // location.cc:296
+#line 14 "agent_parser.yy" // location.cc:290
 namespace isc { namespace agent {
-#line 56 "position.hh" // location.cc:296
+#line 56 "position.hh" // location.cc:290
   /// Abstract a position.
   class position
   {
   public:
     /// Construct a position.
     explicit position (std::string* f = YY_NULLPTR,
-                       unsigned int l = 1u,
-                       unsigned int c = 1u)
+                       unsigned l = 1u,
+                       unsigned c = 1u)
       : filename (f)
       , line (l)
       , column (c)
-    {
-    }
+    {}
 
 
     /// Initialization.
     void initialize (std::string* fn = YY_NULLPTR,
-                     unsigned int l = 1u,
-                     unsigned int c = 1u)
+                     unsigned l = 1u,
+                     unsigned c = 1u)
     {
       filename = fn;
       line = l;
@@ -101,17 +99,15 @@ namespace isc { namespace agent {
     /// File name to which this position refers.
     std::string* filename;
     /// Current line number.
-    unsigned int line;
+    unsigned line;
     /// Current column number.
-    unsigned int column;
+    unsigned column;
 
   private:
-    /// Compute max(min, lhs+rhs) (provided min <= lhs).
-    static unsigned int add_ (unsigned int lhs, int rhs, unsigned int min)
+    /// Compute max(min, lhs+rhs).
+    static unsigned add_ (unsigned lhs, int rhs, int min)
     {
-      return (0 < rhs || -static_cast<unsigned int>(rhs) < lhs
-              ? rhs + lhs
-              : min);
+      return static_cast<unsigned>(std::max(min, static_cast<int>(lhs) + rhs));
     }
   };
 
@@ -167,7 +163,7 @@ namespace isc { namespace agent {
    ** \param pos a reference to the position to redirect
    */
   template <typename YYChar>
-  inline std::basic_ostream<YYChar>&
+  std::basic_ostream<YYChar>&
   operator<< (std::basic_ostream<YYChar>& ostr, const position& pos)
   {
     if (pos.filename)
@@ -175,7 +171,7 @@ namespace isc { namespace agent {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 14 "agent_parser.yy" // location.cc:296
+#line 14 "agent_parser.yy" // location.cc:290
 } } // isc::agent
-#line 180 "position.hh" // location.cc:296
+#line 177 "position.hh" // location.cc:290
 #endif // !YY_AGENT_POSITION_HH_INCLUDED

@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #ifndef YY_AGENT_AGENT_PARSER_H_INCLUDED
 # define YY_AGENT_AGENT_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "agent_parser.yy" // lalr1.cc:377
+#line 17 "agent_parser.yy" // lalr1.cc:380
 
 #include <string>
 #include <cc/data.h>
@@ -51,7 +51,7 @@ using namespace isc::agent;
 using namespace isc::data;
 using namespace std;
 
-#line 55 "agent_parser.h" // lalr1.cc:377
+#line 55 "agent_parser.h" // lalr1.cc:380
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -102,7 +102,7 @@ using namespace std;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -121,6 +121,13 @@ using namespace std;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+# ifndef YY_NULLPTR
+#  if defined __cplusplus && 201103L <= __cplusplus
+#   define YY_NULLPTR nullptr
+#  else
+#   define YY_NULLPTR 0
+#  endif
+# endif
 /* Debug traces.  */
 #ifndef AGENT_DEBUG
 # if defined YYDEBUG
@@ -134,9 +141,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined AGENT_DEBUG */
 
-#line 14 "agent_parser.yy" // lalr1.cc:377
+#line 14 "agent_parser.yy" // lalr1.cc:380
 namespace isc { namespace agent {
-#line 140 "agent_parser.h" // lalr1.cc:377
+#line 147 "agent_parser.h" // lalr1.cc:380
 
 
 
@@ -153,7 +160,8 @@ namespace isc { namespace agent {
 
     /// Empty construction.
     variant ()
-      : yytypeid_ (YY_NULLPTR)
+      : yybuffer_ ()
+      , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
@@ -179,7 +187,7 @@ namespace isc { namespace agent {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
-      return *new (yyas_<T> ()) T;
+      return *new (yyas_<T> ()) T ();
     }
 
     /// Instantiate a \a T in here from \a t.
@@ -198,6 +206,7 @@ namespace isc { namespace agent {
     T&
     as ()
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -208,6 +217,7 @@ namespace isc { namespace agent {
     const T&
     as () const
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -421,15 +431,15 @@ namespace isc { namespace agent {
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -737,7 +747,7 @@ namespace isc { namespace agent {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short int yypact_[];
+  static const short yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -748,14 +758,14 @@ namespace isc { namespace agent {
   static const signed char yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const short int yydefgoto_[];
+  static const short yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
   // number is the opposite.  If YYTABLE_NINF, syntax error.
   static const unsigned char yytable_[];
 
-  static const short int yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -776,7 +786,7 @@ namespace isc { namespace agent {
     static const char* const yytname_[];
 #if AGENT_DEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short int yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -841,6 +851,8 @@ namespace isc { namespace agent {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
+      /// Copy construct (for efficiency).
+      stack_symbol_type (const stack_symbol_type& that);
       /// Steal the contents from \a sym to build this.
       stack_symbol_type (state_type s, symbol_type& sym);
       /// Assignment, needed by push_back.
@@ -869,7 +881,7 @@ namespace isc { namespace agent {
     void yypush_ (const char* m, state_type s, symbol_type& sym);
 
     /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned int n = 1);
+    void yypop_ (unsigned n = 1);
 
     /// Constants.
     enum
@@ -928,12 +940,12 @@ namespace isc { namespace agent {
       25,    26,    27,    28,    29,    30,    31,    32,    33,    34,
       35,    36,    37,    38,    39,    40,    41,    42,    43,    44
     };
-    const unsigned int user_token_number_max_ = 299;
+    const unsigned user_token_number_max_ = 299;
     const token_number_type undef_token_ = 2;
 
-    if (static_cast<int>(t) <= yyeof_)
+    if (static_cast<int> (t) <= yyeof_)
       return yyeof_;
-    else if (static_cast<unsigned int> (t) <= user_token_number_max_)
+    else if (static_cast<unsigned> (t) <= user_token_number_max_)
       return translate_table[t];
     else
       return undef_token_;
@@ -947,19 +959,18 @@ namespace isc { namespace agent {
 
   // basic_symbol.
   template <typename Base>
-  inline
   AgentParser::basic_symbol<Base>::basic_symbol ()
     : value ()
+    , location ()
   {}
 
   template <typename Base>
-  inline
   AgentParser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
     : Base (other)
     , value ()
     , location (other.location)
   {
-      switch (other.type_get ())
+    switch (other.type_get ())
     {
       case 53: // value
       case 56: // map_value
@@ -989,16 +1000,14 @@ namespace isc { namespace agent {
 
   }
 
-
   template <typename Base>
-  inline
   AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
     : Base (t)
     , value ()
     , location (l)
   {
     (void) v;
-      switch (this->type_get ())
+    switch (this->type_get ())
     {
       case 53: // value
       case 56: // map_value
@@ -1033,40 +1042,39 @@ namespace isc { namespace agent {
   template <typename Base>
   AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
-    , value ()
     , location (l)
   {}
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
+  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
+  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
+  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
+  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+  AgentParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1074,14 +1082,12 @@ namespace isc { namespace agent {
 
 
   template <typename Base>
-  inline
   AgentParser::basic_symbol<Base>::~basic_symbol ()
   {
     clear ();
   }
 
   template <typename Base>
-  inline
   void
   AgentParser::basic_symbol<Base>::clear ()
   {
@@ -1096,7 +1102,7 @@ namespace isc { namespace agent {
     }
 
     // Type destructor.
-    switch (yytype)
+  switch (yytype)
     {
       case 53: // value
       case 56: // map_value
@@ -1128,7 +1134,6 @@ namespace isc { namespace agent {
   }
 
   template <typename Base>
-  inline
   bool
   AgentParser::basic_symbol<Base>::empty () const
   {
@@ -1136,12 +1141,11 @@ namespace isc { namespace agent {
   }
 
   template <typename Base>
-  inline
   void
   AgentParser::basic_symbol<Base>::move (basic_symbol& s)
   {
-    super_type::move(s);
-      switch (this->type_get ())
+    super_type::move (s);
+    switch (this->type_get ())
     {
       case 53: // value
       case 56: // map_value
@@ -1217,7 +1221,7 @@ namespace isc { namespace agent {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
     static
-    const unsigned short int
+    const unsigned short
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
@@ -1488,9 +1492,9 @@ namespace isc { namespace agent {
   }
 
 
-#line 14 "agent_parser.yy" // lalr1.cc:377
+#line 14 "agent_parser.yy" // lalr1.cc:380
 } } // isc::agent
-#line 1494 "agent_parser.h" // lalr1.cc:377
+#line 1498 "agent_parser.h" // lalr1.cc:380
 
 
 
