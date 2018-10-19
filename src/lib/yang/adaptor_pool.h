@@ -44,7 +44,7 @@ public:
     ///
     /// Move parameters from the subnet to each pool. Currently the only
     /// supported model is ietf-dhcpv6-server. The parameters moved are
-    /// valid-lifetime, preferred-lifetime, renew-timer, renbind-timer.
+    /// valid-lifetime, preferred-lifetime, renew-timer, rebind-timer.
     ///
     /// @param model Model name.
     /// @param subnet The subnet element.
@@ -58,7 +58,7 @@ public:
     ///
     /// Move parameters from pool to its partent subnet. Currently the only
     /// supported model is ietf-dhcpv6-server. The parameters moved are
-    /// valid-lifetime, preferred-lifetime, renew-timer, renbind-timer.
+    /// valid-lifetime, preferred-lifetime, renew-timer, rebind-timer.
     ///
     /// @note: currently it is the only from YANG to JSON aka
     /// post-processing adaptor.
