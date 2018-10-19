@@ -1990,8 +1990,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // Check the first error case: unknown client. We check this before
         // validating the address sent because we don't want to respond if
-        // we don't know this client.
-        if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
+        // we don't know this client, except if we're authoritative.
+        bool authoritative = original_subnet->getAuthoritative();
+        bool known_client = lease && lease->belongsToClient(hwaddr, client_id);
+        if (!authoritative && !known_client) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_NO_LEASE_INIT_REBOOT)
                 .arg(query->getLabel())
@@ -2001,9 +2003,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             return;
         }
 
-        // We know this client so we can now check if his notion of the
-        // IP address is correct.
-        if (lease && (lease->addr_ != hint)) {
+        // If we know this client, check if his notion of the IP address is
+        // correct, if we don't know him check, if we are authoritative.
+        if ((known_client && (lease->addr_ != hint))
+            || (!known_client && authoritative)) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
                 .arg(query->getLabel())
