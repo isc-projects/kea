@@ -5772,6 +5772,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
         "    \"name\": \"foo\"\n," // shared network values here
         "    \"interface\": \"eth0\",\n"
         "    \"match-client-id\": false,\n"
+        "    \"authoritative\": true,\n"
         "    \"next-server\": \"1.2.3.4\",\n"
         "    \"server-hostname\": \"foo\",\n"
         "    \"boot-file-name\": \"bar\",\n"
@@ -5846,6 +5847,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // These are values derived from shared network scope:
     EXPECT_EQ("eth0", s->getIface());
     EXPECT_FALSE(s->getMatchClientId());
+    EXPECT_TRUE(s->getAuthoritative());
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
     EXPECT_EQ("foo", s->getSname());
     EXPECT_EQ("bar", s->getFilename());
@@ -5861,6 +5863,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // These are values derived from shared network scope:
     EXPECT_EQ("eth0", s->getIface());
     EXPECT_TRUE(s->getMatchClientId());
+    EXPECT_TRUE(s->getAuthoritative());
     EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
     EXPECT_EQ("some-name.example.org", s->getSname());
     EXPECT_EQ("bootfile.efi", s->getFilename());
@@ -5880,6 +5883,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
     EXPECT_EQ("", s->getIface());
     EXPECT_TRUE(s->getMatchClientId());
+    EXPECT_FALSE(s->getAuthoritative());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
     EXPECT_TRUE(s->getSname().empty());
     EXPECT_TRUE(s->getFilename().empty());
