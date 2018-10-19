@@ -246,12 +246,13 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
-// This test verifies that it's possible to specify client-class
-// and match-client-id on shared-network level.
-TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
+// This test verifies that it's possible to specify client-class,
+// match-client-id, and authoritative on shared-network level.
+TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
+    config_element->set("authoritative", Element::create(true));
     config_element->set("match-client-id", Element::create(false));
     config_element->set("client-class", Element::create("alpha"));
 
@@ -264,6 +265,8 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     EXPECT_EQ("alpha", network->getClientClass());
 
     EXPECT_FALSE(network->getMatchClientId());
+
+    EXPECT_TRUE(network->getAuthoritative());
 }
 
 // This test verifies that parsing of the "relay" element.
