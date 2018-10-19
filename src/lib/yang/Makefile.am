@@ -10,6 +10,7 @@ libkea_yang_la_SOURCES += adaptor_host.cc adaptor_host.h
 libkea_yang_la_SOURCES += adaptor_pool.cc adaptor_pool.h
 libkea_yang_la_SOURCES += adaptor_option.cc adaptor_option.h
 libkea_yang_la_SOURCES += adaptor_subnet.cc adaptor_subnet.h
+libkea_yang_la_SOURCES += adaptor_config.cc adaptor_config.h
 libkea_yang_la_SOURCES += sysrepo_error.h
 libkea_yang_la_SOURCES += translator.cc translator.h
 libkea_yang_la_SOURCES += translator_control_socket.cc
@@ -43,6 +44,7 @@ libkea_yang_la_LDFLAGS = -no-undefined -version-info 0:0:0
 libkea_yang_includedir = $(pkgincludedir)/yang
 libkea_yang_include_HEADERS = \
 	adaptor.h \
+	adaptor_config.h \
 	adaptor_host.h \
 	adaptor_option.h \
 	adaptor_pool.h \
