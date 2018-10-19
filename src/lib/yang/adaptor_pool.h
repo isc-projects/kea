@@ -60,7 +60,7 @@ public:
     /// supported model is ietf-dhcpv6-server. The parameters moved are
     /// valid-lifetime, preferred-lifetime, renew-timer, renbind-timer.
     ///
-    /// @note: currently it is the only from YANH to JSON aka
+    /// @note: currently it is the only from YANG to JSON aka
     /// post-processing adaptor.
     ///
     /// @param model Model name.
