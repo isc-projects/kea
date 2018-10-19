@@ -786,8 +786,8 @@ public:
         ElementPtr response_arguments = Element::createMap();
         response_arguments->set("leases", getTestLeases4AsJson());
 
-        factory2_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -838,8 +838,8 @@ public:
         ElementPtr response_arguments = Element::createMap();
         response_arguments->set("leases", getTestLeases6AsJson());
 
-        factory2_->getResponseCreator()->setArguments("lease6-get-all", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease6-get-all", response_arguments);
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -1934,9 +1934,9 @@ TEST_F(HAServiceTest, processSynchronize4) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease4-get-all and dhcp-enable.
+    // lease4-get-page and dhcp-enable.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -1958,15 +1958,15 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
     // The server2 should only receive dhcp-disable commands. Remaining two should
     // not be sent.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
-// This test verifies that an error is reported when sending a lease4-get-all
+// This test verifies that an error is reported when sending a lease4-get-page
 // command causes an error.
 TEST_F(HAServiceTest, processSynchronizeLease4GetAllError) {
     // Setup the server2 to return an error to dhcp-disable commands.
-    factory2_->getResponseCreator()->setControlResult("lease4-get-all",
+    factory2_->getResponseCreator()->setControlResult("lease4-get-page",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -1980,7 +1980,7 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetAllError) {
     // The server2 should receive all commands. The dhcp-disable was successful, so
     // the dhcp-enable command must be sent to re-enable the service after failure.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2001,7 +2001,7 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
 
     // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2027,9 +2027,9 @@ TEST_F(HAServiceTest, processSynchronize6) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease6-get-all and dhcp-enable.
+    // lease6-get-page and dhcp-enable.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2051,15 +2051,15 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
     // The server2 should only receive dhcp-disable commands. Remaining two should
     // not be sent.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
-// This test verifies that an error is reported when sending a lease6-get-all
+// This test verifies that an error is reported when sending a lease6-get-page
 // command causes an error.
 TEST_F(HAServiceTest, processSynchronizeLease6GetAllError) {
     // Setup the server2 to return an error to dhcp-disable commands.
-    factory2_->getResponseCreator()->setControlResult("lease6-get-all",
+    factory2_->getResponseCreator()->setControlResult("lease6-get-page",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -2073,7 +2073,7 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetAllError) {
     // The server2 should receive all commands. The dhcp-disable was successful, so
     // the dhcp-enable command must be sent to re-enable the service after failure.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2094,7 +2094,7 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
 
     // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2412,7 +2412,7 @@ public:
 
     /// @brief Enable response to commands required for leases synchronization.
     ///
-    /// Enables dhcp-disable, dhcp-enable and lease4-get-all commands. The last
+    /// Enables dhcp-disable, dhcp-enable and lease4-get-page commands. The last
     /// of them returns a bunch of test leases.
     void enableRespondLeaseFetching() {
         // Create IPv4 leases which will be fetched from the other server.
@@ -2425,7 +2425,7 @@ public:
         ElementPtr response_arguments = Element::createMap();
         response_arguments->set("leases", getLeasesAsJson(leases4));
 
-        factory_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
     }
 
     /// @brief Starts up the partner.
@@ -3063,7 +3063,7 @@ TEST_F(HAServiceStateMachineTest, waitingSyncingReadyLoadBalancing) {
     // the partner's IO service in thread (in background).
     testSynchronousCommands([this, &partner]() {
 
-        // SYNCING state: the partner is up but it won't respond to the lease4-get-all
+        // SYNCING state: the partner is up but it won't respond to the lease4-get-page
         // command correctly. This should leave us in the SYNCING state until we finally
         // can synchronize.
         service_->runModel(HAService::NOP_EVT);

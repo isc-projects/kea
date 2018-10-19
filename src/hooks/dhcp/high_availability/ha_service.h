@@ -545,7 +545,9 @@ protected:
     /// remaining leases.
     ///
     /// This method variant uses default HTTP client for communication.
-    void asyncSyncLeases();
+    ///
+    /// @param limit Limit of leases on the page.
+    void asyncSyncLeases(const uint32_t limit = 1024);
 
     /// @brief Asynchronously reads leases from a peer and updates local
     /// lease database using a provided client instance.
@@ -563,10 +565,18 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
+    /// @param lease Pointer to the last lease returned on the previous
+    /// page of leases. This lease is used to set the value of the "from"
+    /// parameter in the lease4-get-page and lease6-get-page commands. If this
+    /// command is sent to fetch the first page, the @c last_lease parameter
+    /// should be set to null.
+    /// @param limit Limit of leases on the page.
     /// @param post_sync_action pointer to the function to be executed when
     /// lease database synchronization is complete. If this is null, no
     /// post synchronization action is invoked.
     void asyncSyncLeases(http::HttpClient& http_client,
+                         const dhcp::LeasePtr& last_lease,
+                         const uint32_t limit,
                          const PostRequestCallback& post_sync_action);
 
 public:
@@ -605,11 +615,12 @@ protected:
     /// @param max_period maximum number of seconds to disable DHCP service
     /// of the peer. This value is used in dhcp-disable command issued to
     /// the peer before the lease4-get-all command.
+    /// @param page_limit Maximum size of a single page of leases to be returned.
     ///
     /// @return Synchronization result according to the status codes returned
     /// in responses to control commands.
     int synchronize(std::string& status_message, const std::string& server_name,
-                    const unsigned int max_period);
+                    const unsigned int max_period, const uint32_t page_limit);
 
 public:
 
