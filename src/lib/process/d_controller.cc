@@ -221,6 +221,11 @@ DControllerBase::checkConfigOnly() {
 void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
+
+    if (argc == 1) {
+        isc_throw(InvalidUsage, "");
+    }
+
     // Iterate over the given command line options. If its a stock option
     // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
