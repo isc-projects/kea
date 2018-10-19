@@ -6,7 +6,7 @@
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <!-- Converted by db4-upgrade version 1.1 -->
-<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-netconf">
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="netconf">
   <title>YANG/NETCONF Support</title>
 
   <section xml:id="netconf-overview">
@@ -21,67 +21,47 @@
   </section>
 
   <section xml:id="netconf-install">
-    <title>Installing NETCONF Dependencies</title>
+    <title>Installing NETCONF</title>
 
-    <para>Note that to get NETCONF capabilities Kea uses Sysrepo software, which has many
-    dependencies. Unfortunately, many of them are not available as packages, so some need
-    to be compiled manually.</para>
-
-    <para>The following installation instruction was tested on Ubuntu 18.04.</para>
-
-    <para>STEP 1. Install dependencies. Note that some of those dependencies are likely to
-    be present in your system already.
-
-<screen>
-$ sudo apt-get install git cmake build-essential bison flex libpcre3-dev libev-dev libavl-dev libprotobuf-c-dev protobuf-c-compiler swig
-</screen>
-
-    </para>
-
-    <para>STEP 2. Install libyang. Download libyang from
-    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-          xlink:href="https://github.com/CESNET/libyang/releases" />. The version used
-    during Kea development was 0.16-r1.
-
-<screen>
-    libyang-0.16-r1.tar.gz
-    cd libyang-0.16-r1
-    mkdir build
-    cd build
-    cmake ..
-    make
-    sudo make install
-</screen>
-
-    For detailed build instructions, see
-    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-          xlink:href="https://github.com/CESNET/libyang" /></para>
+    <para>Note that to get NETCONF capabilities Kea uses Sysrepo software, which
+    has many dependencies. Unfortunately, some of them are not available as
+    packages and need to be compiled manually.</para>
 
     <para>Please note that libyang building requires a gcc version at
     least 4.9 so on some environments like CentOS 7.5 the system
     compiler cannot be used.</para>
 
-    <para>STEP 3. Install syrepo. Download sysrepo from
-    <link xmlns:xlink="http://www.w3.org/1999/xlink"
-          xlink:href="https://github.com/sysrepo/sysrepo/releases" />.
-    The version used during Kea development was 0.7.5.
+    <para>The following sections provide installation instructions for Ubuntu
+    18.04 and CentOS7.5. Due to more modern compiler and many available
+    packages, the installation procedure is much simplers on Ubuntu.</para>
 
-<screen>
-tar zxvf sysrepo-0.7.5.tar.gz
-cd sysrepo-0.7.5
-mkdir build
-cd build
-cmake -DCMAKE_BUILD_TYPE=Debug -DGEN_LANGUAGE_BINDINGS=ON -DGEN_CPP_BINDINGS=ON \
-      -DGEN_PYTHON_BINDINGS=OFF -DGEN_LUA_BINDINGS=OFF -DENABLE_TESTS=OFF ..
-make
-sudo make install
-</screen>
+    <section xml:id="netconf-ubuntu-install">
+      <title>Installing NETCONF on Ubuntu 18.04</title>
 
-For detailed instructions, see Build &amp; Installation Steps Section on the project page
-located at <link xmlns:xlink="http://www.w3.org/1999/xlink"
-                 xlink:href="https://github.com/sysrepo/sysrepo" />.
-</para>
-</section>
+      <para>For detailed installation instructions see
+      <uri xmlns:xlink="http://www.w3.org/1999/xlink"
+           xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/docs/ubuntu-installation-notes">
+        Ubuntu installation notes page</uri>.</para>
+    </section>
+
+    <section xml:id="netconf-centos-install">
+      <title>Installing NETCONF on CentOS 7.5</title>
+
+      <para>For detailed installation instructions see
+      <uri xmlns:xlink="http://www.w3.org/1999/xlink"
+           xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/docs/centos-installation-notes">
+        CentOS installation notes page</uri>.</para>
+      
+      <para>CentOS 7.5 has a very old gcc compiler 4.8.5.  Some sysrepo
+      dependencies require at least 4.9, which unfortunately means that
+      a new compiler has to be installed. Also, many of the Sysrepo dependencies
+      are not avalable in CentOS as packages, so for the time being they
+      need to be installed from sources. The situation is expected
+      to improve over time as more and more CentOS/RedHat packages
+      become available.</para>
+
+    </section>
+  </section> <!-- end of installation notes -->
 
   <section>
     <title>Quick sysrepo overview</title>
