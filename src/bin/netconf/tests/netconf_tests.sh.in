@@ -98,6 +98,27 @@ usage_test() {
     test_finish 0
 }
 
+# This test verifies that no argument is not reported as a PID file error.
+no_argument_test() {
+    local TESTNAME="${1}"
+    local EXP_CODE="${2}"
+
+    # Log the start of the test and print test name.
+    test_start $TESTNAME
+    # Remove dangling Kea instances and remove log files.
+    cleanup
+
+    # Check it
+    printf "Running command %s.\n" "\"${bin_path}/${bin}\""
+    ${bin_path}/${bin} | grep PID 2>&1
+    exit_code=$?
+    if [ ${exit_code} -ne $EXP_CODE ]; then
+        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
+        clean_exit 1
+    fi
+    test_finish 0
+}
+
 # This test verifies that syntax checking works properly. This function
 # requires 3 parameters:
 # testname
@@ -112,7 +133,6 @@ syntax_check_test() {
     test_start $TESTNAME
     # Remove dangling Kea instances and remove log files.
     cleanup
-
     # Create correct configuration file.
     create_config "${CONFIG}"
     # Check it
@@ -185,40 +205,14 @@ shutdown_test() {
     test_finish 0
 }
 
-# This test verifies that no argument is not reported as a PID file error.
-no_argument_test() {
-    local TESTNAME="${1}"
-    local EXP_CODE="${2}"
-
-    # Log the start of the test and print test name.
-    test_start $TESTNAME
-    # Remove dangling Kea instances and remove log files.
-    cleanup
-
-    # Check it
-    printf "Running command %s.\n" "\"${bin_path}/${bin}\""
-    ${bin_path}/${bin} | grep PID 2>&1
-    exit_code=$?
-    if [ ${exit_code} -ne $EXP_CODE ]; then
-        printf "ERROR: expected exit code ${EXP_CODE}, got ${exit_code}\n"
-        clean_exit 1
-    fi
-    test_finish 0
-}
-
 version_test "netconf.version"
 usage_test "netconf.invalid-param" "-f" 1
 usage_test "netconf.dash-h" "-h" 1
 usage_test "netconf.dash-v" "-v" 0
-
-# The following tests are currently disabled. Once we have a parser that is
-# able to understand logger configuration, those tests (imported from DHCPv4)
-# should work.
-#shutdown_test "netconf.sigterm_test" 15
-#shutdown_test "netconf.sigint_test" 2
+no_argument_test "netconf.no-argument" 1
+shutdown_test "netconf.sigterm_test" 15
+shutdown_test "netconf.sigint_test" 2
 logger_vars_test "netconf.variables"
 syntax_check_test "netconf.syntax_check_success" "${CONFIG}" 0
 syntax_check_test "netconf.syntax_check_bad_syntax" "${CONFIG_BAD_SYNTAX}" 1
 syntax_check_test "netconf.syntax_check_bad_values" "${CONFIG_BAD_VALUE}" 1
-
-no_argument_test "netconf.no-argument" 1
