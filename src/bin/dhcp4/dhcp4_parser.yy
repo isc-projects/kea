@@ -67,6 +67,7 @@ using namespace std;
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
+  AUTHORITATIVE "authoritative"
   NEXT_SERVER "next-server"
   SERVER_HOSTNAME "server-hostname"
   BOOT_FILE_NAME "boot-file-name"
@@ -451,6 +452,7 @@ global_param: valid_lifetime
             | dhcp_ddns
             | echo_client_id
             | match_client_id
+            | authoritative
             | next_server
             | server_hostname
             | boot_file_name
@@ -499,6 +501,11 @@ echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
 match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
     ElementPtr match(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("match-client-id", match);
+};
+
+authoritative: AUTHORITATIVE COLON BOOLEAN {
+    ElementPtr prf(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("authoritative", prf);
 };
 
 
@@ -1041,6 +1048,7 @@ subnet4_param: valid_lifetime
              | reservation_mode
              | relay
              | match_client_id
+             | authoritative
              | next_server
              | server_hostname
              | boot_file_name
@@ -1169,6 +1177,7 @@ shared_network_param: name
                     | rebind_timer
                     | option_data_list
                     | match_client_id
+                    | authoritative
                     | next_server
                     | server_hostname
                     | boot_file_name

@@ -195,6 +195,9 @@ Network4::toElement() const {
     // Set match-client-id
     map->set("match-client-id", Element::create(getMatchClientId()));
 
+    // Set authoritative
+    map->set("authoritative", Element::create(getAuthoritative()));
+
     return (map);
 }
 

@@ -368,7 +368,7 @@ public:
 
     /// @brief Constructor.
     Network4()
-        : Network(), match_client_id_(true) {
+        : Network(), match_client_id_(true), authoritative_(false) {
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
@@ -388,6 +388,24 @@ public:
         match_client_id_ = match;
     }
 
+    /// @brief Returns the flag indicating if requests for unknown IP addresses
+    /// should be rejected with DHCPNAK instead of ignored.
+    ///
+    /// @return true if requests for unknown IP addresses should be rejected,
+    /// false otherwise.
+    bool getAuthoritative() const {
+        return (authoritative_);
+    }
+
+    /// @brief Sets the flag indicating if requests for unknown IP addresses
+    /// should be rejected with DHCPNAK instead of ignored.
+    ///
+    /// @param match If this value is true, the requests for unknown IP
+    /// addresses will be rejected with DHCPNAK messages
+    void setAuthoritative(const bool authoritative) {
+        authoritative_ = authoritative;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -404,6 +422,9 @@ private:
     /// @brief Should server use client identifiers for client lease
     /// lookup.
     bool match_client_id_;
+
+    /// @brief Should requests for unknown IP addresses be rejected.
+    bool authoritative_;
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv6 case.

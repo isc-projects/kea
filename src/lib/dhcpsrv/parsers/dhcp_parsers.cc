@@ -712,6 +712,12 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     bool match_client_id = getBoolean(params, "match-client-id");
     subnet4->setMatchClientId(match_client_id);
 
+    // Set the authoritative value for the subnet. It is always present.
+    // If not explicitly specified, the default value was filled in when
+    // SimpleParser4::setAllDefaults was called.
+    bool authoritative = getBoolean(params, "authoritative");
+    subnet4->setAuthoritative(authoritative);
+
     // Set next-server. The default value is 0.0.0.0. Nevertheless, the
     // user could have messed that up by specifying incorrect value.
     // To avoid using 0.0.0.0, user can specify "".

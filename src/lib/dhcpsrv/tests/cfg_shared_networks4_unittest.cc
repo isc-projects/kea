@@ -125,6 +125,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     std::string expected =
         "[\n"
         "  {\n"
+        "    \"authoritative\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"dog\",\n"
@@ -137,6 +138,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"valid-lifetime\": 300\n"
         "  },\n"
         "  {\n"
+        "    \"authoritative\": false,\n"
         "    \"interface\": \"eth0\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"frog\",\n"

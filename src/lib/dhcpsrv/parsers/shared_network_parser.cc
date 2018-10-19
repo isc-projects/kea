@@ -65,6 +65,11 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
                                                         "match-client-id"));
         }
 
+        if (shared_network_data->contains("authoritative")) {
+            shared_network->setAuthoritative(getBoolean(shared_network_data,
+                                                        "authoritative"));
+        }
+
         if (shared_network_data->contains("client-class")) {
             std::string client_class = getString(shared_network_data, "client-class");
             if (!client_class.empty()) {
