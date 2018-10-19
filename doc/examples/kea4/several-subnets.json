@@ -40,6 +40,12 @@
 // globally, but can be overridden on a subnet level.
   "match-client-id": true,
 
+  // By default, Kea ignores requests by clients for unknown IP addresses,
+  // because other non-cooperating DHCP servers could reside on the same
+  // network (RFC 2131). This parameter is defined globally, but can be
+  // overriden on a subnet level
+  "authoritative": false,
+
 // The following list defines subnets. Each subnet consists of at
 // least subnet and pool entries.
   "subnet4": [
