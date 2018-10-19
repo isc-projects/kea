@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <yang/translator_class.h>
+#include <yang/yang_models.h>
 #include <yang/tests/sysrepo_setup.h>
 
 #include <gtest/gtest.h>
@@ -38,7 +39,7 @@ public:
 // This test verifies that an empty client class list can be properly
 // translated from YANG to JSON.
 TEST_F(TranslatorClassesTest, getEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Get the client class list and checks it is empty.
     const string& xpath = "/kea-dhcp4-server:config/client-classes";
@@ -50,7 +51,7 @@ TEST_F(TranslatorClassesTest, getEmpty) {
 // This test verifies that one client class can be properly translated
 // from YANG to JSON.
 TEST_F(TranslatorClassesTest, get) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Create the client class.
     const string& xpath = "/kea-dhcp6-server:config/client-classes";
@@ -80,7 +81,7 @@ TEST_F(TranslatorClassesTest, get) {
 // This test verifies that an empty client class list can be properly
 // translated from JSON to YANG.
 TEST_F(TranslatorClassesTest, setEmpty) {
-    useModel("kea-dhcp4-server");
+    useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
     const string& xpath = "/kea-dhcp4-server:config/client-classes";
@@ -101,7 +102,7 @@ TEST_F(TranslatorClassesTest, setEmpty) {
 // This test verifies that one client class can be properly translated
 // from JSON to YANG.
 TEST_F(TranslatorClassesTest, set) {
-    useModel("kea-dhcp6-server");
+    useModel(KEA_DHCP6_SERVER);
 
     // Set one client class.
     const string& xpath = "/kea-dhcp6-server:config/client-classes";

@@ -6,6 +6,7 @@
 
 #include <yang/translator_class.h>
 #include <yang/adaptor.h>
+#include <yang/yang_models.h>
 #include <sstream>
 
 using namespace std;
@@ -29,8 +30,8 @@ TranslatorClass::~TranslatorClass() {
 ElementPtr
 TranslatorClass::getClass(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getClassKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -63,7 +64,7 @@ TranslatorClass::getClassKea(const string& xpath) {
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    if (model_ == "kea-dhcp4-server") {
+    if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = getOptionDefList(xpath +"/option-def-list");
         if (defs && (defs->size() > 0)) {
             result->set("option-def", defs);
@@ -91,8 +92,8 @@ TranslatorClass::getClassKea(const string& xpath) {
 void
 TranslatorClass::setClass(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setClassKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
@@ -124,7 +125,7 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
         setOptionDataList(xpath + "/option-data-list", options);
         created = true;
     }
-    if (model_ == "kea-dhcp4-server") {
+    if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = elem->get("option-def");
         if (defs) {
             setOptionDefList(xpath + "/option-def-list", defs);
@@ -175,8 +176,8 @@ TranslatorClasses::~TranslatorClasses() {
 ConstElementPtr
 TranslatorClasses::getClasses(const string& xpath) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             return (getClassesKea(xpath));
         }
     } catch (const sysrepo_exception& ex) {
@@ -213,8 +214,8 @@ TranslatorClasses::getClassesKea(const string& xpath) {
 void
 TranslatorClasses::setClasses(const string& xpath, ConstElementPtr elem) {
     try {
-        if ((model_ == "kea-dhcp4-server") ||
-            (model_ == "kea-dhcp6-server")) {
+        if ((model_ == KEA_DHCP4_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
             setClassesKea(xpath, elem);
         } else {
             isc_throw(NotImplemented,
