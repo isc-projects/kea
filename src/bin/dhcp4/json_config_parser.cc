@@ -191,6 +191,7 @@ public:
             // Let's check if all subnets have either the same interface
             // or don't have the interface specified at all.
             string iface = (*net)->getIface();
+            bool authoritative = (*net)->getAuthoritative();
 
             const Subnet4Collection* subnets = (*net)->getAllSubnets();
             if (subnets) {
@@ -210,6 +211,12 @@ public:
                                   << " has specified interface " << (*subnet)->getIface()
                                   << ", but earlier subnet in the same shared-network"
                                   << " or the shared-network itself used " << iface);
+                    }
+
+                    if (authoritative != (*subnet)->getAuthoritative()) {
+                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
+                                  << " has different authoritative setting " << (*subnet)->getAuthoritative()
+                                  << " than the shared-network itself: " << authoritative);
                     }
 
                     // Let's collect the subnets in case we later find out the
