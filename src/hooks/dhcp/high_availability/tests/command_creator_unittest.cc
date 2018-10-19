@@ -10,12 +10,14 @@
 #include <command_creator.h>
 #include <asiolink/io_address.h>
 #include <cc/data.h>
+#include <exceptions/exceptions.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
 #include <vector>
 
+using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
@@ -204,6 +206,55 @@ TEST(CommandCreatorTest, createLease4GetAll) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease4-get-all", "dhcp4"));
 }
 
+// This test verifies that the lease4-get-page command is correct when
+// first page is fetched.
+TEST(CommandCreatorTest, createLease4GetPageStart) {
+    Lease4Ptr lease4;
+    ConstElementPtr command = CommandCreator::createLease4GetPage(lease4, 10);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease4-get-page", "dhcp4",
+                                              arguments));
+
+    ConstElementPtr from = arguments->get("from");
+    ASSERT_TRUE(from);
+    EXPECT_EQ(Element::string, from->getType());
+    EXPECT_EQ("start", from->stringValue());
+
+    ConstElementPtr limit = arguments->get("limit");
+    ASSERT_TRUE(limit);
+    ASSERT_EQ(Element::integer, limit->getType());
+    EXPECT_EQ(10, limit->intValue());
+}
+
+// This test verifies that the lease4-get-page command is correct when next
+// page is fetched.
+TEST(CommandCreatorTest, createLease4GetPageAddress) {
+    Lease4Ptr lease4(new Lease4());
+    lease4->addr_ = IOAddress("1.2.3.4");
+
+    ConstElementPtr command = CommandCreator::createLease4GetPage(lease4, 15);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease4-get-page", "dhcp4",
+                                              arguments));
+
+    ConstElementPtr from = arguments->get("from");
+    ASSERT_TRUE(from);
+    EXPECT_EQ(Element::string, from->getType());
+    EXPECT_EQ("1.2.3.4", from->stringValue());
+
+    ConstElementPtr limit = arguments->get("limit");
+    ASSERT_TRUE(limit);
+    ASSERT_EQ(Element::integer, limit->getType());
+    EXPECT_EQ(15, limit->intValue());
+}
+
+// This test verifies that exception is thrown if limit is set to 0 while
+// creating lease4-get-page command.
+TEST(CommandCreatorTest, createLease4GetPageZeroLimit) {
+    Lease4Ptr lease4;
+    EXPECT_THROW(CommandCreator::createLease4GetPage(lease4, 0), BadValue);
+}
+
 // This test verifies that the dhcp-disable command (DHCPv6 case) is
 // correct.
 TEST(CommandCreatorTest, createDHCPDisable6) {
@@ -258,5 +309,54 @@ TEST(CommandCreatorTest, createLease6GetAll) {
     ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-get-all", "dhcp6"));
 }
 
+
+// This test verifies that the lease6-get-page command is correct when
+// first page is fetched.
+TEST(CommandCreatorTest, createLease6GetPageStart) {
+    Lease6Ptr lease6;
+    ConstElementPtr command = CommandCreator::createLease6GetPage(lease6, 10);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-get-page", "dhcp6",
+                                              arguments));
+
+    ConstElementPtr from = arguments->get("from");
+    ASSERT_TRUE(from);
+    EXPECT_EQ(Element::string, from->getType());
+    EXPECT_EQ("start", from->stringValue());
+
+    ConstElementPtr limit = arguments->get("limit");
+    ASSERT_TRUE(limit);
+    ASSERT_EQ(Element::integer, limit->getType());
+    EXPECT_EQ(10, limit->intValue());
+}
+
+// This test verifies that the lease6-get-page command is correct when next
+// page is fetched.
+TEST(CommandCreatorTest, createLease6GetPageAddress) {
+    Lease6Ptr lease6(new Lease6());
+    lease6->addr_ = IOAddress("2001:db8:1::1");
+
+    ConstElementPtr command = CommandCreator::createLease6GetPage(lease6, 15);
+    ConstElementPtr arguments;
+    ASSERT_NO_FATAL_FAILURE(testCommandBasics(command, "lease6-get-page", "dhcp6",
+                                              arguments));
+
+    ConstElementPtr from = arguments->get("from");
+    ASSERT_TRUE(from);
+    EXPECT_EQ(Element::string, from->getType());
+    EXPECT_EQ("2001:db8:1::1", from->stringValue());
+
+    ConstElementPtr limit = arguments->get("limit");
+    ASSERT_TRUE(limit);
+    ASSERT_EQ(Element::integer, limit->getType());
+    EXPECT_EQ(15, limit->intValue());
+}
+
+// This test verifies that exception is thrown if limit is set to 0 while
+// creating lease6-get-page command.
+TEST(CommandCreatorTest, createLease6GetPageZeroLimit) {
+    Lease6Ptr lease6;
+    EXPECT_THROW(CommandCreator::createLease6GetPage(lease6, 0), BadValue);
+}
 
 }
