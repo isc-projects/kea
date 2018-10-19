@@ -50,6 +50,7 @@
             "match-client-id": false,
             "option-data": [ ],
             "rebind-timer": 150,
+            "authoritative": true,
 
             // If all the traffic coming from that shared network is reachable
             // via relay and that relay always use the same IP address, you

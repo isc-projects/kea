@@ -115,6 +115,12 @@
     // can be overridden on a subnet level.
     "match-client-id": true,
 
+    // By default, Kea ignores requests by clients for unknown IP addresses,
+    // because other non-cooperating DHCP servers could reside on the same
+    // network (RFC 2131). This parameter is defined globally, but can be
+    // overriden on a subnet level
+    "authoritative": false,
+
     // The following list defines subnets. Each subnet consists of at
     // least subnet and pool entries. One extra feature that requires
     // some explanation is user-context. This is a structure that you can
@@ -157,6 +163,14 @@
             "relay": {
                 "ip-address": "192.168.1.1"
             }
+        },
+        {
+            // This particular subnet has the authoritative value changed.
+            // This casuses Kea to reply to requests with unknown IP addresses
+            // with a DHCPNAK message.
+            "pools": [ { "pool": "192.0.5.100 - 192.0.5.200" } ],
+            "subnet": "192.0.5.0/24",
+            "authoritative": true
         }
     ]
 },
