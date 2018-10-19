@@ -1551,6 +1551,81 @@ TEST_F(Dhcp4ParserTest, matchClientIdGlobal) {
     EXPECT_TRUE(subnet2->getMatchClientId());
 }
 
+// This test checks that the global authoritative parameter is optional
+// and that values under the subnet are used.
+TEST_F(Dhcp4ParserTest, authoritativeNoGlobal) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"subnet4\": [ "
+        "{"
+        "    \"authoritative\": true,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        "},"
+        "{"
+        "    \"authoritative\": false,"
+        "    \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet1);
+    EXPECT_TRUE(subnet1->getAuthoritative());
+
+    Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet2);
+    EXPECT_FALSE(subnet2->getAuthoritative());
+}
+
+// This test checks that the global authoritative parameter is used
+// when there is no such parameter under subnet and that the parameter
+// specified for a subnet overrides the global setting.
+TEST_F(Dhcp4ParserTest, authoritativeGlobal) {
+    std::string config = "{ " + genIfaceConfig() + "," +
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"authoritative\": true,"
+        "\"subnet4\": [ "
+        "{"
+        "    \"authoritative\": false,"
+        "    \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\""
+        "},"
+        "{"
+        "    \"pools\": [ { \"pool\": \"192.0.3.1 - 192.0.3.100\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        "} ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(config));
+    extractConfig(config);
+
+    ConstElementPtr status;
+    ASSERT_NO_THROW(status = configureDhcp4Server(*srv_, json));
+    checkResult(status, 0);
+
+    CfgSubnets4Ptr cfg = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    Subnet4Ptr subnet1 = cfg->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet1);
+    EXPECT_FALSE(subnet1->getAuthoritative());
+
+    Subnet4Ptr subnet2 = cfg->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet2);
+    EXPECT_TRUE(subnet2->getAuthoritative());
+}
+
 // This test checks if it is possible to override global values
 // on a per subnet basis.
 TEST_F(Dhcp4ParserTest, subnetLocal) {
