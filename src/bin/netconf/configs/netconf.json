@@ -12,5 +12,24 @@
                 }
             }
         }
+/* Remove comments to get traces in logs.
+    },
+    "Logging":
+    {
+        "loggers":
+        [
+            {
+                "name": "kea-netconf",
+                "output_options":
+                [
+                    {
+                        "output": "stderr"
+                    }
+                ],
+                "severity": "DEBUG",
+                "debuglevel": 99
+            }
+        ]
+*/
     }
 }
