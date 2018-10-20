@@ -280,6 +280,49 @@ AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
 }
 
 void
+AdaptorConfig::requireClassesPools(ConstElementPtr pools) {
+    if (pools && (pools->size() > 0)) {
+        for (size_t i = 0; i < pools->size(); ++i) {
+            ElementPtr pool = pools->getNonConst(i);
+            ConstElementPtr requires = pool->get("require-client-classes");
+            if (requires && (requires->size() == 0)) {
+                pool->remove("require-client-classes");
+            }
+        }
+    }
+}
+
+void
+AdaptorConfig::requireClassesSubnets(ConstElementPtr subnets) {
+    if (subnets && (subnets->size() > 0)) {
+        for (size_t i = 0; i < subnets->size(); ++i) {
+            ElementPtr subnet = subnets->getNonConst(i);
+            requireClassesPools(subnet->get("pools"));
+            requireClassesPools(subnet->get("pd-pools"));
+            ConstElementPtr requires = subnet->get("require-client-classes");
+            if (requires && (requires->size() == 0)) {
+                subnet->remove("require-client-classes");
+            }
+        }
+    }
+}
+
+void
+AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
+                                            const string& subsel) {
+    if (networks && (networks->size() > 0)) {
+        for (size_t i = 0; i < networks->size(); ++i) {
+            ElementPtr network = networks->getNonConst(i);
+            requireClassesSubnets(network->get(subsel));
+            ConstElementPtr requires = network->get("require-client-classes");
+            if (requires && (requires->size() == 0)) {
+                network->remove("require-client-classes");
+            }
+        }
+    }
+}
+
+void
 AdaptorConfig::hostList(ConstElementPtr hosts) {
     if (hosts && (hosts->size() > 0)) {
         for (size_t i = 0; i < hosts->size(); ++i) {
@@ -425,6 +468,9 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
 
     relaySubnets(subnets);
     relaySharedNetworks(networks, subsel);
+
+    requireClassesSubnets(subnets);
+    requireClassesSharedNetworks(networks, subsel);
 
     updateDatabase(dhcp);
 }
