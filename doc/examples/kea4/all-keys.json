@@ -1,5 +1,7 @@
 // This is not an example configuratiion but a test sample for configuration
 // management tools. This in no way reflect a real configuration.
+// If you need to load this file you have to update the interface name (eth1)
+// and the hook library path (/opt/lib/hooks).
 {
   "Dhcp4": {
     "boot-file-name": "/dev/null",
@@ -242,12 +244,14 @@
               {
                 "client-class": "phones_server2",
                 "option-data": [],
-                "pool": "192.3.0.1/16"
+                "pool": "192.3.0.1/16",
+                "require-client-classes": []
               },
               {
                 "client-class": "laptops_server2",
                 "option-data": [],
-                "pool": "192.4.0.1/16"
+                "pool": "192.4.0.1/16",
+                "require-client-classes": []
               }
             ],
             "rebind-timer": 40,
