@@ -1,0 +1,332 @@
+// This is not an example configuratiion but a test sample for configuration
+// management tools. This in no way reflect a real configuration.
+{
+  "Dhcp4": {
+    "boot-file-name": "/dev/null",
+    "client-classes": [
+      {
+        "boot-file-name": "",
+        "name": "phones_server1",
+        "next-server": "0.0.0.0",
+        "option-data": [],
+        "option-def": [],
+        "server-hostname": "",
+        "test": "member('HA_server1')"
+      },
+      {
+        "boot-file-name": "",
+        "name": "phones_server2",
+        "next-server": "0.0.0.0",
+        "option-data": [],
+        "option-def": [],
+        "server-hostname": "",
+        "test": "member('HA_server2')"
+      },
+      {
+        "boot-file-name": "",
+        "name": "laptops_server1",
+        "next-server": "0.0.0.0",
+        "option-data": [],
+        "option-def": [],
+        "server-hostname": "",
+        "test": "member('HA_server1')"
+      },
+      {
+        "boot-file-name": "",
+        "name": "laptops_server2",
+        "next-server": "0.0.0.0",
+        "option-data": [],
+        "option-def": [],
+        "server-hostname": "",
+        "test": "member('HA_server2')"
+      },
+      {
+        "only-if-required": true,
+        "name": "late",
+        "test": "member('ALL')"
+      }
+    ],
+    "control-socket": {
+      "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
+      "socket-type": "unix"
+    },
+    "decline-probation-period": 86400,
+    "dhcp-ddns": {
+      "always-include-fqdn": false,
+      "enable-updates": false,
+      "generated-prefix": "myhost",
+      "hostname-char-replacement": "",
+      "hostname-char-set": "",
+      "max-queue-size": 1024,
+      "ncr-format": "JSON",
+      "ncr-protocol": "UDP",
+      "override-client-update": false,
+      "override-no-update": false,
+      "qualifying-suffix": "",
+      "replace-client-name": "never",
+      "sender-ip": "0.0.0.0",
+      "sender-port": 0,
+      "server-ip": "127.0.0.1",
+      "server-port": 53001
+    },
+    "dhcp4o6-port": 0,
+    "echo-client-id": true,
+    "expired-leases-processing": {
+      "flush-reclaimed-timer-wait-time": 25,
+      "hold-reclaimed-time": 3600,
+      "max-reclaim-leases": 100,
+      "max-reclaim-time": 250,
+      "reclaim-timer-wait-time": 10,
+      "unwarned-reclaim-cycles": 5
+    },
+    "hooks-libraries": [
+      {
+        "library": "/opt/lib/hooks/libdhcp_lease_cmds.so",
+        "parameters": {}
+      },
+      {
+        "library": "/opt/lib/hooks/libdhcp_ha.so",
+        "parameters": {
+          "high-availability": [
+            {
+              "heartbeat-delay": 10000,
+              "max-ack-delay": 5000,
+              "max-response-delay": 10000,
+              "max-unacked-clients": 0,
+              "mode": "load-balancing",
+              "peers": [
+                {
+                  "auto-failover": true,
+                  "name": "server1",
+                  "role": "primary",
+                  "url": "http://192.168.56.33:8080/"
+                },
+                {
+                  "auto-failover": true,
+                  "name": "server2",
+                  "role": "secondary",
+                  "url": "http://192.168.56.66:8080/"
+                }
+              ],
+              "send-lease-updates": true,
+              "state-machine": {
+                "states": [
+                  {
+                    "pause": "always",
+                    "state": "waiting"
+                  },
+                  {
+                    "pause": "once",
+                    "state": "partner-down"
+                  }
+                ]
+              },
+              "sync-leases": true,
+              "sync-timeout": 60000,
+              "this-server-name": "server1"
+            }
+          ]
+        }
+      }
+    ],
+    "hosts-databases": [
+      {
+        "name": "kea",
+        "host": "localhost",
+        "password": "kea",
+        "port": 3306,
+        "type": "mysql",
+        "user": "kea"
+      }
+    ],
+    "host-reservation-identifiers": [
+      "hw-address",
+      "duid",
+      "circuit-id",
+      "client-id",
+      "flex-id"
+    ],
+    "interfaces-config": {
+      "dhcp-socket-type": "udp",
+      "interfaces": [
+        "eth1"
+      ],
+      "outbound-interface": "same-as-inbound",
+      "re-detect": true
+    },
+    "lease-database": {
+      "lfc-interval": 3600,
+      "name": "/tmp/kea-dhcp4.csv",
+      "persist": true,
+      "type": "memfile"
+    },
+    "match-client-id": false,
+    "next-server": "192.0.2.123",
+    "option-data": [
+      {
+        "always-send": false,
+        "code": 6,
+        "csv-format": true,
+        "data": "192.0.3.1, 192.0.3.2",
+        "name": "domain-name-servers",
+        "space": "dhcp4"
+      }
+    ],
+    "option-def": [
+      {
+         "array": false,
+         "code": 6,
+         "encapsulate": "",
+         "name": "my-option",
+         "record-types": "uint8, uint8",
+         "space": "my-space",
+         "type": "record"
+       }
+    ],
+    "rebind-timer": 40,
+    "renew-timer": 30,
+    "sanity-checks": {
+      "lease-checks": "warn"
+    },
+    "shared-networks": [
+      {
+        "boot-file-name": "/dev/null",
+        "client-class": "",
+        "interface": "eth1",
+        "match-client-id": true,
+        "name": "my-secret-network",
+        "next-server": "192.0.2.123",
+        "option-data": [],
+        "relay": {
+          "ip-addresses": []
+        },
+        "rebind-timer": 41,
+        "renew-timer": 31,
+        "reservation-mode": "all",
+        "require-client-classes": [ "late" ],
+        "server-hostname": "",
+        "subnet4": [
+          {
+            "4o6-interface": "",
+            "4o6-interface-id": "",
+            "4o6-subnet": "2001:db8:1:1::/64",
+            "boot-file-name": "",
+            "client-class": "",
+            "id": 1,
+            "interface": "eth1",
+            "match-client-id": true,
+            "next-server": "0.0.0.0",
+            "option-data": [
+              {
+                "always-send": false,
+                "code": 3,
+                "csv-format": true,
+                "data": "192.0.3.1",
+                "name": "routers",
+                "space": "dhcp4"
+              }
+            ],
+            "pools": [
+              {
+                "client-class": "phones_server1",
+                "option-data": [],
+                "pool": "192.1.0.1/16",
+                "require-client-classes": [ "late" ]
+              },
+              {
+                "client-class": "laptops_server1",
+                "option-data": [],
+                "pool": "192.2.0.1/16",
+                "require-client-classes": [ "late" ]
+              },
+              {
+                "client-class": "phones_server2",
+                "option-data": [],
+                "pool": "192.3.0.1/16"
+              },
+              {
+                "client-class": "laptops_server2",
+                "option-data": [],
+                "pool": "192.4.0.1/16"
+              }
+            ],
+            "rebind-timer": 40,
+            "relay": {
+              "ip-addresses": [
+                "192.168.56.1"
+              ]
+            },
+            "rebind-timer": 40,
+            "renew-timer": 30,
+            "reservation-mode": "all",
+            "reservations": [],
+            "require-client-classes": [ "late" ],
+            "server-hostname": "",
+            "subnet": "192.0.0.0/8",
+            "valid-lifetime": 6000
+          }
+        ],
+        "valid-lifetime": 6001
+      }
+    ],
+    "server-hostname": "",
+    "subnet4": [],
+    "valid-lifetime": 6000
+  },
+  "Logging": {
+    "loggers": [
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcp4",
+        "output_options": [
+          {
+            "flush": true,
+            "maxsize": 10240000,
+            "maxver": 1,
+            "output": "stdout"
+          }
+        ],
+        "severity": "INFO"
+      },
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcp4.ha_hooks",
+        "output_options": [
+          {
+            "flush": true,
+            "maxsize": 10240000,
+            "maxver": 1,
+            "output": "stdout"
+          }
+        ],
+        "severity": "INFO"
+      },
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcp4.commands",
+        "output_options": [
+          {
+            "flush": true,
+            "maxsize": 10240000,
+            "maxver": 1,
+            "output": "stdout"
+          }
+        ],
+        "severity": "INFO"
+      },
+      {
+        "debuglevel": 99,
+        "name": "kea-dhcp4.http",
+        "output_options": [
+          {
+            "flush": true,
+            "maxsize": 10240000,
+            "maxver": 1,
+            "output": "stdout"
+          }
+        ],
+        "severity": "INFO"
+      }
+    ]
+  }
+}
