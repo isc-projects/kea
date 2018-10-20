@@ -391,6 +391,16 @@ AdaptorConfig::updateDatabase(ConstElementPtr dhcp) {
 }
 
 void
+AdaptorConfig::relaySuppliedOptions(ConstElementPtr dhcp) {
+    ConstElementPtr options = dhcp->get("relay-supplied-options");
+    if (!options || (options->size() > 0)) {
+        return;
+    }
+    ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
+    mutable_dhcp->remove("relay-supplied-options");
+}
+
+void
 AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
                           const string& space) {
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
@@ -473,6 +483,10 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
     requireClassesSharedNetworks(networks, subsel);
 
     updateDatabase(dhcp);
+
+    if (space == "dhcp6") {
+        relaySuppliedOptions(dhcp);
+    }
 }
 
 void

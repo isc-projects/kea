@@ -165,15 +165,21 @@ protected:
 
     /// @brief Process require client classes in a pool list.
     ///
+    /// Remove empty require client class list.
+    ///
     /// @param pools The pool list.
     static void requireClassesPools(isc::data::ConstElementPtr pools);
 
     /// @brief Process require client classes in a subnet list.
     ///
+    /// Remove empty require client class lists.
+    ///
     /// @param subnets The subnet list.
     static void requireClassesSubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief Process require client classes in a shared network list.
+    ///
+    /// Remove empty require client class lists.
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
@@ -215,6 +221,13 @@ protected:
     ///
     /// @param dhcp The DHCP server.
     static void updateDatabase(isc::data::ConstElementPtr dhcp);
+
+    /// @brief Update relay supplied options.
+    ///
+    /// Remove empty relay supplied option list.
+    ///
+    /// @param dhcp The DHCPv6 server.
+    static void relaySuppliedOptions(isc::data::ConstElementPtr dhcp);
 
     /// @brief Pre process a configuration.
     ///
