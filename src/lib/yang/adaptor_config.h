@@ -163,6 +163,23 @@ protected:
                                      const std::string& space,
                                      const OptionCodes& codes);
 
+    /// @brief Process require client classes in a pool list.
+    ///
+    /// @param pools The pool list.
+    static void requireClassesPools(isc::data::ConstElementPtr pools);
+
+    /// @brief Process require client classes in a subnet list.
+    ///
+    /// @param subnets The subnet list.
+    static void requireClassesSubnets(isc::data::ConstElementPtr subnets);
+
+    /// @brief Process require client classes in a shared network list.
+    ///
+    /// @param networks The shared network list.
+    /// @param subsel The subnet list name.
+    static void requireClassesSharedNetworks(isc::data::ConstElementPtr networks,
+                                             const std::string& subsel);
+
     /// @brief Process host reservation list.
     ///
     /// @param hosts The host reservation list.
