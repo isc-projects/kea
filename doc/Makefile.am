@@ -61,6 +61,10 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 
+if HAVE_GTEST
+nobase_dist_doc_DATA += examples/kea4/all-keys.json
+endif
+
 devel:
 	mkdir -p html
 	(cat Doxyfile; echo PROJECT_NUMBER=$(PACKAGE_VERSION)) | doxygen - > html/doxygen.log 2> html/doxygen-error.log
