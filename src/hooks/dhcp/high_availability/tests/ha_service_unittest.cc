@@ -1964,7 +1964,7 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
 
 // This test verifies that an error is reported when sending a lease4-get-page
 // command causes an error.
-TEST_F(HAServiceTest, processSynchronizeLease4GetAllError) {
+TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
     // Setup the server2 to return an error to dhcp-disable commands.
     factory2_->getResponseCreator()->setControlResult("lease4-get-page",
                                                       CONTROL_RESULT_ERROR);
@@ -2057,7 +2057,7 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
 
 // This test verifies that an error is reported when sending a lease6-get-page
 // command causes an error.
-TEST_F(HAServiceTest, processSynchronizeLease6GetAllError) {
+TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
     // Setup the server2 to return an error to dhcp-disable commands.
     factory2_->getResponseCreator()->setControlResult("lease6-get-page",
                                                       CONTROL_RESULT_ERROR);
