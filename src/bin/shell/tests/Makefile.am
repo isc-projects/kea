@@ -11,7 +11,7 @@ check-python:
 	@for pytest in $(PYTESTS) ; do \
 	echo Running python test: $$pytest ; \
 	chmod +x $(abs_builddir)/$$pytest ; \
-	PYTHONPATH=$(PYTHONPATH):$(abs_top_srcdir)/src/bin/shell python $(abs_builddir)/$$pytest || exit ; \
+	PYTHONPATH=$(PYTHONPATH):$(abs_top_srcdir)/src/bin/shell @PYTHON@ $(abs_builddir)/$$pytest || exit ; \
 	done
 
 check-shell:
