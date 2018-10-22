@@ -52,11 +52,11 @@ TranslatorSubnet::getSubnet(const string& xpath) {
 ElementPtr
 TranslatorSubnet::getSubnetIetf6(const string& xpath) {
     ElementPtr result = Element::createMap();
-    // @todo timers
-    // @todo: option-data
+    /// @todo timers
+    /// @todo: option-data
     ConstElementPtr pools = getPools(xpath + "/address-pools");
     if (pools) {
-        // Set empty list too.
+        /// Set empty list too.
         result->set("pools", pools);
     }
     pools = getPdPools(xpath + "/pd-pools");
@@ -73,16 +73,16 @@ TranslatorSubnet::getSubnetIetf6(const string& xpath) {
         isc_throw(BadValue, "getSubnetIetf6 requires network range id");
     }
     result->set("id", id);
-    // @todo: reservations
-    // missing a lot of things
+    /// @todo: reservations
+    /// missing a lot of things
     ConstElementPtr description = getItem(xpath + "/network-description");
-    // Adding description if exists.
+    /// Adding description if exists.
     if (description) {
         ElementPtr context = Element::createMap();
         context->set("description", description);
         result->set("user-context", context);
     }
-    // missing a lot of things
+    /// missing a lot of things
     AdaptorPool::toSubnet(model_, result, result->get("pools"));
     return (result);
 }
@@ -228,7 +228,7 @@ TranslatorSubnet::setSubnet(const string& xpath, ConstElementPtr elem) {
 
 void
 TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
-    // Skip id as it is the key.
+    /// Skip id as it is the key.
     AdaptorPool::fromSubnet(model_, elem, elem->get("pools"));
     ConstElementPtr context = elem->get("user-context");
     if (context && context->contains("description")) {
@@ -242,7 +242,7 @@ TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
         isc_throw(BadValue, "setSubnetIetf6 requires subnet: " << elem->str());
     }
     setItem(xpath + "/network-prefix", subnet, SR_STRING_T);
-    // @todo option-data
+    /// @todo option-data
     ConstElementPtr pools = elem->get("pools");
     if (pools && (pools->size() > 0)) {
         setPools(xpath + "/address-pools", pools);
@@ -251,12 +251,12 @@ TranslatorSubnet::setSubnetIetf6(const string& xpath, ConstElementPtr elem) {
     if (pools && (pools->size() > 0)) {
         setPdPools(xpath + "/pd-pools", pools);
     }
-    // @todo reservations
+    /// @todo reservations
 }
 
 void
 TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
-    // Skip id as it is the key.
+    /// Skip id as it is the key.
     if (model_ == KEA_DHCP6_SERVER) {
         ConstElementPtr preferred = elem->get("preferred-lifetime");
         if (preferred) {
@@ -400,7 +400,7 @@ TranslatorSubnets::getSubnets(const string& xpath) {
         ElementPtr result = Element::createList();
         S_Iter_Value iter = getIter(xpath + "/*");
         if (!iter) {
-            // Can't happen.
+            /// Can't happen.
             isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
         }
         for (;;) {

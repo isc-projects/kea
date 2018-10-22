@@ -46,7 +46,9 @@ the basic / base class and recursively of translators for embedded parts.
 @c isc::yang::TranslatorPool is the standard example of a translator
 for a structured value. Its constructor takes a model name: the code
 implements some variants to accommodate the model with shared code
-moved into a common private routine.
+moved into a common private routine. When called with an unsupported
+model, generic methods of all structure translators throw
+@c isc::NotImplemented.
 
 @c isc::yang::TranslatorPools deals with a list of pools. The getPools
 method iterates over the list in both ways. Look at examples in unit

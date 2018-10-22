@@ -40,7 +40,7 @@ public:
 TEST_F(TranslatorSubnetsTest, getEmptyIetf) {
     useModel(IETF_DHCPV6_SERVER);
 
-    // Get the subnet list and checks it is empty.
+    // Get the subnet list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets;
@@ -55,7 +55,7 @@ TEST_F(TranslatorSubnetsTest, getEmptyIetf) {
 TEST_F(TranslatorSubnetsTest, getEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
-    // Get the subnet list and checks it is empty.
+    // Get the subnet list and check if it is empty.
     const string& xpath = "/kea-dhcp6-server:config/subnet6";
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
@@ -85,7 +85,7 @@ TEST_F(TranslatorSubnetsTest, getIetf) {
               "\"subnet\": \"2001:db8::/48\" }",
               subnet->str());
 
-    // Get the subnet list and checks the subnet is in it.
+    // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
@@ -115,7 +115,7 @@ TEST_F(TranslatorSubnetsTest, getKea) {
     expected->set("subnet", Element::create(string("2001:db8::/48")));
     EXPECT_TRUE(expected->equals(*subnet));
 
-    // Get the subnet list and checks the subnet is in it.
+    // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
@@ -172,7 +172,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
         "}";
     EXPECT_EQ(expected, prettyPrint(subnet));
 
-    // Get the subnet list and checks the subnet is in it.
+    // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
@@ -230,7 +230,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsKea) {
         "}";
     EXPECT_EQ(expected, prettyPrint(subnet));
 
-    // Get the subnet list and checks the subnet is in it.
+    // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
