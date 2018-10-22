@@ -596,8 +596,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
 
+#ifdef CONFIG_BACKEND // Disabled until we restart CB work
             // If there are config backends, fetch and merge into staging config
             databaseConfigFetch(srv_cfg, mutable_cfg);
+#endif
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
