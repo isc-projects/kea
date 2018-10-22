@@ -160,4 +160,82 @@ TEST_F(TranslatorSharedNetworksTest, set) {
     EXPECT_NO_THROW(sess_->validate());
 }
 
+// This test verifies that several shared networks can be properly
+// translated from YANG to JSON. This test adds the following structure:
+//
+// shared-network "foo":
+//   - subnet1: 2001:db8:1::/48 (subnet-id 1)
+//   - subnet1: 2001:db8:2::/48 (subnet-id 2)
+// shared-network "bar":
+//   - subnet1: 2001:db8:101::/48 (subnet-id 101)
+//   - subnet1: 2001:db8:102::/48 (subnet-id 102)
+TEST_F(TranslatorSharedNetworksTest, getList) {
+    useModel(KEA_DHCP6_SERVER);
+
+    const string& xpath = "/kea-dhcp6-server:config/shared-networks";
+
+    // Those two networks will be added.
+    const string& xnetwork1 = xpath + "/shared-network[name='foo']";
+    const string& xnetwork2 = xpath + "/shared-network[name='bar']";
+
+    // Non-existent network
+    const string& xnetwork3 = xpath + "/shared-network[name='baz']";
+
+    const string& exp_net1 =
+        "{ \"name\": \"foo\", \"subnet6\": [ { \"id\": 1, \"subnet\": "
+        "\"2001:db8:1::/48\" }, { \"id\": 2, \"subnet\": \"2001:db8:2::/48\" } ] }";
+
+    const string& exp_net2 =
+        "{ \"name\": \"bar\", \"subnet6\": [ { \"id\": 101, \"subnet\": "
+        "\"2001:db8:101::/48\" }, { \"id\": 102, \"subnet\": \"2001:db8:102::/48\" } ] }";
+
+    const string exp_both =
+        "[ " + exp_net1 + ", " + exp_net2 + " ]";
+
+    // Create the subnet1: 2001:db8:1::/48 #1 in shared network foo.
+    const string& xsubnet1 = xnetwork1 + "/subnet6/subnet6[id='1']/subnet";
+    S_Val v_subnet1(new Val("2001:db8:1::/48", SR_STRING_T));
+    EXPECT_NO_THROW(sess_->set_item(xsubnet1.c_str(), v_subnet1));
+
+    // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
+    const string& xsubnet2 = xnetwork1 + "/subnet6/subnet6[id='2']/subnet";
+    S_Val v_subnet2(new Val("2001:db8:2::/48", SR_STRING_T));
+    EXPECT_NO_THROW(sess_->set_item(xsubnet2.c_str(), v_subnet2));
+
+    // Create the subnet1: 2001:db8:101::/48 #101 in shared network foo.
+    const string& xsubnet3 = xnetwork2 + "/subnet6/subnet6[id='101']/subnet";
+    S_Val v_subnet(new Val("2001:db8:101::/48", SR_STRING_T));
+    EXPECT_NO_THROW(sess_->set_item(xsubnet3.c_str(), v_subnet));
+
+    // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
+    const string& xsubnet4 = xnetwork2 + "/subnet6/subnet6[id='102']/subnet";
+    S_Val v_subnet4(new Val("2001:db8:102::/48", SR_STRING_T));
+    EXPECT_NO_THROW(sess_->set_item(xsubnet4.c_str(), v_subnet4));
+
+    // Ok, now test the getters. Let's start with the easier ones that
+    // return a single network.
+    ConstElementPtr network;
+
+    // Get the first network.
+    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork1));
+    ASSERT_TRUE(network);
+    EXPECT_EQ(exp_net1, network->str());
+
+    // Get the second network.
+    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork2));
+    ASSERT_TRUE(network);
+    EXPECT_EQ(exp_net2, network->str());
+
+    // Check that networks with non-existent name are not returned.
+    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork3));
+    EXPECT_FALSE(network) << "Unexpected shared network returned, "
+                          << " expected null, but got: " << network->str();
+
+    // Now test returns all networks
+    ConstElementPtr networks;
+    EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
+    ASSERT_TRUE(networks);
+    EXPECT_EQ(exp_both, networks->str());
+}
+
 }; // end of anonymous namespace
