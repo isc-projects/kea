@@ -19,6 +19,7 @@
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
 #include <util/threads/thread.h>
+#include <util/threads/sync.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -32,6 +33,103 @@ using namespace isc::http::test;
 using namespace isc::util::thread;
 
 namespace {
+
+/// @brief Type definition for the pointer to Thread objects.
+typedef boost::shared_ptr<Thread> ThreadPtr;
+
+/// @brief Base class for tests requiring threads.
+///
+/// This class contains 3 flags to signal when the thread has
+/// started, is stopping and when it is stopped. The flags
+/// are accessed in thread safe manner.
+class ThreadedTest : public ::testing::Test {
+protected:
+
+    /// @brief Constructor.
+    ThreadedTest()
+        : thread_(), condvar_(), ready_(false), stopping_(false),
+          stopped_(false) {
+    }
+
+    /// @brief Sets selected flag to true and signals condition
+    /// variable.
+    ///
+    /// @param flag Reference to flag which should be set to true.
+    void doSignal(bool& flag) {
+        {
+            Mutex::Locker lock(mutex_);
+            flag = true;
+        }
+        condvar_.signal();
+    }
+
+    /// @brief Signal that thread is ready.
+    void signalReady() {
+        doSignal(ready_);
+    }
+
+    /// @brief Signal that thread is stopping.
+    void signalStopping() {
+        doSignal(stopping_);
+    }
+
+    /// @brief Signal that thread is stopped.
+    void signalStopped() {
+        doSignal(stopped_);
+    }
+
+    /// @brief Wait for a selected flag to be set.
+    ///
+    /// @param flag Reference to a flag on which the thread is
+    /// waiting.
+    void doWait(bool& flag) {
+        Mutex::Locker lock(mutex_);
+        while (!flag) {
+            condvar_.wait(mutex_);
+        }
+    }
+
+    /// @brief Wait for the thread to be ready.
+    void waitReady() {
+        doWait(ready_);
+    }
+
+    /// @brief Wait for the thread to be stopping.
+    void waitStopping() {
+        doWait(stopping_);
+    }
+
+    /// @brief Wait for the thread to stop.
+    void waitStopped() {
+        doWait(stopped_);
+    }
+
+    /// @brief Checks if the thread is stopping.
+    ///
+    /// @return true if the thread is stopping, false otherwise.
+    bool isStopping() {
+        Mutex::Locker lock(mutex_);
+        return (stopping_);
+    }
+
+    /// @brief Pointer to server thread.
+    ThreadPtr thread_;
+
+    /// @brief Mutex used to synchronize threads.
+    Mutex mutex_;
+
+    /// Condtional variable for thread waits.
+    CondVar condvar_;
+
+    /// Flag indicating that the thread is ready.
+    bool ready_;
+
+    /// Flag indicating that the thread is stopping.
+    bool stopping_;
+
+    /// Flag indicating that the thread is stopped.
+    bool stopped_;
+};
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -131,24 +229,25 @@ const string TEST_SOCKET = "test-socket";
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
-/// @brief Type definition for the pointer to Thread objects.
-typedef boost::shared_ptr<Thread> ThreadPtr;
-
 /// @brief Test fixture class for unix control sockets.
-class UnixControlSocketTest : public ::testing::Test {
+class UnixControlSocketTest : public ThreadedTest {
 public:
     /// @brief Constructor.
-    UnixControlSocketTest() : io_service_(), thread_(), ready_(false) {
+    UnixControlSocketTest()
+        : ThreadedTest(), io_service_() {
         removeUnixSocketFile();
     }
 
     /// @brief Destructor.
     virtual ~UnixControlSocketTest() {
-        io_service_.stop();
         if (thread_) {
             thread_->wait();
             thread_.reset();
         }
+        // io_service must be stopped after the thread returns,
+        // otherwise the thread may never return if it is
+        // waiting for the completion of some asynchronous tasks.
+        io_service_.stop();
         removeUnixSocketFile();
     }
 
@@ -189,17 +288,8 @@ public:
     /// @brief Thread reflecting server function.
     void reflectServer();
 
-    /// @brief Thread timeout server function.
-    void timeoutServer();
-
     /// @brief IOService object.
     IOService io_service_;
-
-    /// @brief Pointer to server thread.
-    ThreadPtr thread_;
-
-    /// @brief Ready flag.
-    bool ready_;
 };
 
 /// @brief Server method running in a thread reflecting the command.
@@ -220,7 +310,7 @@ UnixControlSocketTest::reflectServer() {
         socket(io_service_.get_io_service());
 
     // Ready.
-    ready_ = true;
+    signalReady();
 
     // Timeout.
     IntervalTimer timer(io_service_);
@@ -291,16 +381,6 @@ UnixControlSocketTest::reflectServer() {
     }
 }
 
-/// @brief Server method running in a thread waiting forever.
-///
-/// It waits that ready becomes true.
-void
-UnixControlSocketTest::timeoutServer() {
-    while (!ready_) {
-        usleep(1000);
-    }
-}
-
 // Verifies that the createControlSocket template can create an unix
 // control socket.
 TEST_F(UnixControlSocketTest, createControlSocket) {
@@ -322,9 +402,8 @@ TEST_F(UnixControlSocketTest, configGet) {
 
     // Run a reflecting server in a thread.
     thread_.reset(new Thread([this]() { reflectServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+
+    waitReady();
 
     // Try configGet.
     ConstElementPtr reflected;
@@ -347,9 +426,8 @@ TEST_F(UnixControlSocketTest, configTest) {
 
     // Run a reflecting server in a thread.
     thread_.reset(new Thread([this]() { reflectServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+
+    waitReady();
 
     // Prepare a config to test.
     ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
@@ -375,9 +453,8 @@ TEST_F(UnixControlSocketTest, configSet) {
 
     // Run a reflecting server in a thread.
     thread_.reset(new Thread([this]() { reflectServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+
+    waitReady();
 
     // Prepare a config to set.
     ConstElementPtr json = Element::fromJSON("{ \"bar\": 1 }");
@@ -402,11 +479,11 @@ TEST_F(UnixControlSocketTest, timeout) {
     ASSERT_TRUE(ucs);
 
     // Run a timeout server in a thread.
-    thread_.reset(new Thread([this]() { timeoutServer(); }));
+    thread_.reset(new Thread([this]() { waitReady(); }));
 
     // Try configGet: it should get a communication error,
     EXPECT_THROW(ucs->configGet("foo"), ControlSocketError);
-    ready_ = true;
+    signalReady();
 }
 
 //////////////////////////////// HTTP ////////////////////////////////
@@ -520,20 +597,22 @@ public:
 };
 
 /// @brief Test fixture class for http control sockets.
-class HttpControlSocketTest : public ::testing::Test {
+class HttpControlSocketTest : public ThreadedTest {
 public:
     HttpControlSocketTest()
-        : io_service_(), thread_(),
-          ready_(false), done_(false), finished_(false) {
+        : ThreadedTest(), io_service_() {
     }
 
     /// @brief Destructor.
     virtual ~HttpControlSocketTest() {
-        io_service_.stop();
         if (thread_) {
             thread_->wait();
             thread_.reset();
         }
+        // io_service must be stopped after the thread returns,
+        // otherwise the thread may never return if it is
+        // waiting for the completion of some asynchronous tasks.
+        io_service_.stop();
     }
 
     /// @brief Returns socket URL.
@@ -561,16 +640,15 @@ public:
     /// Run IO in a thread.
     void start() {
         thread_.reset(new Thread([this]() {
-                    ready_ = true;
-                    while (!done_) {
-                        io_service_.run_one();
-                    }
-                    finished_ = true;
-                    io_service_.poll();
-                }));
-        while (!ready_) {
-            usleep(1000);
-        }
+            signalReady();
+            while (!isStopping()) {
+                io_service_.run_one();
+            }
+            signalStopped();
+            io_service_.poll();
+        }));
+        waitReady();
+
         if (listener_) {
             ASSERT_NO_THROW(listener_->start());
         }
@@ -580,11 +658,10 @@ public:
     ///
     /// Post an empty action to finish current run_one.
     void stop() {
-        done_ = true;
+        signalStopping();
         io_service_.post([]() { return; });
-        while (!finished_) {
-            usleep(1000);
-        }
+        waitStopped();
+
         if (listener_) {
             ASSERT_NO_THROW(listener_->stop());
         }
@@ -595,12 +672,6 @@ public:
 
     /// @brief Pointer to listener.
     HttpListenerPtr listener_;
-
-    /// @brief Pointer to server thread.
-    ThreadPtr thread_;
-
-    /// @brief Ready flag.
-    bool ready_;
 
     /// @brief Done flag (stopping thread).
     bool done_;
