@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorOptionDefListTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
-    // Get the option definition list and checks it is empty.
+    // Get the option definition list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config/option-def-list";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = t_obj_->getOptionDefList(xpath));

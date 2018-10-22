@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorOptionDataListTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
-    // Get the option data list and checks it is empty.
+    // Get the option data list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config/option-data-list";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = t_obj_->getOptionDataList(xpath));

@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorHostsTest, getEmpty) {
     useModel(KEA_DHCP6_SERVER);
 
-    // Get the host reservation list and checks it is empty.
+    // Get the host reservation list and check if it is empty.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/reservations";
     ConstElementPtr hosts;
@@ -83,7 +83,8 @@ TEST_F(TranslatorHostsTest, get) {
     expected->set("ip-addresses", addresses);
     EXPECT_TRUE(expected->equals(*host));
 
-    // Get the host reservation list and checks the host reservation is in it.
+    // Get the host reservation list and check if the host reservation
+    // is in it.
     ConstElementPtr hosts;
     EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);

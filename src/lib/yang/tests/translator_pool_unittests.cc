@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorPoolsTest, getEmptyIetf) {
     useModel(IETF_DHCPV6_SERVER);
 
-    // Get the pool list and checks it is empty.
+    // Get the pool list and check if it is empty.
     const string& xpath = "/ietf-dhcpv6-server:server/server-config/"
         "network-ranges/network-range[network-range-id='111']/address-pools";
     ConstElementPtr pools;
@@ -56,7 +56,7 @@ TEST_F(TranslatorPoolsTest, getEmptyIetf) {
 TEST_F(TranslatorPoolsTest, getEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
-    // Get the pool list and checks it is empty.
+    // Get the pool list and check if it is empty.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools";
     ConstElementPtr pools;
@@ -90,7 +90,7 @@ TEST_F(TranslatorPoolsTest, getIetf) {
     ASSERT_TRUE(pool);
     EXPECT_EQ("{ \"pool\": \"2001:db8::1:0/112\" }", pool->str());
 
-    // Get the pool list and checks the pool is in it.
+    // Get the pool list and check if the pool is in it.
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
     ASSERT_TRUE(pools);
@@ -135,7 +135,7 @@ TEST_F(TranslatorPoolsTest, getKea) {
     expected->set("pool", Element::create(string("2001:db8::1:0/112")));
     EXPECT_TRUE(expected->equals(*pool));
 
-    // Get the pool list and checks the pool is in it.
+    // Get the pool list and check if the pool is in it.
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPools(xpath));
     ASSERT_TRUE(pools);

@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorPdPoolsTest, getEmptyIetf) {
     useModel(IETF_DHCPV6_SERVER);
 
-    // Get the pd-pool list and checks it is empty.
+    // Get the pd-pool list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
         "/network-range[network-range-id='111']/pd-pools";
@@ -57,7 +57,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyIetf) {
 TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
-    // Get the pd-pool list and checks it is empty.
+    // Get the pd-pool list and check if it is empty.
     const string& xpath =
         "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools";
     ConstElementPtr pools;
@@ -99,7 +99,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
     expected->set("prefix-len", Element::create(56));
     EXPECT_TRUE(expected->equals(*pool));
 
-    // Get the pd-pool list and checks the pd-pool is in it.
+    // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(subnet + "/pd-pools"));
     ASSERT_TRUE(pools);
@@ -140,7 +140,7 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
     expected->set("delegated-len", Element::create(64));
     EXPECT_TRUE(expected->equals(*pool));
 
-    // Get the pd-pool list and checks the pd-pool is in it.
+    // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
