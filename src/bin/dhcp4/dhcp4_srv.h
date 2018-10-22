@@ -241,7 +241,7 @@ public:
     }
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref Daemon::getVersion()
+    /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
     /// @brief Main server processing loop.

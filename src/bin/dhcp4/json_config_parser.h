@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,9 +84,9 @@ databaseConfigConnect(const SrvConfigPtr& srv_cfg);
 /// configuration.
 ///
 /// @param srv_cfg Server configuration into which database configuration should be merged
-/// @param mutable_cfg parsed configuration from the configuration file plus default values
+/// @param mutable_cfg parsed configuration from the configuration file plus default values (ignored)
 void
-databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr /* mutable_cfg */);
+databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr mutable_cfg);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
