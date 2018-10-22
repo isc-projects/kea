@@ -3229,6 +3229,37 @@ It is merely echoed by the server
 
     </section>
 
+    <section xml:id="dhcp4-authoritative">
+      <title>Authoritative DHCPv4 Server Behavior</title>
+      <para>The original DHCPv4 specification
+      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>)
+      states that if a clients requests an address in the INIT-REBOOT state of
+      which, the server has no knowledge of, the server must remain silent,
+      except if the server knows that the client requests an IP address from the
+      wrong network.
+      By default Kea follows the behavior of the ISC dhcpd instead of the
+      specification and also remains silent, if the client requests an IP
+      address from the wrong network,
+      because configuration information about a given network segment is not
+      known to be correct.
+      Kea only rejects a client's DHCPREQUEST with a DHCPNAK message, if it
+      already has a lease for the client, but with a different IP address.
+      Administrators can override this behavior through the
+      boolean <command>authoritative</command> (<userinput>false</userinput>
+      by default) setting.
+      </para>
+
+      <para>In authoritative mode, <command>authoritative</command> set to
+      <userinput>true</userinput>, Kea always rejects INIT-REBOOT requests from
+      unknown clients with DHCPNAK messages.
+      The <command>authoritative</command> setting can be specified in
+      global, shared-network, and subnet configuration scope and is
+      automatically inherited from the parent scope, if not specified.
+      All subnets in a shared-network must have the same
+      <command>authoritative</command> setting.
+      </para>
+    </section>
+
      <section xml:id="dhcp4-dhcp4o6-config">
       <title>DHCPv4-over-DHCPv6: DHCPv4 Side</title>
       <para>
