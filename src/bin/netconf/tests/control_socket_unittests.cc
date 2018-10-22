@@ -10,7 +10,6 @@
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
 #include <asiolink/asio_wrapper.h>
-#include <asiolink/interval_timer.h>
 #include <asiolink/io_service.h>
 #include <http/listener.h>
 #include <http/post_request_json.h>
@@ -138,13 +137,12 @@ typedef boost::shared_ptr<Thread> ThreadPtr;
 class UnixControlSocketTest : public ::testing::Test {
 public:
     /// @brief Constructor.
-    UnixControlSocketTest() : io_service_(), thread_(), ready_(false) {
+    UnixControlSocketTest() : thread_(), ready_(false) {
         removeUnixSocketFile();
     }
 
     /// @brief Destructor.
     virtual ~UnixControlSocketTest() {
-        io_service_.stop();
         if (thread_) {
             thread_->wait();
             thread_.reset();
@@ -192,9 +190,6 @@ public:
     /// @brief Thread timeout server function.
     void timeoutServer();
 
-    /// @brief IOService object.
-    IOService io_service_;
-
     /// @brief Pointer to server thread.
     ThreadPtr thread_;
 
@@ -208,27 +203,34 @@ public:
 /// the command and send it back in a received JSON map.
 void
 UnixControlSocketTest::reflectServer() {
+    // IO service.
+    boost::asio::io_service io_service;
     // Acceptor.
     boost::asio::local::stream_protocol::acceptor
-        acceptor(io_service_.get_io_service());
+        acceptor(io_service);
     EXPECT_NO_THROW(acceptor.open());
     boost::asio::local::stream_protocol::endpoint
         endpoint(unixSocketFilePath());
     EXPECT_NO_THROW(acceptor.bind(endpoint));
     EXPECT_NO_THROW(acceptor.listen());
     boost::asio::local::stream_protocol::socket
-        socket(io_service_.get_io_service());
+        socket(io_service);
 
     // Ready.
     ready_ = true;
 
     // Timeout.
-    IntervalTimer timer(io_service_);
+    boost::asio::deadline_timer timer(io_service);
     bool timeout = false;
-    timer.setup([&timeout]() {
-            timeout = true;
-            FAIL() << "timeout";
-        }, 1500, IntervalTimer::ONE_SHOT);
+    bool cancelled = false;
+    timer.expires_from_now(boost::posix_time::millisec(1500));
+    timer.async_wait([&timeout, &cancelled]
+                     (const boost::system::error_code& /*error*/) {
+                         if (!cancelled) {
+                             timeout = true;
+                             FAIL() << "timeout";
+                         }
+                     });
 
     // Accept.
     bool accepted = false;
@@ -240,7 +242,7 @@ UnixControlSocketTest::reflectServer() {
                               accepted = true;
                           });
     while (!accepted && !timeout) {
-        io_service_.run_one();
+        io_service.run_one();
     }
     ASSERT_FALSE(ec);
 
@@ -254,7 +256,7 @@ UnixControlSocketTest::reflectServer() {
                              received = cnt;
                          });
     while (!received && !timeout) {
-        io_service_.run_one();
+        io_service.run_one();
     }
     ASSERT_FALSE(ec);
     rbuf.resize(received);
@@ -273,22 +275,29 @@ UnixControlSocketTest::reflectServer() {
                           sent = cnt;
                       });
     while (!sent && !timeout) {
-        io_service_.run_one();
+        io_service.run_one();
     }
     ASSERT_FALSE(ec);
 
     // Stop timer.
+    cancelled = true;
     timer.cancel();
 
+    // Close socket.
+    if (socket.is_open()) {
+        EXPECT_NO_THROW(socket.close());
+    }
+
+    // Stop I/O.
+    io_service.stop();
+
     EXPECT_FALSE(timeout);
+    EXPECT_TRUE(cancelled);
     EXPECT_TRUE(accepted);
     EXPECT_TRUE(received);
     EXPECT_TRUE(sent);
     EXPECT_EQ(sent, sbuf.size());
 
-    if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
-    }
 }
 
 /// @brief Server method running in a thread waiting forever.
