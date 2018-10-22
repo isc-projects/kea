@@ -55,7 +55,12 @@ ElementPtr
 TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
                                              const std::string& subsel) {
     ElementPtr result = Element::createMap();
-    result->set("name", getItem(xpath + "/name"));
+    ConstElementPtr name = getItem(xpath + "/name");
+    if (!name) {
+        // Can't happen as the name is the key.
+        isc_throw(Unexpected, "getSharedNetworkKea requires name: " << xpath);
+    }
+    result->set("name", name);
     ConstElementPtr subnets = getSubnets(xpath + "/" + subsel);
     if (subnets && (subnets->size() > 0)) {
         result->set(subsel, subnets);

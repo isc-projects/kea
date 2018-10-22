@@ -61,7 +61,7 @@ namespace yang {
 /// }
 /// @endcode
 ///
-/// YANG syntax for kea-dhcp[46] is with name as the list key:
+/// YANG syntax for kea-dhcp[46]-server is with name as the list key:
 /// @code
 ///  +--rw name                      string
 ///  +--rw valid-lifetime?           uint32
@@ -152,7 +152,8 @@ public:
                           isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getSharedNetwork for kea-dhcp4-server and kea-dhcp6-server models
+    /// @brief getSharedNetwork for kea-dhcp4-server and
+    /// kea-dhcp6-server models
     ///
     /// @param xpath The xpath of the shared network.
     /// @param subsel The subnet list name (either "subnet4" or "subnet6").
@@ -160,7 +161,8 @@ protected:
     isc::data::ElementPtr getSharedNetworkKea(const std::string& xpath,
                                               const std::string& subsel);
 
-    /// @brief setSharedNetwork for kea-dhcp4-server and kea-dhcp6-server models
+    /// @brief setSharedNetwork for kea-dhcp4-server and
+    /// kea-dhcp6-server models
     ///
     /// @param xpath The xpath of the shared network.
     /// @param elem The JSON element.
@@ -205,7 +207,8 @@ public:
                            isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief setSharedNetworks for kea-dhcp[46]-server.
+    /// @brief setSharedNetworks for kea-dhcp4-server and
+    /// kea-dhcp6-server
     ///
     /// @param xpath The xpath of the shared network list.
     /// @param elem The JSON element.
