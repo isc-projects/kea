@@ -182,12 +182,14 @@ TEST_F(TranslatorSharedNetworksTest, getList) {
     const string& xnetwork3 = xpath + "/shared-network[name='baz']";
 
     const string& exp_net1 =
-        "{ \"name\": \"foo\", \"subnet6\": [ { \"id\": 1, \"subnet\": "
-        "\"2001:db8:1::/48\" }, { \"id\": 2, \"subnet\": \"2001:db8:2::/48\" } ] }";
+        "{ \"name\": \"foo\", \"subnet6\": [ { \"id\": 1, "
+        "\"subnet\": \"2001:db8:1::/48\" }, "
+        "{ \"id\": 2, \"subnet\": \"2001:db8:2::/48\" } ] }";
 
     const string& exp_net2 =
-        "{ \"name\": \"bar\", \"subnet6\": [ { \"id\": 101, \"subnet\": "
-        "\"2001:db8:101::/48\" }, { \"id\": 102, \"subnet\": \"2001:db8:102::/48\" } ] }";
+        "{ \"name\": \"bar\", \"subnet6\": [ { \"id\": 101, "
+        "\"subnet\": \"2001:db8:101::/48\" }, "
+        "{ \"id\": 102, \"subnet\": \"2001:db8:102::/48\" } ] }";
 
     const string exp_both =
         "[ " + exp_net1 + ", " + exp_net2 + " ]";
@@ -227,9 +229,7 @@ TEST_F(TranslatorSharedNetworksTest, getList) {
     EXPECT_EQ(exp_net2, network->str());
 
     // Check that networks with non-existent name are not returned.
-    EXPECT_NO_THROW(network = t_obj_->getSharedNetwork(xnetwork3));
-    EXPECT_FALSE(network) << "Unexpected shared network returned, "
-                          << " expected null, but got: " << network->str();
+    EXPECT_THROW(network = t_obj_->getSharedNetwork(xnetwork3), Unexpected);
 
     // Now test returns all networks
     ConstElementPtr networks;
