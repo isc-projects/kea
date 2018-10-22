@@ -41,7 +41,7 @@ public:
 TEST_F(TranslatorClassesTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
-    // Get the client class list and checks it is empty.
+    // Get the client class list and check if it is empty.
     const string& xpath = "/kea-dhcp4-server:config/client-classes";
     ConstElementPtr classes;
     EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
@@ -69,7 +69,7 @@ TEST_F(TranslatorClassesTest, get) {
     expected->set("test", Element::create(string("not member('ALL')")));
     EXPECT_TRUE(expected->equals(*cclass));
 
-    // Get the client class list and checks the client class is in it.
+    // Get the client class list and check if the client class is in it.
     ConstElementPtr classes;
     EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
     ASSERT_TRUE(classes);
@@ -110,7 +110,7 @@ TEST_F(TranslatorClassesTest, set) {
     ElementPtr cclass = Element::createMap();
     cclass->set("name", Element::create(string("foo")));
     cclass->set("test", Element::create(string("''==''")));
-    cclass->set("only-if-required",Element::create(false));
+    cclass->set("only-if-required", Element::create(false));
     classes->add(cclass);
     EXPECT_NO_THROW(t_obj_->setClasses(xpath, classes));
 
