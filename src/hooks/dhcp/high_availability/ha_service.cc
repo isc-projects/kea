@@ -359,7 +359,7 @@ HAService::syncingStateHandler() {
         std::string status_message;
         int sync_status = synchronize(status_message,
                                       config_->getFailoverPeerConfig()->getName(),
-                                      60, 1024);
+                                      60, config_->getSyncPageLimit());
 
        // If the leases synchronization was successful, let's transition
         // to the ready state.
@@ -1158,9 +1158,9 @@ HAService::localEnable() {
 }
 
 void
-HAService::asyncSyncLeases(const uint32_t limit) {
+HAService::asyncSyncLeases() {
     PostRequestCallback null_action;
-    asyncSyncLeases(client_, LeasePtr(), limit, null_action);
+    asyncSyncLeases(client_, LeasePtr(), config_->getSyncPageLimit(), null_action);
 }
 
 void
@@ -1234,14 +1234,9 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                     // Iterate over the leases and update the database as appropriate.
                     const auto& leases_element = leases->listValue();
 
-                    // If we haven't hit the last page. Set the last lease pointer so as
-                    // it can be used as an input to the next leaseX-get-page command.
-                    if (leases_element.size() >= limit) {
-                        last_lease = boost::dynamic_pointer_cast<Lease>(*leases_element.rbegin());
-                    }
-
                     for (auto l = leases_element.begin(); l != leases_element.end(); ++l) {
                         try {
+
                             if (server_type_ == HAServerType::DHCPv4) {
                                 Lease4Ptr lease = Lease4::fromElement(*l);
 
@@ -1260,6 +1255,13 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                                     LOG_DEBUG(ha_logger, DBGLVL_TRACE_BASIC, HA_LEASE_SYNC_STALE_LEASE4_SKIP)
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
+                                }
+
+                                // If we're not on the last page and we're processing final lease on
+                                // this page, let's record the lease as input to the next
+                                // lease4-get-page command.
+                                if ((leases_element.size() >= limit) && (l + 1 == leases_element.end())) {
+                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
 
                             } else {
@@ -1282,6 +1284,14 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                                         .arg(lease->addr_.toText())
                                         .arg(lease->subnet_id_);
                                 }
+
+                                // If we're not on the last page and we're processing final lease on
+                                // this page, let's record the lease as input to the next
+                                // lease6-get-page command.
+                                if ((leases_element.size() >= limit) && (l + 1 == leases_element.end())) {
+                                    last_lease = boost::dynamic_pointer_cast<Lease>(lease);
+                                }
+
                             }
 
                         } catch (const std::exception& ex) {
@@ -1305,6 +1315,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                  communication_state_->setPartnerState("unavailable");
 
              } else if (last_lease) {
+                 // This indicates that there are more leases to be fetched.
+                 // Therefore, we have to send another leaseX-get-page command.
                  asyncSyncLeases(http_client, last_lease, limit, post_sync_action);
                  return;
              }
@@ -1321,7 +1333,8 @@ ConstElementPtr
 HAService::processSynchronize(const std::string& server_name,
                               const unsigned int max_period) {
     std::string answer_message;
-    int sync_status = synchronize(answer_message, server_name, max_period, 1024);
+    int sync_status = synchronize(answer_message, server_name, max_period,
+                                  config_->getSyncPageLimit());
     return (createAnswer(sync_status, answer_message));
 }
 

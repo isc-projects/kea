@@ -209,7 +209,7 @@ public:
     TestHttpResponseCreator() :
         requests_(), control_result_(CONTROL_RESULT_SUCCESS),
         arguments_(), per_request_control_result_(),
-        per_request_arguments_() {
+        per_request_arguments_(), request_index_() {
     }
 
     /// @brief Removes all received requests.
@@ -270,11 +270,23 @@ public:
     /// @brief Sets arguments to be included in the response to a particular
     /// command.
     ///
+    /// Some tests require that the returned arguments vary for the same
+    /// command sent multiple times. One example of such command is the
+    /// @c lease4-get-page command sent multiple times to fetch pages of
+    /// leases from the partner. This method facilitates such test scenario.
+    /// In order to set different arguments for consecutive requests this
+    /// method must be called multiple times. Each call results in adding
+    /// arguments to be returned when the command is issued multiple times.
+    ///
     /// @param command_name command name.
     /// @param arguments pointer to the arguments.
     void setArguments(const std::string& command_name,
                       const ElementPtr& arguments) {
-        per_request_arguments_[command_name] = arguments;
+        per_request_arguments_[command_name].push_back(isc::data::copy(arguments));
+        // Create request index for this command if it doesn't exist.
+        if (request_index_.count(command_name) == 0) {
+            request_index_[command_name] = 0;
+        }
     }
 
     /// @brief Create a new request.
@@ -345,7 +357,17 @@ private:
                 // Check if there are specific arguments to be returned for this
                 // command.
                 if (per_request_arguments_.count(command_name) > 0) {
-                    arguments = per_request_arguments_[command_name];
+                    // For certain requests we may return different arguments for consecutive
+                    // instances of the same command. The request_index_ tracks the current
+                    // index of the arguments to be returned.
+                    arguments = per_request_arguments_[command_name][request_index_[command_name]];
+
+                    // If we have reached the last arguments do not increase the index. Simply
+                    // continue returning the same arguments.
+                    if (request_index_[command_name] + 1 < per_request_arguments_[command_name].size()) {
+                        // Not the last arguments, increase the index.
+                        ++request_index_[command_name];
+                    }
                 }
             }
         }
@@ -392,7 +414,10 @@ private:
     std::map<std::string, int> per_request_control_result_;
 
     /// @brief Command specific response arguments.
-    std::map<std::string, ElementPtr> per_request_arguments_;
+    std::map<std::string, std::vector<ElementPtr> > per_request_arguments_;
+
+    /// @brief Index of the next request of the given type.
+    std::map<std::string, size_t> request_index_;
 };
 
 /// @brief Shared pointer to the @c TestHttpResponseCreator.
@@ -509,9 +534,14 @@ public:
         generateTestLeases(leases4_);
     }
 
-    /// @brief Returns generated IPv4 leases in JSON format.
-    ConstElementPtr getTestLeases4AsJson() const {
-        return (getLeasesAsJson(leases4_));
+    /// @brief Returns range of generated IPv4 leases in JSON format.
+    ///
+    /// @param first_index Index of the first lease to be returned.
+    /// @param last_index Index of the last lease to be returned.
+    ConstElementPtr getTestLeases4AsJson(const size_t first_index,
+                                         const size_t last_index) const {
+        return (getLeasesAsJson(std::vector<Lease4Ptr>(leases4_.begin() + first_index,
+                                                       leases4_.begin() + last_index)));
     }
 
     /// @brief Generates IPv6 leases to be used by the tests.
@@ -519,9 +549,82 @@ public:
         generateTestLeases(leases6_);
     }
 
-    /// @brief Returns generated IPv6 leases in JSON format.
-    ConstElementPtr getTestLeases6AsJson() const {
-        return (getLeasesAsJson(leases6_));
+    /// @brief Returns range of generated IPv6 leases in JSON format.
+    ///
+    /// @param first_index Index of the first lease to be returned.
+    /// @param last_index Index of the last lease to be returned.
+    ConstElementPtr getTestLeases6AsJson(const size_t first_index,
+                                         const size_t last_index) const {
+        return (getLeasesAsJson(std::vector<Lease6Ptr>(leases6_.begin() + first_index,
+                                                       leases6_.begin() + last_index)));
+    }
+
+    /// @brief Configure server side to return  IPv4 leases in 3-element
+    /// chunks.
+    ///
+    /// Leases are fetched in pages, so the lease4-get-page should be
+    /// sent multiple times. The server is configured to return leases
+    /// in 3-element chunks. Note that the HA configis set to ask for 3
+    /// leases.
+    void createPagedSyncResponses4() {
+        ElementPtr response_arguments = Element::createMap();
+
+        // First, return leases with indexes from 0 to 2.
+        response_arguments->set("leases", getTestLeases4AsJson(0, 3));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Next, return leases with indexes from 3 to 5.
+        response_arguments->set("leases", getTestLeases4AsJson(3, 6));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Then, return leases with indexes from 6 to 8.
+        response_arguments->set("leases", getTestLeases4AsJson(6, 9));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Finally, there is one lease with index 9 to be returned.
+        // When the server requests a page of 3 leases and gets 1 it
+        // means that the last page was returned. At this point, the
+        // server ends synchronization.
+        response_arguments->set("leases", getTestLeases4AsJson(9, 10));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+    }
+
+    /// @brief Configure server side to return  IPv6 leases in 3-element
+    /// chunks.
+    ///
+    /// Leases are fetched in pages, so the lease6-get-page should be
+    /// sent multiple times. The server is configured to return leases
+    /// in 3-element chunks. Note that the HA configis set to ask for 3
+    /// leases.
+    void createPagedSyncResponses6() {
+        ElementPtr response_arguments = Element::createMap();
+
+        // First, return leases with indexes from 0 to 2.
+        response_arguments->set("leases", getTestLeases6AsJson(0, 3));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Next, return leases with indexes from 3 to 5.
+        response_arguments->set("leases", getTestLeases6AsJson(3, 6));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Then, return leases with indexes from 6 to 8.
+        response_arguments->set("leases", getTestLeases6AsJson(6, 9));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Finally, there is one lease with index 9 to be returned.
+        // When the server requests a page of 3 leases and gets 1 it
+        // means that the last page was returned. At this point, the
+        // server ends synchronization.
+        response_arguments->set("leases", getTestLeases6AsJson(9, 10));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
     }
 
     /// @brief Tests scenarios when lease updates are sent to a partner while
@@ -780,14 +883,10 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
 
-        // Convert leases to the JSON format, the same as used by the lease_cmds
-        // hook library. Configure our test HTTP servers to return those
-        // leases in this format.
-        ElementPtr response_arguments = Element::createMap();
-        response_arguments->set("leases", getTestLeases4AsJson());
-
-        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        // Leases are fetched in pages, so the lease4-get-page should be
+        // sent multiple times. The server is configured to return leases
+        // in 3-element chunks.
+        createPagedSyncResponses4();
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -832,14 +931,10 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
 
-        // Convert leases to the JSON format, the same as used by the lease_cmds
-        // hook library. Configure our test HTTP servers to return those
-        // leases in this format.
-        ElementPtr response_arguments = Element::createMap();
-        response_arguments->set("leases", getTestLeases6AsJson());
-
-        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        // Leases are fetched in pages, so the lease6-get-page should be
+        // sent multiple times. The server is configured to return leases
+        // in 3-element chunks.
+        createPagedSyncResponses6();
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -1610,10 +1705,11 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
     // hook library. Configure our test HTTP servers to return those
     // leases in this format.
     ElementPtr response_arguments = Element::createMap();
-    response_arguments->set("leases", getTestLeases4AsJson());
 
-    factory2_->getResponseCreator()->setArguments(response_arguments);
-    factory3_->getResponseCreator()->setArguments(response_arguments);
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. The server is configured to return leases
+    // in 3-element chunks.
+    createPagedSyncResponses4();
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -1635,7 +1731,7 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
         // Stop running the IO service if we see a lease in the lease
         // database which is expected to be inserted as a result of lease
         // syncing.
-        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(4)).empty());
+        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(10)).empty());
     }));
 
     // Check if all leases have been stored in the local database.
@@ -1783,10 +1879,11 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
     // hook library. Configure our test HTTP servers to return those
     // leases in this format.
     ElementPtr response_arguments = Element::createMap();
-    response_arguments->set("leases", getTestLeases6AsJson());
 
-    factory2_->getResponseCreator()->setArguments(response_arguments);
-    factory3_->getResponseCreator()->setArguments(response_arguments);
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. We need to configure the server side to
+    // return leases in 3-element chunks.
+    createPagedSyncResponses6();
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -1809,7 +1906,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
         // Stop running the IO service if we see a lease in the lease
         // database which is expected to be inserted as a result of lease
         // syncing.
-        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(4)).empty());
+        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(10)).empty());
     }));
 
     // Check if all leases have been stored in the local database.
@@ -2502,6 +2599,7 @@ public:
     void startService(const HAConfigPtr& config,
                       const HAServerType& server_type = HAServerType::DHCPv4) {
         config->setHeartbeatDelay(1);
+        config->setSyncPageLimit(1000);
         service_.reset(new TestHAService(io_service_, network_state_, config,
                                          server_type));
         // Replace default communication state with custom state which exposes
