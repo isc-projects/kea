@@ -18,6 +18,7 @@ TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
 run_unittests_SOURCES  = adaptor_unittests.cc
+run_unittests_SOURCES += adaptor_config_unittests.cc
 run_unittests_SOURCES += adaptor_option_unittests.cc
 run_unittests_SOURCES += adaptor_pool_unittests.cc
 run_unittests_SOURCES += adaptor_host_unittests.cc
