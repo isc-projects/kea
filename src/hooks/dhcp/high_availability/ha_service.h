@@ -545,9 +545,7 @@ protected:
     /// remaining leases.
     ///
     /// This method variant uses default HTTP client for communication.
-    ///
-    /// @param limit Limit of leases on the page.
-    void asyncSyncLeases(const uint32_t limit = 1024);
+    void asyncSyncLeases();
 
     /// @brief Asynchronously reads leases from a peer and updates local
     /// lease database using a provided client instance.

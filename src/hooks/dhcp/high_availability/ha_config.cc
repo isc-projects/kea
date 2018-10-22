@@ -139,9 +139,9 @@ HAConfig::StateMachineConfig::getStateConfig(const int state) {
 
 HAConfig::HAConfig()
     : this_server_name_(), ha_mode_(HOT_STANDBY), send_lease_updates_(true),
-      sync_leases_(true), sync_timeout_(60000), heartbeat_delay_(10000),
-      max_response_delay_(60000), max_ack_delay_(10000), max_unacked_clients_(10),
-      peers_(), state_machine_(new StateMachineConfig()) {
+      sync_leases_(true), sync_timeout_(60000), sync_page_limit_(10000),
+      heartbeat_delay_(10000), max_response_delay_(60000), max_ack_delay_(10000),
+      max_unacked_clients_(10), peers_(), state_machine_(new StateMachineConfig()) {
 }
 
 HAConfig::PeerConfigPtr

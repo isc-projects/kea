@@ -23,6 +23,7 @@ const SimpleDefaults HA_CONFIG_DEFAULTS = {
     { "send-lease-updates", Element::boolean, "true" },
     { "sync-leases", Element::boolean, "true" },
     { "sync-timeout", Element::integer, "60000" },
+    { "sync-page-limit", Element::integer, "10000" },
     { "heartbeat-delay", Element::integer, "10000" },
     { "max-response-delay", Element::integer, "60000" },
     { "max-ack-delay", Element::integer, "10000" },
@@ -135,6 +136,10 @@ HAConfigParser::parseInternal(const HAConfigPtr& config_storage,
     // Get 'sync-timeout'.
     uint32_t sync_timeout = getAndValidateInteger<uint32_t>(c, "sync-timeout");
     config_storage->setSyncTimeout(sync_timeout);
+
+    // Get 'sync-page-limit'.
+    uint32_t sync_page_limit = getAndValidateInteger<uint32_t>(c, "sync-page-limit");
+    config_storage->setSyncPageLimit(sync_page_limit);
 
     // Get 'heartbeat-delay'.
     uint16_t heartbeat_delay = getAndValidateInteger<uint16_t>(c, "heartbeat-delay");
