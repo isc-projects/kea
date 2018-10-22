@@ -34,7 +34,9 @@ public:
 
     /// @brief Pre process a DHCPv4 configuration.
     ///
-    /// Assign subnet IDs, check and set default in options.
+    /// Assign subnet IDs, check and set default in options, etc.
+    /// Note even the parameter is a ConstElementPtr and is not modified
+    /// sub-structures can be so if you need a copy do a deep one.
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
@@ -44,7 +46,9 @@ public:
 
     /// @brief Pre process a DHCPv6 configuration.
     ///
-    /// Assign subnet IDs, check and set default in options.
+    /// Assign subnet IDs, check and set default in options, etc.
+    /// Note even the parameter is a ConstElementPtr and is not modified
+    /// sub-structures can be so if you need a copy do a deep one.
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
@@ -257,7 +261,7 @@ protected:
     /// @param subsel The subnet list name.
     /// @param space The default option space name.
     /// @throw MissingKey when a required key is missing.
-    static void preProcess(isc::data::ConstElementPtr dhcp,
+    static void preProcess(isc::data::ElementPtr dhcp,
                            const std::string& subsel,
                            const std::string& space);
 };

@@ -402,9 +402,11 @@ AdaptorConfig::relaySuppliedOptions(ConstElementPtr dhcp) {
 }
 
 void
-AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
+AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
                           const string& space) {
-    ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
+    if (!dhcp) {
+        isc_throw(BadValue, "preProcess: null DHCP config");
+    }
     bool have_ids = true;
     SubnetIDSet set;
     ConstElementPtr subnets = dhcp->get(subsel);
@@ -414,7 +416,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
                 have_ids = false;
             }
         } else {
-            mutable_dhcp->remove(subsel);
+            dhcp->remove(subsel);
         }
     }
     ConstElementPtr networks = dhcp->get("shared-networks");
@@ -424,7 +426,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
                 have_ids = false;
             }
         } else {
-            mutable_dhcp->remove("shared-networks");
+            dhcp->remove("shared-networks");
         }
     }
 
@@ -441,7 +443,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
         if (defs->size() > 0) {
             optionDefList(defs, space, codes);
         } else {
-            mutable_dhcp->remove("option-def");
+            dhcp->remove("option-def");
         }
     }
     ConstElementPtr options = dhcp->get("option-data");
@@ -449,7 +451,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
         if (options->size() > 0) {
             optionDataList(options, space, codes);
         } else {
-            mutable_dhcp->remove("option-data");
+            dhcp->remove("option-data");
         }
     }
     ConstElementPtr classes = dhcp->get("client-classes");
@@ -457,7 +459,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
         if (classes->size() > 0) {
             optionClasses(classes, space, codes);
         } else {
-            mutable_dhcp->remove("client-classes");
+            dhcp->remove("client-classes");
         }
     }
     ConstElementPtr hosts = dhcp->get("reservations");
@@ -465,7 +467,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
         if (hosts->size() > 0) {
             optionHosts(hosts, space, codes);
         } else {
-            mutable_dhcp->remove("reservations");
+            dhcp->remove("reservations");
         }
     }
     optionSubnets(subnets, space, codes);
@@ -502,7 +504,8 @@ AdaptorConfig::preProcess4(ConstElementPtr config) {
     if (!dhcp) {
         return;
     }
-    preProcess(dhcp, "subnet4", "dhcp4");
+    ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
+    preProcess(mutable_dhcp, "subnet4", "dhcp4");
 }
 
 void
@@ -517,8 +520,10 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
     if (!dhcp) {
         return;
     }
-    preProcess(dhcp, "subnet6", "dhcp6");
+    ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
+    preProcess(mutable_dhcp, "subnet6", "dhcp6");
 }
 
 }; // end of namespace isc::yang
 }; // end of namespace isc
+
