@@ -33,8 +33,9 @@ AdaptorConfig::subnetsCollectID(ConstElementPtr subnets, SubnetIDSet& set) {
 }
 
 bool
-AdaptorConfig::shareNetworksCollectID(ConstElementPtr networks,
-                                      SubnetIDSet& set, const string& subsel) {
+AdaptorConfig::sharedNetworksCollectID(ConstElementPtr networks,
+                                       SubnetIDSet& set,
+                                       const string& subsel) {
     bool have_ids = true;
     if (networks && (networks->size() > 0)) {
         for (size_t i = 0; i < networks->size(); ++i) {
@@ -66,9 +67,9 @@ AdaptorConfig::subnetsAssignID(ConstElementPtr subnets, SubnetIDSet& set,
 }
 
 void
-AdaptorConfig::shareNetworksAssignID(ConstElementPtr networks,
-                                     SubnetIDSet& set, SubnetID& next,
-                                     const string& subsel) {
+AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
+                                      SubnetIDSet& set, SubnetID& next,
+                                      const string& subsel) {
     if (networks && (networks->size() > 0)) {
         for (ConstElementPtr network : networks->listValue()) {
             ConstElementPtr subnets = network->get(subsel);
@@ -419,7 +420,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
     ConstElementPtr networks = dhcp->get("shared-networks");
     if (networks) {
         if (networks->size() > 0) {
-            if (!shareNetworksCollectID(networks, set, subsel)) {
+            if (!sharedNetworksCollectID(networks, set, subsel)) {
                 have_ids = false;
             }
         } else {
@@ -430,7 +431,7 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
     if (!have_ids) {
         SubnetID next(1);
         subnetsAssignID(subnets, set, next);
-        shareNetworksAssignID(networks, set, next, subsel);
+        sharedNetworksAssignID(networks, set, next, subsel);
     }
 
     OptionCodes codes;
@@ -491,14 +492,32 @@ AdaptorConfig::preProcess(ConstElementPtr dhcp, const string& subsel,
 
 void
 AdaptorConfig::preProcess4(ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadValue, "preProcess4: null config");
+    }
+    if (config->getType() != Element::map) {
+        isc_throw(BadValue, "preProcess4: not map: " << config->str());
+    }
     ConstElementPtr dhcp = config->get("Dhcp4");
-    preProcess(config->get("Dhcp4"), "subnet4", "dhcp4");
+    if (!dhcp) {
+        return;
+    }
+    preProcess(dhcp, "subnet4", "dhcp4");
 }
 
 void
 AdaptorConfig::preProcess6(ConstElementPtr config) {
+    if (!config) {
+        isc_throw(BadValue, "preProcess6: null config");
+    }
+    if (config->getType() != Element::map) {
+        isc_throw(BadValue, "preProcess6: not map: " << config->str());
+    }
     ConstElementPtr dhcp = config->get("Dhcp6");
-    preProcess(config->get("Dhcp6"), "subnet6", "dhcp6");
+    if (!dhcp) {
+        return;
+    }
+    preProcess(dhcp, "subnet6", "dhcp6");
 }
 
 }; // end of namespace isc::yang
