@@ -16,7 +16,12 @@
 namespace isc {
 namespace yang {
 
-/// @brief JSON adaptor for configurations.
+/// @brief JSON adaptor for Kea server configurations.
+///
+/// Currently only from JSON to YANG for DHCPv4 and DHCPv6 available
+/// as preProcess4 and preProcess6 class methods, filling some required
+/// (by YANG) fields (e.g. subnet IDs, or option code and space), or
+/// transforming a hand-written JSON configuration into a canonical form.
 class AdaptorConfig : public AdaptorHost, public AdaptorOption,
     public AdaptorSubnet {
 public:
@@ -33,6 +38,8 @@ public:
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
+    /// @throw BadValue when null or not a map
+    /// @note Does nothing if "Dhcp4" is not present in the map.
     static void preProcess4(isc::data::ConstElementPtr config);
 
     /// @brief Pre process a DHCPv6 configuration.
@@ -41,10 +48,12 @@ public:
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
+    /// @throw BadValue when null or not a map
+    /// @note Does nothing if "Dhcp6" is not present in the map.
     static void preProcess6(isc::data::ConstElementPtr config);
 
 protected:
-    /// @brief collectID for a subnet list.
+    /// @brief collectID applied to a subnet list.
     ///
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
@@ -52,17 +61,17 @@ protected:
     static bool subnetsCollectID(isc::data::ConstElementPtr subnets,
                                  SubnetIDSet& set);
 
-    /// @brief collectID for a shared network list.
+    /// @brief collectID applied to a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param set The reference to the set of assigned IDs.
     /// @param subsel The subnet list name.
     /// @return True if all subnets have an ID, false otherwise.
-    static bool shareNetworksCollectID(isc::data::ConstElementPtr networks,
-                                       SubnetIDSet& set,
-                                       const std::string& subsel);
+    static bool sharedNetworksCollectID(isc::data::ConstElementPtr networks,
+                                        SubnetIDSet& set,
+                                        const std::string& subsel);
 
-    /// @brief assignID for a subnet list.
+    /// @brief assignID applied to a subnet list.
     ///
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
@@ -71,36 +80,36 @@ protected:
     static void subnetsAssignID(isc::data::ConstElementPtr subnets,
                                 SubnetIDSet& set, isc::dhcp::SubnetID& next);
 
-    /// @brief assignID for a shared network list.
+    /// @brief assignID applied to a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param set The reference to the set of assigned IDs.
     /// @param next The next ID.
     /// @param subsel The subnet list name.
     /// @return True if all subnets have an ID, false otherwise.
-    static void shareNetworksAssignID(isc::data::ConstElementPtr networks,
-                                      SubnetIDSet& set,
-                                      isc::dhcp::SubnetID& next,
-                                      const std::string& subsel);
+    static void sharedNetworksAssignID(isc::data::ConstElementPtr networks,
+                                       SubnetIDSet& set,
+                                       isc::dhcp::SubnetID& next,
+                                       const std::string& subsel);
 
-    /// @brief canonizePool for a pool list.
+    /// @brief canonizePool applied to a pool list.
     ///
     /// @param pools The pool list.
     static void canonizePools(isc::data::ConstElementPtr pools);
 
-    /// @brief canonizePool for a subnet list.
+    /// @brief canonizePool applied to a subnet list.
     ///
     /// @param subnets The subnet list.
     static void poolSubnets(isc::data::ConstElementPtr subnets);
 
-    /// @brief canonizePool for a shared network list.
+    /// @brief canonizePool applied to a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
     static void poolShareNetworks(isc::data::ConstElementPtr networks,
                                   const std::string& subsel);
 
-    /// @brief Process an option definition list.
+    /// @brief Collect option definitions from an option definition list.
     ///
     /// @param defs The option definition list.
     /// @param space The default space name.
@@ -109,7 +118,7 @@ protected:
                               const std::string& space,
                               OptionCodes& codes);
 
-    /// @brief Process an option data list.
+    /// @brief Set missing option codes to an option data list.
     ///
     /// @param options The option data list.
     /// @param space The default space name.
@@ -118,7 +127,8 @@ protected:
                                const std::string& space,
                                const OptionCodes& codes);
 
-    /// @brief Process options in a client class list.
+    /// @brief Collect option definitions from a client class list
+    /// and set missing option codes.
     ///
     /// @param classes The client class list.
     /// @param space The default space name.
@@ -127,7 +137,7 @@ protected:
                               const std::string& space,
                               OptionCodes& codes);
 
-    /// @brief Process options in a pool list.
+    /// @brief Set missing option codes to a pool list.
     ///
     /// @param pools The pool list.
     /// @param space The default space name.
@@ -136,7 +146,7 @@ protected:
                             const std::string& space,
                             const OptionCodes& codes);
 
-    /// @brief Process options in a host reservation list.
+    /// @brief Set missing option codes to a host reservation list.
     ///
     /// @param hosts The host reservation list.
     /// @param space The default space name.
@@ -145,7 +155,7 @@ protected:
                             const std::string& space,
                             const OptionCodes& codes);
 
-    /// @brief Process options in a subnet list.
+    /// @brief Set missing option codes to a subnet list.
     ///
     /// @param subnets The subnet list.
     /// @param space The default space name.
@@ -154,7 +164,7 @@ protected:
                               const std::string& space,
                               const OptionCodes& codes);
 
-    /// @brief Process options in a shared network list.
+    /// @brief Set missing option codes to a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param space The default space name.
@@ -188,15 +198,21 @@ protected:
 
     /// @brief Process host reservation list.
     ///
+    /// Quote when needed flex-id identifiers.
+    ///
     /// @param hosts The host reservation list.
     static void hostList(isc::data::ConstElementPtr hosts);
 
     /// @brief Process host reservations in a subnet list.
     ///
+    /// Quote when needed flex-id identifiers.
+    ///
     /// @param subnets The subnet list.
     static void hostSubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief Process host reservations in a shared network list.
+    ///
+    /// Quote when needed flex-id identifiers.
     ///
     /// @param networks The shared network list.
     /// @param space The default space name.
@@ -205,10 +221,14 @@ protected:
 
     /// @brief updateRelay in a subnet list.
     ///
+    /// Force the use of ip-addresses when it finds an ip-address entry.
+    ///
     /// @param subnets The subnet list.
     static void relaySubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief updateRelay in a shared network list.
+    ///
+    /// Force the use of ip-addresses when it finds an ip-address entry.
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
@@ -231,7 +251,7 @@ protected:
 
     /// @brief Pre process a configuration.
     ///
-    /// Assign subnet IDs, check and set default in options.
+    /// Assign subnet IDs, check and set default in options, etc.
     ///
     /// @param dhcp The server configuration.
     /// @param subsel The subnet list name.
