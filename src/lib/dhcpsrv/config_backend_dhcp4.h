@@ -121,6 +121,8 @@ public:
     /// @brief Retrieves single option by code and space.
     ///
     /// @param server_selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
@@ -147,7 +149,7 @@ public:
 
     /// @brief Retrieves global parameter value.
     ///
-    /// @param server_selector Server selector.
+    /// @param selector Server selector.
     /// @param name Name of the global parameter to be retrieved.
     /// @return Value of the global parameter or null if parameter doesn't
     /// exist.
@@ -162,6 +164,7 @@ public:
     /// @brief Retrieves global parameters modified after specified time.
     ///
     /// @param selector Server selector.
+    /// @param modification_time Modification time.
     /// @return Collection of modified global parameters.
     virtual data::StampedValueCollection
     getModifiedGlobalParameters4(const db::ServerSelector& selector,

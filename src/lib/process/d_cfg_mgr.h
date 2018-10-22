@@ -118,7 +118,7 @@ public:
 
     /// @brief Acts as the receiver of new configurations.
     ///
-    /// This method is similar to what @ref parseConfig does, execept it employs
+    /// This method is similar to what parseConfig did, execept it employs
     /// the simple parser paradigm: no intermediate storage, no parser pointers
     /// no distinction between params_map and objects_map, parse order (if needed)
     /// can be enforced in the actual implementation by calling specific

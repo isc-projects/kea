@@ -775,19 +775,23 @@ INPUT                  = ../src/bin/agent \
                          ../src/bin/d2 \
                          ../src/bin/dhcp4 \
                          ../src/bin/dhcp6 \
+                         ../src/bin/lfc \
+                         ../src/bin/netconf \
                          ../src/bin/perfdhcp \
                          ../src/bin/sockcreator \
-                         ../src/bin/lfc \
                          ../src/hooks/dhcp/high_availability \
-                         ../src/hooks/dhcp/user_chk \
                          ../src/hooks/dhcp/lease_cmds \
                          ../src/hooks/dhcp/stat_cmds \
+                         ../src/hooks/dhcp/user_chk \
                          ../src/lib/asiodns \
                          ../src/lib/asiolink \
                          ../src/lib/cc \
                          ../src/lib/cfgrpt \
                          ../src/lib/config \
+                         ../src/lib/config_backend \
+                         ../src/lib/cql \
                          ../src/lib/cryptolink \
+                         ../src/lib/database \
                          ../src/lib/dhcp \
                          ../src/lib/dhcp_ddns \
                          ../src/lib/dhcpsrv \
@@ -801,6 +805,8 @@ INPUT                  = ../src/bin/agent \
                          ../src/lib/log \
                          ../src/lib/log/compiler \
                          ../src/lib/log/interprocess \
+                         ../src/lib/mysql \
+                         ../src/lib/pgsql \
                          ../src/lib/process \
                          ../src/lib/stats \
                          ../src/lib/testutils \

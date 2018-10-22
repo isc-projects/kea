@@ -72,7 +72,7 @@ public:
         return (name_);
     }
 
-    /// @Brief Returns value as string.
+    /// @brief Returns value as string.
     std::string getValue() const {
         return (value_);
     }

@@ -114,7 +114,7 @@ public:
     virtual ~DControllerBase();
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref isc::dhcp::Daemon::getVersion()
+    /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     std::string getVersion(bool extended);
 
     /// @brief Acts as the primary entry point into the controller execution

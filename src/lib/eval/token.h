@@ -754,7 +754,7 @@ public:
     /// means no separator.
     ///
     /// The following example use a binary MAC address 06:ce:8f:55:b3:33:
-    /// - <mac>, '-' => "06-ce-8f-55-b3-33"
+    /// - mac, '-' => "06-ce-8f-55-b3-33"
     ///
     /// @throw EvalBadStack if there are less than 2 values on stack
     ///
