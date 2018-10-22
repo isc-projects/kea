@@ -1,3 +1,9 @@
+1475.	[func]		sebschrader
+	Authoritative flag for DHCPv4 has been added. When enabled, it
+	alters how DHCPv4 server treats packets from unknown clients. This
+	lets two servers cooperate on the same link easier.
+	(Gitlab #66, git tbd)
+
 1474.	[doc]		godfryd
 	Updated list of supported operating systems.
 	(Gitlab #205, !109, git 73253af554cf48434798282f8440a99b1494fd04)
