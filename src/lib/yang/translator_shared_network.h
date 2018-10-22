@@ -122,8 +122,9 @@ namespace yang {
 /// @brief A translator class for converting a shared network between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server. Does not exist in
-/// ietf-dhcpv6-server.
+/// Currently supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
 class TranslatorSharedNetwork : virtual public TranslatorSubnets {
 public:
 
@@ -151,32 +152,33 @@ public:
                           isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief getSharedNetwork for kea-dhcp[46].
+    /// @brief getSharedNetwork for kea-dhcp4-server and kea-dhcp6-server models
     ///
     /// @param xpath The xpath of the shared network.
-    /// @param subsel The subnet list name.
+    /// @param subsel The subnet list name (either "subnet4" or "subnet6").
     /// @return JSON representation of the shared network.
     isc::data::ElementPtr getSharedNetworkKea(const std::string& xpath,
                                               const std::string& subsel);
 
-    /// @brief setSharedNetwork for kea-dhcp[46].
+    /// @brief setSharedNetwork for kea-dhcp4-server and kea-dhcp6-server models
     ///
     /// @param xpath The xpath of the shared network.
     /// @param elem The JSON element.
-    /// @param subsel The subnet list name.
+    /// @param subsel The subnet list name (either "subnet4" or "subnet6").
     void setSharedNetworkKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem,
                              const std::string& subsel);
 
-    /// @brief The model.
+    /// @brief The model name.
     std::string model_;
 };
 
 /// @brief A translator class for converting a shared network list between
 /// YANG and JSON.
 ///
-/// Currently supports on kea-dhcp[46]-server. Does not exist in
-/// ietf-dhcpv6-server.
+/// Currently supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
 class TranslatorSharedNetworks : virtual public TranslatorSharedNetwork {
 public:
 
@@ -203,7 +205,7 @@ public:
                            isc::data::ConstElementPtr elem);
 
 protected:
-    /// @brief setSharedNetworks for kea-dhcp[46].
+    /// @brief setSharedNetworks for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the shared network list.
     /// @param elem The JSON element.
@@ -211,7 +213,7 @@ protected:
     void setSharedNetworksKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
 
-    /// @brief The model.
+    /// @brief The model name.
     std::string model_;
 };
 
