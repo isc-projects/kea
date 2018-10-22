@@ -434,6 +434,7 @@ Here's the complete set of changes that were necessary.
                 | reservation_mode
                 | relay
                 | match_client_id
+                | authoritative
                 | next_server
                 | subnet_4o6_interface
                 | subnet_4o6_interface_id (*)
