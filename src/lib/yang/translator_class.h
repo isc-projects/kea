@@ -160,7 +160,6 @@ protected:
 
     /// @brief setClasses for kea-dhcp[46].
     ///
-    ///
     /// @param xpath The xpath of classes.
     /// @param elem The JSON element.
     /// @throw BadValue on client class without name.

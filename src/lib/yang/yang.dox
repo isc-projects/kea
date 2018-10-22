@@ -56,6 +56,18 @@ Note pools show two shortcomings in IETF models:
  - option sets make to track changes nearly impossible: the only easy
   code is to translate the whole configuration.
  - prefix and start - end forms of pool ranges are both mandatory.
+  (reported to authors' so should be fixed in the next version).
+
+All structure translators depend on @c isc::yang::TranslatorBasic and
+some of them depend on other structures, for instance
+@c isc::yang::TranslatorPool depends on
+@c isc::yang::TranslatorOptionDataList which itself as all list translators
+depends on the corresponding list item translator
+@c isc::yang::TranslatorOptionData. This multiple inheritance forms
+a graph with the basic and the configuration translators at the two ends.
+Multiple inheritance and its "diamond" issue are handled by C++ with
+the "virtual" inheritance: depending classes must be virtually inherited
+and explicitly constructed.
 
 @section yangTranslatorSubnet Subnet translator
 
