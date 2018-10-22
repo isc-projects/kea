@@ -1,3 +1,10 @@
+1460.	[func]		tmark
+	While kea-dhcp4 and kea-dhcp6 configuration parsing supports
+	configuration backend elements "server-tag" and "config-control",
+	use of these parameters has been disabled. Developement of this 
+	feature will resume after Kea 1.5 release.
+	(Gitlab #101,!87, git 4292a7ef7ab268826f846812e7320e1fe1fc46ef)
+
 1459.	[func]		marcin
 	Implemented libdhcp_mysql_cb hooks library which provides
 	Configuration Backend functionality for MySQL.
