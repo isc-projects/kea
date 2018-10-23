@@ -644,8 +644,8 @@ public:
             while (!isStopping()) {
                 io_service_.run_one();
             }
-            signalStopped();
             io_service_.poll();
+            signalStopped();
         }));
         waitReady();
 
