@@ -290,7 +290,7 @@
         // Specifies a list of interfaces on which the Kea DHCPv4
         // server should listen to the DHCP requests.
         "interfaces": [
-            "eth1"
+            "ethX"
         ],
 
         // Enumeration which indicates what interface should be used
