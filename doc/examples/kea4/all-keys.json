@@ -103,12 +103,6 @@
     // NCRs are sent to Kea D2 module to update DNS upon allocation of the
     // DHCP leases.
     "dhcp-ddns": {
-        // Boolean flag indicating if the Client FQDN option must be
-        // always included in DHCP responses. The default value is false
-        // indicating that Client FQDN option is only returned when
-        // requested.
-        "always-include-fqdn": false,
-
         // Boolean flag indicating if Kea DHCPv4 server must generate NCRs.
         // By default NCRs are not generated.
         "enable-updates": false,
