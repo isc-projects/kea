@@ -485,7 +485,7 @@ An example result returned when the host was found:
 
         </section>
 
-        <section>
+        <section xml:id="lease-get-page-cmds">
           <title>lease4-get-page, lease6-get-page commands</title>
           <para>The <command>lease4-get-all</command> and
           <command>lease6-get-all</command> commands may result in very
