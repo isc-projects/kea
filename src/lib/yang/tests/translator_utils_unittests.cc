@@ -202,13 +202,12 @@ TEST(YangReprTest, setTest) {
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
 }
 
-
 /// @brief Tests specified configuration.
 ///
 /// Configuration is set and then verified using YangRepr object.
 ///
-/// @param model name of the model to be verified against
-/// @param tree tree to be verified
+/// @param model name of the model to be verified against.
+/// @param tree tree to be verified.
 void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     // Get a translator object to play with.
     S_Connection conn(new Connection("utils unittests"));
@@ -225,14 +224,13 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
     EXPECT_TRUE(result);
 }
 
-// This is test environment sanity check. It verifies that every configuration
-// defined in yang_configs.h is sane.
+// This is test environment sanity check. It verifies that all configuration
+// defined in yang_configs.h are sane.
 TEST(YangReprTest, verifyConfigs) {
     for (auto x : test_configs) {
         cout << "Testing tree for model " << x.first << endl;
         sanityCheckConfig(x.first, x.second);
     }
 }
-
 
 }; // end of anonymous namespace
