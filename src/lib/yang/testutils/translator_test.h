@@ -16,6 +16,9 @@ namespace yang {
 namespace test {
 
 /// @brief Yang/sysrepo datastore textual representation class.
+///
+/// This class allows to store a configuration tree in YANG format.
+/// It is used in tests to conduct operations on whole configurations.
 class YangRepr {
 public:
 
@@ -25,7 +28,7 @@ public:
     YangRepr(const std::string& model) : model_(model) {
     }
 
-    /// @brief The item class.
+    /// @brief A struct representing a single entry.
     struct YangReprItem {
         /// @brief Constructor with content.
         ///
@@ -38,10 +41,11 @@ public:
             : xpath_(xpath), value_(value), type_(type), settable_(settable) {
         }
 
-        /// @brief Factory from session.
+        /// @brief Retrieves configuration parameter from sysrepo
         ///
-        /// @param xpath The xpath.
+        /// @param xpath The xpath of an element to be retrieved
         /// @param session Sysrepo session.
+        /// @return YangReprItem instance representing configuration parameter
         static YangReprItem get(const std::string& xpath, S_Session session);
 
         /// @brief The xpath.
@@ -57,6 +61,9 @@ public:
         bool settable_;
 
         /// @brief The equal operator ignoring settable.
+        ///
+        /// @param other the other object to compare with
+        /// @return true if equal
         bool operator==(const YangReprItem& other) const {
             return ((xpath_ == other.xpath_) &&
                     (value_ == other.value_) &&
@@ -64,6 +71,9 @@ public:
         }
 
         /// @brief The unequal operator ignoring settable.
+        ///
+        /// @param other the other object to compare with
+        /// @return false if equal
         bool operator!=(const YangReprItem& other) const {
             return (!(*this == other));
         }
@@ -77,17 +87,19 @@ public:
     /// @param session Sysrepo session.
     Tree get(S_Session session) const;
 
-    /// @brief Verify tree.
+    /// @brief Verifies a tree.
     ///
     /// @param expected The expected value.
     /// @param session Sysrepo session.
     /// @param errs Error stream.
-    /// @return True if verification succeeds, false with errors displayed
+    /// @return true if verification succeeds, false with errors displayed
     /// on errs if it fails.
     bool verify(const Tree& expected, S_Session session,
                 std::ostream& errs) const;
 
-    /// @brief Set tree to session.
+    /// @brief Sets specified tree in a sysrepo.
+    ///
+    /// The actual access parameters are specified within session.
     ///
     /// @param tree The tree to install.
     /// @param session Sysrepo session.
