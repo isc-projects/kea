@@ -144,12 +144,12 @@ public:
     /// @brief Destructor.
     virtual ~NetconfAgentTest() {
         NetconfProcess::global_shut_down_flag = true;
-        io_service_->stop();
-        io_service_.reset();
         if (thread_) {
             thread_->wait();
             thread_.reset();
         }
+        io_service_->stop();
+        io_service_.reset();
         if (agent_) {
             clearYang(agent_);
             agent_->clear();
@@ -230,12 +230,12 @@ public:
     /// @brief Destructor.
     virtual ~NetconfAgentLogTest() {
         NetconfProcess::global_shut_down_flag = true;
-        io_service_->stop();
-        io_service_.reset();
         if (thread_) {
             thread_->wait();
             thread_.reset();
         }
+        io_service_->stop();
+        io_service_.reset();
         if (agent_) {
             clearYang(agent_);
             agent_->clear();
@@ -822,7 +822,7 @@ TEST_F(NetconfAgentTest, subscribe) {
     EXPECT_NO_THROW(agent_->subscriptions_.clear());
 }
 
-/// Verifies the update method works as expected: apply new YNAG configuration
+/// Verifies the update method works as expected: apply new YANG configuration
 /// to the server. Note it is called by the subscription callback.
 TEST_F(NetconfAgentTest, update) {
     // Initial YANG configuration.
@@ -963,7 +963,7 @@ TEST_F(NetconfAgentTest, update) {
     EXPECT_TRUE(expected->equals(*pruned));
 }
 
-/// Verifies the validate method works as expected: test new YNAG configuration
+/// Verifies the validate method works as expected: test new YANG configuration
 /// with the server. Note it is called by the subscription callback and
 /// update is called after.
 TEST_F(NetconfAgentTest, validate) {

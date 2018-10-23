@@ -106,6 +106,9 @@ NetconfAgent::~NetconfAgent() {
 
 void
 NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
+    if (NetconfProcess::global_shut_down_flag) {
+        return;
+    }
     const CfgServersMapPtr& servers =
         cfg_mgr->getNetconfConfig()->getCfgServersMap();
     for (auto pair : *servers) {
@@ -113,11 +116,17 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
             return;
         }
         keaConfig(pair);
+        if (NetconfProcess::global_shut_down_flag) {
+            return;
+        }
     }
     if (NetconfProcess::global_shut_down_flag) {
         return;
     }
     initSysrepo();
+    if (NetconfProcess::global_shut_down_flag) {
+        return;
+    }
     for (auto pair : *servers) {
         if (NetconfProcess::global_shut_down_flag) {
             return;
@@ -127,6 +136,9 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
             return;
         }
         subscribe(pair);
+        if (NetconfProcess::global_shut_down_flag) {
+            return;
+        }
     }
 }
 
