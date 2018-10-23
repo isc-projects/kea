@@ -85,7 +85,7 @@ protected:
                                         SubnetIDSet& set,
                                         const std::string& subsel);
 
-    /// @brief Assigns subnet-id to a subnet list.
+    /// @brief Assigns subnet-id to every subnet in a subnet list.
     ///
     /// Only those subnets that don't have one subnet-id assigned yet,
     /// will get a new subnet-id value.
@@ -97,7 +97,10 @@ protected:
     static void subnetsAssignID(isc::data::ConstElementPtr subnets,
                                 SubnetIDSet& set, isc::dhcp::SubnetID& next);
 
-    /// @brief assignID applied to a shared network list.
+    /// @brief Assigns subnet-id to every subnet in a shared network list.
+    ///
+    /// Only those subnets that don't have one subnet-id assigned yet,
+    /// will get a new subnet-id value.
     ///
     /// @param networks The shared network list.
     /// @param set The reference to the set of assigned IDs.
@@ -109,22 +112,25 @@ protected:
                                        isc::dhcp::SubnetID& next,
                                        const std::string& subsel);
 
-    /// @brief canonizePool applied to a pool list.
+    /// @brief Sanitizes all pools in a pools list.
+    ///
+    /// Goes over each pool and cleans up its definition (removes extra spaces,
+    /// adds one space before and after - ).
     ///
     /// @param pools The pool list.
-    static void canonizePools(isc::data::ConstElementPtr pools);
+    static void sanitizePools(isc::data::ConstElementPtr pools);
 
-    /// @brief canonizePool applied to a subnet list.
+    /// @brief Sanitizes all pools in a subnets list.
     ///
     /// @param subnets The subnet list.
-    static void canonizePoolsInSubnets(isc::data::ConstElementPtr subnets);
+    static void sanitizePoolsInSubnets(isc::data::ConstElementPtr subnets);
 
-    /// @brief canonizePool applied to a shared network list.
+    /// @brief Sanitizes all pools in all subnets in a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
-    static void poolShareNetworks(isc::data::ConstElementPtr networks,
-                                  const std::string& subsel);
+    static void sanitizePoolsInSharedNetworks(isc::data::ConstElementPtr networks,
+                                              const std::string& subsel);
 
     /// @brief Collect option definitions from an option definition list.
     ///
