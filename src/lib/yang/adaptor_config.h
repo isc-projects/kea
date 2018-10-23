@@ -134,21 +134,24 @@ protected:
 
     /// @brief Collect option definitions from an option definition list.
     ///
+    /// Collects options definitions, but also sets missing option space
+    /// with default.
+    ///
     /// @param defs The option definition list.
-    /// @param space The default space name.
+    /// @param space The default space name (missing will be filled with this)
     /// @param codes Option definitions.
-    static void optionDefList(isc::data::ConstElementPtr defs,
-                              const std::string& space,
-                              OptionCodes& codes);
+    static void sanitizeOptionDefList(isc::data::ConstElementPtr defs,
+                                      const std::string& space,
+                                      OptionCodes& codes);
 
     /// @brief Set missing option codes to an option data list.
     ///
     /// @param options The option data list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionDataList(isc::data::ConstElementPtr options,
-                               const std::string& space,
-                               const OptionCodes& codes);
+    static void sanitizeOptionDataList(isc::data::ConstElementPtr options,
+                                       const std::string& space,
+                                       const OptionCodes& codes);
 
     /// @brief Collect option definitions from a client class list
     /// and set missing option codes.
@@ -156,59 +159,59 @@ protected:
     /// @param classes The client class list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionClasses(isc::data::ConstElementPtr classes,
-                              const std::string& space,
-                              OptionCodes& codes);
+    static void sanitizeOptionClasses(isc::data::ConstElementPtr classes,
+                                      const std::string& space,
+                                      OptionCodes& codes);
 
     /// @brief Set missing option codes to a pool list.
     ///
     /// @param pools The pool list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionPools(isc::data::ConstElementPtr pools,
-                            const std::string& space,
-                            const OptionCodes& codes);
+    static void sanitizeOptionPools(isc::data::ConstElementPtr pools,
+                                    const std::string& space,
+                                    const OptionCodes& codes);
 
     /// @brief Set missing option codes to a host reservation list.
     ///
     /// @param hosts The host reservation list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionHosts(isc::data::ConstElementPtr hosts,
-                            const std::string& space,
-                            const OptionCodes& codes);
+    static void sanitizeOptionHosts(isc::data::ConstElementPtr hosts,
+                                    const std::string& space,
+                                    const OptionCodes& codes);
 
     /// @brief Set missing option codes to a subnet list.
     ///
     /// @param subnets The subnet list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionSubnets(isc::data::ConstElementPtr subnets,
-                              const std::string& space,
-                              const OptionCodes& codes);
+    static void sanitizeOptionSubnets(isc::data::ConstElementPtr subnets,
+                                      const std::string& space,
+                                      const OptionCodes& codes);
 
     /// @brief Set missing option codes to a shared network list.
     ///
     /// @param networks The shared network list.
     /// @param space The default space name.
     /// @param codes Option definitions.
-    static void optionSharedNetworks(isc::data::ConstElementPtr networks,
-                                     const std::string& space,
-                                     const OptionCodes& codes);
+    static void sanitizeOptionSharedNetworks(isc::data::ConstElementPtr networks,
+                                             const std::string& space,
+                                             const OptionCodes& codes);
 
     /// @brief Process require client classes in a pool list.
     ///
     /// Remove empty require client class list.
     ///
     /// @param pools The pool list.
-    static void requireClassesPools(isc::data::ConstElementPtr pools);
+    static void sanitizeRequireClassesPools(isc::data::ConstElementPtr pools);
 
     /// @brief Process require client classes in a subnet list.
     ///
     /// Remove empty require client class lists.
     ///
     /// @param subnets The subnet list.
-    static void requireClassesSubnets(isc::data::ConstElementPtr subnets);
+    static void sanitizeRequireClassesSubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief Process require client classes in a shared network list.
     ///
@@ -224,14 +227,14 @@ protected:
     /// Quote when needed flex-id identifiers.
     ///
     /// @param hosts The host reservation list.
-    static void hostList(isc::data::ConstElementPtr hosts);
+    static void sanitizeHostList(isc::data::ConstElementPtr hosts);
 
     /// @brief Process host reservations in a subnet list.
     ///
     /// Quote when needed flex-id identifiers.
     ///
     /// @param subnets The subnet list.
-    static void hostSubnets(isc::data::ConstElementPtr subnets);
+    static void sanitizeHostSubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief Process host reservations in a shared network list.
     ///
@@ -239,38 +242,38 @@ protected:
     ///
     /// @param networks The shared network list.
     /// @param space The default space name.
-    static void hostSharedNetworks(isc::data::ConstElementPtr networks,
-                                   const std::string& space);
+    static void SanitizeHostsInSharedNetworks(isc::data::ConstElementPtr networks,
+                                              const std::string& space);
 
-    /// @brief updateRelay in a subnet list.
+    /// @brief Sanitizes relay information in subnets in a subnet list.
     ///
     /// Force the use of ip-addresses when it finds an ip-address entry.
     ///
     /// @param subnets The subnet list.
-    static void relaySubnets(isc::data::ConstElementPtr subnets);
+    static void sanitizeRelaySubnets(isc::data::ConstElementPtr subnets);
 
-    /// @brief updateRelay in a shared network list.
+    /// @brief Sanitizes relay information in a shared network list.
     ///
     /// Force the use of ip-addresses when it finds an ip-address entry.
     ///
     /// @param networks The shared network list.
     /// @param subsel The subnet list name.
-    static void relaySharedNetworks(isc::data::ConstElementPtr networks,
-                                    const std::string& subsel);
+    static void sanitizeRelayInSharedNetworks(isc::data::ConstElementPtr networks,
+                                              const std::string& subsel);
 
     /// @brief Update (hosts) database.
     ///
     /// Force the use of hosts-databases vs. hosts-database.
     ///
     /// @param dhcp The DHCP server.
-    static void updateDatabase(isc::data::ConstElementPtr dhcp);
+    static void sanitizeDatabase(isc::data::ConstElementPtr dhcp);
 
     /// @brief Update relay supplied options.
     ///
     /// Remove empty relay supplied option list.
     ///
     /// @param dhcp The DHCPv6 server.
-    static void relaySuppliedOptions(isc::data::ConstElementPtr dhcp);
+    static void sanitizeRelaySuppliedOptions(isc::data::ConstElementPtr dhcp);
 
     /// @brief Pre process a configuration.
     ///

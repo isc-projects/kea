@@ -104,11 +104,13 @@ AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
 
     for (ConstElementPtr network : networks->listValue()) {
         ConstElementPtr subnets = network->get(subsel);
-        if (subnets && (subnets->size() > 0)) {
-            for (size_t i = 0; i < subnets->size(); ++i) {
-                ElementPtr subnet = subnets->getNonConst(i);
-                assignID(subnet, set, next);
-            }
+        if (!subnets || subnets->empty()) {
+            continue;
+        }
+
+        for (size_t i = 0; i < subnets->size(); ++i) {
+            ElementPtr subnet = subnets->getNonConst(i);
+            assignID(subnet, set, next);
         }
     }
 }
@@ -154,9 +156,9 @@ AdaptorConfig::sanitizePoolsInSharedNetworks(ConstElementPtr networks,
 }
 
 void
-AdaptorConfig::optionDefList(ConstElementPtr defs,
-                             const string& space,
-                             OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionDefList(ConstElementPtr defs,
+                                     const string& space,
+                                     OptionCodes& codes) {
     if (!defs || defs->empty()) {
         // nothing to do here.
         return;
@@ -174,8 +176,9 @@ AdaptorConfig::optionDefList(ConstElementPtr defs,
 }
 
 void
-AdaptorConfig::optionDataList(ConstElementPtr options,const string& space,
-                              const OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionDataList(ConstElementPtr options,
+                                      const string& space,
+                                      const OptionCodes& codes) {
     if (!options || options->empty()) {
         // nothing to do here.
         return;
@@ -191,30 +194,39 @@ AdaptorConfig::optionDataList(ConstElementPtr options,const string& space,
 }
 
 void
-AdaptorConfig::optionClasses(ConstElementPtr classes, const string& space,
-                             OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionClasses(ConstElementPtr classes,
+                                     const string& space,
+                                     OptionCodes& codes) {
     if (!classes || classes->empty()) {
         // nothing to do here.
         return;
     }
 
+    // For every client class defined...
     for (size_t i = 0; i < classes->size(); ++i) {
         ElementPtr cclass = classes->getNonConst(i);
+
         if (space == DHCP4_SPACE) {
             ConstElementPtr options = cclass->get("option-def");
             if (options) {
-                if (options->size() > 0) {
-                    optionDefList(options, space, codes);
+                if (!options->empty()) {
+                    // If present, sanitize it.
+                    sanitizeOptionDefList(options, space, codes);
                 } else {
+                    // If empty, remove it.
                     cclass->remove("option-def");
                 }
             }
         }
+
+        // also sanitize option data.
         ConstElementPtr options = cclass->get("option-data");
         if (options) {
-            if (options->size() > 0) {
-                optionDataList(options, space, codes);
+            if (!options->empty()) {
+                // If present, sanitize it.
+                sanitizeOptionDataList(options, space, codes);
             } else {
+                // If empty, remove it.
                 cclass->remove("option-data");
             }
         }
@@ -222,8 +234,8 @@ AdaptorConfig::optionClasses(ConstElementPtr classes, const string& space,
 }
 
 void
-AdaptorConfig::optionPools(ConstElementPtr pools, const string& space,
-                           const OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionPools(ConstElementPtr pools, const string& space,
+                                   const OptionCodes& codes) {
     if (!pools || pools->empty()) {
         // nothing to do here.
         return;
@@ -233,8 +245,8 @@ AdaptorConfig::optionPools(ConstElementPtr pools, const string& space,
         ElementPtr pool = pools->getNonConst(i);
         ConstElementPtr options = pool->get("option-data");
         if (options) {
-            if (options->size() > 0) {
-                optionDataList(options, space, codes);
+            if (!options->empty()) {
+                sanitizeOptionDataList(options, space, codes);
             } else {
                 pool->remove("option-data");
             }
@@ -243,8 +255,8 @@ AdaptorConfig::optionPools(ConstElementPtr pools, const string& space,
 }
 
 void
-AdaptorConfig::optionHosts(ConstElementPtr hosts, const string& space,
-                           const OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionHosts(ConstElementPtr hosts, const string& space,
+                                   const OptionCodes& codes) {
     if (!hosts || hosts->empty()) {
         // nothing to do here.
         return;
@@ -254,8 +266,8 @@ AdaptorConfig::optionHosts(ConstElementPtr hosts, const string& space,
         ElementPtr host = hosts->getNonConst(i);
         ConstElementPtr options = host->get("option-data");
         if (options) {
-            if (options->size() > 0) {
-                optionDataList(options, space, codes);
+            if (!options->empty()) {
+                sanitizeOptionDataList(options, space, codes);
             } else {
                 host->remove("option-data");
             }
@@ -264,8 +276,9 @@ AdaptorConfig::optionHosts(ConstElementPtr hosts, const string& space,
 }
 
 void
-AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
-                             const OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionSubnets(ConstElementPtr subnets,
+                                     const string& space,
+                                     const OptionCodes& codes) {
     if (!subnets || subnets->empty()) {
         // nothing to do here.
         return;
@@ -277,8 +290,8 @@ AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
         // Let's try to sanitize option-data first.
         ConstElementPtr options = subnet->get("option-data");
         if (options) {
-            if (options->size() > 0) {
-                optionDataList(options, space, codes);
+            if (!options->empty()) {
+                sanitizeOptionDataList(options, space, codes);
             } else {
                 subnet->remove("option-data");
             }
@@ -287,8 +300,8 @@ AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
         // Then try to sanitize pools.
         ConstElementPtr pools = subnet->get("pools");
         if (pools) {
-            if (pools->size() > 0) {
-                optionPools(pools, space, codes);
+            if (!pools->empty()) {
+                sanitizeOptionPools(pools, space, codes);
             } else {
                 subnet->remove("pools");
             }
@@ -298,8 +311,8 @@ AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
         if (space == DHCP6_SPACE) {
             ConstElementPtr pools = subnet->get("pd-pools");
             if (pools) {
-                if (pools->size() > 0) {
-                    optionPools(pools, space, codes);
+                if (!pools->empty()) {
+                    sanitizeOptionPools(pools, space, codes);
                 } else {
                     subnet->remove("pd-pools");
                 }
@@ -309,8 +322,8 @@ AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
         // Finally, sanitize host reservations.
         ConstElementPtr hosts = subnet->get("reservations");
         if (hosts) {
-            if (hosts->size() > 0) {
-                optionHosts(hosts, space, codes);
+            if (!hosts->empty()) {
+                sanitizeOptionHosts(hosts, space, codes);
             } else {
                 subnet->remove("reservations");
             }
@@ -319,9 +332,9 @@ AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
 }
 
 void
-AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
-                                    const string& space,
-                                    const OptionCodes& codes) {
+AdaptorConfig::sanitizeOptionSharedNetworks(ConstElementPtr networks,
+                                            const string& space,
+                                            const OptionCodes& codes) {
     if (!networks || networks->empty()) {
         // nothing to do here.
         return;
@@ -334,8 +347,8 @@ AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
         // try to sanitize shared network options first.
         ConstElementPtr options = network->get("option-data");
         if (options) {
-            if (options->size() > 0) {
-                optionDataList(options, space, codes);
+            if (!options->empty()) {
+                sanitizeOptionDataList(options, space, codes);
             } else {
                 network->remove("option-data");
             }
@@ -350,8 +363,8 @@ AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
         // Now try to sanitize subnets.
         ConstElementPtr subnets = network->get(subnet);
         if (subnets) {
-            if (subnets->size() > 0) {
-                optionSubnets(subnets, space, codes);
+            if (!subnets->empty()) {
+                sanitizeOptionSubnets(subnets, space, codes);
             } else {
                 network->remove(subnet);
             }
@@ -360,7 +373,7 @@ AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
 }
 
 void
-AdaptorConfig::requireClassesPools(ConstElementPtr pools) {
+AdaptorConfig::sanitizeRequireClassesPools(ConstElementPtr pools) {
     if (!pools || pools->empty()) {
         // nothing to do here.
         return;
@@ -376,7 +389,7 @@ AdaptorConfig::requireClassesPools(ConstElementPtr pools) {
 }
 
 void
-AdaptorConfig::requireClassesSubnets(ConstElementPtr subnets) {
+AdaptorConfig::sanitizeRequireClassesSubnets(ConstElementPtr subnets) {
     if (!subnets || subnets->empty()) {
         // nothing to do here.
         return;
@@ -384,10 +397,10 @@ AdaptorConfig::requireClassesSubnets(ConstElementPtr subnets) {
 
     for (size_t i = 0; i < subnets->size(); ++i) {
         ElementPtr subnet = subnets->getNonConst(i);
-        requireClassesPools(subnet->get("pools"));
-        requireClassesPools(subnet->get("pd-pools"));
+        sanitizeRequireClassesPools(subnet->get("pools"));
+        sanitizeRequireClassesPools(subnet->get("pd-pools"));
         ConstElementPtr requires = subnet->get("require-client-classes");
-        if (requires && (requires->size() == 0)) {
+        if (requires && requires->empty()) {
             subnet->remove("require-client-classes");
         }
     }
@@ -403,16 +416,16 @@ AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
 
     for (size_t i = 0; i < networks->size(); ++i) {
         ElementPtr network = networks->getNonConst(i);
-        requireClassesSubnets(network->get(subsel));
+        sanitizeRequireClassesSubnets(network->get(subsel));
         ConstElementPtr requires = network->get("require-client-classes");
-        if (requires && (requires->size() == 0)) {
+        if (requires && requires->empty()) {
             network->remove("require-client-classes");
         }
     }
 }
 
 void
-AdaptorConfig::hostList(ConstElementPtr hosts) {
+AdaptorConfig::sanitizeHostList(ConstElementPtr hosts) {
 
     if (!hosts || hosts->empty()) {
         // nothing to do here.
@@ -426,7 +439,7 @@ AdaptorConfig::hostList(ConstElementPtr hosts) {
 }
 
 void
-AdaptorConfig::hostSubnets(ConstElementPtr subnets) {
+AdaptorConfig::sanitizeHostSubnets(ConstElementPtr subnets) {
 
     if (!subnets || subnets->empty()) {
         // nothing to do here.
@@ -434,12 +447,12 @@ AdaptorConfig::hostSubnets(ConstElementPtr subnets) {
     }
 
     for (ConstElementPtr subnet : subnets->listValue()) {
-        hostList(subnet->get("reservations"));
+        sanitizeHostList(subnet->get("reservations"));
     }
 }
 
 void
-AdaptorConfig::hostSharedNetworks(ConstElementPtr networks,
+AdaptorConfig::SanitizeHostsInSharedNetworks(ConstElementPtr networks,
                                   const string& space) {
     if (!networks || networks->empty()) {
         // nothing to do here.
@@ -448,15 +461,15 @@ AdaptorConfig::hostSharedNetworks(ConstElementPtr networks,
 
     for (ConstElementPtr network : networks->listValue()) {
         if (space == DHCP4_SPACE) {
-            hostSubnets(network->get("subnet4"));
+            sanitizeHostSubnets(network->get("subnet4"));
         } else {
-            hostSubnets(network->get("subnet6"));
+            sanitizeHostSubnets(network->get("subnet6"));
         }
     }
 }
 
 void
-AdaptorConfig::relaySubnets(ConstElementPtr subnets) {
+AdaptorConfig::sanitizeRelaySubnets(ConstElementPtr subnets) {
     if (!subnets || subnets->empty()) {
         // nothing to do here.
         return;
@@ -469,7 +482,7 @@ AdaptorConfig::relaySubnets(ConstElementPtr subnets) {
 }
 
 void
-AdaptorConfig::relaySharedNetworks(ConstElementPtr networks,
+AdaptorConfig::sanitizeRelayInSharedNetworks(ConstElementPtr networks,
                                    const string& subsel) {
     if (!networks || networks->empty()) {
         // nothing to do here.
@@ -479,12 +492,12 @@ AdaptorConfig::relaySharedNetworks(ConstElementPtr networks,
     for (size_t i = 0; i < networks->size(); ++i) {
         ElementPtr network = networks->getNonConst(i);
         updateRelay(network);
-        relaySubnets(network->get(subsel));
+        sanitizeRelaySubnets(network->get(subsel));
     }
 }
 
 void
-AdaptorConfig::updateDatabase(ConstElementPtr dhcp) {
+AdaptorConfig::sanitizeDatabase(ConstElementPtr dhcp) {
     ConstElementPtr database = dhcp->get("hosts-database");
     if (!database) {
         return;
@@ -498,7 +511,7 @@ AdaptorConfig::updateDatabase(ConstElementPtr dhcp) {
 }
 
 void
-AdaptorConfig::relaySuppliedOptions(ConstElementPtr dhcp) {
+AdaptorConfig::sanitizeRelaySuppliedOptions(ConstElementPtr dhcp) {
     ConstElementPtr options = dhcp->get("relay-supplied-options");
     if (!options || options->empty()) {
         return;
@@ -517,7 +530,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     SubnetIDSet set;
     ConstElementPtr subnets = dhcp->get(subsel);
     if (subnets) {
-        if (subnets->size() > 0) {
+        if (!subnets->empty()) {
             if (!subnetsCollectID(subnets, set)) {
                 have_ids = false;
             }
@@ -527,7 +540,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     }
     ConstElementPtr networks = dhcp->get("shared-networks");
     if (networks) {
-        if (networks->size() > 0) {
+        if (!networks->empty()) {
             if (!sharedNetworksCollectID(networks, set, subsel)) {
                 have_ids = false;
             }
@@ -546,55 +559,55 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     initCodes(codes, space);;
     ConstElementPtr defs = dhcp->get("option-def");
     if (defs) {
-        if (defs->size() > 0) {
-            optionDefList(defs, space, codes);
+        if (!defs->empty()) {
+            sanitizeOptionDefList(defs, space, codes);
         } else {
             dhcp->remove("option-def");
         }
     }
     ConstElementPtr options = dhcp->get("option-data");
     if (options) {
-        if (options->size() > 0) {
-            optionDataList(options, space, codes);
+        if (!options->empty()) {
+            sanitizeOptionDataList(options, space, codes);
         } else {
             dhcp->remove("option-data");
         }
     }
     ConstElementPtr classes = dhcp->get("client-classes");
     if (classes) {
-        if (classes->size() > 0) {
-            optionClasses(classes, space, codes);
+        if (!classes->empty()) {
+            sanitizeOptionClasses(classes, space, codes);
         } else {
             dhcp->remove("client-classes");
         }
     }
     ConstElementPtr hosts = dhcp->get("reservations");
     if (hosts) {
-        if (hosts->size() > 0) {
-            optionHosts(hosts, space, codes);
+        if (!hosts->empty()) {
+            sanitizeOptionHosts(hosts, space, codes);
         } else {
             dhcp->remove("reservations");
         }
     }
-    optionSubnets(subnets, space, codes);
-    optionSharedNetworks(networks, space, codes);
+    sanitizeOptionSubnets(subnets, space, codes);
+    sanitizeOptionSharedNetworks(networks, space, codes);
 
     sanitizePoolsInSubnets(subnets);
     sanitizePoolsInSharedNetworks(networks, subsel);
 
-    hostSubnets(subnets);
-    hostSharedNetworks(networks, space);
+    sanitizeHostSubnets(subnets);
+    SanitizeHostsInSharedNetworks(networks, space);
 
-    relaySubnets(subnets);
-    relaySharedNetworks(networks, subsel);
+    sanitizeRelaySubnets(subnets);
+    sanitizeRelayInSharedNetworks(networks, subsel);
 
-    requireClassesSubnets(subnets);
+    sanitizeRequireClassesSubnets(subnets);
     requireClassesSharedNetworks(networks, subsel);
 
-    updateDatabase(dhcp);
+    sanitizeDatabase(dhcp);
 
     if (space == DHCP6_SPACE) {
-        relaySuppliedOptions(dhcp);
+        sanitizeRelaySuppliedOptions(dhcp);
     }
 }
 
