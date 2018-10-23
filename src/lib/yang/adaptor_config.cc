@@ -10,6 +10,11 @@ using namespace std;
 using namespace isc::data;
 using namespace isc::dhcp;
 
+namespace {
+const string DHCP4_SPACE = "dhcp4";
+const string DHCP6_SPACE = "dhcp6";
+}
+
 namespace isc {
 namespace yang {
 
@@ -109,7 +114,7 @@ AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
 }
 
 void
-AdaptorConfig::canonizePools(ConstElementPtr pools) {
+AdaptorConfig::sanitizePools(ConstElementPtr pools) {
     if (!pools || !pools->empty()) {
         // nothing to do here.
         return;
@@ -124,27 +129,27 @@ AdaptorConfig::canonizePools(ConstElementPtr pools) {
 }
 
 void
-AdaptorConfig::canonizePoolsInSubnets(ConstElementPtr subnets) {
+AdaptorConfig::sanitizePoolsInSubnets(ConstElementPtr subnets) {
     if (!subnets || !subnets->empty()) {
         // nothing to do here.
         return;
     }
 
     for (ConstElementPtr subnet : subnets->listValue()) {
-        canonizePools(subnet->get("pools"));
+        sanitizePools(subnet->get("pools"));
     }
 }
 
 void
-AdaptorConfig::poolShareNetworks(ConstElementPtr networks,
-                                 const string& subsel) {
+AdaptorConfig::sanitizePoolsInSharedNetworks(ConstElementPtr networks,
+                                             const string& subsel) {
     if (!networks || networks->empty()) {
         // nothing to do here.
         return;
     }
 
     for (ConstElementPtr network : networks->listValue()) {
-        canonizePoolsInSubnets(network->get(subsel));
+        sanitizePoolsInSubnets(network->get(subsel));
     }
 }
 
@@ -195,7 +200,7 @@ AdaptorConfig::optionClasses(ConstElementPtr classes, const string& space,
 
     for (size_t i = 0; i < classes->size(); ++i) {
         ElementPtr cclass = classes->getNonConst(i);
-        if (space == "dhcp4") {
+        if (space == DHCP4_SPACE) {
             ConstElementPtr options = cclass->get("option-def");
             if (options) {
                 if (options->size() > 0) {
@@ -219,16 +224,19 @@ AdaptorConfig::optionClasses(ConstElementPtr classes, const string& space,
 void
 AdaptorConfig::optionPools(ConstElementPtr pools, const string& space,
                            const OptionCodes& codes) {
-    if (pools && (pools->size() > 0)) {
-        for (size_t i = 0; i < pools->size(); ++i) {
-            ElementPtr pool = pools->getNonConst(i);
-            ConstElementPtr options = pool->get("option-data");
-            if (options) {
-                if (options->size() > 0) {
-                    optionDataList(options, space, codes);
-                } else {
-                    pool->remove("option-data");
-                }
+    if (!pools || pools->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < pools->size(); ++i) {
+        ElementPtr pool = pools->getNonConst(i);
+        ConstElementPtr options = pool->get("option-data");
+        if (options) {
+            if (options->size() > 0) {
+                optionDataList(options, space, codes);
+            } else {
+                pool->remove("option-data");
             }
         }
     }
@@ -237,16 +245,19 @@ AdaptorConfig::optionPools(ConstElementPtr pools, const string& space,
 void
 AdaptorConfig::optionHosts(ConstElementPtr hosts, const string& space,
                            const OptionCodes& codes) {
-    if (hosts && (hosts->size() > 0)) {
-        for (size_t i = 0; i < hosts->size(); ++i) {
-            ElementPtr host = hosts->getNonConst(i);
-            ConstElementPtr options = host->get("option-data");
-            if (options) {
-                if (options->size() > 0) {
-                    optionDataList(options, space, codes);
-                } else {
-                    host->remove("option-data");
-                }
+    if (!hosts || hosts->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < hosts->size(); ++i) {
+        ElementPtr host = hosts->getNonConst(i);
+        ConstElementPtr options = host->get("option-data");
+        if (options) {
+            if (options->size() > 0) {
+                optionDataList(options, space, codes);
+            } else {
+                host->remove("option-data");
             }
         }
     }
@@ -255,42 +266,53 @@ AdaptorConfig::optionHosts(ConstElementPtr hosts, const string& space,
 void
 AdaptorConfig::optionSubnets(ConstElementPtr subnets, const string& space,
                              const OptionCodes& codes) {
-    if (subnets && (subnets->size() > 0)) {
-        for (size_t i = 0; i < subnets->size(); ++i) {
-            ElementPtr subnet = subnets->getNonConst(i);
-            ConstElementPtr options = subnet->get("option-data");
-            if (options) {
-                if (options->size() > 0) {
-                    optionDataList(options, space, codes);
-                } else {
-                    subnet->remove("option-data");
-                }
+    if (!subnets || subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < subnets->size(); ++i) {
+        ElementPtr subnet = subnets->getNonConst(i);
+
+        // Let's try to sanitize option-data first.
+        ConstElementPtr options = subnet->get("option-data");
+        if (options) {
+            if (options->size() > 0) {
+                optionDataList(options, space, codes);
+            } else {
+                subnet->remove("option-data");
             }
-            ConstElementPtr pools = subnet->get("pools");
+        }
+
+        // Then try to sanitize pools.
+        ConstElementPtr pools = subnet->get("pools");
+        if (pools) {
+            if (pools->size() > 0) {
+                optionPools(pools, space, codes);
+            } else {
+                subnet->remove("pools");
+            }
+        }
+
+        // If this is v6, also sanitize pd-pools.
+        if (space == DHCP6_SPACE) {
+            ConstElementPtr pools = subnet->get("pd-pools");
             if (pools) {
                 if (pools->size() > 0) {
                     optionPools(pools, space, codes);
                 } else {
-                    subnet->remove("pools");
+                    subnet->remove("pd-pools");
                 }
             }
-            if (space == "dhcp6") {
-                ConstElementPtr pools = subnet->get("pd-pools");
-                if (pools) {
-                    if (pools->size() > 0) {
-                        optionPools(pools, space, codes);
-                    } else {
-                        subnet->remove("pd-pools");
-                    }
-                }
-            }
-            ConstElementPtr hosts = subnet->get("reservations");
-            if (hosts) {
-                if (hosts->size() > 0) {
-                    optionHosts(hosts, space, codes);
-                } else {
-                    subnet->remove("reservations");
-                }
+        }
+
+        // Finally, sanitize host reservations.
+        ConstElementPtr hosts = subnet->get("reservations");
+        if (hosts) {
+            if (hosts->size() > 0) {
+                optionHosts(hosts, space, codes);
+            } else {
+                subnet->remove("reservations");
             }
         }
     }
@@ -300,30 +322,38 @@ void
 AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
                                     const string& space,
                                     const OptionCodes& codes) {
-    if (networks && (networks->size() > 0)) {
-        for (size_t i = 0; i < networks->size(); ++i) {
-            ElementPtr network = networks->getNonConst(i);
-            ConstElementPtr options = network->get("option-data");
-            if (options) {
-                if (options->size() > 0) {
-                    optionDataList(options, space, codes);
-                } else {
-                    network->remove("option-data");
-                }
-            }
-            string subnet = "subnet";
-            if (space == "dhcp4") {
-                subnet += "4";
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    // For every shared network...
+    for (size_t i = 0; i < networks->size(); ++i) {
+        ElementPtr network = networks->getNonConst(i);
+
+        // try to sanitize shared network options first.
+        ConstElementPtr options = network->get("option-data");
+        if (options) {
+            if (options->size() > 0) {
+                optionDataList(options, space, codes);
             } else {
-                subnet += "6";
+                network->remove("option-data");
             }
-            ConstElementPtr subnets = network->get(subnet);
-            if (subnets) {
-                if (subnets->size() > 0) {
-                    optionSubnets(subnets, space, codes);
-                } else {
-                    network->remove(subnet);
-                }
+        }
+        string subnet = "subnet";
+        if (space == DHCP4_SPACE) {
+            subnet += "4";
+        } else {
+            subnet += "6";
+        }
+
+        // Now try to sanitize subnets.
+        ConstElementPtr subnets = network->get(subnet);
+        if (subnets) {
+            if (subnets->size() > 0) {
+                optionSubnets(subnets, space, codes);
+            } else {
+                network->remove(subnet);
             }
         }
     }
@@ -331,28 +361,34 @@ AdaptorConfig::optionSharedNetworks(ConstElementPtr networks,
 
 void
 AdaptorConfig::requireClassesPools(ConstElementPtr pools) {
-    if (pools && (pools->size() > 0)) {
-        for (size_t i = 0; i < pools->size(); ++i) {
-            ElementPtr pool = pools->getNonConst(i);
-            ConstElementPtr requires = pool->get("require-client-classes");
-            if (requires && (requires->size() == 0)) {
-                pool->remove("require-client-classes");
-            }
+    if (!pools || pools->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < pools->size(); ++i) {
+        ElementPtr pool = pools->getNonConst(i);
+        ConstElementPtr requires = pool->get("require-client-classes");
+        if (requires && requires->empty()) {
+            pool->remove("require-client-classes");
         }
     }
 }
 
 void
 AdaptorConfig::requireClassesSubnets(ConstElementPtr subnets) {
-    if (subnets && (subnets->size() > 0)) {
-        for (size_t i = 0; i < subnets->size(); ++i) {
-            ElementPtr subnet = subnets->getNonConst(i);
-            requireClassesPools(subnet->get("pools"));
-            requireClassesPools(subnet->get("pd-pools"));
-            ConstElementPtr requires = subnet->get("require-client-classes");
-            if (requires && (requires->size() == 0)) {
-                subnet->remove("require-client-classes");
-            }
+    if (!subnets || subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < subnets->size(); ++i) {
+        ElementPtr subnet = subnets->getNonConst(i);
+        requireClassesPools(subnet->get("pools"));
+        requireClassesPools(subnet->get("pd-pools"));
+        ConstElementPtr requires = subnet->get("require-client-classes");
+        if (requires && (requires->size() == 0)) {
+            subnet->remove("require-client-classes");
         }
     }
 }
@@ -360,70 +396,90 @@ AdaptorConfig::requireClassesSubnets(ConstElementPtr subnets) {
 void
 AdaptorConfig::requireClassesSharedNetworks(ConstElementPtr networks,
                                             const string& subsel) {
-    if (networks && (networks->size() > 0)) {
-        for (size_t i = 0; i < networks->size(); ++i) {
-            ElementPtr network = networks->getNonConst(i);
-            requireClassesSubnets(network->get(subsel));
-            ConstElementPtr requires = network->get("require-client-classes");
-            if (requires && (requires->size() == 0)) {
-                network->remove("require-client-classes");
-            }
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < networks->size(); ++i) {
+        ElementPtr network = networks->getNonConst(i);
+        requireClassesSubnets(network->get(subsel));
+        ConstElementPtr requires = network->get("require-client-classes");
+        if (requires && (requires->size() == 0)) {
+            network->remove("require-client-classes");
         }
     }
 }
 
 void
 AdaptorConfig::hostList(ConstElementPtr hosts) {
-    if (hosts && (hosts->size() > 0)) {
-        for (size_t i = 0; i < hosts->size(); ++i) {
-            ElementPtr host = hosts->getNonConst(i);
-            quoteIdentifier(host);
-        }
+
+    if (!hosts || hosts->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < hosts->size(); ++i) {
+        ElementPtr host = hosts->getNonConst(i);
+        quoteIdentifier(host);
     }
 }
 
 void
 AdaptorConfig::hostSubnets(ConstElementPtr subnets) {
-    if (subnets && (subnets->size() > 0)) {
-        for (ConstElementPtr subnet : subnets->listValue()) {
-            hostList(subnet->get("reservations"));
-        }
+
+    if (!subnets || subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (ConstElementPtr subnet : subnets->listValue()) {
+        hostList(subnet->get("reservations"));
     }
 }
 
 void
 AdaptorConfig::hostSharedNetworks(ConstElementPtr networks,
                                   const string& space) {
-    if (networks && (networks->size() > 0)) {
-        for (ConstElementPtr network : networks->listValue()) {
-            if (space == "dhcp4") {
-                hostSubnets(network->get("subnet4"));
-            } else {
-                hostSubnets(network->get("subnet6"));
-            }
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (ConstElementPtr network : networks->listValue()) {
+        if (space == DHCP4_SPACE) {
+            hostSubnets(network->get("subnet4"));
+        } else {
+            hostSubnets(network->get("subnet6"));
         }
     }
 }
 
 void
 AdaptorConfig::relaySubnets(ConstElementPtr subnets) {
-    if (subnets && (subnets->size() > 0)) {
-        for (size_t i = 0; i < subnets->size(); ++i) {
-            ElementPtr subnet = subnets->getNonConst(i);
-            updateRelay(subnet);
-        }
+    if (!subnets || subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < subnets->size(); ++i) {
+        ElementPtr subnet = subnets->getNonConst(i);
+        updateRelay(subnet);
     }
 }
 
 void
 AdaptorConfig::relaySharedNetworks(ConstElementPtr networks,
                                    const string& subsel) {
-    if (networks && (networks->size() > 0)) {
-        for (size_t i = 0; i < networks->size(); ++i) {
-            ElementPtr network = networks->getNonConst(i);
-            updateRelay(network);
-            relaySubnets(network->get(subsel));
-        }
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < networks->size(); ++i) {
+        ElementPtr network = networks->getNonConst(i);
+        updateRelay(network);
+        relaySubnets(network->get(subsel));
     }
 }
 
@@ -433,6 +489,7 @@ AdaptorConfig::updateDatabase(ConstElementPtr dhcp) {
     if (!database) {
         return;
     }
+
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
     mutable_dhcp->remove("hosts-database");
     ElementPtr list = Element::createList();
@@ -443,7 +500,7 @@ AdaptorConfig::updateDatabase(ConstElementPtr dhcp) {
 void
 AdaptorConfig::relaySuppliedOptions(ConstElementPtr dhcp) {
     ConstElementPtr options = dhcp->get("relay-supplied-options");
-    if (!options || (options->size() > 0)) {
+    if (!options || options->empty()) {
         return;
     }
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
@@ -522,8 +579,8 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     optionSubnets(subnets, space, codes);
     optionSharedNetworks(networks, space, codes);
 
-    canonizePoolsInSubnets(subnets);
-    poolShareNetworks(networks, subsel);
+    sanitizePoolsInSubnets(subnets);
+    sanitizePoolsInSharedNetworks(networks, subsel);
 
     hostSubnets(subnets);
     hostSharedNetworks(networks, space);
@@ -536,7 +593,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
 
     updateDatabase(dhcp);
 
-    if (space == "dhcp6") {
+    if (space == DHCP6_SPACE) {
         relaySuppliedOptions(dhcp);
     }
 }
@@ -554,7 +611,7 @@ AdaptorConfig::preProcess4(ConstElementPtr config) {
         return;
     }
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
-    preProcess(mutable_dhcp, "subnet4", "dhcp4");
+    preProcess(mutable_dhcp, "subnet4", DHCP4_SPACE);
 }
 
 void
@@ -570,7 +627,7 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
         return;
     }
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
-    preProcess(mutable_dhcp, "subnet6", "dhcp6");
+    preProcess(mutable_dhcp, "subnet6", DHCP6_SPACE);
 }
 
 }; // end of namespace isc::yang
