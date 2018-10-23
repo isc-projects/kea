@@ -37,7 +37,7 @@ AdaptorConfig::subnetsCollectID(ConstElementPtr subnets, SubnetIDSet& set) {
     }
 
     // If there are subnets defined, let's go over them one by one and
-    // colled subnet-ids used in them.
+    // collect subnet-ids used in them.
     for (ConstElementPtr subnet : subnets->listValue()) {
         if (!collectID(subnet, set)) {
             have_ids = false;
@@ -500,6 +500,7 @@ void
 AdaptorConfig::sanitizeDatabase(ConstElementPtr dhcp) {
     ConstElementPtr database = dhcp->get("hosts-database");
     if (!database) {
+        // nothing to do here.
         return;
     }
 
@@ -514,6 +515,7 @@ void
 AdaptorConfig::sanitizeRelaySuppliedOptions(ConstElementPtr dhcp) {
     ConstElementPtr options = dhcp->get("relay-supplied-options");
     if (!options || options->empty()) {
+        // nothing to do here.
         return;
     }
     ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
