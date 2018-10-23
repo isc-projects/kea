@@ -34,9 +34,9 @@ public:
 
     /// @brief Pre process a DHCPv4 configuration.
     ///
-    /// Assign subnet IDs, check and set default in options, etc.
-    /// Note even the parameter is a ConstElementPtr and is not modified
-    /// sub-structures can be so if you need a copy do a deep one.
+    /// Assign subnet IDs, check and set defaults in options, etc.
+    /// Note even though the parameter is a ConstElementPtr and is not modified,
+    /// sub-structures can modify it, so if you need a copy do a deep one.
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
@@ -47,8 +47,8 @@ public:
     /// @brief Pre process a DHCPv6 configuration.
     ///
     /// Assign subnet IDs, check and set default in options, etc.
-    /// Note even the parameter is a ConstElementPtr and is not modified
-    /// sub-structures can be so if you need a copy do a deep one.
+    /// Note even though the parameter is a ConstElementPtr and is not modified,
+    /// sub-structures can modify it, so if you need a copy do a deep one.
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
@@ -57,7 +57,12 @@ public:
     static void preProcess6(isc::data::ConstElementPtr config);
 
 protected:
-    /// @brief collectID applied to a subnet list.
+    /// @brief Collects subnet-ids on all subnets.
+    ///
+    /// It will go over all subnets and collect their ids. It will then return
+    /// true if all subnets have ids. If the subnets list is empty, it will also
+    /// return true. False will be returned if there is at least one subnet that
+    /// doesn't have subnet-id.
     ///
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
@@ -65,7 +70,12 @@ protected:
     static bool subnetsCollectID(isc::data::ConstElementPtr subnets,
                                  SubnetIDSet& set);
 
-    /// @brief collectID applied to a shared network list.
+    /// @brief Collects subnet-ids in all subnets in all shared network list.
+    ///
+    /// It will go over all subnets in all shared networks specified to collect
+    /// their subnet-ids. It will then return true if all subnets have ids. If
+    /// the subnets list is empty, it will also return true. False will be
+    /// returned if there is at least one subnet that doesn't have subnet-id.
     ///
     /// @param networks The shared network list.
     /// @param set The reference to the set of assigned IDs.
@@ -75,7 +85,10 @@ protected:
                                         SubnetIDSet& set,
                                         const std::string& subsel);
 
-    /// @brief assignID applied to a subnet list.
+    /// @brief Assigns subnet-id to a subnet list.
+    ///
+    /// Only those subnets that don't have one subnet-id assigned yet,
+    /// will get a new subnet-id value.
     ///
     /// @param subnets The subnet list.
     /// @param set The reference to the set of assigned IDs.
@@ -104,7 +117,7 @@ protected:
     /// @brief canonizePool applied to a subnet list.
     ///
     /// @param subnets The subnet list.
-    static void poolSubnets(isc::data::ConstElementPtr subnets);
+    static void canonizePoolsInSubnets(isc::data::ConstElementPtr subnets);
 
     /// @brief canonizePool applied to a shared network list.
     ///

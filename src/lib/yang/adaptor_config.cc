@@ -22,11 +22,20 @@ AdaptorConfig::~AdaptorConfig() {
 bool
 AdaptorConfig::subnetsCollectID(ConstElementPtr subnets, SubnetIDSet& set) {
     bool have_ids = true;
-    if (subnets && (subnets->size() > 0)) {
-        for (ConstElementPtr subnet : subnets->listValue()) {
-            if (!collectID(subnet, set)) {
-                have_ids = false;
-            }
+
+    if (!subnets || subnets->empty()) {
+        // There are no subnets defined, so technically there are no ids.
+        // However, the flag is used to determine whether the code later
+        // needs to call assignIDs. Since there is no need to assign
+        // anything, the code returns true here.
+        return (true);
+    }
+
+    // If there are subnets defined, let's go over them one by one and
+    // colled subnet-ids used in them.
+    for (ConstElementPtr subnet : subnets->listValue()) {
+        if (!collectID(subnet, set)) {
+            have_ids = false;
         }
     }
     return (have_ids);
@@ -36,19 +45,29 @@ bool
 AdaptorConfig::sharedNetworksCollectID(ConstElementPtr networks,
                                        SubnetIDSet& set,
                                        const string& subsel) {
+    if (!networks || networks->empty()) {
+        // There are no shared networks defined, so technically there are no
+        // ids. However, the flag is used to determine whether the code later
+        // needs to call assignIDs. Since there is no need to assign anything,
+        // the code returns true here.
+        return (true);
+    }
+
+    // This determines if EVERY subnet has subnet-id defined.
     bool have_ids = true;
-    if (networks && (networks->size() > 0)) {
-        for (size_t i = 0; i < networks->size(); ++i) {
-            ElementPtr network = networks->getNonConst(i);
-            ConstElementPtr subnets = network->get(subsel);
-            if (subnets) {
-                if (subnets->size() > 0) {
-                    if (!subnetsCollectID(subnets, set)) {
-                        have_ids = false;
-                    }
-                } else {
-                    network->remove(subsel);
+    for (size_t i = 0; i < networks->size(); ++i) {
+        ElementPtr network = networks->getNonConst(i);
+        ConstElementPtr subnets = network->get(subsel);
+        if (subnets) {
+            if (!subnets->empty()) {
+                // If there are subnets, collect their subnet-ids. If any
+                // of them doesn't have a subnet-id, return false.
+                if (!subnetsCollectID(subnets, set)) {
+                    have_ids = false;
                 }
+            } else {
+                // There's empty subnets list, so just remove it.
+                network->remove(subsel);
             }
         }
     }
@@ -58,11 +77,14 @@ AdaptorConfig::sharedNetworksCollectID(ConstElementPtr networks,
 void
 AdaptorConfig::subnetsAssignID(ConstElementPtr subnets, SubnetIDSet& set,
                                SubnetID& next) {
-    if (subnets && (subnets->size() > 0)) {
-        for (size_t i = 0; i < subnets->size(); ++i) {
-            ElementPtr subnet = subnets->getNonConst(i);
-            assignID(subnet, set, next);
-        }
+    if (!subnets || subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < subnets->size(); ++i) {
+        ElementPtr subnet = subnets->getNonConst(i);
+        assignID(subnet, set, next);
     }
 }
 
@@ -70,14 +92,17 @@ void
 AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
                                       SubnetIDSet& set, SubnetID& next,
                                       const string& subsel) {
-    if (networks && (networks->size() > 0)) {
-        for (ConstElementPtr network : networks->listValue()) {
-            ConstElementPtr subnets = network->get(subsel);
-            if (subnets && (subnets->size() > 0)) {
-                for (size_t i = 0; i < subnets->size(); ++i) {
-                    ElementPtr subnet = subnets->getNonConst(i);
-                    assignID(subnet, set, next);
-                }
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (ConstElementPtr network : networks->listValue()) {
+        ConstElementPtr subnets = network->get(subsel);
+        if (subnets && (subnets->size() > 0)) {
+            for (size_t i = 0; i < subnets->size(); ++i) {
+                ElementPtr subnet = subnets->getNonConst(i);
+                assignID(subnet, set, next);
             }
         }
     }
@@ -85,30 +110,41 @@ AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
 
 void
 AdaptorConfig::canonizePools(ConstElementPtr pools) {
-    if (pools && (pools->size() > 0)) {
-        for (size_t i = 0; i < pools->size(); ++i) {
-            ElementPtr pool = pools->getNonConst(i);
-            AdaptorPool::canonizePool(pool);
-        }
+    if (!pools || !pools->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    // Canonize (clean up name, remove extra spaces, add one space where
+    // needed) every pool on the list.
+    for (size_t i = 0; i < pools->size(); ++i) {
+        ElementPtr pool = pools->getNonConst(i);
+        AdaptorPool::canonizePool(pool);
     }
 }
 
 void
-AdaptorConfig::poolSubnets(ConstElementPtr subnets) {
-    if (subnets && (subnets->size() > 0)) {
-        for (ConstElementPtr subnet : subnets->listValue()) {
-            canonizePools(subnet->get("pools"));
-        }
+AdaptorConfig::canonizePoolsInSubnets(ConstElementPtr subnets) {
+    if (!subnets || !subnets->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (ConstElementPtr subnet : subnets->listValue()) {
+        canonizePools(subnet->get("pools"));
     }
 }
 
 void
 AdaptorConfig::poolShareNetworks(ConstElementPtr networks,
                                  const string& subsel) {
-    if (networks && (networks->size() > 0)) {
-        for (ConstElementPtr network : networks->listValue()) {
-            poolSubnets(network->get(subsel));
-        }
+    if (!networks || networks->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (ConstElementPtr network : networks->listValue()) {
+        canonizePoolsInSubnets(network->get(subsel));
     }
 }
 
@@ -116,52 +152,65 @@ void
 AdaptorConfig::optionDefList(ConstElementPtr defs,
                              const string& space,
                              OptionCodes& codes) {
-    if (defs && (defs->size() > 0)) {
-        for (size_t i = 0; i < defs->size(); ++i) {
-            ElementPtr def = defs->getNonConst(i);
-            checkCode(def);
-            checkType(def);
-            setSpace(def, space);
-            collect(def, codes);
-        }
+    if (!defs || defs->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    // Do sanity checks on every option definition and fill any missing
+    // fields with default values.
+    for (size_t i = 0; i < defs->size(); ++i) {
+        ElementPtr def = defs->getNonConst(i);
+        checkCode(def);
+        checkType(def);
+        setSpace(def, space);
+        collect(def, codes);
     }
 }
 
 void
 AdaptorConfig::optionDataList(ConstElementPtr options,const string& space,
                               const OptionCodes& codes) {
-    if (options && (options->size() > 0)) {
-        for (size_t i = 0; i < options->size(); ++i) {
-            ElementPtr option = options->getNonConst(i);
-            setSpace(option, space);
-            setCode(option, codes);
-        }
+    if (!options || options->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    // Sanitize option-data. The only missing elements we may possibly
+    // need to fill are option space and option code.
+    for (size_t i = 0; i < options->size(); ++i) {
+        ElementPtr option = options->getNonConst(i);
+        setSpace(option, space);
+        setCode(option, codes);
     }
 }
 
 void
 AdaptorConfig::optionClasses(ConstElementPtr classes, const string& space,
                              OptionCodes& codes) {
-    if (classes && (classes->size() > 0)) {
-        for (size_t i = 0; i < classes->size(); ++i) {
-            ElementPtr cclass = classes->getNonConst(i);
-            if (space == "dhcp4") {
-                ConstElementPtr options = cclass->get("option-def");
-                if (options) {
-                    if (options->size() > 0) {
-                        optionDefList(options, space, codes);
-                    } else {
-                        cclass->remove("option-def");
-                    }
-                }
-            }
-            ConstElementPtr options = cclass->get("option-data");
+    if (!classes || classes->empty()) {
+        // nothing to do here.
+        return;
+    }
+
+    for (size_t i = 0; i < classes->size(); ++i) {
+        ElementPtr cclass = classes->getNonConst(i);
+        if (space == "dhcp4") {
+            ConstElementPtr options = cclass->get("option-def");
             if (options) {
                 if (options->size() > 0) {
-                    optionDataList(options, space, codes);
+                    optionDefList(options, space, codes);
                 } else {
-                    cclass->remove("option-data");
+                    cclass->remove("option-def");
                 }
+            }
+        }
+        ConstElementPtr options = cclass->get("option-data");
+        if (options) {
+            if (options->size() > 0) {
+                optionDataList(options, space, codes);
+            } else {
+                cclass->remove("option-data");
             }
         }
     }
@@ -473,7 +522,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     optionSubnets(subnets, space, codes);
     optionSharedNetworks(networks, space, codes);
 
-    poolSubnets(subnets);
+    canonizePoolsInSubnets(subnets);
     poolShareNetworks(networks, subsel);
 
     hostSubnets(subnets);
@@ -526,4 +575,3 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
 
 }; // end of namespace isc::yang
 }; // end of namespace isc
-
