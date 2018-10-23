@@ -443,7 +443,7 @@ const YRTree designExampleTree = {
 };
 
 /// @brief Set of example configurations
-const std::map<std::string, YRTree> test_configs =
+const std::vector<std::pair<std::string, YRTree>> test_configs =
 {
     { exampleModel, exampleTree },
     { testModel, testTree },
