@@ -41,11 +41,11 @@ public:
             : xpath_(xpath), value_(value), type_(type), settable_(settable) {
         }
 
-        /// @brief Retrieves configuration parameter from sysrepo
+        /// @brief Retrieves configuration parameter from sysrepo.
         ///
-        /// @param xpath The xpath of an element to be retrieved
+        /// @param xpath The xpath of an element to be retrieved.
         /// @param session Sysrepo session.
-        /// @return YangReprItem instance representing configuration parameter
+        /// @return YangReprItem instance representing configuration parameter.
         static YangReprItem get(const std::string& xpath, S_Session session);
 
         /// @brief The xpath.
@@ -62,8 +62,8 @@ public:
 
         /// @brief The equal operator ignoring settable.
         ///
-        /// @param other the other object to compare with
-        /// @return true if equal
+        /// @param other the other object to compare with.
+        /// @return true if equal.
         bool operator==(const YangReprItem& other) const {
             return ((xpath_ == other.xpath_) &&
                     (value_ == other.value_) &&
@@ -72,8 +72,8 @@ public:
 
         /// @brief The unequal operator ignoring settable.
         ///
-        /// @param other the other object to compare with
-        /// @return false if equal
+        /// @param other the other object to compare with.
+        /// @return false if equal.
         bool operator!=(const YangReprItem& other) const {
             return (!(*this == other));
         }
@@ -92,7 +92,7 @@ public:
     /// @param expected The expected value.
     /// @param session Sysrepo session.
     /// @param errs Error stream.
-    /// @return true if verification succeeds, false with errors displayed
+    /// @return true if verification succeeds, false with errors displayed.
     /// on errs if it fails.
     bool verify(const Tree& expected, S_Session session,
                 std::ostream& errs) const;
