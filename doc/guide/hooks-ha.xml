@@ -975,7 +975,29 @@
           hooks library configuration is designed to maximize the administration
           flexibility.
         </para>
+      </section>
 
+      <section xml:id="ha-syncing-page-limit">
+        <title>Controlling Lease Page Size Limit</title>
+        <para>HA enabled server initiates synchronization of the lease
+        database after down time or upon receiving <command>ha-sync</command>
+        command. The server uses commands described in
+        <xref linkend="lease-get-page-cmds"/> to fetch leases from the
+        partner server (lease queries). The size of the results page
+        (maximum number of leases to be returned in a single response to one
+        of these commands) can be controlled via HA hooks library configuration.
+        Increasing the page size decreases the number of lease queries sent to
+        the partner server, but it causes the partner server to generate
+        larger responses, which lengthens transmission time as well as
+        memory and CPU utilization on both servers. Decreasing the
+        page size helps to decrease resources utilization but requires
+        more lease queries to be issued to fetch the entire lease
+        database.</para>
+        <para>The default value of the <command>sync-page-limit</command>
+        controlling the page size is 10000. This means that the entire
+        lease database can be fetched with a single command if the
+        size of this database is equal or lower than 10000.
+        </para>
       </section>
 
       <section xml:id="ha-syncing-timeouts">
@@ -1330,10 +1352,10 @@
             The <command>max-period</command> parameter specifies the maximum
             duration (in seconds) for which the DHCP service should be disabled.
             If the DHCP service is successfully disabled, the synchronizing
-            server will fetch leases from the remote server by issuing the
-            <command>lease4-get-all</command> command. When the lease database
-            synchronization is complete, the synchronizing server sends the
-            <command>dhcp-enable</command> to the peer to re-enable its
+            server will fetch leases from the remote server by issuing one or
+            more <command>lease4-get-page</command> commands. When the lease
+            database synchronization is complete, the synchronizing server sends
+            the <command>dhcp-enable</command> to the peer to re-enable its
             DHCP service.
           </para>
 
