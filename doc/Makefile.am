@@ -61,10 +61,8 @@ nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
 
-if HAVE_GTEST
 nobase_dist_doc_DATA += examples/kea4/all-keys.json
 nobase_dist_doc_DATA += examples/kea6/all-keys.json
-endif
 
 devel:
 	mkdir -p html
