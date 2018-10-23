@@ -19,6 +19,7 @@
 #include <yang/translator_config.h>
 #include <yang/testutils/translator_test.h>
 #include <testutils/log_utils.h>
+#include <testutils/threaded_test.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -29,9 +30,10 @@ using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
 using namespace isc::http;
-using namespace isc::util::thread;
+using namespace isc::test;
 using namespace isc::yang;
 using namespace isc::yang::test;
+using namespace isc::util::thread;
 
 namespace {
 
@@ -127,16 +129,15 @@ ConstElementPtr prune(ConstElementPtr expected, ConstElementPtr other) {
 }
 
 /// @brief Test fixture class for netconf agent.
-class NetconfAgentTest : public ::testing::Test  {
+class NetconfAgentTest : public ThreadedTest {
 public:
     /// @brief Constructor.
     NetconfAgentTest()
-        : io_service_(new IOService()),
-          thread_(),
+        : ThreadedTest(),
+          io_service_(new IOService()),
           agent_(new NakedNetconfAgent),
           requests_(),
-          responses_(),
-          ready_(false) {
+          responses_() {
         NetconfProcess::global_shut_down_flag = false;
         removeUnixSocketFile();
     }
@@ -148,6 +149,9 @@ public:
             thread_->wait();
             thread_.reset();
         }
+        // io_service must be stopped after the thread returns,
+        // otherwise the thread may never return if it is
+        // waiting for the completion of some asynchronous tasks.
         io_service_->stop();
         io_service_.reset();
         if (agent_) {
@@ -200,9 +204,6 @@ public:
     /// @brief IOService object.
     IOServicePtr io_service_;
 
-    /// @brief Pointer to server thread.
-    ThreadPtr thread_;
-
     /// @brief Test netconf agent.
     NakedNetconfAgentPtr agent_;
 
@@ -211,9 +212,6 @@ public:
 
     /// @brief Response list.
     vector<string> responses_;
-
-    /// @brief Ready flag.
-    bool ready_;
 };
 
 /// @brief Special test fixture for logging tests.
@@ -230,12 +228,13 @@ public:
     /// @brief Destructor.
     virtual ~NetconfAgentLogTest() {
         NetconfProcess::global_shut_down_flag = true;
+        // io_service must be stopped to make the thread to return.
+        io_service_->stop();
+        io_service_.reset();
         if (thread_) {
             thread_->wait();
             thread_.reset();
         }
-        io_service_->stop();
-        io_service_.reset();
         if (agent_) {
             clearYang(agent_);
             agent_->clear();
@@ -270,7 +269,7 @@ NetconfAgentTest::fakeServer() {
         socket(io_service_->get_io_service());
 
     // Ready.
-    ready_ = true;
+    signalReady();
 
     // Timeout.
     bool timeout = false;
@@ -340,6 +339,14 @@ NetconfAgentTest::fakeServer() {
     // Stop timer.
     timer.cancel();
 
+    // Close socket and acceptor.
+    if (socket.is_open()) {
+        EXPECT_NO_THROW(socket.close());
+    }
+    EXPECT_NO_THROW(acceptor.close());
+    // Removed the socket file so it can be called again immediately.
+    removeUnixSocketFile();
+
     /// Finished.
     EXPECT_FALSE(timeout);
     EXPECT_TRUE(accepted);
@@ -347,14 +354,7 @@ NetconfAgentTest::fakeServer() {
     EXPECT_TRUE(sent);
     EXPECT_EQ(sent, sbuf.size());
 
-    if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
-    }
-    EXPECT_NO_THROW(acceptor.close());
-    removeUnixSocketFile();
-
-    // Done.
-    ready_ = false;
+    // signalStopped can't be called here because of the 2 runs for update.
 }
 
 /// Verifies the initSysrepo method opens sysrepo connection and sessions.
@@ -610,18 +610,16 @@ TEST_F(NetconfAgentTest, keaConfig) {
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Launch server.
-    thread_.reset(new Thread([this]() { fakeServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+    thread_.reset(new Thread([this]() { fakeServer(); signalStopped(); }));
+
+    // Wait until the server is listening.
+    waitReady();
 
     // Try keaConfig.
     EXPECT_NO_THROW(agent_->keaConfig(service_pair));
 
-    // Wait server.
-    while (ready_) {
-        usleep(1000);
-    }
+    // Wait server to be stopped.
+    waitStopped();
 
     // Check request.
     ASSERT_EQ(1, requests_.size());
@@ -720,18 +718,16 @@ TEST_F(NetconfAgentTest, yangConfig) {
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Launch server.
-    thread_.reset(new Thread([this]() { fakeServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+    thread_.reset(new Thread([this]() { fakeServer(); signalStopped();}));
+
+    // Wait until the server is listening.
+    waitReady();
 
     // Try yangConfig.
     EXPECT_NO_THROW(agent_->yangConfig(service_pair));
 
-    // Wait server.
-    while (ready_) {
-        usleep(1000);
-    }
+    // Wait server to be stopped.
+    waitStopped();
 
     // Check request.
     ASSERT_EQ(1, requests_.size());
@@ -893,10 +889,10 @@ TEST_F(NetconfAgentTest, update) {
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server.
-    thread_.reset(new Thread([this]() { fakeServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+    thread_.reset(new Thread([this]() { fakeServer(); signalStopped(); }));
+
+    // Wait until the server is listening.
+    waitReady();
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
     const YRTree tree1 = {
@@ -918,10 +914,8 @@ TEST_F(NetconfAgentTest, update) {
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->commit());
 
-    // Wait server.
-    while (ready_) {
-        usleep(1000);
-    }
+    // Wait server to be stopped.
+    waitStopped();
 
     // Check request.
     ASSERT_EQ(1, requests_.size());
@@ -1033,10 +1027,15 @@ TEST_F(NetconfAgentTest, validate) {
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server twice.
-    thread_.reset(new Thread([this]() { fakeServer(); fakeServer(); }));
-    while (!ready_) {
-        usleep(1000);
-    }
+    thread_.reset(new Thread([this]()
+                             {
+                                 fakeServer();
+                                 fakeServer();
+                                 signalStopped();
+                             }));
+
+    // Wait until the server is listening.
+    waitReady();
 
     // Change configuration (subnet #1 moved from 10.0.0.0/24 to 10.0.1/0/24).
     const YRTree tree1 = {
@@ -1058,14 +1057,8 @@ TEST_F(NetconfAgentTest, validate) {
     EXPECT_NO_THROW(repr.set(tree1, agent_->running_sess_));
     EXPECT_NO_THROW(agent_->running_sess_->commit());
 
-    // Wait servers.
-    while (ready_) {
-        usleep(1000);
-    }
-    usleep(1000);
-    while (ready_) {
-        usleep(1000);
-    }
+    // Wait servers to be stopped.
+    waitStopped();
 
     // Check requests.
     ASSERT_EQ(2, requests_.size());

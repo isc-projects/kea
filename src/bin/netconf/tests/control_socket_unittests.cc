@@ -278,15 +278,16 @@ UnixControlSocketTest::reflectServer() {
     // Stop timer.
     timer.cancel();
 
+    // Close socket.
+    if (socket.is_open()) {
+        EXPECT_NO_THROW(socket.close());
+    }
+
     EXPECT_FALSE(timeout);
     EXPECT_TRUE(accepted);
     EXPECT_TRUE(received);
     EXPECT_TRUE(sent);
     EXPECT_EQ(sent, sbuf.size());
-
-    if (socket.is_open()) {
-        EXPECT_NO_THROW(socket.close());
-    }
 }
 
 // Verifies that the createControlSocket template can create an unix
@@ -844,6 +845,9 @@ TEST_F(HttpControlSocketTest, partial) {
 
     // Prepare a special config to set.
     ConstElementPtr json = Element::fromJSON("{ \"want-partial\": true }");
+
+    // Warn this makes time.
+    cout << "this test waits for 2 seconds" << endl;
 
     // Try configSet: it should get a communication error,
     try {
