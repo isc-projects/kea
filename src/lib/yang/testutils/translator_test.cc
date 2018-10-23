@@ -256,14 +256,20 @@ YangRepr::set(const Tree& tree, S_Session session) const {
 bool
 YangRepr::validate(S_Session session, std::ostream& errs) const {
     try {
+        // Try to validate. If it succeeds, then we're done here.
         session->validate();
         return (true);
     } catch (const std::exception& ex) {
         errs << "validate fails with " << ex.what() << endl;
     }
     try {
+        // If we get here, it means the validate() threw exceptions.
         S_Errors s_errors = session->get_last_errors();
         if (!s_errors) {
+
+            // This is really weird. An exception was thrown, but
+            // get_last_errors() didn't return anything. Maybe we're out of
+            // memory or something?
             errs << "no errors" << endl;
             return (false);
         }
