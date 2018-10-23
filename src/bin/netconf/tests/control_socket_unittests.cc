@@ -18,6 +18,7 @@
 #include <http/response_creator_factory.h>
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
+#include <testutils/threaded_test.h>
 #include <util/threads/thread.h>
 #include <util/threads/sync.h>
 #include <gtest/gtest.h>
@@ -30,106 +31,13 @@ using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::http;
 using namespace isc::http::test;
+using namespace isc::test;
 using namespace isc::util::thread;
 
 namespace {
 
 /// @brief Type definition for the pointer to Thread objects.
 typedef boost::shared_ptr<Thread> ThreadPtr;
-
-/// @brief Base class for tests requiring threads.
-///
-/// This class contains 3 flags to signal when the thread has
-/// started, is stopping and when it is stopped. The flags
-/// are accessed in thread safe manner.
-class ThreadedTest : public ::testing::Test {
-protected:
-
-    /// @brief Constructor.
-    ThreadedTest()
-        : thread_(), condvar_(), ready_(false), stopping_(false),
-          stopped_(false) {
-    }
-
-    /// @brief Sets selected flag to true and signals condition
-    /// variable.
-    ///
-    /// @param flag Reference to flag which should be set to true.
-    void doSignal(bool& flag) {
-        {
-            Mutex::Locker lock(mutex_);
-            flag = true;
-        }
-        condvar_.signal();
-    }
-
-    /// @brief Signal that thread is ready.
-    void signalReady() {
-        doSignal(ready_);
-    }
-
-    /// @brief Signal that thread is stopping.
-    void signalStopping() {
-        doSignal(stopping_);
-    }
-
-    /// @brief Signal that thread is stopped.
-    void signalStopped() {
-        doSignal(stopped_);
-    }
-
-    /// @brief Wait for a selected flag to be set.
-    ///
-    /// @param flag Reference to a flag on which the thread is
-    /// waiting.
-    void doWait(bool& flag) {
-        Mutex::Locker lock(mutex_);
-        while (!flag) {
-            condvar_.wait(mutex_);
-        }
-    }
-
-    /// @brief Wait for the thread to be ready.
-    void waitReady() {
-        doWait(ready_);
-    }
-
-    /// @brief Wait for the thread to be stopping.
-    void waitStopping() {
-        doWait(stopping_);
-    }
-
-    /// @brief Wait for the thread to stop.
-    void waitStopped() {
-        doWait(stopped_);
-    }
-
-    /// @brief Checks if the thread is stopping.
-    ///
-    /// @return true if the thread is stopping, false otherwise.
-    bool isStopping() {
-        Mutex::Locker lock(mutex_);
-        return (stopping_);
-    }
-
-    /// @brief Pointer to server thread.
-    ThreadPtr thread_;
-
-    /// @brief Mutex used to synchronize threads.
-    Mutex mutex_;
-
-    /// Condtional variable for thread waits.
-    CondVar condvar_;
-
-    /// Flag indicating that the thread is ready.
-    bool ready_;
-
-    /// Flag indicating that the thread is stopping.
-    bool stopping_;
-
-    /// Flag indicating that the thread is stopped.
-    bool stopped_;
-};
 
 //////////////////////////////// STDOUT ////////////////////////////////
 
@@ -640,15 +548,27 @@ public:
     /// Run IO in a thread.
     void start() {
         thread_.reset(new Thread([this]() {
+            // The thread is ready to go. Signal it to the main
+            // thread so it can start the actual test.
             signalReady();
+            // Until stop() is called run IO service.
             while (!isStopping()) {
                 io_service_.run_one();
             }
+            // Main thread signalled that the thread should
+            // terminate. Launch any outstanding IO service
+            // handlers.
             io_service_.poll();
+            // Nothing more to do. Signal that the thread is
+            // done so as the main thread can close HTTP
+            // listener and clean up after the test.
             signalStopped();
         }));
+
+        // Main thread waits here for the thread to start.
         waitReady();
 
+        // If the thread is ready to go, start the listener.
         if (listener_) {
             ASSERT_NO_THROW(listener_->start());
         }
@@ -658,10 +578,18 @@ public:
     ///
     /// Post an empty action to finish current run_one.
     void stop() {
+        // Notify the thread that it should terminate.
         signalStopping();
+        // If the thread is blocked on running the IO
+        // service, post the empty handler to cause
+        // run_one to return.
         io_service_.post([]() { return; });
+        // We asked that the thread stops. Let's wait
+        // for it to signal that it has stopped.
         waitStopped();
 
+        // Thread has terminated. We can stop the HTTP
+        // listener safely.
         if (listener_) {
             ASSERT_NO_THROW(listener_->stop());
         }
