@@ -117,7 +117,7 @@ AdaptorConfig::sharedNetworksAssignID(ConstElementPtr networks,
 
 void
 AdaptorConfig::sanitizePools(ConstElementPtr pools) {
-    if (!pools || !pools->empty()) {
+    if (!pools || pools->empty()) {
         // nothing to do here.
         return;
     }
@@ -132,7 +132,7 @@ AdaptorConfig::sanitizePools(ConstElementPtr pools) {
 
 void
 AdaptorConfig::sanitizePoolsInSubnets(ConstElementPtr subnets) {
-    if (!subnets || !subnets->empty()) {
+    if (!subnets || subnets->empty()) {
         // nothing to do here.
         return;
     }
@@ -514,7 +514,7 @@ AdaptorConfig::sanitizeDatabase(ConstElementPtr dhcp) {
 void
 AdaptorConfig::sanitizeRelaySuppliedOptions(ConstElementPtr dhcp) {
     ConstElementPtr options = dhcp->get("relay-supplied-options");
-    if (!options || options->empty()) {
+    if (!options || !options->empty()) {
         // nothing to do here.
         return;
     }
