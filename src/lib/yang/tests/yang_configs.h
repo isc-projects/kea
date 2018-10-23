@@ -442,6 +442,20 @@ const YRTree designExampleTree = {
       "disabled", SR_ENUM_T, true }
 };
 
+/// @brief Set of example configurations
+const std::map<std::string, YRTree> test_configs =
+{
+    { exampleModel, exampleTree },
+    { testModel, testTree },
+    { subnetTwoPoolsModelIetf6, subnetTwoPoolsTreeIetf6 },
+    { subnetTimersModel, subnetTimersIetf6 },
+    { validModelIetf6, validTreeIetf6 },
+    { subnetOptionsModelKeaDhcp4, subnetOptionsTreeKeaDhcp4 },
+    { subnetOptionsModelKeaDhcp6, subnetOptionsTreeKeaDhcp6 },
+    { designExampleModel, designExampleTree }
+};
+
+
 }; // end of namespace isc::yang::test
 }; // end of namespace isc::yang
 }; // end of namespace isc
