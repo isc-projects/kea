@@ -20,7 +20,7 @@ namespace yang {
 
 /// Configuration translation between YANG and JSON
 ///
-/// JSON syntax for kea-dhcp6-server is:
+/// JSON syntax for kea-dhcp6 is:
 /// @code
 /// "Dhcp6": {
 ///     "preferred-lifetime": <preferred lifetime>,
@@ -133,7 +133,59 @@ namespace yang {
 ///    +--rw loggers
 /// @endcode
 ///
-/// @todo add example
+/// Example of kea-dhcp6 simple configuration:
+/// @code
+/// {
+///     "Dhcp6": {
+///         "interfaces-config":
+///     {
+///         "interfaces": [ "eth1" ]
+///     },
+///         "control-socket": {
+///             "socket-type": "unix",
+///             "socket-name": "/tmp/kea6-sock"
+///         },
+///     "subnet6":
+///     [
+///         {
+///             "subnet": "2001:db8::/64",
+///             "pools":
+///             [
+///                 {
+///                     "pool": "2001:db8::1:0/112"
+///                 }
+///             ]
+///         }
+///     ]
+///     }
+/// }
+/// @endcode
+///
+/// The same configuration wrote into YANG datastore using @c setConfig() and exported to XML format:
+/// @code
+/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
+///   <subnet6>
+///     <subnet6>
+///       <id>1</id>
+///       <pools>
+///         <pool>
+///           <start-address>2001:db8::1:0</start-address>
+///           <end-address>2001:db8::1:ffff</end-address>
+///           <prefix>2001:db8::1:0/112</prefix>
+///         </pool>
+///       </pools>
+///       <subnet>2001:db8::/64</subnet>
+///     </subnet6>
+///   </subnet6>
+///   <interfaces-config>
+///     <interfaces>eth1</interfaces>
+///   </interfaces-config>
+///   <control-socket>
+///     <socket-name>/tmp/kea6-sock</socket-name>
+///     <socket-type>unix</socket-type>
+///   </control-socket>
+/// </config>
+/// @endcode
 ///
 /// Inheritance graph between translators is:
 ///
