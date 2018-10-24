@@ -1,6 +1,6 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
 // It is a basic scenario with one IPv4 subnet configured but with DDNS
-// enabled. 
+// enabled.
 
 { "Dhcp4":
 
