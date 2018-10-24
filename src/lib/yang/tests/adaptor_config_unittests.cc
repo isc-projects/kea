@@ -37,7 +37,7 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
 
     string decommented = decommentJSONfile(fname);
 
-    cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
+    //cout << "Parsing file " << fname << " (" << decommented << ")" << endl;
 
     EXPECT_NO_THROW(json = Element::fromJSONFile(decommented, true));
     reference_json = moveComments(json);

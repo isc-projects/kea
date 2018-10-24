@@ -17,7 +17,7 @@ EXTRA_DIST = keatest-module.yang
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
-run_unittests_SOURCES  = yang_configs.h
+run_unittests_SOURCES  = json_configs.h yang_configs.h
 run_unittests_SOURCES += adaptor_unittests.cc
 run_unittests_SOURCES += adaptor_option_unittests.cc
 run_unittests_SOURCES += adaptor_pool_unittests.cc
@@ -38,6 +38,7 @@ run_unittests_SOURCES += translator_host_unittests.cc
 run_unittests_SOURCES += translator_subnet_unittests.cc
 run_unittests_SOURCES += translator_shared_network_unittests.cc
 run_unittests_SOURCES += translator_utils_unittests.cc
+run_unittests_SOURCES += config_unittests.cc
 run_unittests_SOURCES += run_unittests.cc
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 run_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
