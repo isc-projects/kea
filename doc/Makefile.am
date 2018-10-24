@@ -17,6 +17,7 @@ nobase_dist_doc_DATA += examples/https/httpd2/kea-httpd2.conf
 nobase_dist_doc_DATA += examples/https/nginx/kea-nginx.conf
 nobase_dist_doc_DATA += examples/https/shell/kea-stunnel.conf
 nobase_dist_doc_DATA += examples/kea4/advanced.json
+nobase_dist_doc_DATA += examples/kea4/all-keys.json
 nobase_dist_doc_DATA += examples/kea4/backends.json
 nobase_dist_doc_DATA += examples/kea4/cassandra.json
 nobase_dist_doc_DATA += examples/kea4/classify.json
@@ -36,6 +37,7 @@ nobase_dist_doc_DATA += examples/kea4/shared-network.json
 nobase_dist_doc_DATA += examples/kea4/single-subnet.json
 nobase_dist_doc_DATA += examples/kea4/with-ddns.json
 nobase_dist_doc_DATA += examples/kea6/advanced.json
+nobase_dist_doc_DATA += examples/kea6/all-keys.json
 nobase_dist_doc_DATA += examples/kea6/backends.json
 nobase_dist_doc_DATA += examples/kea6/cassandra.json
 nobase_dist_doc_DATA += examples/kea6/classify.json
@@ -60,9 +62,6 @@ nobase_dist_doc_DATA += examples/kea6/with-ddns.json
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
-
-nobase_dist_doc_DATA += examples/kea4/all-keys.json
-nobase_dist_doc_DATA += examples/kea6/all-keys.json
 
 devel:
 	mkdir -p html
