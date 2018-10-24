@@ -343,6 +343,7 @@ TEST_F(ConfigTest, examples4) {
     for (string file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea4/" + file;
+        cout << "Testing file " << path << endl;
         ConstElementPtr json;
         ASSERT_NO_THROW(json = loadFile(path));
         json = isc::test::moveComments(json);
@@ -383,6 +384,7 @@ TEST_F(ConfigTest, examples6) {
     for (string file : examples) {
         resetSession();
         string path = string(CFG_EXAMPLES) + "/kea6/" + file;
+        cout << "Testing file " << path << endl;
         ConstElementPtr json;
         ASSERT_NO_THROW(json = loadFile(path));
         json = isc::test::moveComments(json);
