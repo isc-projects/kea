@@ -154,7 +154,7 @@ TEST(TranslatorBasicTest, getItem) {
     S_Val s_val;
     EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
     ConstElementPtr elem;
-    EXPECT_NO_THROW(elem = t_obj->getItem("/keatest-module:containe"));
+    EXPECT_NO_THROW(elem = t_obj->getItem("/keatest-module:container"));
     EXPECT_FALSE(elem);
     elem.reset();
 
@@ -452,7 +452,7 @@ TEST(TranslatorBasicTest, setItem) {
     ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
 
     // Container.
-    string xpath = "/keatest-module:containe";
+    string xpath = "/keatest-module:container";
     ConstElementPtr elem = Element::createMap();
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_T), NotImplemented);
     EXPECT_THROW(t_obj->setItem(xpath, elem, SR_CONTAINER_PRESENCE_T),

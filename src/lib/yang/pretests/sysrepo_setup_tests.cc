@@ -108,7 +108,7 @@ int main() {
 
     int exit_code = 0;
 
-    if (!found_test || 
+    if (!found_test ||
         !found_ietf_types || !found_yang_types ||
         !found_ietf || !found_kea4 || !found_kea6 || !found_keaca ||
         !found_kea2) {
