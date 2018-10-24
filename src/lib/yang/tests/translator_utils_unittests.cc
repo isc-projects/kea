@@ -58,6 +58,7 @@ TEST(YangReprTest, item) {
 
 // Test get with test module.
 TEST(YangReprTest, getTest) {
+
     // Get a translator object to play with.
     S_Connection conn(new Connection("utils unittests"));
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
@@ -128,8 +129,24 @@ TEST(YangReprTest, getTest) {
 
     // Verify.
     EXPECT_TRUE(repr.verify(testTree, sess, cerr));
+}
+
+// This test verifies that errors are handled properly.
+TEST(YangReprTrest, getTestErrors) {
+    // Get a translator object to play with.
+    S_Connection conn(new Connection("utils unittests"));
+    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
+
+    // Get it.
+    YangRepr repr(testModel);
+    YRTree tree;
+    EXPECT_NO_THROW(repr.set(testTree, sess));
+
+    // Verify.
+    EXPECT_TRUE(repr.verify(testTree, sess, cerr));
 
     // Some error messages will be displayed.
+    cout << "Some error messages will be displayed. Please ignore." << endl;
 
     // Change a path.
     YRTree badpath = testTree;
