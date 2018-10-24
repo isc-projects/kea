@@ -14,16 +14,11 @@ namespace isc {
 namespace yang {
 namespace test {
 
-/// @brief The example module from sysrepo tests.
-const std::string exampleModel = "keaexample-module";
-const YRTree exampleTree = {
-    { "/keaexample-module:container",      "", SR_CONTAINER_T, false },
-    { "/keaexample-module:container/list", "", SR_LIST_T,      true }
-};
-
 /// @brief The test module from sysrepo tests.
 const std::string testModel = "keatest-module";
 const YRTree testTree = {
+    { "/keatest-module:container",      "", SR_CONTAINER_T, false },
+    { "/keatest-module:container/list", "", SR_LIST_T,      true },
     { "/keatest-module:main", "", SR_CONTAINER_T, false },
     { "/keatest-module:main/string", "str", SR_STRING_T, true },
     { "/keatest-module:main/boolean", "true", SR_BOOL_T, true },
@@ -445,7 +440,6 @@ const YRTree designExampleTree = {
 /// @brief Set of example configurations.
 const std::vector<std::pair<std::string, YRTree> > test_configs =
 {
-    { exampleModel,                exampleTree },
     { testModel,                   testTree },
     { subnetTwoPoolsModelIetf6,    subnetTwoPoolsTreeIetf6 },
     { subnetTimersModel,           subnetTimersIetf6 },

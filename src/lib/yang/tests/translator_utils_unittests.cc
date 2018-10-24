@@ -56,26 +56,6 @@ TEST(YangReprTest, item) {
     EXPECT_EQ(item2, item1);
 }
 
-// Test get with example module.
-TEST(YangReprTest, getExample) {
-    // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-
-    // Create a list.
-    string xpath = "/keaexample-module:container/list";
-    S_Val s_val;
-    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
-
-    // Get it.
-    YangRepr repr(exampleModel);
-    YRTree tree;
-    EXPECT_NO_THROW(tree = repr.get(sess));
-
-    // Verify.
-    EXPECT_TRUE(repr.verify(exampleTree, sess, cerr));
-}
-
 // Test get with test module.
 TEST(YangReprTest, getTest) {
     // Get a translator object to play with.
@@ -85,6 +65,10 @@ TEST(YangReprTest, getTest) {
     // Fill the test module.
     string xpath;
     S_Val s_val;
+
+    // Create a list.
+    xpath = "/keatest-module:container/list";
+    EXPECT_NO_THROW(sess->set_item(xpath.c_str(), s_val));
 
     xpath = "/keatest-module:main/string";
     s_val.reset(new Val("str", SR_STRING_T));
@@ -172,20 +156,6 @@ TEST(YangReprTest, getTest) {
     YRTree badextra = testTree;
     badextra.pop_back();
     EXPECT_FALSE(repr.verify(badextra, sess, cerr));
-}
-
-// Test set with example module.
-TEST(YangReprTest, setExample) {
-    // Get a translator object to play with.
-    S_Connection conn(new Connection("utils unittests"));
-    S_Session sess(new Session(conn, SR_DS_CANDIDATE));
-
-    // Set the module content.
-    YangRepr repr(exampleModel);
-    EXPECT_NO_THROW(repr.set(exampleTree, sess));
-
-    // Verify it.
-    EXPECT_TRUE(repr.verify(exampleTree, sess, cerr));
 }
 
 // Test set with test module.

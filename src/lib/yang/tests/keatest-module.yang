@@ -28,6 +28,22 @@ module keatest-module {
     description "Power in dBm";
   }
 
+  container container {
+      config true;
+      list list {
+         leaf leaf {
+            type string;
+         }
+         leaf key1 {
+            type string;
+         }
+         leaf key2 {
+            type string;
+         }
+         key "key1 key2";
+      }
+  }
+
   container main {
     leaf enum {
       type enumeration {
