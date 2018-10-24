@@ -479,7 +479,7 @@
             // Shared network level rebind timer.
             "rebind-timer": 41,
 
-            // Shared network level rebew timer.
+            // Shared network level renew timer.
             "renew-timer": 31,
 
             // Enumeration specifying server's mode of operation when it
