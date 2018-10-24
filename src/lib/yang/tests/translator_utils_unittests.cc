@@ -150,17 +150,17 @@ TEST(YangReprTrest, getTestErrors) {
 
     // Change a path.
     YRTree badpath = testTree;
-    badpath[20].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
+    badpath[22].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
     EXPECT_FALSE(repr.verify(badpath, sess, cerr));
 
     // Change a value.
     YRTree badvalue = testTree;
-    badvalue[1].value_ = "Str"; // was "str"
+    badvalue[3].value_ = "Str"; // was "str"
     EXPECT_FALSE(repr.verify(badvalue, sess, cerr));
 
     // Change a type.
     YRTree badtype = testTree;
-    badtype[8].type_ = SR_UINT32_T; // was SR_INT32_T
+    badtype[10].type_ = SR_UINT32_T; // was SR_INT32_T
     EXPECT_FALSE(repr.verify(badtype, sess, cerr));
 
     // Add a record at the end.
