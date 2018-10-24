@@ -1,3 +1,9 @@
+1461.	[doc]		marcin, fdupont
+	Added new sample configurations providing all parameters at
+	the exception of host reservations for DHCPv4 and DHCPv6 servers
+	for testing of configuration managers.
+	(Gitlab #130,!89, git 4bc7e0dbe4804f63c51d100a8f724327e3d3a936)
+
 1460.	[func]		tmark
 	While kea-dhcp4 and kea-dhcp6 configuration parsing supports
 	configuration backend elements "server-tag" and "config-control",
