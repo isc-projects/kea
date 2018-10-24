@@ -63,7 +63,8 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
 
 
 TEST_F(AdaptorConfigTest, loadExamples4) {
-    vector<string> configs = { "advanced.json" ,
+    vector<string> configs = { "advanced.json",
+                               "all-keys.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
@@ -92,6 +93,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
 
 TEST_F(AdaptorConfigTest, loadExamples6) {
     vector<string> configs = { "advanced.json",
+                               "all-keys.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
