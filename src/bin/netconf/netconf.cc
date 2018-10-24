@@ -106,7 +106,7 @@ NetconfAgent::~NetconfAgent() {
 
 void
 NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::global_shut_down_flag || !cfg_mgr) {
         return;
     }
     const CfgServersMapPtr& servers =

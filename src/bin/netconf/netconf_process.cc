@@ -47,10 +47,18 @@ NetconfProcess::run() {
 
     try {
         // Initialize sysrepo.
-        agent_.initSysrepo();
+        if (!shouldShutdown()) {
+            agent_.initSysrepo();
+        }
 
         // Initialize netconf agent in a thread.
-        Thread th([this]() { agent_.init(getNetconfCfgMgr()); });
+        NetconfCfgMgrPtr cfg_mgr;
+        if (!shouldShutdown()) {
+            cfg_mgr = getNetconfCfgMgr();
+        }
+
+        // Initialize the agent in a thread.
+        Thread th([cfg_mgr]() { agent_.init(cfg_mgr); });
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
