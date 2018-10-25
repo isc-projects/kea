@@ -697,6 +697,8 @@ public:
     }
 
     bool equals(const Element& other) const;
+
+    bool empty() const { return (m.empty()); }
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
