@@ -240,6 +240,9 @@ TEST_F(ConfigTest, emptyKeaDhcp6) {
 }
 
 // Check subnet with two pools with ietf-dhcpv6-server model.
+// Validation will fail because the current model has a vendor-info
+// container with a mandatory ent-num leaf and no presence flag,
+// and of course the candidate YANG tree has nothing for this.
 TEST_F(ConfigTest, subnetTwoPoolsIetf6) {
     // First set the model.
     setModel(subnetTwoPoolsModelIetf6);
