@@ -650,6 +650,8 @@ TEST(Element, MapElement) {
 
     EXPECT_TRUE(isNull(el->get("value3")));
 
+    EXPECT_FALSE(el->empty());
+
     el->set("value3", Element::create(56176));
     EXPECT_EQ(el->get("value3")->intValue(), 56176);
 
@@ -1339,5 +1341,24 @@ TEST(Element, getPositionCommented) {
     EXPECT_EQ(8, level2_el->getPosition().line_);
     EXPECT_EQ(14, level2_el->getPosition().pos_);
     EXPECT_EQ("kea.conf", level2_el->getPosition().file_);
+}
+
+TEST(Element, empty) {
+
+    // Let's try Map first
+    ElementPtr m = Element::createMap();
+    EXPECT_TRUE(m->empty());
+    m->set("something", Element::create(123));
+    EXPECT_FALSE(m->empty());
+    m->remove("something");
+    EXPECT_TRUE(m->empty());
+
+    // Now do the same with list
+    ElementPtr l = Element::createList();
+    EXPECT_TRUE(l->empty());
+    l->add(Element::create(123));
+    EXPECT_FALSE(l->empty());
+    l->remove(0);
+    EXPECT_TRUE(l->empty());
 }
 }
