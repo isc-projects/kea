@@ -20,9 +20,10 @@ namespace yang {
 
 /// @brief DHCP configuration translation between YANG and JSON
 ///
-/// This translator supports kea-dhcp4-server and kea-dhcp6-server.
+/// This translator supports kea-dhcp4-server, kea-dhcp6-server and
+/// partially ietf-dhcpv6-server.
 ///
-/// JSON syntax for kea-dhcp6-server is:
+/// JSON syntax for kea-dhcp6 is:
 /// @code
 /// "Dhcp6": {
 ///     "preferred-lifetime": <preferred lifetime>,
@@ -135,7 +136,7 @@ namespace yang {
 ///    +--rw loggers
 /// @endcode
 ///
-/// Example of kea-dhcp6-server simple configuration:
+/// Example of kea-dhcp6 simple configuration:
 /// @code
 /// {
 ///     "Dhcp6": {
@@ -163,7 +164,8 @@ namespace yang {
 /// }
 /// @endcode
 ///
-/// The same configuration wrote into YANG datastore using @c setConfig() and exported to XML format:
+/// The same configuration wrote into YANG datastore using @c setConfig()
+/// with the kea-dhcp6-model and exported to XML format:
 /// @code
 /// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
 ///   <subnet6>
@@ -231,8 +233,7 @@ namespace yang {
 ///  'XXX (list)' stands for 'XXX list --- XXX' which is a common motif
 ///  (only database shows direct dependencies on both the list and the element)
 ///
-/// @brief A translator class for converting the config between
-/// YANG and JSON.
+/// @brief A translator class for converting the config between YANG and JSON.
 ///
 /// Currently supports the following models:
 /// - kea-dhcp4-server
@@ -255,13 +256,15 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorConfig();
 
-    /// @brief Get and translate the whole DHCP server config from YANG to JSON.
+    /// @brief Get and translate the whole DHCP server configuration
+    /// from YANG to JSON.
     ///
     /// @return JSON representation of the config.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getConfig();
 
-    /// @brief Translate and sets the DHCP server config from JSON to YANG.
+    /// @brief Translate and sets the DHCP server configuration
+    /// from JSON to YANG.
     ///
     /// Null elem argument removes the config containers.
     ///
