@@ -46,19 +46,28 @@ NetconfProcess::run() {
     LOG_INFO(netconf_logger, NETCONF_STARTED).arg(VERSION);
 
     try {
-        // Initialize sysrepo.
-        if (!shouldShutdown()) {
-            agent_.initSysrepo();
-        }
-
         // Initialize netconf agent in a thread.
-        NetconfCfgMgrPtr cfg_mgr;
-        if (!shouldShutdown()) {
-            cfg_mgr = getNetconfCfgMgr();
-        }
+        Thread th([this]() {
+                if (shouldShutdown()) {
+                    return;
+                }
+                // Initialize sysrepo.
+                agent_.initSysrepo();
+                if (shouldShutdown()) {
+                    return;
+                }
 
-        // Initialize the agent in a thread.
-        Thread th([this, cfg_mgr]() { agent_.init(cfg_mgr); });
+                // Get the configuration manager.
+                NetconfCfgMgrPtr cfg_mgr;
+                if (shouldShutdown()) {
+                    return;
+                } else {
+                    cfg_mgr = getNetconfCfgMgr();
+                }
+
+                // Call init.
+                agent_.init(cfg_mgr);
+            });
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
