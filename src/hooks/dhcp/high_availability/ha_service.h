@@ -55,9 +55,18 @@ protected:
     /// @brief Callback invoked when request was sent and a response received
     /// or an error occurred.
     ///
-    /// The first arguments indicates if the operation passed (when true).
+    /// The first argument indicates if the operation passed (when true).
     /// The second argument holds error message.
-    typedef std::function<void(const bool, const std::string&)> PostRequestCallback;
+   typedef std::function<void(const bool, const std::string&)> PostRequestCallback;
+
+    /// @brief Callback invoked when lease database synchronization is complete.
+    ///
+    /// The first argument indicates if the operation passed (when true).
+    /// The second argument holds error message.
+    /// The third argument indicates whether the synchronization resulted in
+    /// disabling DHCP service on the partner server and has to be
+    /// re-enabled.
+    typedef std::function<void(const bool, const std::string&, const bool)> PostSyncCallback;
 
 public:
 
@@ -509,7 +518,7 @@ protected:
     void asyncDisable(http::HttpClient& http_client,
                       const std::string& server_name,
                       const unsigned int max_period,
-                      const PostRequestCallback& post_request_action);
+                      PostRequestCallback post_request_action);
 
     /// @brief Schedules asynchronous "dhcp-enable" command to the specified
     /// server.
@@ -522,7 +531,7 @@ protected:
     /// the request is completed.
     void asyncEnable(http::HttpClient& http_client,
                      const std::string& server_name,
-                     const PostRequestCallback& post_request_action);
+                     PostRequestCallback post_request_action);
 
     /// @brief Disables local DHCP service.
     void localDisable();
@@ -533,7 +542,7 @@ protected:
     /// @brief Asynchronously reads leases from a peer and updates local
     /// lease database.
     ///
-    /// This method asynchronously sends lease4-get-all command to fetch all
+    /// This method asynchronously sends lease4-get-page command to fetch
     /// leases from the HA peer database. When the response is received, the
     /// callback function iterates over the returned leases and inserts those
     /// that are not present in the local database and replaces any existing
@@ -550,12 +559,32 @@ protected:
     /// @brief Asynchronously reads leases from a peer and updates local
     /// lease database using a provided client instance.
     ///
-    /// This method asynchronously sends lease4-get-all command to fetch all
-    /// leases from the HA peer database. When the response is received, the
-    /// callback function iterates over the returned leases and inserts those
-    /// that are not present in the local database and replaces any existing
-    /// leases if the fetched lease instance is newer (based on cltt) than
-    /// the instance in the local lease database.
+    /// This method first sends dhcp-disable command to the server from which
+    /// it will be fetching leases to disable its DHCP function while database
+    /// synchronization is in progress. If the command is successful, it then
+    /// sends lease4-get-page command to fetch a page of leases from the
+    /// partner's database. Depending on the configured page size, it may
+    /// be required to send multiple lease4-get-page or lease6-get-page
+    /// commands to fetch all leases. If the lease database is large,
+    /// the database synchronization may even take several minutes.
+    /// Therefore, dhcp-disable command is sent prior to fetching each page,
+    /// in order to reset the timeout for automatic re-enabling of the
+    /// DHCP service on the remote server. Such timeout must only occur
+    /// if there was no communication from the synchronizing server for
+    /// longer period of time. If the synchronization is progressing the
+    /// timeout must be deferred.
+    ///
+    /// The @c asyncSyncLeases method calls itself recursively when the
+    /// previous @c lease4-get-page or @c lease6-get-page command has
+    /// completed successfully. If the last page of leases was fetched or
+    /// if any error occurred, the synchronization is terminated and the
+    /// @c post_sync_action callback is invoked.
+    ///
+    /// The last parameter passed to the @c post_sync_action callback indicates
+    /// whether this server has successfully disabled DHCP service on
+    /// the partner server at least once. If that's the case, the DHCP
+    /// service must be re-enabled by sending dhcp-enable command. This
+    /// is done in the @c HAService::synchronize method.
     ///
     /// If there is an error while inserting or updating any of the leases
     /// a warning message is logged and the process continues for the
@@ -563,19 +592,60 @@ protected:
     ///
     /// @param http_client reference to the client to be used to communicate
     /// with the other server.
+    /// @param server_name name of the server to fetch leases from.
+    /// @param max_period maximum number of seconds to disable DHCP service
+    /// @param lease Pointer to the last lease returned on the previous
+    /// page of leases. This lease is used to set the value of the "from"
+    /// parameter in the @c lease4-get-page and @c lease6-get-page commands. If this
+    /// command is sent to fetch the first page, the @c last_lease parameter
+    /// should be set to null.
+    /// @param post_sync_action pointer to the function to be executed when
+    /// lease database synchronization is complete. If this is null, no
+    /// post synchronization action is invoked.
+    /// @param dhcp_disabled Boolean flag indicating if the remote DHCP
+    /// server is disabled. This flag propagates down to the
+    /// @c post_sync_action to indicate whether the DHCP service has to
+    /// be enabled after the leases synchronization.
+    void asyncSyncLeases(http::HttpClient& http_client,
+                         const std::string& server_name,
+                         const unsigned int max_period,
+                         const dhcp::LeasePtr& last_lease,
+                         PostSyncCallback post_sync_action,
+                         const bool dhcp_disabled = false);
+
+    /// @brief Implements fetching one page of leases during synchronization.
+    ///
+    /// This method implements the actual lease fetching from the partner
+    /// and synchronization of the database. It excludes sending @c dhcp-disable
+    /// command. This command is sent by @c HAService::asyncSyncLeases.
+    ///
+    /// When the page of leases is successfully synchronized, this method
+    /// will call @c HAService::asyncSyncLeases to schedule synchronization of
+    /// the next page of leases.
+    ///
+    /// @param http_client reference to the client to be used to communicate
+    /// with the other server.
+    /// @param server_name name of the server to fetch leases from.
+    /// @param max_period maximum number of seconds to disable DHCP service
     /// @param lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
     /// parameter in the lease4-get-page and lease6-get-page commands. If this
     /// command is sent to fetch the first page, the @c last_lease parameter
     /// should be set to null.
-    /// @param limit Limit of leases on the page.
     /// @param post_sync_action pointer to the function to be executed when
     /// lease database synchronization is complete. If this is null, no
     /// post synchronization action is invoked.
-    void asyncSyncLeases(http::HttpClient& http_client,
-                         const dhcp::LeasePtr& last_lease,
-                         const uint32_t limit,
-                         const PostRequestCallback& post_sync_action);
+    /// @param dhcp_disabled Boolean flag indicating if the remote DHCP
+    /// server is disabled. This flag propagates down to the
+    /// @c post_sync_action to indicate whether the DHCP service has to
+    /// be enabled after the leases synchronization.
+    void asyncSyncLeasesInternal(http::HttpClient& http_client,
+                                 const std::string& server_name,
+                                 const unsigned int max_period,
+                                 const dhcp::LeasePtr& last_lease,
+                                 PostSyncCallback post_sync_action,
+                                 const bool dhcp_disabled);
+
 
 public:
 
@@ -595,7 +665,7 @@ public:
     /// @param server_name name of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// of the peer. This value is used in dhcp-disable command issued to
-    /// the peer before the lease4-get-all command.
+    /// the peer before the lease4-get-page command.
     ///
     /// @return Pointer to the response to the ha-sync command.
     data::ConstElementPtr processSynchronize(const std::string& server_name,
@@ -612,13 +682,12 @@ protected:
     /// @param server_name name of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
     /// of the peer. This value is used in dhcp-disable command issued to
-    /// the peer before the lease4-get-all command.
-    /// @param page_limit Maximum size of a single page of leases to be returned.
+    /// the peer before the lease4-get-page command.
     ///
     /// @return Synchronization result according to the status codes returned
     /// in responses to control commands.
     int synchronize(std::string& status_message, const std::string& server_name,
-                    const unsigned int max_period, const uint32_t page_limit);
+                    const unsigned int max_period);
 
 public:
 

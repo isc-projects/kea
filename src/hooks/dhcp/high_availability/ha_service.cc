@@ -359,7 +359,7 @@ HAService::syncingStateHandler() {
         std::string status_message;
         int sync_status = synchronize(status_message,
                                       config_->getFailoverPeerConfig()->getName(),
-                                      60, config_->getSyncPageLimit());
+                                      60);
 
        // If the leases synchronization was successful, let's transition
         // to the ready state.
@@ -1018,7 +1018,7 @@ void
 HAService::asyncDisable(HttpClient& http_client,
                         const std::string& server_name,
                         const unsigned int max_period,
-                        const PostRequestCallback& post_request_action) {
+                        PostRequestCallback post_request_action) {
     HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
 
     // Create HTTP/1.1 request including our command.
@@ -1084,7 +1084,7 @@ HAService::asyncDisable(HttpClient& http_client,
 void
 HAService::asyncEnable(HttpClient& http_client,
                        const std::string& server_name,
-                       const PostRequestCallback& post_request_action) {
+                       PostRequestCallback post_request_action) {
     HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
 
     // Create HTTP/1.1 request including our command.
@@ -1159,15 +1159,50 @@ HAService::localEnable() {
 
 void
 HAService::asyncSyncLeases() {
-    PostRequestCallback null_action;
-    asyncSyncLeases(client_, LeasePtr(), config_->getSyncPageLimit(), null_action);
+    PostSyncCallback null_action;
+    asyncSyncLeases(client_, config_->getFailoverPeerConfig()->getName(),
+                    60, LeasePtr(), null_action);
 }
 
 void
 HAService::asyncSyncLeases(http::HttpClient& http_client,
+                           const std::string& server_name,
+                           const unsigned int max_period,
                            const dhcp::LeasePtr& last_lease,
-                           const uint32_t limit,
-                           const PostRequestCallback& post_sync_action) {
+                           PostSyncCallback post_sync_action,
+                           const bool dhcp_disabled) {
+    // Synchronization starts with a command to disable DHCP service of the
+    // peer from which we're fetching leases. We don't want the other server
+    // to allocate new leases while we fetch from it. The DHCP service will
+    // be disabled for a certain amount of time and will be automatically
+    // re-enabled if we die during the synchronization.
+    asyncDisable(http_client, server_name, max_period,
+                 [this, &http_client, server_name, max_period, last_lease,
+                  post_sync_action, dhcp_disabled]
+                 (const bool success, const std::string& error_message) {
+
+        // If we have successfully disabled the DHCP service on the peer,
+        // we can start fetching the leases.
+        if (success) {
+            // The last argument indicates that disabling the DHCP
+            // service on the partner server was successful.
+            asyncSyncLeasesInternal(http_client, server_name, max_period,
+                                    last_lease, post_sync_action, true);
+
+        } else {
+            post_sync_action(success, error_message, dhcp_disabled);
+        }
+    });
+}
+
+void
+HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
+                                   const std::string& server_name,
+                                   const unsigned int max_period,
+                                   const dhcp::LeasePtr& last_lease,
+                                   PostSyncCallback post_sync_action,
+                                   const bool dhcp_disabled) {
+
     HAConfig::PeerConfigPtr partner_config = config_->getFailoverPeerConfig();
 
     // Create HTTP/1.1 request including our command.
@@ -1175,11 +1210,11 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11());
     if (server_type_ == HAServerType::DHCPv4) {
         request->setBodyAsJson(CommandCreator::createLease4GetPage(
-            boost::dynamic_pointer_cast<Lease4>(last_lease), limit));
+            boost::dynamic_pointer_cast<Lease4>(last_lease), config_->getSyncPageLimit()));
 
     } else {
         request->setBodyAsJson(CommandCreator::createLease6GetPage(
-            boost::dynamic_pointer_cast<Lease6>(last_lease), limit));
+            boost::dynamic_pointer_cast<Lease6>(last_lease), config_->getSyncPageLimit()));
     }
     request->finalize();
 
@@ -1189,7 +1224,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
 
     // Schedule asynchronous HTTP request.
     http_client.asyncSendRequest(partner_config->getUrl(), request, response,
-        [this, partner_config, post_sync_action, &http_client, limit]
+        [this, partner_config, post_sync_action, &http_client, server_name,
+         max_period, dhcp_disabled]
             (const boost::system::error_code& ec,
              const HttpResponsePtr& response,
              const std::string& error_str) {
@@ -1234,6 +1270,10 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                     // Iterate over the leases and update the database as appropriate.
                     const auto& leases_element = leases->listValue();
 
+                    LOG_INFO(ha_logger, HA_LEASES_SYNC_LEASE_PAGE_RECEIVED)
+                        .arg(leases_element.size())
+                        .arg(server_name);
+
                     for (auto l = leases_element.begin(); l != leases_element.end(); ++l) {
                         try {
 
@@ -1260,7 +1300,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                                 // If we're not on the last page and we're processing final lease on
                                 // this page, let's record the lease as input to the next
                                 // lease4-get-page command.
-                                if ((leases_element.size() >= limit) && (l + 1 == leases_element.end())) {
+                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
+                                    (l + 1 == leases_element.end())) {
                                     last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
 
@@ -1288,7 +1329,8 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
                                 // If we're not on the last page and we're processing final lease on
                                 // this page, let's record the lease as input to the next
                                 // lease6-get-page command.
-                                if ((leases_element.size() >= limit) && (l + 1 == leases_element.end())) {
+                                if ((leases_element.size() >= config_->getSyncPageLimit()) &&
+                                    (l + 1 == leases_element.end())) {
                                     last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
 
@@ -1317,14 +1359,16 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
              } else if (last_lease) {
                  // This indicates that there are more leases to be fetched.
                  // Therefore, we have to send another leaseX-get-page command.
-                 asyncSyncLeases(http_client, last_lease, limit, post_sync_action);
+                 asyncSyncLeases(http_client, server_name, max_period, last_lease,
+                                 post_sync_action, dhcp_disabled);
                  return;
              }
 
             // Invoke post synchronization action if it was specified.
             if (post_sync_action) {
                 post_sync_action(error_message.empty(),
-                                 error_message);
+                                 error_message,
+                                 dhcp_disabled);
             }
     }, HttpClient::RequestTimeout(config_->getSyncTimeout()));
 }
@@ -1333,59 +1377,49 @@ ConstElementPtr
 HAService::processSynchronize(const std::string& server_name,
                               const unsigned int max_period) {
     std::string answer_message;
-    int sync_status = synchronize(answer_message, server_name, max_period,
-                                  config_->getSyncPageLimit());
+    int sync_status = synchronize(answer_message, server_name, max_period);
     return (createAnswer(sync_status, answer_message));
 }
 
 int
 HAService::synchronize(std::string& status_message, const std::string& server_name,
-                       const unsigned int max_period, const uint32_t page_limit) {
+                       const unsigned int max_period) {
     IOService io_service;
     HttpClient client(io_service);
 
-    // Synchronization starts with a command to disable DHCP service of the
-    // peer from which we're fetching leases. We don't want the other server
-    // to allocate new leases while we fetch from it. The DHCP service will
-    // be disabled for a certain amount of time and will be automatically
-    // re-enabled if we die during the synchronization.
-    asyncDisable(client, server_name, max_period,
-                 [&](const bool success, const std::string& error_message) {
-        // If we have successfully disabled the DHCP service on the peer,
-        // we can start fetching the leases.
-        if (success) {
-            asyncSyncLeases(client, Lease4Ptr(), page_limit,
-                            [&](const bool success, const std::string& error_message) {
-                // If there was a fatal error while fetching the leases, let's
-                // log an error message so as it can be included in the response
-                // to the controlling client.
-                if (!success) {
+    asyncSyncLeases(client, server_name, max_period, Lease4Ptr(),
+                    [&](const bool success, const std::string& error_message,
+                        const bool dhcp_disabled) {
+        // If there was a fatal error while fetching the leases, let's
+        // log an error message so as it can be included in the response
+        // to the controlling client.
+        if (!success) {
+            status_message = error_message;
+        }
+
+        // Whether or not there was an error while fetching the leases,
+        // we need to re-enable the DHCP service on the peer if the
+        // DHCP service was disabled in the course of synchronization.
+        if (dhcp_disabled) {
+            asyncEnable(client, server_name,
+                        [&](const bool success,
+                            const std::string& error_message) {
+                // It is possible that we have already recorded an error
+                // message while synchronizing the lease database. Don't
+                // override the existing error message.
+                if (!success && status_message.empty()) {
                     status_message = error_message;
                 }
 
-                // Whether or not there was an error while fetching the leases,
-                // we need to re-enable the DHCP service on the peer.
-                asyncEnable(client, server_name,
-                            [&](const bool success,
-                                const std::string& error_message) {
-                    // It is possible that we have already recorded an error
-                    // message while synchronizing the lease database. Don't
-                    // override the existing error message.
-                    if (!success && status_message.empty()) {
-                        status_message = error_message;
-                    }
-                    // The synchronization process is completed, so let's break
-                    // the IO service so as we can return the response to the
-                    // controlling client.
-                    io_service.stop();
-                });
+                // The synchronization process is completed, so let's break
+                // the IO service so as we can return the response to the
+                // controlling client.
+                io_service.stop();
             });
 
         } else {
-            // We have failed to disable the DHCP service of the peer. Let's
-            // record the error message and break the IO service so as we can
-            // return the response to the controlling client.
-            status_message = error_message;
+            // Also stop IO service if there is no need to enable DHCP
+            // service.
             io_service.stop();
         }
     });
