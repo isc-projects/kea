@@ -82,7 +82,7 @@ public:
         session_.reset(new Session(connection_, SR_DS_CANDIDATE));
     }
 
-    /// @brief Load Yang.
+    /// @brief Loads YANG configuration from specified tree.
     ///
     /// @param tree The Yang tree to load.
     void load(const YRTree& tree) {
@@ -90,7 +90,7 @@ public:
         repr.set(tree, session_);
     }
 
-    /// @brief Load JSON.
+    /// @brief Loads JSON configuration from specified Element tree.
     ///
     /// @param json The JSON tree to load.
     void load(ConstElementPtr json) {
@@ -98,7 +98,7 @@ public:
         tc.setConfig(json);
     }
 
-    /// @brief Load JSON text.
+    /// @brief Load a cofiguration from a string containing JSON.
     ///
     /// @param config The JSON tree to load in textual format.
     void load(const string& config) {
@@ -107,7 +107,7 @@ public:
         load(json);
     }
 
-    /// @brief Load JSON file.
+    /// @brief Load a configuration from JSON file.
     ///
     /// @param filename The name of the JSON file to load,
     ConstElementPtr loadFile(const string& filename) {
@@ -118,19 +118,19 @@ public:
         return (json);
     }
 
-    /// @brief Get Yang.
+    /// @brief Returns YANG tree configuration.
     YRTree getYang() {
         YangRepr repr(model_);
         return (repr.get(session_));
     }
 
-    /// @brief Get JSON.
+    /// @brief Returns configuration in JSON (translated by TranslatorConfig)
     ConstElementPtr getJSON() {
         TranslatorConfig tc(session_, model_);
         return (tc.getConfig());
     }
 
-    /// @brief Get JSON text.
+    /// @brief Retrieves configuration as text (in pretty JSON format).
     string getText() {
         return (isc::data::prettyPrint(getJSON()));
     }

@@ -68,7 +68,7 @@ TranslatorConfig::getConfigIetf6() {
     result->set("Dhcp6", dhcp6);
     string xpath = "/" + model_ + ":server/server-config";
     ConstElementPtr ranges = getSubnets(xpath + "/network-ranges");
-    if (ranges && (ranges->size() > 0)) {
+    if (ranges && !ranges->empty()) {
         dhcp6->set("subnet6", ranges);
     }
     // Skip everything else.
@@ -80,7 +80,7 @@ TranslatorConfig::getConfigKea4() {
     ElementPtr result = Element::createMap();
     result->set("Dhcp4", getServerKeaDhcp4());
     ConstElementPtr logging = getServerKeaLogging();
-    if (logging && (logging->size() > 0)) {
+    if (logging && !logging->empty()) {
         result->set("Logging", logging);
     }
     return (result);
@@ -91,7 +91,7 @@ TranslatorConfig::getConfigKea6() {
     ElementPtr result = Element::createMap();
     result->set("Dhcp6", getServerKeaDhcp6());
     ConstElementPtr logging = getServerKeaLogging();
-    if (logging && (logging->size() > 0)) {
+    if (logging && !logging->empty()) {
         result->set("Logging", logging);
     }
     return (result);
@@ -149,7 +149,7 @@ TranslatorConfig::getExpiredKea(std::string xpath) {
     getParam(expired, xpath, "max-reclaim-time");
     getParam(expired, xpath, "unwarned-reclaim-cycles");
 
-    if (expired->size() > 0) {
+    if (!expired->empty()) {
         return (expired);
     }
 
@@ -175,10 +175,8 @@ TranslatorConfig::getDdnsKea(std::string xpath) {
     getParam(ddns, xpath, "generated-prefix");
     getParam(ddns, xpath, "hostname-char-set");
     getParam(ddns, xpath, "hostname-char-replacement");
-    getParam(ddns, xpath, "");
-    getParam(ddns, xpath, "");
 
-    ConstElementPtr context = getItem(xpath + "/dhcp-ddns/user-context");
+    ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
         ddns->set("user-context", Element::fromJSON(context->stringValue()));
     }
@@ -218,9 +216,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         result->set("hosts-databases", databases);
     }
 
-    getParam(result, xpath, "host-reservation-identifiers");
-    ConstElementPtr host_ids =
-        getItems(xpath + "/");
+    ConstElementPtr host_ids = getItems(xpath + "/host-reservation-identifiers");
     if (host_ids) {
         result->set("host-reservation-identifiers", host_ids);
     }
@@ -251,7 +247,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     }
 
     ConstElementPtr ddns = getDdnsKea(xpath + "/dhcp-ddns");
-    if (!ddns->empty()) {
+    if (ddns) {
         result->set("dhcp-ddns", ddns);
     }
 
@@ -268,7 +264,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     }
 
     ConstElementPtr hosts = getHosts(xpath + "/reservations");
-    if (hosts && (hosts->size() > 0)) {
+    if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
     }
     return (result);
@@ -290,9 +286,9 @@ TranslatorConfig::getServerKeaDhcp4() {
     if (ifs && !ifs->empty()) {
         if_config->set("interfaces", ifs);
     }
-    getParam(if_config, xpath, "interfaces-config/dhcp-socket-type");
-    getParam(if_config, xpath, "interfaces-config/outbound-interface");
-    getParam(if_config, xpath, "interfaces-config/re-detect");
+    getParam(if_config, xpath + "/interfaces-config", "dhcp-socket-type");
+    getParam(if_config, xpath + "/interfaces-config", "outbound-interface");
+    getParam(if_config, xpath + "/interfaces-config", "re-detect");
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
     if (context) {
@@ -320,17 +316,17 @@ TranslatorConfig::getServerKeaDhcp6() {
     getParam(result, xpath, "preferred-lifetime");
 
     ConstElementPtr subnets = getSubnets(xpath + "/subnet6");
-    if (subnets && (subnets->size() > 0)) {
+    if (subnets && !subnets->empty()) {
         result->set("subnet6", subnets);
     }
 
     ElementPtr if_config = Element::createMap();
     ConstElementPtr ifs = getItems(xpath + "/interfaces-config/interfaces");
-    if (ifs && (ifs->size() > 0)) {
+    if (ifs && !ifs->empty()) {
         if_config->set("interfaces", ifs);
     }
 
-    getParam(if_config, xpath, "interfaces-config/re-detect");
+    getParam(if_config, xpath + "/interfaces-config", "re-detect");
 
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
@@ -353,12 +349,12 @@ TranslatorConfig::getServerKeaDhcp6() {
     }
 
     ElementPtr server_id = Element::createMap();
-    getParam(server_id, xpath, "server-id/type");
-    getParam(server_id, xpath, "server-id/identifier");
-    getParam(server_id, xpath, "server-id/time");
-    getParam(server_id, xpath, "server-id/htype");
-    getParam(server_id, xpath, "server-id/enterprise-id");
-    getParam(server_id, xpath, "server-id/persist");
+    getParam(server_id, xpath + "/server-id", "type");
+    getParam(server_id, xpath + "/server-id", "identifier");
+    getParam(server_id, xpath + "/server-id", "time");
+    getParam(server_id, xpath + "/server-id", "htype");
+    getParam(server_id, xpath + "/server-id", "enterprise-id");
+    getParam(server_id, xpath + "/server-id", "persist");
     context = getItem(xpath + "/server-id/user-context");
     if (context) {
         server_id->set("user-context",
@@ -375,7 +371,7 @@ TranslatorConfig::getServerKeaLogging() {
     string xpath = "/" + model_ + ":logging";
     ElementPtr result = Element::createMap();
     ConstElementPtr loggers = getLoggers(xpath + "/loggers");
-    if (loggers && (loggers->size() > 0)) {
+    if (loggers && !loggers->empty()) {
         result->set("loggers", loggers);
     }
     return (result);
@@ -429,7 +425,7 @@ TranslatorConfig::setConfigIetf6(ConstElementPtr elem) {
         isc_throw(BadValue, "no Dhcp6 entry in " << elem->str());
     }
     ConstElementPtr ranges = dhcp6->get("subnet6");
-    if (ranges && (ranges->size() > 0)) {
+    if (ranges && !ranges->empty()) {
         setSubnets(xpath + "/network-ranges", ranges);
     }
     // Skip everything else.
@@ -514,11 +510,11 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         }
     }
     ConstElementPtr defs = elem->get("option-def");
-    if (defs && (defs->size() > 0)) {
+    if (defs && !defs->empty()) {
         setOptionDefList(xpath + "/option-def-list", defs);
     }
     ConstElementPtr options = elem->get("option-data");
-    if (options && (options->size() > 0)) {
+    if (options && !options->empty()) {
         setOptionDataList(xpath + "/option-data-list", options);
     }
     ConstElementPtr hook_libs = elem->get("hooks-libraries");
@@ -678,7 +674,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         }
     }
     ConstElementPtr hosts = elem->get("reservations");
-    if (hosts && (hosts->size() > 0)) {
+    if (hosts && !hosts->empty()) {
         setHosts(xpath + "/reservations", hosts);
     }
 }
@@ -694,7 +690,7 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
         ConstElementPtr ifs = if_config->get("interfaces");
-        if (ifs && (ifs->size() > 0)) {
+        if (ifs && !ifs->empty()) {
             for (ConstElementPtr intf : ifs->listValue()) {
                 setItem(xpath + "/interfaces-config/interfaces",
                         intf, SR_STRING_T);
@@ -758,7 +754,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
         ConstElementPtr ifs = if_config->get("interfaces");
-        if (ifs && (ifs->size() > 0)) {
+        if (ifs && !ifs->empty()) {
             for (ConstElementPtr intf : ifs->listValue()) {
                 setItem(xpath + "/interfaces-config/interfaces",
                         intf, SR_STRING_T);
