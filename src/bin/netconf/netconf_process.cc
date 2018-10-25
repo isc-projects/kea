@@ -58,7 +58,7 @@ NetconfProcess::run() {
         }
 
         // Initialize the agent in a thread.
-        Thread th([cfg_mgr]() { agent_.init(cfg_mgr); });
+        Thread th([this, cfg_mgr]() { agent_.init(cfg_mgr); });
 
         // Let's process incoming data or expiring timers in a loop until
         // shutdown condition is detected.
