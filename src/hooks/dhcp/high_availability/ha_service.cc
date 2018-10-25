@@ -355,11 +355,18 @@ HAService::syncingStateHandler() {
         // so let's temporarily stop it.
         communication_state_->stopHeartbeat();
 
+        // Timeout is configured in milliseconds. Need to convert to seconds.
+        unsigned int dhcp_disable_timeout =
+            static_cast<unsigned int>(config_->getSyncTimeout() / 1000);
+        if (dhcp_disable_timeout == 0) {
+            ++dhcp_disable_timeout;
+        }
+
         // Perform synchronous leases update.
         std::string status_message;
         int sync_status = synchronize(status_message,
                                       config_->getFailoverPeerConfig()->getName(),
-                                      60);
+                                      dhcp_disable_timeout);
 
        // If the leases synchronization was successful, let's transition
         // to the ready state.
@@ -1024,7 +1031,9 @@ HAService::asyncDisable(HttpClient& http_client,
     // Create HTTP/1.1 request including our command.
     PostHttpRequestJsonPtr request = boost::make_shared<PostHttpRequestJson>
         (HttpRequest::Method::HTTP_POST, "/", HttpVersion::HTTP_11());
-    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period, server_type_));
+
+    request->setBodyAsJson(CommandCreator::createDHCPDisable(max_period,
+                                                             server_type_));
     request->finalize();
 
     // Response object should also be created because the HTTP client needs
@@ -1160,8 +1169,16 @@ HAService::localEnable() {
 void
 HAService::asyncSyncLeases() {
     PostSyncCallback null_action;
+
+    // Timeout is configured in milliseconds. Need to convert to seconds.
+    unsigned int dhcp_disable_timeout =
+        static_cast<unsigned int>(config_->getSyncTimeout() / 1000);
+    if (dhcp_disable_timeout == 0) {
+        ++dhcp_disable_timeout;
+    }
+
     asyncSyncLeases(client_, config_->getFailoverPeerConfig()->getName(),
-                    60, LeasePtr(), null_action);
+                    dhcp_disable_timeout, LeasePtr(), null_action);
 }
 
 void
