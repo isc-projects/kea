@@ -1,0 +1,22 @@
+<config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+  <subnet4>
+    <subnet4>
+      <id>1</id>
+      <pools>
+        <pool>
+          <start-address>10.0.35.64</start-address>
+          <end-address>10.0.35.95</end-address>
+          <prefix>10.0.35.64/27</prefix>
+        </pool>
+      </pools>
+      <subnet>10.0.35.0/24</subnet>
+    </subnet4>
+  </subnet4>
+  <interfaces-config>
+    <interfaces>eth1</interfaces>
+  </interfaces-config>
+  <control-socket>
+    <socket-name>/tmp/kea4-sock</socket-name>
+    <socket-type>unix</socket-type>
+  </control-socket>
+</config>

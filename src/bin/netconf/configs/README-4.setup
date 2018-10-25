@@ -1,0 +1,28 @@
+# System tests for Netconf agent and Kea DHCPv4 server on Linux
+
+# 0 tunoff NetworkManager on the target interface
+
+# 1 change interface name from ens38 (put your here) to eth1
+sudo ip link set down dev ens38
+sudo ip link set name eth1 dev ens38
+sudo ip link set up dev eth1
+
+# 2 add IPv4 address
+sudo ip addr add 10.0.0.1/16 dev eth1
+
+# 3 launch DHCPv4 server
+sudo kea-dhcp4 -d -c boot-4.json
+
+# 4 verify its configuration
+echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea4-sock '-,ignoreeof'
+
+# 5 load the startup config to the startup datastore
+sudo sysrepocfg -l 4 -d startup -f xml -i startup-4.xml kea-dhcp4-server
+
+# 6 launch Netconf agent
+sudo kea-netconf -d -c netconf-4.json
+
+# 7 play changing configuration
+sudo sysrepocfg -l 4 -d running -f xml -i bad-schema-4.xml kea-dhcp4-server
+
+sudo sysrepocfg -l 4 -d running -f xml -i twopools-4.xml kea-dhcp4-server

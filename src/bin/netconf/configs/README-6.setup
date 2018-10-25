@@ -1,4 +1,4 @@
-# for Linux
+# System tests for Netconf agent and Kea DHCPv6 server on Linux
 
 # 0 tunoff NetworkManager on the target interface
 
@@ -11,18 +11,18 @@ sudo ip link set up dev eth1
 sudo ip -6 addr add 2001:db8::1/64 dev eth1
 
 # 3 launch DHCPv6 server
-sudo kea-dhcp6 -d -c boot.json
+sudo kea-dhcp6 -d -c boot-6.json
 
 # 4 verify its configuration
 echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea6-sock '-,ignoreeof'
 
 # 5 load the startup config to the startup datastore
-sudo sysrepocfg -l 4 -d startup -f xml -i startup.xml kea-dhcp6-server
+sudo sysrepocfg -l 4 -d startup -f xml -i startup-6.xml kea-dhcp6-server
 
 # 6 launch Netconf agent
-sudo kea-netconf -d -c netconf.json
+sudo kea-netconf -d -c netconf-6.json
 
 # 7 play changing configuration
-sudo sysrepocfg -l 4 -d running -f xml -i bad-schema.xml kea-dhcp6-server
+sudo sysrepocfg -l 4 -d running -f xml -i bad-schema-6.xml kea-dhcp6-server
 
-sudo sysrepocfg -l 4 -d running -f xml -i twopools.xml kea-dhcp6-server
+sudo sysrepocfg -l 4 -d running -f xml -i twopools-6.xml kea-dhcp6-server

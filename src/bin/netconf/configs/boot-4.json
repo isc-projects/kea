@@ -1,0 +1,8 @@
+{
+    "Dhcp4": {
+        "control-socket": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea4-sock"
+        }
+    }
+}
