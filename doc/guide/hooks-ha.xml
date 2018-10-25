@@ -1006,14 +1006,25 @@
         network, lease database synchronization after the server failure
         may be a time consuming operation. The synchronizing server needs
         to gather all leases from the partner which yields a large response
-        over the RESTful interface. The time required for generating the
-        response and sending it to the synchronizing server may take from
-        several seconds to tens of seconds. The default timeout value for
-        such communication is set to 60 seconds. However, the server
-        administrator may need to extend this timeout if necessary. The
-        following configuration snippet demonstrates how to extend this
-        timeout to 90 seconds with the <command>sync-timeout</command>
-        parameter:
+        over the RESTful interface. The server receives leases using
+        paging mechanism as described in <xref linkend="ha-syncing-page-limit"/>.
+        Before the page of leases is fetched, the synchronizing server
+        sends a <command>dhcp-disable</command> command to disable the DHCP
+        service on the partner server. If the service is already disabled, this
+        command will reset the timeout for the DHCP service being disabled.
+        This timeout value is by default set to 60 seconds. If fetching a
+        single page of leases takes longer, the partner server will assume that
+        the synchronizing server died and will resume its DHCP service.
+        The connection of the synchronizing server with its partner is also
+        guarded with the timeout. If the synchronization of a single page
+        of leases takes longer than 60 seconds the synchronizing server
+        terminates the connection and the synchronization fails.
+        Both timeout values are controlled by a single configuration
+        parameter <command>sync-timeout</command>. The following
+        configuration snippet deminstrates how to modify the timeout for
+        automatic re-enabling of the DHCP service on the partner server
+        and the timeout for fetching a single page of leases from 60 seconds
+        to 90 seconds:
 <screen>
 {
 "Dhcp4": {
