@@ -53,7 +53,10 @@ public:
     /// Load Kea server configurations from YANG datastore.
     /// Subscribe changes in YANG datastore.
     ///
-    /// @param cfg_mgr The configuration manager.
+    /// If @c NetconfProcess::global_shut_down_flag becomes true
+    /// returns as soon as possible.
+    ///
+    /// @param cfg_mgr The configuration manager (can be null).
     void init(NetconfCfgMgrPtr cfg_mgr);
 
     /// @brief Clear.
