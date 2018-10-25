@@ -215,7 +215,6 @@ void sanityCheckConfig(const std::string& model, const YRTree& tree) {
 // defined in yang_configs.h are sane.
 TEST(YangReprTest, verifyConfigs) {
     for (auto x : test_configs) {
-        //cout << "Testing tree for model " << x.first << endl;
         sanityCheckConfig(x.first, x.second);
     }
 }
