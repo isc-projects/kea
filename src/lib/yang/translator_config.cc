@@ -97,55 +97,18 @@ TranslatorConfig::getConfigKea6() {
     return (result);
 }
 
+void
+TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
+                           const std::string& name) {
+    ConstElementPtr x = getItem(xpath + "/" + name);
+    if (x) {
+        storage->set(name, x);
+    }
+}
+
 ElementPtr
-TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
-    ElementPtr result = Element::createMap();
-    ConstElementPtr valid = getItem(xpath + "/valid-lifetime");
-    if (valid) {
-        result->set("valid-lifetime", valid);
-    }
-    ConstElementPtr renew = getItem(xpath + "/renew-timer");
-    if (renew) {
-        result->set("renew-timer", renew);
-    }
-    ConstElementPtr rebind = getItem(xpath + "/rebind-timer");
-    if (rebind) {
-        result->set("rebind-timer", rebind);
-    }
-    ConstElementPtr period = getItem(xpath + "/decline-probation-period");
-    if (period) {
-        result->set("decline-probation-period", period);
-    }
-    ConstElementPtr networks = getSharedNetworks(xpath + "/shared-networks");
-    if (networks && (networks->size() > 0)) {
-        result->set("shared-networks", networks);
-    }
-    ConstElementPtr classes = getClasses(xpath + "/client-classes");
-    if (classes && (classes->size() > 0)) {
-        result->set("client-classes", classes);
-    }
-    ConstElementPtr database = getDatabase(xpath + "/lease-database");
-    if (database) {
-        result->set("lease-database", database);
-    }
-    ConstElementPtr databases = getDatabases(xpath + "/hosts-databases");
-    if (databases && (databases->size() > 0)) {
-        result->set("hosts-databases", databases);
-    }
-    ConstElementPtr host_ids =
-        getItems(xpath + "/host-reservation-identifiers");
-    if (host_ids) {
-        result->set("host-reservation-identifiers", host_ids);
-    }
-    ConstElementPtr defs = getOptionDefList(xpath + "/option-def-list");
-    if (defs && (defs->size() > 0)) {
-        result->set("option-def", defs);
-    }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
-    if (options && (options->size() > 0)) {
-        result->set("option-data", options);
-    }
-    S_Iter_Value iter = getIter(xpath + "/hooks-libraries/*");
+TranslatorConfig::getHooksKea(std::string xpath) {
+    S_Iter_Value iter = getIter(xpath + "/*");
     if (iter) {
         ElementPtr hook_libs = Element::createList();
         for (;;) {
@@ -168,137 +131,142 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
                 hook_libs->add(hook_lib);
             }
         }
-        if (hook_libs->size() > 0) {
-            result->set("hooks-libraries", hook_libs);
+        if (!hook_libs->empty()) {
+            return (hook_libs);
         }
     }
+    return (ElementPtr());
+}
+
+isc::data::ElementPtr
+TranslatorConfig::getExpiredKea(std::string xpath) {
     ElementPtr expired = Element::createMap();
-    ConstElementPtr reclaim =
-        getItem(xpath + "/expired-leases-processing/reclaim-timer-wait-time");
-    if (reclaim) {
-        expired->set("reclaim-timer-wait-time", reclaim);
-    }
-    ConstElementPtr flush =
-        getItem(xpath + "/expired-leases-processing/flush-reclaimed-timer-wait-time");
-    if (flush) {
-        expired->set("flush-reclaimed-timer-wait-time", flush);
-    }
-    ConstElementPtr hold =
-        getItem(xpath + "/expired-leases-processing/hold-reclaimed-time");
-    if (hold) {
-        expired->set("hold-reclaimed-time", hold);
-    }
-    ConstElementPtr max_leases =
-        getItem(xpath + "/expired-leases-processing/max-reclaim-leases");
-    if (max_leases) {
-        expired->set("max-reclaim-leases", max_leases);
-    }
-    ConstElementPtr max_time =
-        getItem(xpath + "/expired-leases-processing/max-reclaim-time");
-    if (max_time) {
-        expired->set("max-reclaim-time", max_time);
-    }
-    ConstElementPtr unwarned =
-        getItem(xpath + "/expired-leases-processing/unwarned-reclaim-cycles");
-    if (unwarned) {
-        expired->set("unwarned-reclaim-cycles", unwarned);
-    }
+
+    getParam(expired, xpath, "reclaim-timer-wait-time");
+    getParam(expired, xpath, "flush-reclaimed-timer-wait-time");
+    getParam(expired, xpath, "hold-reclaimed-time");
+    getParam(expired, xpath, "max-reclaim-leases");
+    getParam(expired, xpath, "max-reclaim-time");
+    getParam(expired, xpath, "unwarned-reclaim-cycles");
+
     if (expired->size() > 0) {
-        result->set("expired-leases-processing", expired);
+        return (expired);
     }
-    ConstElementPtr port = getItem(xpath + "/dhcp4o6-port");
-    if (port) {
-        result->set("dhcp4o6-port", port);
-    }
-    ConstElementPtr socket = getControlSocket(xpath + "/control-socket");
-    if (socket) {
-        result->set("control-socket", socket);
-    }
+
+    return (ElementPtr());
+}
+
+isc::data::ElementPtr
+TranslatorConfig::getDdnsKea(std::string xpath) {
     ElementPtr ddns = Element::createMap();
-    ConstElementPtr enable = getItem(xpath + "/dhcp-ddns/enable-updates");
-    if (enable) {
-        ddns->set("enable-updates", enable);
-    }
-    ConstElementPtr suffix = getItem(xpath + "/dhcp-ddns/qualifying-suffix");
-    if (suffix) {
-        ddns->set("qualifying-suffix", suffix);
-    }
-    ConstElementPtr server_ip = getItem(xpath + "/dhcp-ddns/server-ip");
-    if (server_ip) {
-        ddns->set("server-ip", server_ip);
-    }
-    ConstElementPtr server_port = getItem(xpath + "/dhcp-ddns/server-port");
-    if (server_port) {
-        ddns->set("server-port", server_port);
-    }
-    ConstElementPtr sender_ip = getItem(xpath + "/dhcp-ddns/sender-ip");
-    if (sender_ip) {
-        ddns->set("sender-ip", sender_ip);
-    }
-    ConstElementPtr sender_port = getItem(xpath + "/dhcp-ddns/sender-port");
-    if (sender_port) {
-        ddns->set("sender-port", sender_port);
-    }
-    ConstElementPtr queue = getItem(xpath + "/dhcp-ddns/max-queue-size");
-    if (queue) {
-        ddns->set("max-queue-size", queue);
-    }
-    ConstElementPtr protocol = getItem(xpath + "/dhcp-ddns/ncr-protocol");
-    if (protocol) {
-        ddns->set("ncr-protocol", protocol);
-    }
-    ConstElementPtr format = getItem(xpath + "/dhcp-ddns/ncr-format");
-    if (format) {
-        ddns->set("ncr-format", format);
-    }
-    ConstElementPtr always = getItem(xpath + "/dhcp-ddns/always-include-fqdn");
-    if (always) {
-        ddns->set("always-include-fqdn", always);
-    }
-    ConstElementPtr no_up = getItem(xpath + "/dhcp-ddns/override-no-update");
-    if (no_up) {
-        ddns->set("override-no-update", no_up);
-    }
-    ConstElementPtr client =
-        getItem(xpath + "/dhcp-ddns/override-client-update");
-    if (client) {
-        ddns->set("override-client-update", client);
-    }
-    ConstElementPtr replace =
-        getItem(xpath + "/dhcp-ddns/replace-client-name");
-    if (replace) {
-        ddns->set("replace-client-name", replace);
-    }
-    ConstElementPtr generated = getItem(xpath + "/dhcp-ddns/generated-prefix");
-    if (generated) {
-        ddns->set("generated-prefix", generated);
-    }
-    ConstElementPtr char_set = getItem(xpath + "/dhcp-ddns/hostname-char-set");
-    if (char_set) {
-        ddns->set("hostname-char-set", char_set);
-    }
-    ConstElementPtr char_repl =
-        getItem(xpath + "/dhcp-ddns/hostname-char-replacement");
-    if (char_repl) {
-        ddns->set("hostname-char-replacement", char_repl);
-    }
+    getParam(ddns, xpath, "enable-updates");
+    getParam(ddns, xpath, "qualifying-suffix");
+    getParam(ddns, xpath, "server-ip");
+    getParam(ddns, xpath, "server-port");
+    getParam(ddns, xpath, "sender-ip");
+    getParam(ddns, xpath, "sender-port");
+    getParam(ddns, xpath, "max-queue-size");
+    getParam(ddns, xpath, "ncr-protocol");
+    getParam(ddns, xpath, "ncr-format");
+    getParam(ddns, xpath, "always-include-fqdn");
+    getParam(ddns, xpath, "override-no-update");
+    getParam(ddns, xpath, "override-client-update");
+    getParam(ddns, xpath, "replace-client-name");
+    getParam(ddns, xpath, "generated-prefix");
+    getParam(ddns, xpath, "hostname-char-set");
+    getParam(ddns, xpath, "hostname-char-replacement");
+    getParam(ddns, xpath, "");
+    getParam(ddns, xpath, "");
+
     ConstElementPtr context = getItem(xpath + "/dhcp-ddns/user-context");
     if (context) {
         ddns->set("user-context", Element::fromJSON(context->stringValue()));
     }
-    if (ddns->size() > 0) {
+
+    if (!ddns->empty()) {
+        // If there's something to return, use it.
+        return (ddns);
+    }
+
+    // If not, return null
+    return (ElementPtr());
+}
+
+ElementPtr
+TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
+    ElementPtr result = Element::createMap();
+
+    getParam(result, xpath, "valid-lifetime");
+    getParam(result, xpath, "renew-timer");
+    getParam(result, xpath, "rebind-timer");
+    getParam(result, xpath, "decline-probation-period");
+
+    ConstElementPtr networks = getSharedNetworks(xpath + "/shared-networks");
+    if (networks && !networks->empty()) {
+        result->set("shared-networks", networks);
+    }
+    ConstElementPtr classes = getClasses(xpath + "/client-classes");
+    if (classes && !classes->empty()) {
+        result->set("client-classes", classes);
+    }
+    ConstElementPtr database = getDatabase(xpath + "/lease-database");
+    if (database) {
+        result->set("lease-database", database);
+    }
+    ConstElementPtr databases = getDatabases(xpath + "/hosts-databases");
+    if (databases && !databases->empty()) {
+        result->set("hosts-databases", databases);
+    }
+
+    getParam(result, xpath, "host-reservation-identifiers");
+    ConstElementPtr host_ids =
+        getItems(xpath + "/");
+    if (host_ids) {
+        result->set("host-reservation-identifiers", host_ids);
+    }
+    ConstElementPtr defs = getOptionDefList(xpath + "/option-def-list");
+    if (defs && !defs->empty()) {
+        result->set("option-def", defs);
+    }
+    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    if (options && !options->empty()) {
+        result->set("option-data", options);
+    }
+
+    ConstElementPtr hooks = getHooksKea(xpath + "/hooks-libraries");
+    if (hooks && !hooks->empty()) {
+        result->set("hooks-libraries", hooks);
+    }
+
+    ConstElementPtr expired = getExpiredKea(xpath + "/expired-leases-processing");
+    if (expired) {
+        result->set("expired-leases-processing", expired);
+    }
+
+    getParam(result, xpath, "dhcp4o6-port");
+
+    ConstElementPtr socket = getControlSocket(xpath + "/control-socket");
+    if (socket) {
+        result->set("control-socket", socket);
+    }
+
+    ConstElementPtr ddns = getDdnsKea(xpath + "/dhcp-ddns");
+    if (!ddns->empty()) {
         result->set("dhcp-ddns", ddns);
     }
-    context = getItem(xpath + "/user-context");
+
+    ConstElementPtr context = getItem(xpath + "/user-context");
     if (context) {
         result->set("user-context", Element::fromJSON(context->stringValue()));
     }
+
     ConstElementPtr checks = getItem(xpath + "/sanity-checks/lease-checks");
     if (checks) {
         ElementPtr sanity = Element::createMap();
         sanity->set("lease-checks", checks);
         result->set("sanity-checks", sanity);
     }
+
     ConstElementPtr hosts = getHosts(xpath + "/reservations");
     if (hosts && (hosts->size() > 0)) {
         result->set("reservations", hosts);
@@ -306,63 +274,41 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     return (result);
 }
 
+
 ElementPtr
 TranslatorConfig::getServerKeaDhcp4() {
     string xpath = "/kea-dhcp4-server:config";
     ElementPtr result = getServerKeaDhcpCommon(xpath);
     ConstElementPtr subnets = getSubnets(xpath + "/subnet4");
-    if (subnets && (subnets->size() > 0)) {
+    if (subnets && !subnets->empty()) {
         result->set("subnet4", subnets);
     }
+
+    // Handle interfaces
     ElementPtr if_config = Element::createMap();
     ConstElementPtr ifs = getItems(xpath + "/interfaces-config/interfaces");
-    if (ifs && (ifs->size() > 0)) {
+    if (ifs && !ifs->empty()) {
         if_config->set("interfaces", ifs);
     }
-    ConstElementPtr ds_type =
-        getItem(xpath + "/interfaces-config/dhcp-socket-type");
-    if (ds_type) {
-        if_config->set("dhcp-socket-type", ds_type);
-    }
-    ConstElementPtr out_if =
-        getItem(xpath + "/interfaces-config/outbound-interface");
-    if (out_if) {
-        if_config->set("outbound-interface", out_if);
-    }
-    ConstElementPtr redetect =
-        getItem(xpath + "/interfaces-config/re-detect");
-    if (redetect) {
-        if_config->set("re-detect", redetect);
-    }
+    getParam(if_config, xpath, "interfaces-config/dhcp-socket-type");
+    getParam(if_config, xpath, "interfaces-config/outbound-interface");
+    getParam(if_config, xpath, "interfaces-config/re-detect");
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
     if (context) {
         if_config->set("user-context",
                        Element::fromJSON(context->stringValue()));
     }
-    if (if_config->size() > 0) {
+    if (!if_config->empty()) {
         result->set("interfaces-config", if_config);
     }
-    ConstElementPtr echo = getItem(xpath + "/echo-client-id");
-    if (echo) {
-        result->set("echo-client-id", echo);
-    }
-    ConstElementPtr match = getItem(xpath + "/match-client-id");
-    if (match) {
-        result->set("match-client-id", match);
-    }
-    ConstElementPtr next = getItem(xpath + "/next-server");
-    if (next) {
-        result->set("next-server", next);
-    }
-    ConstElementPtr hostname = getItem(xpath + "/server-hostname");
-    if (hostname) {
-        result->set("server-hostname", hostname);
-    }
-    ConstElementPtr boot = getItem(xpath + "/boot-file-name");
-    if (boot) {
-        result->set("boot-file-name", boot);
-    }
+
+    getParam(result, xpath, "echo-client-id");
+    getParam(result, xpath, "match-client-id");
+    getParam(result, xpath, "next-server");
+    getParam(result, xpath, "server-hostname");
+    getParam(result, xpath, "boot-file-name");
+
     return (result);
 }
 
@@ -370,72 +316,55 @@ ElementPtr
 TranslatorConfig::getServerKeaDhcp6() {
     string xpath = "/kea-dhcp6-server:config";
     ElementPtr result = getServerKeaDhcpCommon(xpath);
-    ConstElementPtr preferred = getItem(xpath + "/preferred-lifetime");
-    if (preferred) {
-        result->set("preferred-lifetime", preferred);
-    }
+
+    getParam(result, xpath, "preferred-lifetime");
+
     ConstElementPtr subnets = getSubnets(xpath + "/subnet6");
     if (subnets && (subnets->size() > 0)) {
         result->set("subnet6", subnets);
     }
+
     ElementPtr if_config = Element::createMap();
     ConstElementPtr ifs = getItems(xpath + "/interfaces-config/interfaces");
     if (ifs && (ifs->size() > 0)) {
         if_config->set("interfaces", ifs);
     }
-    ConstElementPtr redetect =
-        getItem(xpath + "/interfaces-config/re-detect");
-    if (redetect) {
-        if_config->set("re-detect", redetect);
-    }
+
+    getParam(if_config, xpath, "interfaces-config/re-detect");
+
     ConstElementPtr context =
         getItem(xpath + "/interfaces-config/user-context");
     if (context) {
         if_config->set("user-context",
                        Element::fromJSON(context->stringValue()));
     }
-    if (if_config->size() > 0) {
+    if (!if_config->empty()) {
         result->set("interfaces-config", if_config);
     }
+
     ConstElementPtr relay = getItems(xpath + "/relay-supplied-options");
     if (relay) {
         result->set("relay-supplied-options", relay);
     }
+
     ConstElementPtr macs = getItems(xpath + "/mac-sources");
     if (macs) {
         result->set("mac-sources", macs);
     }
+
     ElementPtr server_id = Element::createMap();
-    ConstElementPtr id_type = getItem(xpath + "/server-id/type");
-    if (id_type) {
-        server_id->set("type", id_type);
-    }
-    ConstElementPtr id_id = getItem(xpath + "/server-id/identifier");
-    if (id_id) {
-        server_id->set("identifier", id_id);
-    }
-    ConstElementPtr id_time = getItem(xpath + "/server-id/time");
-    if (id_time) {
-        server_id->set("time", id_time);
-    }
-    ConstElementPtr id_htype = getItem(xpath + "/server-id/htype");
-    if (id_htype) {
-        server_id->set("htype", id_htype);
-    }
-    ConstElementPtr id_ent_id = getItem(xpath + "/server-id/enterprise-id");
-    if (id_ent_id) {
-        server_id->set("enterprise-id", id_ent_id);
-    }
-    ConstElementPtr id_persist = getItem(xpath + "/server-id/persist");
-    if (id_persist) {
-        server_id->set("persist", id_persist);
-    }
+    getParam(server_id, xpath, "server-id/type");
+    getParam(server_id, xpath, "server-id/identifier");
+    getParam(server_id, xpath, "server-id/time");
+    getParam(server_id, xpath, "server-id/htype");
+    getParam(server_id, xpath, "server-id/enterprise-id");
+    getParam(server_id, xpath, "server-id/persist");
     context = getItem(xpath + "/server-id/user-context");
     if (context) {
         server_id->set("user-context",
                        Element::fromJSON(context->stringValue()));
     }
-    if (server_id->size() > 0) {
+    if (!server_id->empty()) {
         result->set("server-id", server_id);
     }
     return (result);
@@ -560,7 +489,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         setSharedNetworks(xpath + "/shared-networks", networks);
     }
     ConstElementPtr classes = elem->get("client-classes");
-    if (classes && (classes->size() > 0)) {
+    if (classes && !classes->empty()) {
         setClasses(xpath + "/client-classes", classes);
     }
     ConstElementPtr database = elem->get("lease-database");
@@ -568,10 +497,8 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         setDatabase(xpath + "/lease-database", database);
     }
     ConstElementPtr databases = elem->get("hosts-databases");
-    if (databases) {
-        if (databases->size() > 0) {
-            setDatabases(xpath + "/hosts-databases", databases);
-        }
+    if (databases && !databases->empty()) {
+        setDatabases(xpath + "/hosts-databases", databases);
     } else {
         database = elem->get("hosts-database");
         if (database) {

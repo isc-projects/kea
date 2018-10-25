@@ -18,9 +18,11 @@
 namespace isc {
 namespace yang {
 
-/// Configuration translation between YANG and JSON
+/// @brief DHCP configuration translation between YANG and JSON
 ///
-/// JSON syntax for kea-dhcp6 is:
+/// This translator supports kea-dhcp4-server and kea-dhcp6-server.
+///
+/// JSON syntax for kea-dhcp6-server is:
 /// @code
 /// "Dhcp6": {
 ///     "preferred-lifetime": <preferred lifetime>,
@@ -133,7 +135,7 @@ namespace yang {
 ///    +--rw loggers
 /// @endcode
 ///
-/// Example of kea-dhcp6 simple configuration:
+/// Example of kea-dhcp6-server simple configuration:
 /// @code
 /// {
 ///     "Dhcp6": {
@@ -232,8 +234,11 @@ namespace yang {
 /// @brief A translator class for converting the config between
 /// YANG and JSON.
 ///
-/// Currently supports kea-dhcp[46]-server, kea-logging and partially
-/// ietf-dhcpv6-server.
+/// Currently supports the following models:
+/// - kea-dhcp4-server
+/// - kea-dhcp6-server
+/// - kea-logging
+/// - ietf-dhcpv6-server (partial)
 class TranslatorConfig : virtual public TranslatorControlSocket,
     virtual public TranslatorDatabases,
     virtual public TranslatorClasses,
@@ -250,13 +255,13 @@ public:
     /// @brief Destructor.
     virtual ~TranslatorConfig();
 
-    /// @brief Get and translate a pool from YANG to JSON.
+    /// @brief Get and translate the whole DHCP server config from YANG to JSON.
     ///
     /// @return JSON representation of the config.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getConfig();
 
-    /// @brief Translate and set config from JSON to YANG.
+    /// @brief Translate and sets the DHCP server config from JSON to YANG.
     ///
     /// Null elem argument removes the config containers.
     ///
@@ -266,6 +271,9 @@ public:
 protected:
     /// @brief getConfig for ietf-dhcpv6-server.
     ///
+    /// This implementation is very preliminary. It handles network-ranges
+    /// only partially and nothing else.
+    ///
     /// @return JSON representation of the config.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getConfigIetf6();
@@ -274,6 +282,9 @@ protected:
     void delConfigIetf6();
 
     /// @brief setConfig for ietf-dhcpv6-server.
+    ///
+    /// This implementation is very preliminary. It handles network-ranges
+    /// only partially and nothing else.
     ///
     /// @param elem The JSON element.
     /// @throw BadValue on config without Dhcp6.
@@ -291,7 +302,7 @@ protected:
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getConfigKea6();
 
-    /// @brief getServer common part for kea-dhcp[46]:config.
+    /// @brief getServer common part for kea-dhcp[46]-server:config.
     ///
     /// @param xpath The xpath of the server.
     /// @return JSON representation of the server.
@@ -318,7 +329,7 @@ protected:
     /// @brief delConfig for kea-dhcp[46]-server.
     void delConfigKea();
 
-    /// @brief setConfig for kea-dhcp4-server.
+    /// @brief setConfig for kea-dhcp[46]-server.
     ///
     /// @param elem The JSON element.
     void setConfigKea4(isc::data::ConstElementPtr elem);
@@ -328,12 +339,30 @@ protected:
     /// @param elem The JSON element.
     void setConfigKea6(isc::data::ConstElementPtr elem);
 
-    /// @brief setServer common part for kea-dhcp[46]:config.
+    /// @brief setServer common part for kea-dhcp[46]-server:config.
     ///
     /// @param xpath The xpath of the server.
     /// @param elem The JSON element.
     void setServerKeaDhcpCommon(const std::string& xpath,
                                 isc::data::ConstElementPtr elem);
+
+    /// @brief Retrieves hooks configuration from sysrepo
+    ///
+    /// @param xpath path to hooks configuration
+    /// @return ElementList with hooks configuration
+    isc::data::ElementPtr getHooksKea(std::string xpath);
+
+    /// @brief Retrieves expired leases processing parameters from sysrepo
+    ///
+    /// @param xpath path to expired leases configuration
+    /// @return ElementList with expired leases configuration
+    isc::data::ElementPtr getExpiredKea(std::string xpath);
+
+    /// @brief Retrieves DDNS configuration from sysrepo
+    ///
+    /// @param xpath path to dhcp-ddns configuration
+    /// @return ElementList with dhcp-ddns configuration
+    isc::data::ElementPtr getDdnsKea(std::string xpath);
 
     /// @brief setServer for kea-dhcp4-server:config.
     ///
@@ -349,6 +378,17 @@ protected:
     ///
     /// @param elem The JSON element.
     void setServerKeaLogging(isc::data::ConstElementPtr elem);
+
+    /// @brief Retrieves an item and stores in the specified storage.
+    ///
+    /// This will attempt to retrieve an item and, if exists, will
+    /// store it in the storage.
+    ///
+    /// @param storage ElementMap (result will be stored here)
+    /// @param xpath xpath location (data will be extracted from sysrepo)
+    /// @param name name of the parameter
+    void getParam(isc::data::ElementPtr& storage, const std::string& xpath,
+                  const std::string& name);
 
     /// @brief The model.
     std::string model_;
