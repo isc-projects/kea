@@ -90,10 +90,16 @@ public:
     /// @param class_dictionary dictionary into which the class should be added
     /// @param client_class_def a configuration entry to be parsed.
     /// @param family the address family of the client class.
+    /// @param append_error_position Boolean flag indicating if position
+    /// of the parsed string within parsed JSON should be appended. The
+    /// default setting is to append it, but it is typically set to false
+    /// when this parser is used by hooks libraries.
     ///
     /// @throw DhcpConfigError if parsing was unsuccessful.
     void parse(ClientClassDictionaryPtr& class_dictionary,
-               isc::data::ConstElementPtr client_class_def, uint16_t family);
+               isc::data::ConstElementPtr client_class_def,
+               uint16_t family,
+               bool append_error_position = true);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
