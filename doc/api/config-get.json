@@ -1,6 +1,6 @@
 {
     "name": "config-get",
-    "brief": "retrieves the current configuration used by the server. The configuration
+    "brief": "Retrieves the current configuration used by the server. The configuration
               is roughtly equal to the configuration file, but includes additional
               changes made by other commands and due to parameters inheritance.",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
