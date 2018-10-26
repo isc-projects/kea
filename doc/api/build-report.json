@@ -1,6 +1,6 @@
 {
     "name": "build-report",
-    "brief": "returns a list of compilation options that this particular binary was built with",
+    "brief": "Returns a list of compilation options that this particular binary was built with",
     "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
     "avail": "1.2.0",
 

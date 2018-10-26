@@ -1,6 +1,6 @@
 {
     "name": "reservation-get",
-    "brief": "attempts to retrieve an existing host reservation",
+    "brief": "Attempts to retrieve an existing host reservation",
     "support": [ "kea-dhcp4", "kea-dhcp6" ],
     "hook": "host_cmds",
     "avail": "1.2.0",
