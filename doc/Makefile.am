@@ -130,7 +130,7 @@ clean:
 #    If you don't want to provide command syntax (cmd-syntax key),
 #    any comments about the syntax (cmd-comment key) or response syntax
 #    (resp-syntax) or any comment about response (resp-comment), simply
-#    remove those unused keys. The generator will attempt to gerate
+#    remove those unused keys. The generator will attempt to generate
 #    boilerplates for it.
 # 6. Generate api.xml: make api
 # 7. Rebuild User's Guide as usual: make guide
