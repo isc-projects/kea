@@ -333,10 +333,11 @@ public:
     /// @brief Checks direct dependency.
     ///
     /// @param name The client class name.
-    /// @param depend Set to the name of the first depending class.
+    /// @param [out] dependent_class Reference to a variable where the
+    /// name of the first class depending on the checked class is set.
     ///
     /// @return true if a definition depends on the class name, false if none.
-    bool dependOnClass(const std::string& name, std::string& depend) const;
+    bool dependOnClass(const std::string& name, std::string& dependent_class) const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///

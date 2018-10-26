@@ -287,14 +287,14 @@ ClientClassDictionary::getClasses() const {
 
 bool
 ClientClassDictionary::dependOnClass(const std::string& name,
-                                     std::string& depend) const {
+                                     std::string& dependent_class) const {
     // Skip previous classes as they should not depend on name.
     bool found = false;
     for (ClientClassDefList::iterator this_class = list_->begin();
          this_class != list_->end(); ++this_class) {
         if (found) {
             if ((*this_class)->dependOnClass(name)) {
-                depend = (*this_class)->getName();
+                dependent_class = (*this_class)->getName();
                 return (true);
             }
         } else {
