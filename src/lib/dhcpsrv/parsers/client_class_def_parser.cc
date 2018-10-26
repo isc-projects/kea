@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 #include <algorithm>
+#include <sstream>
 
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -68,7 +69,8 @@ ExpressionParser::parse(ExpressionPtr& expression,
 void
 ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                             ConstElementPtr class_def_cfg,
-                            uint16_t family) {
+                            uint16_t family,
+                            bool append_error_position) {
     // name is now mandatory
     std::string name = getString(class_def_cfg, "name");
     if (name.empty()) {
@@ -207,8 +209,13 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                                    depend_on_known, options, defs,
                                    user_context, next_server, sname, filename);
     } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
-                  << " (" << class_def_cfg->getPosition() << ")");
+        std::ostringstream s;
+        s << "Can't add class: " << ex.what();
+        // Append position of the error in JSON string if required.
+        if (append_error_position) {
+            s << " (" << class_def_cfg->getPosition() << ")";
+        }
+        isc_throw(DhcpConfigError, s.str());
     }
 }
 
