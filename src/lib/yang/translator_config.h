@@ -22,75 +22,41 @@ namespace yang {
 ///
 /// This translator supports kea-dhcp4-server, kea-dhcp6-server and
 /// partially ietf-dhcpv6-server.
-///
-/// JSON syntax for kea-dhcp6 is:
+
+/// JSON syntax for kea-dhcp4 is:
 /// @code
-/// "Dhcp6": {
-///     "preferred-lifetime": <preferred lifetime>,
+/// "Dhcp4": {
 ///     "valid-lifetime": <valid lifetime>,
 ///     "renew-timer": <renew timer>,
 ///     "rebind-timer": <rebind timer>,
 ///     "decline-probation-period": <decline probation period>,
-///     "subnet6": [ <list of subnet6> ],
+///     "subnet4": [ <list of subnet4> ],
 ///     <shared-networks>,
 ///     "interfaces-config": {
 ///         "interfaces" [ <list of interface names / specs> ],
 ///         ...
 ///     },
 ///     <databases>,
-///     <mac-sources>,
-///     <relay-supplied-options>,
 ///     <host-reservation-identifiers>,
 ///     <client-classes>,
 ///     <option-def>,
 ///     <option-data>,
 ///     <hooks-libraries>,
 ///     <expired-leases-processing>,
-///     <server-id>,
 ///     <dhcp4o6-port>,
 ///     <control-socket>,
 ///     <dhcp-ddns>,
+///     "echo-client-id": <echo client id flag>,
+///     "match-client-id": <match client id flag>,
+///     "next-server": <next server address>,
+///     "server-hostname": <server hostname>,
+///     "boot-file-name": <boot file name>,
 ///     <user-context>,
-///     <comment>
+///     <comment>,
+///     "sanity-checks": { <sanity checks> },
+///     "reservations": [ <list of host reservations> ]
 /// },
 /// "Logging": <logging>
-/// @endcode
-///
-/// @todo: add kea-dhcp4 syntax and expand logging.
-///
-/// YANG syntax for kea-dhcp6-server:config is:
-/// @code
-/// +--rw preferred-lifetime?            uint32
-/// +--rw valid-lifetime?                uint32
-/// +--rw renew-timer?                   uint32
-/// +--rw rebind-timer?                  uint32
-/// +--rw decline-probation-period?      uint32
-/// +--rw subnet6                        subnet6*
-/// +--rw shared-networks                shared-network*
-/// +--rw interfaces-config
-///    +--rw interfaces*                 string
-///    +--rw re-detect?                  boolean
-///    +--rw user-context?               string
-/// +--rw lease-database!                <database>
-/// +--rw hosts-databases                hosts-database*
-/// +--rw relay-supplied-options*        string
-/// +--rw mac-sources*                   string
-/// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-classes                 client-class*
-/// +--rw option-def-list                option-def*
-/// +--rw option-data-list               option-data*
-/// +--rw hook-library*
-///    +--rw library                     string
-///    +--rw parameters?                 string
-/// +--rw expired-leases-processing      <expired-leases-processing>
-/// +--rw server-id                      <server-id>
-/// +--rw dhcp4o6-port?                  uint16
-/// +--rw control-socket!                <control-socket>
-/// +--rw dhcp-ddns                      <dhcp-ddns>
-/// +--rw echo-client-id?                boolean
-/// +--rw user-context?                  string
-/// +--rw sanity-checks
-///    +--rw lease-checks?               enumeration
 /// @endcode
 ///
 /// YANG syntax for kea-dhcp4-server:config is:
@@ -130,10 +96,130 @@ namespace yang {
 ///    +--rw lease-checks?               enumeration
 /// @endcode
 ///
-/// YANG syntax for kea-*:logging is:
+/// Example of kea-dhcp6 simple configuration:
 /// @code
-/// +--rw logging
-///    +--rw loggers
+/// {
+///     "Dhcp4": {
+///         "interfaces-config":
+/// 	{
+/// 	    "interfaces": [ "eth1" ]
+/// 	},
+///         "control-socket": {
+///             "socket-type": "unix",
+///             "socket-name": "/tmp/kea4-sock"
+///         },
+/// 	"subnet4":
+/// 	[
+/// 	    {
+/// 	        "subnet": "10.0.35.0/24",
+/// 		"pools":
+/// 		[
+/// 		    {
+/// 			"pool": "10.0.35.64/27"
+/// 		    }
+/// 		]
+/// 	    }
+/// 	]
+///     }
+/// }
+///
+/// @endcode
+///
+/// The same configuration wrote into YANG datastore using @c setConfig()
+/// with the kea-dhcp4-model and exported to XML format:
+/// @code
+/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+///   <subnet4>
+///     <subnet4>
+///       <id>1</id>
+///       <pools>
+///         <pool>
+///           <start-address>10.0.35.64</start-address>
+///           <end-address>10.0.35.95</end-address>
+///           <prefix>10.0.35.64/27</prefix>
+///         </pool>
+///       </pools>
+///       <subnet>10.0.35.0/24</subnet>
+///     </subnet4>
+///   </subnet4>
+///   <interfaces-config>
+///     <interfaces>eth1</interfaces>
+///   </interfaces-config>
+///   <control-socket>
+///     <socket-name>/tmp/kea4-sock</socket-name>
+///     <socket-type>unix</socket-type>
+///   </control-socket>
+/// </config>
+/// @endcode
+
+/// JSON syntax for kea-dhcp6 is:
+/// @code
+/// "Dhcp6": {
+///     "preferred-lifetime": <preferred lifetime>,
+///     "valid-lifetime": <valid lifetime>,
+///     "renew-timer": <renew timer>,
+///     "rebind-timer": <rebind timer>,
+///     "decline-probation-period": <decline probation period>,
+///     "subnet6": [ <list of subnet6> ],
+///     <shared-networks>,
+///     "interfaces-config": {
+///         "interfaces" [ <list of interface names / specs> ],
+///         ...
+///     },
+///     <databases>,
+///     <mac-sources>,
+///     <relay-supplied-options>,
+///     <host-reservation-identifiers>,
+///     <client-classes>,
+///     <option-def>,
+///     <option-data>,
+///     <hooks-libraries>,
+///     <expired-leases-processing>,
+///     <server-id>,
+///     <dhcp4o6-port>,
+///     <control-socket>,
+///     <dhcp-ddns>,
+///     <user-context>,
+///     <comment>
+///     "sanity-checks": { <sanity checks> },
+///     "reservations": [ <list of host reservations> ]
+/// },
+/// "Logging": <logging>
+/// @endcode
+///
+/// YANG syntax for kea-dhcp6-server:config is:
+/// @code
+/// +--rw preferred-lifetime?            uint32
+/// +--rw valid-lifetime?                uint32
+/// +--rw renew-timer?                   uint32
+/// +--rw rebind-timer?                  uint32
+/// +--rw decline-probation-period?      uint32
+/// +--rw subnet6                        subnet6*
+/// +--rw shared-networks                shared-network*
+/// +--rw interfaces-config
+///    +--rw interfaces*                 string
+///    +--rw re-detect?                  boolean
+///    +--rw user-context?               string
+/// +--rw lease-database!                <database>
+/// +--rw hosts-databases                hosts-database*
+/// +--rw relay-supplied-options*        string
+/// +--rw mac-sources*                   string
+/// +--rw host-reservation-identifiers*  enumeration
+/// +--rw client-classes                 client-class*
+/// +--rw option-def-list                option-def*
+/// +--rw option-data-list               option-data*
+/// +--rw hook-library*
+///    +--rw library                     string
+///    +--rw parameters?                 string
+/// +--rw expired-leases-processing      <expired-leases-processing>
+/// +--rw server-id                      <server-id>
+/// +--rw dhcp4o6-port?                  uint16
+/// +--rw control-socket!                <control-socket>
+/// +--rw dhcp-ddns                      <dhcp-ddns>
+/// +--rw echo-client-id?                boolean
+/// +--rw user-context?                  string
+/// +--rw sanity-checks
+///    +--rw lease-checks?               enumeration
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -190,7 +276,64 @@ namespace yang {
 ///   </control-socket>
 /// </config>
 /// @endcode
+
+/// JSON syntax for the logging part of kea servers is:
+/// @code
+/// "Logging": {
+///     "loggers": [ <list of loggers> '
+/// }
+/// @endcode
 ///
+/// YANG syntax for kea-*:logging is:
+/// @code
+/// +--rw logging
+///    +--rw loggers
+/// @endcode
+///
+/// Example of Logging simple configuration:
+/// @code
+/// {
+///     "Logging":
+///     {
+///         "loggers":
+///         [
+///             {
+///                 "name": "kea-dhcp6",
+///                 "output_options":
+///                 [
+///                     {
+///                         "output": "stderr"
+///                     }
+///                 ],
+///                 "severity": "DEBUG",
+///                 "debuglevel": 99
+///             }
+///         ]
+///     }
+/// }
+/// @endcode
+///
+/// The same configuration wrote into YANG datastore using @c setConfig()
+/// with a kea server model and exported to XML format:
+/// @code
+/// <logging xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+///   <loggers>
+///     <logger>
+///       <name>kea-dhcp6</name>
+///       <output-options>
+///         <option>
+///           <output>stderr</output>
+///         </option>
+///       </output-options>
+///       <debuglevel>99</debuglevel>
+///       <severity>DEBUG</severity>
+///     </logger>
+///   </loggers>
+/// </logging>
+/// @endcode
+///
+/// Note that sysrepo uses one XML document per container in the model.
+
 /// Inheritance graph between translators is:
 ///
 ///        +-----------------------------------------+
@@ -232,7 +375,7 @@ namespace yang {
 ///
 ///  'XXX (list)' stands for 'XXX list --- XXX' which is a common motif
 ///  (only database shows direct dependencies on both the list and the element)
-///
+
 /// @brief A translator class for converting the config between YANG and JSON.
 ///
 /// Currently supports the following models:
