@@ -43,6 +43,7 @@ libkea_dhcp___la_SOURCES += option_space_container.h
 libkea_dhcp___la_SOURCES += option_string.cc option_string.h
 libkea_dhcp___la_SOURCES += option_vendor.cc option_vendor.h
 libkea_dhcp___la_SOURCES += option_vendor_class.cc option_vendor_class.h
+libkea_dhcp___la_SOURCES += packet_queue.h 
 libkea_dhcp___la_SOURCES += pkt.cc pkt.h
 libkea_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libkea_dhcp___la_SOURCES += pkt4o6.cc pkt4o6.h
@@ -51,6 +52,7 @@ libkea_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
 libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 libkea_dhcp___la_SOURCES += pkt_filter_inet6.cc pkt_filter_inet6.h
+libkea_dhcp___la_SOURCES += socket_info.h 
 
 # Utilize Linux Packet Filtering on Linux.
 if OS_LINUX

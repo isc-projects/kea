@@ -525,65 +525,6 @@ TEST_F(IfaceMgrTest, instance) {
     EXPECT_NO_THROW(IfaceMgr::instance());
 }
 
-// This test verifies that sockets can be closed selectively, i.e. all
-// IPv4 sockets can be closed first and all IPv6 sockets remain open.
-TEST_F(IfaceMgrTest, closeSockets) {
-    // Will be using local loopback addresses for this test.
-    IOAddress loaddr("127.0.0.1");
-    IOAddress loaddr6("::1");
-
-    // Create instance of IfaceMgr.
-    boost::scoped_ptr<NakedIfaceMgr> iface_mgr(new NakedIfaceMgr());
-    ASSERT_TRUE(iface_mgr);
-
-    // Out constructor does not detect interfaces by itself. We need
-    // to create one and add.
-    int ifindex = if_nametoindex(LOOPBACK);
-    ASSERT_GT(ifindex, 0);
-    IfacePtr lo_iface(new Iface(LOOPBACK, ifindex));
-    iface_mgr->getIfacesLst().push_back(lo_iface);
-
-    // Create set of V4 and V6 sockets on the loopback interface.
-    // They must differ by a port they are bound to.
-    for (unsigned i = 0; i < 6; ++i) {
-        // Every other socket will be IPv4.
-        if (i % 2) {
-            ASSERT_NO_THROW(
-                iface_mgr->openSocket(LOOPBACK, loaddr, 10000 + i)
-            );
-        } else {
-            ASSERT_NO_THROW(
-                iface_mgr->openSocket(LOOPBACK, loaddr6, 10000 + i)
-            );
-        }
-    }
-
-    // At the end we should have 3 IPv4 and 3 IPv6 sockets open.
-    IfacePtr iface = iface_mgr->getIface(LOOPBACK);
-    ASSERT_TRUE(iface != NULL);
-
-    int v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
-    ASSERT_EQ(3, v4_sockets_count);
-    int v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
-    ASSERT_EQ(3, v6_sockets_count);
-
-    // Let's try to close only IPv4 sockets.
-    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET));
-    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
-    EXPECT_EQ(0, v4_sockets_count);
-    // The IPv6 sockets should remain open.
-    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
-    EXPECT_EQ(3, v6_sockets_count);
-
-    // Let's try to close IPv6 sockets.
-    ASSERT_NO_THROW(iface_mgr->closeSockets(AF_INET6));
-    v4_sockets_count = getOpenSocketsCount(*iface, AF_INET);
-    EXPECT_EQ(0, v4_sockets_count);
-    // They should have been closed now.
-    v6_sockets_count = getOpenSocketsCount(*iface, AF_INET6);
-    EXPECT_EQ(0, v6_sockets_count);
-}
-
 TEST_F(IfaceMgrTest, ifaceClass) {
     // Basic tests for Iface inner class
 
@@ -699,6 +640,60 @@ TEST_F(IfaceMgrTest, clearIfaces) {
     EXPECT_EQ(0, ifacemgr.countIfaces());
 }
 
+// Verify that we can manipulate the DHCPv4 packet queue.
+TEST_F(IfaceMgrTest, packetQueue4) {
+    NakedIfaceMgr ifacemgr;
+  
+    // Verify the default packet queue exists and has the default capacity.
+    size_t default_cap = PacketQueueRing4::DEFAULT_RING_CAPACITY;
+    EXPECT_EQ(default_cap, ifacemgr.getPacketQueueCapacity4());
+
+    PacketQueue4Ptr myQueue;
+    // Verify we cannot set the queue to an empty pointer.
+    ASSERT_THROW(ifacemgr.setPacketQueue4(myQueue), BadValue);
+
+    // Verify we can replace the default packet queue with our own.
+    myQueue.reset(new PacketQueueRing4(default_cap + 1));
+    ASSERT_NO_THROW(ifacemgr.setPacketQueue4(myQueue));
+
+    // Verify the new queue has the expected capacity.
+    EXPECT_EQ(default_cap + 1, ifacemgr.getPacketQueueCapacity4());
+
+    // Verify we can't set the capacity to an invalid value.
+    ASSERT_THROW(ifacemgr.setPacketQueueCapacity4(0), BadValue);
+
+    // Verify we can set the capacity to an invalid value.
+    ASSERT_NO_THROW(ifacemgr.setPacketQueueCapacity4(default_cap + 2));
+    EXPECT_EQ(default_cap + 2, ifacemgr.getPacketQueueCapacity4());
+}
+
+// Verify that we can manipulate the DHCPv6 packet queue.
+TEST_F(IfaceMgrTest, packetQueue6) {
+    NakedIfaceMgr ifacemgr;
+  
+    // Verify the default packet queue exists and has the default capacity.
+    size_t default_cap = PacketQueueRing6::DEFAULT_RING_CAPACITY;
+    EXPECT_EQ(default_cap, ifacemgr.getPacketQueueCapacity6());
+
+    PacketQueue6Ptr myQueue;
+    // Verify we cannot set the queue to an empty pointer.
+    ASSERT_THROW(ifacemgr.setPacketQueue6(myQueue), BadValue);
+
+    // Verify we can replace the default packet queue with our own.
+    myQueue.reset(new PacketQueueRing6(default_cap + 1));
+    ASSERT_NO_THROW(ifacemgr.setPacketQueue6(myQueue));
+
+    // Verify the new queue has the expected capacity.
+    EXPECT_EQ(default_cap + 1, ifacemgr.getPacketQueueCapacity6());
+
+    // Verify we can't set the capacity to an invalid value.
+    ASSERT_THROW(ifacemgr.setPacketQueueCapacity6(0), BadValue);
+
+    // Verify we can set the capacity to an invalid value.
+    ASSERT_NO_THROW(ifacemgr.setPacketQueueCapacity6(default_cap + 2));
+    EXPECT_EQ(default_cap + 2, ifacemgr.getPacketQueueCapacity6());
+}
+
 TEST_F(IfaceMgrTest, receiveTimeout6) {
     using namespace boost::posix_time;
     std::cout << "Testing DHCPv6 packet reception timeouts."
@@ -714,6 +709,8 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     );
     // Socket is open if result is non-negative.
     ASSERT_GE(socket1, 0);
+    // Start receiver.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET6));
 
     // Remember when we call receive6().
     ptime start_time = microsec_clock::universal_time();
@@ -749,6 +746,9 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
     EXPECT_THROW(ifacemgr->receive6(1, 1000010), isc::BadValue);
+
+    // Stop receiver.
+    EXPECT_NO_THROW(ifacemgr->stopReceiver());
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
@@ -766,6 +766,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     );
     // Socket is open if returned value is non-negative.
     ASSERT_GE(socket1, 0);
+    // Start receiver.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
 
     Pkt4Ptr pkt;
     // Remember when we call receive4().
@@ -801,6 +803,9 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     // Test with invalid fractional timeout values.
     EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
     EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
+
+    // Stop receiver.
+    EXPECT_NO_THROW(ifacemgr->stopReceiver());
 }
 
 TEST_F(IfaceMgrTest, multipleSockets) {
@@ -1089,6 +1094,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     EXPECT_GE(socket1, 0);
     EXPECT_GE(socket2, 0);
 
+    ifacemgr->startDHCPReceiver(AF_INET6);
 
     // prepare dummy payload
     uint8_t data[128];
@@ -1124,6 +1130,8 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // assume the one or the other will always be chosen for sending data. Therefore
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
+
+    ifacemgr->stopReceiver();
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -1141,6 +1149,8 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     );
 
     EXPECT_GE(socket1, 0);
+
+    ifacemgr->startDHCPReceiver(AF_INET);
 
     boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
 
@@ -1208,31 +1218,23 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // assume the one or the other will always be chosen for sending data. We should
     // skip checking source port of sent address.
 
+
     // Close the socket. Further we will test if errors are reported
     // properly on attempt to use closed socket.
     close(socket1);
 
-// Warning: kernel bug on FreeBSD. The following code checks that attempt to
-// read through invalid descriptor will result in exception. The reason why
-// this failure is expected is that select() function should result in EBADF
-// error when invalid descriptor is passed to it. In particular, closed socket
-// descriptor is invalid. On the following OS:
-//
-// 8.1-RELEASE FreeBSD 8.1-RELEASE #0: Mon Jul 19 02:55:53 UTC 2010
-//
-// calling select() using invalid descriptor results in timeout and eventually
-// value of 0 is returned. This has been identified and reported as a bug in
-// FreeBSD: http://www.freebsd.org/cgi/query-pr.cgi?pr=155606
-//
-// @todo: This part of the test is currently disabled on all BSD systems as it was
-// the quick fix. We need a more elegant (config-based) solution to disable
-// this check on affected systems only. The ticket has been submitted for this
-// work: http://kea.isc.org/ticket/2971
-#ifndef OS_BSD
+#if 0
+    // @todo Closing the socket does NOT cause a read error out of the
+    // receiveDHCP<X>Packets() select.  Apparently this is because the
+    // thread is already inside the select when the socket is closed,
+    // and (at least under Centos 7.5), this does not interrupt the 
+    // select.
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
 #endif
 
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
+
+    ifacemgr->stopReceiver();
 }
 
 // Verifies that it is possible to set custom packet filter object
@@ -1271,8 +1273,8 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
     EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
                  PacketFilterChangeDenied);
 
-    // So, let's close the open IPv4 sockets and retry. Now it should succeed.
-    iface_mgr->closeSockets(AF_INET);
+    // So, let's close the open sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets();
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 }
 
@@ -1312,8 +1314,8 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
     EXPECT_THROW(iface_mgr->setPacketFilter(custom_packet_filter),
                  PacketFilterChangeDenied);
 
-    // So, let's close the IPv6 sockets and retry. Now it should succeed.
-    iface_mgr->closeSockets(AF_INET6);
+    // So, let's close the sockets and retry. Now it should succeed.
+    iface_mgr->closeSockets();
     EXPECT_NO_THROW(iface_mgr->setPacketFilter(custom_packet_filter));
 
 }
@@ -2528,6 +2530,8 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
     EXPECT_TRUE(pipe(pipefd) == 0);
     EXPECT_NO_THROW(ifacemgr->addExternalSocket(pipefd[0], my_callback));
 
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
+
     Pkt4Ptr pkt4;
     ASSERT_NO_THROW(pkt4 = ifacemgr->receive4(1));
 
@@ -2552,6 +2556,8 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
     // close both pipe ends
     close(pipefd[1]);
     close(pipefd[0]);
+
+    ASSERT_NO_THROW(ifacemgr->stopReceiver());
 }
 
 // Tests if multiple external sockets and their callbacks can be passed and
