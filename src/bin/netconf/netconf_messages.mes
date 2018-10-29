@@ -50,11 +50,11 @@ are printed.
 
 % NETCONF_LOG_CHANGE_FAIL Netconf configuration change logging failed: %1
 The warning message indicates that the configuration change logging
-encountered a not expected condition.
+encountered an unexpected condition. Details of it will be logged.
 
 % NETCONF_RUN_EXIT application is exiting the event loop
 This is a debug message issued when the Netconf application exits its
-event loop.
+event loop. This is a normal step during kea-netconf shutdown.
 
 % NETCONF_SET_CONFIG setting configuration to %1 server
 This debug message indicates that Netconf is trying to set the
@@ -64,7 +64,7 @@ configuration to a Kea server.
 This debug message indicates that Netconf set the configuration to a
 Kea server. The server name and the applied configuration are printed.
 
-% NETCONF_SET_CONFIG_FAILED setting configuration to %1 server: %2
+% NETCONF_SET_CONFIG_FAILED setting configuration to %1 server failed: %2
 The error message indicates that Netconf got an error setting the
 configuration to a Kea server. The name of the server and the error
 are printed. Make sure that the server is up and running, has appropriate

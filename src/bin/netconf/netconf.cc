@@ -40,6 +40,9 @@ public:
 
     /// @brief Module change callback.
     ///
+    /// This callback is called by sysrepo when there is a change to
+    /// configuration data.
+    ///
     /// @param sess The running datastore session.
     /// @param module_name The module name.
     /// @param event The event.
@@ -115,6 +118,8 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
         if (NetconfProcess::global_shut_down_flag) {
             return;
         }
+
+        // Retrieve configuration from existing running DHCP daemons.
         keaConfig(pair);
         if (NetconfProcess::global_shut_down_flag) {
             return;
@@ -123,10 +128,13 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
     if (NetconfProcess::global_shut_down_flag) {
         return;
     }
+
+    // Initialize sysrepo interface.
     initSysrepo();
     if (NetconfProcess::global_shut_down_flag) {
         return;
     }
+
     for (auto pair : *servers) {
         if (NetconfProcess::global_shut_down_flag) {
             return;
@@ -205,7 +213,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     if (!config) {
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
             .arg(service_pair.first)
-            .arg("configGet returned an empty configuration");
+            .arg("config-get returned an empty configuration");
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETE)
@@ -237,19 +245,26 @@ NetconfAgent::initSysrepo() {
 
 void
 NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
+    // If we're shutting down, or the boot-update flag is not set or the model
+    // associated with it is not specified.
     if (NetconfProcess::global_shut_down_flag ||
         !service_pair.second->getBootUpdate() ||
         service_pair.second->getModel().empty()) {
         return;
     }
+
+    // First we need a way to reach the actual servers.
     CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
     if (!ctrl_sock) {
         return;
     }
+
     LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_SET_CONFIG)
         .arg(service_pair.first);
     ConstElementPtr config;
     try {
+
+        // Retrieve configuration from Sysrepo.
         TranslatorConfig tc(startup_sess_, service_pair.second->getModel());
         config = tc.getConfig();
         if (!config) {
@@ -269,7 +284,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG getConfig for " << service_pair.first
+        msg << "YANG config-get for " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
             .arg(service_pair.first)
@@ -383,7 +398,7 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG getConfig for " << service_pair.first
+        msg << "YANG config-get for " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
             .arg(service_pair.first)
@@ -468,7 +483,7 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG getConfig for " << service_pair.first
+        msg << "YANG config-get " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
             .arg(service_pair.first)
@@ -507,6 +522,8 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);
     }
+
+    // rcode == CONTROL_RESULT_SUCCESS, unless the docs say otherwise :)
     if (rcode != CONTROL_RESULT_SUCCESS) {
         stringstream msg;
         msg << "configSet returned " << answerToText(answer);

@@ -41,7 +41,7 @@ namespace {
 const string TEST_SOCKET = "test-socket";
 
 /// @brief Test timeout in ms.
-const long TEST_TIMEOUT = 10000;
+//const long TEST_TIMEOUT = 10000;
 
 /// @brief Type definition for the pointer to Thread objects.
 typedef boost::shared_ptr<Thread> ThreadPtr;
@@ -451,9 +451,8 @@ TEST_F(NetconfAgentLogTest, logChanges) {
         usleep(1000);
     }
     // Enable this for debugging.
-#if 0
-    logCheckVerbose(true);
-#endif
+    // logCheckVerbose(true);
+
     EXPECT_TRUE(checkFile());
 }
 
@@ -564,9 +563,8 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
         usleep(1000);
     }
     // Enable this for debugging.
-#if 0
-    logCheckVerbose(true);
-#endif
+    // logCheckVerbose(true);
+
     EXPECT_TRUE(checkFile());
 }
 
@@ -634,9 +632,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
     ConstElementPtr pruned = prune(expected, request);
     EXPECT_TRUE(expected->equals(*pruned));
     // Alternative showing more for debugging...
-#if 0
-    EXPECT_EQ(prettyPrint(expected), prettyPrint(pruned));
-#endif
+    // EXPECT_EQ(prettyPrint(expected), prettyPrint(pruned));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
