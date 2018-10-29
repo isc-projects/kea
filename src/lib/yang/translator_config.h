@@ -101,25 +101,25 @@ namespace yang {
 /// {
 ///     "Dhcp4": {
 ///         "interfaces-config":
-/// 	{
-/// 	    "interfaces": [ "eth1" ]
-/// 	},
+///     {
+///         "interfaces": [ "eth1" ]
+///     },
 ///         "control-socket": {
 ///             "socket-type": "unix",
 ///             "socket-name": "/tmp/kea4-sock"
 ///         },
-/// 	"subnet4":
-/// 	[
-/// 	    {
-/// 	        "subnet": "10.0.35.0/24",
-/// 		"pools":
-/// 		[
-/// 		    {
-/// 			"pool": "10.0.35.64/27"
-/// 		    }
-/// 		]
-/// 	    }
-/// 	]
+///     "subnet4":
+///     [
+///         {
+///             "subnet": "10.0.35.0/24",
+///             "pools":
+///             [
+///                 {
+///                     "pool": "10.0.35.64/27"
+///                 }
+///             ]
+///         }
+///     ]
 ///     }
 /// }
 ///
