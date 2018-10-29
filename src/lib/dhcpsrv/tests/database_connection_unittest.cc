@@ -20,6 +20,7 @@ public:
     /// Constructor
     DatabaseConnectionCallbackTest()
         : db_reconnect_ctl_(0) {
+        DatabaseConnection::db_lost_callback = 0;
     }
 
     /// @brief Callback to register with a DatabaseConnection
