@@ -28,8 +28,21 @@
 
                 // The three control flags can be defined in this scope too
                 // and takes precedence over global and default values.
-                "boot-update": false,
-                "subscribe-changes": false,
+                // boot-update determines whether the initial configuration
+                // should be retrieved from netconf during kea-netconf startup.
+                // You almost always want to set this to yes.
+                "boot-update": true,
+
+                // This flag control whether the kea-netconf daemon should
+                // subscribe to any changes. If set to true, kea-netconf will
+                // monitor sysrepo and will pick up any changes that may be
+                // introduced, either using netconf clients or sysrepocfg.
+                "subscribe-changes": true,
+
+                // This parameters specifies whether kea-netconf will attempt
+                // to verify if the upcoming NETCONF configuration is sane. The
+                // verification is done by calling config-test. Depending on
+                // Kea response, the new configuration is accepted or rejected.
                 "validate-changes": false,
 
                 // Currently three control channel types are supported:
@@ -51,24 +64,27 @@
                 "comment": "Kea DHCP4 server serving network on floor 13"
             }
 
-        },
+        }
 
         // Netconf is able to load hook libraries that augment its operation.
         // The primary functionality is the ability to add new commands.
-        "hooks-libraries": [
-            // Hook libraries list may contain more than one library.
-            {
-                // The only necessary parameter is the library filename.
-                "library": "/opt/local/netconf-commands.so",
-
-                // Some libraries may support parameters. Make sure you
-                // type this section carefully, as the CA does not validate
-                // it (because the format is library specific).
-                "parameters": {
-                    "param1": "foo"
-                }
-            }
-        ]
+        //
+        // Uncomment this section to load a hook library.
+        //
+        // "hooks-libraries": [
+        //    // Hook libraries list may contain more than one library.
+        //    {
+        //        // The only necessary parameter is the library filename.
+        //        "library": "/opt/local/netconf-commands.so",
+        //
+        //        // Some libraries may support parameters. Make sure you
+        //        // type this section carefully, as the CA does not validate
+        //        // it (because the format is library specific).
+        //        "parameters": {
+        //            "param1": "foo"
+        //        }
+        //    }
+        //]
 
     },
 
@@ -80,7 +96,8 @@
                 "name": "kea-netconf",
                 "output_options": [
                     {
-                        "output": "/var/log/kea-netconf.log",
+                        //"output": "/var/log/kea-netconf.log",
+                        "output": "stdout",
                         // Several additional parameters are possible in addition
                         // to the typical output. Flush determines whether logger
                         // flushes output to a file. Maxsize determines maximum
@@ -92,6 +109,10 @@
                         "maxver": 4
                     }
                 ],
+                // You can change the severity to DEBUG, INFO, WARN, ERROR or
+                // CRIT. For DEBUG level, you can also additionally specify
+                // debuglevel (0-99, higher = more verbose). All configurations
+                // are logged on DEBUG/55.
                 "severity": "INFO",
                 "debuglevel": 0
             }
