@@ -94,10 +94,22 @@ public:
 protected:
     /// @brief Get and display Kea server configuration.
     ///
+    /// Retrieves current configuration via control socket (unix or http)
+    /// from a running Kea server. If boot-update is set to false, this
+    /// operation is a no-op.
+    ///
     /// @param service_pair The service name and configuration pair.
     void keaConfig(const CfgServersMapPair& service_pair);
 
-    /// @brief Kea server configuration from YANG datastore.
+    /// @brief Retrieve Kea server configuration from YANG datastore and
+    ///        applies it to servers.
+    ///
+    /// This method retrieves the configuation from sysrepo first, then
+    /// established control socket connection to Kea servers (currently
+    /// dhcp4 and/or dhcp6) and then attempts to send configuration
+    /// using config-set.
+    ///
+    /// If boot-update is set to false, this operation is a no-op.
     ///
     /// @param service_pair The service name and configuration pair.
     void yangConfig(const CfgServersMapPair& service_pair);
