@@ -2521,6 +2521,9 @@ both the command and the response.
 
     </section> <!-- end of subnet commands -->
 
+    <!-- section class-cmds-library -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-class-cmds.xml"/>
+
     <!-- section high-availability-library -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
 

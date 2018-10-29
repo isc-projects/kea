@@ -1,0 +1,245 @@
+<!--
+ - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+    <section xml:id="class-cmds-library">
+      <title>class_cmds: Class Commands</title>
+      <para>
+        This section describes the Class Commands hooks library, which exposes
+        several control commands for manipulating client classes, being a part of
+        the Kea DHCP servers' configurations, without the need to restart those
+        servers. Using these commands it is possible to add, update, delete and
+        list client classes configured for a given server.
+
+        <note>
+          <para>This library may only be loaded by <command>kea-dhcp4</command>
+          or <command>kea-dhcp6</command> process.
+          </para>
+        </note>
+
+        <para>The Class Commands hooks library is available to premium Kea
+        customers only</para>
+      </para>
+
+      <section>
+        <title>class-add command</title>
+        <para>The <command>class-add</command> command is used to add a new client
+        class to the DHCP server configuration. This class is appended at the
+        end of the list of classes used by the server, i.e. this class may depend
+        on any of the already configured client classes.</para>
+        <para>The following example demonstrates how to add a new client class
+        to the DHCPv4 server configuration:
+<screen>
+{
+    "command": "class-add",
+    "arguments": {
+        "client-classes": [
+            {
+                "name": "ipxe_efi_x64",
+                "test": "option[93].hex == 0x0009",
+                "next-server": "192.0.2.254",
+                "server-hostname": "hal9000",
+                "boot-file-name": "/dev/null"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+        <para>
+          Note that the <command>client-classes</command> parameter is a JSON list,
+          but it allows only a single client class to be present. In the future this
+          hooks library may be extended to support specification of multiple client
+          classes within a single <command>class-add</command> command.
+        </para>
+
+        <para>
+          The following is the example response to the <command>class-add</command>
+          command:
+<screen>
+{
+    "result": 0,
+    "text": "Class 'ipxe_efi_x64' added."
+}
+</screen>
+        </para>
+      </section>
+
+      <section>
+        <title>class-update command</title>
+        <para>
+          The <command>class-update</command> command is used to update an existing
+          client class in the DHCP server configuration. If the client class with the
+          given name doesn't exist, the server returns result code of 3. In such case,
+          the server configuration is not modified (client class is not created). The
+          <command>class-add</command> command must be used instead to create the new
+          client class.
+        </para>
+        <para>
+          The <command>class-update</command> command has the same arguments structure
+          as <command>class-add</command> command:
+<screen>
+{
+    "command": "class-update",
+    "arguments": {
+        "client-classes": [
+            {
+                "name": "ipxe_efi_x64",
+                "test": "option[93].hex == 0x0017",
+                "next-server": "0.0.0.0",
+                "server-hostname": "xfce",
+                "boot-file-name": "/dev/null"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+        <para>
+          The following is the example response:
+<screen>
+{
+    "result": 0,
+    "text": "Class 'ipxe_efi_x64' updated."
+}
+</screen>
+        </para>
+        <para>
+          Any parameter of the client class can be modified with this command, except
+          <command>name</command>. There is currently no way to rename the class,
+          because the class name is used as a key for searching the class to be updated.
+          In order to achieve similar effect to renaming the class, an existing class
+          should be removed with <command>class-del</command> command and then added
+          again with a different name using <command>class-add</command>. Note however,
+          that the class with the new name will be added at the end of the list of
+          configured classes.
+        </para>
+      </section>
+
+      <section>
+        <title>class-del command</title>
+        <para>The <command>class-del</command> is used to remove a particular class
+        from the server configuration. The class to be removed is identified by name.
+        The class won't be removed if there are other classes dependening on it.
+        In order to remove such class, the dependent classes must be removed first.</para>
+        <para>The following is the example command removing
+        <command>ipxe_efi_x64</command> class:
+<screen>
+{
+    "command": "class-del",
+    "arguments": {
+        {
+            "name": "ipxe_efi_x64"
+        }
+    }
+}
+</screen>
+        </para>
+        <para>The following is the sample response to the <command>class-del</command>
+        command when the specified client class has been found:
+<screen>
+{
+    "result": 0,
+    "text": "Class 'ipxe_efi_x64' deleted."
+}
+</screen>
+        </para>
+        <para>If the class doesn't exist, the result of 3 is returned.</para>
+      </section>
+
+      <section>
+        <title>class-list command</title>
+        <para>The <command>class-list</command> is used to retrieve a list of all
+        client classes. This command includes no arguments:
+<screen>
+{
+    "command": "class-list"
+}
+</screen>
+        </para>
+        <para>
+          The following is the example response of the server including the list
+          of client classes:
+<screen>
+{
+    "result": 0,
+    "text": "2 classes found",
+    "arguments": {
+        "client-classes": [
+            {
+                "name": "ipxe_efi_x64"
+            },
+            {
+                "name": "pxeclient"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+        <para>
+          Note that the returned list does not contain full class definitions, but
+          merely class names. In order to retrieve full class information, the
+          <command>class-get</command> command should be used.
+        </para>
+      </section>
+
+      <section>
+        <title>class-get command</title>
+        <para>The <command>class-get</command> is used to retrieve detail information
+        about specified class. The command structure is very simple:
+<screen>
+{
+    "command": "class-get",
+    "arguments": {
+        "name": "pxeclient"
+    }
+}
+</screen>
+        </para>
+        <para>
+          If the class with the specified name doesn't exist, the status code of 3
+          is returned. If the specified client class exists, the class details are
+          returned in the following format:
+<screen>
+{
+    "result": 0,
+    "text": "Class 'pxeclient' definition returned",
+    "arguments": {
+        "client-classes": [
+            {
+                "name": "pxeclient",
+                "only-if-required": true,
+                "test": "option[vendor-class-identifier].text == 'PXEClient'",
+                "option-def": [
+                    {
+                        "name": "configfile",
+                        "code": 209,
+                        "type": "string"
+                    }
+                ],
+                "option-data": [ ],
+                "next-server": "0.0.0.0",
+                "server-hostname": "xfce",
+                "boot-file-name": "/dev/null"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+        <para>
+          Note that the example above is DHCPv4 specific. The last three parameters
+          are only returned by the DHCPv4 server and never returned by the DHCPv6
+          server. Also, some of the parameters provided in this example may not be
+          returned if they are not specified for the class. Specifically,
+          <command>only-if-required</command>, <command>test</command> and the
+          <command>option-def</command> are not returned if they are not specified
+          for the class.
+        </para>
+      </section>
+    </section>
