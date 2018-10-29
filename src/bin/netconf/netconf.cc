@@ -185,7 +185,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
         config = parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "configGet failed with " << ex.what();
+        msg << "config-get command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
@@ -196,7 +196,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     }
     if (rcode != CONTROL_RESULT_SUCCESS) {
         ostringstream msg;
-        msg << "configGet returned " << answerToText(answer);
+        msg << "config-get command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
@@ -208,6 +208,9 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
             .arg("configGet returned an empty configuration");
         return;
     }
+    LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETE)
+        .arg(service_pair.first);
+
     LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
               NETCONF_GET_CONFIG_CONFIG)
         .arg(service_pair.first)
@@ -297,7 +300,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         parseAnswer(rcode, answer);
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "configSet failed with " << ex.what();
+        msg << "config-set command failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
@@ -305,7 +308,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
     }
     if (rcode != CONTROL_RESULT_SUCCESS) {
         ostringstream msg;
-        msg << "configSet returned " << answerToText(answer);
+        msg << "config-set command returned " << answerToText(answer);
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
@@ -427,6 +430,8 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
 
 int
 NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
+
+    // Check if we should and can process this update.
     if (NetconfProcess::global_shut_down_flag ||
         !service_pair.second->getSubscribeChanges()) {
         return (SR_ERR_OK);
@@ -435,8 +440,13 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
     if (!ctrl_sock) {
         return (SR_ERR_OK);
     }
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_UPDATE_CONFIG)
+
+    // All looks good, let's get started. Print an info that we're about
+    // to update the configuration.
+    LOG_INFO(netconf_logger, NETCONF_DBG_TRACE, NETCONF_UPDATE_CONFIG)
         .arg(service_pair.first);
+
+    // Retrieve the configuration from SYSREPO first.
     ConstElementPtr config;
     try {
         TranslatorConfig tc(sess, service_pair.second->getModel());
@@ -468,6 +478,9 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
     if (NetconfProcess::global_shut_down_flag) {
         return (SR_ERR_OK);
     }
+
+    // Ok, now open the control socket. We need this to send the config to
+    // the server.
     ControlSocketBasePtr comm;
     try {
         comm = createControlSocket(ctrl_sock);
@@ -479,6 +492,8 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return (SR_ERR_OK);
     }
+
+    // Now apply the config using config-set command.
     ConstElementPtr answer;
     int rcode;
     try {
