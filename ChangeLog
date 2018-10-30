@@ -1,3 +1,10 @@
+1463.	[bug]		tmark
+	Added missing parsing logic for the reservation-mode value, 
+	"global", to kea-dhcp6.  The parsing logic was somehow omitted
+	and caused kea-dhcp6 configuration parsing to fail on values
+	of "global".
+	(Gitlab #129,!55, git 00352d701f61274f0993b468a413af6c5623af3d)
+
 1462.	[build,doc]	tomek,sgoldlust,vicky
 	Kea REST API is now documented. Thanks to Suzanne Goldlust for
 	providing descriptions for great majority of commands and to
