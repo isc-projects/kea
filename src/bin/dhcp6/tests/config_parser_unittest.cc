@@ -5214,7 +5214,12 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
         " },"
         " {"
         "    \"pools\": [ { \"pool\": \"2001:db8:4::/64\" } ],"
-        "    \"subnet\": \"2001:db8:4::/48\" "
+        "    \"subnet\": \"2001:db8:4::/48\", "
+        "    \"reservation-mode\": \"global\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:5::/64\" } ],"
+        "    \"subnet\": \"2001:db8:5::/48\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
 
@@ -5233,7 +5238,7 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
     ASSERT_TRUE(subnets);
     const Subnet6Collection* subnet_col = subnets->getAll();
-    ASSERT_EQ(4, subnet_col->size()); // We expect 4 subnets
+    ASSERT_EQ(5, subnet_col->size()); // We expect 4 subnets
 
     // Let's check if the parsed subnets have correct HR modes.
 
@@ -5255,6 +5260,11 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
 
     // Subnet 4
     subnet = subnets->selectSubnet(IOAddress("2001:db8:4::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_GLOBAL, subnet->getHostReservationMode());
+
+    // Subnet 5
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:5::1"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
 }

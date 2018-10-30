@@ -1083,6 +1083,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"global\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::RESERVATION_MODE:
+        return isc::dhcp::Dhcp6Parser::make_GLOBAL(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("global", driver.loc_);
+    }
+}
+
 \"all\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::RESERVATION_MODE:
