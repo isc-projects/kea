@@ -4,17 +4,6 @@ AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
 
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
-
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Define rule to build logging source files from message file
@@ -61,17 +50,6 @@ libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
-
-if HAVE_MYSQL
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
-endif
-if HAVE_PGSQL
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
-endif
-if HAVE_CQL
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/cql/libkea-cql.la
-endif
-
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la

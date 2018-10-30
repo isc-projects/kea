@@ -15,18 +15,7 @@
 #include <process/d_controller.h>
 #include <process/config_base.h>
 #include <kea_version.h>
-
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
-#endif
-#ifdef HAVE_CQL
-#include <dhcpsrv/cql_lease_mgr.h>
-#endif
-#include <dhcpsrv/memfile_lease_mgr.h>
-
+#include <boost/bind.hpp>
 #include <sstream>
 #include <unistd.h>
 
