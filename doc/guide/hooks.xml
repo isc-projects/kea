@@ -176,6 +176,7 @@ $ <userinput>sudo make install</userinput>
       libraries are installed properly with this command:
 <screen>
 $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
+/usr/local/lib/hooks/libdhcp_class_cmds.so
 /usr/local/lib/hooks/libdhcp_flex_id.so
 /usr/local/lib/hooks/libdhcp_host_cmds.so
 /usr/local/lib/hooks/libdhcp_lease_cmds.so
@@ -547,6 +548,21 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               responses from other hosts. This includes negative caching,
               i.e. the ability to remember that there is no client information
               in the database.
+              </entry>
+            </row>
+            <row>
+              <entry>Class Commands</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.5.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>This Class Cmds hooks library allows for adding, updating
+              deleting and fetching configured DHCP client classes without the
+              need to restart the DHCP server.
               </entry>
             </row>
           </tbody>
