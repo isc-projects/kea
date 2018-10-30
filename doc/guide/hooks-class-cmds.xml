@@ -25,7 +25,7 @@
         customers only</para>
       </para>
 
-      <section>
+      <section xml:id="command-class-add">
         <title>class-add command</title>
         <para>The <command>class-add</command> command is used to add a new client
         class to the DHCP server configuration. This class is appended at the
@@ -69,7 +69,7 @@
         </para>
       </section>
 
-      <section>
+      <section xml:id="command-class-update">
         <title>class-update command</title>
         <para>
           The <command>class-update</command> command is used to update an existing
@@ -120,7 +120,7 @@
         </para>
       </section>
 
-      <section>
+      <section xml:id="command-class-del">
         <title>class-del command</title>
         <para>The <command>class-del</command> is used to remove a particular class
         from the server configuration. The class to be removed is identified by name.
@@ -151,7 +151,7 @@
         <para>If the class doesn't exist, the result of 3 is returned.</para>
       </section>
 
-      <section>
+      <section xml:id="command-class-list">
         <title>class-list command</title>
         <para>The <command>class-list</command> is used to retrieve a list of all
         client classes. This command includes no arguments:
@@ -188,7 +188,7 @@
         </para>
       </section>
 
-      <section>
+      <section xml:id="command-class-get">
         <title>class-get command</title>
         <para>The <command>class-get</command> is used to retrieve detail information
         about specified class. The command structure is very simple:

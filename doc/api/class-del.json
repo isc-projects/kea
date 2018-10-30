@@ -1,0 +1,18 @@
+{
+    "name": "class-del",
+    "brief": "This command is used to remove a client class from the server configuration.",
+    "description": "See <xref linkend=\"command-class-del\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.5.0",
+    "hook": "class_cmds",
+    "cmd-syntax": "{
+    \"command\": \"class-del\",
+    \"arguments\": {
+        \"name\": \"ipxe_efi_x64\",
+    }
+}",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"Class 'ipxe_efi_x64' deleted.\"
+}"
+}
