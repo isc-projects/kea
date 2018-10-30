@@ -6,6 +6,17 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 AM_CPPFLAGS += -DSTAT_CMDS_LIB_SO=\"$(abs_top_builddir)/src/hooks/dhcp/stat_cmds/.libs/libdhcp_stat_cmds.so\"
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
+if HAVE_MYSQL
+AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
+endif
+if HAVE_PGSQL
+AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
+endif
+if HAVE_CQL
+AM_CPPFLAGS += $(CQL_CPPFLAGS)
+endif
+
+
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
 if USE_STATIC_LINK
@@ -55,6 +66,12 @@ stat_cmds_unittests_LDADD += $(CRYPTO_LIBS)
 stat_cmds_unittests_LDADD += $(BOOST_LIBS)
 stat_cmds_unittests_LDADD += $(GTEST_LDADD)
 
+if HAVE_MYSQL
+stat_cmds_unittests_LDFLAGS += $(MYSQL_LIBS)
+endif
+if HAVE_PGSQL
+stat_cmds_unittests_LDFLAGS += $(PGSQL_LIBS)
+endif
 if HAVE_CQL
 stat_cmds_unittests_LDFLAGS += $(CQL_LIBS)
 endif
