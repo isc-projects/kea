@@ -1,5 +1,10 @@
+1464.	[build]		marcin
+	Exclude mysql_cb hooks library from the Kea 1.5.0 release. This
+	library will be added back in Kea 1.6.0 release.
+	(Gitlab #93,!105, git 49572aa300ea2b25712d7e8cea0dd0df34faf7ee)
+
 1463.	[bug]		tmark
-	Added missing parsing logic for the reservation-mode value, 
+	Added missing parsing logic for the reservation-mode value,
 	"global", to kea-dhcp6.  The parsing logic was somehow omitted
 	and caused kea-dhcp6 configuration parsing to fail on values
 	of "global".
