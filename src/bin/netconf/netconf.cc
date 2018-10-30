@@ -188,7 +188,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     ConstElementPtr answer;
     int rcode;
     ConstElementPtr config;
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_GET_CONFIG)
+    LOG_INFO(netconf_logger, NETCONF_GET_CONFIG_STARTED)
         .arg(service_pair.first);
     try {
         answer = comm->configGet(service_pair.first);
@@ -218,11 +218,8 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
             .arg("config-get command returned an empty configuration");
         return;
     }
-    LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETE)
-        .arg(service_pair.first);
-
     LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-              NETCONF_GET_CONFIG_CONFIG)
+              NETCONF_GET_CONFIG)
         .arg(service_pair.first)
         .arg(prettyPrint(config));
 }
@@ -261,7 +258,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         return;
     }
 
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_SET_CONFIG)
+    LOG_INFO(netconf_logger, NETCONF_SET_CONFIG_STARTED)
         .arg(service_pair.first);
     ConstElementPtr config;
     try {
@@ -279,7 +276,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
             return;
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_SET_CONFIG_CONFIG)
+                      NETCONF_SET_CONFIG)
                 .arg(service_pair.first)
                 .arg(prettyPrint(config));
         }
@@ -328,7 +325,10 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
+        return;
     }
+    LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETED)
+        .arg(service_pair.first);
 }
 
 void
@@ -382,8 +382,7 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
     if (!ctrl_sock) {
         return (SR_ERR_OK);
     }
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE,
-              NETCONF_VALIDATE_CONFIG_STARTED)
+    LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_STARTED)
         .arg(service_pair.first);
     ConstElementPtr config;
     try {
@@ -448,6 +447,8 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);
     }
+    LOG_INFO(netconf_logger, NETCONF_VALIDATE_CONFIG_COMPLETED)
+        .arg(service_pair.first);
     return (SR_ERR_OK);
 }
 
@@ -466,7 +467,7 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
 
     // All looks good, let's get started. Print an info that we're about
     // to update the configuration.
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_UPDATE_CONFIG_STARTED)
+    LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_STARTED)
         .arg(service_pair.first);
 
     // Retrieve the configuration from SYSREPO first.
@@ -540,6 +541,8 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);
     }
+    LOG_INFO(netconf_logger, NETCONF_UPDATE_CONFIG_COMPLETED)
+        .arg(service_pair.first);
     return (SR_ERR_OK);
 }
 
