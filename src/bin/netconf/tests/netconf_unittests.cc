@@ -40,9 +40,6 @@ namespace {
 /// @brief Test unix socket file name.
 const string TEST_SOCKET = "test-socket";
 
-/// @brief Test timeout in ms.
-//const long TEST_TIMEOUT = 10000;
-
 /// @brief Type definition for the pointer to Thread objects.
 typedef boost::shared_ptr<Thread> ThreadPtr;
 
@@ -61,7 +58,7 @@ public:
     using NetconfAgent::keaConfig;
     using NetconfAgent::initSysrepo;
     using NetconfAgent::yangConfig;
-    using NetconfAgent::subscribe;
+    using NetconfAgent::subscribeConfig;
     using NetconfAgent::conn_;
     using NetconfAgent::startup_sess_;
     using NetconfAgent::running_sess_;
@@ -138,13 +135,13 @@ public:
           agent_(new NakedNetconfAgent),
           requests_(),
           responses_() {
-        NetconfProcess::global_shut_down_flag = false;
+        NetconfProcess::shut_down = false;
         removeUnixSocketFile();
     }
 
     /// @brief Destructor.
     virtual ~NetconfAgentTest() {
-        NetconfProcess::global_shut_down_flag = true;
+        NetconfProcess::shut_down = true;
         if (thread_) {
             thread_->wait();
             thread_.reset();
@@ -222,12 +219,12 @@ public:
         : io_service_(new IOService()),
           thread_(),
           agent_(new NakedNetconfAgent) {
-        NetconfProcess::global_shut_down_flag = false;
+        NetconfProcess::shut_down = false;
     }
 
     /// @brief Destructor.
     virtual ~NetconfAgentLogTest() {
-        NetconfProcess::global_shut_down_flag = true;
+        NetconfProcess::shut_down = true;
         // io_service must be stopped to make the thread to return.
         io_service_->stop();
         io_service_.reset();
@@ -409,7 +406,7 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->commit());
 
-    // Subscribe changes.
+    // Subscribe configuration changes.
     S_Subscribe subs(new Subscribe(agent_->running_sess_));
     S_Callback cb(new TestCallback());
     TestCallback::finished = false;
@@ -452,7 +449,6 @@ TEST_F(NetconfAgentLogTest, logChanges) {
     }
     // Enable this for debugging.
     // logCheckVerbose(true);
-
     EXPECT_TRUE(checkFile());
 }
 
@@ -483,7 +479,7 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     ASSERT_NO_THROW(repr.set(tree0, agent_->startup_sess_));
     EXPECT_NO_THROW(agent_->startup_sess_->commit());
 
-    // Subscribe changes.
+    // Subscribe configuration changes.
     S_Subscribe subs(new Subscribe(agent_->running_sess_));
     S_Callback cb(new TestCallback());
     TestCallback::finished = false;
@@ -564,7 +560,6 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
     }
     // Enable this for debugging.
     // logCheckVerbose(true);
-
     EXPECT_TRUE(checkFile());
 }
 
@@ -765,8 +760,8 @@ TEST_F(NetconfAgentTest, yangConfig) {
     EXPECT_TRUE(expected->equals(*pruned));
 }
 
-/// Verifies the subscribe method works as expected.
-TEST_F(NetconfAgentTest, subscribe) {
+/// Verifies the subscribeConfig method works as expected.
+TEST_F(NetconfAgentTest, subscribeConfig) {
     // Netconf configuration.
     string config_prefix = "{\n"
         "  \"Netconf\": {\n"
@@ -804,10 +799,10 @@ TEST_F(NetconfAgentTest, subscribe) {
     ASSERT_EQ(1, servers_map->size());
     CfgServersMapPair service_pair = *servers_map->begin();
 
-    // Try subscribe.
+    // Try subscribeConfig.
     EXPECT_EQ(0, agent_->subscriptions_.size());
     ASSERT_NO_THROW(agent_->initSysrepo());
-    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     /// Unsubscribe.
@@ -881,7 +876,7 @@ TEST_F(NetconfAgentTest, update) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server.
@@ -1019,7 +1014,7 @@ TEST_F(NetconfAgentTest, validate) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Launch server twice.
@@ -1187,7 +1182,7 @@ TEST_F(NetconfAgentTest, noValidate) {
 
     // Subscribe YANG changes.
     EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribe(service_pair));
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
 
     // Change configuration (add invalid user context).

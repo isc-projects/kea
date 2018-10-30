@@ -60,8 +60,8 @@ libkea_yang_include_HEADERS = \
 	translator_logger.h \
 	translator_option_data.h \
 	translator_option_def.h \
-	translator_pool.h \
 	translator_pd_pool.h \
+	translator_pool.h \
 	translator_shared_network.h \
 	translator_subnet.h \
 	yang_models.h

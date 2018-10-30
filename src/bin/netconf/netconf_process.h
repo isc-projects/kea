@@ -85,7 +85,7 @@ public:
     NetconfCfgMgrPtr getNetconfCfgMgr();
 
     /// @brief Global (globally visible) shutdown flag.
-    static bool global_shut_down_flag;
+    static bool shut_down;
 
 private:
 

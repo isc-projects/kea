@@ -51,7 +51,7 @@ public:
     ///
     /// Get and display Kea server configurations.
     /// Load Kea server configurations from YANG datastore.
-    /// Subscribe changes in YANG datastore.
+    /// Subscribe configuration changes in YANG datastore.
     ///
     /// If @c NetconfProcess::global_shut_down_flag becomes true
     /// returns as soon as possible.
@@ -101,8 +101,8 @@ protected:
     /// @param service_pair The service name and configuration pair.
     void keaConfig(const CfgServersMapPair& service_pair);
 
-    /// @brief Retrieve Kea server configuration from YANG datastore and
-    ///        applies it to servers.
+    /// @brief Retrieve Kea server configuration from the YANG startup
+    ///        datastore and applies it to servers.
     ///
     /// This method retrieves the configuation from sysrepo first, then
     /// established control socket connection to Kea servers (currently
@@ -117,7 +117,7 @@ protected:
     /// @brief Subscribe changes for a module in YANG datastore.
     ///
     /// @param service_pair The service name and configuration pair.
-    void subscribe(const CfgServersMapPair& service_pair);
+    void subscribeConfig(const CfgServersMapPair& service_pair);
 
     /// @brief Sysrepo connection.
     S_Connection conn_;
