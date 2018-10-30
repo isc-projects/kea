@@ -27,7 +27,7 @@ using namespace isc::util::thread;
 namespace isc {
 namespace netconf {
 
-bool NetconfProcess::global_shut_down_flag = false;
+bool NetconfProcess::shut_down = false;
 
 NetconfProcess::NetconfProcess(const char* name,
                                const asiolink::IOServicePtr& io_service)
@@ -100,7 +100,7 @@ NetconfProcess::runIO() {
 
 isc::data::ConstElementPtr
 NetconfProcess::shutdown(isc::data::ConstElementPtr /*args*/) {
-    global_shut_down_flag = true;
+    shut_down = true;
     setShutdownFlag(true);
     return (isc::config::createAnswer(0, "Netconf is shutting down"));
 }

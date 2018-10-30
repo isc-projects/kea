@@ -38,10 +38,10 @@ public:
     /// @brief Server name and configuration pair.
     CfgServersMapPair service_pair_;
 
-    /// @brief Module change callback.
+    /// @brief Module configuration change callback.
     ///
     /// This callback is called by sysrepo when there is a change to
-    /// configuration data.
+    /// module configuration.
     ///
     /// @param sess The running datastore session.
     /// @param module_name The module name.
@@ -52,7 +52,7 @@ public:
                       const char* /*module_name*/,
                       sr_notif_event_t event,
                       void* /*private_ctx*/) {
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return (SR_ERR_DISCONNECT);
         }
         ostringstream event_type;
@@ -77,11 +77,11 @@ public:
             .arg(event_type.str());
         string xpath = "/" + service_pair_.second->getModel() + ":";
         NetconfAgent::logChanges(sess, xpath + "config");
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return (SR_ERR_DISCONNECT);
         }
         NetconfAgent::logChanges(sess, xpath + "logging");
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return (SR_ERR_DISCONNECT);
         }
         switch (event) {
@@ -109,42 +109,42 @@ NetconfAgent::~NetconfAgent() {
 
 void
 NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
-    if (NetconfProcess::global_shut_down_flag || !cfg_mgr) {
+    if (NetconfProcess::shut_down || !cfg_mgr) {
         return;
     }
     const CfgServersMapPtr& servers =
         cfg_mgr->getNetconfConfig()->getCfgServersMap();
     for (auto pair : *servers) {
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
 
         // Retrieve configuration from existing running DHCP daemons.
         keaConfig(pair);
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
 
     // Initialize sysrepo interface.
     initSysrepo();
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
 
     for (auto pair : *servers) {
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
         yangConfig(pair);
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
-        subscribe(pair);
-        if (NetconfProcess::global_shut_down_flag) {
+        subscribeConfig(pair);
+        if (NetconfProcess::shut_down) {
             return;
         }
     }
@@ -153,7 +153,7 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
 void
 NetconfAgent::clear() {
     // Should be already set to true but in case...
-    NetconfProcess::global_shut_down_flag = true;
+    NetconfProcess::shut_down = true;
     for (auto subs : subscriptions_) {
         subs.second.reset();
     }
@@ -199,7 +199,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return;
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
     if (rcode != CONTROL_RESULT_SUCCESS) {
@@ -213,7 +213,7 @@ NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
     if (!config) {
         LOG_ERROR(netconf_logger, NETCONF_GET_CONFIG_FAILED)
             .arg(service_pair.first)
-            .arg("config-get returned an empty configuration");
+            .arg("config-get command returned an empty configuration");
         return;
     }
     LOG_INFO(netconf_logger, NETCONF_BOOT_UPDATE_COMPLETE)
@@ -247,7 +247,7 @@ void
 NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
     // If we're shutting down, or the boot-update flag is not set or the model
     // associated with it is not specified.
-    if (NetconfProcess::global_shut_down_flag ||
+    if (NetconfProcess::shut_down ||
         !service_pair.second->getBootUpdate() ||
         service_pair.second->getModel().empty()) {
         return;
@@ -263,7 +263,6 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         .arg(service_pair.first);
     ConstElementPtr config;
     try {
-
         // Retrieve configuration from Sysrepo.
         TranslatorConfig tc(startup_sess_, service_pair.second->getModel());
         config = tc.getConfig();
@@ -284,14 +283,14 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG config-get for " << service_pair.first
+        msg << "get YANG configuration for " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_SET_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
         return;
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
     ControlSocketBasePtr comm;
@@ -305,7 +304,7 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
             .arg(msg.str());
         return;
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
     ConstElementPtr answer;
@@ -331,13 +330,13 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
 }
 
 void
-NetconfAgent::subscribe(const CfgServersMapPair& service_pair) {
-    if (NetconfProcess::global_shut_down_flag ||
+NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
+    if (NetconfProcess::shut_down ||
         !service_pair.second->getSubscribeChanges() ||
         service_pair.second->getModel().empty()) {
         return;
     }
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_SUBSCRIBE)
+    LOG_INFO(netconf_logger, NETCONF_SUBSCRIBE_CONFIG)
         .arg(service_pair.first)
         .arg(service_pair.second->getModel());
     S_Subscribe subs(new Subscribe(running_sess_));
@@ -354,7 +353,7 @@ NetconfAgent::subscribe(const CfgServersMapPair& service_pair) {
     } catch (const std::exception& ex) {
         ostringstream msg;
         msg << "module change subscribe failed with " << ex.what();
-        LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_FAILED)
+        LOG_ERROR(netconf_logger, NETCONF_SUBSCRIBE_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(service_pair.second->getModel())
             .arg(msg.str());
@@ -366,7 +365,7 @@ NetconfAgent::subscribe(const CfgServersMapPair& service_pair) {
 
 int
 NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
-    if (NetconfProcess::global_shut_down_flag ||
+    if (NetconfProcess::shut_down ||
         !service_pair.second->getSubscribeChanges() ||
         !service_pair.second->getValidateChanges()) {
         return (SR_ERR_OK);
@@ -375,7 +374,8 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
     if (!ctrl_sock) {
         return (SR_ERR_OK);
     }
-    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_VALIDATE_CONFIG)
+    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE,
+              NETCONF_VALIDATE_CONFIG_STARTED)
         .arg(service_pair.first);
     ConstElementPtr config;
     try {
@@ -392,20 +392,20 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
             return (SR_ERR_DISCONNECT);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_VALIDATE_CONFIG_CONFIG)
+                      NETCONF_VALIDATE_CONFIG)
                 .arg(service_pair.first)
                 .arg(prettyPrint(config));
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG config-get for " << service_pair.first
+        msg << "get YANG configuration for " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);;
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return (SR_ERR_DISCONNECT);
     }
     ControlSocketBasePtr comm;
@@ -435,7 +435,7 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
     if (rcode != CONTROL_RESULT_SUCCESS) {
         stringstream msg;
         msg << "configTest returned " << answerToText(answer);
-        LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_FAILED)
+        LOG_ERROR(netconf_logger, NETCONF_VALIDATE_CONFIG_REJECTED)
             .arg(service_pair.first)
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);
@@ -445,9 +445,8 @@ NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
 
 int
 NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
-
     // Check if we should and can process this update.
-    if (NetconfProcess::global_shut_down_flag ||
+    if (NetconfProcess::shut_down ||
         !service_pair.second->getSubscribeChanges()) {
         return (SR_ERR_OK);
     }
@@ -458,7 +457,7 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
 
     // All looks good, let's get started. Print an info that we're about
     // to update the configuration.
-    LOG_INFO(netconf_logger, NETCONF_DBG_TRACE, NETCONF_UPDATE_CONFIG)
+    LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE, NETCONF_UPDATE_CONFIG_STARTED)
         .arg(service_pair.first);
 
     // Retrieve the configuration from SYSREPO first.
@@ -477,20 +476,20 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
             return (SR_ERR_VALIDATION_FAILED);
         } else {
             LOG_DEBUG(netconf_logger, NETCONF_DBG_TRACE_DETAIL_DATA,
-                      NETCONF_UPDATE_CONFIG_CONFIG)
+                      NETCONF_UPDATE_CONFIG)
                 .arg(service_pair.first)
                 .arg(prettyPrint(config));
         }
     } catch (const std::exception& ex) {
         ostringstream msg;
-        msg << "YANG config-get " << service_pair.first
+        msg << "get YANG configuration for " << service_pair.first
             << " failed with " << ex.what();
         LOG_ERROR(netconf_logger, NETCONF_UPDATE_CONFIG_FAILED)
             .arg(service_pair.first)
             .arg(msg.str());
         return (SR_ERR_VALIDATION_FAILED);
     }
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return (SR_ERR_OK);
     }
 
@@ -523,7 +522,7 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
         return (SR_ERR_VALIDATION_FAILED);
     }
 
-    // rcode == CONTROL_RESULT_SUCCESS, unless the docs say otherwise :)
+    // rcode == CONTROL_RESULT_SUCCESS, unless the docs say otherwise :).
     if (rcode != CONTROL_RESULT_SUCCESS) {
         stringstream msg;
         msg << "configSet returned " << answerToText(answer);
@@ -537,7 +536,7 @@ NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
 
 void
 NetconfAgent::logChanges(S_Session sess, const string& model) {
-    if (NetconfProcess::global_shut_down_flag) {
+    if (NetconfProcess::shut_down) {
         return;
     }
     S_Iter_Change iter = sess->get_changes_iter(model.c_str());
@@ -547,7 +546,7 @@ NetconfAgent::logChanges(S_Session sess, const string& model) {
         return;
     }
     for (;;) {
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
         S_Change change;
@@ -564,7 +563,7 @@ NetconfAgent::logChanges(S_Session sess, const string& model) {
             // End of changes, not an error.
             return;
         }
-        if (NetconfProcess::global_shut_down_flag) {
+        if (NetconfProcess::shut_down) {
             return;
         }
         S_Val new_val = change->new_val();
