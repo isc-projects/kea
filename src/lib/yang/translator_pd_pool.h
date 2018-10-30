@@ -122,7 +122,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorPdPool(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPdPool(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPdPool();
@@ -170,9 +174,6 @@ protected:
     /// @param elem The JSON element.
     void setPdPoolKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a pd-pool list between
@@ -188,7 +189,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorPdPools(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPdPools(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPdPools();
@@ -220,9 +225,6 @@ protected:
     /// @throw BadValue on pd-pool without prefix or prefix length.
     void setPdPoolsPrefix(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

@@ -119,7 +119,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorHost(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorHost(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorHost();
@@ -149,9 +153,6 @@ protected:
     /// @param xpath The xpath of the host reservation.
     /// @param elem The JSON element.
     void setHostKea(const std::string& xpath, isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting host reservations list between
@@ -169,7 +170,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorHosts(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorHosts(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorHosts();
@@ -194,9 +199,6 @@ protected:
     /// @throw BadValue on host reservation without known identifier type.
     void setHostsKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

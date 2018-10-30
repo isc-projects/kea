@@ -132,7 +132,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorSharedNetwork(sysrepo::S_Session session,
+                            const std::string& model);
+#else
     TranslatorSharedNetwork(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSharedNetwork();
@@ -170,9 +175,6 @@ protected:
     void setSharedNetworkKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem,
                              const std::string& subsel);
-
-    /// @brief The model name.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a shared network list between
@@ -188,7 +190,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorSharedNetworks(sysrepo::S_Session session,
+                             const std::string& model);
+#else
     TranslatorSharedNetworks(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSharedNetworks();
@@ -215,9 +222,6 @@ protected:
     /// @throw BadValue on a shared network without name.
     void setSharedNetworksKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-
-    /// @brief The model name.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

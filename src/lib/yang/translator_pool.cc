@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <yang/adaptor.h>
@@ -16,15 +18,17 @@ using namespace std;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorPool::TranslatorPool(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
-      TranslatorOptionDataList(session, model),
-      model_(model) {
+      TranslatorOptionDataList(session, model) {
 }
 
 TranslatorPool::~TranslatorPool() {
@@ -263,11 +267,10 @@ TranslatorPool::getAddresses(const string& prefix,
 }
 
 TranslatorPools::TranslatorPools(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
-      TranslatorPool(session, model),
-      model_(model) {
+      TranslatorPool(session, model) {
 }
 
 TranslatorPools::~TranslatorPools() {

@@ -6,10 +6,18 @@
 
 #include <config.h>
 
+#ifndef HAVE_OLD_SYSREPO
+#include <sysrepo-cpp/Session.hpp>
+#else
 #include <sysrepo-cpp/Session.h>
+#endif
+
 #include <sstream>
 
 using namespace std;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 /// Not using libyang headers, e.g. yang_models.h.
 

@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_subnet.h>
 #include <yang/adaptor_pool.h>
 #include <yang/yang_models.h>
@@ -11,12 +13,15 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorSubnet::TranslatorSubnet(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -24,8 +29,7 @@ TranslatorSubnet::TranslatorSubnet(S_Session session, const string& model)
       TranslatorPdPool(session, model),
       TranslatorPdPools(session, model),
       TranslatorHost(session, model),
-      TranslatorHosts(session, model),
-      model_(model) {
+      TranslatorHosts(session, model) {
 }
 
 TranslatorSubnet::~TranslatorSubnet() {
@@ -378,7 +382,7 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
 }
 
 TranslatorSubnets::TranslatorSubnets(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -387,8 +391,7 @@ TranslatorSubnets::TranslatorSubnets(S_Session session, const string& model)
       TranslatorPdPools(session, model),
       TranslatorHost(session, model),
       TranslatorHosts(session, model),
-      TranslatorSubnet(session, model),
-      model_(model) {
+      TranslatorSubnet(session, model) {
 }
 
 TranslatorSubnets::~TranslatorSubnets() {

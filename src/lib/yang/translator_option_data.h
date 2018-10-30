@@ -80,7 +80,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorOptionData(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorOptionData(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionData();
@@ -114,9 +118,6 @@ protected:
     /// @param elem The JSON element.
     void setOptionDataKea(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting an option data list between
@@ -130,7 +131,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorOptionDataList(sysrepo::S_Session session,
+                             const std::string& model);
+#else
     TranslatorOptionDataList(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDataList();
@@ -162,9 +168,6 @@ protected:
     /// @throw BadValue on option data without code or space.
     void setOptionDataListKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

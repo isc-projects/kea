@@ -240,7 +240,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorSubnet(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorSubnet(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSubnet();
@@ -286,9 +290,6 @@ protected:
     /// @param elem The JSON element.
     void setSubnetKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a subnet list between
@@ -302,7 +303,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorSubnets(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorSubnets(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorSubnets();
@@ -336,9 +341,6 @@ protected:
     void setSubnetsKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem,
                        const std::string& subsel);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

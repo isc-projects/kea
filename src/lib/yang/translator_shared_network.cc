@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_shared_network.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,13 +13,16 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
                                                  const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -27,8 +32,7 @@ TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
       TranslatorHost(session, model),
       TranslatorHosts(session, model),
       TranslatorSubnet(session, model),
-      TranslatorSubnets(session, model),
-      model_(model) {
+      TranslatorSubnets(session, model) {
 }
 
 TranslatorSharedNetwork::~TranslatorSharedNetwork() {
@@ -262,7 +266,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
 
 TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
                                                    const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -273,8 +277,7 @@ TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
       TranslatorHosts(session, model),
       TranslatorSubnet(session, model),
       TranslatorSubnets(session, model),
-      TranslatorSharedNetwork(session, model),
-      model_(model) {
+      TranslatorSharedNetwork(session, model) {
 }
 
 TranslatorSharedNetworks::~TranslatorSharedNetworks() {

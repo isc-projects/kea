@@ -10,7 +10,15 @@
 #include <cc/data.h>
 #include <yang/sysrepo_error.h>
 
+#ifndef HAVE_SYSREPO
+#error "config.h must be included before translator.h"
+#endif
+
+#ifndef HAVE_OLD_SYSREPO
+#include <sysrepo-cpp/Session.hpp>
+#else
 #include <sysrepo-cpp/Session.h>
+#endif
 
 namespace isc {
 namespace yang {
@@ -22,7 +30,12 @@ public:
     /// @brief Constructor.
     ///
     /// @param session Sysrepo session.
-    TranslatorBasic(S_Session session);
+    /// @param model Model name (used and shared by derived classes).
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorBasic(sysrepo::S_Session session, const std::string& model);
+#else
+    TranslatorBasic(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorBasic();
@@ -34,7 +47,11 @@ public:
     /// @param s_val The value.
     /// @return The Element representing the sysrepo value.
     /// @throw NotImplemented when the value type is not supported.
+#ifndef HAVE_OLD_SYSREPO
+    static isc::data::ElementPtr value(sysrepo::S_Val s_val);
+#else
     static isc::data::ElementPtr value(S_Val s_val);
+#endif
 
     /// @brief Get and translate basic value from YANG to JSON.
     ///
@@ -60,7 +77,12 @@ public:
     ///
     /// @param elem The JSON element.
     /// @param type The sysrepo type.
+#ifndef HAVE_OLD_SYSREPO
+    static sysrepo::S_Val value(isc::data::ConstElementPtr elem,
+                                sr_type_t type);
+#else
     static S_Val value(isc::data::ConstElementPtr elem, sr_type_t type);
+#endif
 
     /// @brief Translate and set basic value from JSON to YANG.
     ///
@@ -81,17 +103,33 @@ public:
     ///
     /// @param xpath The xpath of the list.
     /// @return An S_Iter_Value pointer. Null is the list does not exist.
+#ifndef HAVE_OLD_SYSREPO
+    sysrepo::S_Iter_Value getIter(const std::string& xpath);
+#else
     S_Iter_Value getIter(const std::string& xpath);
+#endif
 
     /// @brief Get xpath of the next YANG list item.
     ///
     /// @param iter The iterator pointing to the previous element
-    /// @return The xpath of the next element. Empty string when at the end of the list.
+    /// @return The xpath of the next element. Empty string when at
+    /// the end of the list.
+#ifndef HAVE_OLD_SYSREPO
+    std::string getNext(sysrepo::S_Iter_Value iter);
+#else
     std::string getNext(S_Iter_Value iter);
+#endif
 
 protected:
     /// @brief The sysrepo session.
+#ifndef HAVE_OLD_SYSREPO
+    sysrepo::S_Session session_;
+#else
     S_Session session_;
+#endif
+
+    /// @brief The model.
+    std::string model_;
 };
 
 }; // end of namespace isc::yang

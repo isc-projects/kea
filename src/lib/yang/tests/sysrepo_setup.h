@@ -36,8 +36,13 @@ public:
     void useModel(std::string model) {
         std::string full_name =
             "translator " + std::string(Name) + " unittests";
+#ifndef HAVE_OLD_SYSREPO
+        conn_.reset(new sysrepo::Connection(full_name.c_str()));
+        sess_.reset(new sysrepo::Session(conn_, SR_DS_CANDIDATE));
+#else
         conn_.reset(new Connection(full_name.c_str()));
         sess_.reset(new Session(conn_, SR_DS_CANDIDATE));
+#endif
         EXPECT_NO_THROW(t_obj_.reset(new Type(sess_, model)));
     }
 
@@ -51,10 +56,18 @@ public:
     }
 
     /// @brief Sysrepo connection.
+#ifndef HAVE_OLD_SYSREPO
+    sysrepo::S_Connection conn_;
+#else
     S_Connection conn_;
+#endif
 
     /// @brief Sysrepo session.
+#ifndef HAVE_OLD_SYSREPO
+    sysrepo::S_Session sess_;
+#else
     S_Session sess_;
+#endif
 
     /// @brief Shared pointer to the transaction object.
     boost::shared_ptr<Type> t_obj_;

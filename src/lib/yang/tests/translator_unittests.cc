@@ -15,6 +15,9 @@ using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -26,7 +29,7 @@ TEST(TranslatorBasicTest, constructor) {
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     // Get a translator object.
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    EXPECT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
+    EXPECT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
 }
 
 // Test basic yang value to JSON using the static method.
@@ -147,7 +150,7 @@ TEST(TranslatorBasicTest, getItem) {
     S_Connection conn(new Connection("translator unittests"));
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
+    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
 
     // Container.
     string xpath = "/keatest-module:container/list";
@@ -449,7 +452,7 @@ TEST(TranslatorBasicTest, setItem) {
     S_Connection conn(new Connection("translator unittests"));
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
+    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
 
     // Container.
     string xpath = "/keatest-module:container";
@@ -653,7 +656,7 @@ TEST(TranslatorBasicTest, list) {
     S_Connection conn(new Connection("translator unittests"));
     S_Session sess(new Session(conn, SR_DS_CANDIDATE));
     boost::scoped_ptr<TranslatorBasic> t_obj;
-    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess)));
+    ASSERT_NO_THROW(t_obj.reset(new TranslatorBasic(sess, "")));
 
     // Empty list.
     S_Iter_Value iter;
