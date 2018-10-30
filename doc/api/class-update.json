@@ -1,0 +1,23 @@
+{
+    "name": "class-update",
+    "brief": "This command is used to update an existing client class in the server configuration.",
+    "description": "See <xref linkend=\"command-class-update\"/>",
+    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "avail": "1.5.0",
+    "hook": "class_cmds",
+    "cmd-syntax": "{
+    \"command\": \"class-update\",
+    \"arguments\": {
+        \"client-classes\": [ {
+           \"name\": \"ipxe_efi_x64\",
+           \"test\": \"option[93].hex == 0x0009\",
+            ...
+        } ]
+    }
+}",
+    "cmd-comment": "Only one client class can be updated with a single command..",
+    "resp-syntax": "{
+    \"result\": 0,
+    \"text\": \"Class 'ipxe_efi_x64' updated.\"
+}"
+}

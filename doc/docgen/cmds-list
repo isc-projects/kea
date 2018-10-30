@@ -5,6 +5,11 @@ cache-insert
 cache-load
 cache-remove
 cache-write
+class-add
+class-del
+class-get
+class-list
+class-update
 config-get
 config-reload
 config-set
