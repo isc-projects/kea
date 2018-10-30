@@ -82,7 +82,11 @@ public:
     /// @return return code for sysrepo.
     static int update(S_Session sess, const CfgServersMapPair& service_pair);
 
-    /// @brief Print changes.
+    /// @brief Log changes.
+    ///
+    /// Iterate on changes logging them. Sysrepo changes are an operation
+    /// (created, modified, deleted or moved) with old and new values
+    /// (cf sr_change_oper_e sysrepo documentation).
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.

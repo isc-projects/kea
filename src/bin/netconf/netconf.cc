@@ -109,7 +109,8 @@ NetconfAgent::~NetconfAgent() {
 
 void
 NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
-    if (NetconfProcess::shut_down || !cfg_mgr) {
+    // If there is no configuration manager and/or we're shutting down.
+    if (!cfg_mgr || NetconfProcess::shut_down) {
         return;
     }
     const CfgServersMapPtr& servers =
@@ -165,6 +166,7 @@ NetconfAgent::clear() {
 
 void
 NetconfAgent::keaConfig(const CfgServersMapPair& service_pair) {
+    // If the boot-update flag is not set.
     if (!service_pair.second->getBootUpdate()) {
         return;
     }
@@ -331,6 +333,8 @@ NetconfAgent::yangConfig(const CfgServersMapPair& service_pair) {
 
 void
 NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
+    // If we're shutting down, or the subscribe-changes flag is not set or
+    // the model associated with it is not specified.
     if (NetconfProcess::shut_down ||
         !service_pair.second->getSubscribeChanges() ||
         service_pair.second->getModel().empty()) {
@@ -365,9 +369,13 @@ NetconfAgent::subscribeConfig(const CfgServersMapPair& service_pair) {
 
 int
 NetconfAgent::validate(S_Session sess, const CfgServersMapPair& service_pair) {
+    // If we're shutting down, or the subscribe-changes or the
+    // validate-changes flag is not set or the model associated with
+    // it is not specified.
     if (NetconfProcess::shut_down ||
         !service_pair.second->getSubscribeChanges() ||
-        !service_pair.second->getValidateChanges()) {
+        !service_pair.second->getValidateChanges() ||
+        service_pair.second->getModel().empty()) {
         return (SR_ERR_OK);
     }
     CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();
@@ -447,7 +455,8 @@ int
 NetconfAgent::update(S_Session sess, const CfgServersMapPair& service_pair) {
     // Check if we should and can process this update.
     if (NetconfProcess::shut_down ||
-        !service_pair.second->getSubscribeChanges()) {
+        !service_pair.second->getSubscribeChanges() ||
+        service_pair.second->getModel().empty()) {
         return (SR_ERR_OK);
     }
     CfgControlSocketPtr ctrl_sock = service_pair.second->getCfgControlSocket();

@@ -148,10 +148,9 @@ TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
     S_Val s_pool2(new Val("2001:db8::2:0/112"));
     EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
 
-#if 0
-    S_Tree tree = sess_->get_subtree("/ietf-dhcpv6-server:server");
-    cerr << "tree:\n" << tree->to_string(100) << "\n";
-#endif
+    // Uncomment this for debugging.
+    // S_Tree tree = sess_->get_subtree("/ietf-dhcpv6-server:server");
+    // cerr << "tree:\n" << tree->to_string(100) << "\n";
 
     // Get the subnet.
     ConstElementPtr subnet;
@@ -206,10 +205,9 @@ TEST_F(TranslatorSubnetsTest, getPoolsKea) {
     S_Val s_pool2;
     EXPECT_NO_THROW(sess_->set_item(prefix2.c_str(), s_pool2));
 
-#if 0
-    S_Tree tree = sess_->get_subtree("/kea-dhcp6-server:config");
-    cerr << "tree:\n" << tree->to_string(100) << "\n";
-#endif
+    // Uncomment this for debugging.
+    // S_Tree tree = sess_->get_subtree("/kea-dhcp6-server:config");
+    // cerr << "tree:\n" << tree->to_string(100) << "\n";
 
     // Get the subnet.
     ConstElementPtr subnet;
