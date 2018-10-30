@@ -17,6 +17,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 

@@ -109,7 +109,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorDatabase(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorDatabase(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorDatabase();
@@ -149,9 +153,6 @@ protected:
     void setDatabaseKea(const std::string& xpath,
                         isc::data::ConstElementPtr elem,
                         bool skip);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a database access list between
@@ -165,7 +166,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorDatabases(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorDatabases(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorDatabases();
@@ -201,9 +206,6 @@ protected:
     /// @throw BadValue on database without tyoe,
     void setDatabasesKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

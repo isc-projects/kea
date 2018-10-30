@@ -83,7 +83,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorOptionDef(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorOptionDef(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDef();
@@ -118,9 +122,6 @@ protected:
     /// @throw BadValue on option definition without name or type.
     void setOptionDefKea(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 // @brief A translator class for converting an option definition list
@@ -135,7 +136,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorOptionDefList(sysrepo::S_Session session,
+                            const std::string& model);
+#else
     TranslatorOptionDefList(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDefList();
@@ -169,9 +175,6 @@ protected:
     /// @throw BadValue on option definition without code or space.
     void setOptionDefListKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

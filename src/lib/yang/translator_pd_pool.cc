@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/adaptor.h>
 #include <yang/translator_pd_pool.h>
 #include <yang/yang_models.h>
@@ -12,15 +14,17 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorPdPool::TranslatorPdPool(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
-      TranslatorOptionDataList(session, model),
-      model_(model) {
+      TranslatorOptionDataList(session, model) {
 }
 
 TranslatorPdPool::~TranslatorPdPool() {
@@ -283,11 +287,10 @@ TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
 }
 
 TranslatorPdPools::TranslatorPdPools(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
-      TranslatorPdPool(session, model),
-      model_(model) {
+      TranslatorPdPool(session, model) {
 }
 
 TranslatorPdPools::~TranslatorPdPools() {

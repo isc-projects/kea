@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_host.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,15 +13,17 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorHost::TranslatorHost(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
-      TranslatorOptionDataList(session, model),
-      model_(model) {
+      TranslatorOptionDataList(session, model) {
 }
 
 TranslatorHost::~TranslatorHost() {
@@ -178,11 +182,10 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
 }
 
 TranslatorHosts::TranslatorHosts(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
-      TranslatorHost(session, model),
-      model_(model) {
+      TranslatorHost(session, model) {
 }
 
 TranslatorHosts::~TranslatorHosts() {

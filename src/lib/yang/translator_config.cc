@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_config.h>
 #include <yang/adaptor_config.h>
 #include <yang/yang_models.h>
@@ -11,12 +13,15 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorConfig::TranslatorConfig(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorControlSocket(session, model),
       TranslatorDatabase(session, model),
       TranslatorDatabases(session, model),
@@ -37,8 +42,7 @@ TranslatorConfig::TranslatorConfig(S_Session session, const string& model)
       TranslatorSharedNetwork(session, model),
       TranslatorSharedNetworks(session, model),
       TranslatorLogger(session, model),
-      TranslatorLoggers(session, model),
-      model_(model) {
+      TranslatorLoggers(session, model) {
 }
 
 TranslatorConfig::~TranslatorConfig() {

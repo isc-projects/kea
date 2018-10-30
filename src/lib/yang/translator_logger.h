@@ -101,7 +101,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorLogger(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorLogger(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorLogger();
@@ -162,9 +166,6 @@ protected:
     /// @param elem The JSON element.
     void setLoggerKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a logger list between
@@ -178,7 +179,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorLoggers(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorLoggers(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorLoggers();
@@ -212,9 +217,6 @@ protected:
     /// @throw BadValue on a logger without name.
     void setLoggersKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

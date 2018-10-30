@@ -46,7 +46,12 @@ public:
         /// @param xpath The xpath of an element to be retrieved.
         /// @param session Sysrepo session.
         /// @return YangReprItem instance representing configuration parameter.
+#ifndef HAVE_OLD_SYSREPO
+        static YangReprItem get(const std::string& xpath,
+                                sysrepo::S_Session session);
+#else
         static YangReprItem get(const std::string& xpath, S_Session session);
+#endif
 
         /// @brief The xpath.
         std::string xpath_;
@@ -85,7 +90,11 @@ public:
     /// @brief Get tree from session.
     ///
     /// @param session Sysrepo session.
+#ifndef HAVE_OLD_SYSREPO
+    Tree get(sysrepo::S_Session session) const;
+#else
     Tree get(S_Session session) const;
+#endif
 
     /// @brief Verifies a tree.
     ///
@@ -94,8 +103,13 @@ public:
     /// @param errs Error stream.
     /// @return true if verification succeeds, false with errors displayed.
     /// on errs if it fails.
+#ifndef HAVE_OLD_SYSREPO
+    bool verify(const Tree& expected, sysrepo::S_Session session,
+                std::ostream& errs) const;
+#else
     bool verify(const Tree& expected, S_Session session,
                 std::ostream& errs) const;
+#endif
 
     /// @brief Sets specified tree in a sysrepo.
     ///
@@ -103,7 +117,11 @@ public:
     ///
     /// @param tree The tree to install.
     /// @param session Sysrepo session.
+#ifndef HAVE_OLD_SYSREPO
+    void set(const Tree& tree, sysrepo::S_Session session) const;
+#else
     void set(const Tree& tree, S_Session session) const;
+#endif
 
     /// @brief Validate.
     ///
@@ -111,7 +129,11 @@ public:
     /// @param errs Error stream.
     /// @return True if validation succeeds, false with errors displayed
     /// on errs if it fails.
+#ifndef HAVE_OLD_SYSREPO
+    bool validate(sysrepo::S_Session session, std::ostream& errs) const;
+#else
     bool validate(S_Session session, std::ostream& errs) const;
+#endif
 
     /// @brief The model name.
     std::string model_;

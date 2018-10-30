@@ -4,12 +4,17 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/testutils/translator_test.h>
 #include <boost/lexical_cast.hpp>
 #include <sstream>
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
@@ -104,7 +109,7 @@ YangRepr::get(S_Session session) const {
     Tree result;
     try {
         const string& xpath0 = "/" + model_ + ":*//.";
-        TranslatorBasic tb(session);
+        TranslatorBasic tb(session, model_);
         S_Iter_Value iter = tb.getIter(xpath0);
         for (;;) {
             const string& xpath = tb.getNext(iter);

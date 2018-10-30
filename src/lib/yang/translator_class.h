@@ -82,7 +82,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorClass(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorClass(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorClass();
@@ -114,9 +118,6 @@ protected:
     /// @param elem The JSON element.
     void setClassKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a client class list between
@@ -131,7 +132,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorClasses(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorClasses(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorClasses();
@@ -165,9 +170,6 @@ protected:
     /// @throw BadValue on client class without name.
     void setClassesKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

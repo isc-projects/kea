@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator.h>
 #include <util/encode/base64.h>
 #include <cstring>
@@ -11,6 +13,9 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::util::encode;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -35,7 +40,8 @@ string decode64(const string& input) {
 namespace isc {
 namespace yang {
 
-TranslatorBasic::TranslatorBasic(S_Session session) : session_(session) {
+TranslatorBasic::TranslatorBasic(S_Session session, const string& model)
+    : session_(session), model_(model) {
 }
 
 TranslatorBasic::~TranslatorBasic() {

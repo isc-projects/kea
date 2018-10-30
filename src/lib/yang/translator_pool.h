@@ -130,7 +130,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorPool(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPool(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPool();
@@ -188,9 +192,6 @@ protected:
     /// @param elem The JSON element.
     /// @throw BadValue on a pool without a well formed prefix.
     void setPoolKea(const std::string& xpath, isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting pools between YANG and JSON.
@@ -203,7 +204,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_OLD_SYSREPO
+    TranslatorPools(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPools(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPools();
@@ -235,9 +240,6 @@ protected:
     /// @throw BadValue on a pool without a prefix.
     void setPoolsByAddresses(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

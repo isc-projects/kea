@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_database.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,12 +13,15 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorDatabase::TranslatorDatabase(S_Session session, const string& model)
-    : TranslatorBasic(session), model_(model) {
+    : TranslatorBasic(session, model) {
 }
 
 TranslatorDatabase::~TranslatorDatabase() {
@@ -225,9 +230,8 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
 
 TranslatorDatabases::TranslatorDatabases(S_Session session,
                                          const string& model)
-    : TranslatorBasic(session),
-      TranslatorDatabase(session, model),
-      model_(model) {
+    : TranslatorBasic(session, model),
+      TranslatorDatabase(session, model) {
 }
 
 TranslatorDatabases::~TranslatorDatabases() {
