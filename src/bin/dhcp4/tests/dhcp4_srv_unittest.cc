@@ -2145,7 +2145,7 @@ TEST_F(Dhcpv4SrvTest, matchClassificationOptionDef) {
     EXPECT_TRUE(query->inClass("router"));
 }
 
-// Checks subnet options have the priority over class options
+// Checks class options have the priority over subnet options
 TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
@@ -2165,12 +2165,12 @@ TEST_F(Dhcpv4SrvTest, subnetClassPriority) {
         "    \"subnet\": \"192.0.2.0/24\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
-        "             \"data\": \"false\" } ] } ], "
+        "             \"data\": \"true\" } ] } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\","
         "    \"option-data\": ["
         "        {    \"name\": \"ip-forwarding\", "
-        "             \"data\": \"true\" } ], "
+        "             \"data\": \"false\" } ], "
         "    \"test\": \"option[12].text == 'foo'\" } ] }";
 
     ConstElementPtr json;

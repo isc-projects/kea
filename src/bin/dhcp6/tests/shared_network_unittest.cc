@@ -2499,7 +2499,7 @@ TEST_F(Dhcpv6SharedNetworkTest, poolInSubnetSelectedByClass) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedenceGlobal) {
     const std::string config =
         "{"
@@ -2538,7 +2538,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceGlobal) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedenceClass) {
     const std::string config =
         "{"
@@ -2589,7 +2589,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceClass) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedenceClasses) {
     const std::string config =
         "{"
@@ -2651,8 +2651,8 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceClasses) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
-TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
+// Order is global < shared-network < subnet < pools < class < host reservation
+TEST_F(Dhcpv6SharedNetworkTest, precedencePoolClass) {
     const std::string config =
         "{"
         "    \"option-data\": ["
@@ -2689,7 +2689,13 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
         "                    \"id\": 10,"
         "                    \"pools\": ["
         "                        {"
-        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\""
+        "                            \"pool\": \"2001:db8:1::1 - 2001:db8:1::64\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"dns-servers\","
+        "                                   \"data\": \"2001:db8:1::4\""
+        "                                }"
+        "                            ]"
         "                        }"
         "                    ],"
         "                    \"reservations\": ["
@@ -2704,11 +2710,11 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceNetworkClass) {
         "    ]"
         "}";
 
-    testPrecedence(config, "2001:db8:1::3");
+    testPrecedence(config, "2001:db8:1::2");
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
     const std::string config =
         "{"
@@ -2716,18 +2722,6 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
         "        {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
-        "        }"
-        "    ],"
-        "    \"client-classes\": ["
-        "        {"
-        "            \"name\": \"alpha\","
-        "            \"test\": \"'' == ''\","
-        "            \"option-data\": ["
-        "                {"
-        "                   \"name\": \"dns-servers\","
-        "                   \"data\": \"2001:db8:1::2\""
-        "                }"
-        "            ]"
         "        }"
         "    ],"
         "    \"shared-networks\": ["
@@ -2771,7 +2765,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedenceSubnet) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
     const std::string config =
         "{"
@@ -2779,18 +2773,6 @@ TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
         "        {"
         "           \"name\": \"dns-servers\","
         "           \"data\": \"2001:db8:1::1\""
-        "        }"
-        "    ],"
-        "    \"client-classes\": ["
-        "        {"
-        "            \"name\": \"alpha\","
-        "            \"test\": \"'' == ''\","
-        "            \"option-data\": ["
-        "                {"
-        "                   \"name\": \"dns-servers\","
-        "                   \"data\": \"2001:db8:1::2\""
-        "                }"
-        "            ]"
         "        }"
         "    ],"
         "    \"shared-networks\": ["
@@ -2840,7 +2822,7 @@ TEST_F(Dhcpv6SharedNetworkTest, precedencePool) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pools < host reservation
+// Order is global < shared-network < subnet < pools < class < host reservation
 TEST_F(Dhcpv6SharedNetworkTest, precedenceReservation) {
     const std::string config =
         "{"

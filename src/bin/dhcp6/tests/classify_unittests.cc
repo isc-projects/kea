@@ -687,12 +687,12 @@ TEST_F(ClassifyTest, subnetClassPriority) {
         "    \"interface\": \"eth1\", "
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
-        "             \"data\": \"false\" } ] } ], "
+        "             \"data\": \"true\" } ] } ], "
         "\"client-classes\": [ "
         "{   \"name\": \"router\","
         "    \"option-data\": ["
         "        {    \"name\": \"ipv6-forwarding\", "
-        "             \"data\": \"true\" } ], "
+        "             \"data\": \"false\" } ], "
         "    \"test\": \"option[1234].text == 'foo'\" } ] }";
     ASSERT_NO_THROW(configure(config));
 

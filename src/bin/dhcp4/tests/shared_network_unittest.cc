@@ -2121,7 +2121,7 @@ TEST_F(Dhcpv4SharedNetworkTest, poolInSubnetSelectedByClass) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceGlobal) {
     const std::string config =
         "{"
@@ -2164,7 +2164,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceGlobal) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceClass) {
     const std::string config =
         "{"
@@ -2219,7 +2219,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceClass) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceClasses) {
     const std::string config =
         "{"
@@ -2259,13 +2259,31 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceClasses) {
         "        {"
         "            \"name\": \"frog\","
         "            \"interface\": \"eth1\","
+        "            \"option-data\": ["
+        "                {"
+        "                   \"name\": \"domain-name-servers\","
+        "                   \"data\": \"192.0.2.4\""
+        "                }"
+        "            ],"
         "            \"subnet4\": ["
         "                {"
         "                    \"subnet\": \"192.0.2.0/26\","
         "                    \"id\": 10,"
+        "                    \"option-data\": ["
+        "                        {"
+        "                           \"name\": \"domain-name-servers\","
+        "                           \"data\": \"192.0.2.5\""
+        "                        }"
+        "                    ],"
         "                    \"pools\": ["
         "                        {"
-        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\""
+        "                            \"pool\": \"192.0.2.1 - 192.0.2.63\","
+        "                            \"option-data\": ["
+        "                                {"
+        "                                   \"name\": \"domain-name-servers\","
+        "                                   \"data\": \"192.0.2.5\""
+        "                                }"
+        "                            ]"
         "                        }"
         "                    ],"
         "                    \"reservations\": ["
@@ -2285,7 +2303,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceClasses) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceNetwork) {
     const std::string config =
         "{"
@@ -2297,18 +2315,6 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceNetwork) {
         "        {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"192.0.2.1\""
-        "        }"
-        "    ],"
-        "    \"client-classes\": ["
-        "        {"
-        "            \"name\": \"alpha\","
-        "            \"test\": \"'' == ''\","
-        "            \"option-data\": ["
-        "                {"
-        "                   \"name\": \"domain-name-servers\","
-        "                   \"data\": \"192.0.2.2\""
-        "                }"
-        "            ]"
         "        }"
         "    ],"
         "    \"shared-networks\": ["
@@ -2346,7 +2352,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceNetwork) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceSubnet) {
     const std::string config =
         "{"
@@ -2358,18 +2364,6 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceSubnet) {
         "        {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"192.0.2.1\""
-        "        }"
-        "    ],"
-        "    \"client-classes\": ["
-        "        {"
-        "            \"name\": \"alpha\","
-        "            \"test\": \"'' == ''\","
-        "            \"option-data\": ["
-        "                {"
-        "                   \"name\": \"domain-name-servers\","
-        "                   \"data\": \"192.0.2.2\""
-        "                }"
-        "            ]"
         "        }"
         "    ],"
         "    \"shared-networks\": ["
@@ -2413,7 +2407,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedenceSubnet) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedencePool) {
     const std::string config =
         "{"
@@ -2425,18 +2419,6 @@ TEST_F(Dhcpv4SharedNetworkTest, precedencePool) {
         "        {"
         "           \"name\": \"domain-name-servers\","
         "           \"data\": \"192.0.2.1\""
-        "        }"
-        "    ],"
-        "    \"client-classes\": ["
-        "        {"
-        "            \"name\": \"alpha\","
-        "            \"test\": \"'' == ''\","
-        "            \"option-data\": ["
-        "                {"
-        "                   \"name\": \"domain-name-servers\","
-        "                   \"data\": \"192.0.2.2\""
-        "                }"
-        "            ]"
         "        }"
         "    ],"
         "    \"shared-networks\": ["
@@ -2486,7 +2468,7 @@ TEST_F(Dhcpv4SharedNetworkTest, precedencePool) {
 }
 
 // Verify option processing precedence
-// Order is global < class < shared-network < subnet < pool < host reservation
+// Order is global < shared-network < subnet < pool < class < host reservation
 TEST_F(Dhcpv4SharedNetworkTest, precedenceReservation) {
     const std::string config =
         "{"
