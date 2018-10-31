@@ -1,3 +1,8 @@
+1465.	[build]		marcin
+	Removed libkea-process dependency on MySQL, Postgres and
+	Cassandra libraries.
+	(Gitlab #194,!104, git bcce7d3c2226c10218d537c4688344c3b7f8c84a)
+
 1464.	[build]		marcin
 	Exclude mysql_cb hooks library from the Kea 1.5.0 release. This
 	library will be added back in Kea 1.6.0 release.
