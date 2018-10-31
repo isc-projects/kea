@@ -548,7 +548,8 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of class-add -->
 <section xml:id="reference-class-add">
 <title>class-add reference</title>
-<para xml:id="ref-class-add"><command>class-add</command> - This command is used to create and add a new class to the existing server configuration.</para>
+<para xml:id="ref-class-add"><command>class-add</command> - This command is used to create and add a new class to the existing
+              server configuration.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -561,27 +562,28 @@ Result is an integer representation of the status. Currently supported statuses 
     "command": "class-add",
     "arguments": {
         "client-classes": [ {
-           "name": "ipxe_efi_x64",
-           "test": "option[93].hex == 0x0009",
-            ...
+           "name": &lt;name of the class&gt;,
+           "test": &lt;test expression to be evaluated on incoming packets&gt;,
+           "option-data": [ &lt;option values here&gt; ],
+           "option-def": [ &lt;option defintions here&gt; ],
+           "next-server": &lt;ipv4 address&gt;,
+           "server-hostname": &lt;string&gt;,
+           "boot-file-name": &lt;name of the boot file&gt;
         } ]
     }
 }</screen>
-Only one client class can be added with a single command.</para>
+The <command>next-server</command>, 
+                    <command>server-hostname</command> and 
+                    <command>boot-file-name</command> are DHCPv4 specific. Only
+                    one client class can be added with a single command. </para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "Class 'ipxe_efi_x64' added."
+    "text": "Class '&lt;class-name&gt;' added.",
 }</screen>
-Result is an integer representation of the status. Currently supported statuses are:
-<itemizedlist>
-  <listitem><para>0 - success</para></listitem>
-  <listitem><para>1 - error</para></listitem>
-  <listitem><para>2 - unsupported</para></listitem>
-  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
-</itemizedlist>
-</para>
+The command will be successful (result 0), unless the
+                     class name is a duplicate (result 1).</para>
 
 </section>
 <!-- end of class-add -->
