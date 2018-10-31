@@ -1316,38 +1316,13 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // Firstly, host specific options.
+    // First: host specific options.
     const ConstHostPtr& host = ex.getContext()->currentHost();
     if (host && !host->getCfgOption4()->empty()) {
         co_list.push_back(host->getCfgOption4());
     }
 
-    // Secondly, pool specific options.
-    Pkt4Ptr resp = ex.getResponse();
-    IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
-    if (resp) {
-        addr = resp->getYiaddr();
-    }
-    if (!addr.isV4Zero()) {
-        PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
-        if (pool && !pool->getCfgOption()->empty()) {
-            co_list.push_back(pool->getCfgOption());
-        }
-    }
-
-    // Thirdly, subnet configured options.
-    if (!subnet->getCfgOption()->empty()) {
-        co_list.push_back(subnet->getCfgOption());
-    }
-
-    // Forthly, shared network specific options.
-    SharedNetwork4Ptr network;
-    subnet->getSharedNetwork(network);
-    if (network && !network->getCfgOption()->empty()) {
-        co_list.push_back(network->getCfgOption());
-    }
-
-    // Each class in the incoming packet
+    // Second: each class the incoming packet belongs to.
     const ClientClasses& classes = ex.getQuery()->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
@@ -1371,7 +1346,32 @@ Dhcpv4Srv::buildCfgOptionList(Dhcpv4Exchange& ex) {
         co_list.push_back(ccdef->getCfgOption());
     }
 
-    // Last global options
+    // Third: pool specific options.
+    Pkt4Ptr resp = ex.getResponse();
+    IOAddress addr = IOAddress::IPV4_ZERO_ADDRESS();
+    if (resp) {
+        addr = resp->getYiaddr();
+    }
+    if (!addr.isV4Zero()) {
+        PoolPtr pool = subnet->getPool(Lease::TYPE_V4, addr, false);
+        if (pool && !pool->getCfgOption()->empty()) {
+            co_list.push_back(pool->getCfgOption());
+        }
+    }
+
+    // Fourth: subnet configured options.
+    if (!subnet->getCfgOption()->empty()) {
+        co_list.push_back(subnet->getCfgOption());
+    }
+
+    // Fifth: shared network specific options.
+    SharedNetwork4Ptr network;
+    subnet->getSharedNetwork(network);
+    if (network && !network->getCfgOption()->empty()) {
+        co_list.push_back(network->getCfgOption());
+    }
+
+    // Sixth: global options come last.
     if (!CfgMgr::instance().getCurrentCfg()->getCfgOption()->empty()) {
         co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
     }

@@ -1051,40 +1051,12 @@ void
 Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
                               AllocEngine::ClientContext6& ctx,
                               CfgOptionList& co_list) {
-    // Firstly, host specific options.
+    // First: host specific options.
     if (ctx.currentHost() && !ctx.currentHost()->getCfgOption6()->empty()) {
         co_list.push_back(ctx.currentHost()->getCfgOption6());
     }
 
-    // Secondly, pool specific options. Pools are defined within a subnet, so
-    // if there is no subnet, there is nothing to do.
-    if (ctx.subnet_) {
-        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
-                      ctx.allocated_resources_) {
-            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
-                                                Lease::TYPE_NA : Lease::TYPE_PD,
-                                                resource.first, false);
-            if (pool && !pool->getCfgOption()->empty()) {
-                co_list.push_back(pool->getCfgOption());
-            }
-        }
-    };
-
-    if (ctx.subnet_) {
-        // Next, subnet configured options.
-        if (!ctx.subnet_->getCfgOption()->empty()) {
-            co_list.push_back(ctx.subnet_->getCfgOption());
-        }
-
-        // Then, shared network specific options.
-        SharedNetwork6Ptr network;
-        ctx.subnet_->getSharedNetwork(network);
-        if (network && !network->getCfgOption()->empty()) {
-            co_list.push_back(network->getCfgOption());
-        }
-    }
-
-    // Each class in the incoming packet
+    // Second: each class the incoming packet belongs to.
     const ClientClasses& classes = question->getClasses();
     for (ClientClasses::const_iterator cclass = classes.cbegin();
          cclass != classes.cend(); ++cclass) {
@@ -1110,7 +1082,35 @@ Dhcpv6Srv::buildCfgOptionList(const Pkt6Ptr& question,
         co_list.push_back(ccdef->getCfgOption());
     }
 
-    // Last global options
+    // Third: pool specific options. Pools are defined within a subnet, so
+    // if there is no subnet, there is nothing to do.
+    if (ctx.subnet_) {
+        BOOST_FOREACH(const AllocEngine::ResourceType& resource,
+                      ctx.allocated_resources_) {
+            PoolPtr pool = ctx.subnet_->getPool(resource.second == 128 ?
+                                                Lease::TYPE_NA : Lease::TYPE_PD,
+                                                resource.first, false);
+            if (pool && !pool->getCfgOption()->empty()) {
+                co_list.push_back(pool->getCfgOption());
+            }
+        }
+    };
+
+    if (ctx.subnet_) {
+        // Fourth: subnet configured options.
+        if (!ctx.subnet_->getCfgOption()->empty()) {
+            co_list.push_back(ctx.subnet_->getCfgOption());
+        }
+
+        // Fifth: shared network specific options.
+        SharedNetwork6Ptr network;
+        ctx.subnet_->getSharedNetwork(network);
+        if (network && !network->getCfgOption()->empty()) {
+            co_list.push_back(network->getCfgOption());
+        }
+    }
+
+    // Sixth: global options
     if (!CfgMgr::instance().getCurrentCfg()->getCfgOption()->empty()) {
         co_list.push_back(CfgMgr::instance().getCurrentCfg()->getCfgOption());
     }
