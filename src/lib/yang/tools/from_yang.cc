@@ -14,6 +14,9 @@ using namespace std;
 using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
+#ifndef HAVE_OLD_SYSREPO
+using namespace sysrepo;
+#endif
 
 /// @file From YANG to JSON utility.
 
