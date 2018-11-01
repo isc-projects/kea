@@ -634,6 +634,26 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    try {
+        // @todo Consider making this a function and consider whether
+        // it should check for old gc != null and new gc null before
+        // calling setPacketQueueControl().  Or if we should even
+        // call it when it's null?  
+        // Still grappling with what to if there is a custom queue
+        // loaded.  Could have a flag in the control that means
+        // using custom impl, in which case we don't make the call
+        // at all.  ... I dunno 
+        ConstQueueControlPtr qc;
+        qc  = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+        IfaceMgr::instance().setPacketQueueControl4(qc);
+        qc = IfaceMgr::instance().getPacketQueueControl4();
+        std::cout << "TKM using capacity: " << qc->getCapacity() << std::endl;
+    } catch (const std::exception& ex) {
+        err << "Error setting packet queue controls after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function

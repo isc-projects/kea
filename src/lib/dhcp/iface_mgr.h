@@ -1059,21 +1059,23 @@ public:
     /// @throw BadValue if given an empty pointer
     void setPacketQueue6(PacketQueue6Ptr& packet_queue6);
 
-    /// @brief Returns the current capacity of the DHCPv4 packet queue buffer.
-    size_t getPacketQueueCapacity4() const;
+    /// @brief Returns the current queue control information 
+    /// for the DHCPv4 packet queue buffer.
+    ConstQueueControlPtr getPacketQueueControl4() const;
 
-    /// @brief Set the capacity of the DHCPv4 packet queue buffer.
+    /// @brief Set the queue controls for the DHCPv4 packet queue buffer.
     ///
-    /// @param new_capacity New capacity of the buffer.
-    void setPacketQueueCapacity4(const size_t new_capacity);
+    /// @param new queue controls to use 
+    void setPacketQueueControl4(ConstQueueControlPtr queue_control);
 
-    /// @brief Returns the current capacity of the DHCPv6 packet queue buffer.
-    size_t getPacketQueueCapacity6() const;
+    /// @brief Returns the current queue control information 
+    /// for the DHCPv6 packet queue buffer.
+    ConstQueueControlPtr getPacketQueueControl6() const;
 
-    /// @brief Set the capacity of the DHCPv6 packet queue buffer.
+    /// @brief Set the queue controls for the DHCPv6 packet queue buffer.
     ///
-    /// @param new_capacity New capacity of the buffer.
-    void setPacketQueueCapacity6(const size_t new_capacity);
+    /// @param new queue controls to use 
+    void setPacketQueueControl6(ConstQueueControlPtr queue_control);
 
     /// @brief Starts DHCP packet receiver.
     ///

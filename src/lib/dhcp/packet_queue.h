@@ -7,6 +7,7 @@
 #ifndef PACKET_QUEUE_H
 #define PACKET_QUEUE_H
 
+#include <dhcp/queue_control.h>
 #include <dhcp/socket_info.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -132,6 +133,14 @@ public:
     /// @brief return True if the queue is empty.
     virtual bool empty() const = 0;
 
+    /// @brief Fetches the current queue control parameters
+    virtual ConstQueueControlPtr getQueueControl() const = 0;
+
+    /// @brief Sets queue control parameters from the given control structure.
+    ///
+    /// @param queue_control new control parameters to implement
+    virtual void setQueueControl(ConstQueueControlPtr queue_control) = 0;
+
     /// @brief Returns the maximum number of packets allowed in the buffer.
     virtual size_t getCapacity() const = 0;
 
@@ -143,6 +152,9 @@ public:
 
     /// @brief Discards all packets currently in the buffer.
     virtual void clear() = 0;
+
+    /// @brief Sets queue control parameters to their default values.
+    virtual void useDefaults() = 0;
 };
 
 /// @brief Defines pointer to the DHCPv4 queue interface used at the application level. 
@@ -160,7 +172,6 @@ public:
     /// @brief Constructor
     ///
     /// @param queue_capacity maximum number of packets the queue can hold
-    /// Defaults to DEFAULT_RING_CAPACITY.
     PacketQueueRing(size_t capacity) { 
         queue_.set_capacity(capacity);
     }
@@ -224,6 +235,26 @@ public:
         return(queue_.empty());
     } 
 
+    /// @brief Fetches the current queue control parameters
+    virtual ConstQueueControlPtr getQueueControl() const {
+        QueueControlPtr queue_control(new QueueControl());
+        queue_control->setCapacity(getCapacity());
+        return (queue_control);
+    } 
+
+    /// @brief Sets queue control parameters from the given control structure.
+    ///
+    /// @param queue_control new control parameters to implement.  If it is
+    /// an empty pointer we reset to default values.
+    virtual void setQueueControl(ConstQueueControlPtr queue_control) {
+        if (!queue_control) {
+            useDefaults();
+            return;
+        }
+
+        setCapacity(queue_control->getCapacity());
+    } 
+
     /// @brief Returns the maximum number of packets allowed in the buffer.
     virtual size_t getCapacity() const {
         return (queue_.capacity());
@@ -253,6 +284,11 @@ public:
         queue_.clear();
     }
 
+    /// @brief Sets capacity for default value of MIN_RING_CAPACITY
+    virtual void useDefaults() {
+        setCapacity(MIN_RING_CAPACITY);
+    }
+
 private:
 
     /// @brief Packet queue
@@ -273,7 +309,11 @@ public:
     };
 
     /// @brief virtual Destructor
-    virtual ~PacketQueueRing4(){};
+    virtual ~PacketQueueRing4(){}
+
+    virtual void useDefaults(){
+        setCapacity(DEFAULT_RING_CAPACITY);
+    }
 };
 
 /// @brief Default DHCPv6 packet queue buffer implementation
@@ -289,7 +329,11 @@ public:
     };
 
     /// @brief virtual Destructor
-    virtual ~PacketQueueRing6(){};
+    virtual ~PacketQueueRing6(){}
+
+    virtual void useDefaults() {
+        setCapacity(DEFAULT_RING_CAPACITY);
+    }
 };
 
 

@@ -1481,24 +1481,24 @@ IfaceMgr::setPacketQueue6(PacketQueue6Ptr& packet_queue6) {
     packet_queue6_ = packet_queue6;
 }
 
-size_t 
-IfaceMgr::getPacketQueueCapacity4() const {
-    return (packet_queue4_->getCapacity());
+ConstQueueControlPtr 
+IfaceMgr::getPacketQueueControl4() const {
+    return (packet_queue4_->getQueueControl());
 }
 
 void 
-IfaceMgr::setPacketQueueCapacity4(const size_t new_capacity) {
-    packet_queue4_->setCapacity(new_capacity);
+IfaceMgr::setPacketQueueControl4(ConstQueueControlPtr queue_control) {
+    packet_queue4_->setQueueControl(queue_control);
 }
 
-size_t 
-IfaceMgr::getPacketQueueCapacity6() const {
-    return (packet_queue6_->getCapacity());
+ConstQueueControlPtr 
+IfaceMgr::getPacketQueueControl6() const {
+    return (packet_queue6_->getQueueControl());
 }
 
 void 
-IfaceMgr::setPacketQueueCapacity6(const size_t new_capacity) {
-    packet_queue6_->setCapacity(new_capacity);
+IfaceMgr::setPacketQueueControl6(ConstQueueControlPtr queue_control) {
+    packet_queue6_->setQueueControl(queue_control);
 }
 
 } // end of namespace isc::dhcp
