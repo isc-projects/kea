@@ -6337,4 +6337,103 @@ TEST_F(Dhcp4ParserTest, serverTag) {
     ASSERT_THROW(parseDHCP4(bad_tag), std::exception);
 }
 
+// Check whether it is possible to configure server-tag
+TEST_F(Dhcp4ParserTest, queueControl) {
+    // Config without server-tag
+    string config_no_queue = "{ " + genIfaceConfig() + "," +
+        "\"subnet4\": [  ] "
+        "}";
+
+    string config_with_queue =
+        "{ " + genIfaceConfig() + ", \n" +
+        "   \"subnet4\": [  ],  \n"
+        "   \"queue-control\": { \n"
+        "       \"capacity\": 75 \n"
+        "   } \n"
+        "} \n";
+
+    string config_with_context =
+        "{ " + genIfaceConfig() + ", \n" +
+        "   \"subnet4\": [  ],  \n"
+        "   \"queue-control\": { \n"
+        "       \"capacity\": 90, \n"
+        "       \"user-context\": { \"comment\": \"some text\" } \n"
+        "   } \n"
+        "} \n";
+
+    // Let's check the default. It should be empty.
+    ConstQueueControlPtr control;
+    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+    ASSERT_FALSE(control);
+
+    // Configuration with no queue should default to an emtpy control.
+    configure(config_no_queue, CONTROL_RESULT_SUCCESS, "");
+    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+    ASSERT_FALSE(control);
+
+    // Clear the config
+    CfgMgr::instance().clear();
+
+    // Configuration with queue should be valid.
+    configure(config_with_queue, CONTROL_RESULT_SUCCESS, "");
+    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+    ASSERT_TRUE(control);
+    EXPECT_EQ(75, control->getCapacity());
+    EXPECT_FALSE(control->getContext());
+
+    CfgMgr::instance().clear();
+
+    // Configuration with queue with context should be valid.
+    configure(config_with_context, CONTROL_RESULT_SUCCESS, "");
+    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+    ASSERT_TRUE(control);
+    EXPECT_EQ(90, control->getCapacity());
+    EXPECT_TRUE(control->getContext());
+}
+
+// Check whether it is possible to configure server-tag
+TEST_F(Dhcp4ParserTest, queueControlInvalid) {
+    struct Scenario {
+        std::string description_;
+        std::string json_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "not a map",
+            "{ " + genIfaceConfig() + ", \n" +
+            "   \"subnet4\": [  ],  \n"
+            "   \"queue-control\": 75 \n"
+            "} \n"
+        },
+        {
+            "capacity missing",
+            "{ " + genIfaceConfig() + ", \n" +
+            "   \"subnet4\": [  ],  \n"
+            "   \"queue-control\": {} \n"
+            "} \n"
+        },
+        {
+            "capacity not an int",
+            "{ " + genIfaceConfig() + ", \n" +
+            "   \"subnet4\": [  ],  \n"
+            "   \"queue-control\": { \n"
+            "       \"capacity\": \"ninety\", \n"
+            "   } \n"
+            "} \n"
+        }
+    };
+
+    // Iterate over the incorrect scenarios and verify they
+    // fail as expected. Note, we use parseDHCP4() directly
+    // as all of the errors above are enforced by the grammar.
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE((scenario).description_);
+        {
+            EXPECT_THROW(parseDHCP4((scenario).json_), Dhcp4ParseError);
+        }
+    }
+}
+
+
 }

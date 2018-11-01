@@ -170,6 +170,9 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
+  QUEUE_CONTROL "queue-control"
+  CAPACITY "capacity"
+
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
   QUALIFYING_SUFFIX "qualifying-suffix"
@@ -448,6 +451,7 @@ global_param: valid_lifetime
             | expired_leases_processing
             | dhcp4o6_port
             | control_socket
+            | queue_control
             | dhcp_ddns
             | echo_client_id
             | match_client_id
@@ -1821,6 +1825,35 @@ control_socket_name: SOCKET_NAME {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
+};
+
+
+// --- queue control ---------------------------------------------
+
+queue_control: QUEUE_CONTROL {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("queue-control", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.QUEUE_CONTROL);
+} COLON LCURLY_BRACKET queue_control_params RCURLY_BRACKET {
+    ctx.require("capacity", ctx.loc2pos(@4), ctx.loc2pos(@6));
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+queue_control_params: queue_control_param
+                     | queue_control_params COMMA queue_control_param
+                     ;
+
+queue_control_param: capacity
+                    | user_context
+                    | comment
+                    | unknown_map_entry
+                    ;
+
+capacity: CAPACITY COLON INTEGER {
+    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("capacity", i);
 };
 
 // --- dhcp ddns ---------------------------------------------

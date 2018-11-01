@@ -78,19 +78,43 @@ public:
     int eat_count_;
 };
 
+// Verifies basic operation of the PacketQueue interface:
+// 1. Construction
+// 2. Manipulation of configurable parameters
 TEST(TestQueue6, interfaceBasics) {
-    PacketQueue6Ptr q6(new TestQueue6(100));
+    // Use minimum allowed 
+    size_t min = TestQueue6::MIN_RING_CAPACITY;
+
+    PacketQueue6Ptr q6(new TestQueue6(min));
     ASSERT_TRUE(q6);
     EXPECT_TRUE(q6->empty());
-    EXPECT_EQ(100, q6->getCapacity());
+
+    ConstQueueControlPtr orig_control = q6->getQueueControl();
+    ASSERT_TRUE(orig_control);
+    EXPECT_EQ(min, orig_control->getCapacity());
+    EXPECT_EQ(min, q6->getCapacity());
     EXPECT_EQ(0, q6->getSize());
 
-    size_t min = TestQueue6::MIN_RING_CAPACITY;
-    ASSERT_THROW(q6->setCapacity(min - 1), BadValue);
-    ASSERT_NO_THROW(q6->setCapacity(min));
-    EXPECT_EQ(min, q6->getCapacity());
+    // Verify we cannot violate minium.
+    QueueControlPtr new_control(new QueueControl());
+    new_control->setCapacity(min - 1);
+    ASSERT_THROW(q6->setQueueControl(new_control), BadValue);
+
+    // Verify original control values remain
+    EXPECT_TRUE(*(q6->getQueueControl()) == *orig_control);
+
+    // Verify we can update to a valid value.
+    new_control->setCapacity(min + 10);
+    ASSERT_NO_THROW(q6->setQueueControl(new_control));
+    ConstQueueControlPtr control = q6->getQueueControl();
+    ASSERT_TRUE(control);
+    EXPECT_TRUE(*control == *new_control);
+    EXPECT_EQ(min + 10, control->getCapacity());
+    EXPECT_EQ(min + 10, q6->getCapacity());
 }
 
+// Verifies the basic mechanics of the adding and
+// removing packets to and from the ring buffer.
 TEST(TestQueue6, ringTest) {
     PacketQueue6Ptr q6(new TestQueue6(3));
 
@@ -160,6 +184,8 @@ TEST(TestQueue6, ringTest) {
     EXPECT_EQ(0, q6->getSize()); 
 }
 
+// Verifies the higher level functions of queueing and
+// dequeueing with drop and skip logic disabled.
 TEST(TestQueue6, enqueueDequeueTest) {
     PacketQueue6Ptr q6(new TestQueue6(100));
     EXPECT_TRUE(q6->empty());
@@ -201,6 +227,7 @@ TEST(TestQueue6, enqueueDequeueTest) {
     ASSERT_FALSE(pkt);
 }
 
+// Verifies enqueuing operations when drop logic is enabled.
 TEST(TestQueue6, dropPacketTest) {
     TestQueue6 q6(100);
     EXPECT_TRUE(q6.empty());
@@ -257,6 +284,7 @@ TEST(TestQueue6, dropPacketTest) {
     ASSERT_FALSE(pkt);
 }
 
+// Verifies dequeuing operations when eat packets is enabled.
 TEST(TestQueue6, eatPacketsTest) {
     TestQueue6 q6(100);
     EXPECT_TRUE(q6.empty());

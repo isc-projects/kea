@@ -267,6 +267,9 @@ public:
         /// Used while parsing Dhcp4/control-socket structures.
         CONTROL_SOCKET,
 
+        /// Used while parsing Dhcp4/queue-control structures.
+        QUEUE_CONTROL,
+
         /// Used while parsing Dhcp4/subnet4/pools structures.
         POOLS,
 

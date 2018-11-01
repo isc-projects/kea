@@ -47,6 +47,8 @@ EXTRA_DIST += parsers/simple_parser4.cc
 EXTRA_DIST += parsers/simple_parser4.h
 EXTRA_DIST += parsers/simple_parser6.cc
 EXTRA_DIST += parsers/simple_parser6.h
+EXTRA_DIST += parsers/queue_control_parser.cc
+EXTRA_DIST += parsers/queue_control_parser.h
 
 # Devel guide diagrams
 EXTRA_DIST += images/pgsql_host_data_source.svg
@@ -180,6 +182,8 @@ libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/ifaces_config_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/option_data_parser.h
+libkea_dhcpsrv_la_SOURCES += parsers/queue_control_parser.cc
+libkea_dhcpsrv_la_SOURCES += parsers/queue_control_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/sanity_checks_parser.cc
 libkea_dhcpsrv_la_SOURCES += parsers/sanity_checks_parser.h
 libkea_dhcpsrv_la_SOURCES += parsers/shared_network_parser.cc
@@ -338,11 +342,11 @@ libkea_dhcpsrv_parsers_include_HEADERS = \
 	parsers/host_reservations_list_parser.h \
 	parsers/ifaces_config_parser.h \
 	parsers/option_data_parser.h \
+	parsers/queue_control_parser.h \
 	parsers/shared_network_parser.h \
 	parsers/shared_networks_list_parser.h \
 	parsers/simple_parser4.h \
 	parsers/simple_parser6.h
-
 
 install-data-local:
 	$(mkinstalldirs) $(DESTDIR)$(dhcp_data_dir)

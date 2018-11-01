@@ -6,7 +6,6 @@
 
 #include <config.h>
 
-#include <asiolink/io_address.h>
 #include <dhcp/packet_queue.h>
 
 #include <boost/shared_ptr.hpp>
@@ -20,7 +19,6 @@ namespace {
 
 class TestQueue4 : public PacketQueueRing<Pkt4Ptr> {
 public:
-
     /// @brief Constructor
     ///
     /// @param queue_size maximum number of packets the queue can hold
@@ -70,23 +68,56 @@ public:
         return (eaten);
     }
 
+    virtual void useDefaults() {
+        setCapacity(411);
+    }
+
     bool drop_enabled_;
     int eat_count_;
 };
 
+// Verifies basic use onf PacketQueue interface:
+// 1. Construction
+// 2. Manipulation of configurable parameters
 TEST(TestQueue4, interfaceBasics) {
-    PacketQueue4Ptr q4(new TestQueue4(100));
+    // Use minimum allowed 
+    size_t min = TestQueue4::MIN_RING_CAPACITY;
+
+    PacketQueue4Ptr q4(new TestQueue4(min));
     ASSERT_TRUE(q4);
     EXPECT_TRUE(q4->empty());
-    EXPECT_EQ(100, q4->getCapacity());
+
+    ConstQueueControlPtr orig_control = q4->getQueueControl();
+    ASSERT_TRUE(orig_control);
+    EXPECT_EQ(min, orig_control->getCapacity());
+    EXPECT_EQ(min, q4->getCapacity());
     EXPECT_EQ(0, q4->getSize());
 
-    size_t min = TestQueue4::MIN_RING_CAPACITY;
-    ASSERT_THROW(q4->setCapacity(min - 1), BadValue);
-    ASSERT_NO_THROW(q4->setCapacity(min));
-    EXPECT_EQ(min, q4->getCapacity());
+    // Verify we cannot violate minium.
+    QueueControlPtr new_control(new QueueControl());
+    new_control->setCapacity(min - 1);
+    ASSERT_THROW(q4->setQueueControl(new_control), BadValue);
+
+    // Verify original control values remain
+    EXPECT_TRUE(*(q4->getQueueControl()) == *orig_control);
+
+    // Verify we can update to a valid value.
+    new_control->setCapacity(min + 10);
+    ASSERT_NO_THROW(q4->setQueueControl(new_control));
+    ConstQueueControlPtr control = q4->getQueueControl();
+    ASSERT_TRUE(control);
+    EXPECT_TRUE(*control == *new_control);
+    EXPECT_EQ(min + 10, control->getCapacity());
+    EXPECT_EQ(min + 10, q4->getCapacity());
+
+    ASSERT_NO_THROW(q4->setQueueControl(ConstQueueControlPtr()));
+    control = q4->getQueueControl();
+    ASSERT_TRUE(control);
+    EXPECT_EQ(411, control->getCapacity());
 }
 
+// Verifies the basic mechanics of the adding and
+// removing packets to and from the ring buffer.
 TEST(TestQueue4, ringTest) {
     PacketQueue4Ptr q4(new TestQueue4(3));
 
@@ -156,6 +187,8 @@ TEST(TestQueue4, ringTest) {
     EXPECT_EQ(0, q4->getSize()); 
 }
 
+// Verifies the higher level functions of queueing and
+// dequeueing with drop and skip logic disabled.
 TEST(TestQueue4, enqueueDequeueTest) {
     PacketQueue4Ptr q4(new TestQueue4(100));
     EXPECT_TRUE(q4->empty());
@@ -197,6 +230,7 @@ TEST(TestQueue4, enqueueDequeueTest) {
     ASSERT_FALSE(pkt);
 }
 
+// Verifies enqueuing operations when drop logic is enabled.
 TEST(TestQueue4, dropPacketTest) {
     TestQueue4 q4(100);
     EXPECT_TRUE(q4.empty());
@@ -252,7 +286,7 @@ TEST(TestQueue4, dropPacketTest) {
     ASSERT_NO_THROW(pkt = q4.dequeuePacket());
     ASSERT_FALSE(pkt);
 }
-
+// Verifies dequeuing operations when eat packets is enabled.
 TEST(TestQueue4, eatPacketsTest) {
     TestQueue4 q4(100);
     EXPECT_TRUE(q4.empty());

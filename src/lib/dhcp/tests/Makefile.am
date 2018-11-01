@@ -82,6 +82,7 @@ libdhcp___unittests_SOURCES += pkt_filter_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter6_test_stub.cc pkt_filter_test_stub.h
 libdhcp___unittests_SOURCES += pkt_filter_test_utils.h pkt_filter_test_utils.cc
 libdhcp___unittests_SOURCES += pkt_filter6_test_utils.h pkt_filter6_test_utils.cc
+libdhcp___unittests_SOURCES += queue_control_unittest.cc
 
 # Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
