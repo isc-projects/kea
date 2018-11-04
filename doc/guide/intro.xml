@@ -36,10 +36,16 @@
       <para>
         Kea is officially supported on Red Hat Enterprise Linux,
 	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.4.0 builds have been tested on (in no
-        particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
-        Ubuntu 14.04, Ubuntu 16.04, Fedora 25, Fedore 26, Fedora 27,
-        CentOS Linux 7, FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11, Debian 9
+	    other platforms: Kea 1.4.0 builds have been tested on:
+        <itemizedlist>
+          <listitem>Red Hat Enterprise Linux — 6.4</listitem>
+          <listitem>CentOS Linux — 7</listitem>
+          <listitem>Debian GNU/Linux — 7, 7.11, 9</listitem>
+          <listitem>Ubuntu — 14.04, 16.04</listitem>
+          <listitem>Fedora — 25, 26, 27</listitem>
+          <listitem>FreeBSD — 11.0</listitem>
+          <listitem>MAC OS X — 10.11, 10.12</listitem>
+        </itemizedlist>
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
@@ -163,7 +169,7 @@
               <command>kea-lfc</command> —
               This process removes redundant information from the files used
               to provide persistent storage for the memfile data base backend.
-              While it can be run standalone, it is normally run as and when 
+              While it can be run standalone, it is normally run as and when
               required by the Kea DHCP servers.
             </simpara>
           </listitem>
