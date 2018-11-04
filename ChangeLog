@@ -1,3 +1,9 @@
+1466.	[func]		fdupont
+	Added random number generation in services provided by
+	the crypto library (and ultimately by the crypto backend,
+	i.e. Botan or OpenSSL).
+	(Gitlab #29,!9, git 609ddc69613dc828b3d93673d61a2c259c3944aa)
+
 1465.	[build]		marcin
 	Removed libkea-process dependency on MySQL, Postgres and
 	Cassandra libraries.
