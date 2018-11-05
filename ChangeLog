@@ -1,3 +1,7 @@
+1466.	[doc]		fdupont, tomek
+	Doxygen errors fixed.
+	(Gitlab #180,!93, git d12fb04d71c3b2d0e84ebb2c957334454b5705c4)
+
 1465.	[build]		marcin
 	Removed libkea-process dependency on MySQL, Postgres and
 	Cassandra libraries.
