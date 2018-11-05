@@ -1,3 +1,8 @@
+1469.	[doc]		marcin, fdupont
+	Documented new class_cmds premium library which is used
+	to modify client class configuration of the DHCP servers.
+	(Gitlab #64,!41, git c1c1d0b71496d81b330a8c1eb95996bbf634ada0)
+
 1468.	[build]		wlodek
 	make distcheck fix.
 	(Gitlab #202, !111, git 5d8fb5f7af5fa36f4cb2b89f10631683b2e230d5)
