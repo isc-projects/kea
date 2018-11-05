@@ -8,11 +8,16 @@
     "cmd-syntax": "{
     \"command\": \"class-del\",
     \"arguments\": {
-        \"name\": \"ipxe_efi_x64\",
+        \"name\": <name of the class>,
     }
 }",
     "resp-syntax": "{
     \"result\": 0,
-    \"text\": \"Class 'ipxe_efi_x64' deleted.\"
-}"
+    \"text\": \"Class '<class-name>' deleted.\"
+}",
+    "resp-comment": "The command will return a result of 3 (empty) if the client
+                    class doesn't exist. If the client class exists, the retured
+                    result is 0 if the deletion was successful and the result is 1
+                    if the deletion is unsuccessful."
+
 }
