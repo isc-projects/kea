@@ -1,0 +1,107 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#include <config.h>
+
+#include <dhcp/packet_queue_mgr4.h>
+#include <packet_queue_testutils.h>
+
+#include <boost/shared_ptr.hpp>
+#include <gtest/gtest.h>
+
+using namespace std;
+using namespace isc;
+using namespace isc::dhcp;
+
+namespace {
+
+class PacketQueueMgr4Test : public ::testing::Test {
+public:
+    PacketQueueMgr4Test(){
+        PacketQueueMgr4::create();
+    }
+
+    ~PacketQueueMgr4Test(){
+        PacketQueueMgr4::destroy();
+    }
+
+    /// @brief Registers a queue type factory 
+    bool addCustomQueueType(const std::string& queue_type) {
+        bool did_it =
+            mgr().registerPacketQueueFactory(queue_type, 
+                                            [](const QueueControl& control)
+                                            -> PacketQueue4Ptr {
+                return (PacketQueue4Ptr(new PacketQueueRing4(control.getQueueType(),
+                                                             control.getCapacity())));
+            });
+
+        return did_it; 
+    }
+
+    PacketQueueMgr4& mgr() {
+        return (PacketQueueMgr4::instance());
+    };
+
+    void checkMyInfo(const std::string& exp_json) {
+        checkInfo((mgr().getPacketQueue()), exp_json);
+    }
+
+};
+
+TEST_F(PacketQueueMgr4Test, defaultQueue) {
+
+    // Verify that we have a default queue and its info is correct.
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+
+    QueueControl control;
+    control.setQueueType("kea-ring4");
+    control.setCapacity(2000);
+
+    // Verify that we can replace the default queue with different capacity queue
+    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+
+    // We should be able to recreate the manager.
+    ASSERT_NO_THROW(PacketQueueMgr4::create());  
+
+    // And be back to having the default queue.
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+}
+
+TEST_F(PacketQueueMgr4Test, customQueueType) {
+    QueueControl control;
+    control.setQueueType("custom-queue");
+    control.setCapacity(2000);
+
+    // Verify that we cannot create a queue for a non-existant type
+    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+
+    // Register our adjustable-type factory
+    ASSERT_TRUE(addCustomQueueType("custom-queue"));
+
+    // We still have our default queue.
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+
+    // Verify that we can replace the default queue with a "custom-queue" queue
+    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
+
+    // Now unregister the factory.
+    ASSERT_NO_THROW(mgr().unregisterPacketQueueFactory("custom-queue"));
+
+    // Verify we did not lose the queue.
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
+
+    // Try and recreate the custom queue, type should be invalid.
+    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+
+    // Verify we can create a default type queue.
+    control.setQueueType("kea-ring4");
+    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+}
+
+} // end of anonymous namespace

@@ -13,23 +13,28 @@ namespace isc {
 namespace dhcp {
 
 QueueControl::QueueControl()
-    : capacity_(0) {
+    : queue_type_(""), capacity_(0) {
 }
 
 bool
 QueueControl::equals(const QueueControl& other) const {
-    return (capacity_ == other.capacity_);
+    return (queue_type_ == other.queue_type_ &&
+            capacity_ == other.capacity_);
 }
 
 ElementPtr
 QueueControl::toElement() const {
     ElementPtr result = Element::createMap();
 
-    // Set user context
-    contextToElement(result);
+    // Add "capacity"
+    result->set("queue-type", Element::create(queue_type_));
 
     // Add "capacity"
     result->set("capacity", Element::create(static_cast<long int>(capacity_)));
+
+    // Set user context
+    contextToElement(result);
+
 
     return (result);
 }

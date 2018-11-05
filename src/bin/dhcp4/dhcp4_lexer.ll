@@ -1250,6 +1250,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"queue-type\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::QUEUE_CONTROL:
+        return isc::dhcp::Dhcp4Parser::make_QUEUE_TYPE(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("queue-type", driver.loc_);
+    }
+}
+
 \"capacity\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::QUEUE_CONTROL:

@@ -35,12 +35,23 @@ QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
         isc_throw(DhcpConfigError, "queue-control must be a map");
     }
 
+    ConstElementPtr elem  = queue_elem->get("queue-type");
+    if (!elem) {
+        isc_throw(DhcpConfigError, "queue-type is required");
+    } else {
+        if (elem->getType() != Element::string) {
+            isc_throw(DhcpConfigError, "queue-type must be a string");
+        }
+
+        queue_control->setQueueType(elem->stringValue());
+    }
+
     try {
         size_t capacity = getInteger(queue_elem, "capacity");
         queue_control->setCapacity(capacity);
     } catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() 
-                  << " (" << getPosition("ip-addresses", queue_elem) << ")");
+                  << " (" << getPosition("capacity", queue_elem) << ")");
     }
 
     ConstElementPtr user_context = queue_elem->get("user-context");

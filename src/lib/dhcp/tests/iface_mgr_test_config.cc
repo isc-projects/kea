@@ -37,7 +37,7 @@ IfaceMgrTestConfig::IfaceMgrTestConfig(const bool default_config) {
 }
 
 IfaceMgrTestConfig::~IfaceMgrTestConfig() {
-    IfaceMgr::instance().stopReceiver();
+    IfaceMgr::instance().stopDHCPReceiver();
     IfaceMgr::instance().closeSockets();
     IfaceMgr::instance().clearIfaces();
     IfaceMgr::instance().setPacketFilter(PktFilterPtr(new PktFilterInet()));

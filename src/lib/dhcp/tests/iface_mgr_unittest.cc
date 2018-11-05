@@ -14,6 +14,7 @@
 #include <dhcp/pkt_filter.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/tests/pkt_filter6_test_utils.h>
+#include <dhcp/tests/packet_queue_testutils.h>
 
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
@@ -640,71 +641,37 @@ TEST_F(IfaceMgrTest, clearIfaces) {
     EXPECT_EQ(0, ifacemgr.countIfaces());
 }
 
-// Verify that we can manipulate the DHCPv4 packet queue.
+// Verify that we have the expected default DHCPv4 packet queue.
 TEST_F(IfaceMgrTest, packetQueue4) {
     NakedIfaceMgr ifacemgr;
-  
-    // Verify the default packet queue exists and has the default capacity.
-    size_t default_cap = PacketQueueRing4::DEFAULT_RING_CAPACITY;
 
-    ConstQueueControlPtr control;
-    ASSERT_NO_THROW(control = ifacemgr.getPacketQueueControl4());
-    ASSERT_TRUE(control);
-    EXPECT_EQ(default_cap, control->getCapacity());
+    // Get the default queue.
+    PacketQueue4Ptr q4 = ifacemgr.getPacketQueue4();
+    ASSERT_TRUE(q4);
 
-    PacketQueue4Ptr myQueue;
-    // Verify we cannot set the queue to an empty pointer.
-    ASSERT_THROW(ifacemgr.setPacketQueue4(myQueue), BadValue);
+    // Verify that the queue is what we expect.
+    checkInfo(q4, "{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
-    // Verify we can replace the default packet queue with our own.
-    myQueue.reset(new PacketQueueRing4(default_cap + 1));
-    ASSERT_NO_THROW(ifacemgr.setPacketQueue4(myQueue));
-
-    // Verify the new queue has the expected capacity.
-    control = ifacemgr.getPacketQueueControl4();
-    ASSERT_TRUE(control);
-    EXPECT_EQ(default_cap + 1, control->getCapacity());
-
-    // Verify we can't set the capacity to an invalid value.
-    QueueControlPtr new_control(new QueueControl());
-    new_control->setCapacity(0);
-    ASSERT_THROW(ifacemgr.setPacketQueueControl4(new_control), BadValue);
-
-    // Verify we can set the capacity to an invalid value.
-    new_control->setCapacity(default_cap + 2);
-    ASSERT_NO_THROW(ifacemgr.setPacketQueueControl4(new_control));
-    ASSERT_NO_THROW(control = ifacemgr.getPacketQueueControl4());
-    EXPECT_EQ(default_cap + 2, control->getCapacity());
+    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
+    // returns the same queue.
+    ASSERT_EQ(ifacemgr.getPacketQueue4(), PacketQueueMgr4::instance().getPacketQueue());
 }
 
-#if 0
-// Verify that we can manipulate the DHCPv6 packet queue.
+// Verify that we have the expected default DHCPv6 packet queue.
 TEST_F(IfaceMgrTest, packetQueue6) {
     NakedIfaceMgr ifacemgr;
-  
-    // Verify the default packet queue exists and has the default capacity.
-    size_t default_cap = PacketQueueRing6::DEFAULT_RING_CAPACITY;
-    EXPECT_EQ(default_cap, ifacemgr.getPacketQueueCapacity6());
 
-    PacketQueue6Ptr myQueue;
-    // Verify we cannot set the queue to an empty pointer.
-    ASSERT_THROW(ifacemgr.setPacketQueue6(myQueue), BadValue);
+    // Get the default queue.
+    PacketQueue6Ptr q6 = ifacemgr.getPacketQueue6();
 
-    // Verify we can replace the default packet queue with our own.
-    myQueue.reset(new PacketQueueRing6(default_cap + 1));
-    ASSERT_NO_THROW(ifacemgr.setPacketQueue6(myQueue));
+    // Verify that we have a default queue and its info is correct.
+    checkInfo(q6, "{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
-    // Verify the new queue has the expected capacity.
-    EXPECT_EQ(default_cap + 1, ifacemgr.getPacketQueueCapacity6());
-
-    // Verify we can't set the capacity to an invalid value.
-    ASSERT_THROW(ifacemgr.setPacketQueueCapacity6(0), BadValue);
-
-    // Verify we can set the capacity to an invalid value.
-    ASSERT_NO_THROW(ifacemgr.setPacketQueueCapacity6(default_cap + 2));
-    EXPECT_EQ(default_cap + 2, ifacemgr.getPacketQueueCapacity6());
+    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
+    // returns the same queue.
+    ASSERT_EQ(ifacemgr.getPacketQueue6(), PacketQueueMgr6::instance().getPacketQueue());
 }
-#endif
+
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
     using namespace boost::posix_time;
@@ -760,7 +727,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
     EXPECT_THROW(ifacemgr->receive6(1, 1000010), isc::BadValue);
 
     // Stop receiver.
-    EXPECT_NO_THROW(ifacemgr->stopReceiver());
+    EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
@@ -817,7 +784,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
 
     // Stop receiver.
-    EXPECT_NO_THROW(ifacemgr->stopReceiver());
+    EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
 TEST_F(IfaceMgrTest, multipleSockets) {
@@ -1143,7 +1110,7 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     // we should accept both values as source ports.
     EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
 
-    ifacemgr->stopReceiver();
+    ifacemgr->stopDHCPReceiver();
 }
 
 TEST_F(IfaceMgrTest, sendReceive4) {
@@ -1239,14 +1206,14 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     // @todo Closing the socket does NOT cause a read error out of the
     // receiveDHCP<X>Packets() select.  Apparently this is because the
     // thread is already inside the select when the socket is closed,
-    // and (at least under Centos 7.5), this does not interrupt the 
+    // and (at least under Centos 7.5), this does not interrupt the
     // select.
     EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
 #endif
 
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 
-    ifacemgr->stopReceiver();
+    ifacemgr->stopDHCPReceiver();
 }
 
 // Verifies that it is possible to set custom packet filter object
@@ -2569,7 +2536,7 @@ TEST_F(IfaceMgrTest, SingleExternalSocket4) {
     close(pipefd[1]);
     close(pipefd[0]);
 
-    ASSERT_NO_THROW(ifacemgr->stopReceiver());
+    ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
 }
 
 // Tests if multiple external sockets and their callbacks can be passed and

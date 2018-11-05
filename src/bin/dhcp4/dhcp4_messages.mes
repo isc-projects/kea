@@ -120,6 +120,11 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
+% DHCP4_CONFIG_PACKET_QUEUE DHCPv4 packet queue info after configuration: %1
+This debug message is emitted during DHCPv4 server configuration, immediately
+after configuring the DHCPv4 packet queue.  The information shown depends
+upon the packet queue type selected.
+
 % DHCP4_CONFIG_LOAD_FAIL configuration error using file: %1, reason: %2
 This error message indicates that the DHCPv4 configuration has failed.
 If this is an initial configuration (during server's startup) the server

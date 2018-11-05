@@ -12,7 +12,8 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <dhcp/packet_queue.h>
+#include <dhcp/packet_queue_mgr4.h>
+#include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
 #include <util/optional_value.h>
@@ -1031,51 +1032,23 @@ public:
     /// @return true if there is a socket bound to the specified address.
     bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief Sets the DHCPv4 packet queue
+    /// @brief DHCPv4 receiver packet queue.
     ///
-    /// Replaces the existing DHCPv4 packet queue with the
-    /// given queue.  Any packets contained in the existing 
-    /// queue will be discarded.  This method is intended to 
-    /// be used by hook developers to install their own packet
-    /// queue implementation(s).
-    ///
-    /// @param packet_queue4 pointer to a PacketQueue4 instance
-    /// to use to manage inbound DHCPv4 packets.
-    ///
-    /// @throw BadValue if given an empty pointer
-    void setPacketQueue4(PacketQueue4Ptr& packet_queue4);
+    /// Incoming packets are read by the receiver thread and
+    /// added to this queue. @c receive4() dequeues and 
+    /// returns them. 
+    PacketQueue4Ptr getPacketQueue4() { 
+        return (PacketQueueMgr4::instance().getPacketQueue());
+    }
 
-    /// @brief Sets the DHCPv6 packet queue
+    /// @brief DHCPv6 receiver packet queue.
     ///
-    /// Replaces the existing DHCPv6 packet queue with the
-    /// given queue.  Any packets contained in the existing 
-    /// queue will be discarded.  This method is intended to 
-    /// be used by hook developers to install their own packet
-    /// queue implementation(s).
-    ///
-    /// @param packet_queue6 pointer to a PacketQueue6 instance
-    /// to use to manage inbound DHCPv6 packets.
-    ///
-    /// @throw BadValue if given an empty pointer
-    void setPacketQueue6(PacketQueue6Ptr& packet_queue6);
-
-    /// @brief Returns the current queue control information 
-    /// for the DHCPv4 packet queue buffer.
-    ConstQueueControlPtr getPacketQueueControl4() const;
-
-    /// @brief Set the queue controls for the DHCPv4 packet queue buffer.
-    ///
-    /// @param new queue controls to use 
-    void setPacketQueueControl4(ConstQueueControlPtr queue_control);
-
-    /// @brief Returns the current queue control information 
-    /// for the DHCPv6 packet queue buffer.
-    ConstQueueControlPtr getPacketQueueControl6() const;
-
-    /// @brief Set the queue controls for the DHCPv6 packet queue buffer.
-    ///
-    /// @param new queue controls to use 
-    void setPacketQueueControl6(ConstQueueControlPtr queue_control);
+    /// Incoming packets are read by the receiver thread and
+    /// added to this queue. @c receive6() dequeues and
+    /// returns them.
+    PacketQueue6Ptr getPacketQueue6() {
+        return (PacketQueueMgr6::instance().getPacketQueue());
+    }
 
     /// @brief Starts DHCP packet receiver.
     ///
@@ -1091,7 +1064,7 @@ public:
     /// @brief Stops the DHCP packet receiver.
     ///
     /// Stops the receiver and delete the dedicated thread.
-    void stopReceiver();
+    void stopDHCPReceiver();
 
     // don't use private, we need derived classes in tests
 protected:
@@ -1281,20 +1254,6 @@ private:
 
     /// @brief Error message of the last DHCP packet receive error.
     std::string receiver_error_;
-
-    /// @brief DHCPv4 receiver packet queue.
-    ///
-    /// Incoming packets are read by the receiver thread and
-    /// added to this queue. @c receive4() dequeues and 
-    /// returns them.
-    PacketQueue4Ptr packet_queue4_;
-
-    /// @brief DHCPv6 receiver packet queue.
-    ///
-    /// Incoming packets are read by the receiver thread and
-    /// added to this queue. @c receive6() dequeues and
-    /// returns them.
-    PacketQueue6Ptr packet_queue6_;
 
     /// @brief DHCP packet receive error watch socket.
     /// Marked as ready when the DHCP packet receiver experiences 

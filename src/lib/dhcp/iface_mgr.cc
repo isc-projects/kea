@@ -185,9 +185,16 @@ IfaceMgr::IfaceMgr()
      packet_filter6_(new PktFilterInet6()),
      test_mode_(false),
      allow_loopback_(false),
-     receiver_error_("no error"),
-     packet_queue4_(new PacketQueueRing4()),
-     packet_queue6_(new PacketQueueRing6()) {
+    receiver_error_("no error") {
+
+    // Ensure that PQMs have been created to guarantee we have
+    // default packet queues in place.
+    try {
+        PacketQueueMgr4::create();
+        PacketQueueMgr6::create();
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "Failed to create PacketQueueManagers: " << ex.what());
+    }
 
     try {
 
@@ -280,7 +287,7 @@ void IfaceMgr::closeSockets() {
     }
 }
 
-void IfaceMgr::stopReceiver() {
+void IfaceMgr::stopDHCPReceiver() {
     if (receiver_thread_) {
         terminate_watch_.markReady();
         receiver_thread_->wait();
@@ -288,14 +295,16 @@ void IfaceMgr::stopReceiver() {
         error_watch_.clearReady();
     }
     receiver_error_ = "no error";
-    if (packet_queue4_) {
-        packet_queue4_->clear();
+
+    /* if(getPacketQueue4())*/ {
+        getPacketQueue4()->clear();
     }
 
-    if (packet_queue6_) {
-        packet_queue6_->clear();
+    /* if (getPacketQueue6()) */ {
+        getPacketQueue4()->clear();
     }
 }
+
 
 void
 IfaceMgr::closeSockets(const uint16_t) {
@@ -306,8 +315,12 @@ IfaceMgr::~IfaceMgr() {
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
 
-    stopReceiver();
+    stopDHCPReceiver();
     closeSockets();
+
+    // Explicitly delete PQM singletons.
+    PacketQueueMgr4::destroy();
+    PacketQueueMgr6::destroy();
 }
 
 bool
@@ -671,9 +684,17 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
 
     switch (family) {
     case AF_INET:
+        if(!getPacketQueue4()) {
+            isc_throw(Unexpected, "startDHCPRecever - no packet queue?");
+        }
+
         receiver_thread_.reset(new Thread(boost::bind(&IfaceMgr::receiveDHCP4Packets, this)));
         break;
     case AF_INET6:
+        if(!getPacketQueue6()) {
+            isc_throw(Unexpected, "startDHCPRecever - no packet queue?");
+        }
+
         receiver_thread_.reset(new Thread(boost::bind(&IfaceMgr::receiveDHCP6Packets, this)));
         break;
     default:
@@ -965,7 +986,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     struct timeval select_timeout;
-    if (packet_queue4_->empty()) {
+    if (getPacketQueue4()->empty()) {
         select_timeout.tv_sec = timeout_sec;
         select_timeout.tv_usec = timeout_usec;
     } else {
@@ -978,7 +999,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
-    if ((result == 0) && packet_queue4_->empty()) {
+    if ((result == 0) && getPacketQueue4()->empty()) {
         // nothing received and timeout has been reached
         return (Pkt4Ptr()); // NULL
 
@@ -1025,7 +1046,7 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // Protected packet queue access.
     {
         Mutex::Locker lock(receiver_lock_);
-        Pkt4Ptr pkt = packet_queue4_->dequeuePacket();
+        Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
         if (!pkt) {
             receive_watch_.clearReady();
         }
@@ -1068,7 +1089,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     struct timeval select_timeout;
-    if (packet_queue6_->empty()) {
+    if (getPacketQueue6()->empty()) {
         select_timeout.tv_sec = timeout_sec;
         select_timeout.tv_usec = timeout_usec;
     } else {
@@ -1081,7 +1102,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
 
     int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
 
-    if ((result == 0) && packet_queue6_->empty()) {
+    if ((result == 0) && getPacketQueue6()->empty()) {
         // nothing received and timeout has been reached
         return (Pkt6Ptr()); // NULL
 
@@ -1128,7 +1149,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // Protected DHCP packet queue access.
     {
         Mutex::Locker lock(receiver_lock_);
-        Pkt6Ptr pkt = packet_queue6_->dequeuePacket();
+        Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
         if (!pkt) {
             receive_watch_.clearReady();
         }
@@ -1328,7 +1349,7 @@ void IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
 
     if (pkt) {
         Mutex::Locker lock(receiver_lock_);
-        packet_queue4_->enqueuePacket(pkt, socket_info);
+        getPacketQueue4()->enqueuePacket(pkt, socket_info);
         receive_watch_.markReady();
     }
 }
@@ -1361,7 +1382,7 @@ void IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
 
     if (pkt) {
         Mutex::Locker lock(receiver_lock_);
-        packet_queue6_->enqueuePacket(pkt, socket_info);
+        getPacketQueue6()->enqueuePacket(pkt, socket_info);
         receive_watch_.markReady();
     }
 }
@@ -1453,52 +1474,6 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
     }
 
     return (*candidate);
-}
-
-void 
-IfaceMgr::setPacketQueue4(PacketQueue4Ptr& packet_queue4) {
-    if (!packet_queue4) {
-        isc_throw(BadValue, "IfaceMgr::setPacketQueue4 "
-                  " queue pointer cannot be empty");
-    }
-
-    // On the off chance the existing impl doesn't clear on 
-    // destruction, we will as a safe guard.
-    packet_queue4_->clear();
-    packet_queue4_ = packet_queue4;
-}
-
-void 
-IfaceMgr::setPacketQueue6(PacketQueue6Ptr& packet_queue6) {
-    if (!packet_queue6) {
-        isc_throw(BadValue, "IfaceMgr::setPacketQueue6 "
-                  " queue pointer cannot be empty");
-        }
-
-    // On the off chance the existing impl doesn't clear on 
-    // destruction, we will as a safe guard.
-    packet_queue6_->clear();
-    packet_queue6_ = packet_queue6;
-}
-
-ConstQueueControlPtr 
-IfaceMgr::getPacketQueueControl4() const {
-    return (packet_queue4_->getQueueControl());
-}
-
-void 
-IfaceMgr::setPacketQueueControl4(ConstQueueControlPtr queue_control) {
-    packet_queue4_->setQueueControl(queue_control);
-}
-
-ConstQueueControlPtr 
-IfaceMgr::getPacketQueueControl6() const {
-    return (packet_queue6_->getQueueControl());
-}
-
-void 
-IfaceMgr::setPacketQueueControl6(ConstQueueControlPtr queue_control) {
-    packet_queue6_->setQueueControl(queue_control);
 }
 
 } // end of namespace isc::dhcp
