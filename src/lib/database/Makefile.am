@@ -24,6 +24,8 @@ CLEANFILES = *.gcno *.gcda db_messages.h db_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-database.la
 libkea_database_la_SOURCES  = backend_selector.cc backend_selector.h
+libkea_database_la_SOURCES += config_ctl_info.cc config_ctl_info.h
+libkea_database_la_SOURCES += config_ctl_parser.cc config_ctl_parser.h
 libkea_database_la_SOURCES += database_connection.cc database_connection.h
 libkea_database_la_SOURCES += dbaccess_parser.h dbaccess_parser.cc
 libkea_database_la_SOURCES += db_exceptions.h

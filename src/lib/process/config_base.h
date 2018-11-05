@@ -9,7 +9,6 @@
 
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
-#include <process/config_ctl_info.h>
 #include <process/logging_info.h>
 
 namespace isc {
@@ -76,26 +75,6 @@ public:
     /// @return Element representation.
     virtual isc::data::ElementPtr toElement() const;
 
-    /// @brief Fetches a read-only copy of the configuration control
-    /// information
-    /// @return pointer to the const ConfigControlInfo
-    process::ConstConfigControlInfoPtr getConfigControlInfo() const {
-        return (config_ctl_info_);
-    }
-
-    /// @brief Set the configuration control information
-    ///
-    /// Updates the internal pointer to the configuration control
-    /// information with the given pointer value.  If the given pointer
-    /// is empty, the internal pointer will be reset.
-    ///
-    /// @param config_ctl_info pointer to the configuration value
-    /// to store.
-    void setConfigControlInfo(const process::ConfigControlInfoPtr&
-                              config_ctl_info) {
-        config_ctl_info_ = config_ctl_info;
-    }
-
 protected:
     /// @brief Copies the current configuration to a new configuration.
     ///
@@ -110,9 +89,6 @@ protected:
 private:
     /// @brief Logging specific information.
     process::LoggingInfoStorage logging_info_;
-
-    /// @brief Configuration control information.
-    process::ConfigControlInfoPtr config_ctl_info_;
 };
 
 /// @brief Non-const pointer to the @c SrvConfig.

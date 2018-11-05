@@ -20,6 +20,8 @@ if HAVE_GTEST
 TESTS += libdatabase_unittests
 
 libdatabase_unittests_SOURCES  = backend_selector_unittest.cc
+libdatabase_unittests_SOURCES += config_ctl_info_unittests.cc
+libdatabase_unittests_SOURCES += config_ctl_parser_unittests.cc
 libdatabase_unittests_SOURCES += database_connection_unittest.cc
 libdatabase_unittests_SOURCES += dbaccess_parser_unittest.cc
 libdatabase_unittests_SOURCES += run_unittests.cc

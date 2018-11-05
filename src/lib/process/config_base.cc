@@ -54,14 +54,6 @@ ConfigBase::equals(const ConfigBase& other) const {
         }
     }
 
-    // Check config control info for equality.
-    if ((config_ctl_info_ && !other.config_ctl_info_) ||
-        (!config_ctl_info_ && other.config_ctl_info_) ||
-        ((config_ctl_info_ && other.config_ctl_info_) &&
-         (!config_ctl_info_->equals(*(other.config_ctl_info_))))) {
-        return (false);
-    }
-
     return (true);
 }
 
@@ -72,13 +64,6 @@ ConfigBase::copy(ConfigBase& other) const {
     for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
          it != logging_info_.end(); ++it) {
         other.addLoggingInfo(*it);
-    }
-
-    // Clone the config control info
-    if (config_ctl_info_) {
-        other.config_ctl_info_.reset(new ConfigControlInfo(*config_ctl_info_));
-    } else {
-        other.config_ctl_info_.reset();
     }
 }
 

@@ -38,7 +38,7 @@ SrvConfig::SrvConfig()
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
-      cfg_consist_(new CfgConsistency()), 
+      cfg_consist_(new CfgConsistency()),
       server_tag_("") {
 }
 
@@ -128,6 +128,13 @@ SrvConfig::copy(SrvConfig& new_config) const {
          it != hooks_config_.get().end(); ++it) {
         new_config.hooks_config_.add(it->first, it->second);
     }
+
+    // Clone the config control info
+    if (config_ctl_info_) {
+        new_config.config_ctl_info_.reset(new ConfigControlInfo(*config_ctl_info_));
+    } else {
+        new_config.config_ctl_info_.reset();
+    }
 }
 
 bool
@@ -146,6 +153,15 @@ SrvConfig::equals(const SrvConfig& other) const {
         (*d2_client_config_ != *other.d2_client_config_)) {
         return (false);
     }
+
+    // Check config control info for equality.
+    if ((config_ctl_info_ && !other.config_ctl_info_) ||
+        (!config_ctl_info_ && other.config_ctl_info_) ||
+        ((config_ctl_info_ && other.config_ctl_info_) &&
+         (!config_ctl_info_->equals(*(other.config_ctl_info_))))) {
+        return (false);
+    }
+
     // Now only configured hooks libraries can differ.
     // If number of configured hooks libraries are different, then
     // configurations aren't equal.

@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <process/config_ctl_info.h>
+#include <database/config_ctl_info.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -13,7 +13,7 @@
 #include <sstream>
 #include <iostream>
 
-using namespace isc::process;
+using namespace isc::db;
 using namespace isc::data;
 
 // Verifies initializing via an access string and unparsing into elements

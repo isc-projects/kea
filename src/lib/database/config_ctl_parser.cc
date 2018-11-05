@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <cc/dhcp_config_error.h>
-#include <process/config_ctl_parser.h>
+#include <database/config_ctl_parser.h>
 #include <database/dbaccess_parser.h>
 #include <string>
 
@@ -15,7 +15,7 @@ using namespace isc;
 using namespace isc::data;
 
 namespace isc {
-namespace process {
+namespace db {
 
 ConfigControlInfoPtr
 ConfigControlParser::parse(const data::ConstElementPtr& config_control) {

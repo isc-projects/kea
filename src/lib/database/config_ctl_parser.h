@@ -9,10 +9,10 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <process/config_ctl_info.h>
+#include <database/config_ctl_info.h>
 
 namespace isc {
-namespace process {
+namespace db {
 
 /// @brief Implements parser for config control information, "config-control"
 class ConfigControlParser : isc::data::SimpleParser {

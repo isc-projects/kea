@@ -15,7 +15,7 @@
 #include <vector>
 
 namespace isc {
-namespace process {
+namespace db {
 
 /// @brief Provides configuration information used during a server's
 /// configuration process

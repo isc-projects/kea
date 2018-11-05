@@ -24,6 +24,7 @@
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
+#include <database/config_ctl_info.h>
 #include <process/config_base.h>
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
@@ -392,6 +393,26 @@ public:
         return (hooks_config_);
     }
 
+    /// @brief Fetches a read-only copy of the configuration control
+    /// information
+    /// @return pointer to the const ConfigControlInfo
+    db::ConstConfigControlInfoPtr getConfigControlInfo() const {
+        return (config_ctl_info_);
+    }
+
+    /// @brief Set the configuration control information
+    ///
+    /// Updates the internal pointer to the configuration control
+    /// information with the given pointer value.  If the given pointer
+    /// is empty, the internal pointer will be reset.
+    ///
+    /// @param config_ctl_info pointer to the configuration value
+    /// to store.
+    void setConfigControlInfo(const db::ConfigControlInfoPtr&
+                              config_ctl_info) {
+        config_ctl_info_ = config_ctl_info;
+    }
+
     /// @brief Copies the current configuration to a new configuration.
     ///
     /// This method copies the parameters stored in the configuration to
@@ -683,6 +704,9 @@ private:
 
     /// @brief Logical name of the server
     std::string server_tag_;
+
+    /// @brief Configuration control information.
+    db::ConfigControlInfoPtr config_ctl_info_;
 };
 
 /// @name Pointers to the @c SrvConfig object.
