@@ -69,7 +69,7 @@ BackendSelector::BackendSelector(const data::ConstElementPtr& access_map)
 }
 
 const BackendSelector&
-BackendSelector::BackendSelector::UNSPEC() {
+BackendSelector::UNSPEC() {
     static BackendSelector selector;
     return (selector);
 }
