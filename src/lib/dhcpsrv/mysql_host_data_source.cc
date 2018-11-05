@@ -2035,7 +2035,7 @@ public:
 
     /// @brief Check Error and Throw Exception
     ///
-    /// This method invokes @ref MySqlConnection::checkError.
+    /// This method invokes @ref db::MySqlConnection::checkError.
     ///
     /// @param status Status code: non-zero implies an error
     /// @param index Index of statement that caused the error
