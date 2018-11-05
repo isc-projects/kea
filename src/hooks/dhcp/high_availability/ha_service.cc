@@ -1022,10 +1022,10 @@ HAService::startHeartbeat() {
 }
 
 void
-HAService::asyncDisable(HttpClient& http_client,
-                        const std::string& server_name,
-                        const unsigned int max_period,
-                        PostRequestCallback post_request_action) {
+HAService::asyncDisableDHCPService(HttpClient& http_client,
+                                   const std::string& server_name,
+                                   const unsigned int max_period,
+                                   PostRequestCallback post_request_action) {
     HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
 
     // Create HTTP/1.1 request including our command.
@@ -1091,9 +1091,9 @@ HAService::asyncDisable(HttpClient& http_client,
 }
 
 void
-HAService::asyncEnable(HttpClient& http_client,
-                       const std::string& server_name,
-                       PostRequestCallback post_request_action) {
+HAService::asyncEnableDHCPService(HttpClient& http_client,
+                                  const std::string& server_name,
+                                  PostRequestCallback post_request_action) {
     HAConfig::PeerConfigPtr remote_config = config_->getPeerConfig(server_name);
 
     // Create HTTP/1.1 request including our command.
@@ -1157,12 +1157,12 @@ HAService::asyncEnable(HttpClient& http_client,
 }
 
 void
-HAService::localDisable() {
+HAService::localDisableDHCPService() {
     network_state_->disableService();
 }
 
 void
-HAService::localEnable() {
+HAService::localEnableDHCPService() {
     network_state_->enableService();
 }
 
@@ -1174,7 +1174,8 @@ HAService::asyncSyncLeases() {
     unsigned int dhcp_disable_timeout =
         static_cast<unsigned int>(config_->getSyncTimeout() / 1000);
     if (dhcp_disable_timeout == 0) {
-        ++dhcp_disable_timeout;
+        // Ensure that we always use at least 1 second timeout.
+        dhcp_disable_timeout = 1;
     }
 
     asyncSyncLeases(client_, config_->getFailoverPeerConfig()->getName(),
@@ -1193,10 +1194,10 @@ HAService::asyncSyncLeases(http::HttpClient& http_client,
     // to allocate new leases while we fetch from it. The DHCP service will
     // be disabled for a certain amount of time and will be automatically
     // re-enabled if we die during the synchronization.
-    asyncDisable(http_client, server_name, max_period,
-                 [this, &http_client, server_name, max_period, last_lease,
-                  post_sync_action, dhcp_disabled]
-                 (const bool success, const std::string& error_message) {
+    asyncDisableDHCPService(http_client, server_name, max_period,
+                            [this, &http_client, server_name, max_period, last_lease,
+                             post_sync_action, dhcp_disabled]
+                            (const bool success, const std::string& error_message) {
 
         // If we have successfully disabled the DHCP service on the peer,
         // we can start fetching the leases.
@@ -1350,8 +1351,8 @@ HAService::asyncSyncLeasesInternal(http::HttpClient& http_client,
                                     (l + 1 == leases_element.end())) {
                                     last_lease = boost::dynamic_pointer_cast<Lease>(lease);
                                 }
-
                             }
+
 
                         } catch (const std::exception& ex) {
                             LOG_WARN(ha_logger, HA_LEASE_SYNC_FAILED)
@@ -1418,9 +1419,9 @@ HAService::synchronize(std::string& status_message, const std::string& server_na
         // we need to re-enable the DHCP service on the peer if the
         // DHCP service was disabled in the course of synchronization.
         if (dhcp_disabled) {
-            asyncEnable(client, server_name,
-                        [&](const bool success,
-                            const std::string& error_message) {
+            asyncEnableDHCPService(client, server_name,
+                                   [&](const bool success,
+                                       const std::string& error_message) {
                 // It is possible that we have already recorded an error
                 // message while synchronizing the lease database. Don't
                 // override the existing error message.
