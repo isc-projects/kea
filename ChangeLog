@@ -1,3 +1,13 @@
+1470.	[func]		marcin
+	Improved lease database synchronization mechanisms in High
+	Availability hooks library. The new implementation uses
+	lease4-get-page and lease6-get-page commands to fetch leases
+	from the partner server. This prevents timeouts occurring
+	during long synchronizations as well as decreases CPU and
+	memory consumption on the HA enabled servers during lease
+	database synchronization.
+	(Gitlab #78,!85, git c54ea216463dcc6df693c96c4a5f82c0fbec2ff6)
+
 1469.	[doc]		marcin, fdupont
 	Documented new class_cmds premium library which is used
 	to modify client class configuration of the DHCP servers.
