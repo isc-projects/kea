@@ -156,7 +156,7 @@ public:
     /// Creates a bind array to receive @ref Host data from the Cassandra
     /// database. After data is successfully received, @ref retrieve() can be
     /// called to retrieve the @ref Host object. Called in @ref
-    /// CqlExchange::executeSelect().
+    /// db::CqlExchange::executeSelect().
     ///
     /// @param data array of objects representing data being retrieved
     /// @param statement_tag prepared statement being executed; defaults to an
@@ -1504,7 +1504,7 @@ protected:
 
     /// @brief Retrieves a collection of hosts.
     ///
-    /// Calls @ref CqlExchange::executeSelect().
+    /// Calls @ref db::CqlExchange::executeSelect().
     ///
     /// @param where_values array of bound objects used to filter the results
     /// @param statement_tag prepared statement being executed
@@ -1516,7 +1516,7 @@ protected:
     /// @brief Inserts or deletes a single host.
     ///
     /// All information is available here. Calls @ref
-    /// CqlExchange::executeMutation().
+    /// db::CqlExchange::executeMutation().
     ///
     /// @param insert insert or delete a host
     /// @param host @ref Host object from which options are retrieved and

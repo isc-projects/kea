@@ -135,8 +135,8 @@ typedef boost::shared_ptr<ReconnectCtl> ReconnectCtlPtr;
 /// connection with different types of databases; enables operations
 /// on access parameters strings. In particular, it provides a way
 /// to parse parameters in key=value format. This class is expected
-/// to be a base class for all @ref LeaseMgr and possibly
-/// @ref BaseHostDataSource derived classes.
+/// to be a base class for all @ref isc::dhcp::LeaseMgr and possibly
+/// @ref isc::dhcp::BaseHostDataSource derived classes.
 class DatabaseConnection : public boost::noncopyable {
 public:
 

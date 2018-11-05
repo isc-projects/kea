@@ -71,7 +71,7 @@ public:
     /// - tcp-nodelay
     ///
     /// For details regarding those paraemters, see
-    /// @ref isc::dhcp::CqlConnection::openDatabase.
+    /// @ref isc::db::CqlConnection::openDatabase.
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
@@ -95,7 +95,7 @@ public:
     /// The implementations of this method should guard against duplicate
     /// reservations for the same @ref Host, where possible. For example, when
     /// the reservation for the same @ref HWAddr and @ref SubnetID is added
-    /// twice, @ref add() should throw a @ref DuplicateEntry exception. Note,
+    /// twice, @ref add() should throw a @ref db::DuplicateEntry exception. Note,
     /// that usually it is impossible to guard against adding duplicated @ref
     /// Host, where one instance is identified by different identifier types.
     ///
