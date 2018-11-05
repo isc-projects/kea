@@ -142,6 +142,8 @@ public:
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space.
     /// @return Pointer to the retrieved option descriptor or null if
     /// no option was found.
     virtual OptionDescriptorPtr
@@ -287,7 +289,6 @@ public:
     ///
     /// @param backend_selector Backend selector.
     /// @param server_selector Server selector.
-    /// @param name Name of the global parameter.
     /// @param value Value of the global parameter.
     virtual void
     createUpdateGlobalParameter4(const db::BackendSelector& backend_selector,

@@ -380,7 +380,7 @@ protected:
     /// This method selects backends matching the selector. If the selector is
     /// "unspecified" or there is no backend in the pool, an empty list is returned.
     ///
-    /// @param selector Selector for which matching backends should be selected.
+    /// @param backend_selector Selector for which matching backends should be selected.
     std::list<ConfigBackendTypePtr>
     selectBackends(const db::BackendSelector& backend_selector) const {
 
