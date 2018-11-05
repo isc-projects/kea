@@ -8,7 +8,6 @@
 #define DHCPSRV_CONFIG_H
 
 #include <cc/cfg_to_element.h>
-#include <dhcp/queue_control.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/cfg_duid.h>
 #include <dhcpsrv/cfg_expiration.h>
@@ -363,13 +362,13 @@ public:
 
     /// @brief Returns queue control information
     /// @return pointer to a queue control information
-    const isc::dhcp::ConstQueueControlPtr getQueueControlInfo() const {
+    const isc::data::ConstElementPtr getQueueControlInfo() const {
         return (queue_control_);
     }
 
     /// @brief Sets information about the queue control
     /// @param new queue control information
-    void setQueueControlInfo(const isc::dhcp::ConstQueueControlPtr& queue_control) {
+    void setQueueControlInfo(const isc::data::ConstElementPtr queue_control) {
         queue_control_ = queue_control;
     }
 
@@ -665,7 +664,7 @@ private:
     isc::data::ConstElementPtr control_socket_;
 
     /// @brief Pointer to the queue-control information
-    isc::dhcp::ConstQueueControlPtr queue_control_;
+    isc::data::ConstElementPtr queue_control_;
 
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;

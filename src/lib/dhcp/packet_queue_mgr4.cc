@@ -14,17 +14,25 @@ namespace dhcp {
 
 PacketQueueMgr4::PacketQueueMgr4() {
     // Register default queue factory
-    registerPacketQueueFactory("kea-ring4", [](const QueueControl& control)
+    registerPacketQueueFactory("kea-ring4", [](data::ConstElementPtr parameters)
                                           -> PacketQueue4Ptr {
-            PacketQueue4Ptr queue(new PacketQueueRing4("kea-ring4", control.getCapacity()));
+            size_t capacity;
+            try {
+                capacity = data::SimpleParser::getInteger(parameters, "capacity");
+            } catch (const std::exception& ex) {
+                isc_throw(InvalidQueueParameter, "kea-ring4 factory:"
+                          " 'capacity' parameter is missing/invalid: " << ex.what());
+            }
+
+            PacketQueue4Ptr queue(new PacketQueueRing4("kea-ring4", capacity));
             return (queue);
         });
 
-    QueueControl control;
-    control.setQueueType("kea-ring4");
     // @todo default comes from ?
-    control.setCapacity(500); 
-    createPacketQueue(control);
+    data::ElementPtr parameters = data::Element::createMap();
+    parameters->set("queue-type", data::Element::create("kea-ring4"));
+    parameters->set("capacity", data::Element::create(static_cast<long int>(500)));
+    createPacketQueue(parameters);
 }
 
 boost::scoped_ptr<PacketQueueMgr4>&

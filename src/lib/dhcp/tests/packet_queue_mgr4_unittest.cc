@@ -15,6 +15,15 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
+
+data::ElementPtr 
+isc::dhcp::test::makeQueueConfig(const std::string& queue_type, size_t capacity) {
+    data::ElementPtr config = data::Element::createMap();
+    config->set("queue-type", data::Element::create(queue_type));
+    config->set("capacity", data::Element::create(static_cast<long int>(capacity)));
+    return (config);
+}
 
 namespace {
 
@@ -32,10 +41,25 @@ public:
     bool addCustomQueueType(const std::string& queue_type) {
         bool did_it =
             mgr().registerPacketQueueFactory(queue_type, 
-                                            [](const QueueControl& control)
+                                            [](data::ConstElementPtr parameters)
                                             -> PacketQueue4Ptr {
-                return (PacketQueue4Ptr(new PacketQueueRing4(control.getQueueType(),
-                                                             control.getCapacity())));
+                std::string queue_type ;
+                try {
+                    queue_type = data::SimpleParser::getString(parameters, "queue-type");
+                } catch (std::exception& ex) {
+                    isc_throw(InvalidQueueParameter, 
+                              "queue-type missing or invalid: " << ex.what());
+                }
+
+                size_t capacity;
+                try {
+                    capacity = data::SimpleParser::getInteger(parameters, "capacity");
+                } catch (const std::exception& ex) {
+                    isc_throw(InvalidQueueParameter, 
+                              "'capacity' missing or invalid: " << ex.what());
+                }
+
+                return (PacketQueue4Ptr(new PacketQueueRing4(queue_type, capacity)));
             });
 
         return did_it; 
@@ -56,12 +80,10 @@ TEST_F(PacketQueueMgr4Test, defaultQueue) {
     // Verify that we have a default queue and its info is correct.
     checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
-    QueueControl control;
-    control.setQueueType("kea-ring4");
-    control.setCapacity(2000);
+    data::ConstElementPtr config = makeQueueConfig("kea-ring4", 2000);
 
     // Verify that we can replace the default queue with different capacity queue
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
     // We should be able to recreate the manager.
@@ -72,12 +94,10 @@ TEST_F(PacketQueueMgr4Test, defaultQueue) {
 }
 
 TEST_F(PacketQueueMgr4Test, customQueueType) {
-    QueueControl control;
-    control.setQueueType("custom-queue");
-    control.setCapacity(2000);
 
     // Verify that we cannot create a queue for a non-existant type
-    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+    data::ConstElementPtr config = makeQueueConfig("custom-queue", 2000);
+    ASSERT_THROW(mgr().createPacketQueue(config), InvalidQueueType);
 
     // Register our adjustable-type factory
     ASSERT_TRUE(addCustomQueueType("custom-queue"));
@@ -86,7 +106,7 @@ TEST_F(PacketQueueMgr4Test, customQueueType) {
     checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
     // Verify that we can replace the default queue with a "custom-queue" queue
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
 
     // Now unregister the factory.
@@ -96,11 +116,11 @@ TEST_F(PacketQueueMgr4Test, customQueueType) {
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
 
     // Try and recreate the custom queue, type should be invalid.
-    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+    ASSERT_THROW(mgr().createPacketQueue(config), InvalidQueueType);
 
-    // Verify we can create a default type queue.
-    control.setQueueType("kea-ring4");
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
+    // Verify we can create a default type queue with non-default capacity.
+    config = makeQueueConfig("kea-ring4", 2000);
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 }
 

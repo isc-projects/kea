@@ -4,6 +4,9 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#ifndef PACKET_QUEUE_TESTUTILS_H
+#define PACKET_QUEUE_TESTUTILS_H
+
 #include <config.h>
 
 #include <dhcp/packet_queue.h>
@@ -11,9 +14,9 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 
-using namespace std;
-using namespace isc;
-using namespace isc::dhcp;
+namespace isc {
+namespace dhcp {
+namespace test {
 
 template<typename PacketQueuePtrType> void checkInfo(PacketQueuePtrType queue, const std::string& exp_json) {
     ASSERT_TRUE(queue) << "packet queue ptr is null";
@@ -42,3 +45,11 @@ template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue
     ASSERT_NO_THROW(value = elem->intValue());
     EXPECT_EQ(exp_value, value) << "stat: " << name << " is wrong" << std::endl;;
 }
+
+extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity);
+
+}; // end of namespace isc::dhcp::test
+}; // end of namespace isc::dhcp
+}; // end of namespace isc
+
+#endif // PACKET_QUEUE_TESTUTILS_H

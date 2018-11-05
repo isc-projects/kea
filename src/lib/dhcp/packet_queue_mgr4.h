@@ -27,7 +27,6 @@ namespace dhcp {
 class PacketQueueMgr4 : public PacketQueueMgr<PacketQueue4Ptr>,
                         public boost::noncopyable {
 public:
-
     /// @brief virtual Destructor
     virtual ~PacketQueueMgr4(){}
 

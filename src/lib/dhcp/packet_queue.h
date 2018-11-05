@@ -8,7 +8,6 @@
 #define PACKET_QUEUE_H
 
 #include <cc/data.h>
-#include <dhcp/queue_control.h>
 #include <dhcp/socket_info.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>

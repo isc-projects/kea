@@ -636,17 +636,17 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
 
     // Configure packet queue
     try {
-        ConstQueueControlPtr qc;
+        data::ConstElementPtr qc;
         qc  = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
         if (!qc) {
-            // For right now, we are maually constructing the default
+            // @todo For now we're manually constructing default queue config
             // This probably needs to be built into the PQM?
-            QueueControl default_qc;
-            default_qc.setQueueType("kea-ring4");
-            default_qc.setCapacity(500);
+            data::ElementPtr default_qc = data::Element::createMap();
+            default_qc->set("queue-type", data::Element::create("kea-ring4"));
+            default_qc->set("capacity", data::Element::create(static_cast<long int>(500)));
             PacketQueueMgr4::instance().createPacketQueue(default_qc);
         } else {
-            PacketQueueMgr4::instance().createPacketQueue(*qc);
+            PacketQueueMgr4::instance().createPacketQueue(qc);
         }
 
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CONFIG_PACKET_QUEUE)

@@ -7,6 +7,8 @@
 #ifndef PACKET_QUEUE_MGR_H
 #define PACKET_QUEUE_MGR_H
 
+#include <cc/data.h>
+#include <cc/simple_parser.h>
 #include <dhcp/packet_queue.h>
 #include <exceptions/exceptions.h>
 #include <boost/shared_ptr.hpp>
@@ -72,7 +74,7 @@ public:
     ///
     /// Factory function returns a pointer to the instance of the configuration
     /// backend created.
-    typedef std::function<PacketQueueTypePtr(const QueueControl&)> Factory;
+    typedef std::function<PacketQueueTypePtr(data::ConstElementPtr)> Factory;
 
     /// @brief Constructor.
     PacketQueueMgr()
@@ -86,7 +88,7 @@ public:
     /// in a hooks library. In such a case, this function should be called from
     /// the @c load function in this library. When the queue impl is registered,
     /// the server will use it when required by the configuration, i.e. a
-    /// user specifies it by name in "queue-control".
+    /// user specifies it in "queue-control:queue-type"
     ///
     /// If the given queue type has already been registered, perhaps
     /// by another hooks library, the PQM will refuse to register another
@@ -139,32 +141,45 @@ public:
 
     /// @brief Create an instance of a packet queue.
     ///
-    /// This method uses provided @c dbaccess string representing database
-    /// connection information to create an instance of the database
-    /// backend. If the specified backend type is not supported, i.e. there
-    /// is no relevant factory function registered, an exception is thrown.
+    /// Replace the current packet queue with a new one based on the
+    /// given configuration parameters.  The set of parameters must
+    /// contain at least "queue-type".  This value is used to locate
+    /// the registered queue factory to invoke to create the new queue.
     ///
-    /// @param dbaccess Database access string being a collection of
-    /// key=value pairs.
+    /// The factory is passed the parameters verbatim for its use in
+    /// creating the new queue.  Factories are expected to throw exceptions
+    /// on creation failure. Note the existing queue is not altered or
+    /// replaced unless the new queue is successfully created.
     ///
-    /// @throw InvalidQueueType if the queue type requested is not supported
+    /// @throw InvalidQueueParameter if parameters is not map that contains
+    /// "queue-type", InvalidQueueType if the queue type requested is not 
+    /// supported.
     /// @throw Unexpected if the backend factory function returned NULL.
-    void createPacketQueue(const QueueControl& queue_control) {
+    void createPacketQueue(data::ConstElementPtr parameters) {
+        if (!parameters) {
+            isc_throw(Unexpected, "createPacketQueue - queue parameters is null");
+        }
+
         // Get the database type to locate a factory function.
-        // easier if these are elements no?
-        std::string queue_type = queue_control.getQueueType();
+        std::string queue_type ;
+        try {
+            queue_type = data::SimpleParser::getString(parameters, "queue-type");
+        } catch (std::exception& ex) {
+            isc_throw(InvalidQueueParameter, "queue-type missing or invalid: " << ex.what());
+        }
+
+        // Look up the factory.
         auto index = factories_.find(queue_type);
 
-        // No match?
+        // Punt if there is no matching factory.
         if (index == factories_.end()) {
             isc_throw(InvalidQueueType, "The type of the packet queue: '" <<
-                      queue_type << "' is not supported");
-        }
+                      queue_type << "' is not supported"); }
 
         // Call the factory to create the new queue.
         // Factories should throw InvalidQueueParameter if given
         // bad values in the control.
-        auto new_queue = index->second(queue_control);
+        auto new_queue = index->second(parameters);
         if (!new_queue) {
             isc_throw(Unexpected, "Packet queue " << queue_type <<
                       " factory returned NULL");

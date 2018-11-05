@@ -393,9 +393,9 @@ SrvConfig::toElement() const {
     }
 
     // Set queue-control (if it exists)
-    ConstQueueControlPtr queue_control = getQueueControlInfo();
+    data::ConstElementPtr queue_control = getQueueControlInfo();
     if (queue_control) {
-        dhcp->set("queue-control", queue_control->toElement());
+        dhcp->set("queue-control", queue_control);
     }
 
     return (result);
