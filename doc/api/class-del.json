@@ -8,7 +8,7 @@
     "cmd-syntax": "{
     \"command\": \"class-del\",
     \"arguments\": {
-        \"name\": <name of the class>,
+        \"name\": <name of the class>
     }
 }",
     "resp-syntax": "{

@@ -28,7 +28,7 @@
     \"result\": 0,
     \"text\": \"Class '<class-name>' updated.\",
 }",
-    "resp-comment": "The command will return a result of 3 (empty) if the client
+    "resp-comment": "The command will return the result of 3 (empty) if the client
                     class doesn't exist. If the client class exists, the retured
                     result is 0 if the update was successful and the result is 1
                     if the update is unsuccessful."
