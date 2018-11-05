@@ -6364,7 +6364,7 @@ TEST_F(Dhcp4ParserTest, queueControl) {
         "} \n";
 
     // Let's check the default. It should be empty.
-    ConstQueueControlPtr control;
+    data::ConstElementPtr control;
     control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
     ASSERT_FALSE(control);
 
@@ -6380,17 +6380,14 @@ TEST_F(Dhcp4ParserTest, queueControl) {
     configure(config_with_queue, CONTROL_RESULT_SUCCESS, "");
     control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
     ASSERT_TRUE(control);
-    EXPECT_EQ(75, control->getCapacity());
-    EXPECT_FALSE(control->getContext());
 
+    // Clear the config
     CfgMgr::instance().clear();
 
     // Configuration with queue with context should be valid.
     configure(config_with_context, CONTROL_RESULT_SUCCESS, "");
     control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
     ASSERT_TRUE(control);
-    EXPECT_EQ(90, control->getCapacity());
-    EXPECT_TRUE(control->getContext());
 }
 
 // Check whether it is possible to configure server-tag

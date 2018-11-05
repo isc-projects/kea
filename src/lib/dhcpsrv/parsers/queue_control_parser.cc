@@ -27,10 +27,13 @@ QueueControlParser::QueueControlParser(const uint16_t family)
     }
 }
 
-QueueControlPtr 
+data::ElementPtr 
 QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
     QueueControlPtr queue_control(new QueueControl());
 
+    // All we really do here is verify that it is a map that
+    // contains at least queue-type.  All other content depends 
+    // on the packet queue implementation of that type.
     if (queue_elem->getType() != Element::map) {
         isc_throw(DhcpConfigError, "queue-control must be a map");
     }
@@ -46,20 +49,8 @@ QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
         queue_control->setQueueType(elem->stringValue());
     }
 
-    try {
-        size_t capacity = getInteger(queue_elem, "capacity");
-        queue_control->setCapacity(capacity);
-    } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, ex.what() 
-                  << " (" << getPosition("capacity", queue_elem) << ")");
-    }
-
-    ConstElementPtr user_context = queue_elem->get("user-context");
-    if (user_context) {
-        queue_control->setContext(user_context);
-    }
-
-    return (queue_control);
+    // Return a copy of it.
+    return (data::copy(queue_elem));
 }
 
 } // end of namespace isc::dhcp

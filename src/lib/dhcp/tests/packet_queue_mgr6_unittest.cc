@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcp/packet_queue_mgr6.h>
+#include <packet_queue_testutils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -14,6 +15,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 
@@ -31,10 +33,25 @@ public:
     bool addCustomQueueType(const std::string& queue_type) {
         bool did_it =
             mgr().registerPacketQueueFactory(queue_type, 
-                                            [](const QueueControl& control)
+                                            [](data::ConstElementPtr parameters)
                                             -> PacketQueue6Ptr {
-                return (PacketQueue6Ptr(new PacketQueueRing6(control.getQueueType(),
-                                                             control.getCapacity())));
+                std::string queue_type ;
+                try {
+                    queue_type = data::SimpleParser::getString(parameters, "queue-type");
+                } catch (std::exception& ex) {
+                    isc_throw(InvalidQueueParameter, 
+                              "queue-type missing or invalid: " << ex.what());
+                }
+
+                size_t capacity;
+                try {
+                    capacity = data::SimpleParser::getInteger(parameters, "capacity");
+                } catch (const std::exception& ex) {
+                    isc_throw(InvalidQueueParameter, 
+                              "'capacity' missing or invalid: " << ex.what());
+                }
+
+                return (PacketQueue6Ptr(new PacketQueueRing6(queue_type, capacity)));
             });
 
         return did_it; 
@@ -44,17 +61,8 @@ public:
         return (PacketQueueMgr6::instance());
     };
 
-    void checkInfo(const std::string& exp_json) {
-        // Fetch the queue info and verify it has all the expected values.
-        ASSERT_TRUE(mgr().getPacketQueue()) << " no packet queue!";  
-        data::ElementPtr info;
-        ASSERT_NO_THROW(info = mgr().getPacketQueue()->getInfo());
-        ASSERT_TRUE(info);
-        data::ElementPtr exp_elems;
-        ASSERT_NO_THROW(exp_elems = data::Element::fromJSON(exp_json))
-                        << " exp_elems is invalid JSON : " << exp_json 
-                        << " test is broken";
-        EXPECT_TRUE(exp_elems->equals(*info));
+    void checkMyInfo(const std::string& exp_json) {
+        checkInfo((mgr().getPacketQueue()), exp_json);
     }
 
 };
@@ -62,54 +70,50 @@ public:
 TEST_F(PacketQueueMgr6Test, defaultQueue) {
 
     // Verify that we have a default queue and its info is correct.
-    checkInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
-    QueueControl control;
-    control.setQueueType("kea-ring6");
-    control.setCapacity(2000);
+    data::ConstElementPtr config = makeQueueConfig("kea-ring6", 2000);
 
     // Verify that we can replace the default queue with different capacity queue
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
-    checkInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
     // We should be able to recreate the manager.
     ASSERT_NO_THROW(PacketQueueMgr6::create());  
 
     // And be back to having the default queue.
-    checkInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 }
 
 TEST_F(PacketQueueMgr6Test, customQueueType) {
-    QueueControl control;
-    control.setQueueType("custom-queue");
-    control.setCapacity(2000);
 
     // Verify that we cannot create a queue for a non-existant type
-    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+    data::ConstElementPtr config = makeQueueConfig("custom-queue", 2000);
+    ASSERT_THROW(mgr().createPacketQueue(config), InvalidQueueType);
 
     // Register our adjustable-type factory
     ASSERT_TRUE(addCustomQueueType("custom-queue"));
 
     // We still have our default queue.
-    checkInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
     // Verify that we can replace the default queue with a "custom-queue" queue
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
-    checkInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
 
     // Now unregister the factory.
     ASSERT_NO_THROW(mgr().unregisterPacketQueueFactory("custom-queue"));
 
     // Verify we did not lose the queue.
-    checkInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
 
     // Try and recreate the custom queue, type should be invalid.
-    ASSERT_THROW(mgr().createPacketQueue(control), InvalidQueueType);
+    ASSERT_THROW(mgr().createPacketQueue(config), InvalidQueueType);
 
-    // Verify we can create a default type queue.
-    control.setQueueType("kea-ring6");
-    ASSERT_NO_THROW(mgr().createPacketQueue(control));
-    checkInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    // Verify we can create a default type queue with non-default capacity.
+    config = makeQueueConfig("kea-ring6", 2000);
+    ASSERT_NO_THROW(mgr().createPacketQueue(config));
+    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 }
 
 } // end of anonymous namespace

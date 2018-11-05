@@ -15,6 +15,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::dhcp;
+using namespace isc::dhcp::test;
 
 namespace {
 

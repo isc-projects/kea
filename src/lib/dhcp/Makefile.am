@@ -55,7 +55,6 @@ libkea_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
 libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 libkea_dhcp___la_SOURCES += pkt_filter_inet6.cc pkt_filter_inet6.h
-libkea_dhcp___la_SOURCES += queue_control.cc queue_control.h
 libkea_dhcp___la_SOURCES += socket_info.h 
 
 # Utilize Linux Packet Filtering on Linux.
@@ -138,7 +137,6 @@ libkea_dhcp___include_HEADERS = \
 	pkt_filter6.h \
 	pkt_filter_inet.h \
 	pkt_filter_inet6.h \
-    queue_control.h \
 	protocol_util.h \
 	socket_info.h \
 	std_option_defs.h

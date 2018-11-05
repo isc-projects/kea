@@ -38,7 +38,7 @@ public:
     /// with the parsed values
     ///
     /// @throw DhcpConfigError if any of the values are invalid.
-    QueueControlPtr parse(const isc::data::ConstElementPtr& values);
+    data::ElementPtr parse(const isc::data::ConstElementPtr& values);
 
 private:
     /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
