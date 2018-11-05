@@ -603,7 +603,7 @@ The command will be successful (result 0), unless the
   <screen>{
     "command": "class-del",
     "arguments": {
-        "name": &lt;name of the class&gt;,
+        "name": &lt;name of the class&gt;
     }
 }</screen>
 </para>
@@ -754,7 +754,7 @@ The <command>next-server</command>,
     "result": 0,
     "text": "Class '&lt;class-name&gt;' updated.",
 }</screen>
-The command will return a result of 3 (empty) if the client
+The command will return the result of 3 (empty) if the client
                     class doesn't exist. If the client class exists, the retured
                     result is 0 if the update was successful and the result is 1
                     if the update is unsuccessful.</para>
