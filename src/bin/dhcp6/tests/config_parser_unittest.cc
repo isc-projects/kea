@@ -25,7 +25,7 @@
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <hooks/hooks_manager.h>
-#include <process/config_ctl_info.h>
+#include <database/config_ctl_info.h>
 
 #include "test_data_files_config.h"
 #include "test_libraries.h"
@@ -53,6 +53,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::db;
 using namespace std;
 
 namespace {
@@ -6870,12 +6871,12 @@ TEST_F(Dhcp6ParserTest, configControlInfo) {
     configure(config, CONTROL_RESULT_SUCCESS, "");
 
     // Make sure the config control info is there.
-    process::ConstConfigControlInfoPtr info =
+    db::ConstConfigControlInfoPtr info =
         CfgMgr::instance().getStagingCfg()->getConfigControlInfo();
     ASSERT_TRUE(info);
 
     // Fetch the list of config dbs.  It should have two entries.
-    const process::ConfigDbInfoList& dblist = info->getConfigDatabases();
+    const db::ConfigDbInfoList& dblist = info->getConfigDatabases();
     ASSERT_EQ(2, dblist.size());
 
     // Make sure the entries are what we expect and in the right order.

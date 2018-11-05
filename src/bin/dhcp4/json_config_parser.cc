@@ -29,7 +29,7 @@
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
-#include <process/config_ctl_parser.h>
+#include <database/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -53,6 +53,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::config;
+using namespace isc::db;
 
 namespace {
 

@@ -19,6 +19,7 @@
 using namespace isc::log;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {

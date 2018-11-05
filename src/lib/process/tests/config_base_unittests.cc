@@ -30,30 +30,20 @@ public:
 TEST(ConfigBase, configControlInfoTests) {
 
     // Create a control info instance
-    ConfigControlInfoPtr ctl_info1(new ConfigControlInfo());
-    ctl_info1->addConfigDatabase("type=mysql host=example.com");
-    ctl_info1->addConfigDatabase("type=mysql host=example2.com");
+    LoggingInfo log_info;
 
     // Create a ConfigBase
     ConfigBaseImpl base1;
-    base1.setConfigControlInfo(ctl_info1);
 
     // Clone the ConfigBase
     ConfigBaseImpl base2;
-    base1.copy(base2);
 
     // They should be equal.
     EXPECT_TRUE(base1.equals(base2));
 
     // Reset control info for one of them.
-    base1.setConfigControlInfo(ConfigControlInfoPtr());
+    base1.addLoggingInfo(log_info);
 
-    // They should not be equal.
+    // They should not be equal anymore.
     EXPECT_FALSE(base1.equals(base2));
-
-    // Reset control info for the other one.
-    base2.setConfigControlInfo(ConfigControlInfoPtr());
-
-    // They should be equal again.
-    EXPECT_TRUE(base1.equals(base2));
 }

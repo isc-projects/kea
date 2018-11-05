@@ -18,6 +18,7 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::process;
+using namespace isc::db;
 
 // Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more
@@ -972,6 +973,40 @@ TEST_F(SrvConfigTest, unparseConfigControlInfo6) {
     // that in unparsed config.  They should be equal.
     ElementPtr info_elem = info->toElement();
     EXPECT_TRUE(info_elem->equals(*check));
+}
+
+
+// Verifies construction, copy, and equality of
+// ConfigBase with respect to ConfigControInfo.
+TEST_F(SrvConfigTest, configControlInfoTests) {
+
+    // Create a control info instance
+    ConfigControlInfoPtr ctl_info1(new ConfigControlInfo());
+    ctl_info1->addConfigDatabase("type=mysql host=example.com");
+    ctl_info1->addConfigDatabase("type=mysql host=example2.com");
+
+    // Create a ConfigBase
+    SrvConfig base1;
+    base1.setConfigControlInfo(ctl_info1);
+
+    // Clone the ConfigBase
+    SrvConfig base2;
+    base1.copy(base2);
+
+    // They should be equal.
+    EXPECT_TRUE(base1.equals(base2));
+
+    // Reset control info for one of them.
+    base1.setConfigControlInfo(ConfigControlInfoPtr());
+
+    // They should not be equal.
+    EXPECT_FALSE(base1.equals(base2));
+
+    // Reset control info for the other one.
+    base2.setConfigControlInfo(ConfigControlInfoPtr());
+
+    // They should be equal again.
+    EXPECT_TRUE(base1.equals(base2));
 }
 
 } // end of anonymous namespace

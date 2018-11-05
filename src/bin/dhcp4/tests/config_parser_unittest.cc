@@ -26,7 +26,7 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
-#include <process/config_ctl_info.h>
+#include <database/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
 
 #include "marker_file.h"
@@ -50,6 +50,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::hooks;
+using namespace isc::db;
 using namespace std;
 
 namespace {
