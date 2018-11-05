@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <dhcp/packet_queue.h>
+#include <packet_queue_testutils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
@@ -17,13 +18,13 @@ using namespace isc::dhcp;
 
 namespace {
 
-class TestQueue4 : public PacketQueueRing<Pkt4Ptr> {
+class TestQueue4 : public PacketQueueRing4 {
 public:
     /// @brief Constructor
     ///
     /// @param queue_size maximum number of packets the queue can hold
-    TestQueue4(size_t queue_size) 
-        : PacketQueueRing(queue_size), drop_enabled_(false), eat_count_(0) {
+    TestQueue4(size_t queue_size)
+        : PacketQueueRing4("kea-ring4", queue_size), drop_enabled_(false), eat_count_(0) {
     };
 
     /// @brief virtual Destructor
@@ -41,8 +42,8 @@ public:
     virtual bool dropPacket(Pkt4Ptr packet,
                             const SocketInfo& source) {
         if (drop_enabled_) {
-            return ((packet->getTransid() % 2 == 0) || 
-                    (source.port_ % 2 == 0)); 
+            return ((packet->getTransid() % 2 == 0) ||
+                    (source.port_ % 2 == 0));
         }
 
         return (false);
@@ -76,44 +77,21 @@ public:
     int eat_count_;
 };
 
-// Verifies basic use onf PacketQueue interface:
-// 1. Construction
-// 2. Manipulation of configurable parameters
+// Verifies use of the generic PacketQueue interface to
+// construct a queue implementation.
 TEST(TestQueue4, interfaceBasics) {
-    // Use minimum allowed 
-    size_t min = TestQueue4::MIN_RING_CAPACITY;
-
-    PacketQueue4Ptr q4(new TestQueue4(min));
+    // Verify we can create a queue
+    PacketQueue4Ptr q4(new TestQueue4(100));
     ASSERT_TRUE(q4);
+
+    // It should be empty.
     EXPECT_TRUE(q4->empty());
 
-    ConstQueueControlPtr orig_control = q4->getQueueControl();
-    ASSERT_TRUE(orig_control);
-    EXPECT_EQ(min, orig_control->getCapacity());
-    EXPECT_EQ(min, q4->getCapacity());
-    EXPECT_EQ(0, q4->getSize());
+    // Type should match.
+    EXPECT_EQ("kea-ring4", q4->getQueueType());
 
-    // Verify we cannot violate minium.
-    QueueControlPtr new_control(new QueueControl());
-    new_control->setCapacity(min - 1);
-    ASSERT_THROW(q4->setQueueControl(new_control), BadValue);
-
-    // Verify original control values remain
-    EXPECT_TRUE(*(q4->getQueueControl()) == *orig_control);
-
-    // Verify we can update to a valid value.
-    new_control->setCapacity(min + 10);
-    ASSERT_NO_THROW(q4->setQueueControl(new_control));
-    ConstQueueControlPtr control = q4->getQueueControl();
-    ASSERT_TRUE(control);
-    EXPECT_TRUE(*control == *new_control);
-    EXPECT_EQ(min + 10, control->getCapacity());
-    EXPECT_EQ(min + 10, q4->getCapacity());
-
-    ASSERT_NO_THROW(q4->setQueueControl(ConstQueueControlPtr()));
-    control = q4->getQueueControl();
-    ASSERT_TRUE(control);
-    EXPECT_EQ(411, control->getCapacity());
+    // Fetch the queue info and verify it has all the expected values.
+    checkInfo(q4, "{ \"capacity\": 100, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 }
 
 // Verifies the basic mechanics of the adding and
@@ -121,16 +99,19 @@ TEST(TestQueue4, interfaceBasics) {
 TEST(TestQueue4, ringTest) {
     PacketQueue4Ptr q4(new TestQueue4(3));
 
-    EXPECT_EQ(3, q4->getCapacity());
+    // Fetch the queue info and verify it has all the expected values.
+    checkInfo(q4, "{ \"capacity\": 3, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+
     // Enqueue five packets.  The first two should be pushed off.
     SocketInfo sock1(isc::asiolink::IOAddress("127.0.0.1"), 777, 10);
     for (int i = 1; i < 6; ++i) {
         Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1000+i));
         ASSERT_NO_THROW(q4->enqueuePacket(pkt, sock1));
-
-        int exp_size = (i > 3 ? 3 : i);
-        EXPECT_EQ(exp_size, q4->getSize()); 
+        checkIntStat(q4, "size", (i > 3 ? 3 : i));
     }
+
+    // Fetch the queue info and verify it has all the expected values.
+    checkInfo(q4, "{ \"capacity\": 3, \"queue-type\": \"kea-ring4\", \"size\": 3 }");
 
     // We should have transids 1005,1004,1003  (back to front)
 
@@ -178,13 +159,13 @@ TEST(TestQueue4, ringTest) {
     for (int i = 1; i < 3; ++i) {
         Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1000+i));
         ASSERT_NO_THROW(q4->enqueuePacket(pkt, sock1));
-        EXPECT_EQ(i, q4->getSize()); 
+        checkIntStat(q4, "size", i);
     }
 
     // Let's flush the buffer and then verify it is empty.
     q4->clear();
-    EXPECT_TRUE(q4->empty()); 
-    EXPECT_EQ(0, q4->getSize()); 
+    EXPECT_TRUE(q4->empty());
+    checkIntStat(q4, "size", 0);
 }
 
 // Verifies the higher level functions of queueing and
@@ -198,17 +179,17 @@ TEST(TestQueue4, enqueueDequeueTest) {
     // Enqueue the first packet.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1002));
     ASSERT_NO_THROW(q4->enqueuePacket(pkt, sock1));
-    EXPECT_EQ(1, q4->getSize());
+    checkIntStat(q4, "size", 1);
 
     // Enqueue a packet onto the front.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1003));
     ASSERT_NO_THROW(q4->enqueuePacket(pkt, sock1, QueueEnd::FRONT));
-    EXPECT_EQ(2, q4->getSize());
+    checkIntStat(q4, "size", 2);
 
     // Enqueue a packet onto the back.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1001));
     ASSERT_NO_THROW(q4->enqueuePacket(pkt, sock1, QueueEnd::BACK));
-    EXPECT_EQ(3, q4->getSize());
+    checkIntStat(q4, "size", 3);
 
     // By default we dequeue from the front. We should get transid 1003.
     ASSERT_NO_THROW(pkt = q4->dequeuePacket());
@@ -231,6 +212,8 @@ TEST(TestQueue4, enqueueDequeueTest) {
 }
 
 // Verifies enqueuing operations when drop logic is enabled.
+// This accesses it's queue instance as a TestQueue4, rather than
+// a PacketQueue4Ptr, to provide access to TestQueue4 specifics.
 TEST(TestQueue4, dropPacketTest) {
     TestQueue4 q4(100);
     EXPECT_TRUE(q4.empty());
@@ -240,7 +223,7 @@ TEST(TestQueue4, dropPacketTest) {
     SocketInfo sockEven(isc::asiolink::IOAddress("127.0.0.1"), 888, 10);
     SocketInfo sockOdd(isc::asiolink::IOAddress("127.0.0.1"), 777, 11);
 
-    // Drop is not enabled. 
+    // Drop is not enabled.
     // We should be able to enqueu a packet with even numbered values.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1002));
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockEven));
@@ -254,12 +237,12 @@ TEST(TestQueue4, dropPacketTest) {
     // Enable drop logic.
     q4.drop_enabled_ = true;
 
-    // We should not be able to add one with an even-numbered transid.      
+    // We should not be able to add one with an even-numbered transid.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1004));
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockOdd));
     EXPECT_EQ(2, q4.getSize());
 
-    // We should not be able to add one with from even-numbered port.      
+    // We should not be able to add one with from even-numbered port.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1005));
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockEven));
     EXPECT_EQ(2, q4.getSize());
@@ -269,7 +252,7 @@ TEST(TestQueue4, dropPacketTest) {
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockOdd));
     EXPECT_EQ(3, q4.getSize());
 
-    // Dequeue them and make sure they are as expected: 1002,1003, and 1007. 
+    // Dequeue them and make sure they are as expected: 1002,1003, and 1007.
     ASSERT_NO_THROW(pkt = q4.dequeuePacket());
     ASSERT_TRUE(pkt);
     EXPECT_EQ(1002, pkt->getTransid());
@@ -286,7 +269,10 @@ TEST(TestQueue4, dropPacketTest) {
     ASSERT_NO_THROW(pkt = q4.dequeuePacket());
     ASSERT_FALSE(pkt);
 }
+
 // Verifies dequeuing operations when eat packets is enabled.
+// This accesses it's queue instance as a TestQueue4, rather than
+// a PacketQueue4Ptr, to provide access to TestQueue4 specifics.
 TEST(TestQueue4, eatPacketsTest) {
     TestQueue4 q4(100);
     EXPECT_TRUE(q4.empty());
@@ -303,7 +289,7 @@ TEST(TestQueue4, eatPacketsTest) {
         EXPECT_EQ(i, q4.getSize());
     }
 
-    // Setting eat count to two and dequeuing (from the front, by default), 
+    // Setting eat count to two and dequeuing (from the front, by default),
     // should discard 1001 and 1002, resulting in a dequeue of 1003.
     q4.eat_count_ = 2;
     ASSERT_NO_THROW(pkt = q4.dequeuePacket());

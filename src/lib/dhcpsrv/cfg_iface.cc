@@ -28,7 +28,7 @@ CfgIface::CfgIface()
 
 void
 CfgIface::closeSockets() const {
-    IfaceMgr::instance().stopReceiver();
+    IfaceMgr::instance().stopDHCPReceiver();
     IfaceMgr::instance().closeSockets();
 }
 

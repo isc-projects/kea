@@ -6348,6 +6348,7 @@ TEST_F(Dhcp4ParserTest, queueControl) {
         "{ " + genIfaceConfig() + ", \n" +
         "   \"subnet4\": [  ],  \n"
         "   \"queue-control\": { \n"
+        "       \"queue-type\": \"some-type\", \n"
         "       \"capacity\": 75 \n"
         "   } \n"
         "} \n";
@@ -6356,6 +6357,7 @@ TEST_F(Dhcp4ParserTest, queueControl) {
         "{ " + genIfaceConfig() + ", \n" +
         "   \"subnet4\": [  ],  \n"
         "   \"queue-control\": { \n"
+        "       \"queue-type\": \"some-type\", \n"
         "       \"capacity\": 90, \n"
         "       \"user-context\": { \"comment\": \"some text\" } \n"
         "   } \n"
@@ -6404,6 +6406,15 @@ TEST_F(Dhcp4ParserTest, queueControlInvalid) {
             "{ " + genIfaceConfig() + ", \n" +
             "   \"subnet4\": [  ],  \n"
             "   \"queue-control\": 75 \n"
+            "} \n"
+        },
+        {
+            "queue type missing",
+            "{ " + genIfaceConfig() + ", \n" +
+            "   \"subnet4\": [  ],  \n"
+            "   \"queue-control\": { \n"
+            "       \"capacity\": 100 \n"
+            "   } \n"
             "} \n"
         },
         {

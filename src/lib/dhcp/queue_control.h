@@ -30,6 +30,20 @@ public:
     /// @return true if objects are equal, false otherwise.
     bool equals(const QueueControl& other) const;
 
+    /// @brief Fetches the queue type 
+    ///
+    /// @return string containg the queue type
+    std::string getQueueType() const {
+        return (queue_type_);
+    }
+
+    /// @brief Sets the queue type
+    ///
+    /// @param queue_type new value for the queue type
+    void setQueueType(const std::string& queue_type) {
+        queue_type_ = queue_type;
+    }
+
     /// @brief Fetches the maximum number of packets that the queue may hold.
     ///
     /// @return the current capacity of the packet queue.
@@ -70,6 +84,11 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
 private:
+    /// @brief Name of the queue type
+    /// This is the value used to uniquely identify/register
+    /// packet queue implementations 
+    std::string  queue_type_;
+
     /// @brief A set of interface names specified by the user.
     size_t  capacity_;
 };

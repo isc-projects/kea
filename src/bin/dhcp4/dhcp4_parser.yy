@@ -171,6 +171,7 @@ using namespace std;
   SOCKET_NAME "socket-name"
 
   QUEUE_CONTROL "queue-control"
+  QUEUE_TYPE "queue-type"
   CAPACITY "capacity"
 
   DHCP_DDNS "dhcp-ddns"
@@ -1836,6 +1837,7 @@ queue_control: QUEUE_CONTROL {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.QUEUE_CONTROL);
 } COLON LCURLY_BRACKET queue_control_params RCURLY_BRACKET {
+    ctx.require("queue-type", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.require("capacity", ctx.loc2pos(@4), ctx.loc2pos(@6));
     ctx.stack_.pop_back();
     ctx.leave();
@@ -1845,11 +1847,20 @@ queue_control_params: queue_control_param
                      | queue_control_params COMMA queue_control_param
                      ;
 
-queue_control_param: capacity
+queue_control_param: queue_type
+                    | capacity
                     | user_context
                     | comment
                     | unknown_map_entry
                     ;
+
+queue_type : QUEUE_TYPE {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr qtype(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("queue-type", qtype);
+    ctx.leave();
+};
 
 capacity: CAPACITY COLON INTEGER {
     ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));

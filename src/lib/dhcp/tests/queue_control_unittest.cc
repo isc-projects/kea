@@ -45,10 +45,11 @@ TEST(QueueControl, basics) {
 TEST(QueueControl, toElement) {
     QueueControlPtr control;
     ASSERT_NO_THROW(control.reset(new QueueControl()));
+    control->setQueueType("qtype");
     control->setCapacity(100);
 
     data::ElementPtr exp_elements;
-    std::string json = "{ \"capacity\": 100 }";
+    std::string json = "{ \"capacity\": 100, \"queue-type\": \"qtype\" }";
 
     ASSERT_NO_THROW(exp_elements = data::Element::fromJSON(json))
                     << "invalid JSON, test is broken";

@@ -634,20 +634,24 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure packet queue
     try {
-        // @todo Consider making this a function and consider whether
-        // it should check for old gc != null and new gc null before
-        // calling setPacketQueueControl().  Or if we should even
-        // call it when it's null?  
-        // Still grappling with what to if there is a custom queue
-        // loaded.  Could have a flag in the control that means
-        // using custom impl, in which case we don't make the call
-        // at all.  ... I dunno 
         ConstQueueControlPtr qc;
         qc  = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
-        IfaceMgr::instance().setPacketQueueControl4(qc);
-        qc = IfaceMgr::instance().getPacketQueueControl4();
-        std::cout << "TKM using capacity: " << qc->getCapacity() << std::endl;
+        if (!qc) {
+            // For right now, we are maually constructing the default
+            // This probably needs to be built into the PQM?
+            QueueControl default_qc;
+            default_qc.setQueueType("kea-ring4");
+            default_qc.setCapacity(500);
+            PacketQueueMgr4::instance().createPacketQueue(default_qc);
+        } else {
+            PacketQueueMgr4::instance().createPacketQueue(*qc);
+        }
+
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CONFIG_PACKET_QUEUE)
+                 .arg(PacketQueueMgr4::instance().getPacketQueue()->getInfoStr());
+
     } catch (const std::exception& ex) {
         err << "Error setting packet queue controls after server reconfiguration: "
             << ex.what();

@@ -7,6 +7,7 @@
 #ifndef PACKET_QUEUE_H
 #define PACKET_QUEUE_H
 
+#include <cc/data.h>
 #include <dhcp/queue_control.h>
 #include <dhcp/socket_info.h>
 #include <dhcp/pkt4.h>
@@ -14,10 +15,20 @@
 
 #include <boost/function.hpp>
 #include <boost/circular_buffer.hpp>
+#include <sstream>
 
 namespace isc {
 
 namespace dhcp {
+
+/// @brief Invalid queue parameter exception
+///
+/// Thrown when packet queue is supplied an invalid/missing parameter
+class InvalidQueueParameter : public Exception {
+public:
+    InvalidQueueParameter(const char* file, size_t line, const char* what) :
+        isc::Exception(file, line, what) {}
+};
 
 /// @brief Enumerates choices between the two ends of the queue.
 enum class QueueEnd {
@@ -31,9 +42,15 @@ class PacketQueue {
 public:
 
     /// @brief Constructor
-    PacketQueue() {}
+    ///
+    /// @param queue_type name of this queue's implementation type. 
+    /// Typically this is assigned by the factory that creates the
+    /// queue.  It is the logical name used to register queue
+    /// implementations.
+    PacketQueue(const std::string& queue_type) 
+        :  queue_type_(queue_type) {}
 
-    /// @brief virtual Destructor
+    /// Virtual destructor
     virtual ~PacketQueue(){};
 
     /// @brief Adds a packet to the queue
@@ -133,28 +150,35 @@ public:
     /// @brief return True if the queue is empty.
     virtual bool empty() const = 0;
 
-    /// @brief Fetches the current queue control parameters
-    virtual ConstQueueControlPtr getQueueControl() const = 0;
-
-    /// @brief Sets queue control parameters from the given control structure.
-    ///
-    /// @param queue_control new control parameters to implement
-    virtual void setQueueControl(ConstQueueControlPtr queue_control) = 0;
-
-    /// @brief Returns the maximum number of packets allowed in the buffer.
-    virtual size_t getCapacity() const = 0;
-
-    /// @brief Sets the maximum number of packets allowed in the buffer.
-    virtual void setCapacity(size_t capacity) = 0;
-
+    /// @todo size may not apply either... what if there are two internal buffers?
     /// @brief Returns the current number of packets in the buffer.
     virtual size_t getSize() const = 0;
 
     /// @brief Discards all packets currently in the buffer.
     virtual void clear() = 0;
 
-    /// @brief Sets queue control parameters to their default values.
-    virtual void useDefaults() = 0;
+    virtual data::ElementPtr getInfo() {
+       data::ElementPtr info = data::Element::createMap();
+       info->set("queue-type", data::Element::create(queue_type_));
+       return(info);
+    }
+
+    virtual std::string getInfoStr() {
+       data::ElementPtr info = getInfo();
+       std::ostringstream os;
+       info->toJSON(os);
+       return (os.str());
+    }
+
+    /// @brief 
+    std::string getQueueType() {
+        return (queue_type_);
+    };
+
+private:
+    /// @brief Name of the this queue's implementation type. 
+    std::string queue_type_;
+    
 };
 
 /// @brief Defines pointer to the DHCPv4 queue interface used at the application level. 
@@ -172,7 +196,8 @@ public:
     /// @brief Constructor
     ///
     /// @param queue_capacity maximum number of packets the queue can hold
-    PacketQueueRing(size_t capacity) { 
+    PacketQueueRing(const std::string& queue_type, size_t capacity)
+        : PacketQueue<PacketTypePtr>(queue_type) { 
         queue_.set_capacity(capacity);
     }
 
@@ -235,32 +260,15 @@ public:
         return(queue_.empty());
     } 
 
-    /// @brief Fetches the current queue control parameters
-    virtual ConstQueueControlPtr getQueueControl() const {
-        QueueControlPtr queue_control(new QueueControl());
-        queue_control->setCapacity(getCapacity());
-        return (queue_control);
-    } 
-
-    /// @brief Sets queue control parameters from the given control structure.
-    ///
-    /// @param queue_control new control parameters to implement.  If it is
-    /// an empty pointer we reset to default values.
-    virtual void setQueueControl(ConstQueueControlPtr queue_control) {
-        if (!queue_control) {
-            useDefaults();
-            return;
-        }
-
-        setCapacity(queue_control->getCapacity());
-    } 
-
     /// @brief Returns the maximum number of packets allowed in the buffer.
     virtual size_t getCapacity() const {
         return (queue_.capacity());
     }
 
     /// @brief Sets the maximum number of packets allowed in the buffer.
+    ///
+    /// @todo - do we want to change size on the fly?  This might need
+    /// to be private, called only by constructor
     ///
     /// @throw BadValue if capacity is too low.
     virtual void setCapacity(size_t capacity) {
@@ -284,9 +292,11 @@ public:
         queue_.clear();
     }
 
-    /// @brief Sets capacity for default value of MIN_RING_CAPACITY
-    virtual void useDefaults() {
-        setCapacity(MIN_RING_CAPACITY);
+    virtual data::ElementPtr getInfo() {
+       data::ElementPtr info = PacketQueue<PacketTypePtr>::getInfo();
+       info->set("capacity", data::Element::create(static_cast<int64_t>(getCapacity())));
+       info->set("size", data::Element::create(static_cast<int64_t>(getSize())));
+       return(info);
     }
 
 private:
@@ -304,8 +314,8 @@ public:
     /// @brief Constructor
     ///
     /// @param capacity maximum number of packets the queue can hold
-    PacketQueueRing4(size_t capacity=DEFAULT_RING_CAPACITY) 
-        : PacketQueueRing(capacity) {
+    PacketQueueRing4(const std::string& queue_type, size_t capacity=DEFAULT_RING_CAPACITY) 
+        : PacketQueueRing(queue_type, capacity) {
     };
 
     /// @brief virtual Destructor
@@ -324,8 +334,8 @@ public:
     /// @brief Constructor
     ///
     /// @param capacity maximum number of packets the queue can hold
-    PacketQueueRing6(size_t capacity=DEFAULT_RING_CAPACITY)
-        : PacketQueueRing(capacity) {
+    PacketQueueRing6(const std::string& queue_type, size_t capacity=DEFAULT_RING_CAPACITY)
+        : PacketQueueRing(queue_type, capacity) {
     };
 
     /// @brief virtual Destructor
@@ -335,7 +345,6 @@ public:
         setCapacity(DEFAULT_RING_CAPACITY);
     }
 };
-
 
 
 }; // namespace isc::dhcp
