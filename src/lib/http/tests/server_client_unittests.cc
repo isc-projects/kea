@@ -1249,5 +1249,58 @@ TEST_F(HttpClientTest, clientRequestTimeout) {
     ASSERT_NO_THROW(runIOService());
 }
 
+// Test that client times out when connection takes too long.
+TEST_F(HttpClientTest, clientConnectTimeout) {
+    // Start the server.
+    ASSERT_NO_THROW(listener_.start());
+
+    // Create the client.
+    HttpClient client(io_service_);
+
+    // Specify the URL of the server.
+    Url url("http://127.0.0.1:18123");
+
+    unsigned cb_num = 0;
+
+    PostHttpRequestJsonPtr request = createRequest("sequence", 1);
+    HttpResponseJsonPtr response(new HttpResponseJson());
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
+        [this, &cb_num](const boost::system::error_code& ec,
+                        const HttpResponsePtr& response,
+                        const std::string&) {
+        if (++cb_num > 1) {
+            io_service_.stop();
+        }
+        // In this particular case we know exactly the type of the
+        // IO error returned, because the client explicitly sets this
+        // error code.
+        EXPECT_TRUE(ec.value() == boost::asio::error::timed_out);
+        // There should be no response returned.
+        EXPECT_FALSE(response);
+
+    }, HttpClient::RequestTimeout(100),
+
+       // This callback is invoked upon an attempt to connect to the
+       // server. The false value indicates to the HttpClient to not
+       // try to send a request to the server. This simulates the
+       // case of connect() taking very long and should eventually
+       // cause the transaction to time out.
+       [](const boost::system::error_code& ec) {
+           return (false);
+    }));
+
+    // Create another request after the timeout. It should be handled ok.
+    ASSERT_NO_THROW(client.asyncSendRequest(url, request, response,
+                    [this, &cb_num](const boost::system::error_code& /*ec*/, const HttpResponsePtr&,
+               const std::string&) {
+        if (++cb_num > 1) {
+            io_service_.stop();
+        }
+    }));
+
+    // Actually trigger the requests.
+    ASSERT_NO_THROW(runIOService());
+}
+
 
 }
