@@ -348,10 +348,10 @@ public:
         sync_timeout_ = sync_timeout;
     }
 
-    /// @brief Returns page size for leases fetched from the partner
+    /// @brief Returns maximum number of leases per page to be fetched
     /// during database synchronization.
     ///
-    /// @return Page limit.
+    /// @return Maximum number of leases per page.
     uint32_t getSyncPageLimit() const {
         return (sync_page_limit_);
     }

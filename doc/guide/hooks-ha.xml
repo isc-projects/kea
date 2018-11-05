@@ -893,7 +893,7 @@
 
       <section xml:id="ha-sharing-lease-info">
         <title>Lease Information Sharing</title>
-        <para>The HA enabled server informs its active partner about allocated
+        <para>An HA enabled server informs its active partner about allocated
         or renewed leases by sending appropriate control commands. The partner
         updates the lease information in its own database. When the server starts
         up for the first time or recovers after a failure it synchronizes its
@@ -979,7 +979,7 @@
 
       <section xml:id="ha-syncing-page-limit">
         <title>Controlling Lease Page Size Limit</title>
-        <para>HA enabled server initiates synchronization of the lease
+        <para>An HA enabled server initiates synchronization of the lease
         database after down time or upon receiving <command>ha-sync</command>
         command. The server uses commands described in
         <xref linkend="lease-get-page-cmds"/> to fetch leases from the
@@ -1006,8 +1006,8 @@
         network, lease database synchronization after the server failure
         may be a time consuming operation. The synchronizing server needs
         to gather all leases from the partner which yields a large response
-        over the RESTful interface. The server receives leases using
-        paging mechanism as described in <xref linkend="ha-syncing-page-limit"/>.
+        over the RESTful interface. The server receives leases using the
+        paging mechanism described in <xref linkend="ha-syncing-page-limit"/>.
         Before the page of leases is fetched, the synchronizing server
         sends a <command>dhcp-disable</command> command to disable the DHCP
         service on the partner server. If the service is already disabled, this

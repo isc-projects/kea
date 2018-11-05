@@ -515,10 +515,10 @@ protected:
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisable(http::HttpClient& http_client,
-                      const std::string& server_name,
-                      const unsigned int max_period,
-                      PostRequestCallback post_request_action);
+    void asyncDisableDHCPService(http::HttpClient& http_client,
+                                 const std::string& server_name,
+                                 const unsigned int max_period,
+                                 PostRequestCallback post_request_action);
 
     /// @brief Schedules asynchronous "dhcp-enable" command to the specified
     /// server.
@@ -529,15 +529,15 @@ protected:
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnable(http::HttpClient& http_client,
-                     const std::string& server_name,
-                     PostRequestCallback post_request_action);
+    void asyncEnableDHCPService(http::HttpClient& http_client,
+                                const std::string& server_name,
+                                PostRequestCallback post_request_action);
 
     /// @brief Disables local DHCP service.
-    void localDisable();
+    void localDisableDHCPService();
 
     /// @brief Enables local DHCP service.
-    void localEnable();
+    void localEnableDHCPService();
 
     /// @brief Asynchronously reads leases from a peer and updates local
     /// lease database.
@@ -574,10 +574,10 @@ protected:
     /// longer period of time. If the synchronization is progressing the
     /// timeout must be deferred.
     ///
-    /// The @c asyncSyncLeases method calls itself recursively when the
-    /// previous @c lease4-get-page or @c lease6-get-page command has
-    /// completed successfully. If the last page of leases was fetched or
-    /// if any error occurred, the synchronization is terminated and the
+    /// The @c asyncSyncLeases method calls itself (recurses) when the previous
+    /// @c lease4-get-page or @c lease6-get-page command has completed
+    /// successfully. If the last page of leases was fetched or if any
+    /// error occurred, the synchronization is terminated and the
     /// @c post_sync_action callback is invoked.
     ///
     /// The last parameter passed to the @c post_sync_action callback indicates

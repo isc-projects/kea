@@ -161,11 +161,11 @@ public:
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisable(const std::string& server_name,
-                      const unsigned int max_period,
-                      const PostRequestCallback& post_request_action) {
-        HAService::asyncDisable(client_, server_name, max_period,
-                                post_request_action);
+    void asyncDisableDHCPService(const std::string& server_name,
+                                 const unsigned int max_period,
+                                 const PostRequestCallback& post_request_action) {
+        HAService::asyncDisableDHCPService(client_, server_name, max_period,
+                                           post_request_action);
     }
 
     /// @brief Schedules asynchronous "dhcp-enable" command to the specified
@@ -177,9 +177,9 @@ public:
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnable(const std::string& server_name,
-                     const PostRequestCallback& post_request_action) {
-        HAService::asyncEnable(client_, server_name, post_request_action);
+    void asyncEnableDHCPService(const std::string& server_name,
+                                const PostRequestCallback& post_request_action) {
+        HAService::asyncEnableDHCPService(client_, server_name, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;
@@ -2196,7 +2196,7 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
 }
 
 // This test verifies that the DHCPv4 service can be disabled on the remote server.
-TEST_F(HAServiceTest, asyncDisable4) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2211,9 +2211,9 @@ TEST_F(HAServiceTest, asyncDisable4) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server3", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -2231,7 +2231,7 @@ TEST_F(HAServiceTest, asyncDisable4) {
 
 // This test verifies that there is no exception thrown as a result of dhcp-disable
 // command when the server is offline.
-TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2239,9 +2239,9 @@ TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server2", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server2", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -2253,7 +2253,7 @@ TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
 
 // This test verifies that an error is returned when the remote server
 // returns control status error.
-TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2273,9 +2273,9 @@ TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server3", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -2286,7 +2286,7 @@ TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
 }
 
 // This test verifies that the DHCPv4 service can be enabled on the remote server.
-TEST_F(HAServiceTest, asyncEnable4) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2301,7 +2301,8 @@ TEST_F(HAServiceTest, asyncEnable4) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
@@ -2319,7 +2320,7 @@ TEST_F(HAServiceTest, asyncEnable4) {
 
 // This test verifies that there is no exception thrown as a result of dhcp-enable
 // command when the server is offline.
-TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2327,7 +2328,8 @@ TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
@@ -2340,7 +2342,7 @@ TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
 
 // This test verifies that an error is returned when the remote server
 // returns control status error.
-TEST_F(HAServiceTest, asyncEnable4ControlResultError) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2360,7 +2362,8 @@ TEST_F(HAServiceTest, asyncEnable4ControlResultError) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
