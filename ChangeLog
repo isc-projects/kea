@@ -1,3 +1,7 @@
+1467.	[doc]		fdupont, tomek
+	Doxygen errors fixed.
+	(Gitlab #180,!93, git d12fb04d71c3b2d0e84ebb2c957334454b5705c4)
+
 1466.	[func]		fdupont
 	Added random number generation in services provided by
 	the crypto library (and ultimately by the crypto backend,
