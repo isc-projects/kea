@@ -572,8 +572,8 @@ Result is an integer representation of the status. Currently supported statuses 
         } ]
     }
 }</screen>
-The <command>next-server</command>, 
-                    <command>server-hostname</command> and 
+The <command>next-server</command>,
+                    <command>server-hostname</command> and
                     <command>boot-file-name</command> are DHCPv4 specific. Only
                     one client class can be added with a single command. </para>
 
@@ -583,7 +583,7 @@ The <command>next-server</command>,
     "text": "Class '&lt;class-name&gt;' added.",
 }</screen>
 The command will be successful (result 0), unless the
-                     class name is a duplicate (result 1).</para>
+                     class name is a duplicate or another error occurs (result 1).</para>
 
 </section>
 <!-- end of class-add -->
@@ -603,7 +603,7 @@ The command will be successful (result 0), unless the
   <screen>{
     "command": "class-del",
     "arguments": {
-        "name": "ipxe_efi_x64",
+        "name": &lt;name of the class&gt;,
     }
 }</screen>
 </para>
@@ -611,16 +611,12 @@ The command will be successful (result 0), unless the
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "Class 'ipxe_efi_x64' deleted."
+    "text": "Class '&lt;class-name&gt;' deleted."
 }</screen>
-Result is an integer representation of the status. Currently supported statuses are:
-<itemizedlist>
-  <listitem><para>0 - success</para></listitem>
-  <listitem><para>1 - error</para></listitem>
-  <listitem><para>2 - unsupported</para></listitem>
-  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
-</itemizedlist>
-</para>
+The command will return a result of 3 (empty) if the client
+                    class doesn't exist. If the client class exists, the retured
+                    result is 0 if the deletion was successful and the result is 1
+                    if the deletion is unsuccessful.</para>
 
 </section>
 <!-- end of class-del -->
@@ -628,7 +624,8 @@ Result is an integer representation of the status. Currently supported statuses 
 <!-- start of class-get -->
 <section xml:id="reference-class-get">
 <title>class-get reference</title>
-<para xml:id="ref-class-get"><command>class-get</command> - This command is used to return detailed information about an existing client class.</para>
+<para xml:id="ref-class-get"><command>class-get</command> - This command is used to return detailed information about an
+              existing client class.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -640,7 +637,7 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "class-get",
     "arguments": {
-        "name": "pxeclient"
+        "name": &lt;name of the class&gt;
     }
 }</screen>
 </para>
@@ -648,29 +645,29 @@ Result is an integer representation of the status. Currently supported statuses 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "Class 'pxeclient' definition returned",
+    "text": "Class '&lt;class-name&gt;' definition returned",
     "arguments": {
         "client-classes": [
             {
-                "name": "pxeclient",
-                "only-if-required": true,
-                "test": "option[vendor-class-identifier].text == 'PXEClient'",
-                "option-def": [
-                    {
-                        "name": "configfile",
-                        "code": 209,
-                        "type": "string"
-                    }
-                ],
-                "option-data": [ ],
-                "next-server": "0.0.0.0",
-                "server-hostname": "xfce",
-                "boot-file-name": "/dev/null"
+                "name": &lt;name of the class&gt;,
+                "only-if-required": &lt;only if required boolean value&gt;,
+                "test": &lt;test expression to be evaluated on incoming packets&gt;,
+                "option-data": [ &lt;option values here&gt; ],
+                "option-def": [ &lt;option defintions here&gt; ],
+                "next-server": &lt;ipv4 address&gt;,
+                "server-hostname": &lt;string&gt;,
+                "boot-file-name": &lt;name of the boot file&gt;
             }
         ]
     }
 }</screen>
-The returned information depends on the DHCP server type, i.e. some parameters are specific to DHCPv4 server. Also, some parameters may not be returned if they are not set for the client class. If the class with specified name doesn't exist a result of 3 is returned.</para>
+The returned information depends on the DHCP server type,
+                     i.e. some parameters are specific to DHCPv4 server. Also,
+                     some parameters may not be returned if they are not set for
+                     the client class. If the class with specified name doesn't
+                     exist a result of 3 (empty) is returned. If the client class
+                     is found, the result of 0 is returned. If there is an error
+                     while processing the command, the result of 1 is returned.</para>
 
 </section>
 <!-- end of class-get -->
@@ -678,7 +675,8 @@ The returned information depends on the DHCP server type, i.e. some parameters a
 <!-- start of class-list -->
 <section xml:id="reference-class-list">
 <title>class-list reference</title>
-<para xml:id="ref-class-list"><command>class-list</command> - This command is used to retrieve a list of all client classes from the server configuration.</para>
+<para xml:id="ref-class-list"><command>class-list</command> - This command is used to retrieve a list of all client
+              classes from the server configuration.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -695,19 +693,26 @@ This command includes no arguments.</para>
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "2 classes found",
+    "text": "&lt;number of&gt; classes found",
     "arguments": {
         "client-classes": [
             {
-                "name": "ipxe_efi_x64"
+                "name": &lt;first class name&gt;
             },
             {
-                "name": "pxeclient"
+                "name": &lt;second class name&gt;
             }
         ]
     }
 }</screen>
-The returned list of classes merely contains their names. In order to retrieve full information about one of these classes use <xref linkend="command-class-get"/>.</para>
+The returned list of classes merely contains their names.
+                     In order to retrieve full information about one of these
+                     classes use <xref linkend="command-class-get"/>.
+                     The returned result is 3 (empty) if no classes are found.
+                     If the command is processed successfully and the list of
+                     client classes is not empty, the result of 0 is returned.
+                     If there is an error while processing the command, the
+                     result of 1 is returned.</para>
 
 </section>
 <!-- end of class-list -->
@@ -715,7 +720,8 @@ The returned list of classes merely contains their names. In order to retrieve f
 <!-- start of class-update -->
 <section xml:id="reference-class-update">
 <title>class-update reference</title>
-<para xml:id="ref-class-update"><command>class-update</command> - This command is used to update an existing client class in the server configuration.</para>
+<para xml:id="ref-class-update"><command>class-update</command> - This command is used to update an existing client class in
+              the server configuration.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
@@ -728,27 +734,30 @@ The returned list of classes merely contains their names. In order to retrieve f
     "command": "class-update",
     "arguments": {
         "client-classes": [ {
-           "name": "ipxe_efi_x64",
-           "test": "option[93].hex == 0x0009",
-            ...
+           "name": &lt;name of the class&gt;,
+           "test": &lt;test expression to be evaluated on incoming packets&gt;,
+           "option-data": [ &lt;option values here&gt; ],
+           "option-def": [ &lt;option defintions here&gt; ],
+           "next-server": &lt;ipv4 address&gt;,
+           "server-hostname": &lt;string&gt;,
+           "boot-file-name": &lt;name of the boot file&gt;
         } ]
     }
 }</screen>
-Only one client class can be updated with a single command..</para>
+The <command>next-server</command>,
+                    <command>server-hostname</command> and
+                    <command>boot-file-name</command> are DHCPv4 specific. Only
+                    one client class can be updated with a single command. </para>
 
 <para>Response syntax:
   <screen>{
     "result": 0,
-    "text": "Class 'ipxe_efi_x64' updated."
+    "text": "Class '&lt;class-name&gt;' updated.",
 }</screen>
-Result is an integer representation of the status. Currently supported statuses are:
-<itemizedlist>
-  <listitem><para>0 - success</para></listitem>
-  <listitem><para>1 - error</para></listitem>
-  <listitem><para>2 - unsupported</para></listitem>
-  <listitem><para>3 - empty (command was completed successfully, but no data was affected or returned)</para></listitem>
-</itemizedlist>
-</para>
+The command will return a result of 3 (empty) if the client
+                    class doesn't exist. If the client class exists, the retured
+                    result is 0 if the update was successful and the result is 1
+                    if the update is unsuccessful.</para>
 
 </section>
 <!-- end of class-update -->

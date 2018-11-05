@@ -29,5 +29,5 @@
     \"text\": \"Class '<class-name>' added.\",
 }",
     "resp-comment": "The command will be successful (result 0), unless the
-                     class name is a duplicate (result 1)."
+                     class name is a duplicate or another error occurs (result 1)."
 }
