@@ -361,7 +361,7 @@ public:
     }
 
     /// @brief Returns queue control information
-    /// @return pointer to a queue control information
+    /// @return pointer to the queue control information
     const isc::data::ConstElementPtr getQueueControlInfo() const {
         return (queue_control_);
     }

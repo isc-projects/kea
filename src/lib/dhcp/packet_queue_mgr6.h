@@ -17,8 +17,8 @@ namespace dhcp {
 /// @brief Packet Queue Manager for DHPCv6 servers.
 ///
 /// Implements the "manager" class which holds information about the
-/// supported and packet queues and provides management of the current
-/// queue instance. 
+/// supported DHCPv6 packet queue implementations and provides management
+/// of the current queue instance.
 ///
 /// It is implemented as a singleton that can be accessed from any place
 /// within the server code. This includes server configuration, data
@@ -56,7 +56,8 @@ public:
 private:
     /// @brief Private constructor.
     ///
-    /// @todo probably will add the open source/default impl(s)
+    /// It registers a default factory for DHCPv6 queues and creates
+    /// an default DHCPv6 packet queue.
     PacketQueueMgr6();
 
     /// @brief Returns a pointer to the currently used instance of the

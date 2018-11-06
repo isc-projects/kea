@@ -17,8 +17,8 @@ namespace dhcp {
 /// @brief Packet Queue Manager for DHPCv4 servers.
 ///
 /// Implements the "manager" class which holds information about the
-/// supported and packet queues and provides management of the current
-/// queue instance. 
+/// supported DHCPv4 packet queue implementations and provides management
+/// of the current queue instance.
 ///
 /// It is implemented as a singleton that can be accessed from any place
 /// within the server code. This includes server configuration, data
@@ -46,8 +46,8 @@ public:
 
     /// @brief Returns a sole instance of the @c PacketQueueMgr4.
     ///
-    /// This method is used to retrieve the instance of the of the 
-    /// @c PacketQueueMgr4 created by the @c create method. If the 
+    /// This method is used to retrieve the instance of the of the
+    /// @c PacketQueueMgr4 created by the @c create method. If the
     /// instance doesn't exist yet, it is created using the @c create
     /// method.
     static PacketQueueMgr4& instance();
@@ -55,10 +55,11 @@ public:
 private:
     /// @brief Private constructor.
     ///
-    /// @todo probably will add the open source/default impl(s)
+    /// It registers a default factory for DHCPv4 queues and creates
+    /// an default DHCPv4 packet queue.
     PacketQueueMgr4();
 
-    /// @brief Returns a pointer to the currently used instance of the
+    /// @brief Returns a pointer to the currently instance of the
     /// @c PacketQueueMgr4.
     static boost::scoped_ptr<PacketQueueMgr4>& getPacketQueueMgr4Ptr();
 };
