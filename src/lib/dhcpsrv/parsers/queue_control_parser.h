@@ -9,7 +9,6 @@
 
 #include <cc/data.h>
 #include <cc/simple_parser.h>
-#include <dhcp/queue_control.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 
 namespace isc {

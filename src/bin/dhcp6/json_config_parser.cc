@@ -31,6 +31,7 @@
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/queue_control_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
@@ -479,6 +480,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             if (config_pair.first == "control-socket") {
                 ControlSocketParser parser;
                 parser.parse(*srv_config, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "queue-control") {
+                QueueControlParser parser(AF_INET);
+                srv_config->setQueueControlInfo(parser.parse(config_pair.second));
                 continue;
             }
 
