@@ -511,44 +511,52 @@ ${args}" 1
         exit 0 ;;
 
     status)
-        kea4_status="inactive"
+        if [ -t 1 ]; then
+            inactive="\e[91minactive\e[0m"
+            active="\e[92mactive\e[0m"
+        else
+            inactive="inactive"
+            active="active"
+        fi
+
+        kea4_status=$inactive
         # This case of nested double quotes looks confusing, but it is actually
         # correct. For details, see this fine explanation:
         # https://unix.stackexchange.com/questions/443989/whats-the-right-way-to-quote-command-arg
         check_running "$(basename -- "${dhcp4_srv}")"
         if [ ${_running} -eq 1 ]; then
-            kea4_status="active"
+            kea4_status=$active
         fi
-        printf "DHCPv4 server: %s\n" "${kea4_status}"
+        printf "DHCPv4 server: %b\n" "${kea4_status}"
 
-        kea6_status="inactive"
+        kea6_status=$inactive
         check_running "$(basename -- "${dhcp6_srv}")"
         if [ ${_running} -eq 1 ]; then
-            kea6_status="active"
+            kea6_status=$active
         fi
-        printf "DHCPv6 server: %s\n" "${kea6_status}"
+        printf "DHCPv6 server: %b\n" "${kea6_status}"
 
-        d2_status="inactive"
+        d2_status=$inactive
         check_running "$(basename -- "${dhcp_ddns_srv}")"
         if [ ${_running} -eq 1 ]; then
             d2_status="active"
         fi
-        printf "DHCP DDNS: %s\n" "${d2_status}"
+        printf "DHCP DDNS: %b\n" "${d2_status}"
 
-        agent_status="inactive"
+        agent_status=$inactive
         check_running "$(basename -- "${ctrl_agent_srv}")"
         if [ ${_running} -eq 1 ]; then
-            agent_status="active"
+            agent_status=$active
         fi
-        printf "Control Agent: %s\n" "${agent_status}"
+        printf "Control Agent: %b\n" "${agent_status}"
 
         if [ "${have_netconf}" -eq 1 ]; then
-            netconf_status="inactive"
+            netconf_status=$inactive
             check_running "$(basename -- "${netconf_srv}")"
             if [ "${_running}" -eq 1 ]; then
-                netconf_status="active"
+                netconf_status=$active
             fi
-            printf "Netconf agent: %s\n" "${netconf_status}"
+            printf "Netconf agent: %b\n" "${netconf_status}"
         fi
 
         printf "Kea DHCPv4 configuration file: %s\n" "${kea_dhcp4_config_file}"
