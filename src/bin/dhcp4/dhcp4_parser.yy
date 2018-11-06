@@ -171,8 +171,6 @@ using namespace std;
   SOCKET_NAME "socket-name"
 
   QUEUE_CONTROL "queue-control"
-  QUEUE_TYPE "queue-type"
-  CAPACITY "capacity"
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
@@ -1831,40 +1829,22 @@ control_socket_name: SOCKET_NAME {
 
 // --- queue control ---------------------------------------------
 
+// --- queue-control ---------------------------------------------
+
 queue_control: QUEUE_CONTROL {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("queue-control", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.QUEUE_CONTROL);
-} COLON LCURLY_BRACKET queue_control_params RCURLY_BRACKET {
-    ctx.require("queue-type", ctx.loc2pos(@4), ctx.loc2pos(@6));
-    ctx.require("capacity", ctx.loc2pos(@4), ctx.loc2pos(@6));
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-queue_control_params: queue_control_param
-                     | queue_control_params COMMA queue_control_param
-                     ;
-
-queue_control_param: queue_type
-                    | capacity
-                    | user_context
-                    | comment
-                    | unknown_map_entry
-                    ;
-
-queue_type : QUEUE_TYPE {
     ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr qtype(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("queue-type", qtype);
-    ctx.leave();
-};
+} COLON map_value {
+    ElementPtr qc = $4;
+    ctx.stack_.back()->set("queue-control", qc);
 
-capacity: CAPACITY COLON INTEGER {
-    ElementPtr i(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("capacity", i);
+    if (!qc->contains("queue-type")) {
+        std::stringstream msg;
+        msg << "'queue-type' is required: ";
+        msg  << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
+    ctx.leave();
 };
 
 // --- dhcp ddns ---------------------------------------------
