@@ -29,8 +29,6 @@ QueueControlParser::QueueControlParser(const uint16_t family)
 
 data::ElementPtr 
 QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
-    QueueControlPtr queue_control(new QueueControl());
-
     // All we really do here is verify that it is a map that
     // contains at least queue-type.  All other content depends 
     // on the packet queue implementation of that type.
@@ -45,8 +43,6 @@ QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
         if (elem->getType() != Element::string) {
             isc_throw(DhcpConfigError, "queue-type must be a string");
         }
-
-        queue_control->setQueueType(elem->stringValue());
     }
 
     // Return a copy of it.
