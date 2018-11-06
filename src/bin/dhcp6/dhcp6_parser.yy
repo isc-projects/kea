@@ -1923,6 +1923,8 @@ socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
+// --- queue-control ---------------------------------------------
+
 queue_control: QUEUE_CONTROL {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {

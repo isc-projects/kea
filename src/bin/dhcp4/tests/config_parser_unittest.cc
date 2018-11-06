@@ -6413,22 +6413,6 @@ TEST_F(Dhcp4ParserTest, queueControlInvalid) {
             "       \"capacity\": 100 \n"
             "   } \n"
             "} \n"
-        },
-        {
-            "capacity missing",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet4\": [  ],  \n"
-            "   \"queue-control\": {} \n"
-            "} \n"
-        },
-        {
-            "capacity not an int",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet4\": [  ],  \n"
-            "   \"queue-control\": { \n"
-            "       \"capacity\": \"ninety\", \n"
-            "   } \n"
-            "} \n"
         }
     };
 

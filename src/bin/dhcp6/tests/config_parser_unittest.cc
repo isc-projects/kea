@@ -6991,22 +6991,6 @@ TEST_F(Dhcp6ParserTest, queueControlInvalid) {
             "       \"capacity\": 100 \n"
             "   } \n"
             "} \n"
-        },
-        {
-            "capacity missing",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet6\": [  ],  \n"
-            "   \"queue-control\": {} \n"
-            "} \n"
-        },
-        {
-            "capacity not an int",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet6\": [  ],  \n"
-            "   \"queue-control\": { \n"
-            "       \"capacity\": \"ninety\", \n"
-            "   } \n"
-            "} \n"
         }
     };
 
