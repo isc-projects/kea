@@ -36,17 +36,22 @@ enum class QueueEnd {
 };
 
 /// @brief Interface for managing a queue of inbound DHCP packets
-template<typename PacketTypePtr> 
+///
+/// This class serves as the abstract interface for packet queue
+/// implementations which may be used by @c IfaceMgr to store
+/// inbound packets until they are a dequeued for processing.
+///
+template<typename PacketTypePtr>
 class PacketQueue {
 public:
 
     /// @brief Constructor
     ///
-    /// @param queue_type name of this queue's implementation type. 
+    /// @param queue_type name of this queue's implementation type.
     /// Typically this is assigned by the factory that creates the
     /// queue.  It is the logical name used to register queue
     /// implementations.
-    PacketQueue(const std::string& queue_type) 
+    PacketQueue(const std::string& queue_type)
         :  queue_type_(queue_type) {}
 
     /// Virtual destructor
@@ -56,9 +61,9 @@ public:
     ///
     /// Calls @c dropPacket to determine if the packet should be queued
     /// or dropped.  If it should be queued it is added to the end of the
-    /// specified by the "to" parameter. 
+    /// specified by the "to" parameter.
     ///
-    /// @param packet packet to enqueue 
+    /// @param packet packet to enqueue
     /// @param source socket the packet came from - this can be
     /// @param to end of the queue from which to remove packet(s).
     /// Defaults to BACK.
@@ -92,7 +97,7 @@ public:
     /// This function is called at the beginning of @enqueuePacket and
     /// provides an opportunity to examine the packet and its source
     /// and decide whether it should be dropped or added to the queue.
-    /// Derivations are expected to provide implementations based on 
+    /// Derivations are expected to provide implementations based on
     /// their own requirements.  Bear in mind that the packet has NOT
     /// been unpacked at this point. The default implementation simply
     /// returns false.
@@ -102,7 +107,7 @@ public:
     ///
     /// @return true if the packet should be dropped, false if it should be
     /// kept.
-    virtual bool dropPacket(PacketTypePtr /* packet */, 
+    virtual bool dropPacket(PacketTypePtr /* packet */,
                             const SocketInfo& /* source */) {
         return (false);
     }
@@ -112,8 +117,8 @@ public:
     /// This function is called at the beginning of @c dequeuPacket and
     /// provides an opportunity to examine and discard packets from
     /// the queue prior to dequeuing the next packet to be
-    /// processed.  Derivations are expected to provide implementations 
-    /// based on their own requirements.  The default implemenation is to 
+    /// processed.  Derivations are expected to provide implementations
+    /// based on their own requirements.  The default implemenation is to
     /// to simply returns without skipping any packets.
     ///
     /// @param from end of the queue from which packets should discarded
@@ -121,7 +126,7 @@ public:
     ///
     /// @return The number of packets discarded.
     virtual int eatPackets(const QueueEnd& /* from */) {
-        return (0); 
+        return (0);
     }
 
     /// @brief Pushes a packet onto the queue
@@ -140,9 +145,9 @@ public:
     /// @brief Gets the packet currently at one end of the queue
     ///
     /// Returns a pointer the packet at the specified end of the
-    /// queue without dequeuing it.  
+    /// queue without dequeuing it.
     ///
-    /// @return A pointer to packet, or an empty pointer if the 
+    /// @return A pointer to packet, or an empty pointer if the
     /// queue is empty.
     virtual const PacketTypePtr peek(const QueueEnd& from=QueueEnd::FRONT) const = 0;
 
@@ -156,12 +161,26 @@ public:
     /// @brief Discards all packets currently in the buffer.
     virtual void clear() = 0;
 
+    /// @brief Fetches operational information about the current state of the queue
+    ///
+    /// Creates and returns an ElementPtr containing a single entry,
+    /// "queue-type".  Derivations are expected to call this method first
+    /// and then add their own values.  Since implementations may vary
+    /// widely on data of interest, this is structured as an ElementPtr
+    /// for broad latitude.
+    ///
+    /// @return an ElementPtr containing elements for values of interest
     virtual data::ElementPtr getInfo() {
        data::ElementPtr info = data::Element::createMap();
        info->set("queue-type", data::Element::create(queue_type_));
        return(info);
     }
 
+    /// @brief Fetches a JSON string representation of queue operational info
+    ///
+    /// This method calls @c getInfo() and then converts that into JSON text.
+    ///
+    /// @return string of JSON text
     virtual std::string getInfoStr() {
        data::ElementPtr info = getInfo();
        std::ostringstream os;
@@ -169,25 +188,30 @@ public:
        return (os.str());
     }
 
-    /// @brief 
+    /// @return Fetches the logical name of the type of this queue.
     std::string getQueueType() {
         return (queue_type_);
     };
 
 private:
-    /// @brief Name of the this queue's implementation type. 
+    /// @brief Logcial name of the this queue's implementation type.
     std::string queue_type_;
-    
+
 };
 
-/// @brief Defines pointer to the DHCPv4 queue interface used at the application level. 
+/// @brief Defines pointer to the DHCPv4 queue interface used at the application level.
+/// This is the type understood by IfaceMgr and the type that should be returned by
+/// DHCPv4 packet queue factories.
 typedef boost::shared_ptr<PacketQueue<Pkt4Ptr>> PacketQueue4Ptr;
 
-/// @brief Defines pointer to the DHCPv6 queue interface used at the application level. 
+/// @brief Defines pointer to the DHCPv6 queue interface used at the application level.
+/// This is the type understood by IfaceMgr and the type that should be returned by
+/// DHCPv6 packet queue factories.
 typedef boost::shared_ptr<PacketQueue<Pkt6Ptr>> PacketQueue6Ptr;
 
+
 /// @brief Provides an abstract ring-buffer implementation of the PacketQueue interface.
-template<typename PacketTypePtr> 
+template<typename PacketTypePtr>
 class PacketQueueRing : public PacketQueue<PacketTypePtr> {
 public:
     static const size_t MIN_RING_CAPACITY = 5;
@@ -196,7 +220,7 @@ public:
     ///
     /// @param queue_capacity maximum number of packets the queue can hold
     PacketQueueRing(const std::string& queue_type, size_t capacity)
-        : PacketQueue<PacketTypePtr>(queue_type) { 
+        : PacketQueue<PacketTypePtr>(queue_type) {
         queue_.set_capacity(capacity);
     }
 
@@ -241,9 +265,9 @@ public:
     /// @brief Gets the packet currently at one end of the queue
     ///
     /// Returns a pointer the packet at the specified end of the
-    /// queue without dequeuing it.  
+    /// queue without dequeuing it.
     ///
-    /// @return A pointer to packet, or an empty pointer if the 
+    /// @return A pointer to packet, or an empty pointer if the
     /// queue is empty.
     virtual const PacketTypePtr peek(const QueueEnd& from=QueueEnd::FRONT) const {
         PacketTypePtr packet;
@@ -257,7 +281,7 @@ public:
     /// @brief Returns True if the queue is empty.
     virtual bool empty() const {
         return(queue_.empty());
-    } 
+    }
 
     /// @brief Returns the maximum number of packets allowed in the buffer.
     virtual size_t getCapacity() const {
@@ -272,8 +296,8 @@ public:
     /// @throw BadValue if capacity is too low.
     virtual void setCapacity(size_t capacity) {
         if (capacity < MIN_RING_CAPACITY) {
-            isc_throw(BadValue, "Queue capacity of " << capacity 
-                      << " is invalid.  It must be at least " 
+            isc_throw(BadValue, "Queue capacity of " << capacity
+                      << " is invalid.  It must be at least "
                       << MIN_RING_CAPACITY);
         }
 
@@ -291,6 +315,7 @@ public:
         queue_.clear();
     }
 
+    /// @brief Fetches pertinent information
     virtual data::ElementPtr getInfo() {
        data::ElementPtr info = PacketQueue<PacketTypePtr>::getInfo();
        info->set("capacity", data::Element::create(static_cast<int64_t>(getCapacity())));
@@ -305,44 +330,42 @@ private:
 };
 
 
-/// @brief Default DHCPv4 packet queue buffer implementation
+/// @brief DHCPv4 packet queue buffer implementation
+///
+/// This implementation does not (currently) add any drop
+/// or packet skip logic, it operates as a verbatim ring
+/// queue for DHCPv4 packets.
+///
 class PacketQueueRing4 : public PacketQueueRing<Pkt4Ptr> {
 public:
-    static const size_t DEFAULT_RING_CAPACITY = 500;
-
     /// @brief Constructor
     ///
     /// @param capacity maximum number of packets the queue can hold
-    PacketQueueRing4(const std::string& queue_type, size_t capacity=DEFAULT_RING_CAPACITY) 
+    PacketQueueRing4(const std::string& queue_type, size_t capacity)
         : PacketQueueRing(queue_type, capacity) {
     };
 
     /// @brief virtual Destructor
     virtual ~PacketQueueRing4(){}
-
-    virtual void useDefaults(){
-        setCapacity(DEFAULT_RING_CAPACITY);
-    }
 };
 
-/// @brief Default DHCPv6 packet queue buffer implementation
+/// @brief DHCPv6 packet queue buffer implementation
+///
+/// This implementation does not (currently) add any drop
+/// or packet skip logic, it operates as a verbatim ring
+/// queue for DHCPv6 packets.
+///
 class PacketQueueRing6 : public PacketQueueRing<Pkt6Ptr> {
 public:
-    static const size_t DEFAULT_RING_CAPACITY = 500;
-
     /// @brief Constructor
     ///
     /// @param capacity maximum number of packets the queue can hold
-    PacketQueueRing6(const std::string& queue_type, size_t capacity=DEFAULT_RING_CAPACITY)
+    PacketQueueRing6(const std::string& queue_type, size_t capacity)
         : PacketQueueRing(queue_type, capacity) {
     };
 
     /// @brief virtual Destructor
     virtual ~PacketQueueRing6(){}
-
-    virtual void useDefaults() {
-        setCapacity(DEFAULT_RING_CAPACITY);
-    }
 };
 
 

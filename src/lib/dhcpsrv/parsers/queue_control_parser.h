@@ -18,6 +18,9 @@ namespace dhcp {
 ///
 /// This parser parses the "queue-control" parameter which holds the
 /// the configurable parameters that tailor DHCP packet queue behavior.
+/// Currently "queue-control" is treated as a map of arbitrary values,
+/// with only one required value, "queue-type". This was done to
+/// provide latitude for differing queue implementations.
 ///
 /// This parser is used in both DHCPv4 and DHCPv6. Derived parsers
 /// are not needed.

@@ -296,13 +296,8 @@ void IfaceMgr::stopDHCPReceiver() {
     }
     receiver_error_ = "no error";
 
-    /* if(getPacketQueue4())*/ {
-        getPacketQueue4()->clear();
-    }
-
-    /* if (getPacketQueue6()) */ {
-        getPacketQueue4()->clear();
-    }
+    getPacketQueue4()->clear();
+    getPacketQueue4()->clear();
 }
 
 

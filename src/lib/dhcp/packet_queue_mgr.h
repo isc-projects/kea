@@ -21,7 +21,7 @@ namespace dhcp {
 
 /// @brief Invalid Queue type exception
 ///
-/// Thrown when a packet queue manager doesn't recognize the type of the queue. 
+/// Thrown when a packet queue manager doesn't recognize the type of the queue.
 class InvalidQueueType : public Exception {
 public:
     InvalidQueueType(const char* file, size_t line, const char* what) :
@@ -30,43 +30,11 @@ public:
 
 /// @brief Packet Queue Managers (PQM).
 ///
-
-/// @todo TKM rewrite this...
-
-/// Each Kea server supporting Configuration Backend feature implements
-/// a "manager" class which holds information about supported and
-/// configured backends and provides access to the backends. This is
-/// similar to @c HostMgr and @c LeaseMgr singletons being used by the
-/// DHCP servers.
+/// Base class to manage the registry of packet queue implemenations
+/// and the creation of and access to the current packet queue.
 ///
-/// The Config Backend Managers are typically implemented as singletons
-/// which can be accessed from any place within the server code. This
-/// includes server configuration, data fetching during normal server
-/// operation and data management, including processing of control
-/// commands implemented within hooks libraries.
-///
-/// The @c BaseConfigBackendMgr is a base class for all PQMs implemented
-/// for respective Kea servers. It includes mechanisms to register config
-/// backend factory functions and to create instances of the backends using
-/// those factory functions as a result of server configuration. The mechanism
-/// of factory functions registration is useful in cases when the config
-/// backend is implemented within the hook library. Such hook library
-/// registers factory function in its @c load function and the server
-/// simply calls this function to create the instance of this backend when
-/// instructed to do so via configuration. Similar mechanism exists in
-/// DHCP @c HostMgr.
-///
-/// Unlike @c HostMgr, the PQMs do not directly expose API to fetch and
-/// manipulate the data in the database. This is done via, so called,
-/// Configuration Backends Pools. See @c BaseConfigBackendPool for
-/// details. The @c BaseConfigBackendMgr is provided with the pool type
-/// via class template parameter. Respective PQM implementations
-/// use their own pools, which provide APIs appropriate for those
-/// implementations.
-///
-/// @tparam ConfgBackendPoolType Type of the configuration backend pool
-/// to be used by the manager. It must derive from @c BaseConfigBackendPool
-/// template class.
+/// @tparam PacktQueueTypePtr Base type of packet queues managed by
+/// the manager (e.g. PacketQueue4Ptr, PacketQueue6Ptr).
 template<typename PacketQueueTypePtr>
 class PacketQueueMgr {
 public:
@@ -128,10 +96,6 @@ public:
         // If it's there remove it
         if (index != factories_.end()) {
             factories_.erase(index);
-        // @todo What do we do here, if we only have one queue?
-        // I think we don't care, as we should be reloading/reconfiging...
-        // It may be that PQM doesn't retain the instance at all?
-        //  pool_->delAllBackends(db_type);
             return (true);
 
         }
@@ -152,7 +116,7 @@ public:
     /// replaced unless the new queue is successfully created.
     ///
     /// @throw InvalidQueueParameter if parameters is not map that contains
-    /// "queue-type", InvalidQueueType if the queue type requested is not 
+    /// "queue-type", InvalidQueueType if the queue type requested is not
     /// supported.
     /// @throw Unexpected if the backend factory function returned NULL.
     void createPacketQueue(data::ConstElementPtr parameters) {

@@ -1035,9 +1035,9 @@ public:
     /// @brief DHCPv4 receiver packet queue.
     ///
     /// Incoming packets are read by the receiver thread and
-    /// added to this queue. @c receive4() dequeues and 
-    /// returns them. 
-    PacketQueue4Ptr getPacketQueue4() { 
+    /// added to this queue. @c receive4() dequeues and
+    /// returns them.
+    PacketQueue4Ptr getPacketQueue4() {
         return (PacketQueueMgr4::instance().getPacketQueue());
     }
 
@@ -1060,8 +1060,7 @@ public:
     ///
     /// @throw Unexpected if the thread already exists.
     void startDHCPReceiver(const uint16_t family);
-
-    /// @brief Stops the DHCP packet receiver.
+/// @brief Stops the DHCP packet receiver.
     ///
     /// Stops the receiver and delete the dedicated thread.
     void stopDHCPReceiver();
@@ -1186,7 +1185,7 @@ private:
     /// Loops forever reading DHCPv4 packets from the interface sockets
     /// and adds them to the packet queue.  It monitors the "terminate"
     /// watch socket, and exits if it is marked ready.  This is method
-    /// is used as the worker function in the thread created by @c 
+    /// is used as the worker function in the thread created by @c
     /// startDHCP4Receiver().  It currently uses select() to monitor
     /// socket readiness.  If the select errors out (other than EINTR),
     /// it marks the "error" watch socket as ready.
@@ -1195,11 +1194,11 @@ private:
     /// @brief Receives a single DHCPv4 packet from an interface socket
     ///
     /// Called by @c receiveDHPC4Packets when a socket fd is flagged as
-    /// ready. It uses the DHCPv4 packet filter to receive a single packet 
-    /// from the given interface socket, adds it to the packet queue, and 
+    /// ready. It uses the DHCPv4 packet filter to receive a single packet
+    /// from the given interface socket, adds it to the packet queue, and
     /// marks the "receive" watch socket ready. If an error occurs during
     /// the read, the "error" watch socket is marked ready.
-    /// 
+    ///
     /// @param iface interface
     /// @param socket_info structure holding socket information
     void receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info);
@@ -1209,7 +1208,7 @@ private:
     /// Loops forever reading DHCPv6 packets from the interface sockets
     /// and adds them to the packet queue.  It monitors the "terminate"
     /// watch socket, and exits if it is marked ready.  This is method
-    /// is used as the worker function in the thread created by @c 
+    /// is used as the worker function in the thread created by @c
     /// startDHCP6Receiver().  It currently uses select() to monitor
     /// socket readiness.  If the select errors out (other than EINTR),
     /// it marks the "error" watch socket as ready.
@@ -1218,11 +1217,11 @@ private:
     /// @brief Receives a single DHCPv6 packet from an interface socket
     ///
     /// Called by @c receiveDHPC6Packets when a socket fd is flagged as
-    /// ready. It uses the DHCPv6 packet filter to receive a single packet 
-    /// from the given interface socket, adds it to the packet queue, and 
+    /// ready. It uses the DHCPv6 packet filter to receive a single packet
+    /// from the given interface socket, adds it to the packet queue, and
     /// marks the "receive" watch socket ready. If an error occurs during
     /// the read, the "error" watch socket is marked ready.
-    /// 
+    ///
     /// @param iface interface
     /// @param socket_info structure holding socket information
     void receiveDHCP6Packet(const SocketInfo& socket_info);
@@ -1256,7 +1255,7 @@ private:
     std::string receiver_error_;
 
     /// @brief DHCP packet receive error watch socket.
-    /// Marked as ready when the DHCP packet receiver experiences 
+    /// Marked as ready when the DHCP packet receiver experiences
     /// an I/O error.
     isc::util::WatchSocket error_watch_;
 
