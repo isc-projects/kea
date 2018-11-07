@@ -9,7 +9,7 @@ DOCBOOK = kea-guide.xml intro.xml quickstart.xml install.xml admin.xml config.xm
 DOCBOOK += keactrl.xml dhcp4-srv.xml dhcp6-srv.xml lease-expiration.xml logging.xml
 DOCBOOK += ddns.xml hooks.xml hooks-class-cmds.xml hooks-ha.xml hooks-host-cache.xml
 DOCBOOK += hooks-lease-cmds.xml hooks-radius.xml hooks-stat-cmds.xml libdhcp.xml
-DOCBOOK += lfc.xml stats.xml ctrl-channel.xml faq.xml classify.xml shell.xml agent.xml
+DOCBOOK += lfc.xml stats.xml ctrl-channel.xml classify.xml shell.xml agent.xml
 DOCBOOK += netconf.xml api.xml
 
 EXTRA_DIST = $(DOCBOOK)
