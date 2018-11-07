@@ -138,8 +138,15 @@ namespace {
 ///   - Use for testing authoritative flag
 ///   - 1 subnet: 10.0.0.0/24
 ///   - 1 pool: 10.0.0.10-10.0.0.100
-///   - authoritative flag is set to false, thus the server responds
-///     with DHCPNAK to requests with unknown subnets.
+///   - authoritative flag is set to true, thus the server responds
+///     with DHCPNAK to requests from unknown clients.
+///
+/// - Configuration 16:
+///   - Use for testing authoritative flag
+///   - 1 subnet: 10.0.0.0/24
+///   - 1 pool: 10.0.0.10-10.0.0.100
+///   - authoritative flag is set to false, thus the server does not
+///     respond to requests from unknown clients.
 ///
 const char* DORA_CONFIGS[] = {
 // Configuration 0
@@ -506,10 +513,27 @@ const char* DORA_CONFIGS[] = {
         "      \"interfaces\": [ \"*\" ]"
         "},"
         "\"valid-lifetime\": 600,"
+        "\"authoritative\": true,"
         "\"subnet4\": [ { "
         "    \"subnet\": \"10.0.0.0/24\", "
         "    \"id\": 1,"
-        "    \"authoritative\": true,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ]"
+        " } ]"
+    "}",
+
+// Configuration 16
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 600,"
+        "\"authoritative\": false,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
         "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
         "    \"option-data\": [ {"
         "        \"name\": \"routers\","
@@ -823,7 +847,7 @@ TEST_F(DORATest, initRebootRequest) {
 
 // Test that the client in the INIT-REBOOT state can request the IP
 // address it has and the address is returned. Also, check that if
-// if the client requests invalid address the server sends a DHCPNAK.
+// if the client is unknown the server sends a DHCPNAK.
 TEST_F(DORATest, authoritative) {
     Dhcp4Client client(Dhcp4Client::SELECTING);
     // Configure DHCP server.
@@ -891,13 +915,106 @@ TEST_F(DORATest, authoritative) {
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
 
     // Now let's fix the IP address. The client identifier is still
-    // invalid so the message should be dropped.
-    client.config_.lease_.addr_ = IOAddress("10.0.0.50");
+    // invalid so the server still responds with DHCPNAK.
+
     ASSERT_NO_THROW(client.doRequest());
     // Make sure that the server responded.
     ASSERT_TRUE(client.getContext().response_);
     resp = client.getContext().response_;
     EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // Restore original client identifier.
+    client.includeClientId("11:22");
+    client.config_.lease_.addr_ = IOAddress("10.0.0.50");
+
+    // Try to request from a different HW address. This should be successful
+    // because the client identifier matches.
+    client.modifyHWAddr();
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+}
+
+// Test that the client in the INIT-REBOOT state can request the IP
+// address it has and the address is returned. Also, check that if
+// if the client is unknown the request is dropped.
+TEST_F(DORATest, notAuthoritative) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+    // Configure DHCP server.
+    configure(DORA_CONFIGS[16], *client.getServer());
+    client.includeClientId("11:22");
+    // Obtain a lease from the server using the 4-way exchange.
+    ASSERT_NO_THROW(client.doDORA(boost::shared_ptr<
+                                  IOAddress>(new IOAddress("10.0.0.50"))));
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    Pkt4Ptr resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Response must not be relayed.
+    EXPECT_FALSE(resp->isRelayed());
+    // Make sure that the server id is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+
+    // Client has a lease in the database. Let's transition the client
+    // to the INIT_REBOOT state so as the client can request the cached
+    // lease using the DHCPREQUEST message.
+    client.setState(Dhcp4Client::INIT_REBOOT);
+    ASSERT_NO_THROW(client.doRequest());
+
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    // Make sure that the server has responded with DHCPACK.
+    ASSERT_EQ(DHCPACK, static_cast<int>(resp->getType()));
+    // Response must not be relayed.
+    EXPECT_FALSE(resp->isRelayed());
+    // Make sure that the server id is present.
+    EXPECT_EQ("10.0.0.1", client.config_.serverid_.toText());
+    // Make sure that the client has got the lease with the requested address.
+    ASSERT_EQ("10.0.0.50", client.config_.lease_.addr_.toText());
+
+    // Try to request a different address than the client has. The server
+    // should respond with DHCPNAK.
+    client.config_.lease_.addr_ = IOAddress("10.0.0.30");
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    EXPECT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // Try to request another different address from an unknown subnet.
+    // The server should respond with DHCPNAK.
+    client.config_.lease_.addr_ = IOAddress("10.1.0.30");
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server responded.
+    ASSERT_TRUE(client.getContext().response_);
+    resp = client.getContext().response_;
+    ASSERT_EQ(DHCPNAK, static_cast<int>(resp->getType()));
+
+    // Change client identifier. The server should treat the request
+    // as a request from unknown client and not respond (no DHCPNAK).
+    // Changed behavior vs authoritative!
+    client.includeClientId("12:34");
+    client.config_.lease_.addr_ = IOAddress("10.1.0.30");
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server did not respond.
+    EXPECT_FALSE(client.getContext().response_);
+
+    // Now let's fix the IP address. The client identifier is still
+    // invalid so the message should be dropped (no DHCPNAK).
+    // Changed behavior vs authoritative!
+    client.config_.lease_.addr_ = IOAddress("10.0.0.50");
+    ASSERT_NO_THROW(client.doRequest());
+    // Make sure that the server did not respond.
+    EXPECT_FALSE(client.getContext().response_);
 
     // Restore original client identifier.
     client.includeClientId("11:22");
@@ -2117,7 +2234,7 @@ public:
     /// Recreates PgSQL schema for a test.
     DORAPgSQLTest() : DORATest() {
         db::test::destroyPgSQLSchema();
-	db::test::createPgSQLSchema();
+        db::test::createPgSQLSchema();
     }
 
     /// @brief Destructor.

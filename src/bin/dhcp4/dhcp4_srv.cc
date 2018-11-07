@@ -2004,9 +2004,9 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         }
 
         // If we know this client, check if his notion of the IP address is
-        // correct, if we don't know him check, if we are authoritative.
-        if ((known_client && (lease->addr_ != hint))
-            || (!known_client && authoritative)) {
+        // correct, if we don't know him, check if we are authoritative.
+        if ((known_client && (lease->addr_ != hint)) ||
+            (!known_client && authoritative)) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
                 .arg(query->getLabel())

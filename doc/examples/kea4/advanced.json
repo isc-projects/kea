@@ -166,7 +166,7 @@
         },
         {
             // This particular subnet has the authoritative value changed.
-            // This casuses Kea to reply to requests with unknown IP addresses
+            // This causes Kea to reply to requests for unknown IP addresses
             // with a DHCPNAK message.
             "pools": [ { "pool": "192.0.5.100 - 192.0.5.200" } ],
             "subnet": "192.0.5.0/24",

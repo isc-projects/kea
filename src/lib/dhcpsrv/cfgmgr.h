@@ -92,19 +92,6 @@ public:
     /// @param datadir New data directory.
     void setDataDir(const std::string& datadir);
 
-    /// @brief Sets whether server should NAK unknown clients in DHCPv4
-    ///
-    /// @param echo should unknown clients be rejected or not
-    void authoritative(const bool enabled) {
-        authoritative_ = enabled;
-    }
-
-    /// @brief Returns whether server should NAK requests for unknown leases
-    /// @return true if requests for unknown leases should be NAKed, false otherwise
-    bool authoritative() const {
-        return (authoritative_);
-    }
-
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///
     /// Passes the new configuration to the D2ClientMgr instance,
@@ -282,9 +269,6 @@ private:
 
     /// @brief directory where data files (e.g. server-id) are stored
     std::string datadir_;
-
-    /// Indicates whether v4 server should NAK requests for unknown addresses
-    bool authoritative_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;

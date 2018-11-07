@@ -1,7 +1,8 @@
 1475.	[func]		sebschrader
-	Authoritative flag for DHCPv4 has been added. When enabled, it
-	alters how DHCPv4 server treats packets from unknown clients. This
-	lets two servers cooperate on the same link easier.
+	Add authoritative feature for DHCPv4 from ISC DHCP: requests from
+	unknown clients are dropped (default/previous behavior) or
+	answered with DHCPNAK (new behevior with new authoritative flag
+	set to true for the subnet). Patch proposed by Sebastian Schrader.
 	(Gitlab #66, git tbd)
 
 1474.	[doc]		godfryd

@@ -3217,7 +3217,7 @@ namespace isc { namespace dhcp {
   case 577:
 #line 1971 "dhcp4_parser.yy" // lalr1.cc:856
     {
-      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location))); 
+      yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location)));
       }
 #line 3223 "dhcp4_parser.cc" // lalr1.cc:856
     break;

@@ -1969,7 +1969,7 @@ replace_client_name: REPLACE_CLIENT_NAME {
 
 replace_client_name_value:
     WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
       }
   | NEVER {
       $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
