@@ -1,3 +1,7 @@
+1473.	[doc]		tomek
+	Outdated FAQ section removed from the User's Guide.
+	(Gitlab #118, !113, git 7d079384bd5f49e0e36a571ee964bfd7d6ebd25d)
+
 1472.	[bug]		marcin
 	Timeout is now reported by the HTTP client when connecting to the server
 	takes too long. This eliminates HTTP client hangs when firewall is
