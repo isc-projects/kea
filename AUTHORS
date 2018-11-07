@@ -188,6 +188,9 @@ We have received the following contributions:
  - Suzanne Goldlust
    2018-10: API documentation
 
+ - lpaserati
+   2018-11: Two bugfixes in kea-admin
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
