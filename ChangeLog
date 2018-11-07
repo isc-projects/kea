@@ -1,3 +1,7 @@
+1474.	[doc]		godfryd
+	Updated list of supported operating systems.
+	(Gitlab #205, !109, git 73253af554cf48434798282f8440a99b1494fd04)
+
 1473.	[doc]		tomek
 	Outdated FAQ section removed from the User's Guide.
 	(Gitlab #118, !113, git 7d079384bd5f49e0e36a571ee964bfd7d6ebd25d)
@@ -494,7 +498,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	tracked by the database, they do not have to be recalculated at startup
 	or following reconfiguration. This may result in less processing overhead
 	during these events. The new statistics will be accessible via a new Hooks
-	library, being developed for Kea 1.4 under #5589. 
+	library, being developed for Kea 1.4 under #5589.
 	(Trac #5586, git a070c327668c10de3b28f5e249f91d6d16a97ff5)
 
 1394.	[doc]		marcin
@@ -9260,5 +9264,3 @@ LEGEND
 	fix except that it will be handled as confidential and will cause
 	security patch releases.
 *: Backward incompatible or operational change.
-
-
