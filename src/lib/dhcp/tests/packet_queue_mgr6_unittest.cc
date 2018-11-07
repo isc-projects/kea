@@ -19,27 +19,38 @@ using namespace isc::dhcp::test;
 
 namespace {
 
+/// @brief Test fixture for exercising the DHCPv6 Packet Queue Manager (PQM)
 class PacketQueueMgr6Test : public ::testing::Test {
 public:
+    /// @brief Constructor
+    ///
+    /// Note that it instantiates the PQM singleton.
     PacketQueueMgr6Test(){
         PacketQueueMgr6::create();
     }
 
-    ~PacketQueueMgr6Test(){
+    /// @brief Destructor
+    ///
+    /// It destroys the PQM singleton.
+    virtual ~PacketQueueMgr6Test(){
         PacketQueueMgr6::destroy();
     }
 
-    /// @brief Registers a queue type factory 
+    /// @brief Registers a queue type factory
+    ///
+    /// @param queue_type logical name of the queue implementation
+    ///
+    /// @return true if the registration succeeded, false otherwise
     bool addCustomQueueType(const std::string& queue_type) {
         bool did_it =
-            mgr().registerPacketQueueFactory(queue_type, 
+            mgr().registerPacketQueueFactory(queue_type,
                                             [](data::ConstElementPtr parameters)
                                             -> PacketQueue6Ptr {
                 std::string queue_type ;
                 try {
                     queue_type = data::SimpleParser::getString(parameters, "queue-type");
                 } catch (std::exception& ex) {
-                    isc_throw(InvalidQueueParameter, 
+                    isc_throw(InvalidQueueParameter,
                               "queue-type missing or invalid: " << ex.what());
                 }
 
@@ -47,26 +58,33 @@ public:
                 try {
                     capacity = data::SimpleParser::getInteger(parameters, "capacity");
                 } catch (const std::exception& ex) {
-                    isc_throw(InvalidQueueParameter, 
+                    isc_throw(InvalidQueueParameter,
                               "'capacity' missing or invalid: " << ex.what());
                 }
 
                 return (PacketQueue6Ptr(new PacketQueueRing6(queue_type, capacity)));
             });
 
-        return did_it; 
+        return did_it;
     }
 
+    /// @brief Fetches a pointer to the PQM singleton
     PacketQueueMgr6& mgr() {
         return (PacketQueueMgr6::instance());
     };
 
+    /// @brief Tests the current packet queue info against expected content
+    ///
+    /// @param exp_json JSON text describing the expected packet queue info
+    /// contents
     void checkMyInfo(const std::string& exp_json) {
         checkInfo((mgr().getPacketQueue()), exp_json);
     }
 
 };
 
+// Verifies that DHCPv6 PQM provides a default queue factory
+// and packet queue.
 TEST_F(PacketQueueMgr6Test, defaultQueue) {
 
     // Verify that we have a default queue and its info is correct.
@@ -79,12 +97,13 @@ TEST_F(PacketQueueMgr6Test, defaultQueue) {
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
     // We should be able to recreate the manager.
-    ASSERT_NO_THROW(PacketQueueMgr6::create());  
+    ASSERT_NO_THROW(PacketQueueMgr6::create());
 
     // And be back to having the default queue.
     checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 }
 
+// Verifies that PQM registry and creation of custome queue implementations.
 TEST_F(PacketQueueMgr6Test, customQueueType) {
 
     // Verify that we cannot create a queue for a non-existant type

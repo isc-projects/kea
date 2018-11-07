@@ -68,7 +68,7 @@ public:
     /// @return true if the queue type has been successfully registered, false
     /// if the type already exists.
     bool registerPacketQueueFactory(const std::string& queue_type,
-                                const Factory& factory) {
+                                    const Factory& factory) {
         // Check if this backend has been already registered.
         if (factories_.count(queue_type)) {
             return (false);

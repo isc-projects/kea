@@ -8,7 +8,7 @@
 #include <cc/data.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
-#include <dhcpsrv/parsers/queue_control_parser.h>
+#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
 #include <boost/foreach.hpp>
 #include <string>
 #include <sys/types.h>
@@ -18,25 +18,25 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-QueueControlParser::QueueControlParser(const uint16_t family)
+DHCPQueueControlParser::DHCPQueueControlParser(const uint16_t family)
     : family_(family) {
     // @todo Not sure we need family but just in case.
     if (family_ != AF_INET && family_ != AF_INET6) {
-        isc_throw(BadValue, "QueueControlParser - invalid family: "
+        isc_throw(BadValue, "DHCPQueueControlParser - invalid family: "
                  << family_ << ", must be AF_INET or AF_INET6");
     }
 }
 
 data::ElementPtr 
-QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
+DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
     // All we really do here is verify that it is a map that
     // contains at least queue-type.  All other content depends 
     // on the packet queue implementation of that type.
-    if (queue_elem->getType() != Element::map) {
-        isc_throw(DhcpConfigError, "queue-control must be a map");
+    if (control_elem->getType() != Element::map) {
+        isc_throw(DhcpConfigError, "dhcp-queue-control must be a map");
     }
 
-    ConstElementPtr elem  = queue_elem->get("queue-type");
+    ConstElementPtr elem  = control_elem->get("queue-type");
     if (!elem) {
         isc_throw(DhcpConfigError, "queue-type is required");
     } else {
@@ -46,7 +46,7 @@ QueueControlParser::parse(const isc::data::ConstElementPtr& queue_elem) {
     }
 
     // Return a copy of it.
-    return (data::copy(queue_elem));
+    return (data::copy(control_elem));
 }
 
 } // end of namespace isc::dhcp

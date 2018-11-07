@@ -6915,61 +6915,86 @@ TEST_F(Dhcp6ParserTest, serverTag) {
     ASSERT_THROW(parseDHCP6(bad_tag), std::exception);
 }
 
-// Check whether it is possible to configure queue-control 
-TEST_F(Dhcp6ParserTest, queueControl) {
-    // Config without server-tag
-    string config_no_queue = "{ " + genIfaceConfig() + "," +
-        "\"subnet6\": [  ] "
-        "}";
+// Check whether it is possible to configure packet queue
+TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
+    struct Scenario {
+        std::string description_;
+        std::string json_;
+    };
 
-    string config_with_queue =
-        "{ " + genIfaceConfig() + ", \n" +
-        "   \"subnet6\": [  ],  \n"
-        "   \"queue-control\": { \n"
-        "       \"queue-type\": \"some-type\", \n"
-        "       \"capacity\": 75 \n"
-        "   } \n"
-        "} \n";
-
-    string config_with_context =
-        "{ " + genIfaceConfig() + ", \n" +
-        "   \"subnet6\": [  ],  \n"
-        "   \"queue-control\": { \n"
+    std::vector<Scenario> scenarios = {
+        {
+        "no entry",
+        ""
+        },
+        {
+        "valid entry",
+        "{ \n"
+        "   \"queue-type\": \"some-type\", \n"
+        "   \"capacity\": 75 \n"
+        "} \n"
+        },
+        {
+        "valid arbitrary content",
+        "{ \n"
         "       \"queue-type\": \"some-type\", \n"
         "       \"capacity\": 90, \n"
-        "       \"user-context\": { \"comment\": \"some text\" } \n"
-        "   } \n"
-        "} \n";
+        "       \"user-context\": { \"comment\": \"some text\" },\n"
+        "       \"random-bool\" : false, \n"
+        "       \"random-int\" : 1236 \n"
+        "} \n"
+        }
+    };
 
     // Let's check the default. It should be empty.
     data::ConstElementPtr control;
-    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+    control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
     ASSERT_FALSE(control);
 
-    // Configuration with no queue should default to an emtpy control.
-    configure(config_no_queue, CONTROL_RESULT_SUCCESS, "");
-    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
-    ASSERT_FALSE(control);
+    // Iterate over the incorrect scenarios and verify they
+    // fail as expected. Note, we use parseDHCP6() directly
+    // as all of the errors above are enforced by the grammar.
+    data::ConstElementPtr exp_elems;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE(scenario.description_);
+        {
+            // Clear the config
+            CfgMgr::instance().clear();
 
-    // Clear the config
-    CfgMgr::instance().clear();
+            // Construct the config JSON
+            std::stringstream os;
+            os << "{ " + genIfaceConfig();
+            if (!scenario.json_.empty()) {
 
-    // Configuration with queue should be valid.
-    configure(config_with_queue, CONTROL_RESULT_SUCCESS, "");
-    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
-    ASSERT_TRUE(control);
+               os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
+            }
 
-    // Clear the config
-    CfgMgr::instance().clear();
+            os << "} \n";
 
-    // Configuration with queue with context should be valid.
-    configure(config_with_context, CONTROL_RESULT_SUCCESS, "");
-    control = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
-    ASSERT_TRUE(control);
+            // Configure the server. This should succeed.
+            configure(os.str(), CONTROL_RESULT_SUCCESS, "");
+
+            // Fetch the queue control info.
+            control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+
+            // If JSON does not contain queue control,
+            // the pointer stored in staging should be empty.
+            if (scenario.json_.empty()) {
+                ASSERT_FALSE(control);
+                continue;
+            }
+
+            // Make sure the staged config is correct.
+            ASSERT_TRUE(control);
+            ASSERT_NO_THROW(exp_elems = Element::fromJSON(scenario.json_))
+                            << " cannot convert expected JSON, test is broken";
+            EXPECT_TRUE(control->equals(*exp_elems));
+        }
+    }
 }
 
-// Check whether it is possible to configure server-tag
-TEST_F(Dhcp6ParserTest, queueControlInvalid) {
+// Check that we catch invalid dhcp-queue-control content
+TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
     struct Scenario {
         std::string description_;
         std::string json_;
@@ -6980,14 +7005,14 @@ TEST_F(Dhcp6ParserTest, queueControlInvalid) {
             "not a map",
             "{ " + genIfaceConfig() + ", \n" +
             "   \"subnet6\": [  ],  \n"
-            "   \"queue-control\": 75 \n"
+            "   \"dhcp-queue-control\": 75 \n"
             "} \n"
         },
         {
             "queue type missing",
             "{ " + genIfaceConfig() + ", \n" +
             "   \"subnet6\": [  ],  \n"
-            "   \"queue-control\": { \n"
+            "   \"dhcp-queue-control\": { \n"
             "       \"capacity\": 100 \n"
             "   } \n"
             "} \n"
@@ -6998,9 +7023,9 @@ TEST_F(Dhcp6ParserTest, queueControlInvalid) {
     // fail as expected. Note, we use parseDHCP6() directly
     // as all of the errors above are enforced by the grammar.
     for (auto scenario : scenarios) {
-        SCOPED_TRACE((scenario).description_);
+        SCOPED_TRACE(scenario.description_);
         {
-            EXPECT_THROW(parseDHCP6((scenario).json_), Dhcp6ParseError);
+            EXPECT_THROW(parseDHCP6(scenario.json_), Dhcp6ParseError);
         }
     }
 }

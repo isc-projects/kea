@@ -706,7 +706,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
-    case isc::dhcp::Parser4Context::QUEUE_CONTROL:
+    case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::LOGGERS:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
         return isc::dhcp::Dhcp4Parser::make_USER_CONTEXT(driver.loc_);
@@ -727,7 +727,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::dhcp::Parser4Context::RESERVATIONS:
     case isc::dhcp::Parser4Context::CLIENT_CLASSES:
     case isc::dhcp::Parser4Context::CONTROL_SOCKET:
-    case isc::dhcp::Parser4Context::QUEUE_CONTROL:
+    case isc::dhcp::Parser4Context::DHCP_QUEUE_CONTROL:
     case isc::dhcp::Parser4Context::LOGGERS:
     case isc::dhcp::Parser4Context::DHCP_DDNS:
         return isc::dhcp::Dhcp4Parser::make_COMMENT(driver.loc_);
@@ -1241,12 +1241,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"queue-control\" {
+\"dhcp-queue-control\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::DHCP4:
-        return isc::dhcp::Dhcp4Parser::make_QUEUE_CONTROL(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_DHCP_QUEUE_CONTROL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("queue-control", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("dhcp-queue-control", driver.loc_);
     }
 }
 

@@ -51,7 +51,7 @@ public:
     /// Typically this is assigned by the factory that creates the
     /// queue.  It is the logical name used to register queue
     /// implementations.
-    PacketQueue(const std::string& queue_type)
+    explicit PacketQueue(const std::string& queue_type)
         :  queue_type_(queue_type) {}
 
     /// Virtual destructor
@@ -59,18 +59,18 @@ public:
 
     /// @brief Adds a packet to the queue
     ///
-    /// Calls @c dropPacket to determine if the packet should be queued
+    /// Calls @c shouldDropPacket to determine if the packet should be queued
     /// or dropped.  If it should be queued it is added to the end of the
-    /// specified by the "to" parameter.
+    /// queue specified by the "to" parameter.
     ///
     /// @param packet packet to enqueue
-    /// @param source socket the packet came from - this can be
+    /// @param source socket the packet came from
     /// @param to end of the queue from which to remove packet(s).
     /// Defaults to BACK.
     ///
     void enqueuePacket(PacketTypePtr packet, const SocketInfo& source,
                        const QueueEnd& to=QueueEnd::BACK) {
-        if (!dropPacket(packet, source)) {
+        if (!shouldDropPacket(packet, source)) {
             pushPacket(packet, to);
         }
     }
@@ -94,7 +94,7 @@ public:
 
     /// @brief Determines if a packet should be discarded.
     ///
-    /// This function is called at the beginning of @enqueuePacket and
+    /// This function is called at the beginning of @c enqueuePacket and
     /// provides an opportunity to examine the packet and its source
     /// and decide whether it should be dropped or added to the queue.
     /// Derivations are expected to provide implementations based on
@@ -107,22 +107,25 @@ public:
     ///
     /// @return true if the packet should be dropped, false if it should be
     /// kept.
-    virtual bool dropPacket(PacketTypePtr /* packet */,
+    virtual bool shouldDropPacket(PacketTypePtr /* packet */,
                             const SocketInfo& /* source */) {
         return (false);
     }
 
-    /// Discards packets from one end of the queue.
+    /// @brief Discards packets from one end of the queue.
     ///
-    /// This function is called at the beginning of @c dequeuPacket and
+    /// This function is called at the beginning of @c dequeuePacket and
     /// provides an opportunity to examine and discard packets from
     /// the queue prior to dequeuing the next packet to be
     /// processed.  Derivations are expected to provide implementations
     /// based on their own requirements.  The default implemenation is to
-    /// to simply returns without skipping any packets.
+    /// to simply return without skipping any packets.
     ///
     /// @param from end of the queue from which packets should discarded
     /// This is passed in from @c dequeuePackets.
+    ///
+    /// @param from specifies the end of the queue from which packets
+    /// should be discarded.
     ///
     /// @return The number of packets discarded.
     virtual int eatPackets(const QueueEnd& /* from */) {
@@ -132,11 +135,18 @@ public:
     /// @brief Pushes a packet onto the queue
     ///
     ///  Adds a packet onto the end of queue specified.
+    ///
+    /// @param packet packet to add to the queue
+    /// @param to specifies the end of the queue to which the packet
+    /// should be added.
     virtual void pushPacket(PacketTypePtr& packet, const QueueEnd& to=QueueEnd::BACK) = 0;
 
     /// @brief Pops a packet from the queue
     ///
     /// Removes a packet from the end of the queue specified and returns it.
+    ///
+    /// @param from specifies the end of the queue from which the packet
+    /// should be taken.
     ///
     /// @return A pointer to dequeued packet, or an empty pointer
     /// if the queue is empty.
@@ -146,6 +156,8 @@ public:
     ///
     /// Returns a pointer the packet at the specified end of the
     /// queue without dequeuing it.
+    ///
+    /// @param from specifies which end of the queue to examine.
     ///
     /// @return A pointer to packet, or an empty pointer if the
     /// queue is empty.
@@ -161,7 +173,8 @@ public:
     /// @brief Discards all packets currently in the buffer.
     virtual void clear() = 0;
 
-    /// @brief Fetches operational information about the current state of the queue
+    /// @brief Fetches operational information about the current state of
+    /// the queue
     ///
     /// Creates and returns an ElementPtr containing a single entry,
     /// "queue-type".  Derivations are expected to call this method first
@@ -170,7 +183,7 @@ public:
     /// for broad latitude.
     ///
     /// @return an ElementPtr containing elements for values of interest
-    virtual data::ElementPtr getInfo() {
+    virtual data::ElementPtr getInfo() const {
        data::ElementPtr info = data::Element::createMap();
        info->set("queue-type", data::Element::create(queue_type_));
        return(info);
@@ -181,7 +194,7 @@ public:
     /// This method calls @c getInfo() and then converts that into JSON text.
     ///
     /// @return string of JSON text
-    virtual std::string getInfoStr() {
+    virtual std::string getInfoStr() const {
        data::ElementPtr info = getInfo();
        std::ostringstream os;
        info->toJSON(os);
@@ -194,7 +207,7 @@ public:
     };
 
 private:
-    /// @brief Logcial name of the this queue's implementation type.
+    /// @brief Logical name of the this queue's implementation type.
     std::string queue_type_;
 
 };
@@ -214,10 +227,13 @@ typedef boost::shared_ptr<PacketQueue<Pkt6Ptr>> PacketQueue6Ptr;
 template<typename PacketTypePtr>
 class PacketQueueRing : public PacketQueue<PacketTypePtr> {
 public:
+    /// @brief Minimum queue capacity permitted. Below five is pretty much
+    /// nonsensical.
     static const size_t MIN_RING_CAPACITY = 5;
 
     /// @brief Constructor
     ///
+    /// @param queue_type logical name of the queue type
     /// @param queue_capacity maximum number of packets the queue can hold
     PacketQueueRing(const std::string& queue_type, size_t capacity)
         : PacketQueue<PacketTypePtr>(queue_type) {
@@ -230,6 +246,10 @@ public:
     /// @brief Pushes a packet onto the queue
     ///
     ///  Adds a packet onto the end of queue specified.
+    ///
+    /// @param packet packet to add to the queue
+    /// @param to specifies the end of the queue to which the packet
+    /// should be added.
     virtual void pushPacket(PacketTypePtr& packet, const QueueEnd& to=QueueEnd::BACK) {
         if (to == QueueEnd::BACK) {
             queue_.push_back(packet);
@@ -241,6 +261,9 @@ public:
     /// @brief Pops a packet from the queue
     ///
     /// Removes a packet from the end of the queue specified and returns it.
+    ///
+    /// @param from specifies the end of the queue from which the packet
+    /// should be taken.
     ///
     /// @return A pointer to dequeued packet, or an empty pointer
     /// if the queue is empty.
@@ -266,6 +289,8 @@ public:
     ///
     /// Returns a pointer the packet at the specified end of the
     /// queue without dequeuing it.
+    ///
+    /// @param from specifies which end of the queue to examine.
     ///
     /// @return A pointer to packet, or an empty pointer if the
     /// queue is empty.
@@ -316,7 +341,7 @@ public:
     }
 
     /// @brief Fetches pertinent information
-    virtual data::ElementPtr getInfo() {
+    virtual data::ElementPtr getInfo() const {
        data::ElementPtr info = PacketQueue<PacketTypePtr>::getInfo();
        info->set("capacity", data::Element::create(static_cast<int64_t>(getCapacity())));
        info->set("size", data::Element::create(static_cast<int64_t>(getSize())));

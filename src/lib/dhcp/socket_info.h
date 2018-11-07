@@ -8,6 +8,8 @@
 #define DHCP_SOCKET_INFO_H
 
 #include <asiolink/io_address.h>
+#include <cstdint>
+
 
 namespace isc {
 

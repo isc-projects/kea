@@ -48,7 +48,7 @@ PacketQueueMgr6::create() {
 
 void
 PacketQueueMgr6::destroy() {
-    getPacketQueueMgr6Ptr().reset(new PacketQueueMgr6());
+    getPacketQueueMgr6Ptr().reset();
 }
 
 PacketQueueMgr6&
