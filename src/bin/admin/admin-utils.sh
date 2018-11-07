@@ -22,7 +22,7 @@ mysql_execute() {
         mysql -N -B "$@" -e "${QUERY}"
         retcode=$?
     else
-        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
+        mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
         retcode=$?
     fi
 
@@ -36,7 +36,7 @@ mysql_execute_script() {
         mysql -N -B "$@" < "${file}"
         retcode=$?
     else
-        mysql -N -B --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
+        mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" < "${file}"
         retcode=$?
     fi
 
