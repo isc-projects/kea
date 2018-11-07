@@ -302,7 +302,7 @@ http {
       it should use. For example:
 <screen>
 $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
-</screen>3
+</screen>
       It can be started by keactrl as well (see <xref linkend="keactrl"/>).
     </para>
   </section>
