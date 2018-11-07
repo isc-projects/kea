@@ -1,4 +1,5 @@
-// A Bison parser, made by GNU Bison 3.1.
+// Generated 201811071039
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Stack handling for Bison parsers in C++
 
@@ -40,9 +41,9 @@
 
 # include <vector>
 
-#line 14 "dhcp4_parser.yy" // stack.hh:132
+#line 14 "dhcp4_parser.yy" // stack.hh:131
 namespace isc { namespace dhcp {
-#line 46 "stack.hh" // stack.hh:132
+#line 46 "stack.hh" // stack.hh:131
   /// A stack with random access from its top.
   template <class T, class S = std::vector<T> >
   class stack
@@ -51,14 +52,14 @@ namespace isc { namespace dhcp {
     // Hide our reversed order.
     typedef typename S::reverse_iterator iterator;
     typedef typename S::const_reverse_iterator const_iterator;
-    typedef typename S::size_type size_type;
 
     stack ()
+      : seq_ ()
     {
       seq_.reserve (200);
     }
 
-    stack (size_type n)
+    stack (unsigned n)
       : seq_ (n)
     {}
 
@@ -66,7 +67,7 @@ namespace isc { namespace dhcp {
     ///
     /// Index 0 returns the topmost element.
     T&
-    operator[] (size_type i)
+    operator[] (unsigned i)
     {
       return seq_[seq_.size () - 1 - i];
     }
@@ -75,7 +76,7 @@ namespace isc { namespace dhcp {
     ///
     /// Index 0 returns the topmost element.
     const T&
-    operator[] (size_type i) const
+    operator[] (unsigned i) const
     {
       return seq_[seq_.size () - 1 - i];
     }
@@ -91,7 +92,7 @@ namespace isc { namespace dhcp {
     }
 
     void
-    pop (size_type n = 1)
+    pop (unsigned n = 1)
     {
       for (; n; --n)
         seq_.pop_back ();
@@ -103,7 +104,7 @@ namespace isc { namespace dhcp {
       seq_.clear ();
     }
 
-    size_type
+    typename S::size_type
     size () const
     {
       return seq_.size ();
@@ -133,25 +134,24 @@ namespace isc { namespace dhcp {
   class slice
   {
   public:
-    typedef typename S::size_type size_type;
-    slice (const S& stack, size_type range)
+    slice (const S& stack, unsigned range)
       : stack_ (stack)
       , range_ (range)
     {}
 
     const T&
-    operator[] (size_type i) const
+    operator [] (unsigned i) const
     {
       return stack_[range_ - i];
     }
 
   private:
     const S& stack_;
-    size_type range_;
+    unsigned range_;
   };
 
-#line 14 "dhcp4_parser.yy" // stack.hh:132
+#line 14 "dhcp4_parser.yy" // stack.hh:131
 } } // isc::dhcp
-#line 156 "stack.hh" // stack.hh:132
+#line 155 "stack.hh" // stack.hh:131
 
 #endif // !YY_PARSER4_STACK_HH_INCLUDED

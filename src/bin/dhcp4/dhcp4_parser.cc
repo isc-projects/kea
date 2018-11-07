@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.1.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -35,7 +35,7 @@
 
 // First part of user declarations.
 
-#line 39 "dhcp4_parser.cc" // lalr1.cc:407
+#line 39 "dhcp4_parser.cc" // lalr1.cc:406
 
 # ifndef YY_NULLPTR
 #  if defined __cplusplus && 201103L <= __cplusplus
@@ -49,13 +49,13 @@
 
 // User implementation prologue.
 
-#line 53 "dhcp4_parser.cc" // lalr1.cc:415
+#line 53 "dhcp4_parser.cc" // lalr1.cc:414
 // Unqualified %code blocks.
-#line 34 "dhcp4_parser.yy" // lalr1.cc:416
+#line 34 "dhcp4_parser.yy" // lalr1.cc:415
 
 #include <dhcp4/parser_context.h>
 
-#line 59 "dhcp4_parser.cc" // lalr1.cc:416
+#line 59 "dhcp4_parser.cc" // lalr1.cc:415
 
 
 #ifndef YY_
@@ -67,15 +67,6 @@
 # endif
 # ifndef YY_
 #  define YY_(msgid) msgid
-# endif
-#endif
-
-// Whether we are compiled with exception support.
-#ifndef YY_EXCEPTIONS
-# if defined __GNUC__ && !defined __EXCEPTIONS
-#  define YY_EXCEPTIONS 0
-# else
-#  define YY_EXCEPTIONS 1
 # endif
 #endif
 
@@ -148,9 +139,9 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:491
+#line 14 "dhcp4_parser.yy" // lalr1.cc:481
 namespace isc { namespace dhcp {
-#line 154 "dhcp4_parser.cc" // lalr1.cc:491
+#line 145 "dhcp4_parser.cc" // lalr1.cc:481
 
   /* Return YYSTR after stripping away unnecessary quotes and
      backslashes, so that it's suitable for yyerror.  The heuristic is
@@ -396,86 +387,86 @@ namespace isc { namespace dhcp {
     {
             case 165: // "constant string"
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
-#line 402 "dhcp4_parser.cc" // lalr1.cc:644
+#line 393 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 166: // "integer"
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
-#line 409 "dhcp4_parser.cc" // lalr1.cc:644
+#line 400 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 167: // "floating point"
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
-#line 416 "dhcp4_parser.cc" // lalr1.cc:644
+#line 407 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 168: // "boolean"
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
-#line 423 "dhcp4_parser.cc" // lalr1.cc:644
+#line 414 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 185: // value
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 430 "dhcp4_parser.cc" // lalr1.cc:644
+#line 421 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 189: // map_value
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 437 "dhcp4_parser.cc" // lalr1.cc:644
+#line 428 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 230: // socket_type
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 444 "dhcp4_parser.cc" // lalr1.cc:644
+#line 435 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 233: // outbound_interface_value
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 451 "dhcp4_parser.cc" // lalr1.cc:644
+#line 442 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 255: // db_type
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 458 "dhcp4_parser.cc" // lalr1.cc:644
+#line 449 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 337: // hr_mode
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 465 "dhcp4_parser.cc" // lalr1.cc:644
+#line 456 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 484: // ncr_protocol_value
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 472 "dhcp4_parser.cc" // lalr1.cc:644
+#line 463 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
       case 492: // replace_client_name_value
 
-#line 244 "dhcp4_parser.yy" // lalr1.cc:644
+#line 244 "dhcp4_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 479 "dhcp4_parser.cc" // lalr1.cc:644
+#line 470 "dhcp4_parser.cc" // lalr1.cc:635
         break;
 
 
@@ -577,9 +568,9 @@ namespace isc { namespace dhcp {
     /// The return value of parse ().
     int yyresult;
 
-#if YY_EXCEPTIONS
+    // FIXME: This shoud be completely indented.  It is not yet to
+    // avoid gratuitous conflicts when merging into the master branch.
     try
-#endif // YY_EXCEPTIONS
       {
     YYCDEBUG << "Starting parse\n";
 
@@ -603,6 +594,7 @@ namespace isc { namespace dhcp {
 
     // Backup.
   yybackup:
+
     // Try to take a decision without lookahead.
     yyn = yypact_[yystack_[0].state];
     if (yy_pact_value_is_default_ (yyn))
@@ -612,20 +604,16 @@ namespace isc { namespace dhcp {
     if (yyla.empty ())
       {
         YYCDEBUG << "Reading a token: ";
-#if YY_EXCEPTIONS
         try
-#endif // YY_EXCEPTIONS
           {
             symbol_type yylookahead (yylex (ctx));
             yyla.move (yylookahead);
           }
-#if YY_EXCEPTIONS
         catch (const syntax_error& yyexc)
           {
             error (yyexc);
             goto yyerrlab1;
           }
-#endif // YY_EXCEPTIONS
       }
     YY_SYMBOL_PRINT ("Next token is", yyla);
 
@@ -716,287 +704,285 @@ namespace isc { namespace dhcp {
 
       // Perform the reduction.
       YY_REDUCE_PRINT (yyn);
-#if YY_EXCEPTIONS
       try
-#endif // YY_EXCEPTIONS
         {
           switch (yyn)
             {
   case 2:
-#line 253 "dhcp4_parser.yy" // lalr1.cc:870
+#line 253 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.NO_KEYWORD; }
-#line 729 "dhcp4_parser.cc" // lalr1.cc:870
+#line 715 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 4:
-#line 254 "dhcp4_parser.yy" // lalr1.cc:870
+#line 254 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.CONFIG; }
-#line 735 "dhcp4_parser.cc" // lalr1.cc:870
+#line 721 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 6:
-#line 255 "dhcp4_parser.yy" // lalr1.cc:870
+#line 255 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.DHCP4; }
-#line 741 "dhcp4_parser.cc" // lalr1.cc:870
+#line 727 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 8:
-#line 256 "dhcp4_parser.yy" // lalr1.cc:870
+#line 256 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.INTERFACES_CONFIG; }
-#line 747 "dhcp4_parser.cc" // lalr1.cc:870
+#line 733 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 10:
-#line 257 "dhcp4_parser.yy" // lalr1.cc:870
+#line 257 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.SUBNET4; }
-#line 753 "dhcp4_parser.cc" // lalr1.cc:870
+#line 739 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 12:
-#line 258 "dhcp4_parser.yy" // lalr1.cc:870
+#line 258 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.POOLS; }
-#line 759 "dhcp4_parser.cc" // lalr1.cc:870
+#line 745 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 14:
-#line 259 "dhcp4_parser.yy" // lalr1.cc:870
+#line 259 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.RESERVATIONS; }
-#line 765 "dhcp4_parser.cc" // lalr1.cc:870
+#line 751 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 16:
-#line 260 "dhcp4_parser.yy" // lalr1.cc:870
+#line 260 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.DHCP4; }
-#line 771 "dhcp4_parser.cc" // lalr1.cc:870
+#line 757 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 18:
-#line 261 "dhcp4_parser.yy" // lalr1.cc:870
+#line 261 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.OPTION_DEF; }
-#line 777 "dhcp4_parser.cc" // lalr1.cc:870
+#line 763 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 20:
-#line 262 "dhcp4_parser.yy" // lalr1.cc:870
+#line 262 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.OPTION_DATA; }
-#line 783 "dhcp4_parser.cc" // lalr1.cc:870
+#line 769 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 22:
-#line 263 "dhcp4_parser.yy" // lalr1.cc:870
+#line 263 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.HOOKS_LIBRARIES; }
-#line 789 "dhcp4_parser.cc" // lalr1.cc:870
+#line 775 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 24:
-#line 264 "dhcp4_parser.yy" // lalr1.cc:870
+#line 264 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.DHCP_DDNS; }
-#line 795 "dhcp4_parser.cc" // lalr1.cc:870
+#line 781 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 26:
-#line 265 "dhcp4_parser.yy" // lalr1.cc:870
+#line 265 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.LOGGING; }
-#line 801 "dhcp4_parser.cc" // lalr1.cc:870
+#line 787 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 28:
-#line 266 "dhcp4_parser.yy" // lalr1.cc:870
+#line 266 "dhcp4_parser.yy" // lalr1.cc:856
     { ctx.ctx_ = ctx.CONFIG_CONTROL; }
-#line 807 "dhcp4_parser.cc" // lalr1.cc:870
+#line 793 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 30:
-#line 274 "dhcp4_parser.yy" // lalr1.cc:870
+#line 274 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 813 "dhcp4_parser.cc" // lalr1.cc:870
+#line 799 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 31:
-#line 275 "dhcp4_parser.yy" // lalr1.cc:870
+#line 275 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 819 "dhcp4_parser.cc" // lalr1.cc:870
+#line 805 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 32:
-#line 276 "dhcp4_parser.yy" // lalr1.cc:870
+#line 276 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 825 "dhcp4_parser.cc" // lalr1.cc:870
+#line 811 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 33:
-#line 277 "dhcp4_parser.yy" // lalr1.cc:870
+#line 277 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 831 "dhcp4_parser.cc" // lalr1.cc:870
+#line 817 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 34:
-#line 278 "dhcp4_parser.yy" // lalr1.cc:870
+#line 278 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 837 "dhcp4_parser.cc" // lalr1.cc:870
+#line 823 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 35:
-#line 279 "dhcp4_parser.yy" // lalr1.cc:870
+#line 279 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 843 "dhcp4_parser.cc" // lalr1.cc:870
+#line 829 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 36:
-#line 280 "dhcp4_parser.yy" // lalr1.cc:870
+#line 280 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 849 "dhcp4_parser.cc" // lalr1.cc:870
+#line 835 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 37:
-#line 283 "dhcp4_parser.yy" // lalr1.cc:870
+#line 283 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Push back the JSON value on the stack
     ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
 }
-#line 858 "dhcp4_parser.cc" // lalr1.cc:870
+#line 844 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 38:
-#line 288 "dhcp4_parser.yy" // lalr1.cc:870
+#line 288 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 869 "dhcp4_parser.cc" // lalr1.cc:870
+#line 855 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 39:
-#line 293 "dhcp4_parser.yy" // lalr1.cc:870
+#line 293 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 879 "dhcp4_parser.cc" // lalr1.cc:870
+#line 865 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 40:
-#line 299 "dhcp4_parser.yy" // lalr1.cc:870
+#line 299 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 885 "dhcp4_parser.cc" // lalr1.cc:870
+#line 871 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 43:
-#line 306 "dhcp4_parser.yy" // lalr1.cc:870
+#line 306 "dhcp4_parser.yy" // lalr1.cc:856
     {
                   // map containing a single entry
                   ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
                   }
-#line 894 "dhcp4_parser.cc" // lalr1.cc:870
+#line 880 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 44:
-#line 310 "dhcp4_parser.yy" // lalr1.cc:870
+#line 310 "dhcp4_parser.yy" // lalr1.cc:856
     {
                   // map consisting of a shorter map followed by
                   // comma and string:value
                   ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
                   }
-#line 904 "dhcp4_parser.cc" // lalr1.cc:870
+#line 890 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 45:
-#line 317 "dhcp4_parser.yy" // lalr1.cc:870
+#line 317 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 913 "dhcp4_parser.cc" // lalr1.cc:870
+#line 899 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 46:
-#line 320 "dhcp4_parser.yy" // lalr1.cc:870
+#line 320 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // list parsing complete. Put any sanity checking here
 }
-#line 921 "dhcp4_parser.cc" // lalr1.cc:870
+#line 907 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 49:
-#line 328 "dhcp4_parser.yy" // lalr1.cc:870
+#line 328 "dhcp4_parser.yy" // lalr1.cc:856
     {
                   // List consisting of a single element.
                   ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
                   }
-#line 930 "dhcp4_parser.cc" // lalr1.cc:870
+#line 916 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 50:
-#line 332 "dhcp4_parser.yy" // lalr1.cc:870
+#line 332 "dhcp4_parser.yy" // lalr1.cc:856
     {
                   // List ending with , and a value.
                   ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
                   }
-#line 939 "dhcp4_parser.cc" // lalr1.cc:870
+#line 925 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 51:
-#line 339 "dhcp4_parser.yy" // lalr1.cc:870
+#line 339 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // List parsing about to start
 }
-#line 947 "dhcp4_parser.cc" // lalr1.cc:870
+#line 933 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 52:
-#line 341 "dhcp4_parser.yy" // lalr1.cc:870
+#line 341 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // list parsing complete. Put any sanity checking here
     //ctx.stack_.pop_back();
 }
-#line 956 "dhcp4_parser.cc" // lalr1.cc:870
+#line 942 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 55:
-#line 350 "dhcp4_parser.yy" // lalr1.cc:870
+#line 350 "dhcp4_parser.yy" // lalr1.cc:856
     {
                           ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 965 "dhcp4_parser.cc" // lalr1.cc:870
+#line 951 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 56:
-#line 354 "dhcp4_parser.yy" // lalr1.cc:870
+#line 354 "dhcp4_parser.yy" // lalr1.cc:856
     {
                           ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
                           ctx.stack_.back()->add(s);
                           }
-#line 974 "dhcp4_parser.cc" // lalr1.cc:870
+#line 960 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 57:
-#line 365 "dhcp4_parser.yy" // lalr1.cc:870
+#line 365 "dhcp4_parser.yy" // lalr1.cc:856
     {
     const std::string& where = ctx.contextName();
     const std::string& keyword = yystack_[1].value.as< std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 985 "dhcp4_parser.cc" // lalr1.cc:870
+#line 971 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 58:
-#line 375 "dhcp4_parser.yy" // lalr1.cc:870
+#line 375 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 996 "dhcp4_parser.cc" // lalr1.cc:870
+#line 982 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 59:
-#line 380 "dhcp4_parser.yy" // lalr1.cc:870
+#line 380 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
@@ -1005,11 +991,11 @@ namespace isc { namespace dhcp {
     // Dhcp4 is required
     ctx.require("Dhcp4", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
 }
-#line 1009 "dhcp4_parser.cc" // lalr1.cc:870
+#line 995 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 68:
-#line 404 "dhcp4_parser.yy" // lalr1.cc:870
+#line 404 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // This code is executed when we're about to start parsing
     // the content of the map
@@ -1018,302 +1004,302 @@ namespace isc { namespace dhcp {
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP4);
 }
-#line 1022 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1008 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 69:
-#line 411 "dhcp4_parser.yy" // lalr1.cc:870
+#line 411 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No global parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1032 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1018 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 70:
-#line 419 "dhcp4_parser.yy" // lalr1.cc:870
+#line 419 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the Dhcp4 map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1042 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1028 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 71:
-#line 423 "dhcp4_parser.yy" // lalr1.cc:870
+#line 423 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No global parameter is required
     // parsing completed
 }
-#line 1051 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1037 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 106:
-#line 468 "dhcp4_parser.yy" // lalr1.cc:870
+#line 468 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("valid-lifetime", prf);
 }
-#line 1060 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1046 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 107:
-#line 473 "dhcp4_parser.yy" // lalr1.cc:870
+#line 473 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("renew-timer", prf);
 }
-#line 1069 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1055 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 108:
-#line 478 "dhcp4_parser.yy" // lalr1.cc:870
+#line 478 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr prf(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("rebind-timer", prf);
 }
-#line 1078 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1064 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 109:
-#line 483 "dhcp4_parser.yy" // lalr1.cc:870
+#line 483 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr dpp(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
 }
-#line 1087 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1073 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 110:
-#line 488 "dhcp4_parser.yy" // lalr1.cc:870
+#line 488 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1095 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1081 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 111:
-#line 490 "dhcp4_parser.yy" // lalr1.cc:870
+#line 490 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr stag(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-tag", stag);
     ctx.leave();
 }
-#line 1105 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1091 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 112:
-#line 496 "dhcp4_parser.yy" // lalr1.cc:870
+#line 496 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr echo(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("echo-client-id", echo);
 }
-#line 1114 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1100 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 113:
-#line 501 "dhcp4_parser.yy" // lalr1.cc:870
+#line 501 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr match(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("match-client-id", match);
 }
-#line 1123 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1109 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 114:
-#line 506 "dhcp4_parser.yy" // lalr1.cc:870
+#line 506 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr prf(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("authoritative", prf);
 }
-#line 1132 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1118 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 115:
-#line 512 "dhcp4_parser.yy" // lalr1.cc:870
+#line 512 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces-config", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.INTERFACES_CONFIG);
 }
-#line 1143 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1129 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 116:
-#line 517 "dhcp4_parser.yy" // lalr1.cc:870
+#line 517 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1153 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1139 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 126:
-#line 536 "dhcp4_parser.yy" // lalr1.cc:870
+#line 536 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the interfaces-config map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1163 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1149 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 127:
-#line 540 "dhcp4_parser.yy" // lalr1.cc:870
+#line 540 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No interfaces config param is required
     // parsing completed
 }
-#line 1172 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1158 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 128:
-#line 545 "dhcp4_parser.yy" // lalr1.cc:870
+#line 545 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interfaces", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1183 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1169 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 129:
-#line 550 "dhcp4_parser.yy" // lalr1.cc:870
+#line 550 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1192 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1178 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 130:
-#line 555 "dhcp4_parser.yy" // lalr1.cc:870
+#line 555 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.DHCP_SOCKET_TYPE);
 }
-#line 1200 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1186 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 131:
-#line 557 "dhcp4_parser.yy" // lalr1.cc:870
+#line 557 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("dhcp-socket-type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1209 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1195 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 132:
-#line 562 "dhcp4_parser.yy" // lalr1.cc:870
+#line 562 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("raw", ctx.loc2pos(yystack_[0].location))); }
-#line 1215 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1201 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 133:
-#line 563 "dhcp4_parser.yy" // lalr1.cc:870
+#line 563 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("udp", ctx.loc2pos(yystack_[0].location))); }
-#line 1221 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1207 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 134:
-#line 566 "dhcp4_parser.yy" // lalr1.cc:870
+#line 566 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.OUTBOUND_INTERFACE);
 }
-#line 1229 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1215 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 135:
-#line 568 "dhcp4_parser.yy" // lalr1.cc:870
+#line 568 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("outbound-interface", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1238 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1224 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 136:
-#line 573 "dhcp4_parser.yy" // lalr1.cc:870
+#line 573 "dhcp4_parser.yy" // lalr1.cc:856
     {
     yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("same-as-inbound", ctx.loc2pos(yystack_[0].location)));
 }
-#line 1246 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1232 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 137:
-#line 575 "dhcp4_parser.yy" // lalr1.cc:870
+#line 575 "dhcp4_parser.yy" // lalr1.cc:856
     {
     yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("use-routing", ctx.loc2pos(yystack_[0].location)));
     }
-#line 1254 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1240 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 138:
-#line 579 "dhcp4_parser.yy" // lalr1.cc:870
+#line 579 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("re-detect", b);
 }
-#line 1263 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1249 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 139:
-#line 585 "dhcp4_parser.yy" // lalr1.cc:870
+#line 585 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lease-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.LEASE_DATABASE);
 }
-#line 1274 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1260 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 140:
-#line 590 "dhcp4_parser.yy" // lalr1.cc:870
+#line 590 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1285 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1271 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 141:
-#line 597 "dhcp4_parser.yy" // lalr1.cc:870
+#line 597 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sanity-checks", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.SANITY_CHECKS);
 }
-#line 1296 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1282 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 142:
-#line 602 "dhcp4_parser.yy" // lalr1.cc:870
+#line 602 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1305 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1291 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 146:
-#line 612 "dhcp4_parser.yy" // lalr1.cc:870
+#line 612 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1313 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1299 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 147:
-#line 614 "dhcp4_parser.yy" // lalr1.cc:870
+#line 614 "dhcp4_parser.yy" // lalr1.cc:856
     {
 
     if ( (string(yystack_[0].value.as< std::string > ()) == "none") ||
@@ -1329,577 +1315,577 @@ namespace isc { namespace dhcp {
               ", supported values are: none, warn, fix, fix-del, del");
     }
 }
-#line 1333 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1319 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 148:
-#line 630 "dhcp4_parser.yy" // lalr1.cc:870
+#line 630 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-database", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1344 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1330 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 149:
-#line 635 "dhcp4_parser.yy" // lalr1.cc:870
+#line 635 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1355 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1341 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 150:
-#line 642 "dhcp4_parser.yy" // lalr1.cc:870
+#line 642 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hosts-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOSTS_DATABASE);
 }
-#line 1366 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1352 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 151:
-#line 647 "dhcp4_parser.yy" // lalr1.cc:870
+#line 647 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1375 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1361 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 156:
-#line 660 "dhcp4_parser.yy" // lalr1.cc:870
+#line 660 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1385 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1371 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 157:
-#line 664 "dhcp4_parser.yy" // lalr1.cc:870
+#line 664 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The type parameter is required
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1395 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1381 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 178:
-#line 694 "dhcp4_parser.yy" // lalr1.cc:870
+#line 694 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.DATABASE_TYPE);
 }
-#line 1403 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1389 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 179:
-#line 696 "dhcp4_parser.yy" // lalr1.cc:870
+#line 696 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("type", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1412 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1398 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 180:
-#line 701 "dhcp4_parser.yy" // lalr1.cc:870
+#line 701 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("memfile", ctx.loc2pos(yystack_[0].location))); }
-#line 1418 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1404 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 181:
-#line 702 "dhcp4_parser.yy" // lalr1.cc:870
+#line 702 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("mysql", ctx.loc2pos(yystack_[0].location))); }
-#line 1424 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1410 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 182:
-#line 703 "dhcp4_parser.yy" // lalr1.cc:870
+#line 703 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("postgresql", ctx.loc2pos(yystack_[0].location))); }
-#line 1430 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1416 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 183:
-#line 704 "dhcp4_parser.yy" // lalr1.cc:870
+#line 704 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("cql", ctx.loc2pos(yystack_[0].location))); }
-#line 1436 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1422 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 184:
-#line 707 "dhcp4_parser.yy" // lalr1.cc:870
+#line 707 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1444 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1430 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 185:
-#line 709 "dhcp4_parser.yy" // lalr1.cc:870
+#line 709 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr user(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("user", user);
     ctx.leave();
 }
-#line 1454 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1440 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 186:
-#line 715 "dhcp4_parser.yy" // lalr1.cc:870
+#line 715 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1462 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1448 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 187:
-#line 717 "dhcp4_parser.yy" // lalr1.cc:870
+#line 717 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr pwd(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("password", pwd);
     ctx.leave();
 }
-#line 1472 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1458 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 188:
-#line 723 "dhcp4_parser.yy" // lalr1.cc:870
+#line 723 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1480 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1466 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 189:
-#line 725 "dhcp4_parser.yy" // lalr1.cc:870
+#line 725 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr h(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host", h);
     ctx.leave();
 }
-#line 1490 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1476 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 190:
-#line 731 "dhcp4_parser.yy" // lalr1.cc:870
+#line 731 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr p(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", p);
 }
-#line 1499 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1485 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 191:
-#line 736 "dhcp4_parser.yy" // lalr1.cc:870
+#line 736 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1507 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1493 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 192:
-#line 738 "dhcp4_parser.yy" // lalr1.cc:870
+#line 738 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1517 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1503 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 193:
-#line 744 "dhcp4_parser.yy" // lalr1.cc:870
+#line 744 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("persist", n);
 }
-#line 1526 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1512 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 194:
-#line 749 "dhcp4_parser.yy" // lalr1.cc:870
+#line 749 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("lfc-interval", n);
 }
-#line 1535 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1521 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 195:
-#line 754 "dhcp4_parser.yy" // lalr1.cc:870
+#line 754 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("readonly", n);
 }
-#line 1544 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1530 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 196:
-#line 759 "dhcp4_parser.yy" // lalr1.cc:870
+#line 759 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("connect-timeout", n);
 }
-#line 1553 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1539 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 197:
-#line 764 "dhcp4_parser.yy" // lalr1.cc:870
+#line 764 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("request-timeout", n);
 }
-#line 1562 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1548 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 198:
-#line 769 "dhcp4_parser.yy" // lalr1.cc:870
+#line 769 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-keepalive", n);
 }
-#line 1571 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1557 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 199:
-#line 774 "dhcp4_parser.yy" // lalr1.cc:870
+#line 774 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tcp-nodelay", n);
 }
-#line 1580 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1566 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 200:
-#line 779 "dhcp4_parser.yy" // lalr1.cc:870
+#line 779 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1588 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1574 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 201:
-#line 781 "dhcp4_parser.yy" // lalr1.cc:870
+#line 781 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr cp(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("contact-points", cp);
     ctx.leave();
 }
-#line 1598 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1584 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 202:
-#line 787 "dhcp4_parser.yy" // lalr1.cc:870
+#line 787 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1606 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1592 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 203:
-#line 789 "dhcp4_parser.yy" // lalr1.cc:870
+#line 789 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr ks(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("keyspace", ks);
     ctx.leave();
 }
-#line 1616 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1602 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 204:
-#line 795 "dhcp4_parser.yy" // lalr1.cc:870
+#line 795 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reconnect-tries", n);
 }
-#line 1625 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1611 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 205:
-#line 800 "dhcp4_parser.yy" // lalr1.cc:870
+#line 800 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr n(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reconnect-wait-time", n);
 }
-#line 1634 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1620 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 206:
-#line 805 "dhcp4_parser.yy" // lalr1.cc:870
+#line 805 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("host-reservation-identifiers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOST_RESERVATION_IDENTIFIERS);
 }
-#line 1645 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1631 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 207:
-#line 810 "dhcp4_parser.yy" // lalr1.cc:870
+#line 810 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1654 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1640 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 215:
-#line 826 "dhcp4_parser.yy" // lalr1.cc:870
+#line 826 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr duid(new StringElement("duid", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(duid);
 }
-#line 1663 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1649 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 216:
-#line 831 "dhcp4_parser.yy" // lalr1.cc:870
+#line 831 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(hwaddr);
 }
-#line 1672 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1658 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 217:
-#line 836 "dhcp4_parser.yy" // lalr1.cc:870
+#line 836 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr circuit(new StringElement("circuit-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(circuit);
 }
-#line 1681 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1667 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 218:
-#line 841 "dhcp4_parser.yy" // lalr1.cc:870
+#line 841 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr client(new StringElement("client-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(client);
 }
-#line 1690 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1676 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 219:
-#line 846 "dhcp4_parser.yy" // lalr1.cc:870
+#line 846 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(flex_id);
 }
-#line 1699 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1685 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 220:
-#line 851 "dhcp4_parser.yy" // lalr1.cc:870
+#line 851 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hooks-libraries", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.HOOKS_LIBRARIES);
 }
-#line 1710 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1696 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 221:
-#line 856 "dhcp4_parser.yy" // lalr1.cc:870
+#line 856 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1719 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1705 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 226:
-#line 869 "dhcp4_parser.yy" // lalr1.cc:870
+#line 869 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1729 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1715 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 227:
-#line 873 "dhcp4_parser.yy" // lalr1.cc:870
+#line 873 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1739 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1725 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 228:
-#line 879 "dhcp4_parser.yy" // lalr1.cc:870
+#line 879 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the hooks-libraries list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1749 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1735 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 229:
-#line 883 "dhcp4_parser.yy" // lalr1.cc:870
+#line 883 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The library hooks parameter is required
     ctx.require("library", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 1759 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1745 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 235:
-#line 898 "dhcp4_parser.yy" // lalr1.cc:870
+#line 898 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1767 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1753 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 236:
-#line 900 "dhcp4_parser.yy" // lalr1.cc:870
+#line 900 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr lib(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("library", lib);
     ctx.leave();
 }
-#line 1777 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1763 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 237:
-#line 906 "dhcp4_parser.yy" // lalr1.cc:870
+#line 906 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1785 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1771 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 238:
-#line 908 "dhcp4_parser.yy" // lalr1.cc:870
+#line 908 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("parameters", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 1794 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1780 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 239:
-#line 914 "dhcp4_parser.yy" // lalr1.cc:870
+#line 914 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("expired-leases-processing", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.EXPIRED_LEASES_PROCESSING);
 }
-#line 1805 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1791 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 240:
-#line 919 "dhcp4_parser.yy" // lalr1.cc:870
+#line 919 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No expired lease parameter is required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1815 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1801 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 249:
-#line 937 "dhcp4_parser.yy" // lalr1.cc:870
+#line 937 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reclaim-timer-wait-time", value);
 }
-#line 1824 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1810 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 250:
-#line 942 "dhcp4_parser.yy" // lalr1.cc:870
+#line 942 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush-reclaimed-timer-wait-time", value);
 }
-#line 1833 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1819 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 251:
-#line 947 "dhcp4_parser.yy" // lalr1.cc:870
+#line 947 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hold-reclaimed-time", value);
 }
-#line 1842 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1828 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 252:
-#line 952 "dhcp4_parser.yy" // lalr1.cc:870
+#line 952 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-leases", value);
 }
-#line 1851 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1837 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 253:
-#line 957 "dhcp4_parser.yy" // lalr1.cc:870
+#line 957 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-reclaim-time", value);
 }
-#line 1860 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1846 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 254:
-#line 962 "dhcp4_parser.yy" // lalr1.cc:870
+#line 962 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr value(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("unwarned-reclaim-cycles", value);
 }
-#line 1869 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1855 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 255:
-#line 970 "dhcp4_parser.yy" // lalr1.cc:870
+#line 970 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet4", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SUBNET4);
 }
-#line 1880 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1866 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 256:
-#line 975 "dhcp4_parser.yy" // lalr1.cc:870
+#line 975 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1889 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1875 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 261:
-#line 995 "dhcp4_parser.yy" // lalr1.cc:870
+#line 995 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1899 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1885 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 262:
-#line 999 "dhcp4_parser.yy" // lalr1.cc:870
+#line 999 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Once we reached this place, the subnet parsing is now complete.
     // If we want to, we can implement default values here.
@@ -1921,294 +1907,294 @@ namespace isc { namespace dhcp {
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 1925 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1911 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 263:
-#line 1021 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1021 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the subnet4 list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1935 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1921 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 264:
-#line 1025 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1025 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The subnet subnet4 parameter is required
     ctx.require("subnet", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 1945 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1931 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 291:
-#line 1063 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1063 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1953 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1939 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 292:
-#line 1065 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1065 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr subnet(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("subnet", subnet);
     ctx.leave();
 }
-#line 1963 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1949 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 293:
-#line 1071 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1071 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1971 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1957 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 294:
-#line 1073 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1073 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface", iface);
     ctx.leave();
 }
-#line 1981 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1967 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 295:
-#line 1079 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1079 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1989 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1975 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 296:
-#line 1081 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1081 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-interface-id", iface);
     ctx.leave();
 }
-#line 1999 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1985 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 297:
-#line 1087 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1087 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2007 "dhcp4_parser.cc" // lalr1.cc:870
+#line 1993 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 298:
-#line 1089 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1089 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("4o6-subnet", iface);
     ctx.leave();
 }
-#line 2017 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2003 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 299:
-#line 1095 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1095 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2025 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2011 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 300:
-#line 1097 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1097 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr iface(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("interface", iface);
     ctx.leave();
 }
-#line 2035 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2021 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 301:
-#line 1103 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1103 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2043 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2029 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 302:
-#line 1105 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1105 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr cls(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-class", cls);
     ctx.leave();
 }
-#line 2053 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2039 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 303:
-#line 1111 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1111 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("require-client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2064 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2050 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 304:
-#line 1116 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1116 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2073 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2059 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 305:
-#line 1121 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1121 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.RESERVATION_MODE);
 }
-#line 2081 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2067 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 306:
-#line 1123 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1123 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("reservation-mode", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 2090 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2076 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 307:
-#line 1128 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1128 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("disabled", ctx.loc2pos(yystack_[0].location))); }
-#line 2096 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2082 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 308:
-#line 1129 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1129 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(yystack_[0].location))); }
-#line 2102 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2088 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 309:
-#line 1130 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1130 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("global", ctx.loc2pos(yystack_[0].location))); }
-#line 2108 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2094 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 310:
-#line 1131 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1131 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("all", ctx.loc2pos(yystack_[0].location))); }
-#line 2114 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2100 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 311:
-#line 1134 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1134 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr id(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("id", id);
 }
-#line 2123 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2109 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 312:
-#line 1141 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1141 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("shared-networks", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.SHARED_NETWORK);
 }
-#line 2134 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2120 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 313:
-#line 1146 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1146 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2143 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2129 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 318:
-#line 1161 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1161 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2153 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2139 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 319:
-#line 1165 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1165 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 2161 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2147 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 341:
-#line 1198 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1198 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-def", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DEF);
 }
-#line 2172 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2158 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 342:
-#line 1203 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1203 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2181 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2167 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 343:
-#line 1211 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1211 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2190 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2176 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 344:
-#line 1214 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1214 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // parsing completed
 }
-#line 2198 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2184 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 349:
-#line 1230 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1230 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2208 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2194 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 350:
-#line 1234 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1234 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2216,21 +2202,21 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2220 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2206 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 351:
-#line 1245 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1245 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the option-def list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2230 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2216 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 352:
-#line 1249 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1249 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The name, code and type option def parameters are required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
@@ -2238,281 +2224,281 @@ namespace isc { namespace dhcp {
     ctx.require("type", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2242 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2228 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 368:
-#line 1281 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1281 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr code(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("code", code);
 }
-#line 2251 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2237 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 370:
-#line 1288 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1288 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2259 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2245 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 371:
-#line 1290 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1290 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr prf(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("type", prf);
     ctx.leave();
 }
-#line 2269 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2255 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 372:
-#line 1296 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1296 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2277 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2263 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 373:
-#line 1298 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1298 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr rtypes(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("record-types", rtypes);
     ctx.leave();
 }
-#line 2287 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2273 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 374:
-#line 1304 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1304 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2295 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2281 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 375:
-#line 1306 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1306 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr space(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("space", space);
     ctx.leave();
 }
-#line 2305 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2291 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 377:
-#line 1314 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1314 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2313 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2299 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 378:
-#line 1316 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1316 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr encap(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("encapsulate", encap);
     ctx.leave();
 }
-#line 2323 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2309 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 379:
-#line 1322 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1322 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr array(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("array", array);
 }
-#line 2332 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2318 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 380:
-#line 1331 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1331 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("option-data", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OPTION_DATA);
 }
-#line 2343 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2329 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 381:
-#line 1336 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1336 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2352 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2338 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 386:
-#line 1355 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1355 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2362 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2348 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 387:
-#line 1359 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1359 "dhcp4_parser.yy" // lalr1.cc:856
     {
     /// @todo: the code or name parameters are required.
     ctx.stack_.pop_back();
 }
-#line 2371 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2357 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 388:
-#line 1367 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1367 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the option-data list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2381 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2367 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 389:
-#line 1371 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1371 "dhcp4_parser.yy" // lalr1.cc:856
     {
     /// @todo: the code or name parameters are required.
     // parsing completed
 }
-#line 2390 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2376 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 404:
-#line 1404 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1404 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2398 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2384 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 405:
-#line 1406 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1406 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr data(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("data", data);
     ctx.leave();
 }
-#line 2408 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2394 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 408:
-#line 1416 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1416 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr space(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("csv-format", space);
 }
-#line 2417 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2403 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 409:
-#line 1421 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1421 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr persist(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("always-send", persist);
 }
-#line 2426 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2412 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 410:
-#line 1429 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1429 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pools", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.POOLS);
 }
-#line 2437 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2423 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 411:
-#line 1434 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1434 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2446 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2432 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 416:
-#line 1449 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1449 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2456 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2442 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 417:
-#line 1453 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1453 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2466 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2452 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 418:
-#line 1459 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1459 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the pool list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2476 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2462 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 419:
-#line 1463 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1463 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 2486 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2472 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 429:
-#line 1482 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1482 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2494 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2480 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 430:
-#line 1484 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1484 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr pool(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("pool", pool);
     ctx.leave();
 }
-#line 2504 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2490 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 431:
-#line 1490 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1490 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2512 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2498 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 432:
-#line 1492 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1492 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context = yystack_[0].value.as< ElementPtr > ();
@@ -2535,19 +2521,19 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2539 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2525 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 433:
-#line 1515 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1515 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2547 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2533 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 434:
-#line 1517 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1517 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
@@ -2572,1085 +2558,1083 @@ namespace isc { namespace dhcp {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 2576 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2562 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 435:
-#line 1545 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1545 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reservations", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.RESERVATIONS);
 }
-#line 2587 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2573 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 436:
-#line 1550 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1550 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2596 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2582 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 441:
-#line 1563 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1563 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2606 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2592 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 442:
-#line 1567 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1567 "dhcp4_parser.yy" // lalr1.cc:856
     {
     /// @todo: an identifier parameter is required.
     ctx.stack_.pop_back();
 }
-#line 2615 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2601 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 443:
-#line 1572 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1572 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the reservations list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 2625 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2611 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 444:
-#line 1576 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1576 "dhcp4_parser.yy" // lalr1.cc:856
     {
     /// @todo: an identifier parameter is required.
     // parsing completed
 }
-#line 2634 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2620 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 464:
-#line 1607 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1607 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2642 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2628 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 465:
-#line 1609 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1609 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr next_server(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("next-server", next_server);
     ctx.leave();
 }
-#line 2652 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2638 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 466:
-#line 1615 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1615 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2660 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2646 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 467:
-#line 1617 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1617 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr srv(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-hostname", srv);
     ctx.leave();
 }
-#line 2670 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2656 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 468:
-#line 1623 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1623 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2678 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2664 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 469:
-#line 1625 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1625 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr bootfile(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
     ctx.leave();
 }
-#line 2688 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2674 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 470:
-#line 1631 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1631 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2696 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2682 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 471:
-#line 1633 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1633 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr addr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 }
-#line 2706 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2692 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 472:
-#line 1639 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1639 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-addresses", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2717 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2703 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 473:
-#line 1644 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1644 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2726 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2712 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 474:
-#line 1649 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1649 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2734 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2720 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 475:
-#line 1651 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1651 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr d(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("duid", d);
     ctx.leave();
 }
-#line 2744 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2730 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 476:
-#line 1657 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1657 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2752 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2738 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 477:
-#line 1659 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1659 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hw-address", hw);
     ctx.leave();
 }
-#line 2762 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2748 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 478:
-#line 1665 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1665 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2770 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2756 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 479:
-#line 1667 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1667 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-id", hw);
     ctx.leave();
 }
-#line 2780 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2766 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 480:
-#line 1673 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1673 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2788 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2774 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 481:
-#line 1675 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1675 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("circuit-id", hw);
     ctx.leave();
 }
-#line 2798 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2784 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 482:
-#line 1681 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1681 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2806 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2792 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 483:
-#line 1683 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1683 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr hw(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 }
-#line 2816 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2802 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 484:
-#line 1689 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1689 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2824 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2810 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 485:
-#line 1691 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1691 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr host(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname", host);
     ctx.leave();
 }
-#line 2834 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2820 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 486:
-#line 1697 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1697 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr c(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", c);
     ctx.stack_.push_back(c);
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2845 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2831 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 487:
-#line 1702 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1702 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2854 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2840 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 488:
-#line 1710 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1710 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("relay", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.RELAY);
 }
-#line 2865 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2851 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 489:
-#line 1715 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1715 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2874 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2860 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 492:
-#line 1727 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1727 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("client-classes", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CLIENT_CLASSES);
 }
-#line 2885 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2871 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 493:
-#line 1732 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1732 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2894 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2880 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 496:
-#line 1741 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1741 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 2904 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2890 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 497:
-#line 1745 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1745 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The name client class parameter is required.
     ctx.require("name", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
 }
-#line 2914 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2900 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 514:
-#line 1774 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1774 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2922 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2908 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 515:
-#line 1776 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1776 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr test(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("test", test);
     ctx.leave();
 }
-#line 2932 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2918 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 516:
-#line 1782 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1782 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("only-if-required", b);
 }
-#line 2941 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2927 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 517:
-#line 1791 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1791 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr time(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
 }
-#line 2950 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2936 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 518:
-#line 1798 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1798 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 2961 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2947 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 519:
-#line 1803 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1803 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 2970 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2956 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 527:
-#line 1819 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1819 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2978 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2964 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 528:
-#line 1821 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1821 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr stype(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 2988 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2974 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 529:
-#line 1827 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1827 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 2996 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2982 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 530:
-#line 1829 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1829 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 3006 "dhcp4_parser.cc" // lalr1.cc:870
+#line 2992 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 531:
-#line 1837 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1837 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dhcp-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCP_DDNS);
 }
-#line 3017 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3003 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 532:
-#line 1842 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1842 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[2].location), ctx.loc2pos(yystack_[0].location));
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3028 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3014 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 533:
-#line 1849 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1849 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the dhcp-ddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3038 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3024 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 534:
-#line 1853 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1853 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // The enable updates DHCP DDNS parameter is required.
     ctx.require("enable-updates", ctx.loc2pos(yystack_[3].location), ctx.loc2pos(yystack_[0].location));
     // parsing completed
 }
-#line 3048 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3034 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 556:
-#line 1884 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1884 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("enable-updates", b);
 }
-#line 3057 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3043 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 557:
-#line 1889 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1889 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3065 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3051 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 558:
-#line 1891 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1891 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("qualifying-suffix", s);
     ctx.leave();
 }
-#line 3075 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3061 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 559:
-#line 1897 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1897 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3083 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3069 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 560:
-#line 1899 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1899 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-ip", s);
     ctx.leave();
 }
-#line 3093 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3079 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 561:
-#line 1905 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1905 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("server-port", i);
 }
-#line 3102 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3088 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 562:
-#line 1910 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1910 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3110 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3096 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 563:
-#line 1912 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1912 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-ip", s);
     ctx.leave();
 }
-#line 3120 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3106 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 564:
-#line 1918 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1918 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("sender-port", i);
 }
-#line 3129 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3115 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 565:
-#line 1923 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1923 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("max-queue-size", i);
 }
-#line 3138 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3124 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 566:
-#line 1928 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1928 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 3146 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3132 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 567:
-#line 1930 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1930 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3155 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3141 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 568:
-#line 1936 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1936 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
-#line 3161 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3147 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 569:
-#line 1937 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1937 "dhcp4_parser.yy" // lalr1.cc:856
     { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
-#line 3167 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3153 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 570:
-#line 1940 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1940 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NCR_FORMAT);
 }
-#line 3175 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3161 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 571:
-#line 1942 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1942 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 3185 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3171 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 572:
-#line 1948 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1948 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("always-include-fqdn", b);
 }
-#line 3194 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3180 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 573:
-#line 1953 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1953 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-no-update", b);
 }
-#line 3203 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3189 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 574:
-#line 1958 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1958 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr b(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("override-client-update", b);
 }
-#line 3212 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3198 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 575:
-#line 1963 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1963 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.REPLACE_CLIENT_NAME);
 }
-#line 3220 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3206 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 576:
-#line 1965 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1965 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("replace-client-name", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3229 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3215 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 577:
-#line 1971 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1971 "dhcp4_parser.yy" // lalr1.cc:856
     {
       yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-present", ctx.loc2pos(yystack_[0].location))); 
       }
-#line 3237 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3223 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 578:
-#line 1974 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1974 "dhcp4_parser.yy" // lalr1.cc:856
     {
       yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("never", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3245 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3231 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 579:
-#line 1977 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1977 "dhcp4_parser.yy" // lalr1.cc:856
     {
       yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("always", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3253 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3239 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 580:
-#line 1980 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1980 "dhcp4_parser.yy" // lalr1.cc:856
     {
       yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("when-not-present", ctx.loc2pos(yystack_[0].location)));
       }
-#line 3261 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3247 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 581:
-#line 1983 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1983 "dhcp4_parser.yy" // lalr1.cc:856
     {
       error(yystack_[0].location, "boolean values for the replace-client-name are "
                 "no longer supported");
       }
-#line 3270 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3256 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 582:
-#line 1989 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1989 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3278 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3264 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 583:
-#line 1991 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1991 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("generated-prefix", s);
     ctx.leave();
 }
-#line 3288 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3274 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 584:
-#line 1997 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1997 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3296 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3282 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 585:
-#line 1999 "dhcp4_parser.yy" // lalr1.cc:870
+#line 1999 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-set", s);
     ctx.leave();
 }
-#line 3306 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3292 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 586:
-#line 2005 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2005 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3314 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3300 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 587:
-#line 2007 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2007 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname-char-replacement", s);
     ctx.leave();
 }
-#line 3324 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3310 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 588:
-#line 2016 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2016 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3332 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3318 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 589:
-#line 2018 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2018 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3341 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3327 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 590:
-#line 2023 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2023 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3349 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3335 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 591:
-#line 2025 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2025 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("DhcpDdns", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3358 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3344 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 592:
-#line 2030 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2030 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3366 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3352 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 593:
-#line 2032 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2032 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.back()->set("Control-agent", yystack_[0].value.as< ElementPtr > ());
     ctx.leave();
 }
-#line 3375 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3361 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 594:
-#line 2037 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2037 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3385 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3371 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 595:
-#line 2041 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2041 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 3393 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3379 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 596:
-#line 2046 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2046 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr i(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-control", i);
     ctx.stack_.push_back(i);
     ctx.enter(ctx.CONFIG_CONTROL);
 }
-#line 3404 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3390 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 597:
-#line 2051 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2051 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No config control params are required
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3414 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3400 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 598:
-#line 2057 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2057 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the config-control map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3424 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3410 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 599:
-#line 2061 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2061 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // No config_control params are required
     // parsing completed
 }
-#line 3433 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3419 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 604:
-#line 2076 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2076 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("config-databases", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.CONFIG_DATABASE);
 }
-#line 3444 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3430 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 605:
-#line 2081 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2081 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3453 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3439 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 606:
-#line 2091 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2091 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 3464 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3450 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 607:
-#line 2096 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2096 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3473 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3459 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 608:
-#line 2101 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2101 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // Parse the Logging map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 3483 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3469 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 609:
-#line 2105 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2105 "dhcp4_parser.yy" // lalr1.cc:856
     {
     // parsing completed
 }
-#line 3491 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3477 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 613:
-#line 2121 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2121 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 3502 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3488 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 614:
-#line 2126 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2126 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3511 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3497 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 617:
-#line 2138 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2138 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 3521 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3507 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 618:
-#line 2142 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2142 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 3529 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3515 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 628:
-#line 2159 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2159 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr dl(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 3538 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3524 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 629:
-#line 2164 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2164 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3546 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3532 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 630:
-#line 2166 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2166 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 3556 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3542 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 631:
-#line 2172 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2172 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 3567 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3553 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 632:
-#line 2177 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2177 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 3576 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3562 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 635:
-#line 2186 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2186 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 3586 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3572 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 636:
-#line 2190 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2190 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.stack_.pop_back();
 }
-#line 3594 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3580 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 643:
-#line 2204 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2204 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 3602 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3588 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 644:
-#line 2206 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2206 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 3612 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3598 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 645:
-#line 2212 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2212 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr flush(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 3621 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3607 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 646:
-#line 2217 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2217 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr maxsize(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 3630 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3616 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
   case 647:
-#line 2222 "dhcp4_parser.yy" // lalr1.cc:870
+#line 2222 "dhcp4_parser.yy" // lalr1.cc:856
     {
     ElementPtr maxver(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 3639 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3625 "dhcp4_parser.cc" // lalr1.cc:856
     break;
 
 
-#line 3643 "dhcp4_parser.cc" // lalr1.cc:870
+#line 3629 "dhcp4_parser.cc" // lalr1.cc:856
             default:
               break;
             }
         }
-#if YY_EXCEPTIONS
       catch (const syntax_error& yyexc)
         {
           error (yyexc);
           YYERROR;
         }
-#endif // YY_EXCEPTIONS
       YY_SYMBOL_PRINT ("-> $$ =", yylhs);
       yypop_ (yylen);
       yylen = 0;
@@ -3774,12 +3758,11 @@ namespace isc { namespace dhcp {
 
     return yyresult;
   }
-#if YY_EXCEPTIONS
     catch (...)
       {
         YYCDEBUG << "Exception caught: cleaning lookahead and stack\n";
         // Do not try to display the values of the reclaimed symbols,
-        // as their printers might throw an exception.
+        // as their printer might throw an exception.
         if (!yyla.empty ())
           yy_destroy_ (YY_NULLPTR, yyla);
 
@@ -3790,7 +3773,6 @@ namespace isc { namespace dhcp {
           }
         throw;
       }
-#endif // YY_EXCEPTIONS
   }
 
   void
@@ -3897,11 +3879,11 @@ namespace isc { namespace dhcp {
   }
 
 
-  const short Dhcp4Parser::yypact_ninf_ = -799;
+  const short int Dhcp4Parser::yypact_ninf_ = -799;
 
   const signed char Dhcp4Parser::yytable_ninf_ = -1;
 
-  const short
+  const short int
   Dhcp4Parser::yypact_[] =
   {
      400,  -799,  -799,  -799,  -799,  -799,  -799,  -799,  -799,  -799,
@@ -4011,7 +3993,7 @@ namespace isc { namespace dhcp {
     -799,  -799
   };
 
-  const unsigned short
+  const unsigned short int
   Dhcp4Parser::yydefact_[] =
   {
        0,     2,     4,     6,     8,    10,    12,    14,    16,    18,
@@ -4121,7 +4103,7 @@ namespace isc { namespace dhcp {
      638,   644
   };
 
-  const short
+  const short int
   Dhcp4Parser::yypgoto_[] =
   {
     -799,  -799,  -799,  -799,  -799,  -799,  -799,  -799,  -799,  -799,
@@ -4164,7 +4146,7 @@ namespace isc { namespace dhcp {
     -799,  -799,  -799
   };
 
-  const short
+  const short int
   Dhcp4Parser::yydefgoto_[] =
   {
       -1,    15,    16,    17,    18,    19,    20,    21,    22,    23,
@@ -4207,7 +4189,7 @@ namespace isc { namespace dhcp {
     1026,  1027,  1028
   };
 
-  const unsigned short
+  const unsigned short int
   Dhcp4Parser::yytable_[] =
   {
       95,   135,   173,   193,   220,   237,   711,   263,   282,   299,
@@ -4311,7 +4293,7 @@ namespace isc { namespace dhcp {
      906,     0,   927,   928,   915,     0,     0,     0,   901,   929
   };
 
-  const short
+  const short int
   Dhcp4Parser::yycheck_[] =
   {
       70,    71,    72,    73,    74,    75,   592,    77,    78,    79,
@@ -4415,7 +4397,7 @@ namespace isc { namespace dhcp {
      984,    -1,   989,   989,   984,    -1,    -1,    -1,   984,   989
   };
 
-  const unsigned short
+  const unsigned short int
   Dhcp4Parser::yystos_[] =
   {
        0,   151,   152,   153,   154,   155,   156,   157,   158,   159,
@@ -4525,7 +4507,7 @@ namespace isc { namespace dhcp {
      536,   165
   };
 
-  const unsigned short
+  const unsigned short int
   Dhcp4Parser::yyr1_[] =
   {
        0,   169,   171,   170,   172,   170,   173,   170,   174,   170,
@@ -4812,7 +4794,7 @@ namespace isc { namespace dhcp {
   };
 
 #if PARSER4_DEBUG
-  const unsigned short
+  const unsigned short int
   Dhcp4Parser::yyrline_[] =
   {
        0,   253,   253,   253,   254,   254,   255,   255,   256,   256,
@@ -4912,10 +4894,10 @@ namespace isc { namespace dhcp {
 #endif // PARSER4_DEBUG
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:1181
+#line 14 "dhcp4_parser.yy" // lalr1.cc:1163
 } } // isc::dhcp
-#line 4918 "dhcp4_parser.cc" // lalr1.cc:1181
-#line 2227 "dhcp4_parser.yy" // lalr1.cc:1182
+#line 4900 "dhcp4_parser.cc" // lalr1.cc:1163
+#line 2227 "dhcp4_parser.yy" // lalr1.cc:1164
 
 
 void

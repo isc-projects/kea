@@ -1,4 +1,5 @@
-// A Bison parser, made by GNU Bison 3.1.
+// Generated 201811071039
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Locations for Bison parsers in C++
 
@@ -40,9 +41,9 @@
 
 # include "position.hh"
 
-#line 14 "dhcp4_parser.yy" // location.cc:290
+#line 14 "dhcp4_parser.yy" // location.cc:292
 namespace isc { namespace dhcp {
-#line 46 "location.hh" // location.cc:290
+#line 46 "location.hh" // location.cc:292
   /// Abstract a location.
   class location
   {
@@ -167,7 +168,7 @@ namespace isc { namespace dhcp {
    ** Avoid duplicate information.
    */
   template <typename YYChar>
-  std::basic_ostream<YYChar>&
+  inline std::basic_ostream<YYChar>&
   operator<< (std::basic_ostream<YYChar>& ostr, const location& loc)
   {
     unsigned end_col = 0 < loc.end.column ? loc.end.column - 1 : 0;
@@ -183,7 +184,7 @@ namespace isc { namespace dhcp {
     return ostr;
   }
 
-#line 14 "dhcp4_parser.yy" // location.cc:290
+#line 14 "dhcp4_parser.yy" // location.cc:292
 } } // isc::dhcp
-#line 189 "location.hh" // location.cc:290
+#line 189 "location.hh" // location.cc:292
 #endif // !YY_PARSER4_LOCATION_HH_INCLUDED
