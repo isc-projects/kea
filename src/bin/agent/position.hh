@@ -1,9 +1,9 @@
-// Generated 201811071038
-// A Bison parser, made by GNU Bison 3.0.5.
+// Generated 201804111444
+// A Bison parser, made by GNU Bison 3.0.4.
 
 // Positions for Bison parsers in C++
 
-// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -51,27 +51,28 @@
 #  endif
 # endif
 
-#line 14 "agent_parser.yy" // location.cc:292
+#line 14 "agent_parser.yy" // location.cc:296
 namespace isc { namespace agent {
-#line 56 "position.hh" // location.cc:292
+#line 56 "position.hh" // location.cc:296
   /// Abstract a position.
   class position
   {
   public:
     /// Construct a position.
     explicit position (std::string* f = YY_NULLPTR,
-                       unsigned l = 1u,
-                       unsigned c = 1u)
+                       unsigned int l = 1u,
+                       unsigned int c = 1u)
       : filename (f)
       , line (l)
       , column (c)
-    {}
+    {
+    }
 
 
     /// Initialization.
     void initialize (std::string* fn = YY_NULLPTR,
-                     unsigned l = 1u,
-                     unsigned c = 1u)
+                     unsigned int l = 1u,
+                     unsigned int c = 1u)
     {
       filename = fn;
       line = l;
@@ -100,15 +101,15 @@ namespace isc { namespace agent {
     /// File name to which this position refers.
     std::string* filename;
     /// Current line number.
-    unsigned line;
+    unsigned int line;
     /// Current column number.
-    unsigned column;
+    unsigned int column;
 
   private:
     /// Compute max(min, lhs+rhs) (provided min <= lhs).
-    static unsigned add_ (unsigned lhs, int rhs, unsigned min)
+    static unsigned int add_ (unsigned int lhs, int rhs, unsigned int min)
     {
-      return (0 < rhs || -static_cast<unsigned>(rhs) < lhs
+      return (0 < rhs || -static_cast<unsigned int>(rhs) < lhs
               ? rhs + lhs
               : min);
     }
@@ -174,7 +175,7 @@ namespace isc { namespace agent {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 14 "agent_parser.yy" // location.cc:292
+#line 14 "agent_parser.yy" // location.cc:296
 } } // isc::agent
-#line 179 "position.hh" // location.cc:292
+#line 180 "position.hh" // location.cc:296
 #endif // !YY_AGENT_POSITION_HH_INCLUDED
