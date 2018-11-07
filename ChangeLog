@@ -2,7 +2,7 @@
 	Fixed a bug in kea-admin that ignored specified remote hostname.
 	Thank you to lmasarati and Thorsten Krohn for reporting it and
 	proposing a patch!
-	(Gitlab #61, !114, git tbd)
+	(Gitlab #61, #138, !114, git 901cac7dc85ad8dacf631bf3a5c266eefeb3e6a1)
 
 1470.	[func]		marcin
 	Improved lease database synchronization mechanisms in High
