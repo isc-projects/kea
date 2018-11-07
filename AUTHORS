@@ -188,7 +188,7 @@ We have received the following contributions:
  - Suzanne Goldlust
    2018-10: API documentation
 
- - lpaserati
+ - lpaserati, Thorsten Krohn
    2018-11: Two bugfixes in kea-admin
 
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,

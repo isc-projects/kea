@@ -1,6 +1,7 @@
 1471.	[bug]		lmasarati
 	Fixed a bug in kea-admin that ignored specified remote hostname.
-	Thank you to lmasarati for reporting and submitting a patch!
+	Thank you to lmasarati and Thorsten Krohn for reporting it and
+	proposing a patch!
 	(Gitlab #61, !114, git tbd)
 
 1470.	[func]		marcin
