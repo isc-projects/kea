@@ -162,7 +162,12 @@ DatabaseConnection::toElement(const ParameterMap& params) {
 
         if ((keyword == "lfc-interval") ||
             (keyword == "connect-timeout") ||
-            (keyword == "port")) {
+            (keyword == "request-timeout") ||
+            (keyword == "port") ||
+            (keyword == "max-reconnect-tries") ||
+            (keyword == "reconnect-wait-time") ||
+            (keyword == "tcp-keepalive")) {
+
             // integer parameters
             int64_t int_value;
             try {
@@ -173,7 +178,9 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                           << "integer parameter: " << keyword << "=" << value);
             }
         } else if ((keyword == "persist") ||
-                   (keyword == "readonly")) {
+                   (keyword == "readonly") ||
+                   (keyword == "tcp-nodelay")) {
+
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
