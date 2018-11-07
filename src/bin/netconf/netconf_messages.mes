@@ -10,14 +10,14 @@ $NAMESPACE isc::netconf
 This informational message is issued when the initial configuration
 was retrieved from Netconf and successfully applied to Kea server.
 
-% NETCONF_CONFIG_CHANGE_EVENT Received YANG configuration change %1 event
-This informational message is issued when Netconf receives a YANG
-configuration change event. The type of event is printed.
-
 % NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: %1
 This debug message indicates a YANG configuration change. The format
 is the change operation (created, modified, deleted or moved) followed
 by xpaths and values of old and new nodes.
+
+% NETCONF_CONFIG_CHANGE_EVENT Received YANG configuration change %1 event
+This informational message is issued when Netconf receives a YANG
+configuration change event. The type of event is printed.
 
 % NETCONF_CONFIG_CHECK_FAIL Netconf configuration check failed: %1
 This error message indicates that Netconf had failed configuration
@@ -86,6 +86,25 @@ The error message indicates that Netconf got an error subscribing
 configuration changes for a Kea server. The names of the server and
 the module, and the error are printed.
 
+% NETCONF_UPDATE_CONFIG updating configuration with %1 server: %2
+This debug message indicates that Netconf update the configuration
+of a Kea server. The server name and the updated configuration are
+printed.
+
+% NETCONF_UPDATE_CONFIG_COMPLETED completed updating configuration for %1 server
+This informational message indicates that Netconf updated with success the
+configuration of a Kea server.
+
+% NETCONF_UPDATE_CONFIG_FAILED updating configuration with %1 server: %2
+The error message indicates that Netconf got an error updating the
+configuration of a Kea server. This includes a configuration rejected
+by a Kea server when it tried to apply it. The name of the server and
+the error are printed.
+
+% NETCONF_UPDATE_CONFIG_STARTED started updating configuration for %1 server
+This informational message indicates that Netconf is trying to update the
+configuration of a Kea server.
+
 % NETCONF_VALIDATE_CONFIG validating configuration with %1 server: %2
 This debug message indicates that Netconf is validating the configuration
 with a Kea server. The server name and the validated configuration are
@@ -114,22 +133,3 @@ printed.
 % NETCONF_VALIDATE_CONFIG_STARTED started validating configuration for %1 server
 This informational message indicates that Netconf is trying to validate the
 configuration with a Kea server.
-
-% NETCONF_UPDATE_CONFIG updating configuration with %1 server: %2
-This debug message indicates that Netconf update the configuration
-of a Kea server. The server name and the updated configuration are
-printed.
-
-% NETCONF_UPDATE_CONFIG_COMPLETED completed updating configuration for %1 server
-This informational message indicates that Netconf updated with success the
-configuration of a Kea server.
-
-% NETCONF_UPDATE_CONFIG_FAILED updating configuration with %1 server: %2
-The error message indicates that Netconf got an error updating the
-configuration of a Kea server. This includes a configuration rejected
-by a Kea server when it tried to apply it. The name of the server and
-the error are printed.
-
-% NETCONF_UPDATE_CONFIG_STARTED started updating configuration for %1 server
-This informational message indicates that Netconf is trying to update the
-configuration of a Kea server.
