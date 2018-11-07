@@ -460,7 +460,7 @@ namespace isc { namespace dhcp {
         TOKEN_CONTROL_SOCKET = 367,
         TOKEN_SOCKET_TYPE = 368,
         TOKEN_SOCKET_NAME = 369,
-        TOKEN_QUEUE_CONTROL = 370,
+        TOKEN_DHCP_QUEUE_CONTROL = 370,
         TOKEN_DHCP_DDNS = 371,
         TOKEN_ENABLE_UPDATES = 372,
         TOKEN_QUALIFYING_SUFFIX = 373,
@@ -1082,7 +1082,7 @@ namespace isc { namespace dhcp {
 
     static inline
     symbol_type
-    make_QUEUE_CONTROL (const location_type& l);
+    make_DHCP_QUEUE_CONTROL (const location_type& l);
 
     static inline
     symbol_type
@@ -2579,9 +2579,9 @@ namespace isc { namespace dhcp {
   }
 
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_QUEUE_CONTROL (const location_type& l)
+  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_QUEUE_CONTROL, l);
+    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, l);
   }
 
   Dhcp4Parser::symbol_type

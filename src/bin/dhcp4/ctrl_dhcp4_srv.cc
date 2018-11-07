@@ -637,7 +637,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // Configure packet queue
     try {
         data::ConstElementPtr qc;
-        qc  = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (!qc) {
             // @todo For now we're manually constructing default queue config
             // This probably needs to be built into the PQM?

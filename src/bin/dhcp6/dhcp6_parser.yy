@@ -172,7 +172,7 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
-  QUEUE_CONTROL "queue-control"
+  DHCP_QUEUE_CONTROL "dhcp-queue-control"
 
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
@@ -457,7 +457,7 @@ global_param: preferred_lifetime
             | server_id
             | dhcp4o6_port
             | control_socket
-            | queue_control
+            | dhcp_queue_control
             | dhcp_ddns
             | user_context
             | comment
@@ -1923,13 +1923,13 @@ socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
-// --- queue-control ---------------------------------------------
+// --- dhcp-queue-control ---------------------------------------------
 
-queue_control: QUEUE_CONTROL {
+dhcp_queue_control: DHCP_QUEUE_CONTROL {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON map_value {
     ElementPtr qc = $4;
-    ctx.stack_.back()->set("queue-control", qc);
+    ctx.stack_.back()->set("dhcp-queue-control", qc);
 
     if (!qc->contains("queue-type")) {
         std::stringstream msg;

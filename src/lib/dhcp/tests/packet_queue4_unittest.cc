@@ -19,6 +19,13 @@ using namespace isc::dhcp::test;
 
 namespace {
 
+/// @brief DHCPv4 queue with implements drop and eat logic
+///
+/// This class derives from the default DHCPv4 ring queue
+/// and provies implementations for shouldDropPacket() and
+/// eatPackets().  This permits a full exercising of the
+/// PacketQueue interface as well as the basic v4 ring queue
+/// mechanics.
 class TestQueue4 : public PacketQueueRing4 {
 public:
     /// @brief Constructor
@@ -40,7 +47,7 @@ public:
     /// @param source the socket the packet came from
     ///
     /// @return True if the packet should be dropped.
-    virtual bool dropPacket(Pkt4Ptr packet,
+    virtual bool shouldDropPacket(Pkt4Ptr packet,
                             const SocketInfo& source) {
         if (drop_enabled_) {
             return ((packet->getTransid() % 2 == 0) ||
@@ -68,10 +75,6 @@ public:
         }
 
         return (eaten);
-    }
-
-    virtual void useDefaults() {
-        setCapacity(411);
     }
 
     bool drop_enabled_;
@@ -215,7 +218,7 @@ TEST(TestQueue4, enqueueDequeueTest) {
 // Verifies enqueuing operations when drop logic is enabled.
 // This accesses it's queue instance as a TestQueue4, rather than
 // a PacketQueue4Ptr, to provide access to TestQueue4 specifics.
-TEST(TestQueue4, dropPacketTest) {
+TEST(TestQueue4, shouldDropPacketTest) {
     TestQueue4 q4(100);
     EXPECT_TRUE(q4.empty());
     ASSERT_FALSE(q4.drop_enabled_);
@@ -225,12 +228,12 @@ TEST(TestQueue4, dropPacketTest) {
     SocketInfo sockOdd(isc::asiolink::IOAddress("127.0.0.1"), 777, 11);
 
     // Drop is not enabled.
-    // We should be able to enqueu a packet with even numbered values.
+    // We should be able to enqueue a packet with even numbered values.
     Pkt4Ptr pkt(new Pkt4(DHCPDISCOVER, 1002));
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockEven));
     EXPECT_EQ(1, q4.getSize());
 
-    // We should be able to enqueu a packet with odd numbered values.
+    // We should be able to enqueue a packet with odd numbered values.
     pkt.reset(new Pkt4(DHCPDISCOVER, 1003));
     ASSERT_NO_THROW(q4.enqueuePacket(pkt, sockOdd));
     EXPECT_EQ(2, q4.getSize());

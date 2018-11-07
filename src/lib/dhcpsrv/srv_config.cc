@@ -392,10 +392,10 @@ SrvConfig::toElement() const {
         dhcp->set("config-control", info_elem);
     }
 
-    // Set queue-control (if it exists)
-    data::ConstElementPtr queue_control = getQueueControlInfo();
-    if (queue_control) {
-        dhcp->set("queue-control", queue_control);
+    // Set dhcp-packet-control (if it exists)
+    data::ConstElementPtr dhcp_queue_control = getDHCPQueueControl();
+    if (dhcp_queue_control) {
+        dhcp->set("dhcp-queue-control", dhcp_queue_control);
     }
 
     return (result);

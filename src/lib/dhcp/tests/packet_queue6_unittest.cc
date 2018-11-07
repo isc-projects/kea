@@ -20,6 +20,13 @@ using namespace isc::dhcp::test;
 
 namespace {
 
+/// @brief DHCPv6 queue with implements drop and eat logic
+///
+/// This class derives from the default DHCPv6 ring queue
+/// and provies implementations for shouldDropPacket() and
+/// eatPackets().  This permits a full exercising of the
+/// PacketQueue interface as well as the basic v6 ring queue
+/// mechanics.
 class TestQueue6 : public PacketQueueRing6 {
 public:
     /// @brief Constructor
@@ -41,7 +48,7 @@ public:
     /// @param source the socket the packet came from
     ///
     /// @return True if the packet should be dropped.
-    virtual bool dropPacket(Pkt6Ptr packet,
+    virtual bool shouldDropPacket(Pkt6Ptr packet,
                             const SocketInfo& source) {
         if (drop_enabled_) {
             return ((packet->getTransid() % 2 == 0) ||
@@ -69,10 +76,6 @@ public:
         }
 
         return (eaten);
-    }
-
-    virtual void useDefaults() {
-        setCapacity(411);
     }
 
     bool drop_enabled_;
@@ -216,7 +219,7 @@ TEST(TestQueue6, enqueueDequeueTest) {
 // Verifies enqueuing operations when drop logic is enabled.
 // This accesses it's queue instance as a TestQueue6, rather than
 // a PacketQueue6Ptr, to provide access to TestQueue6 specifics.
-TEST(TestQueue6, dropPacketTest) {
+TEST(TestQueue6, shouldDropPacketTest) {
     TestQueue6 q6(100);
     EXPECT_TRUE(q6.empty());
     ASSERT_FALSE(q6.drop_enabled_);
@@ -226,12 +229,12 @@ TEST(TestQueue6, dropPacketTest) {
     SocketInfo sockOdd(isc::asiolink::IOAddress("127.0.0.1"), 777, 11);
 
     // Drop is not enabled.
-    // We should be able to enqueu a packet with even numbered values.
+    // We should be able to enqueue a packet with even numbered values.
     Pkt6Ptr pkt(new Pkt6(DHCPV6_SOLICIT, 1002));
     ASSERT_NO_THROW(q6.enqueuePacket(pkt, sockEven));
     EXPECT_EQ(1, q6.getSize());
 
-    // We should be able to enqueu a packet with odd numbered values.
+    // We should be able to enqueue a packet with odd numbered values.
     pkt.reset(new Pkt6(DHCPV6_SOLICIT, 1003));
     ASSERT_NO_THROW(q6.enqueuePacket(pkt, sockOdd));
     EXPECT_EQ(2, q6.getSize());

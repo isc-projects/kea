@@ -125,10 +125,10 @@ libkea_dhcp___include_HEADERS = \
 	option_string.h \
 	option_vendor.h \
 	option_vendor_class.h \
-    packet_queue.h \
-    packet_queue_mgr.h \
-    packet_queue_mgr4.h \
-    packet_queue_mgr6.h \
+	packet_queue.h \
+	packet_queue_mgr.h \
+	packet_queue_mgr4.h \
+	packet_queue_mgr6.h \
 	pkt.h \
 	pkt4.h \
 	pkt4o6.h \

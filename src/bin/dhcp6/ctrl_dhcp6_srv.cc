@@ -653,10 +653,10 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
-    // Configure packet queue
+    // Configure DHCP packet queue
     try {
         data::ConstElementPtr qc;
-        qc  = CfgMgr::instance().getStagingCfg()->getQueueControlInfo();
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (!qc) {
             // @todo For now we're manually constructing default queue config
             // This probably needs to be built into the PQM?
@@ -673,7 +673,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
 
     } catch (const std::exception& ex) {
         std::ostringstream err;
-        err << "Error setting packet queue controls after server reconfiguration: "
+        err << "Error setting DHCP packet queue controls after server reconfiguration: "
             << ex.what();
         return (isc::config::createAnswer(1, err.str()));
     }

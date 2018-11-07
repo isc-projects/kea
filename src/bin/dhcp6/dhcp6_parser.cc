@@ -3050,7 +3050,7 @@ namespace isc { namespace dhcp {
 #line 1930 "dhcp6_parser.yy" // lalr1.cc:859
     {
     ElementPtr qc = yystack_[0].value.as< ElementPtr > ();
-    ctx.stack_.back()->set("queue-control", qc);
+    ctx.stack_.back()->set("dhcp-queue-control", qc);
 
     if (!qc->contains("queue-type")) {
         std::stringstream msg;
@@ -4793,7 +4793,7 @@ namespace isc { namespace dhcp {
   "\"max-reclaim-time\"", "\"unwarned-reclaim-cycles\"", "\"server-id\"",
   "\"LLT\"", "\"EN\"", "\"LL\"", "\"identifier\"", "\"htype\"", "\"time\"",
   "\"enterprise-id\"", "\"dhcp4o6-port\"", "\"control-socket\"",
-  "\"socket-type\"", "\"socket-name\"", "\"queue-control\"",
+  "\"socket-type\"", "\"socket-name\"", "\"dhcp-queue-control\"",
   "\"dhcp-ddns\"", "\"enable-updates\"", "\"qualifying-suffix\"",
   "\"server-ip\"", "\"server-port\"", "\"sender-ip\"", "\"sender-port\"",
   "\"max-queue-size\"", "\"ncr-protocol\"", "\"ncr-format\"",
@@ -4883,8 +4883,8 @@ namespace isc { namespace dhcp {
   "server_id_type", "$@98", "duid_type", "htype", "identifier", "$@99",
   "time", "enterprise_id", "dhcp4o6_port", "control_socket", "$@100",
   "control_socket_params", "control_socket_param", "socket_type", "$@101",
-  "socket_name", "$@102", "queue_control", "$@103", "dhcp_ddns", "$@104",
-  "sub_dhcp_ddns", "$@105", "dhcp_ddns_params", "dhcp_ddns_param",
+  "socket_name", "$@102", "dhcp_queue_control", "$@103", "dhcp_ddns",
+  "$@104", "sub_dhcp_ddns", "$@105", "dhcp_ddns_params", "dhcp_ddns_param",
   "enable_updates", "qualifying_suffix", "$@106", "server_ip", "$@107",
   "server_port", "sender_ip", "$@108", "sender_port", "max_queue_size",
   "ncr_protocol", "$@109", "ncr_protocol_value", "ncr_format", "$@110",

@@ -1060,9 +1060,10 @@ public:
     ///
     /// @throw Unexpected if the thread already exists.
     void startDHCPReceiver(const uint16_t family);
-/// @brief Stops the DHCP packet receiver.
+
+    /// @brief Stops the DHCP packet receiver.
     ///
-    /// Stops the receiver and delete the dedicated thread.
+    /// Stops the receiver and deletes the dedicated thread.
     void stopDHCPReceiver();
 
     // don't use private, we need derived classes in tests
@@ -1222,7 +1223,6 @@ private:
     /// marks the "receive" watch socket ready. If an error occurs during
     /// the read, the "error" watch socket is marked ready.
     ///
-    /// @param iface interface
     /// @param socket_info structure holding socket information
     void receiveDHCP6Packet(const SocketInfo& socket_info);
 

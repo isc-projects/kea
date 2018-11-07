@@ -28,7 +28,7 @@ PacketQueueMgr4::PacketQueueMgr4() {
             return (queue);
         });
 
-    // @todo default comes from ?
+    /// @todo default comes from ? 
     data::ElementPtr parameters = data::Element::createMap();
     parameters->set("queue-type", data::Element::create("kea-ring4"));
     parameters->set("capacity", data::Element::create(static_cast<long int>(500)));
@@ -48,7 +48,7 @@ PacketQueueMgr4::create() {
 
 void
 PacketQueueMgr4::destroy() {
-    getPacketQueueMgr4Ptr().reset(new PacketQueueMgr4());
+    getPacketQueueMgr4Ptr().reset();
 }
 
 PacketQueueMgr4&

@@ -1597,12 +1597,12 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"queue-control\" {
+\"dhcp-queue-control\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP6:
-        return isc::dhcp::Dhcp6Parser::make_QUEUE_CONTROL(driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_DHCP_QUEUE_CONTROL(driver.loc_);
     default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("queue-control", driver.loc_);
+        return isc::dhcp::Dhcp6Parser::make_STRING("dhcp-queue-control", driver.loc_);
     }
 }
 
