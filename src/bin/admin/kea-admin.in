@@ -16,6 +16,7 @@
 
 # Get the location of the kea-admin scripts
 prefix=@prefix@
+export prefix
 SCRIPTS_DIR_DEFAULT=@datarootdir@/@PACKAGE@/scripts
 scripts_dir=${SCRIPTS_DIR_DEFAULT}
 VERSION=@PACKAGE_VERSION@
