@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.1.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -40,7 +40,7 @@
 #ifndef YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 # define YY_PARSER4_DHCP4_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp4_parser.yy" // lalr1.cc:380
+#line 17 "dhcp4_parser.yy" // lalr1.cc:379
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp4_parser.h" // lalr1.cc:380
+#line 56 "dhcp4_parser.h" // lalr1.cc:379
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -103,7 +103,7 @@ using namespace std;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -122,13 +122,6 @@ using namespace std;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
-# ifndef YY_NULLPTR
-#  if defined __cplusplus && 201103L <= __cplusplus
-#   define YY_NULLPTR nullptr
-#  else
-#   define YY_NULLPTR 0
-#  endif
-# endif
 /* Debug traces.  */
 #ifndef PARSER4_DEBUG
 # if defined YYDEBUG
@@ -142,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER4_DEBUG */
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:380
+#line 14 "dhcp4_parser.yy" // lalr1.cc:379
 namespace isc { namespace dhcp {
-#line 148 "dhcp4_parser.h" // lalr1.cc:380
+#line 141 "dhcp4_parser.h" // lalr1.cc:379
 
 
 
@@ -161,8 +154,7 @@ namespace isc { namespace dhcp {
 
     /// Empty construction.
     variant ()
-      : yybuffer_ ()
-      , yytypeid_ (YY_NULLPTR)
+      : yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
@@ -188,7 +180,7 @@ namespace isc { namespace dhcp {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
-      return *new (yyas_<T> ()) T ();
+      return *new (yyas_<T> ()) T;
     }
 
     /// Instantiate a \a T in here from \a t.
@@ -207,7 +199,6 @@ namespace isc { namespace dhcp {
     T&
     as ()
     {
-      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -218,7 +209,6 @@ namespace isc { namespace dhcp {
     const T&
     as () const
     {
-      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -561,15 +551,15 @@ namespace isc { namespace dhcp {
 
   basic_symbol (typename Base::kind_type t, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l);
 
-  basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
+  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
 
 
       /// Constructor for symbols with semantic value.
@@ -1364,7 +1354,7 @@ namespace isc { namespace dhcp {
     /// \param yyvalue   the value to check
     static bool yy_table_value_is_error_ (int yyvalue);
 
-    static const short yypact_ninf_;
+    static const short int yypact_ninf_;
     static const signed char yytable_ninf_;
 
     /// Convert a scanner token number \a t to a symbol number.
@@ -1373,32 +1363,32 @@ namespace isc { namespace dhcp {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short yypact_[];
+  static const short int yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
   // means the default is an error.
-  static const unsigned short yydefact_[];
+  static const unsigned short int yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const short yypgoto_[];
+  static const short int yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const short yydefgoto_[];
+  static const short int yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
   // number is the opposite.  If YYTABLE_NINF, syntax error.
-  static const unsigned short yytable_[];
+  static const unsigned short int yytable_[];
 
-  static const short yycheck_[];
+  static const short int yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
-  static const unsigned short yystos_[];
+  static const unsigned short int yystos_[];
 
   // YYR1[YYN] -- Symbol number of symbol that rule YYN derives.
-  static const unsigned short yyr1_[];
+  static const unsigned short int yyr1_[];
 
   // YYR2[YYN] -- Number of symbols on the right hand side of rule YYN.
   static const unsigned char yyr2_[];
@@ -1412,7 +1402,7 @@ namespace isc { namespace dhcp {
     static const char* const yytname_[];
 #if PARSER4_DEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short yyrline_[];
+  static const unsigned short int yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
@@ -1477,7 +1467,7 @@ namespace isc { namespace dhcp {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
-      /// Copy construct (for efficiency).
+      /// Copy construct.
       stack_symbol_type (const stack_symbol_type& that);
       /// Steal the contents from \a sym to build this.
       stack_symbol_type (state_type s, symbol_type& sym);
@@ -1600,7 +1590,6 @@ namespace isc { namespace dhcp {
   template <typename Base>
   Dhcp4Parser::basic_symbol<Base>::basic_symbol ()
     : value ()
-    , location ()
   {}
 
   template <typename Base>
@@ -1691,39 +1680,40 @@ namespace isc { namespace dhcp {
   template <typename Base>
   Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
+    , value ()
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
 
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
@@ -1880,7 +1870,7 @@ namespace isc { namespace dhcp {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
     static
-    const unsigned short
+    const unsigned short int
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
@@ -2907,9 +2897,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp4_parser.yy" // lalr1.cc:380
+#line 14 "dhcp4_parser.yy" // lalr1.cc:379
 } } // isc::dhcp
-#line 2913 "dhcp4_parser.h" // lalr1.cc:380
+#line 2903 "dhcp4_parser.h" // lalr1.cc:379
 
 
 

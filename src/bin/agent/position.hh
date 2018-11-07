@@ -1,4 +1,5 @@
-// A Bison parser, made by GNU Bison 3.1.
+// Generated 201811071038
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Positions for Bison parsers in C++
 
@@ -50,9 +51,9 @@
 #  endif
 # endif
 
-#line 14 "agent_parser.yy" // location.cc:290
+#line 14 "agent_parser.yy" // location.cc:292
 namespace isc { namespace agent {
-#line 56 "position.hh" // location.cc:290
+#line 56 "position.hh" // location.cc:292
   /// Abstract a position.
   class position
   {
@@ -104,10 +105,12 @@ namespace isc { namespace agent {
     unsigned column;
 
   private:
-    /// Compute max(min, lhs+rhs).
-    static unsigned add_ (unsigned lhs, int rhs, int min)
+    /// Compute max(min, lhs+rhs) (provided min <= lhs).
+    static unsigned add_ (unsigned lhs, int rhs, unsigned min)
     {
-      return static_cast<unsigned>(std::max(min, static_cast<int>(lhs) + rhs));
+      return (0 < rhs || -static_cast<unsigned>(rhs) < lhs
+              ? rhs + lhs
+              : min);
     }
   };
 
@@ -163,7 +166,7 @@ namespace isc { namespace agent {
    ** \param pos a reference to the position to redirect
    */
   template <typename YYChar>
-  std::basic_ostream<YYChar>&
+  inline std::basic_ostream<YYChar>&
   operator<< (std::basic_ostream<YYChar>& ostr, const position& pos)
   {
     if (pos.filename)
@@ -171,7 +174,7 @@ namespace isc { namespace agent {
     return ostr << pos.line << '.' << pos.column;
   }
 
-#line 14 "agent_parser.yy" // location.cc:290
+#line 14 "agent_parser.yy" // location.cc:292
 } } // isc::agent
-#line 177 "position.hh" // location.cc:290
+#line 179 "position.hh" // location.cc:292
 #endif // !YY_AGENT_POSITION_HH_INCLUDED
