@@ -7,6 +7,9 @@
 #ifndef DATABASE_LOG_H
 #define DATABASE_LOG_H
 
+#include <databaae/db_messages.h>
+#include <log/macros.h>
+
 namespace isc {
 namespace db {
 
