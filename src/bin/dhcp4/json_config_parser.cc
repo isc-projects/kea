@@ -215,8 +215,10 @@ public:
 
                     if (authoritative != (*subnet)->getAuthoritative()) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
-                                  << " has different authoritative setting " << (*subnet)->getAuthoritative()
-                                  << " than the shared-network itself: " << authoritative);
+                                  << " has different authoritative setting "
+                                  << (*subnet)->getAuthoritative()
+                                  << " than the shared-network itself: "
+                                  << authoritative);
                     }
 
                     // Let's collect the subnets in case we later find out the

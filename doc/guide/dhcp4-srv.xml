@@ -3232,15 +3232,16 @@ It is merely echoed by the server
     <section xml:id="dhcp4-authoritative">
       <title>Authoritative DHCPv4 Server Behavior</title>
       <para>The original DHCPv4 specification
-      (<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>)
+      (<link xmlns:xlink="http://www.w3.org/1999/xlink"
+             xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>)
       states that if a clients requests an address in the INIT-REBOOT state of
       which, the server has no knowledge of, the server must remain silent,
-      except if the server knows that the client requests an IP address from the
-      wrong network.
-      By default Kea follows the behavior of the ISC dhcpd instead of the
-      specification and also remains silent, if the client requests an IP
-      address from the wrong network,
-      because configuration information about a given network segment is not
+      except if the server knows that the client requests an IP
+      address from the wrong network.
+      By default Kea follows the behavior of the ISC dhcpd instead of
+      the specification and also remains silent, if the client
+      requests an IP address from the wrong network, because
+      configuration information about a given network segment is not
       known to be correct.
       Kea only rejects a client's DHCPREQUEST with a DHCPNAK message, if it
       already has a lease for the client, but with a different IP address.
