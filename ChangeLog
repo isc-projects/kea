@@ -1,3 +1,10 @@
+1472.	[bug]		marcin
+	Timeout is now reported by the HTTP client when connecting to the server
+	takes too long. This eliminates HTTP client hangs when firewall is
+	misconfigured and causes connection to never be established. This issue
+	was found during Kea High Availability testing.
+	(Gitlab #26,!106, git 9724823f160af0ef5e8ccdf779087ff08a04457a)
+
 1471.	[bug]		lmasarati
 	Fixed a bug in kea-admin that ignored specified remote hostname.
 	Thank you to lmasarati and Thorsten Krohn for reporting it and
