@@ -3,7 +3,7 @@
 	unknown clients are dropped (default/previous behavior) or
 	answered with DHCPNAK (new behevior with new authoritative flag
 	set to true for the subnet). Patch proposed by Sebastian Schrader.
-	(Gitlab #66, git tbd)
+	(Gitlab #66, !115, git 0fc1b767826f214475025d8631227970de368de5)
 
 1474.	[doc]		godfryd
 	Updated list of supported operating systems.
