@@ -86,6 +86,8 @@ public:
     ///
     /// Returned boolean value indicates whether the client should continue
     /// connecting to the server (if true) or not (false).
+    /// @note Beware that the IO error code can be set to "in progress"
+    /// so a not null error code does not always mean the connect failed.
     typedef std::function<bool(const boost::system::error_code&)> ConnectHandler;
 
     /// @brief Constructor.
@@ -142,7 +144,11 @@ public:
     ///
     /// The default timeout for the transaction is set to 10 seconds
     /// (10 000 ms). If the timeout occurs, the callback is invoked with the
-    //// error code of @c boost::asio::error::timed_out.
+    /// error code of @c boost::asio::error::timed_out.
+    /// The timeout covers both the connect and the transaction phases
+    /// so when connecting to the server takes too long (e.g. with a
+    /// misconfigured firewall) the timeout is triggered. The connect
+    /// callback can be used to recognize this condition.
     ///
     /// @param url URL where the request should be send.
     /// @param request Pointer to the object holding a request.
