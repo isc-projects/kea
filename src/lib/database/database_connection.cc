@@ -10,6 +10,7 @@
 #include <database/database_connection.h>
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
+#include <database/db_messages.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/algorithm/string.hpp>
@@ -174,8 +175,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                 int_value = boost::lexical_cast<int64_t>(value);
                 result->set(keyword, isc::data::Element::create(int_value));
             } catch (...) {
-                isc_throw(ToElementError, "invalid DB access "
-                          << "integer parameter: " << keyword << "=" << value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
+                    .arg("integer").arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
                    (keyword == "readonly") ||
@@ -186,8 +187,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
             } else if (value == "false") {
                 result->set(keyword, isc::data::Element::create(false));
             } else {
-                isc_throw(ToElementError, "invalid DB access "
-                          << "boolean parameter: " << keyword << "=" << value);
+                LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
+                    .arg("boolean").arg(keyword).arg(value);
             }
         } else if ((keyword == "type") ||
                    (keyword == "user") ||
@@ -198,8 +199,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "keyspace")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
-            isc_throw(ToElementError, "unknown DB access parameter: "
-                      << keyword << "=" << value);
+            LOG_ERROR(database_logger, DATABASE_TO_JSON_ERROR)
+                    .arg("unknown").arg(keyword).arg(value);
         }
     }
 
