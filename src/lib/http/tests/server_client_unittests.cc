@@ -1285,7 +1285,7 @@ TEST_F(HttpClientTest, clientConnectTimeout) {
        // try to send a request to the server. This simulates the
        // case of connect() taking very long and should eventually
        // cause the transaction to time out.
-       [](const boost::system::error_code& ec) {
+       [](const boost::system::error_code& /*ec*/) {
            return (false);
     }));
 
