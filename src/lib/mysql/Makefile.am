@@ -28,4 +28,6 @@ libkea_mysql_la_LDFLAGS += $(MYSQL_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_mysql_includedir = $(pkgincludedir)/mysql
 libkea_mysql_include_HEADERS = \
-	mysql_connection.h
+	mysql_binding.h \
+	mysql_connection.h \
+	mysql_constants.h

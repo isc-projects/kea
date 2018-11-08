@@ -109,6 +109,7 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_eval_includedir = $(pkgincludedir)/eval
 libkea_eval_include_HEADERS = \
+	dependency.h \
 	eval_context.h \
 	eval_context_decl.h \
 	eval_log.h \

@@ -277,6 +277,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	cfgmgr.h \
 	client_class_def.h \
 	config_backend_dhcp4.h \
+	config_backend_dhcp4_mgr.h \
 	config_backend_pool_dhcp4.h \
 	csv_lease_file4.h \
 	csv_lease_file6.h \

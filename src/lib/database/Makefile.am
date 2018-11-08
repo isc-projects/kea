@@ -47,5 +47,6 @@ libkea_database_includedir = $(pkgincludedir)/database
 libkea_database_include_HEADERS = \
 	backend_selector.h \
 	database_connection.h \
+	dbaccess_parser.h \
 	db_exceptions.h \
 	db_log.h
