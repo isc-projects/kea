@@ -1,3 +1,5 @@
+Kea 1.5.0-beta released on Nov 9, 2018
+
 1477.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0 beta release.
 	(Gitlab #261,!119, git 54d63139048e7fe2dd0384b547ed6f8b96ff0e8f)
@@ -101,7 +103,7 @@
 1460.	[func]		tmark
 	While kea-dhcp4 and kea-dhcp6 configuration parsing supports
 	configuration backend elements "server-tag" and "config-control",
-	use of these parameters has been disabled. Developement of this
+	use of these parameters has been disabled. Development of this
 	feature will resume after Kea 1.5 release.
 	(Gitlab #101,!87, git 4292a7ef7ab268826f846812e7320e1fe1fc46ef)
 
@@ -163,7 +165,7 @@
 	Modified Kea 1.5.0 database upgrade scripts to convert
 	subnet ID values of 0, to either null (MySQL and Postgres)
 	or 0xFFFFFFFF (CQL), in existing host reservations. This
-	is done to accomodate support for global host reservations.
+	is done to accommodate support for global host reservations.
 	(Gitlab #15,!11, git 25b54fd9ced4c6d3a2c8ceff9cc7c866b56da2c1)
 
 1448.	[build]*	marcin
@@ -212,7 +214,7 @@
 	(Gitlab #8, git 3dbaf4917bea112466f1ee5726870c545950e114)
 
 1440.	[func]		tmark
-	The internal represenation of an "unused" subnet-id has been
+	The internal representation of an "unused" subnet-id has been
 	changed from zero to 0xFFFFFFFF. The largest, valid value for
 	a subnet's ID is now 0xFFFFFFFE.  Three new constants have been
 	added so subnet_id.h:
@@ -244,7 +246,7 @@
 	(Trac #5682, git 609bfa0a67caa91fac6834eb39260acfd19e3be4)
 
 1436.   [func]      tmark
-	Added two new configuration paramters to kea-dhcp4 and kea-dhcp6
+	Added two new configuration parameters to kea-dhcp4 and kea-dhcp6
 	DhcpDdns sections: 'hostname-char-set' and 'hostname-char-replacment'.
 	These values (when not empty) are used by the server to sanitize
 	host name and FQDN domain names sent by clients prior to using them
