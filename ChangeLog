@@ -1,4 +1,8 @@
-1476.	[func]      tmark
+1477.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 beta release.
+	(Gitlab #261,!119, git 54d63139048e7fe2dd0384b547ed6f8b96ff0e8f)
+
+1476.	[func]		tmark
 	Added initial implementation of congestion handling to kea-dhcp4
 	and kea-dhcpt6. This adds a new top level element to the server
 	configurations, "dhcp-queue-control".  Both servers will now
