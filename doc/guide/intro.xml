@@ -182,6 +182,14 @@
 
           <listitem>
             <simpara>
+              <command>kea-netconf</command> ?~@~T
+              Kea netconf is an agent that provides a YANG/NETCONF interface
+              for the Kea environment.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-shell</command> —
               Simple text client that uses REST interface to connect to Kea
               Control Agent.

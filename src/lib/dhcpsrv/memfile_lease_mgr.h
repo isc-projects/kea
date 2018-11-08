@@ -37,7 +37,7 @@ class LFCSetup;
 /// in a significant growth of the lease file size over time, because the lease
 /// file will contain many entries for each lease. In order to mitigate this
 /// problem, the backend implements the Lease File Cleanup mechanism which is
-/// described on the Kea wiki: http://kea.isc.org/wiki/LFCDesign.
+/// described on the Kea wiki: http://oldkea.isc.org/wiki/LFCDesign.
 ///
 /// The backend installs an @c asiolink::IntervalTimer to periodically execute
 /// the @c Memfile_LeaseMgr::lfcCallback. This callback function controls
@@ -548,7 +548,7 @@ public:
     /// - LFC Finish File: ".completed"
     /// - LFC PID File: ".pid"
     ///
-    /// See http://kea.isc.org/wiki/LFCDesign for details.
+    /// See http://oldkea.isc.org/wiki/LFCDesign for details.
     ///
     /// @param file_name A base file name to which suffix is appended.
     /// @param file_type An LFC file type.
@@ -634,7 +634,7 @@ private:
     ///
     /// The <filename>.2, <filename>.1 and <filename>.completed are the
     /// products of the lease file cleanups (LFC).
-    /// See: http://kea.isc.org/wiki/LFCDesign for details.
+    /// See: http://oldkea.isc.org/wiki/LFCDesign for details.
     ///
     /// @note: When the server starts up or is reconfigured it will try to
     /// read leases from the lease files using this method. It is possible
@@ -814,7 +814,7 @@ private:
     /// the lease files.
     ///
     /// For the design and the terminology used in this description refer to
-    /// the http://kea.isc.org/wiki/LFCDesign.
+    /// the http://oldkea.isc.org/wiki/LFCDesign.
     ///
     /// If the method finds that the %Lease File Copy exists it simply runs
     /// the @c kea-lfc application.

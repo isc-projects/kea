@@ -121,7 +121,7 @@ the cache sets its own values for the debug/file attributes.
 
 More information about the logging hierarchy can be found in the section
 on Logging configuration in the <a
-href="http://kea.isc.org/docs/kea-guide.html#logging">Kea Administrator
+href="http://oldkea.isc.org/docs/kea-guide.html#logging">Kea Administrator
 Reference Manual</a>.
 
 @subsection logSeparationUseText Separation of Messages Use from Message Text

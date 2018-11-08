@@ -486,7 +486,7 @@ const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
-/// http://kea.isc.org/wiki/Dhcp4o6Design
+/// http://oldkea.isc.org/wiki/Dhcp4o6Design
 ///
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h

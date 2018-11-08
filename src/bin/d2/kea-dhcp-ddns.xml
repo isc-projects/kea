@@ -131,14 +131,14 @@
       description for each of them. Both documents are typically
       available in various formats (txt, html, pdf) with your Kea
       distribution. The on-line version is available at
-      http://kea.isc.org/docs/.</para>
+      http://oldkea.isc.org/docs/.</para>
     <para>
       Kea source code is documented in the Kea Developer's Guide. It's
-      on-line version is available at http://kea.isc.org. Please
+      on-line version is available at http://oldkea.isc.org. Please
       follow Developer's Guide link.
     </para>
     <para>
-      Kea project website is available at: http://kea.isc.org.
+      Kea project website is available at: http://oldkea.isc.org.
     </para>
   </refsect1>
 

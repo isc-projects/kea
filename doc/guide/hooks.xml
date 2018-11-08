@@ -574,7 +574,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
         ISC hopes to see more hooks libraries become available as time
         progresses, both developed internally and externally. Since
         this list may evolve dynamically, we decided to keep it on a
-        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</link>.
+        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/Hooks">http://oldkea.isc.org/wiki/Hooks</link>.
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
@@ -1405,7 +1405,7 @@ $
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
+<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/ControlAPIRequirements">Control API
 Requirements </link> document.</para>
 
         <para>

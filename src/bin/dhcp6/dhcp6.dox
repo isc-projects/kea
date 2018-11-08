@@ -62,7 +62,7 @@ src/bin/dhcp6/json_config_parser.cc.
 
 During 1.2 milestone it has been decided to significantly refactor the
 parsers as their old implementation became unsustainable. For the brief overview
-of the problems, see ticket 5014 (http://kea.isc.org/ticket/5014). In
+of the problems, see ticket 5014 (http://oldkea.isc.org/ticket/5014). In
 general, the following issues of the existing code were noted:
 
 -# parsers are overwhelmingly complex. Even though each parser is relatively
@@ -343,7 +343,7 @@ mode). Finally, the syntactic context allows the error message to be more
 descriptive if the input string does not parse properly.
 
 Details of the refactor of the classes derived from DhcpConfigParser are
-documented in http://kea.isc.org/wiki/SimpleParser.
+documented in http://oldkea.isc.org/wiki/SimpleParser.
 
 For a generic description of the conflict avoidance, see @ref parserFlex.
 

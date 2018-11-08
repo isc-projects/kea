@@ -22,14 +22,14 @@
  *
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
- * <a href="http://kea.isc.org/docs/kea-guide.html">Kea
+ * <a href="http://oldkea.isc.org/docs/kea-guide.html">Kea
  * Administrator Reference Manual</a> instead. If you are using a beta or
  * development version of Kea, the
  * <a href="http://git.kea.isc.org/~tester/kea/guide/kea-guide.html">
  * development version of the manual</a> is recommended.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
- * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
+ * <a href="http://oldkea.isc.org/">Kea webpage (http://oldkea.isc.org)</a>
  *
  * @section contrib Contributor's Guide
  * - @subpage contributorGuide - This page describes the process of sending

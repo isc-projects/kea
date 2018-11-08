@@ -416,7 +416,7 @@ be followed by a comma and another object definition.</para>
   file used by the server to record lease updates. There are also other files
   being created as a side effect of the lease file cleanup. The detailed
   description of the LFC is located on the Kea wiki:
-  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/LFCDesign">http://kea.isc.org/wiki/LFCDesign</uri>.
+  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/LFCDesign">http://oldkea.isc.org/wiki/LFCDesign</uri>.
   </para>
 
 </section>
@@ -3536,7 +3536,7 @@ should include options from the isc option space:
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information. The Kea wiki <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri>
+        xlink:href="http://oldkea.isc.org/wiki/HostReservationsHowTo">http://oldkea.isc.org/wiki/HostReservationsHowTo</uri>
         provides some examples how to conduct some common operations
         on host reservations.
       </para>
