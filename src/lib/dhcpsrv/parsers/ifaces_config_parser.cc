@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,6 +47,7 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     if (re_detect) {
         // Interface clear will drop opened socket information
         // so close them if the caller did not.
+        IfaceMgr::instance().stopDHCPReceiver();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().detectIfaces();

@@ -174,6 +174,8 @@ Parser6Context::contextName()
         return ("duid-type");
     case CONTROL_SOCKET:
         return ("control-socket");
+    case DHCP_QUEUE_CONTROL:
+        return ("dhcp-queue-control");
     case POOLS:
         return ("pools");
     case PD_POOLS:

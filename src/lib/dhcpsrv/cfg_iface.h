@@ -157,6 +157,7 @@ public:
     CfgIface();
 
     /// @brief Convenience function which closes all open sockets.
+    /// It stops the receiver thread too.
     void closeSockets() const;
 
     /// @brief Compares two @c CfgIface objects for equality.
@@ -172,6 +173,7 @@ public:
     /// sockets bound to unicast address. See @c CfgIface::use function
     /// documentation for details how to specify interfaces and unicast
     /// addresses to bind the sockets to.
+    /// This function starts the family receiver.
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param port Port number to be used to bind sockets to.

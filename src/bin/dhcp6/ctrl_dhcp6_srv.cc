@@ -653,6 +653,31 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure DHCP packet queue
+    try {
+        data::ConstElementPtr qc;
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+        if (!qc) {
+            // @todo For now we're manually constructing default queue config
+            // This probably needs to be built into the PQM?
+            data::ElementPtr default_qc = data::Element::createMap();
+            default_qc->set("queue-type", data::Element::create("kea-ring6"));
+            default_qc->set("capacity", data::Element::create(static_cast<long int>(500)));
+            PacketQueueMgr6::instance().createPacketQueue(default_qc);
+        } else {
+            PacketQueueMgr6::instance().createPacketQueue(qc);
+        }
+
+        LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CONFIG_PACKET_QUEUE)
+                 .arg(PacketQueueMgr6::instance().getPacketQueue()->getInfoStr());
+
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error setting DHCP packet queue controls after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function
