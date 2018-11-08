@@ -12,14 +12,20 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcp/packet_queue_mgr4.h>
+#include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
 #include <util/optional_value.h>
+#include <util/watch_socket.h>
+#include <util/threads/thread.h>
+#include <util/threads/sync.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/circular_buffer.hpp>
 
 #include <list>
 #include <vector>
@@ -86,54 +92,6 @@ class SocketNotFound : public Exception {
 public:
     SocketNotFound(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
-};
-
-
-/// Holds information about socket.
-struct SocketInfo {
-
-    isc::asiolink::IOAddress addr_; /// bound address
-    uint16_t port_;   /// socket port
-    uint16_t family_; /// IPv4 or IPv6
-
-    /// @brief Socket descriptor (a.k.a. primary socket).
-    int sockfd_;
-
-    /// @brief Fallback socket descriptor.
-    ///
-    /// This socket descriptor holds the handle to the fallback socket.
-    /// The fallback socket is created when there is a need for the regular
-    /// datagram socket to be bound to an IP address and port, besides
-    /// primary socket (sockfd_) which is actually used to receive and process
-    /// the DHCP messages. The fallback socket (if exists) is always associated
-    /// with the primary socket. In particular, the need for the fallback socket
-    /// arises when raw socket is a primary one. When primary socket is open,
-    /// it is bound to an interface not the address and port. The implications
-    /// include the possibility that the other process (e.g. the other instance
-    /// of DHCP server) will bind to the same address and port through which the
-    /// raw socket receives the DHCP messages.Another implication is that the
-    /// kernel, being unaware of the DHCP server operating through the raw
-    /// socket, will respond with the ICMP "Destination port unreachable"
-    /// messages when DHCP messages are only received through the raw socket.
-    /// In order to workaround the issues mentioned here, the fallback socket
-    /// should be opened so as/ the kernel is aware that the certain address
-    /// and port is in use.
-    ///
-    /// The fallback description is supposed to be set to a negative value if
-    /// the fallback socket is closed (not open).
-    int fallbackfd_;
-
-    /// @brief SocketInfo constructor.
-    ///
-    /// @param addr An address the socket is bound to.
-    /// @param port A port the socket is bound to.
-    /// @param sockfd Socket descriptor.
-    /// @param fallbackfd A descriptor of the fallback socket.
-    SocketInfo(const isc::asiolink::IOAddress& addr, const uint16_t port,
-               const int sockfd, const int fallbackfd = -1)
-        : addr_(addr), port_(port), family_(addr.getFamily()),
-          sockfd_(sockfd), fallbackfd_(fallbackfd) { }
-
 };
 
 /// @brief Represents a single network interface
@@ -873,7 +831,7 @@ public:
     ///
     /// @warning This function does not check if there has been any sockets
     /// already open by the @c IfaceMgr. Therefore a caller should call
-    /// @c IfaceMgr::closeSockets(AF_INET6) before calling this function.
+    /// @c IfaceMgr::closeSockets() before calling this function.
     /// If there are any sockets open, the function may either throw an
     /// exception or invoke an error handler on attempt to bind the new socket
     /// to the same address and port.
@@ -939,7 +897,7 @@ public:
     ///
     /// @warning This function does not check if there has been any sockets
     /// already open by the @c IfaceMgr. Therefore a caller should call
-    /// @c IfaceMgr::closeSockets(AF_INET) before calling this function.
+    /// @c IfaceMgr::closeSockets() before calling this function.
     /// If there are any sockets open, the function may either throw an
     /// exception or invoke an error handler on attempt to bind the new socket
     /// to the same address and port.
@@ -960,27 +918,6 @@ public:
     /// @brief Closes all open sockets.
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
-
-    /// @brief Closes all IPv4 or IPv6 sockets.
-    ///
-    /// This function closes sockets of the specific 'type' and closes them.
-    /// The 'type' of the socket indicates whether it is used to send IPv4
-    /// or IPv6 packets. The allowed values of the parameter are AF_INET and
-    /// AF_INET6 for IPv4 and IPv6 packets respectively. It is important
-    /// to realize that the actual types of sockets may be different than
-    /// AF_INET for IPv4 packets. This is because, historically the IfaceMgr
-    /// always used AF_INET sockets for IPv4 traffic. This is no longer the
-    /// case when the Direct IPv4 traffic must be supported. In order to support
-    /// direct traffic, the IfaceMgr operates on raw sockets, e.g. AF_PACKET
-    /// family sockets on Linux.
-    ///
-    /// @todo Replace the AF_INET and AF_INET6 values with an enum
-    /// which will not be confused with the actual socket type.
-    ///
-    /// @param family type of the sockets to be closed (AF_INET or AF_INET6)
-    ///
-    /// @throw BadValue if family value is different than AF_INET or AF_INET6.
-    void closeSockets(const uint16_t family);
 
     /// @brief Returns number of detected interfaces.
     ///
@@ -1089,6 +1026,40 @@ public:
     /// @return true if there is a socket bound to the specified address.
     bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
+    /// @brief DHCPv4 receiver packet queue.
+    ///
+    /// Incoming packets are read by the receiver thread and
+    /// added to this queue. @c receive4() dequeues and
+    /// returns them.
+    PacketQueue4Ptr getPacketQueue4() {
+        return (PacketQueueMgr4::instance().getPacketQueue());
+    }
+
+    /// @brief DHCPv6 receiver packet queue.
+    ///
+    /// Incoming packets are read by the receiver thread and
+    /// added to this queue. @c receive6() dequeues and
+    /// returns them.
+    PacketQueue6Ptr getPacketQueue6() {
+        return (PacketQueueMgr6::instance().getPacketQueue());
+    }
+
+    /// @brief Starts DHCP packet receiver.
+    ///
+    /// Starts the DHCP packet receiver thread for the given.
+    /// protocol, AF_NET or AF_INET6
+    ///
+    /// @param family indicates which receiver to start,
+    /// (AF_INET or AF_INET6)
+    ///
+    /// @throw Unexpected if the thread already exists.
+    void startDHCPReceiver(const uint16_t family);
+
+    /// @brief Stops the DHCP packet receiver.
+    ///
+    /// Stops the receiver and deletes the dedicated thread.
+    void stopDHCPReceiver();
+
     // don't use private, we need derived classes in tests
 protected:
 
@@ -1138,8 +1109,7 @@ protected:
     /// and pretends to detect such interface. First interface name and
     /// link-local IPv6 address or IPv4 address is read from the
     /// interfaces.txt file.
-    void
-    stubDetectIfaces();
+    void stubDetectIfaces();
 
     // TODO: having 2 maps (ifindex->iface and ifname->iface would)
     //      probably be better for performance reasons
@@ -1205,6 +1175,51 @@ private:
                              const uint16_t port,
                              IfaceMgrErrorMsgCallback error_handler = 0);
 
+    /// @brief DHCPv4 receiver method.
+    ///
+    /// Loops forever reading DHCPv4 packets from the interface sockets
+    /// and adds them to the packet queue.  It monitors the "terminate"
+    /// watch socket, and exits if it is marked ready.  This is method
+    /// is used as the worker function in the thread created by @c
+    /// startDHCP4Receiver().  It currently uses select() to monitor
+    /// socket readiness.  If the select errors out (other than EINTR),
+    /// it marks the "error" watch socket as ready.
+    void receiveDHCP4Packets();
+
+    /// @brief Receives a single DHCPv4 packet from an interface socket
+    ///
+    /// Called by @c receiveDHPC4Packets when a socket fd is flagged as
+    /// ready. It uses the DHCPv4 packet filter to receive a single packet
+    /// from the given interface socket, adds it to the packet queue, and
+    /// marks the "receive" watch socket ready. If an error occurs during
+    /// the read, the "error" watch socket is marked ready.
+    ///
+    /// @param iface interface
+    /// @param socket_info structure holding socket information
+    void receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info);
+
+    /// @brief DHCPv6 receiver method.
+    ///
+    /// Loops forever reading DHCPv6 packets from the interface sockets
+    /// and adds them to the packet queue.  It monitors the "terminate"
+    /// watch socket, and exits if it is marked ready.  This is method
+    /// is used as the worker function in the thread created by @c
+    /// startDHCP6Receiver().  It currently uses select() to monitor
+    /// socket readiness.  If the select errors out (other than EINTR),
+    /// it marks the "error" watch socket as ready.
+    void receiveDHCP6Packets();
+
+    /// @brief Receives a single DHCPv6 packet from an interface socket
+    ///
+    /// Called by @c receiveDHPC6Packets when a socket fd is flagged as
+    /// ready. It uses the DHCPv6 packet filter to receive a single packet
+    /// from the given interface socket, adds it to the packet queue, and
+    /// marks the "receive" watch socket ready. If an error occurs during
+    /// the read, the "error" watch socket is marked ready.
+    ///
+    /// @param socket_info structure holding socket information
+    void receiveDHCP6Packet(const SocketInfo& socket_info);
+
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
     /// sockets. It is possible to supply custom object using
@@ -1229,6 +1244,29 @@ private:
 
     /// @brief Allows to use loopback
     bool allow_loopback_;
+
+    /// @brief Error message of the last DHCP packet receive error.
+    std::string receiver_error_;
+
+    /// @brief DHCP packet receive error watch socket.
+    /// Marked as ready when the DHCP packet receiver experiences
+    /// an I/O error.
+    isc::util::WatchSocket error_watch_;
+
+    /// @brief DHCP packet receive watch socket.
+    /// Marked as ready when the DHCP packet receiver adds a packet
+    /// to the packet queue.
+    isc::util::WatchSocket receive_watch_;
+
+    /// @brief Packet receiver terminate watch socket.
+    /// Marked as ready when the DHCP packet receiver thread should terminate.
+    isc::util::WatchSocket terminate_watch_;
+
+    /// DHCP packet receiver mutex.
+    isc::util::thread::Mutex receiver_lock_;
+
+    /// DHCP packet receiver thread.
+    isc::util::thread::ThreadPtr receiver_thread_;
 };
 
 }; // namespace isc::dhcp

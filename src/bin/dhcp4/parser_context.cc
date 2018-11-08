@@ -174,6 +174,8 @@ Parser4Context::contextName()
         return ("server-id");
     case CONTROL_SOCKET:
         return ("control-socket");
+    case DHCP_QUEUE_CONTROL:
+        return ("dhcp-queue-control");
     case POOLS:
         return ("pools");
     case RESERVATIONS:

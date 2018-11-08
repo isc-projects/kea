@@ -173,6 +173,8 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
+  DHCP_QUEUE_CONTROL "dhcp-queue-control"
+
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
   QUALIFYING_SUFFIX "qualifying-suffix"
@@ -456,6 +458,7 @@ global_param: preferred_lifetime
             | server_id
             | dhcp4o6_port
             | control_socket
+            | dhcp_queue_control
             | dhcp_ddns
             | user_context
             | comment
@@ -1919,6 +1922,24 @@ socket_name: SOCKET_NAME {
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("socket-name", name);
+    ctx.leave();
+};
+
+// --- dhcp-queue-control ---------------------------------------------
+
+dhcp_queue_control: DHCP_QUEUE_CONTROL {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ElementPtr qc = $4;
+    ctx.stack_.back()->set("dhcp-queue-control", qc);
+
+    if (!qc->contains("queue-type")) {
+        std::stringstream msg;
+        msg << "'queue-type' is required: ";
+        msg  << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
     ctx.leave();
 };
 

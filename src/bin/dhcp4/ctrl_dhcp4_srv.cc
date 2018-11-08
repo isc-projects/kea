@@ -634,6 +634,30 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure packet queue
+    try {
+        data::ConstElementPtr qc;
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+        if (!qc) {
+            // @todo For now we're manually constructing default queue config
+            // This probably needs to be built into the PQM?
+            data::ElementPtr default_qc = data::Element::createMap();
+            default_qc->set("queue-type", data::Element::create("kea-ring4"));
+            default_qc->set("capacity", data::Element::create(static_cast<long int>(500)));
+            PacketQueueMgr4::instance().createPacketQueue(default_qc);
+        } else {
+            PacketQueueMgr4::instance().createPacketQueue(qc);
+        }
+
+        LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CONFIG_PACKET_QUEUE)
+                 .arg(PacketQueueMgr4::instance().getPacketQueue()->getInfoStr());
+
+    } catch (const std::exception& ex) {
+        err << "Error setting packet queue controls after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function

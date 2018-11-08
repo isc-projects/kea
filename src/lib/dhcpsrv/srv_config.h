@@ -360,6 +360,18 @@ public:
         control_socket_ = control_socket;
     }
 
+    /// @brief Returns DHCP queue control information
+    /// @return pointer to the DHCP queue control information
+    const isc::data::ConstElementPtr getDHCPQueueControl() const {
+        return (dhcp_queue_control_);
+    }
+
+    /// @brief Sets information about the dhcp queue control
+    /// @param new dhcp queue control information
+    void setDHCPQueueControl(const isc::data::ConstElementPtr dhcp_queue_control) {
+        dhcp_queue_control_ = dhcp_queue_control;
+    }
+
     /// @brief Returns pointer to the dictionary of global client
     /// class definitions
     ClientClassDictionaryPtr getClientClassDictionary() {
@@ -650,6 +662,9 @@ private:
 
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
+
+    /// @brief Pointer to the dhcp-queue-control information
+    isc::data::ConstElementPtr dhcp_queue_control_;
 
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
