@@ -31,6 +31,7 @@ libkea_cc_include_HEADERS = \
 	json_feed.h \
 	simple_parser.h \
 	stamped_element.h \
+	stamped_value.h \
 	user_context.h
 
 EXTRA_DIST = cc.dox

@@ -43,6 +43,7 @@ libkea_cryptolink_includedir = $(pkgincludedir)/cryptolink
 libkea_cryptolink_include_HEADERS = \
 	crypto_hash.h \
 	crypto_hmac.h \
+	crypto_rng.h \
 	cryptolink.h
 
 if HAVE_BOTAN1
