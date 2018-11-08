@@ -1221,6 +1221,9 @@ void IfaceMgr::receiveDHCP4Packets() {
                 // Signal the error to receive4.
                 receiver_error_ = strerror(errno);
                 error_watch_.markReady();
+                // We need to sleep in case of the error condition to
+                // prevent the thread from tight looping when result
+                // gets negative.
                 sleep(1);
             }
             continue;
@@ -1303,6 +1306,9 @@ void IfaceMgr::receiveDHCP6Packets() {
                 // Signal the error to receive6.
                 receiver_error_ = strerror(errno);
                 error_watch_.markReady();
+                // We need to sleep in case of the error condition to
+                // prevent the thread from tight looping when result
+                // gets negative.
                 sleep(1);
             }
             continue;
