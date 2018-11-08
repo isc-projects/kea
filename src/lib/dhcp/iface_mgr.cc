@@ -300,12 +300,6 @@ void IfaceMgr::stopDHCPReceiver() {
     getPacketQueue4()->clear();
 }
 
-
-void
-IfaceMgr::closeSockets(const uint16_t) {
-    isc_throw(NotImplemented, "closeSockets(family) is obsolete");
-}
-
 IfaceMgr::~IfaceMgr() {
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;

@@ -13,6 +13,9 @@ namespace isc {
 namespace dhcp {
 
 PacketQueueMgr4::PacketQueueMgr4() {
+    // @todo Please forgive magic strings and constants.  The default values,
+    // mechanisms will soon be reworked.
+
     // Register default queue factory
     registerPacketQueueFactory("kea-ring4", [](data::ConstElementPtr parameters)
                                           -> PacketQueue4Ptr {
@@ -28,7 +31,6 @@ PacketQueueMgr4::PacketQueueMgr4() {
             return (queue);
         });
 
-    /// @todo default comes from ? 
     data::ElementPtr parameters = data::Element::createMap();
     parameters->set("queue-type", data::Element::create("kea-ring4"));
     parameters->set("capacity", data::Element::create(static_cast<long int>(500)));
