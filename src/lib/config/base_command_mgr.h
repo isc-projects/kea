@@ -41,7 +41,7 @@ public:
 /// uses the command as an input and invokes appropriate handlers.
 ///
 /// The commands and responses are formatted using JSON.
-/// See http://kea.isc.org/wiki/StatsDesign for details.
+/// See http://oldkea.isc.org/wiki/StatsDesign for details.
 ///
 /// Below is an example of the command using JSON format:
 /// @code

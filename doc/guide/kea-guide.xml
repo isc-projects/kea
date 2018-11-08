@@ -47,7 +47,7 @@
         This is the reference guide for Kea version &keaversion;.
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
-        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs">http://kea.isc.org/docs</uri>.
+        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/docs">http://oldkea.isc.org/docs</uri>.
         </para> </abstract>
 
   </info>

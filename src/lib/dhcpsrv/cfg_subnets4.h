@@ -226,7 +226,7 @@ public:
     ///   received over.
     ///
     /// @todo: Add additional selection criteria. See
-    ///  http://kea.isc.org/wiki/ISC-DHCP4o6-Design for details.
+    ///  http://oldkea.isc.org/wiki/ISC-DHCP4o6-Design for details.
     ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used

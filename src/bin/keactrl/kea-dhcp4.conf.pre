@@ -15,8 +15,8 @@
 // do. Comments in this configuration file sometimes refer to sections for more
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
-// on Kea web page (http://kea.isc.org, click User's Guide, direct link for
-// stable version is http://kea.isc.org/docs/kea-guide.html).
+// on Kea web page (http://oldkea.isc.org, click User's Guide, direct link for
+// stable version is http://oldkea.isc.org/docs/kea-guide.html).
 //
 // This configuration file contains only DHCPv4 server's configuration.
 // If configurations for other Kea services are also included in this file they
@@ -245,7 +245,7 @@
     // even influence how the server processes packets. Those libraries include
     // additional forensic logging capabilities, ability to reserve hosts in
     // more flexible ways, and even add extra commands. For a list of available
-    // hook libraries, see http://kea.isc.org/wiki/Hooks.
+    // hook libraries, see http://oldkea.isc.org/wiki/Hooks.
     //"hooks-libraries": [
     //  {
     //      // Forensic Logging library generates forensic type of audit trail

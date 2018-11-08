@@ -1123,7 +1123,7 @@ concatenation of the strings</entry></row>
      <para>
      In order to understand the logging statements one must understand a
      bit about how expressions are evaluated, for a more complete description
-     refer to the design document at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/KeaDesigns">http://kea.isc.org/wiki/KeaDesigns</uri>.
+     refer to the design document at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/KeaDesigns">http://oldkea.isc.org/wiki/KeaDesigns</uri>.
      In brief there are two structures used during the evaluation of an expression:
      a list of tokens which represent the expressions and a value stack which
      represents the values being manipulated.

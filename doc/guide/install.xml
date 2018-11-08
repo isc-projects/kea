@@ -212,7 +212,7 @@ Debian and Ubuntu:
 
         <para>
           Visit the user-contributed wiki at
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Install">http://kea.isc.org/wiki/Install</uri>
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/Install">http://oldkea.isc.org/wiki/Install</uri>
           for system-specific installation tips.
         </para>
     </section>
@@ -286,7 +286,7 @@ Debian and Ubuntu:
           your code. Please consult
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
           how to fork a Github repository.
-          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs/devel/">Kea
+          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/docs/devel/">Kea
           Developer's Guide</link> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>

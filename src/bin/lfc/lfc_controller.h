@@ -55,7 +55,7 @@ public:
     ///
     /// Provides the control logic to combine two lease files and
     /// weed out duplicate and expired leases. A description of
-    /// the design can be found at http://kea.isc.org/wiki/LFCDesign
+    /// the design can be found at http://oldkea.isc.org/wiki/LFCDesign
     ///
     /// -# parse command line arguments
     /// -# verify that it is the only instance

@@ -14,7 +14,7 @@
 ///
 /// This file contains several functions and constants that are used for
 /// handling commands and responses sent over control channel. The design
-/// is described here: http://kea.isc.org/wiki/StatsDesign, but also
+/// is described here: http://oldkea.isc.org/wiki/StatsDesign, but also
 /// in @ref ctrlSocket section in the Developer's Guide.
 
 namespace isc {
