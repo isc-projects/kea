@@ -1,3 +1,12 @@
+1476.	[func]      tmark
+	Added initial implementation of congestion handling to kea-dhcp4
+	and kea-dhcpt6. This adds a new top level element to the server
+	configurations, "dhcp-queue-control".  Both servers will now
+	read client packets from interface sockets in a separate thread
+	queueing them for server level processing.  For Kea 1.5-Beta
+	this feature is always on.
+	(Gitlab #42, !103, git 09d5ffebc8f9bfab2ab99c384eec9c3a3c915f39)
+
 1475.	[func]		sebschrader
 	Add authoritative feature for DHCPv4 from ISC DHCP: requests from
 	unknown clients are dropped (default/previous behavior) or
