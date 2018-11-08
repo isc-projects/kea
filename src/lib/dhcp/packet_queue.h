@@ -234,7 +234,7 @@ public:
     /// @brief Constructor
     ///
     /// @param queue_type logical name of the queue implementation
-    /// @param queue_capacity maximum number of packets the queue can hold
+    /// @param capacity maximum number of packets the queue can hold
     PacketQueueRing(const std::string& queue_type, size_t capacity)
         : PacketQueue<PacketTypePtr>(queue_type) {
         queue_.set_capacity(capacity);
