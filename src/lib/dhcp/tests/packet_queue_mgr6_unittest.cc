@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <dhcp/packet_queue_mgr6.h>
-#include <packet_queue_testutils.h>
+#include <dhcp/tests/packet_queue_testutils.h>
 
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
