@@ -47,7 +47,7 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param queue_type name of this queue's implementation type.
+    /// @param queue_type logical name of the queue implementation
     /// Typically this is assigned by the factory that creates the
     /// queue.  It is the logical name used to register queue
     /// implementations.
@@ -233,7 +233,7 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param queue_type logical name of the queue type
+    /// @param queue_type logical name of the queue implementation
     /// @param queue_capacity maximum number of packets the queue can hold
     PacketQueueRing(const std::string& queue_type, size_t capacity)
         : PacketQueue<PacketTypePtr>(queue_type) {
@@ -365,6 +365,7 @@ class PacketQueueRing4 : public PacketQueueRing<Pkt4Ptr> {
 public:
     /// @brief Constructor
     ///
+    /// @param queue_type logical name of the queue implementation
     /// @param capacity maximum number of packets the queue can hold
     PacketQueueRing4(const std::string& queue_type, size_t capacity)
         : PacketQueueRing(queue_type, capacity) {
@@ -384,6 +385,7 @@ class PacketQueueRing6 : public PacketQueueRing<Pkt6Ptr> {
 public:
     /// @brief Constructor
     ///
+    /// @param queue_type logical name of the queue implementation
     /// @param capacity maximum number of packets the queue can hold
     PacketQueueRing6(const std::string& queue_type, size_t capacity)
         : PacketQueueRing(queue_type, capacity) {

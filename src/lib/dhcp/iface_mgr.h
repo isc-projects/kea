@@ -919,12 +919,6 @@ public:
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
 
-    /// @brief Closes all IPv4 or IPv6 sockets.
-    ///
-    /// Obsolete!
-    /// @throw NotImplemented
-    void closeSockets(const uint16_t family);
-
     /// @brief Returns number of detected interfaces.
     ///
     /// @return number of detected interfaces
