@@ -391,7 +391,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "dhcp-queue-control") {
-                DHCPQueueControlParser parser(AF_INET);
+                DHCPQueueControlParser parser;
                 srv_cfg->setDHCPQueueControl(parser.parse(config_pair.second));
                 continue;
             }

@@ -645,12 +645,14 @@ TEST_F(IfaceMgrTest, clearIfaces) {
 TEST_F(IfaceMgrTest, packetQueue4) {
     NakedIfaceMgr ifacemgr;
 
-    // Get the default queue.
-    PacketQueue4Ptr q4 = ifacemgr.getPacketQueue4();
-    ASSERT_TRUE(q4);
+    // Should not have a queue at start up.
+    ASSERT_FALSE(ifacemgr.getPacketQueue4());
 
-    // Verify that the queue is what we expect.
-    checkInfo(q4, "{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+    // Verify that we can create a queue with default factory.
+    data::ConstElementPtr config = makeQueueConfig("kea-ring4", 2000);
+    ASSERT_NO_THROW(PacketQueueMgr4::instance().createPacketQueue(config));
+    checkInfo(ifacemgr.getPacketQueue4(),
+              "{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
     // returns the same queue.
@@ -661,17 +663,19 @@ TEST_F(IfaceMgrTest, packetQueue4) {
 TEST_F(IfaceMgrTest, packetQueue6) {
     NakedIfaceMgr ifacemgr;
 
-    // Get the default queue.
-    PacketQueue6Ptr q6 = ifacemgr.getPacketQueue6();
+    // Should not have a queue at start up.
+    ASSERT_FALSE(ifacemgr.getPacketQueue6());
 
-    // Verify that we have a default queue and its info is correct.
-    checkInfo(q6, "{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    // Verify that we can create a queue with default factory.
+    data::ConstElementPtr config = makeQueueConfig("kea-ring6", 2000);
+    ASSERT_NO_THROW(PacketQueueMgr6::instance().createPacketQueue(config));
+    checkInfo(ifacemgr.getPacketQueue6(),
+              "{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
     // returns the same queue.
     ASSERT_EQ(ifacemgr.getPacketQueue6(), PacketQueueMgr6::instance().getPacketQueue());
 }
-
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
     using namespace boost::posix_time;
@@ -732,7 +736,7 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
     using namespace boost::posix_time;
-    std::cout << "Testing DHCPv6 packet reception timeouts."
+    std::cout << "Testing DHCPv4 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
 
@@ -745,6 +749,7 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     );
     // Socket is open if returned value is non-negative.
     ASSERT_GE(socket1, 0);
+
     // Start receiver.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
 
@@ -780,8 +785,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     EXPECT_LE(duration.total_microseconds(), 700000);
 
     // Test with invalid fractional timeout values.
-    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
-    EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive4(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive4(2, 1000005), isc::BadValue);
 
     // Stop receiver.
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
@@ -1129,7 +1134,9 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_GE(socket1, 0);
 
+#if 0
     ifacemgr->startDHCPReceiver(AF_INET);
+#endif
 
     boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
 
@@ -1213,7 +1220,9 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
 
+#if 0
     ifacemgr->stopDHCPReceiver();
+#endif
 }
 
 // Verifies that it is possible to set custom packet filter object
