@@ -18,9 +18,16 @@ namespace dhcp {
 ///
 /// This parser parses the "dhcp-queue-control" parameter which holds the
 /// the configurable parameters that tailor DHCP packet queue behavior.
-/// Currently "dhcp-queue-control" is treated as a map of arbitrary values,
-/// with only one required value, "queue-type". This was done to
-/// provide latitude for differing queue implementations.
+/// In order to provide wide latitude to packet queue implementators,
+/// 'dhcp-queue-control' is mostly treated as a map of arbitrary values.
+/// There is only mandatory value, 'enable-queue', which enables/disables
+/// DHCP packet queueing.  If this value is true, then the content must
+/// also include a value for 'queue-type'.  Beyond these values, the
+/// map may contain any combination of valid JSON elements.
+///
+/// Unlike most other parsers, this parser primarily serves to validate
+/// the aforementioned rules, and rather than instantiate an object as
+/// a result, it simply returns a copy original map of elements.
 ///
 /// This parser is used in both DHCPv4 and DHCPv6. Derived parsers
 /// are not needed.
@@ -29,22 +36,19 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param family AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    explicit DHCPQueueControlParser(const uint16_t family);
+    DHCPQueueControlParser(){};
 
     /// @brief Parses content of the "dhcp-queue-control".
     ///
-    /// @param values pointer to the content of parsed values
+    /// @param control_elem  MapElement containing the queue control values to
+    /// parse
     ///
-    /// @return A pointer to a newly constructed DHCPQueueControl populated
-    /// with the parsed values
+    /// @return A copy of the of the input MapElement.
     ///
     /// @throw DhcpConfigError if any of the values are invalid.
-    data::ElementPtr parse(const isc::data::ConstElementPtr& values);
+    data::ElementPtr parse(const isc::data::ConstElementPtr& control_elem);
 
 private:
-    /// @brief AF_INET for DHCPv4 and AF_INET6 for DHCPv6.
-    int family_;
 };
 
 }

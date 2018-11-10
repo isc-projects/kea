@@ -28,7 +28,6 @@ CfgIface::CfgIface()
 
 void
 CfgIface::closeSockets() const {
-    IfaceMgr::instance().stopDHCPReceiver();
     IfaceMgr::instance().closeSockets();
 }
 
@@ -174,11 +173,7 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);
     }
     
-    if (sopen) {
-        // @todo we may consider starting/stopping this when DHCP service is
-        // enable/disabled, rather then when we open sockets.
-        IfaceMgr::instance().startDHCPReceiver(family);
-    } else {
+    if (!sopen) {
         // If no socket were opened, log a warning because the server will
         // not respond to any queries.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_NO_SOCKETS_OPEN);

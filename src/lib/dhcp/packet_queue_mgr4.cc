@@ -30,11 +30,6 @@ PacketQueueMgr4::PacketQueueMgr4() {
             PacketQueue4Ptr queue(new PacketQueueRing4("kea-ring4", capacity));
             return (queue);
         });
-
-    data::ElementPtr parameters = data::Element::createMap();
-    parameters->set("queue-type", data::Element::create("kea-ring4"));
-    parameters->set("capacity", data::Element::create(static_cast<long int>(500)));
-    createPacketQueue(parameters);
 }
 
 boost::scoped_ptr<PacketQueueMgr4>&
