@@ -96,23 +96,20 @@ public:
 };
 
 // Verifies that DHCPv4 PQM provides a default queue factory
-// and packet queue.
 TEST_F(PacketQueueMgr4Test, defaultQueue) {
+    // Should not be a queue at start-up 
+    ASSERT_FALSE(mgr().getPacketQueue());
 
-    // Verify that we have a default queue and its info is correct.
-    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
-
+    // Verify that we can create a queue with default factory.
     data::ConstElementPtr config = makeQueueConfig("kea-ring4", 2000);
-
-    // Verify that we can replace the default queue with different capacity queue
     ASSERT_NO_THROW(mgr().createPacketQueue(config));
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
 
     // We should be able to recreate the manager.
     ASSERT_NO_THROW(PacketQueueMgr4::create());
 
-    // And be back to having the default queue.
-    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+    // Should not be a queue.
+    ASSERT_FALSE(mgr().getPacketQueue());
 }
 
 // Verifies that PQM registry and creation of custome queue implementations.
@@ -125,10 +122,7 @@ TEST_F(PacketQueueMgr4Test, customQueueType) {
     // Register our adjustable-type factory
     ASSERT_TRUE(addCustomQueueType("custom-queue"));
 
-    // We still have our default queue.
-    checkMyInfo("{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
-
-    // Verify that we can replace the default queue with a "custom-queue" queue
+    // Verify that we can create a custom queue.
     ASSERT_NO_THROW(mgr().createPacketQueue(config));
     checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
 

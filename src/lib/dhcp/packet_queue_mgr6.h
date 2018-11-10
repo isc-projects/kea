@@ -56,8 +56,7 @@ public:
 private:
     /// @brief Private constructor.
     ///
-    /// It registers a default factory for DHCPv6 queues and creates
-    /// an default DHCPv6 packet queue.
+    /// It registers a default factory for DHCPv6 queues.
     PacketQueueMgr6();
 
     /// @brief Returns a pointer to the currently used instance of the
