@@ -158,6 +158,12 @@ public:
         return (packet_queue_);
     }
 
+    /// @brief Destroys the current packet queue.
+    /// Any queued packets will be discarded.
+    void destroyPacketQueue() {
+        packet_queue_.reset();
+    }
+
 protected:
     /// @brief A map holding registered backend factory functions.
     std::map<std::string, Factory> factories_;

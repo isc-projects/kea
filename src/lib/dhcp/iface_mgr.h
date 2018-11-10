@@ -699,6 +699,9 @@ public:
     /// @return Pkt6 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
+    Pkt6Ptr receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+    Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
     /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
     ///
     /// Attempts to receive a single DHCPv4 message over any of the open
@@ -720,6 +723,9 @@ public:
     ///
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    Pkt4Ptr receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+    Pkt4Ptr receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -808,6 +814,9 @@ public:
     /// but it is not running, it is down, or is a loopback interface when
     /// loopback is not allowed, an error is reported.
     ///
+    /// If sockets were successfully opened, it calls @ startDHCPReceiver to
+    /// start the receiver thread (if packet queueing is enabled).
+    ///
     /// On the systems with multiple interfaces, it is often desired that the
     /// failure to open a socket on a particular interface doesn't cause a
     /// fatal error and sockets should be opened on remaining interfaces.
@@ -856,6 +865,9 @@ public:
     /// The type of the socket being open depends on the selected Packet Filter
     /// represented by a class derived from @c isc::dhcp::PktFilter abstract
     /// class.
+    ///
+    /// If sockets were successfully opened, it calls @ startDHCPReceiver to
+    /// start the receiver thread (if packet queueing is enabled).
     ///
     /// It is possible to specify whether sockets should be broadcast capable.
     /// In most of the cases, the sockets should support broadcast traffic, e.g.
@@ -916,6 +928,10 @@ public:
                       IfaceMgrErrorMsgCallback error_handler = 0);
 
     /// @brief Closes all open sockets.
+    ///
+    /// It calls @c stopDHCPReceiver to stop the receiver thread and then
+    /// it closes all open interface sockets.
+    ///
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
 
@@ -1047,7 +1063,8 @@ public:
     /// @brief Starts DHCP packet receiver.
     ///
     /// Starts the DHCP packet receiver thread for the given.
-    /// protocol, AF_NET or AF_INET6
+    /// protocol, AF_NET or AF_INET6, if the packet queue
+    /// exists, otherwise it simply returns.
     ///
     /// @param family indicates which receiver to start,
     /// (AF_INET or AF_INET6)
@@ -1057,8 +1074,26 @@ public:
 
     /// @brief Stops the DHCP packet receiver.
     ///
-    /// Stops the receiver and deletes the dedicated thread.
+    /// If the thread exists, it is stopped, deleted, and
+    /// the packet queue is flushed.
     void stopDHCPReceiver();
+
+    /// @brief Configures DHCP packet queue
+    ///
+    /// If the given configuration enables packet queueing, then the
+    /// appropriate queue is created. Otherwise, the existing queue is
+    /// destroyed. If the receiver thread is running when this function
+    /// is invoked, it will throw.
+    ///
+    /// @param family indicates which receiver to start,
+    /// (AF_INET or AF_INET6)
+    /// @parm queue_control configuration containing "dhcp-queue-control"
+    /// content
+    /// @return true if packet queueuing has been enabled, false otherwise
+    /// @throw InvalidOperation if the receiver thread is currently running.
+    bool configureDHCPPacketQueue(const uint16_t family,
+                                  data::ConstElementPtr queue_control);
+
 
     // don't use private, we need derived classes in tests
 protected:
