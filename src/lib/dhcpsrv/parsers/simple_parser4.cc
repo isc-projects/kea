@@ -135,6 +135,14 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "valid-lifetime"
 };
 
+/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
+const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
+    { "enable-queue",   Element::boolean, "false"},
+    { "queue-type", Element::string,  "kea-ring4"},
+    { "capacity",  Element::integer, "500"}
+};
+
+
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -187,6 +195,19 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
             }
         }
     }
+
+    // Set the defaults for dhcp-queue-control.  If the element isn't
+    // there we'll add it.
+    ConstElementPtr queue_control = global->get("dhcp-queue-control");
+    ElementPtr mutable_cfg;
+    if (queue_control) {
+        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("dhcp-queue-control", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL4_DEFAULTS);
 
     return (cnt);
 }
