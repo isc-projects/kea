@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -6970,12 +6971,12 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
     };
 
     // Let's check the default. It should be empty.
-    data::ConstElementPtr control;
-    control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-    ASSERT_FALSE(control);
+    data::ConstElementPtr staged_control;
+    staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+    ASSERT_FALSE(staged_control);
 
     // Iterate over the valid scenarios and verify they succeed.
-    data::ConstElementPtr exp_elems;
+    data::ElementPtr exp_control;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
@@ -6986,7 +6987,6 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             std::stringstream os;
             os << "{ " + genIfaceConfig();
             if (!scenario.json_.empty()) {
-
                os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
             }
 
@@ -6996,20 +6996,28 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             configure(os.str(), CONTROL_RESULT_SUCCESS, "");
 
             // Fetch the queue control info.
-            control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+            staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
 
-            // If JSON does not contain queue control,
-            // the pointer stored in staging should be empty.
+            // Make sure the staged queue config exists.
+            ASSERT_TRUE(staged_control);
+
+            // Now build the expected queue control content.
             if (scenario.json_.empty()) {
-                ASSERT_FALSE(control);
-                continue;
+                exp_control = Element::createMap();
+            } else {
+                try {
+                    exp_control = boost::const_pointer_cast<Element>(Element::fromJSON(scenario.json_));
+                } catch (const std::exception& ex) {
+                    ADD_FAILURE() << " cannot convert expected JSON, test is broken:"
+                                << ex.what();
+                }
             }
 
-            // Make sure the staged config is correct.
-            ASSERT_TRUE(control);
-            ASSERT_NO_THROW(exp_elems = Element::fromJSON(scenario.json_))
-                            << " cannot convert expected JSON, test is broken";
-            EXPECT_TRUE(control->equals(*exp_elems));
+            // Add the defaults to expected queue control.
+            SimpleParser6::setDefaults(exp_control, SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS);
+
+            // Verify that the staged queue control equals the expected queue control.
+            EXPECT_TRUE(staged_control->equals(*exp_control));
         }
     }
 }

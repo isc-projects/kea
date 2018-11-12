@@ -658,8 +658,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         data::ConstElementPtr qc;
         qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, qc)) {
-            LOG_DEBUG(dhcp6_logger, DBG_DHCP6_BASIC, DHCP6_CONFIG_PACKET_QUEUE)
-                      .arg(PacketQueueMgr6::instance().getPacketQueue()->getInfoStr());
+            LOG_INFO(dhcp6_logger, DHCP6_CONFIG_PACKET_QUEUE)
+                     .arg(PacketQueueMgr6::instance().getPacketQueue()->getInfoStr());
         }
 
     } catch (const std::exception& ex) {

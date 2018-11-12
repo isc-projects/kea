@@ -44,6 +44,7 @@ public:
     static const isc::data::SimpleDefaults SHARED_SUBNET4_DEFAULTS;
     static const isc::data::SimpleDefaults SHARED_NETWORK4_DEFAULTS;
     static const isc::data::SimpleDefaults IFACE4_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP_QUEUE_CONTROL4_DEFAULTS;
     static const isc::data::ParamsList INHERIT_TO_SUBNET4;
 };
 
