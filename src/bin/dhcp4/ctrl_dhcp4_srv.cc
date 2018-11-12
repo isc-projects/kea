@@ -639,7 +639,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         data::ConstElementPtr qc;
         qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
-            LOG_DEBUG(dhcp4_logger, DBG_DHCP4_BASIC, DHCP4_CONFIG_PACKET_QUEUE)
+            LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
                       .arg(PacketQueueMgr4::instance().getPacketQueue()->getInfoStr());
         }
 

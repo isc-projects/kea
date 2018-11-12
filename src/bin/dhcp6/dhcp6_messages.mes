@@ -91,9 +91,9 @@ will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
 
 % DHCP6_CONFIG_PACKET_QUEUE DHCPv6 packet queue info after configuration: %1
-This debug message is emitted during DHCPv6 server configuration, immediately
-after configuring the DHCPv6 packet queue.  The information shown depends
-upon the packet queue type selected.
+This informational message is emitted during DHCPv6 server configuration,
+immediately after configuring the DHCPv6 packet queue.  The information
+shown depends upon the packet queue type selected.
 
 % DHCP6_CONFIG_RECEIVED received configuration: %1
 A debug message listing the configuration received by the DHCPv6 server.
