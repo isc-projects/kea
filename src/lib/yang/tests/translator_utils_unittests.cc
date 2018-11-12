@@ -153,7 +153,7 @@ TEST(YangReprTrest, getTestErrors) {
 
     // Change a path.
     YRTree badpath = testTree;
-    badpath[22].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
+    badpath[14].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
     EXPECT_FALSE(repr.verify(badpath, sess, cerr));
 
     // Change a value.

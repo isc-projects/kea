@@ -32,18 +32,7 @@ const YRTree testTree = {
       SR_IDENTITYREF_T, true },
     { "/keatest-module:main/enum", "maybe", SR_ENUM_T, true },
     { "/keatest-module:main/raw", "Zm9vYmFy", SR_BINARY_T, true },
-    { "/keatest-module:transfer", "", SR_CONTAINER_T, false },
-    { "/keatest-module:transfer/interval", "30", SR_UINT16_T, false },
-    { "/keatest-module:interface", "", SR_CONTAINER_T, false },
-    { "/keatest-module:top-level-default", "default value",
-      SR_STRING_T, false },
-    { "/keatest-module:university", "", SR_CONTAINER_T, false },
-    { "/keatest-module:university/students", "", SR_CONTAINER_T, false },
-    { "/keatest-module:university/classes", "", SR_CONTAINER_T, false },
-    { "/keatest-module:leafref-chain", "", SR_CONTAINER_T, false },
-    { "/keatest-module:kernel-modules", "", SR_CONTAINER_T, false },
-    { "/keatest-module:tpdfs", "", SR_CONTAINER_T, false },
-    { "/keatest-module:tpdfs/unival", "disabled", SR_STRING_T, false }
+    { "/keatest-module:kernel-modules", "", SR_CONTAINER_T, false }
 };
 
 /// @brief A subnet with two pools with ietf-dhcpv6-server model.
