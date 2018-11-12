@@ -292,7 +292,7 @@ void IfaceMgr::closeSockets() {
 }
 
 void IfaceMgr::stopDHCPReceiver() {
-    if (receiver_thread_) {
+    if (isReceiverRunning()) {
         terminate_watch_.markReady();
         receiver_thread_->wait();
         receiver_thread_.reset();
@@ -688,7 +688,7 @@ IfaceMgr::openSockets6(const uint16_t port,
 
 void
 IfaceMgr::startDHCPReceiver(const uint16_t family) {
-    if (receiver_thread_) {
+    if (isReceiverRunning()) {
         isc_throw(InvalidOperation, "a receiver thread already exists");
     }
 
@@ -1741,7 +1741,7 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
 
 bool
 IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_control) {
-    if (receiver_thread_) {
+    if (isReceiverRunning()) {
         isc_throw(InvalidOperation, "Cannot reconfigure queueing"
                                     " while receiver thread is running");
     }

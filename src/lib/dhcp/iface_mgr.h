@@ -1078,6 +1078,11 @@ public:
     /// the packet queue is flushed.
     void stopDHCPReceiver();
 
+    /// @brief Returns true if there is a receiver currently running.
+    bool isReceiverRunning() const {
+        return (receiver_thread_ != 0);
+    }
+
     /// @brief Configures DHCP packet queue
     ///
     /// If the given configuration enables packet queueing, then the
@@ -1093,7 +1098,6 @@ public:
     /// @throw InvalidOperation if the receiver thread is currently running.
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);
-
 
     // don't use private, we need derived classes in tests
 protected:
