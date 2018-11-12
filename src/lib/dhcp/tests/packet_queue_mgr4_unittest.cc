@@ -21,9 +21,11 @@ using namespace isc::dhcp::test;
 ///
 /// @param queue_type logical name of the queue implemenation type
 /// @param capacity maximum queue capacity
+/// @param enable_queue bool value to ascribe to the 'enable-queue' parameter, defaults to true
 data::ElementPtr
-isc::dhcp::test::makeQueueConfig(const std::string& queue_type, size_t capacity) {
+isc::dhcp::test::makeQueueConfig(const std::string& queue_type, size_t capacity, bool enable_queue /* = true */) {
     data::ElementPtr config = data::Element::createMap();
+    config->set("enable-queue", data::Element::create(enable_queue));
     config->set("queue-type", data::Element::create(queue_type));
     config->set("capacity", data::Element::create(static_cast<long int>(capacity)));
     return (config);

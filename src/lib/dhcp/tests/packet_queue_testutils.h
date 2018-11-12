@@ -46,7 +46,7 @@ template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue
     EXPECT_EQ(exp_value, value) << "stat: " << name << " is wrong" << std::endl;;
 }
 
-extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity);
+extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity, bool enable_queue=true);
 
 }; // end of namespace isc::dhcp::test
 }; // end of namespace isc::dhcp
