@@ -27,6 +27,9 @@ namespace dhcp {
 class PacketQueueMgr4 : public PacketQueueMgr<PacketQueue4Ptr>,
                         public boost::noncopyable {
 public:
+    /// @brief Logical name of the pre-registered, default queue implementation
+    static const std::string DEFAULT_QUEUE_TYPE4;
+
     /// @brief virtual Destructor
     virtual ~PacketQueueMgr4(){}
 
