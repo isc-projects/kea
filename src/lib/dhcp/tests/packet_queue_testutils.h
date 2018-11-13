@@ -30,6 +30,14 @@ template<typename PacketQueuePtrType> void checkInfo(PacketQueuePtrType queue, c
     EXPECT_TRUE(exp_elems->equals(*info));
 }
 
+#define CHECK_QUEUE_INFO(queue, stream) \
+    { \
+        std::ostringstream oss__; \
+        oss__ << stream; \
+        checkInfo(queue, oss__.str().c_str());\
+    }
+
+
 template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue, 
                                                      const std::string& name, size_t exp_value) {
     ASSERT_TRUE(queue) << "packet queue ptr is null";
