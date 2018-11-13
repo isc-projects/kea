@@ -190,6 +190,32 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     return (cmd->stringValue());
 }
 
+std::string
+parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
+    std::string command_name = parseCommand(arg, command);
+
+    // This function requires arguments within the command.
+    if (!arg) {
+        isc_throw(CtrlChannelError,
+                  "no arguments specified for the '" << command_name
+                  << "' command");
+    }
+
+    // Arguments must be a map.
+    if (arg->getType() != Element::map) {
+        isc_throw(CtrlChannelError, "arguments specified for the '" << command_name
+                  << "' command are not a map");
+    }
+
+    // At least one argument is required.
+    if (arg->size() == 0) {
+        isc_throw(CtrlChannelError, "arguments must not be empty for "
+                  "the '" << command_name << "' command");
+    }
+
+    return (command_name);
+}
+
 ConstElementPtr
 combineCommandsLists(const ConstElementPtr& response1,
                      const ConstElementPtr& response2) {
