@@ -136,13 +136,33 @@ void
 HttpMessageParserBase::stateWithReadHandler(const std::string& handler_name,
                                             boost::function<void(const char c)>
                                             after_read_logic) {
-    char c = getNextFromBuffer();
+    std::string bytes;
+    getNextFromBuffer(bytes);
     // Do nothing if we reached the end of buffer.
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch(getNextEvent()) {
         case DATA_READ_OK_EVT:
         case MORE_DATA_PROVIDED_EVT:
-            after_read_logic(c);
+            after_read_logic(bytes[0]);
+            break;
+        default:
+            invalidEventError(handler_name, getNextEvent());
+        }
+    }
+}
+
+void
+HttpMessageParserBase::stateWithMultiReadHandler(const std::string& handler_name,
+                                                 boost::function<void(const std::string&)>
+                                                 after_read_logic) {
+    std::string bytes;
+    getNextFromBuffer(bytes, 0);
+    // Do nothing if we reached the end of buffer.
+    if (getNextEvent() != NEED_MORE_DATA_EVT) {
+        switch(getNextEvent()) {
+        case DATA_READ_OK_EVT:
+        case MORE_DATA_PROVIDED_EVT:
+            after_read_logic(bytes);
             break;
         default:
             invalidEventError(handler_name, getNextEvent());
@@ -163,10 +183,10 @@ HttpMessageParserBase::onModelFailure(const std::string& explanation) {
     }
 }
 
-char
-HttpMessageParserBase::getNextFromBuffer() {
+void
+HttpMessageParserBase::getNextFromBuffer(std::string& bytes, const size_t limit) {
     unsigned int ev = getNextEvent();
-    char c = '\0';
+    bytes = "\0";
     // The caller should always provide additional data when the
     // NEED_MORE_DATA_EVT occurs. If the next event is still
     // NEED_MORE_DATA_EVT it indicates that the caller hasn't provided
@@ -178,8 +198,8 @@ HttpMessageParserBase::getNextFromBuffer() {
                   " a deadlock. This is a Kea HTTP server logic error!");
 
     } else {
-        // Try to pop next character from the buffer.
-        const bool data_exist = popNextFromBuffer(c);
+        // Try to retrieve characters from the buffer.
+        const bool data_exist = popNextFromBuffer(bytes, limit);
         if (!data_exist) {
             // There is no more data so it is really not possible that we're
             // at MORE_DATA_PROVIDED_EVT.
@@ -193,11 +213,10 @@ HttpMessageParserBase::getNextFromBuffer() {
             } else {
                 // If there is no more data we should set NEED_MORE_DATA_EVT
                 // event to indicate that new data should be provided.
-                transition(getCurrState(), NEED_MORE_DATA_EVT);
+                postNextEvent(NEED_MORE_DATA_EVT);
             }
         }
     }
-    return (c);
 }
 
 void
@@ -224,15 +243,22 @@ HttpMessageParserBase::parseEndedHandler() {
 }
 
 bool
-HttpMessageParserBase::popNextFromBuffer(char& next) {
+HttpMessageParserBase::popNextFromBuffer(std::string& next, const size_t limit) {
     // If there are any characters in the buffer, pop next.
     if (buffer_pos_ < buffer_.size()) {
-        next = buffer_[buffer_pos_++];
+        next = buffer_.substr(buffer_pos_, limit == 0 ? std::string::npos : limit);
+
+        if (limit > 0) {
+            buffer_pos_ += limit;
+        }
+
+        if ((buffer_pos_ > buffer_.size()) || (limit == 0)) {
+            buffer_pos_ = buffer_.size();
+        }
         return (true);
     }
     return (false);
 }
-
 
 bool
 HttpMessageParserBase::isChar(const char c) const {
