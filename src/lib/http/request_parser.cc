@@ -142,18 +142,19 @@ HttpRequestParser::defineStates() {
 
 void
 HttpRequestParser::receiveStartHandler() {
-    char c = getNextFromBuffer();
+    std::string bytes;
+    getNextFromBuffer(bytes);
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch(getNextEvent()) {
         case START_EVT:
             // The first byte should contain a first character of the
             // HTTP method name.
-            if (!isChar(c) || isCtl(c) || isSpecial(c)) {
-                parseFailure("invalid first character " + std::string(1, c) +
+            if (!isChar(bytes[0]) || isCtl(bytes[0]) || isSpecial(bytes[0])) {
+                parseFailure("invalid first character " + std::string(1, bytes[0]) +
                              " in HTTP method name");
 
             } else {
-                context_->method_.push_back(c);
+                context_->method_.push_back(bytes[0]);
                 transition(HTTP_METHOD_ST, DATA_READ_OK_EVT);
             }
             break;
@@ -433,14 +434,19 @@ HttpRequestParser::headerValueHandler() {
 
 void
 HttpRequestParser::bodyHandler() {
-    stateWithReadHandler("bodyHandler", [this](const char c) {
+    stateWithMultiReadHandler("bodyHandler", [this](const std::string& body) {
         // We don't validate the body at this stage. Simply record the
         // number of characters specified within "Content-Length".
-        context_->body_.push_back(c);
-        if (context_->body_.length() <
-            request_.getHeaderValueAsUint64("Content-Length")) {
+        context_->body_ += body;
+        size_t content_length = request_.getHeaderValueAsUint64("Content-Length");
+        if (context_->body_.length() < content_length) {
             transition(HTTP_BODY_ST, DATA_READ_OK_EVT);
+
         } else {
+            // If there was some extraneous data, ignore it.
+            if (context_->body_.length() > content_length) {
+                context_->body_.resize(content_length);
+            }
             transition(HTTP_PARSE_OK_ST, HTTP_PARSE_OK_EVT);
         }
     });

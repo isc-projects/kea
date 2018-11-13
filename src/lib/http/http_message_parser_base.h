@@ -12,7 +12,6 @@
 #include <util/state_model.h>
 #include <boost/function.hpp>
 #include <string>
-#include <vector>
 
 namespace isc {
 namespace http {
@@ -199,6 +198,26 @@ protected:
                               boost::function<void(const char c)>
                               after_read_logic);
 
+    /// @brief Generic parser handler which reads multiple bytes of data and
+    /// parses it using specified callback function.
+    ///
+    /// This handler is mostly used for parsing body of the HTTP message,
+    /// where we don't validate the content read. Reading multiple bytes
+    /// is the most efficient. If there is no more data it simply returns.
+    /// Otherwise, if the next event is DATA_READ_OK_EVT or
+    /// MORE_DATA_PROVIDED_EVT, it calls the provided callback function to
+    /// parse the new byte of data.
+    ///
+    /// @param handler_name Name of the handler function which called this
+    /// method.
+    /// @param after_read_logic Callback function to parse multiple bytes of
+    /// data. This callback function implements state specific logic.
+    ///
+    /// @throw HttpRequestParserError when invalid event occurred.
+    void stateWithMultiReadHandler(const std::string& handler_name,
+                                   boost::function<void(const std::string&)>
+                                   after_read_logic);
+
     /// @brief Transition parser to failure state.
     ///
     /// This method transitions the parser to @ref HTTP_PARSE_FAILED_ST and
@@ -213,11 +232,14 @@ protected:
     /// failure.
     virtual void onModelFailure(const std::string& explanation);
 
-    /// @brief Retrieves next byte of data from the buffer.
+    /// @brief Retrieves next bytes of data from the buffer.
     ///
     /// During normal operation, when there is no more data in the buffer,
     /// the parser sets NEED_MORE_DATA_EVT as next event to signal the need for
     /// calling @ref HttpMessageParserBase::postBuffer.
+    ///
+    /// @param [out] bytes Reference to the variable where read data should be stored.
+    /// @param limit Maximum number of bytes to be read.
     ///
     /// @throw HttpMessageParserBaseError If current event is already set to
     /// NEED_MORE_DATA_EVT or MORE_DATA_PROVIDED_EVT. In the former case, it
@@ -227,7 +249,7 @@ protected:
     /// parser was changed from NEED_MORE_DATA_EVT or the data were provided
     /// but the data buffer is empty. In both cases, it is an internal server
     /// error.
-    char getNextFromBuffer();
+    void getNextFromBuffer(std::string& bytes, const size_t limit = 1);
 
     /// @brief This method is called when invalid event occurred in a particular
     /// parser state.
@@ -255,9 +277,10 @@ protected:
     ///
     /// @param [out] next A reference to the variable where read data should be
     /// stored.
+    /// @param limit Maximum number of characters to be read.
     ///
-    /// @return true if character was successfully read, false otherwise.
-    bool popNextFromBuffer(char& next);
+    /// @return true if data was successfully read, false otherwise.
+    bool popNextFromBuffer(std::string& next, const size_t limit = 1);
 
     /// @brief Checks if specified value is a character.
     ///
@@ -278,7 +301,7 @@ protected:
     HttpMessage& message_;
 
     /// @brief Internal buffer from which parser reads data.
-    std::vector<char> buffer_;
+    std::string buffer_;
 
     /// @brief Position of the next character to read from the buffer.
     size_t buffer_pos_;
