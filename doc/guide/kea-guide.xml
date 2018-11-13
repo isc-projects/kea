@@ -72,6 +72,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lease-expiration.xml"/>
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="congestion-handling.xml"/>
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lfc.xml"/>
