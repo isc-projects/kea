@@ -183,4 +183,38 @@ TEST(CommandInterpreterTest, parseCommand) {
 
 }
 
+// This test checks whether parseCommandWithArgs function is able to parse
+// various valid and malformed commands.
+TEST(CommandInterpreterTest, parseCommandWithArgs) {
+    ConstElementPtr arg;
+    std::string cmd;
+
+    // Arguments are required.
+    EXPECT_THROW(parseCommandWithArgs(arg, el("{ \"command\": \"my_command\" }")),
+                 CtrlChannelError);
+
+    // Arguments must be a map.
+    EXPECT_THROW(parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
+                                              "\"arguments\": [ 1, 2, 3 ] }")),
+                 CtrlChannelError);
+
+    // Arguments must not be empty.
+    EXPECT_THROW(parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
+                                              "\"arguments\": { } }")),
+                 CtrlChannelError);
+
+    // Specifying arguments in non empty map should be successful.
+    EXPECT_NO_THROW(
+        cmd = parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
+                                           "\"arguments\": { \"arg1\": \"value1\" } }"))
+    );
+    ASSERT_TRUE(arg);
+    ASSERT_EQ(Element::map, arg->getType());
+    auto arg1 = arg->get("arg1");
+    ASSERT_TRUE(arg1);
+    ASSERT_EQ(Element::string, arg1->getType());
+    EXPECT_EQ("value1", arg1->stringValue());
+    EXPECT_EQ("my_command", cmd);
+}
+
 }
