@@ -33,7 +33,8 @@ const int JSONFeed::FEED_OK_EVT;
 const int JSONFeed::FEED_FAILED_EVT;
 
 JSONFeed::JSONFeed()
-    : StateModel(), error_message_(), open_scopes_(0), output_() {
+    : StateModel(), buffer_(), data_ptr_(0), error_message_(), open_scopes_(0),
+      output_() {
 }
 
 void
