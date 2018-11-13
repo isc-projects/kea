@@ -865,10 +865,10 @@ TEST_F(IfaceMgrTest, packetQueue4) {
     ASSERT_FALSE(ifacemgr.getPacketQueue4());
 
     // Verify that we can create a queue with default factory.
-    data::ConstElementPtr config = makeQueueConfig("kea-ring4", 2000);
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 2000);
     ASSERT_NO_THROW(PacketQueueMgr4::instance().createPacketQueue(config));
-    checkInfo(ifacemgr.getPacketQueue4(),
-              "{ \"capacity\": 2000, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue4(), "{ \"capacity\": 2000, \"queue-type\": \"" 
+                     << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
     // returns the same queue.
@@ -883,10 +883,10 @@ TEST_F(IfaceMgrTest, packetQueue6) {
     ASSERT_FALSE(ifacemgr.getPacketQueue6());
 
     // Verify that we can create a queue with default factory.
-    data::ConstElementPtr config = makeQueueConfig("kea-ring6", 2000);
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 2000);
     ASSERT_NO_THROW(PacketQueueMgr6::instance().createPacketQueue(config));
-    checkInfo(ifacemgr.getPacketQueue6(),
-              "{ \"capacity\": 2000, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue6(), "{ \"capacity\": 2000, \"queue-type\": \"" 
+                     << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
     // returns the same queue.
@@ -1286,12 +1286,12 @@ TEST_F(IfaceMgrTest, sendReceive6) {
     sendReceive6Test(queue_control, false);
 
     // Now let's populate queue control.
-    queue_control = makeQueueConfig("kea-ring6", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
     // With queueing disabled, we should use direct reception.
     sendReceive6Test(queue_control, false);
 
     // Queuing enabled, indirection reception should work.
-    queue_control = makeQueueConfig("kea-ring6", 500, true);
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
     sendReceive6Test(queue_control, true);
 }
 
@@ -1305,12 +1305,12 @@ TEST_F(IfaceMgrTest, sendReceive4) {
     sendReceive4Test(queue_control, false);
 
     // Now let's populate queue control.
-    queue_control = makeQueueConfig("kea-ring4", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
     // With queueing disabled, we should use direct reception.
     sendReceive4Test(queue_control, false);
 
     // Queuing enabled, indirection reception should work.
-    queue_control = makeQueueConfig("kea-ring4", 500, true);
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
     sendReceive4Test(queue_control, true);
 }
 
@@ -3071,7 +3071,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
     // Now let's try with a populated queue control, but with enable-queue = false.
-    queue_control = makeQueueConfig("kea-ring4", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue4());
@@ -3079,12 +3079,12 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
     // Now let's enable the queue.
-    queue_control = makeQueueConfig("kea-ring4", 500, true);
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
     ASSERT_TRUE(queue_enabled);
     // Verify we have correctly created the queue.
-    checkInfo(ifacemgr->getPacketQueue4(),
-              "{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue4(), "{ \"capacity\": 500, \"queue-type\": \"" 
+                     << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
@@ -3096,7 +3096,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET), InvalidOperation);
 
     // Create a disabled config.
-    queue_control = makeQueueConfig("kea-ring4", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
 
     // Trying to reconfigure with a running thread should throw.
     ASSERT_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control),
@@ -3140,7 +3140,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
     // Now let's try with a populated queue control, but with enable-queue = false.
-    queue_control = makeQueueConfig("kea-ring6", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue6());
@@ -3148,12 +3148,12 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
     // Now let's enable the queue.
-    queue_control = makeQueueConfig("kea-ring6", 500, true);
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
     ASSERT_TRUE(queue_enabled);
     // Verify we have correctly created the queue.
-    checkInfo(ifacemgr->getPacketQueue6(),
-              "{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue6(), "{ \"capacity\": 500, \"queue-type\": \"" 
+                     << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 
@@ -3165,7 +3165,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET6), InvalidOperation);
 
     // Create a disabled config.
-    queue_control = makeQueueConfig("kea-ring6", 500, false);
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
 
     // Trying to reconfigure with a running thread should throw.
     ASSERT_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control),

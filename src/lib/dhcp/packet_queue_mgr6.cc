@@ -12,22 +12,21 @@
 namespace isc {
 namespace dhcp {
 
-PacketQueueMgr6::PacketQueueMgr6() {
-    // @todo Please forgive magic strings and constants.  The default values,
-    // mechanisms will soon be reworked.
+const std::string PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 = "kea-ring6";
 
+PacketQueueMgr6::PacketQueueMgr6() {
     // Register default queue factory
-    registerPacketQueueFactory("kea-ring6", [](data::ConstElementPtr parameters)
+    registerPacketQueueFactory(DEFAULT_QUEUE_TYPE6, [](data::ConstElementPtr parameters)
                                           -> PacketQueue6Ptr {
             size_t capacity;
             try {
                 capacity = data::SimpleParser::getInteger(parameters, "capacity");
             } catch (const std::exception& ex) {
-                isc_throw(InvalidQueueParameter, "kea-ring6 factory:"
+                isc_throw(InvalidQueueParameter, DEFAULT_QUEUE_TYPE6 << " factory:"
                           " 'capacity' parameter is missing/invalid: " << ex.what());
             }
 
-            PacketQueue6Ptr queue(new PacketQueueRing6("kea-ring6", capacity));
+            PacketQueue6Ptr queue(new PacketQueueRing6(DEFAULT_QUEUE_TYPE6, capacity));
             return (queue);
         });
 }
