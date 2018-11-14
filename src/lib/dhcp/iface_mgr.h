@@ -677,55 +677,31 @@ public:
     /// @return true if sending was successful
     bool send(const Pkt4Ptr& pkt);
 
-    /// @brief Tries to receive DHCPv6 message over open IPv6 sockets.
+    /// @brief Receive IPv4 packets or data from external sockets
     ///
-    /// Attempts to receive a single DHCPv6 message over any of the open IPv6
-    /// sockets. If reception is successful and all information about its
-    /// sender is obtained, Pkt6 object is created and returned.
-    ///
-    /// This method also checks if data arrived over registered external socket.
-    /// This data may be of a different protocol family than AF_INET6.
+    /// Wrapper around calls to either @c receive4Direct or @c
+    /// receive4Indirect.  The former is called when packet queuing is
+    /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
-    /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
-    /// packet.
-    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
-    /// interrupted by a signal.
-    ///
-    /// @return Pkt6 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
-    Pkt6Ptr receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
-    Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
-
-    /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
+    /// @brief Receive IPv4 packets or data from external sockets
     ///
-    /// Attempts to receive a single DHCPv4 message over any of the open
-    /// IPv4 sockets. If reception is successful and all information about
-    /// its sender is obtained, Pkt4 object is created and returned.
-    ///
-    /// This method also checks if data arrived over registered external socket.
-    /// This data may be of a different protocol family than AF_INET.
+    /// Wrapper around calls to either @c receive4Direct or @c
+    /// receive4Indirect.  The former is called when packet queuing is
+    /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
-    ///
-    /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
-    /// packet.
-    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
-    /// interrupted by a signal.
     ///
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
-
-    Pkt4Ptr receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
-    Pkt4Ptr receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
     /// Opens UDP/IP socket and binds it to address, interface and port.
     ///
@@ -1125,6 +1101,50 @@ protected:
                     const uint16_t port, const bool receive_bcast = false,
                     const bool send_bcast = false);
 
+    /// @brief Receive IPv4 packets directly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv4 message over any of the open
+    /// IPv4 sockets. If reception is successful and all information about
+    /// its sender is obtained, an Pkt4 object is created and returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt4 object representing received packet (or NULL)
+    Pkt4Ptr receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    /// @brief Receive IPv4 packets indirectly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv4 message from the packet queue.
+    /// The queue is populated by the receiver thread.  If a packet is waiting
+    /// in the queue, a Pkt4 returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt4 object representing received packet (or NULL)
+    Pkt4Ptr receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
     /// @brief Opens IPv6 socket.
     ///
     /// Please do not use this method directly. Use openSocket instead.
@@ -1141,6 +1161,51 @@ protected:
     /// @return socket descriptor
     int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
                     uint16_t port, const bool join_multicast);
+
+    /// @brief Receive IPv6 packets directly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv6 message over any of the open
+    /// IPv6 sockets. If reception is successful and all information about
+    /// its sender is obtained, an Pkt6 object is created and returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt6 object representing received packet (or NULL)
+    Pkt6Ptr receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    /// @brief Receive IPv6 packets indirectly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv6 message from the packet queue.
+    /// The queue is populated by the receiver thread.  If a packet is waiting
+    /// in the queue, a Pkt6 returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt6 object representing received packet (or NULL)
+    Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
 
     /// @brief Stub implementation of network interface detection.
     ///

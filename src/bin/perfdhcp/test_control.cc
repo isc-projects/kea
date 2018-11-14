@@ -1485,8 +1485,12 @@ TestControl::run() {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
     } else if (options.getIpVersion() == 4) {
+        // Turn off packet queueing.
+        IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ElementPtr());
         setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator()));
     } else {
+        // Turn off packet queueing.
+        IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, data::ElementPtr());
         setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator(0x00FFFFFF)));
     }
 

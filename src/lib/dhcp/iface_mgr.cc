@@ -314,7 +314,6 @@ IfaceMgr::~IfaceMgr() {
     // control_buf_ is deleted automatically (scoped_ptr)
     control_buf_len_ = 0;
 
-    stopDHCPReceiver();
     closeSockets();
 
     // Explicitly delete PQM singletons.
@@ -595,8 +594,9 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
         }
     }
 
+    // If we have open sockets, start the receiver.
     if (count > 0) {
-        // starts the receiver thread (if queueing is enabled);
+        // starts the receiver thread (if queueing is enabled).
         startDHCPReceiver(AF_INET);
     }
 
@@ -679,8 +679,9 @@ IfaceMgr::openSockets6(const uint16_t port,
         }
     }
 
+    // If we have open sockets, start the receiver.
     if (count > 0) {
-        // starts the receiver thread (if queueing is enabled);
+        // starts the receiver thread (if queueing is enabled).
         startDHCPReceiver(AF_INET6);
     }
     return (count > 0);
@@ -694,6 +695,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
 
     switch (family) {
     case AF_INET:
+        // If there's no queue, then has been disabled, simply return.
         if(!getPacketQueue4()) {
             return;
         }
@@ -701,6 +703,7 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
         receiver_thread_.reset(new Thread(boost::bind(&IfaceMgr::receiveDHCP4Packets, this)));
         break;
     case AF_INET6:
+        // If there's no queue, then has been disabled, simply return.
         if(!getPacketQueue6()) {
             return;
         }
@@ -964,7 +967,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
 }
 
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
-    if (receiver_thread_) {
+    if (isReceiverRunning()) {
         return (receive4Indirect(timeout_sec, timeout_usec));
     }
 
@@ -1189,7 +1192,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
 }
 
 Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
-    if (receiver_thread_) {
+    if (isReceiverRunning()) {
         return (receive6Indirect(timeout_sec, timeout_usec));
     }
 
