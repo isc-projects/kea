@@ -449,7 +449,7 @@ public:
 
     /// @brief Tests the ability to send and receive DHCPv6 packets
     ///
-    /// This test calls @r IfaceMgr::configureDHCPqueue, passing int the
+    /// This test calls @r IfaceMgr::configureDHCPPacketQueue, passing in the
     /// given queue configuration.  It then calls IfaceMgr::startDHCPReceiver
     /// and verifies whether or not the receive thread has been started as
     /// expected.  Next it creates a generic DHCPv6 packet and sends it over
@@ -465,11 +465,11 @@ public:
         // Testing socket operation in a portable way is tricky
         // without interface detection implemented
         // let's assume that every supported OS have lo interface
-        IOAddress loAddr("::1");
+        IOAddress lo_addr("::1");
         int socket1 = 0, socket2 = 0;
         EXPECT_NO_THROW(
-            socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
-            socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
+            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
+            socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10546);
         );
 
         EXPECT_GE(socket1, 0);
@@ -537,7 +537,7 @@ public:
 
     /// @brief Tests the ability to send and receive DHCPv4 packets
     ///
-    /// This test calls @r IfaceMgr::configureDHCPqueue, passing int the
+    /// This test calls @r IfaceMgr::configureDHCPPacketQueue, passing in the
     /// given queue configuration.  It then calls IfaceMgr::startDHCPReceiver
     /// and verifies whether or not the receive thread has been started as
     /// expected.  Next it creates a DISCOVER packet and sends it over
@@ -553,10 +553,10 @@ public:
         // Testing socket operation in a portable way is tricky
         // without interface detection implemented.
         // Let's assume that every supported OS has lo interface
-        IOAddress loAddr("127.0.0.1");
+        IOAddress lo_addr("127.0.0.1");
         int socket1 = 0;
         EXPECT_NO_THROW(
-            socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
         );
 
         EXPECT_GE(socket1, 0);
@@ -901,10 +901,10 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547)
     );
     // Socket is open if result is non-negative.
     ASSERT_GE(socket1, 0);
@@ -958,10 +958,10 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10067)
     );
     // Socket is open if returned value is non-negative.
     ASSERT_GE(socket1, 0);
@@ -1023,10 +1023,10 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     init_sockets.push_back(socket1);
 
     // Create socket #2
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket2 = 0;
     ASSERT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromRemoteAddress(lo_addr, PORT2);
     );
     ASSERT_GE(socket2, 0);
     init_sockets.push_back(socket2);
@@ -1102,19 +1102,19 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
 
     Pkt6 pkt6(DHCPV6_SOLICIT, 123);
     pkt6.setIface(LOOPBACK);
 
     // Bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
     EXPECT_GE(socket1, 0); // socket >= 0
 
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
     // Bind unicast socket to port 10548
-    int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
+    int socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10548);
     EXPECT_GE(socket2, 0);
 
     // Removed code for binding socket twice to the same address/port
@@ -1133,7 +1133,7 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     // Use non-existing interface name.
     EXPECT_THROW(
-        ifacemgr->openSocket("non_existing_interface", loAddr, 10548),
+        ifacemgr->openSocket("non_existing_interface", lo_addr, 10548),
         BadValue
     );
 
@@ -1182,18 +1182,18 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
 
     // Open v6 socket on loopback interface and bind to port
     int socket1 = 0;
-    IOAddress loAddr6("::1");
+    IOAddress lo_addr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromAddress(loAddr6, PORT1);
+        socket1 = ifacemgr->openSocketFromAddress(lo_addr6, PORT1);
     );
     // socket descriptor must be non-negative integer
     EXPECT_GE(socket1, 0);
 
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromAddress(lo_addr, PORT2);
     );
     // socket descriptor must be positive integer
     EXPECT_GE(socket2, 0);
@@ -1219,17 +1219,17 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     // Loopback address is the only one that we know
     // so let's treat it as remote address.
     int socket1 = 0;
-    IOAddress loAddr6("::1");
+    IOAddress lo_addr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
+        socket1 = ifacemgr->openSocketFromRemoteAddress(lo_addr6, PORT1);
     );
     EXPECT_GE(socket1, 0);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromRemoteAddress(lo_addr, PORT2);
     );
     EXPECT_GE(socket2, 0);
 
@@ -1255,7 +1255,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     IOAddress mcastAddr("ff02::1:2");
 
     // bind multicast socket to port 10547
@@ -1334,10 +1334,10 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 
     // Try to open socket using IfaceMgr. It should call the openSocket() function
     // on the packet filter object we have set.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
     );
 
     // Check that openSocket function was called.
@@ -1374,10 +1374,10 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
 
     // Try to open socket using IfaceMgr. It should call the openSocket()
     // function on the packet filter object we have set.
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr,
+        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr,
                                         DHCP6_SERVER_PORT + 10000);
     );
     // Check that openSocket function has been actually called on the packet
@@ -1433,7 +1433,7 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 // socket bound to the same address and port. Failing to open the fallback
 // socket should preclude the raw socket from being open.
 TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr1(new NakedIfaceMgr());
@@ -1446,7 +1446,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // PktFilterInet.
     EXPECT_NO_THROW(iface_mgr1->setMatchingPacketFilter(false));
     // Let's open a loopback socket with handy unpriviliged port number
-    socket1 = iface_mgr1->openSocket(LOOPBACK, loAddr,
+    socket1 = iface_mgr1->openSocket(LOOPBACK, lo_addr,
                                      DHCP4_SERVER_PORT + 10000);
 
     EXPECT_GE(socket1, 0);
@@ -1457,7 +1457,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // The socket is open and bound. Another attempt to open socket and
     // bind to the same address and port should result in an exception.
     EXPECT_THROW(
-        socket2 = iface_mgr2->openSocket(LOOPBACK, loAddr,
+        socket2 = iface_mgr2->openSocket(LOOPBACK, lo_addr,
                                          DHCP4_SERVER_PORT + 10000),
         isc::dhcp::SocketConfigError
     );
@@ -1515,12 +1515,12 @@ TEST_F(IfaceMgrTest, socket4) {
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Let's assume that every supported OS have lo interface.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     // Use unprivileged port (it's convenient for running tests as non-root).
     int socket1 = 0;
 
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
     );
 
     EXPECT_GE(socket1, 0);

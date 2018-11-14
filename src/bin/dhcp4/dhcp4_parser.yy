@@ -1849,34 +1849,27 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
     if (!qc->contains("enable-queue")) {
         std::stringstream msg;
         msg << "'enable-queue' is required: ";
-        msg  << qc->getPosition().str() << ")";
+        msg  << "(" << qc->getPosition().str() << ")";
         error(@1, msg.str());
     }
 
-     ConstElementPtr enable_queue = qc->get("enable-queue");
-     if (enable_queue->getType() != Element::boolean) {
+    ConstElementPtr enable_queue = qc->get("enable-queue");
+    if (enable_queue->getType() != Element::boolean) {
         std::stringstream msg;
         msg << "'enable-queue' must be boolean: ";
-        msg  << qc->getPosition().str() << ")";
+        msg  << "(" << qc->getPosition().str() << ")";
         error(@1, msg.str());
-     }
+    }
 
-    if (enable_queue->boolValue()) {
-        if (!qc->contains("queue-type")) {
-            std::stringstream msg;
-            msg << "'queue-type' is required, when 'enable-queue' is true: ";
-            msg  << qc->getPosition().str() << ")";
-            error(@1, msg.str());
-        }
-
+    if (qc->contains("queue-type")) {
         ConstElementPtr queue_type = qc->get("queue-type");
         if (queue_type->getType() != Element::string) {
             std::stringstream msg;
             msg << "'queue-type' must be a string: ";
-            msg  << qc->getPosition().str() << ")";
+            msg  << "(" << qc->getPosition().str() << ")";
             error(@1, msg.str());
         }
-     }
+    }
 
     ctx.leave();
 };

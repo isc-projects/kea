@@ -78,7 +78,8 @@ const char* EXTRACTED_CONFIGS[] = {
 "        \"preferred-lifetime\": 3000,\n"
 "        \"rebind-timer\": 2000,\n"
 "        \"renew-timer\": 1000,\n"
-"        \"subnet6\": [ ],\n" "        \"valid-lifetime\": 4000\n"
+"        \"subnet6\": [ ],\n"
+"        \"valid-lifetime\": 4000\n"
 "    }\n",
     // CONFIGURATION 1
 "{\n"
