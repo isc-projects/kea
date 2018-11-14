@@ -6591,21 +6591,14 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
         "{ \n"
         "   \"enable-type\": \"some-type\" \n"
         "} \n",
-        "<string>:2.2-21: 'enable-queue' is required: <string>:2:24)"
+        "<string>:2.2-21: 'enable-queue' is required: (<string>:2:24)"
         },
         {
         "enable-queue not boolean",
         "{ \n"
         "   \"enable-queue\": \"always\" \n"
         "} \n",
-        "<string>:2.2-21: 'enable-queue' must be boolean: <string>:2:24)"
-        },
-        {
-        "queue enabled, type missing",
-        "{ \n"
-        "   \"enable-queue\": true \n"
-        "} \n",
-        "<string>:2.2-21: 'queue-type' is required, when 'enable-queue' is true: <string>:2:24)"
+        "<string>:2.2-21: 'enable-queue' must be boolean: (<string>:2:24)"
         },
         {
         "queue enabled, type not a string",
@@ -6613,7 +6606,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
         "   \"enable-queue\": true, \n"
         "   \"queue-type\": 7777 \n"
         "} \n",
-        "<string>:2.2-21: 'queue-type' must be a string: <string>:2:24)"
+        "<string>:2.2-21: 'queue-type' must be a string: (<string>:2:24)"
         }
     };
 
