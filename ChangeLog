@@ -1,3 +1,8 @@
+1478.	[bug]		marcin
+	Performance improvements in the HTTP client code used in the
+	Kea High Availability.
+	(Gitlab #57,!122, git 7bd97af1f3d7670cd64cadf0d0cb9ddbe4e74909)
+
 Kea 1.5.0-beta released on Nov 9, 2018
 
 1477.	[build]		marcin
