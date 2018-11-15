@@ -342,7 +342,7 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "result": 0
     "text": "123 entries returned."
-    "arguments": &lt;list of host reservations&gt;
+    "arguments": &lt;list of cashed host&gt;
 }</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
@@ -897,7 +897,7 @@ Result is an integer representation of the status. Currently supported statuses 
         }
      }
 }</screen>
-where &gt;server&lt; is the configuration element name for a given server such as "Dhcp4" or "Dhcp6"</para>
+where &lt;server&gt; is the configuration element name for a given server such as "Dhcp4" or "Dhcp6"</para>
 
 <para>Response syntax:
   <screen>{"result": 0, "text": "Configuration seems sane..." }
@@ -1074,11 +1074,11 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.4.0 (<link linkend="commands-high_availability-lib">high_availability</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-ha-heartbeat"/></para>
+<para>Description and examples: See <xref linkend="ha-server-states"/></para>
 
 <para>Command syntax:
   <screen>{
-    "command": "ha-heartbeat",
+    "command": "ha-heartbeat"
     }</screen>
 </para>
 
@@ -1110,7 +1110,8 @@ The response to this command is different from the typical command response. The
     "service": [ &lt;service, typically "dhcp4" or "dhcp6"&gt; ],
     "arguments": {
         "scopes": [ "HA_server1", "HA_server2" ]
-    }</screen>
+    }
+}</screen>
 In the example given, the arguments configure the server to handle traffic from both HA_server1 and HA_server2 scopes.</para>
 
 <para>Response syntax:
@@ -1304,7 +1305,7 @@ lease4-get returns a result that indicates a result of the operation and lease d
 
 <para>Command syntax:
   <screen>{
-    "command": "lease4-get-all"
+    "command": "lease4-get-all",
     "arguments": "subnets"
 }</screen>
 The lease4-get-all command may result in very large responses.</para>
@@ -1416,7 +1417,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-add"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-add"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -1431,8 +1432,11 @@ Result is an integer representation of the status. Currently supported statuses 
 lease6-add can be also used to add leases for IPv6 prefixes..</para>
 
 <para>Response syntax:
-  <screen>{ "result": 0, "text": "Lease added." }
-    { "result": 1, "text": "missing parameter 'ip-address' (&lt;string&gt;:3:19)" }</screen>
+  <screen>{ "result": 0,
+	    "text": "Lease added." }
+
+          { "result": 1,
+            "text": "missing parameter 'ip-address' (&lt;string&gt;:3:19)" }</screen>
 Result is an integer representation of the status. Currently supported statuses are:
 <itemizedlist>
   <listitem><para>0 - success</para></listitem>
@@ -1454,7 +1458,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-del"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-del"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -1492,7 +1496,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-get"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-get"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -1531,7 +1535,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-get-all"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-get-all"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -1595,7 +1599,7 @@ The lease6-get-all command may result in very large responses.</para>
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-update"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-update"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -1639,7 +1643,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-lease_cmds-lib">lease_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-lease6-wipe"/></para>
+<para>Description and examples: See <xref linkend="command-lease4-wipe"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2070,7 +2074,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-add"/></para>
+<para>Description and examples: See <xref linkend="command-network4-add"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2135,7 +2139,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-del"/></para>
+<para>Description and examples: See <xref linkend="command-network4-del"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2176,7 +2180,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-get"/></para>
+<para>Description and examples: See <xref linkend="command-network4-get"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2234,7 +2238,7 @@ Note that the actual response contains many additional fields that are omitted h
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-list"/></para>
+<para>Description and examples: See <xref linkend="command-network4-list"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2274,7 +2278,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-subnet-add"/></para>
+<para>Description and examples: See <xref linkend="command-network4-subnet-add"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2312,7 +2316,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.3.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-network6-subnet-del"/></para>
+<para>Description and examples: See <xref linkend="command-network4-subnet-del"/></para>
 
 <para>Command syntax:
   <screen>{
@@ -2589,7 +2593,7 @@ Result is an integer representation of the status. Currently supported statuses 
 
 <para>Availability: 1.4.0 (<link linkend="commands-stat_cmds-lib">stat_cmds</link>  hook)</para>
 
-<para>Description and examples: See <xref linkend="command-stat-lease6-get"/></para>
+<para>Description and examples: See <xref linkend="command-stat-lease4-get"/></para>
 
 <para>Command syntax:
   <screen>{
