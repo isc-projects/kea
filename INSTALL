@@ -37,6 +37,6 @@ Cassandra) have additional dependencies. For detailed installation directions,
 see the guide at doc/guide/kea-guide.txt or doc/guide/kea-guide.html or on
 the Kea wiki: http://oldkea.isc.org/docs/kea-guide.html#installation
 
-You can find user-contributed OS-specific build/installation
-instructions on the Kea wiki: http://oldkea.isc.org/wiki/Install
+You can find current OS-specific build/installation
+instructions in our knowledge base at https://kb.isc.org/docs/installing-kea
 
