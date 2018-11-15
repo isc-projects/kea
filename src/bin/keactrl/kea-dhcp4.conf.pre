@@ -15,8 +15,8 @@
 // do. Comments in this configuration file sometimes refer to sections for more
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
-// on Kea web page (http://oldkea.isc.org, click User's Guide, direct link for
-// stable version is http://oldkea.isc.org/docs/kea-guide.html).
+// in ISC's Knowledgebase (https://kb.isc.org/docs/kea-administrator-reference-manual; the direct link for
+// the stable version is https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
 //
 // This configuration file contains only DHCPv4 server's configuration.
 // If configurations for other Kea services are also included in this file they
