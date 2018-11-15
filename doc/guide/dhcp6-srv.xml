@@ -415,8 +415,8 @@ be followed by a comma and another object definition.</para>
   operates on the copy of the original lease file, rather than on the lease
   file used by the server to record lease updates. There are also other files
   being created as a side effect of the lease file cleanup. The detailed
-  description of the LFC is located on the Kea wiki:
-  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/LFCDesign">http://oldkea.isc.org/wiki/LFCDesign</uri>.
+  description of the LFC is located in the Kea Administrator's Reference Manual:
+  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc">https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc</uri>.
   </para>
 
 </section>
