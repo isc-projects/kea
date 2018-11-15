@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -372,49 +372,49 @@ namespace isc { namespace netconf {
     {
             case 45: // "constant string"
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 378 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 46: // "integer"
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
 #line 385 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 47: // "floating point"
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
 #line 392 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 48: // "boolean"
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
 #line 399 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 57: // value
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 406 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 60: // map_value
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 413 "netconf_parser.cc" // lalr1.cc:635
         break;
 
       case 119: // socket_type_value
 
-#line 107 "netconf_parser.yy" // lalr1.cc:635
+#line 107 ""netconf_parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 420 "netconf_parser.cc" // lalr1.cc:635
         break;

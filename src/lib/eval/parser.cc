@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -429,98 +429,98 @@ namespace isc { namespace eval {
     {
             case 50: // "constant string"
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 435 "parser.cc" // lalr1.cc:635
         break;
 
       case 51: // "integer"
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 442 "parser.cc" // lalr1.cc:635
         break;
 
       case 52: // "constant hexstring"
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 449 "parser.cc" // lalr1.cc:635
         break;
 
       case 53: // "option name"
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 456 "parser.cc" // lalr1.cc:635
         break;
 
       case 54: // "ip address"
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 463 "parser.cc" // lalr1.cc:635
         break;
 
       case 60: // integer_expr
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< uint32_t > (); }
 #line 470 "parser.cc" // lalr1.cc:635
         break;
 
       case 61: // option_code
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< uint16_t > (); }
 #line 477 "parser.cc" // lalr1.cc:635
         break;
 
       case 62: // option_repr_type
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< TokenOption::RepresentationType > (); }
 #line 484 "parser.cc" // lalr1.cc:635
         break;
 
       case 63: // nest_level
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int8_t > (); }
 #line 491 "parser.cc" // lalr1.cc:635
         break;
 
       case 64: // pkt_metadata
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< TokenPkt::MetadataType > (); }
 #line 498 "parser.cc" // lalr1.cc:635
         break;
 
       case 65: // enterprise_id
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< uint32_t > (); }
 #line 505 "parser.cc" // lalr1.cc:635
         break;
 
       case 66: // pkt4_field
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< TokenPkt4::FieldType > (); }
 #line 512 "parser.cc" // lalr1.cc:635
         break;
 
       case 67: // pkt6_field
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< TokenPkt6::FieldType > (); }
 #line 519 "parser.cc" // lalr1.cc:635
         break;
 
       case 68: // relay6_field
 
-#line 111 "parser.yy" // lalr1.cc:635
+#line 111 ""parser.yy"" // lalr1.cc:635
         { yyoutput << yysym.value.template as< TokenRelay6Field::FieldType > (); }
 #line 526 "parser.cc" // lalr1.cc:635
         break;
