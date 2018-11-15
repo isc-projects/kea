@@ -245,7 +245,7 @@
     // even influence how the server processes packets. Those libraries include
     // additional forensic logging capabilities, ability to reserve hosts in
     // more flexible ways, and even add extra commands. For a list of available
-    // hook libraries, see http://oldkea.isc.org/wiki/Hooks.
+    // hook libraries, see https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available.
     //"hooks-libraries": [
     //  {
     //      // Forensic Logging library generates forensic type of audit trail
