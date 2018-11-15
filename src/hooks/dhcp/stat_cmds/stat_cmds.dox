@@ -15,8 +15,8 @@ developers who are interested in the internal operation of the Stat Commands
 library. This file provides information needed to understand and perhaps extend
 this library.
 
-This documentation is stand-alone: you should have read and understood <a
-href="http://oldkea.isc.org/docs/devel/">Kea Developer's Guide</a> and in
+This documentation is stand-alone: you should have read and understood the <a
+href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</a> and in
 particular its section about hooks.
 
 @section stat_cmds Stat Commands Overview
