@@ -98,22 +98,22 @@
         system. Unpack this tarball:
 
 <screen>
-$ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
+$ <userinput>tar zxvf kea-1.5.0.tar.gz</userinput>
 </screen>
 
-        This will unpack the tarball into the kea-1.4.0 subdirectory of your
+        This will unpack the tarball into the kea-1.5.0 subdirectory of your
         current working directory.
       </para>
 
       <para>
         3. Unpack the Kea premium tarball into the directory into which Kea was
         unpacked. For example, assuming that you followed step 2 and that Kea
-        1.4.0 has been unpacked into a kea-1.4.0 subdirectory and that the Kea
+        1.5.0 has been unpacked into a kea-1.5.0 subdirectory and that the Kea
         premium tarball is in your current directory, the following steps will
         unpack the premium tarball into the correct location:
 <screen>
-  $ <userinput>cd kea-1.4.0</userinput>
-  $ <userinput>tar xvf ../kea-premium-1.4.0.tar.gz</userinput>
+  $ <userinput>cd kea-1.5.0</userinput>
+  $ <userinput>tar xvf ../kea-premium-1.5.0.tar.gz</userinput>
 </screen>
         Note that unpacking the Kea premium package will put the files into a
         directory named premium. Regardless of the name of your package, the
@@ -137,8 +137,8 @@ $ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
 <screen>
 Package:
   Name:            kea
-  Version:         1.4.0
-  Extended version:1.4.0 (tarball)
+  Version:         1.5.0
+  Extended version:1.5.0 (tarball)
   OS Family:       Linux
   Using GNU sed:   yes
   Premium package: yes
@@ -574,7 +574,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
         ISC hopes to see more hooks libraries become available as time
         progresses, both developed internally and externally. Since
         this list may evolve dynamically, we decided to keep it on a
-        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/Hooks">http://oldkea.isc.org/wiki/Hooks</link>.
+        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available">https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available</link>.
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.

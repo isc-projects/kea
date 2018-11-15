@@ -33,7 +33,7 @@ const int JSONFeed::FEED_OK_EVT;
 const int JSONFeed::FEED_FAILED_EVT;
 
 JSONFeed::JSONFeed()
-    : StateModel(), buffer_(), error_message_(), open_scopes_(0),
+    : StateModel(), buffer_(), data_ptr_(0), error_message_(), open_scopes_(0),
       output_() {
 }
 
@@ -100,8 +100,9 @@ JSONFeed::postBuffer(const void* buf, const size_t buf_size) {
         if (getNextEvent() == NEED_MORE_DATA_EVT) {
             transition(getCurrState(), MORE_DATA_PROVIDED_EVT);
         }
-        buffer_.insert(buffer_.end(), static_cast<const char*>(buf),
+        buffer_.assign(static_cast<const char*>(buf),
                        static_cast<const char*>(buf) + buf_size);
+        data_ptr_ = 0;
     }
 }
 
@@ -163,9 +164,8 @@ JSONFeed::onModelFailure(const std::string& explanation) {
 bool
 JSONFeed::popNextFromBuffer(char& next) {
     // If there are any characters in the buffer, pop next.
-    if (!buffer_.empty()) {
-        next = buffer_.front();
-        buffer_.pop_front();
+    if (!buffer_.empty() && (data_ptr_ < buffer_.size())) {
+        next = buffer_[data_ptr_++];
         return (true);
     }
     return (false);
@@ -295,7 +295,7 @@ JSONFeed::innerJSONHandler() {
                 transition(JSON_END_ST, FEED_OK_EVT);
 
             } else {
-                transition(getCurrState(), DATA_READ_OK_EVT);
+                postNextEvent(DATA_READ_OK_EVT);
             }
             break;
 
@@ -304,7 +304,7 @@ JSONFeed::innerJSONHandler() {
             break;
 
         default:
-            transition(getCurrState(), DATA_READ_OK_EVT);
+            postNextEvent(DATA_READ_OK_EVT);
         }
     }
 }
