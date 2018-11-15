@@ -867,7 +867,7 @@ TEST_F(IfaceMgrTest, packetQueue4) {
     // Verify that we can create a queue with default factory.
     data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 2000);
     ASSERT_NO_THROW(PacketQueueMgr4::instance().createPacketQueue(config));
-    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue4(), "{ \"capacity\": 2000, \"queue-type\": \"" 
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue4(), "{ \"capacity\": 2000, \"queue-type\": \""
                      << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
@@ -885,7 +885,7 @@ TEST_F(IfaceMgrTest, packetQueue6) {
     // Verify that we can create a queue with default factory.
     data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 2000);
     ASSERT_NO_THROW(PacketQueueMgr6::instance().createPacketQueue(config));
-    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue6(), "{ \"capacity\": 2000, \"queue-type\": \"" 
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue6(), "{ \"capacity\": 2000, \"queue-type\": \""
                      << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
 
     // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
@@ -3083,7 +3083,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
     ASSERT_TRUE(queue_enabled);
     // Verify we have correctly created the queue.
-    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue4(), "{ \"capacity\": 500, \"queue-type\": \"" 
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue4(), "{ \"capacity\": 500, \"queue-type\": \""
                      << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
@@ -3152,7 +3152,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
     ASSERT_TRUE(queue_enabled);
     // Verify we have correctly created the queue.
-    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue6(), "{ \"capacity\": 500, \"queue-type\": \"" 
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue6(), "{ \"capacity\": 500, \"queue-type\": \""
                      << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
@@ -3187,5 +3187,178 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     ASSERT_FALSE(ifacemgr->isReceiverRunning());
 }
 
+/// @brief Test Fixture for testing isc:dhcp::Receiver
+class ReceiverTest : public ::testing::Test {
+public:
+    /// @brief Maximum number of passes allowed in worker event loop
+    static const int WORKER_MAX_PASSES;
+
+    /// @brief Constructor.
+    ReceiverTest() {}
+
+    /// @brief Destructor.
+    ~ReceiverTest() {
+    }
+
+    /// @brief Sleeps for a given number of event periods sleep
+    /// Each period is 50 ms.
+    void nap(int periods) {
+        usleep(periods * 50 * 1000);
+    };
+
+    /// @brief Worker function to be used by the Receiver's thread
+    ///
+    /// The function runs 5 passes through an "event" loop.
+    /// On each pass:
+    /// - check terminate command
+    /// - instigate the desired event (second pass only)
+    /// - naps for 1 period (50ms)
+    ///
+    /// @param watch_type type of event that should occur
+    void worker(Receiver::WatchType watch_type) {
+        for (passes_ = 1; passes_ < WORKER_MAX_PASSES; ++passes_) {
+
+            // Stop if we're told to do it.
+            if (receiver_->shouldTerminate()) {
+                return;
+            }
+
+            // On the second pass, set the event.
+            if (passes_ == 2) {
+                switch (watch_type) {
+                case Receiver::RCV_ERROR:
+                    receiver_->setError("we have an error");
+                    break;
+                case Receiver::RCV_READY:
+                    receiver_->markReady(watch_type);
+                    break;
+                case Receiver::RCV_TERMINATE:
+                default:
+                    // Do nothing, we're waiting to be told to stop.
+                    break;
+                }
+            }
+
+            // Take a nap.
+            nap(1);
+        }
+
+        // Indicate why we stopped.
+        receiver_->setError("thread expired");
+    }
+
+    /// @brief Current receiver instance.
+    ReceiverPtr receiver_;
+
+    /// @brief Counter used to track the number of passes made
+    /// within the thread worker function.
+    int passes_;
+};
+
+const int ReceiverTest::WORKER_MAX_PASSES = 5;
+
+/// Verifies the basic operation of the Receiver class.
+/// It checks that a Receiver can be created, can be stopped,
+/// and that in set and clear sockets.
+TEST_F(ReceiverTest, receiverClassBasics) {
+
+    /// We'll create a receiver and let it run until it expires.  (Note this is more
+    /// of a test of ReceiverTest itself and ensures our tests later for why we
+    /// exited are sound.)
+    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
+                                                         Receiver::RCV_TERMINATE))));
+    // Wait long enough for thread to expire.
+    nap(WORKER_MAX_PASSES + 1);
+
+    // It should have done the maximum number of passes.
+    EXPECT_EQ(passes_, WORKER_MAX_PASSES);
+
+    // Error should be ready and error text should be "thread expired".
+    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+    EXPECT_EQ("thread expired", receiver_->getLastError());
+
+    /// Now we'll test stopping a thread.
+    /// We'll create a Receiver, let it run a little and then tell it to stop.
+    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
+                                                         Receiver::RCV_TERMINATE))));
+    // No watches should be ready.
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+
+    // Wait a little while.
+    nap(2);
+
+    // Tell it to stop.
+    receiver_->stop();
+
+    // It should have done less than the maximum number of passes.
+    EXPECT_LT(passes_, WORKER_MAX_PASSES);
+
+    // No watches should be ready.  Error text should be "thread stopped".
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+    EXPECT_EQ("thread stopped", receiver_->getLastError());
+
+
+    // Next we'll test error notification.
+    // We'll create a receiver that sets an error on the second pass.
+    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
+                                                         Receiver::RCV_ERROR))));
+    // No watches should be ready.
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+
+    // Wait a little while.
+    nap(2);
+
+    // It should now indicate an error.
+    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_ERROR));
+    EXPECT_EQ("we have an error", receiver_->getLastError());
+
+    // Tell it to stop.
+    receiver_->stop();
+
+    // It should have done less than the maximum number of passes.
+    EXPECT_LT(passes_, WORKER_MAX_PASSES);
+
+    // No watches should be ready.  Error text should be "thread stopped".
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+    EXPECT_EQ("thread stopped", receiver_->getLastError());
+
+
+    // Finally, we'll test data ready notification.
+    // We'll create a receiver that indicates data ready on its second pass.
+    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
+                                                         Receiver::RCV_READY))));
+    // No watches should be ready.
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+
+    // Wait a little while.
+    nap(2);
+
+    // It should now indicate data ready.
+    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_READY));
+
+    // Tell it to stop.
+    receiver_->stop();
+
+    // It should have done less than the maximum number of passes.
+    EXPECT_LT(passes_, WORKER_MAX_PASSES);
+
+    // No watches should be ready.  Error text should be "thread stopped".
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
+    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
+    EXPECT_EQ("thread stopped", receiver_->getLastError());
+}
 
 }
