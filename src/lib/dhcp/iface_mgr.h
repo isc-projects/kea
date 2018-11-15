@@ -458,6 +458,115 @@ private:
 
 typedef boost::shared_ptr<Iface> IfacePtr;
 
+/// @brief Provides a thread and controls for receiving packets.
+///
+/// Given a "worker function", this class creates a thread which
+/// runs the function and provides the means to monitor the thread
+/// for "error" and "ready" conditions, and finally to stop the thread.
+/// It uses three WatchSockets: one to indicate an error, one to indicate
+/// data is ready, and a third to monitor as a shut-down command.
+class Receiver {
+public:
+    /// @brief Enumerates the list of watch sockets used to mark events
+    /// These are used as arguments to watch socket accessor methods.
+    enum WatchType {
+        RCV_ERROR = 0,
+        RCV_READY = 1,
+        RCV_TERMINATE = 2
+    };
+
+    /// @brief Constructor
+    ///
+    /// It initializes the watch sockets and then instantiates and
+    /// starts the receiver's worker thread.
+    ///
+    /// @param thread_main function the receiver's thread should run
+    Receiver(const boost::function<void()>& thread_main);
+
+    /// @brief Virtual destructor
+    virtual ~Receiver() {}
+
+    /// @brief Fetches the fd of a watch socket
+    ///
+    /// @param watch_type indicates which watch socket
+    /// @return the watch socket's file descriptor
+    int getWatchFd(WatchType watch_type);
+
+    /// @brief Sets a watch socket state to ready
+    ///
+    /// @param watch_type indicates which watch socket to mark
+    void markReady(WatchType watch_type);
+
+    /// @brief Indicates if a watch socket state is ready
+    ///
+    /// @param watch_type indicates which watch socket to mark
+    /// @return true if the watch socket is ready, false otherwise
+    bool isReady(WatchType watch_type);
+
+    /// @brief Sets a watch socket state to not ready
+    ///
+    /// @param watch_type indicates which watch socket to clear
+    void clearReady(WatchType watch_type);
+
+    /// @brief Checks if the receiver thread should terminate
+    ///
+    /// Performs a "one-shot" check of the receiver's terminate
+    /// watch socket.  If it is ready, return true and then clear
+    /// it, otherwise return false.
+    ///
+    /// @return true if the terminate watch socket is ready
+    bool shouldTerminate();
+
+    /// @brief Terminates the receiver thread
+    ///
+    /// It marks the terminate watch socket ready, and then waits for the
+    /// thread to stop.  At this point, the receiver is defunct.  This is
+    /// not done in the destructor to avoid race conditions.
+    void stop();
+
+    /// @brief Fetches the receiver's thread mutex.
+    ///
+    /// This is used for instantation mutex locks to protect code blocks.
+    ///
+    /// @return a reference to the mutex
+    isc::util::thread::Mutex& getLock();
+
+    /// @brief Sets the receiver error state
+    ///
+    /// This records the given error message and sets the error watch
+    /// socket to ready.
+    ///
+    /// @param error_msg
+    void setError(const std::string& error_msg);
+
+    /// @brief Fetches the error message text for the most recent socket error
+    ///
+    /// @return string containing the error message
+    std::string getLastError();
+
+    /// @brief Error message of the last error encountered
+    std::string last_error_;
+
+    /// @brief DHCP watch sockets that are used to communicate with the owning thread
+    /// There are three:
+    /// -# RCV_ERROR - packet receive error watch socket.
+    /// Marked as ready when the DHCP packet receiver experiences an I/O error.
+    /// -# RCV_READY - Marked as ready when the DHCP packet receiver adds a packet
+    /// to the packet queue.
+    /// -# RCV_TERMINATE Packet receiver terminate watch socket.
+    /// Marked as ready when the DHCP packet receiver thread should terminate.
+    isc::util::WatchSocket sockets_[RCV_TERMINATE + 1];
+
+    /// DHCP packet thread mutex.
+    isc::util::thread::Mutex lock_;
+
+    /// DHCP packet receiver thread.
+    isc::util::thread::ThreadPtr thread_ ;
+};
+
+/// @brief Defines a pointer to a Receiver
+typedef boost::shared_ptr<Receiver> ReceiverPtr;
+
 /// @brief Forward declaration to the @c IfaceMgr.
 class IfaceMgr;
 
@@ -1056,7 +1165,7 @@ public:
 
     /// @brief Returns true if there is a receiver currently running.
     bool isReceiverRunning() const {
-        return (receiver_thread_ != 0);
+        return (receiver_ != 0);
     }
 
     /// @brief Configures DHCP packet queue
@@ -1074,6 +1183,15 @@ public:
     /// @throw InvalidOperation if the receiver thread is currently running.
     bool configureDHCPPacketQueue(const uint16_t family,
                                   data::ConstElementPtr queue_control);
+
+    /// @brief Convenience method for adding an descriptor to a set
+    ///
+    /// @param fd descriptor to add
+    /// @param[out] maxfd maximum fd value in the set.  If the new fd is
+    /// larger than it's current value, it will be updated to new fd value
+    /// @param sockets pointer to the set of sockets
+    /// @throw BadValue if sockets is null
+    static void add_fd(int fd, int& maxfd, fd_set* sockets);
 
     // don't use private, we need derived classes in tests
 protected:
@@ -1349,28 +1467,8 @@ private:
     /// @brief Allows to use loopback
     bool allow_loopback_;
 
-    /// @brief Error message of the last DHCP packet receive error.
-    std::string receiver_error_;
-
-    /// @brief DHCP packet receive error watch socket.
-    /// Marked as ready when the DHCP packet receiver experiences
-    /// an I/O error.
-    isc::util::WatchSocket error_watch_;
-
-    /// @brief DHCP packet receive watch socket.
-    /// Marked as ready when the DHCP packet receiver adds a packet
-    /// to the packet queue.
-    isc::util::WatchSocket receive_watch_;
-
-    /// @brief Packet receiver terminate watch socket.
-    /// Marked as ready when the DHCP packet receiver thread should terminate.
-    isc::util::WatchSocket terminate_watch_;
-
-    /// DHCP packet receiver mutex.
-    isc::util::thread::Mutex receiver_lock_;
-
-    /// DHCP packet receiver thread.
-    isc::util::thread::ThreadPtr receiver_thread_;
+    /// DHCP packet receiver.
+    ReceiverPtr receiver_;
 };
 
 }; // namespace isc::dhcp
