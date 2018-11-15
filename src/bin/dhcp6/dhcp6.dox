@@ -343,7 +343,7 @@ mode). Finally, the syntactic context allows the error message to be more
 descriptive if the input string does not parse properly.
 
 Details of the refactor of the classes derived from DhcpConfigParser are
-documented in http://oldkea.isc.org/wiki/SimpleParser.
+documented in https://gitlab.isc.org/isc-projects/kea/wikis/designs/simple-parser-design.
 
 For a generic description of the conflict avoidance, see @ref parserFlex.
 
