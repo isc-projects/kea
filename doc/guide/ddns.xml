@@ -93,7 +93,7 @@
         clients are required to embed ther IPv6 DUID within their IPv4 client
         identifier option as described in
         <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
-        In this way, DNS upates for both IPv4 and IPv6 can be managed under
+        In this way, DNS updates for both IPv4 and IPv6 can be managed under
         the same DHCID RR. Support for this does not yet exist in Kea but is
         called for in the ticket, http://oldkea.isc.org/ticket/4519, which we
         hope to include in a future release.
