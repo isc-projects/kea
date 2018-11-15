@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.2.1.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -372,49 +372,49 @@ namespace isc { namespace agent {
     {
             case 41: // "constant string"
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 378 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 42: // "integer"
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
 #line 385 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 43: // "floating point"
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
 #line 392 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 44: // "boolean"
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
 #line 399 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 53: // value
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 406 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 56: // map_value
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 413 "agent_parser.cc" // lalr1.cc:635
         break;
 
       case 107: // socket_type_value
 
-#line 103 ""agent_parser.yy"" // lalr1.cc:635
+#line 103 "agent_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 420 "agent_parser.cc" // lalr1.cc:635
         break;
