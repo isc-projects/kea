@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.2.1.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -372,49 +372,49 @@ namespace isc { namespace d2 {
     {
             case 53: // "constant string"
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 378 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 54: // "integer"
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
 #line 385 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 55: // "floating point"
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
 #line 392 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 56: // "boolean"
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
 #line 399 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 68: // value
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 406 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 72: // map_value
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 413 "d2_parser.cc" // lalr1.cc:635
         break;
 
       case 96: // ncr_protocol_value
 
-#line 111 ""d2_parser.yy"" // lalr1.cc:635
+#line 111 "d2_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 420 "d2_parser.cc" // lalr1.cc:635
         break;

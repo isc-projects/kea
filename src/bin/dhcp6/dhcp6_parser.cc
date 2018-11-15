@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.2.1.
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
@@ -384,77 +384,77 @@ namespace isc { namespace dhcp {
     {
             case 171: // "constant string"
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< std::string > (); }
 #line 390 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 172: // "integer"
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< int64_t > (); }
 #line 397 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 173: // "floating point"
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< double > (); }
 #line 404 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 174: // "boolean"
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< bool > (); }
 #line 411 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 192: // value
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 418 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 196: // map_value
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 425 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 248: // db_type
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 432 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 337: // hr_mode
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 439 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 473: // duid_type
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 446 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 508: // ncr_protocol_value
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 453 "dhcp6_parser.cc" // lalr1.cc:635
         break;
 
       case 516: // replace_client_name_value
 
-#line 249 ""dhcp6_parser.yy"" // lalr1.cc:635
+#line 249 "dhcp6_parser.yy" // lalr1.cc:635
         { yyoutput << yysym.value.template as< ElementPtr > (); }
 #line 460 "dhcp6_parser.cc" // lalr1.cc:635
         break;
