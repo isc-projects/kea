@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.0.4.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@
 #ifndef YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 # define YY_PARSER6_DHCP6_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "dhcp6_parser.yy" // lalr1.cc:377
+#line 17 "dhcp6_parser.yy" // lalr1.cc:379
 
 #include <string>
 #include <cc/data.h>
@@ -52,7 +52,7 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
 
-#line 56 "dhcp6_parser.h" // lalr1.cc:377
+#line 56 "dhcp6_parser.h" // lalr1.cc:379
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -135,9 +135,9 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined PARSER6_DEBUG */
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp6_parser.yy" // lalr1.cc:379
 namespace isc { namespace dhcp {
-#line 141 "dhcp6_parser.h" // lalr1.cc:377
+#line 141 "dhcp6_parser.h" // lalr1.cc:379
 
 
 
@@ -1496,6 +1496,8 @@ namespace isc { namespace dhcp {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
+      /// Copy construct.
+      stack_symbol_type (const stack_symbol_type& that);
       /// Steal the contents from \a sym to build this.
       stack_symbol_type (state_type s, symbol_type& sym);
       /// Assignment, needed by push_back.
@@ -1524,7 +1526,7 @@ namespace isc { namespace dhcp {
     void yypush_ (const char* m, state_type s, symbol_type& sym);
 
     /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned int n = 1);
+    void yypop_ (unsigned n = 1);
 
     /// Constants.
     enum
@@ -1596,12 +1598,12 @@ namespace isc { namespace dhcp {
      155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
      165,   166,   167,   168,   169,   170,   171,   172,   173,   174
     };
-    const unsigned int user_token_number_max_ = 429;
+    const unsigned user_token_number_max_ = 429;
     const token_number_type undef_token_ = 2;
 
-    if (static_cast<int>(t) <= yyeof_)
+    if (static_cast<int> (t) <= yyeof_)
       return yyeof_;
-    else if (static_cast<unsigned int> (t) <= user_token_number_max_)
+    else if (static_cast<unsigned> (t) <= user_token_number_max_)
       return translate_table[t];
     else
       return undef_token_;
@@ -1615,19 +1617,17 @@ namespace isc { namespace dhcp {
 
   // basic_symbol.
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol ()
     : value ()
   {}
 
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
     : Base (other)
     , value ()
     , location (other.location)
   {
-      switch (other.type_get ())
+    switch (other.type_get ())
     {
       case 192: // value
       case 196: // map_value
@@ -1661,16 +1661,14 @@ namespace isc { namespace dhcp {
 
   }
 
-
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
     : Base (t)
     , value ()
     , location (l)
   {
     (void) v;
-      switch (this->type_get ())
+    switch (this->type_get ())
     {
       case 192: // value
       case 196: // map_value
@@ -1750,14 +1748,12 @@ namespace isc { namespace dhcp {
 
 
   template <typename Base>
-  inline
   Dhcp6Parser::basic_symbol<Base>::~basic_symbol ()
   {
     clear ();
   }
 
   template <typename Base>
-  inline
   void
   Dhcp6Parser::basic_symbol<Base>::clear ()
   {
@@ -1772,7 +1768,7 @@ namespace isc { namespace dhcp {
     }
 
     // Type destructor.
-    switch (yytype)
+  switch (yytype)
     {
       case 192: // value
       case 196: // map_value
@@ -1808,7 +1804,6 @@ namespace isc { namespace dhcp {
   }
 
   template <typename Base>
-  inline
   bool
   Dhcp6Parser::basic_symbol<Base>::empty () const
   {
@@ -1816,12 +1811,11 @@ namespace isc { namespace dhcp {
   }
 
   template <typename Base>
-  inline
   void
   Dhcp6Parser::basic_symbol<Base>::move (basic_symbol& s)
   {
-    super_type::move(s);
-      switch (this->type_get ())
+    super_type::move (s);
+    switch (this->type_get ())
     {
       case 192: // value
       case 196: // map_value
@@ -2965,9 +2959,9 @@ namespace isc { namespace dhcp {
   }
 
 
-#line 14 "dhcp6_parser.yy" // lalr1.cc:377
+#line 14 "dhcp6_parser.yy" // lalr1.cc:379
 } } // isc::dhcp
-#line 2971 "dhcp6_parser.h" // lalr1.cc:377
+#line 2965 "dhcp6_parser.h" // lalr1.cc:379
 
 
 
