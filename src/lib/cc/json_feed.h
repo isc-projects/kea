@@ -11,9 +11,9 @@
 #include <exceptions/exceptions.h>
 #include <util/state_model.h>
 #include <boost/shared_ptr.hpp>
-#include <list>
 #include <stdint.h>
 #include <string>
+#include <vector>
 
 namespace isc {
 namespace config {
@@ -278,7 +278,10 @@ private:
     //@}
 
     /// @brief Internal buffer from which the feed reads data.
-    std::list<char> buffer_;
+    std::vector<char> buffer_;
+
+    /// @brief Holds pointer to the next byte in the buffer to be read.
+    size_t data_ptr_;
 
     /// @brief Error message set by @ref onModelFailure.
     std::string error_message_;

@@ -1,9 +1,9 @@
-// Generated 201804111444
-// A Bison parser, made by GNU Bison 3.0.4.
+// Generated 201811151407
+// A Bison parser, made by GNU Bison 3.0.5.
 
 // Stack handling for Bison parsers in C++
 
-// Copyright (C) 2002-2015 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -41,9 +41,10 @@
 
 # include <vector>
 
-#line 14 "agent_parser.yy" // stack.hh:132
+#line 14 "agent_parser.yy" // stack.hh:131
 namespace isc { namespace agent {
-#line 46 "stack.hh" // stack.hh:132
+#line 46 "stack.hh" // stack.hh:131
+  /// A stack with random access from its top.
   template <class T, class S = std::vector<T> >
   class stack
   {
@@ -58,20 +59,24 @@ namespace isc { namespace agent {
       seq_.reserve (200);
     }
 
-    stack (unsigned int n)
+    stack (unsigned n)
       : seq_ (n)
     {}
 
-    inline
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
     T&
-    operator[] (unsigned int i)
+    operator[] (unsigned i)
     {
       return seq_[seq_.size () - 1 - i];
     }
 
-    inline
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
     const T&
-    operator[] (unsigned int i) const
+    operator[] (unsigned i) const
     {
       return seq_[seq_.size () - 1 - i];
     }
@@ -79,7 +84,6 @@ namespace isc { namespace agent {
     /// Steal the contents of \a t.
     ///
     /// Close to move-semantics.
-    inline
     void
     push (T& t)
     {
@@ -87,9 +91,8 @@ namespace isc { namespace agent {
       operator[](0).move (t);
     }
 
-    inline
     void
-    pop (unsigned int n = 1)
+    pop (unsigned n = 1)
     {
       for (; n; --n)
         seq_.pop_back ();
@@ -101,21 +104,18 @@ namespace isc { namespace agent {
       seq_.clear ();
     }
 
-    inline
     typename S::size_type
     size () const
     {
       return seq_.size ();
     }
 
-    inline
     const_iterator
     begin () const
     {
       return seq_.rbegin ();
     }
 
-    inline
     const_iterator
     end () const
     {
@@ -134,25 +134,24 @@ namespace isc { namespace agent {
   class slice
   {
   public:
-    slice (const S& stack, unsigned int range)
+    slice (const S& stack, unsigned range)
       : stack_ (stack)
       , range_ (range)
     {}
 
-    inline
     const T&
-    operator [] (unsigned int i) const
+    operator [] (unsigned i) const
     {
       return stack_[range_ - i];
     }
 
   private:
     const S& stack_;
-    unsigned int range_;
+    unsigned range_;
   };
 
-#line 14 "agent_parser.yy" // stack.hh:132
+#line 14 "agent_parser.yy" // stack.hh:131
 } } // isc::agent
-#line 156 "stack.hh" // stack.hh:132
+#line 155 "stack.hh" // stack.hh:131
 
 #endif // !YY_AGENT_STACK_HH_INCLUDED

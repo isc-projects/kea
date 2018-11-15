@@ -37,7 +37,7 @@ struct SocketInfo {
     /// it is bound to an interface not the address and port. The implications
     /// include the possibility that the other process (e.g. the other instance
     /// of DHCP server) will bind to the same address and port through which the
-    /// raw socket receives the DHCP messages.Another implication is that the
+    /// raw socket receives the DHCP messages. Another implication is that the
     /// kernel, being unaware of the DHCP server operating through the raw
     /// socket, will respond with the ICMP "Destination port unreachable"
     /// messages when DHCP messages are only received through the raw socket.

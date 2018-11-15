@@ -155,15 +155,16 @@ HttpResponseParser::defineStates() {
 
 void
 HttpResponseParser::receiveStartHandler() {
-    char c = getNextFromBuffer();
+    std::string bytes;
+    getNextFromBuffer(bytes);
     if (getNextEvent() != NEED_MORE_DATA_EVT) {
         switch(getNextEvent()) {
         case START_EVT:
-            if (c == 'H') {
+            if (bytes[0] == 'H') {
                 transition(HTTP_VERSION_T1_ST, DATA_READ_OK_EVT);
 
             } else {
-                parseFailure("unexpected first character " + std::string(1, c) +
+                parseFailure("unexpected first character " + std::string(1, bytes[0]) +
                              ": expected \'H\'");
             }
             break;
@@ -435,14 +436,19 @@ HttpResponseParser::headerValueHandler() {
 
 void
 HttpResponseParser::bodyHandler() {
-    stateWithReadHandler("bodyHandler", [this](const char c) {
+    stateWithMultiReadHandler("bodyHandler", [this](const std::string& body) {
         // We don't validate the body at this stage. Simply record the
         // number of characters specified within "Content-Length".
-        context_->body_.push_back(c);
-        if (context_->body_.length() <
-            response_.getHeaderValueAsUint64("Content-Length")) {
+        context_->body_ += body;
+        size_t content_length = response_.getHeaderValueAsUint64("Content-Length");
+        if (context_->body_.length() < content_length) {
             transition(HTTP_BODY_ST, DATA_READ_OK_EVT);
+
         } else {
+            // If there was some extraneous data, ignore it.
+            if (context_->body_.length() > content_length) {
+                context_->body_.resize(content_length);
+            }
             transition(HTTP_PARSE_OK_ST, HTTP_PARSE_OK_EVT);
         }
     });
