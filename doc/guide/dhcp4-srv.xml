@@ -3909,7 +3909,7 @@ It is merely echoed by the server
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information. <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xlink:href="http://oldkea.isc.org/wiki/HostReservationsHowTo">http://oldkea.isc.org/wiki/HostReservationsHowTo</uri>
+        xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
         provides some examples how to conduct common host reservation operations.
       </para>
 
