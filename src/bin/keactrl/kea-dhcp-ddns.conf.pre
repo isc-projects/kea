@@ -6,7 +6,7 @@
 // do. Comments in this configuration file sometimes refer to sections for more
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
-// on Kea web page (https://kb.isc.org/docs/kea-administrator-reference-manual; the direct link for
+// in ISC's Knowledgebase (https://kb.isc.org/docs/kea-administrator-reference-manual; the direct link for
 // the stable version is https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
 //
 // This configuration file contains only DHCP DDNS daemon's configuration.
