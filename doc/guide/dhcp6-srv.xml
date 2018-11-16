@@ -3626,6 +3626,7 @@ should include options from the isc option space:
 "Dhcp6": {
 
     <userinput>
+    "reservation-mode": "global",
     "reservations": [
        {
         "duid": "00:03:00:01:11:22:33:44:55:66",
@@ -3640,12 +3641,6 @@ should include options from the isc option space:
     "subnet6": [
     {
         "subnet": "2001:db8:1::/64",
-        <userinput>"reservation-mode": "global"</userinput>,
-        ...
-    },
-    {
-        "subnet": "2001:db8:2::/64",
-        <userinput>"reservation-mode": "global"</userinput>,
         ...
     }
     ]

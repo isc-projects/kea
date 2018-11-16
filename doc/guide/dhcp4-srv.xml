@@ -3999,6 +3999,7 @@ It is merely echoed by the server
 "Dhcp4": {
 
     <userinput>
+    "reservation-mode": "global",
     "reservations": [
        {
         "hw-address": "01:bb:cc:dd:ee:ff",
@@ -4013,18 +4014,12 @@ It is merely echoed by the server
     "subnet4": [
     {
         "subnet": "192.0.2.0/24",
-        <userinput>"reservation-mode": "global"</userinput>,
-        ...
-    },
-    {
-        "subnet": "192.0.8.0/24",
-        <userinput>"reservation-mode": "global"</userinput>,
         ...
     }
     ]
 }
 </screen>
-  For more details regarding global erservations, see <xref linkend="global-reservations4"/>.
+  For more details regarding global reservations, see <xref linkend="global-reservations4"/>.
 
       </para>
 
