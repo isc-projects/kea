@@ -67,7 +67,8 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "next-server",              Element::string,  "0.0.0.0" },
     { "server-hostname",          Element::string,  "" },
     { "boot-file-name",           Element::string,  "" },
-    { "server-tag",               Element::string,  "" }
+    { "server-tag",               Element::string,  "" },
+    { "reservation-mode",         Element::string,  "all" }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -81,7 +82,6 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
-    { "reservation-mode", Element::string,  "all" },
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
@@ -103,8 +103,7 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
 /// @brief This table defines default values for each IPv4 shared network.
 const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
     { "client-class",     Element::string, "" },
-    { "interface",        Element::string, "" },
-    { "reservation-mode", Element::string, "all" }
+    { "interface",        Element::string, "" }
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.

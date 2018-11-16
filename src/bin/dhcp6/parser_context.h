@@ -245,7 +245,7 @@ public:
         /// Used while parsing shared-networks structures.
         SHARED_NETWORK,
 
-        /// Used while parsing Dhcp6/Subnet6/reservation-mode.
+        /// Used while parsing Dhcp6/reservation-mode.
         RESERVATION_MODE,
 
         /// Used while parsing Dhcp6/option-def structures.

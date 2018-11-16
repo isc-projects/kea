@@ -63,7 +63,8 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "valid-lifetime",           Element::integer, "7200" },
     { "decline-probation-period", Element::integer, "86400" }, // 24h
     { "dhcp4o6-port",             Element::integer, "0" },
-    { "server-tag",               Element::string, "" }
+    { "server-tag",               Element::string,  "" },
+    { "reservation-mode",         Element::string,  "all" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -71,9 +72,8 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
-    { "reservation-mode", Element::string,  "all" },
     { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
-    { "interface-id",     Element::string,  "" },
+    { "interface-id",     Element::string,  "" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -84,9 +84,8 @@ const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
 /// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
     { "client-class",     Element::string,  "" },
-    { "interface",        Element::string, "" },
+    { "interface",        Element::string,  "" },
     { "interface-id",     Element::string,  "" },
-    { "reservation-mode", Element::string, "all" },
     { "rapid-commit",     Element::boolean, "false" } // rapid-commit disabled by default
 };
 
