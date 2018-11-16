@@ -546,7 +546,10 @@ public:
                                               // reasons, see memset() above
 
             // hostname: varchar(255)
-            bind_[8].buffer_type = MYSQL_TYPE_VARCHAR;
+            // Note that previously we used MYSQL_TYPE_VARCHAR instead of
+            // MYSQL_TYPE_STRING. However, that caused 'buffer type not supported'
+            // errors on some systems running MariaDB.
+            bind_[8].buffer_type = MYSQL_TYPE_STRING;
             bind_[8].buffer = const_cast<char*>(lease_->hostname_.c_str());
             bind_[8].buffer_length = lease_->hostname_.length();
             // bind_[8].is_null = &MLM_FALSE; // commented out for performance
@@ -667,6 +670,9 @@ public:
                                           // reasons, see memset() above
 
         // hostname: varchar(255)
+        // Note that previously we used MYSQL_TYPE_VARCHAR instead of
+        // MYSQL_TYPE_STRING. However, that caused 'buffer type not supported'
+        // errors on some systems running MariaDB.
         hostname_length_ = sizeof(hostname_buffer_);
         bind_[8].buffer_type = MYSQL_TYPE_STRING;
         bind_[8].buffer = reinterpret_cast<char*>(hostname_buffer_);
@@ -1006,7 +1012,7 @@ public:
                                                // reasons, see memset() above
 
             // hostname: varchar(255)
-            bind_[11].buffer_type = MYSQL_TYPE_VARCHAR;
+            bind_[11].buffer_type = MYSQL_TYPE_STRING;
             bind_[11].buffer = const_cast<char*>(lease_->hostname_.c_str());
             bind_[11].buffer_length = lease_->hostname_.length();
             // bind_[11].is_null = &MLM_FALSE; // commented out for performance
