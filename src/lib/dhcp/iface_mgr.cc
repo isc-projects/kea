@@ -227,11 +227,6 @@ Receiver::stop() {
     last_error_ = "thread stopped";
 }
 
-isc::util::thread::Mutex&
-Receiver::getLock() {
-    return(lock_);
-}
-
 void
 Receiver::setError(const std::string& error_msg) {
     last_error_ = error_msg;
@@ -1125,14 +1120,9 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
-    // Protected packet queue access.
-    Pkt4Ptr pkt;
-    {
-        Mutex::Locker lock(receiver_->getLock());
-        pkt = getPacketQueue4()->dequeuePacket();
-        if (!pkt) {
-            receiver_->clearReady(Receiver::RCV_READY);
-        }
+    Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
+    if (!pkt) {
+        receiver_->clearReady(Receiver::RCV_READY);
     }
 
     return (pkt);
@@ -1456,14 +1446,9 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     }
 
     // If we're here it should only be because there are DHCP packets waiting.
-    // Protected packet queue access.
-    Pkt6Ptr pkt;
-    {
-        Mutex::Locker lock(receiver_->getLock());
-        pkt = getPacketQueue6()->dequeuePacket();
-        if (!pkt) {
-            receiver_->clearReady(Receiver::RCV_READY);
-        }
+    Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
+    if (!pkt) {
+        receiver_->clearReady(Receiver::RCV_READY);
     }
 
     return (pkt);
@@ -1643,7 +1628,6 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     }
 
     if (pkt) {
-        Mutex::Locker lock(receiver_->getLock());
         getPacketQueue4()->enqueuePacket(pkt, socket_info);
         receiver_->markReady(Receiver::RCV_READY);
     }
@@ -1675,7 +1659,6 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
     }
 
     if (pkt) {
-        Mutex::Locker lock(receiver_->getLock());
         getPacketQueue6()->enqueuePacket(pkt, socket_info);
         receiver_->markReady(Receiver::RCV_READY);
     }
