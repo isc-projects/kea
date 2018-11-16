@@ -465,7 +465,13 @@ public:
                 hwaddr_ = hwaddr->hwaddr_;
                 hwaddr_length_ = hwaddr->hwaddr_.size();
                 bind_[1].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[1].buffer = reinterpret_cast<char*>(&(hwaddr_[0]));
+
+                // Do not reference the buffer if it is empty and just leave it
+                // set to 0 (memset set it to 0 above).
+                if (!hwaddr_.empty()) {
+                    bind_[1].buffer = reinterpret_cast<char*>(&(hwaddr_[0]));
+                }
+
                 bind_[1].buffer_length = hwaddr_length_;
                 bind_[1].length = &hwaddr_length_;
             } else {
@@ -485,7 +491,13 @@ public:
                 client_id_ = lease_->client_id_->getClientId();
                 client_id_length_ = client_id_.size();
                 bind_[2].buffer_type = MYSQL_TYPE_BLOB;
-                bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
+
+                // Do not reference the buffer if it is empty and just leave it
+                // set to 0 (memset set it to 0 above).
+                if (!client_id_.empty()) {
+                    bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
+                }
+
                 bind_[2].buffer_length = client_id_length_;
                 bind_[2].length = &client_id_length_;
                 // bind_[2].is_null = &MLM_FALSE; // commented out for performance
@@ -1897,16 +1909,23 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
-    // As "buffer" is "char*" - even though the data is being read - we need
-    // to cast away the "const"ness as well as reinterpreting the data as
-    // a "char*". (We could avoid the "const_cast" by copying the data to a
-    // local variable, but as the data is only being read, this introduces
-    // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
-
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(data);
+
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+    uint8_t* data = 0;
+
+    // Only reference the buffer if the buffer has any data. Otherwise
+    // leave it set to 0 (memset set it to 0 above).
+    if (hwaddr_length > 0) {
+        // As "buffer" is "char*" - even though the data is being read - we need
+        // to cast away the "const"ness as well as reinterpreting the data as
+        // a "char*". (We could avoid the "const_cast" by copying the data to a
+        // local variable, but as the data is only being read, this introduces
+        // an unnecessary copy).
+        data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
+        inbind[0].buffer = reinterpret_cast<char*>(data);
+    }
+
     inbind[0].buffer_length = hwaddr_length;
     inbind[0].length = &hwaddr_length;
 
@@ -1927,16 +1946,23 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
-    // As "buffer" is "char*" - even though the data is being read - we need
-    // to cast away the "const"ness as well as reinterpreting the data as
-    // a "char*". (We could avoid the "const_cast" by copying the data to a
-    // local variable, but as the data is only being read, this introduces
-    // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
-
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(data);
+
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+    uint8_t* data = 0;
+
+    // Only reference the buffer if the buffer has any data. Otherwise
+    // leave it set to 0 (memset set it to 0 above).
+    if (hwaddr_length > 0) {
+        // As "buffer" is "char*" - even though the data is being read - we need
+        // to cast away the "const"ness as well as reinterpreting the data as
+        // a "char*". (We could avoid the "const_cast" by copying the data to a
+        // local variable, but as the data is only being read, this introduces
+        // an unnecessary copy).
+        data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
+        inbind[0].buffer = reinterpret_cast<char*>(data);
+    }
+
     inbind[0].buffer_length = hwaddr_length;
     inbind[0].length = &hwaddr_length;
 
@@ -1960,10 +1986,17 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+
+    // Only reference the buffer if the buffer has any data. Otherwise
+    // leave it set to 0 (memset set it to 0 above).
+    if (client_data_length > 0) {
+        inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+    }
+
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
 
@@ -1997,7 +2030,13 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+
+    // Only reference the buffer if the buffer has any data. Otherwise
+    // leave it set to 0 (memset set it to 0 above).
+    if (client_data_length > 0) {
+        inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
+    }
+
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
 
