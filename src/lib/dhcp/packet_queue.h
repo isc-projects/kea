@@ -11,6 +11,7 @@
 #include <dhcp/socket_info.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <util/threads/sync.h>
 
 #include <boost/function.hpp>
 #include <boost/circular_buffer.hpp>
@@ -40,6 +41,8 @@ enum class QueueEnd {
 /// This class serves as the abstract interface for packet queue
 /// implementations which may be used by @c IfaceMgr to store
 /// inbound packets until they are a dequeued for processing.
+/// @note Derivations of this class MUST BE thread-safe.
+/// @endnote
 ///
 template<typename PacketTypePtr>
 class PacketQueue {
@@ -245,12 +248,14 @@ public:
 
     /// @brief Pushes a packet onto the queue
     ///
-    ///  Adds a packet onto the end of queue specified.
+    ///  Adds a packet onto the end of queue specified.  Note that this
+    ///  function is protected by a Mutex.
     ///
     /// @param packet packet to add to the queue
     /// @param to specifies the end of the queue to which the packet
     /// should be added.
     virtual void pushPacket(PacketTypePtr& packet, const QueueEnd& to=QueueEnd::BACK) {
+        isc::util::thread::Mutex::Locker lock(mutex_);
         if (to == QueueEnd::BACK) {
             queue_.push_back(packet);
         } else {
@@ -260,7 +265,8 @@ public:
 
     /// @brief Pops a packet from the queue
     ///
-    /// Removes a packet from the end of the queue specified and returns it.
+    /// Removes a packet from the end of the queue specified and returns it.  Note
+    /// that this function is protected by a Mutex.
     ///
     /// @param from specifies the end of the queue from which the packet
     /// should be taken.
@@ -268,6 +274,7 @@ public:
     /// @return A pointer to dequeued packet, or an empty pointer
     /// if the queue is empty.
     virtual PacketTypePtr popPacket(const QueueEnd& from = QueueEnd::FRONT) {
+        isc::util::thread::Mutex::Locker lock(mutex_);
         PacketTypePtr packet;
         if (queue_.empty()) {
             return (packet);
@@ -352,6 +359,9 @@ private:
 
     /// @brief Packet queue
     boost::circular_buffer<PacketTypePtr> queue_;
+
+    /// @brief Mutex for protecting queue accesses.
+    isc::util::thread::Mutex mutex_;
 };
 
 
