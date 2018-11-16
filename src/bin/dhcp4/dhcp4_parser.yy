@@ -464,6 +464,7 @@ global_param: valid_lifetime
             | reservations
             | config_control
             | server_tag
+            | reservation_mode
             | unknown_map_entry
             ;
 

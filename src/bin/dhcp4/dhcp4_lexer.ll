@@ -766,6 +766,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"reservation-mode\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RESERVATION_MODE(driver.loc_);

@@ -465,6 +465,7 @@ global_param: preferred_lifetime
             | reservations
             | config_control
             | server_tag
+            | reservation_mode
             | unknown_map_entry
             ;
 
