@@ -19,7 +19,6 @@
 #include <util/optional_value.h>
 #include <util/watch_socket.h>
 #include <util/threads/thread.h>
-#include <util/threads/sync.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
@@ -524,13 +523,6 @@ public:
     /// not done in the destructor to avoid race conditions.
     void stop();
 
-    /// @brief Fetches the receiver's thread mutex.
-    ///
-    /// This is used for instantation mutex locks to protect code blocks.
-    ///
-    /// @return a reference to the mutex
-    isc::util::thread::Mutex& getLock();
-
     /// @brief Sets the receiver error state
     ///
     /// This records the given error message and sets the error watch
@@ -556,9 +548,6 @@ public:
     /// -# RCV_TERMINATE Packet receiver terminate watch socket.
     /// Marked as ready when the DHCP packet receiver thread should terminate.
     isc::util::WatchSocket sockets_[RCV_TERMINATE + 1];
-
-    /// DHCP packet thread mutex.
-    isc::util::thread::Mutex lock_;
 
     /// DHCP packet receiver thread.
     isc::util::thread::ThreadPtr thread_ ;
