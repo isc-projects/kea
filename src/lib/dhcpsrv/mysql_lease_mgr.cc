@@ -496,7 +496,7 @@ public:
                 client_id_length_ = client_id_.size();
 
                 // Make sure that the buffer has at least length of 1, even if
-                // empty HW address is passed. This is required by some of the
+                // empty client id is passed. This is required by some of the
                 // MySQL connectors that the buffer is set to non-null value.
                 // Otherwise, null value would be inserted into the database,
                 // rather than empty string.
@@ -1933,7 +1933,7 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
 
     // If the data happens to be empty, we have to create a 1 byte dummy
     // buffer and pass it to the binding.
-    std::vector<uint8_t> single_byte_vec(1);
+    uint8_t single_byte_data = 0;
 
     // As "buffer" is "char*" - even though the data is being read - we need
     // to cast away the "const"ness as well as reinterpreting the data as
@@ -1941,7 +1941,7 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
     uint8_t* data = !hwaddr.hwaddr_.empty() ? const_cast<uint8_t*>(&hwaddr.hwaddr_[0])
-        : &single_byte_vec[0];
+        : &single_byte_data;
 
     inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = hwaddr_length;
@@ -2197,9 +2197,18 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
     // data).  For that reason, "const_cast" has been used.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
+
+    // Make sure that the buffer has at least length of 1, even if
+    // empty client id is passed. This is required by some of the
+    // MySQL connectors that the buffer is set to non-null value.
+    // Otherwise, null value would be inserted into the database,
+    // rather than empty string.
+    uint8_t single_byte_data = 0;
+    uint8_t* data = !duid_vector.empty() ? const_cast<uint8_t*>(&duid_vector[0])
+        : &single_byte_data;
+
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(
-            const_cast<uint8_t*>(&duid_vector[0]));
+    inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
 
