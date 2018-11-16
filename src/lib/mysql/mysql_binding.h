@@ -495,9 +495,19 @@ private:
     /// @param end Iterator pointing to the end of the assigned range.
     template<typename Iterator>
     void setBufferValue(Iterator begin, Iterator end) {
+        length_ = std::distance(begin, end);
         buffer_.assign(begin, end);
+        // It appears that the MySQL connectors sometimes require that the
+        // buffer is specified (set to a non-zero value), even if the buffer
+        // length is 0. We have found that setting the buffer to 0 value would
+        // cause the value inserted to the database be NULL. In order to avoid
+        // it, we simply make sure that the buffer length is at least 1 byte and
+        // provide the pointer to this byte within the binding.
+        if (buffer_.empty()) {
+            buffer_.resize(1);
+        }
         bind_.buffer = &buffer_[0];
-        bind_.buffer_length = std::distance(begin, end);
+        bind_.buffer_length = length_;
     }
 
     /// @brief Resizes the buffer and assigns new length to the binding.
