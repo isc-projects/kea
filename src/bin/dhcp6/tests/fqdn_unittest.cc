@@ -48,10 +48,9 @@ public:
 
     // Bit Constants for turning on and off DDNS configuration options.
     // (Defined here as these are only meaningful to this class.)
-    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
-    static const uint16_t OVERRIDE_NO_UPDATE = 2;
-    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
-    static const uint16_t REPLACE_CLIENT_NAME = 8;
+    static const uint16_t OVERRIDE_NO_UPDATE = 1;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 2;
+    static const uint16_t REPLACE_CLIENT_NAME = 4;
 
     // Enum used to specify whether a client (packet) should include
     // the hostname option
@@ -123,7 +122,6 @@ public:
                                   isc::asiolink::IOAddress("::"), 0,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
                                   ((mask & REPLACE_CLIENT_NAME) ?

@@ -172,8 +172,6 @@ TranslatorConfig::getDdnsKea(std::string xpath) {
     getParam(ddns, xpath, "max-queue-size");
     getParam(ddns, xpath, "ncr-protocol");
     getParam(ddns, xpath, "ncr-format");
-    /// @todo: remove this one when it will be removed from the syntax.
-    getParam(ddns, xpath, "always-include-fqdn");
     getParam(ddns, xpath, "override-no-update");
     getParam(ddns, xpath, "override-client-update");
     getParam(ddns, xpath, "replace-client-name");
@@ -615,11 +613,6 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         ConstElementPtr format = ddns->get("ncr-format");
         if (format) {
             setItem(xpath + "/dhcp-ddns/ncr-format", format, SR_ENUM_T);
-        }
-        ConstElementPtr always = ddns->get("always-include-fqdn");
-        if (always) {
-            setItem(xpath + "/dhcp-ddns/always-include-fqdn", always,
-                    SR_BOOL_T);
         }
         ConstElementPtr no_up = ddns->get("override-no-update");
         if (no_up) {
