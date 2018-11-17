@@ -75,7 +75,7 @@
             },
             "dhcp6": {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4",
+                "socket-name": "/path/to/the/unix/socket-v6",
                 "user-context": { "version": 3 }
             }
         },
