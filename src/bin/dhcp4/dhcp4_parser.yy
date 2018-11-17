@@ -183,7 +183,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
   OVERRIDE_NO_UPDATE "override-no-update"
   OVERRIDE_CLIENT_UPDATE "override-client-update"
   REPLACE_CLIENT_NAME "replace-client-name"
@@ -1891,7 +1890,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | always_include_fqdn
                | override_no_update
                | override_client_update
                | replace_client_name
@@ -1965,11 +1963,6 @@ ncr_format: NCR_FORMAT {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
-};
-
-always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("always-include-fqdn", b);
 };
 
 override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
