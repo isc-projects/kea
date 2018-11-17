@@ -268,15 +268,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"always-include-fqdn\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser6Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp6Parser::make_ALWAYS_INCLUDE_FQDN(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp6Parser::make_STRING("always-include-fqdn", driver.loc_);
-    }
-}
-
 \"override-no-update\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser6Context::DHCP_DDNS:

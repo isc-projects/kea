@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -108,7 +108,6 @@ Dhcp4SrvD2Test::configureD2(bool enable_d2, const bool exp_result,
         "     \"max-queue-size\" : " << max_queue_size << ", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -406,7 +405,6 @@ TEST_F(Dhcp4SrvD2Test, badTCP) {
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"TCP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -446,7 +444,6 @@ TEST_F(Dhcp4SrvD2Test, badFamily) {
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -486,7 +483,6 @@ TEST_F(Dhcp4SrvD2Test, senderEqServer) {
         "     \"max-queue-size\" : 1024, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "

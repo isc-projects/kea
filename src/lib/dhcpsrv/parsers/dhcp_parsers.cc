@@ -1310,9 +1310,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     dhcp_ddns::NameChangeFormat ncr_format =
         getFormat(client_config, "ncr-format");
 
-    bool always_include_fqdn =
-        getBoolean(client_config, "always-include-fqdn");
-
     bool override_no_update =
         getBoolean(client_config, "override-no-update");
 
@@ -1407,7 +1404,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             max_queue_size,
                                             ncr_protocol,
                                             ncr_format,
-                                            always_include_fqdn,
                                             override_no_update,
                                             override_client_update,
                                             replace_client_name_mode,
@@ -1441,7 +1437,6 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "max-queue-size", Element::integer, "1024" },
     { "ncr-protocol", Element::string, "UDP" },
     { "ncr-format", Element::string, "JSON" },
-    { "always-include-fqdn", Element::boolean, "false" },
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },

@@ -798,7 +798,6 @@ public:
     /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# always-include-fqdn
     /// -# override-no-update
     /// -# override-client-update
     /// -# replace-client-name

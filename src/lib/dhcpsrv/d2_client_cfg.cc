@@ -30,7 +30,6 @@ const size_t D2ClientConfig::DFT_SENDER_PORT = 0;
 const size_t D2ClientConfig::DFT_MAX_QUEUE_SIZE = 1024;
 const char* D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
 const char* D2ClientConfig::DFT_NCR_FORMAT = "JSON";
-const bool D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN = false;
 const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
 const char* D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE = "NEVER";
@@ -90,7 +89,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
                                      NameChangeFormat& ncr_format,
-                               const bool always_include_fqdn,
                                const bool override_no_update,
                                const bool override_client_update,
                                const ReplaceClientNameMode replace_client_name_mode,
@@ -106,7 +104,6 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       max_queue_size_(max_queue_size),
       ncr_protocol_(ncr_protocol),
       ncr_format_(ncr_format),
-      always_include_fqdn_(always_include_fqdn),
       override_no_update_(override_no_update),
       override_client_update_(override_client_update),
       replace_client_name_mode_(replace_client_name_mode),
@@ -127,7 +124,6 @@ D2ClientConfig::D2ClientConfig()
       max_queue_size_(DFT_MAX_QUEUE_SIZE),
       ncr_protocol_(dhcp_ddns::stringToNcrProtocol(DFT_NCR_PROTOCOL)),
       ncr_format_(dhcp_ddns::stringToNcrFormat(DFT_NCR_FORMAT)),
-      always_include_fqdn_(DFT_ALWAYS_INCLUDE_FQDN),
       override_no_update_(DFT_OVERRIDE_NO_UPDATE),
       override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
       replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
@@ -198,7 +194,6 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (max_queue_size_ == other.max_queue_size_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
             (ncr_format_ == other.ncr_format_) &&
-            (always_include_fqdn_ == other.always_include_fqdn_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
             (replace_client_name_mode_ == other.replace_client_name_mode_) &&
@@ -226,8 +221,6 @@ D2ClientConfig::toText() const {
                << ", max-queue-size: " << max_queue_size_
                << ", ncr-protocol: " << ncrProtocolToString(ncr_protocol_)
                << ", ncr-format: " << ncrFormatToString(ncr_format_)
-               << ", always-include-fqdn: " << (always_include_fqdn_ ?
-                                                "yes" : "no")
                << ", override-no-update: " << (override_no_update_ ?
                                                "yes" : "no")
                << ", override-client-update: " << (override_client_update_ ?
@@ -266,8 +259,6 @@ D2ClientConfig::toElement() const {
     result->set("ncr-protocol", Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol_)));
     // Set ncr-format
     result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
-    // Set always-include-fqdn
-    result->set("always-include-fqdn", Element::create(always_include_fqdn_));
     // Set override-no-update
     result->set("override-no-update", Element::create(override_no_update_));
     // Set override-client-update
