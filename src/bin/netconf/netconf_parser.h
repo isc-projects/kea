@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -30,6 +30,7 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 
+
 /**
  ** \file netconf_parser.h
  ** Define the isc::netconf::parser class.
@@ -37,10 +38,13 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
+// Undocumented macros, especially those whose name start with YY_,
+// are private implementation details.  Do not rely on them.
+
 #ifndef YY_NETCONF_NETCONF_PARSER_H_INCLUDED
 # define YY_NETCONF_NETCONF_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "netconf_parser.yy" // lalr1.cc:379
+#line 17 "netconf_parser.yy" // lalr1.cc:404
 
 #include <string>
 #include <cc/data.h>
@@ -51,7 +55,7 @@ using namespace isc::netconf;
 using namespace isc::data;
 using namespace std;
 
-#line 55 "netconf_parser.h" // lalr1.cc:379
+#line 59 "netconf_parser.h" // lalr1.cc:404
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -59,7 +63,21 @@ using namespace std;
 # include <stdexcept>
 # include <string>
 # include <vector>
-# include "stack.hh"
+
+// Support move semantics when possible.
+#if defined __cplusplus && 201103L <= __cplusplus
+# define YY_MOVE           std::move
+# define YY_MOVE_OR_COPY   move
+# define YY_MOVE_REF(Type) Type&&
+# define YY_RVREF(Type)    Type&&
+# define YY_COPY(Type)     Type
+#else
+# define YY_MOVE
+# define YY_MOVE_OR_COPY   copy
+# define YY_MOVE_REF(Type) Type&
+# define YY_RVREF(Type)    const Type&
+# define YY_COPY(Type)     const Type&
+#endif
 # include "location.hh"
 #include <typeinfo>
 #ifndef YYASSERT
@@ -86,15 +104,6 @@ using namespace std;
 # define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
 #endif
 
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
-# else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
-# endif
-#endif
-
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
 # define YYUSE(E) ((void) (E))
@@ -102,7 +111,7 @@ using namespace std;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -121,6 +130,18 @@ using namespace std;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
+#  endif
+# endif
+
 /* Debug traces.  */
 #ifndef NETCONF_DEBUG
 # if defined YYDEBUG
@@ -134,9 +155,128 @@ using namespace std;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined NETCONF_DEBUG */
 
-#line 14 "netconf_parser.yy" // lalr1.cc:379
+#line 14 "netconf_parser.yy" // lalr1.cc:404
 namespace isc { namespace netconf {
-#line 140 "netconf_parser.h" // lalr1.cc:379
+#line 161 "netconf_parser.h" // lalr1.cc:404
+
+  /// A stack with random access from its top.
+  template <typename T, typename S = std::vector<T> >
+  class stack
+  {
+  public:
+    // Hide our reversed order.
+    typedef typename S::reverse_iterator iterator;
+    typedef typename S::const_reverse_iterator const_iterator;
+    typedef typename S::size_type size_type;
+
+    stack (size_type n = 200)
+      : seq_ (n)
+    {}
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    T&
+    operator[] (size_type i)
+    {
+      return seq_[size () - 1 - i];
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    T&
+    operator[] (int i)
+    {
+      return operator[] (size_type (i));
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    const T&
+    operator[] (size_type i) const
+    {
+      return seq_[size () - 1 - i];
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    const T&
+    operator[] (int i) const
+    {
+      return operator[] (size_type (i));
+    }
+
+    /// Steal the contents of \a t.
+    ///
+    /// Close to move-semantics.
+    void
+    push (YY_MOVE_REF (T) t)
+    {
+      seq_.push_back (T ());
+      operator[](0).move (t);
+    }
+
+    void
+    pop (int n = 1)
+    {
+      for (; 0 < n; --n)
+        seq_.pop_back ();
+    }
+
+    void
+    clear ()
+    {
+      seq_.clear ();
+    }
+
+    size_type
+    size () const
+    {
+      return seq_.size ();
+    }
+
+    const_iterator
+    begin () const
+    {
+      return seq_.rbegin ();
+    }
+
+    const_iterator
+    end () const
+    {
+      return seq_.rend ();
+    }
+
+  private:
+    stack (const stack&);
+    stack& operator= (const stack&);
+    /// The wrapped container.
+    S seq_;
+  };
+
+  /// Present a slice of the top of a stack.
+  template <typename T, typename S = stack<T> >
+  class slice
+  {
+  public:
+    slice (const S& stack, int range)
+      : stack_ (stack)
+      , range_ (range)
+    {}
+
+    const T&
+    operator[] (int i) const
+    {
+      return stack_[range_ - i];
+    }
+
+  private:
+    const S& stack_;
+    int range_;
+  };
 
 
 
@@ -153,16 +293,17 @@ namespace isc { namespace netconf {
 
     /// Empty construction.
     variant ()
-      : yytypeid_ (YY_NULLPTR)
+      : yybuffer_ ()
+      , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
-    variant (const T& t)
+    variant (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
       YYASSERT (sizeof (T) <= S);
-      new (yyas_<T> ()) T (t);
+      new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
     /// Destruction, allowed only if empty.
@@ -174,23 +315,54 @@ namespace isc { namespace netconf {
     /// Instantiate an empty \a T in here.
     template <typename T>
     T&
-    build ()
+    emplace ()
     {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
-      return *new (yyas_<T> ()) T;
+      return *new (yyas_<T> ()) T ();
     }
 
+# if defined __cplusplus && 201103L <= __cplusplus
+    /// Instantiate a \a T in here from \a t.
+    template <typename T, typename U>
+    T&
+    emplace (U&& u)
+    {
+      YYASSERT (!yytypeid_);
+      YYASSERT (sizeof (T) <= S);
+      yytypeid_ = & typeid (T);
+      return *new (yyas_<T> ()) T (std::forward <U>(u));
+    }
+# else
     /// Instantiate a \a T in here from \a t.
     template <typename T>
     T&
-    build (const T& t)
+    emplace (const T& t)
     {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
+    }
+# endif
+
+    /// Instantiate an empty \a T in here.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build ()
+    {
+      return emplace<T> ();
+    }
+
+    /// Instantiate a \a T in here from \a t.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build (const T& t)
+    {
+      return emplace<T> (t);
     }
 
     /// Accessor to a built \a T.
@@ -198,6 +370,7 @@ namespace isc { namespace netconf {
     T&
     as ()
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -208,6 +381,7 @@ namespace isc { namespace netconf {
     const T&
     as () const
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -218,7 +392,7 @@ namespace isc { namespace netconf {
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsability.
+    /// should not be the variant's responsibility.
     /// Swapping between built and (possibly) non-built is done with
     /// variant::move ().
     template <typename T>
@@ -237,17 +411,32 @@ namespace isc { namespace netconf {
     void
     move (self_type& other)
     {
-      build<T> ();
+# if defined __cplusplus && 201103L <= __cplusplus
+      emplace<T> (std::move (other.as<T> ()));
+# else
+      emplace<T> ();
       swap<T> (other);
+# endif
       other.destroy<T> ();
     }
+
+# if defined __cplusplus && 201103L <= __cplusplus
+    /// Move the content of \a other to this.
+    template <typename T>
+    void
+    move (self_type&& other)
+    {
+      emplace<T> (std::move (other.as<T> ()));
+      other.destroy<T> ();
+    }
+#endif
 
     /// Copy the content of \a other to this.
     template <typename T>
     void
     copy (const self_type& other)
     {
-      build<T> (other.as<T> ());
+      emplace<T> (other.as<T> ());
     }
 
     /// Destroy the stored \a T.
@@ -261,7 +450,7 @@ namespace isc { namespace netconf {
 
   private:
     /// Prohibit blind copies.
-    self_type& operator=(const self_type&);
+    self_type& operator= (const self_type&);
     variant (const self_type&);
 
     /// Accessor to raw memory as \a T.
@@ -306,23 +495,23 @@ namespace isc { namespace netconf {
       // value
       // map_value
       // socket_type_value
-      char dummy1[sizeof(ElementPtr)];
+      char dummy1[sizeof (ElementPtr)];
 
       // "boolean"
-      char dummy2[sizeof(bool)];
+      char dummy2[sizeof (bool)];
 
       // "floating point"
-      char dummy3[sizeof(double)];
+      char dummy3[sizeof (double)];
 
       // "integer"
-      char dummy4[sizeof(int64_t)];
+      char dummy4[sizeof (int64_t)];
 
       // "constant string"
-      char dummy5[sizeof(std::string)];
+      char dummy5[sizeof (std::string)];
 };
 
     /// Symbol semantic values.
-    typedef variant<sizeof(union_type)> semantic_type;
+    typedef variant<sizeof (union_type)> semantic_type;
 #else
     typedef NETCONF_STYPE semantic_type;
 #endif
@@ -406,7 +595,7 @@ namespace isc { namespace netconf {
     /// A complete symbol.
     ///
     /// Expects its Base type to provide access to the symbol type
-    /// via type_get().
+    /// via type_get ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -418,28 +607,18 @@ namespace isc { namespace netconf {
       /// Default constructor.
       basic_symbol ();
 
-      /// Copy constructor.
-      basic_symbol (const basic_symbol& other);
+      /// Move or copy constructor.
+      basic_symbol (YY_RVREF (basic_symbol) other);
+
 
       /// Constructor for valueless symbols, and symbols from each type.
+      basic_symbol (typename Base::kind_type t, YY_RVREF (location_type) l);
+      basic_symbol (typename Base::kind_type t, YY_RVREF (ElementPtr) v, YY_RVREF (location_type) l);
+      basic_symbol (typename Base::kind_type t, YY_RVREF (bool) v, YY_RVREF (location_type) l);
+      basic_symbol (typename Base::kind_type t, YY_RVREF (double) v, YY_RVREF (location_type) l);
+      basic_symbol (typename Base::kind_type t, YY_RVREF (int64_t) v, YY_RVREF (location_type) l);
+      basic_symbol (typename Base::kind_type t, YY_RVREF (std::string) v, YY_RVREF (location_type) l);
 
-  basic_symbol (typename Base::kind_type t, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const bool v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const double v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
-
-
-      /// Constructor for symbols with semantic value.
-      basic_symbol (typename Base::kind_type t,
-                    const semantic_type& v,
-                    const location_type& l);
 
       /// Destroy the symbol.
       ~basic_symbol ();
@@ -460,8 +639,10 @@ namespace isc { namespace netconf {
       location_type location;
 
     private:
+#if !defined __cplusplus || __cplusplus < 201103L
       /// Assignment operator.
       basic_symbol& operator= (const basic_symbol& other);
+#endif
     };
 
     /// Type access provider for token (enum) based symbols.
@@ -501,199 +682,13 @@ namespace isc { namespace netconf {
     /// "External" symbols: returned by the scanner.
     typedef basic_symbol<by_type> symbol_type;
 
-    // Symbol constructors declarations.
-    static inline
-    symbol_type
-    make_END (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COMMA (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COLON (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LSQUARE_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RSQUARE_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LCURLY_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RCURLY_BRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NULL_TYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NETCONF (const location_type& l);
-
-    static inline
-    symbol_type
-    make_USER_CONTEXT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COMMENT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_BOOT_UPDATE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SUBSCRIBE_CHANGES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_VALIDATE_CHANGES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MANAGED_SERVERS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP4_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DHCP6_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_D2_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CA_SERVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MODEL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONTROL_SOCKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_TYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_UNIX (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HTTP (const location_type& l);
-
-    static inline
-    symbol_type
-    make_STDOUT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_NAME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SOCKET_URL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HOOKS_LIBRARIES (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LIBRARY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PARAMETERS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LOGGING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LOGGERS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NAME (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OUTPUT_OPTIONS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OUTPUT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DEBUGLEVEL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SEVERITY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_FLUSH (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MAXSIZE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MAXVER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_JSON (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_NETCONF (const location_type& l);
-
-    static inline
-    symbol_type
-    make_START_SUB_NETCONF (const location_type& l);
-
-    static inline
-    symbol_type
-    make_STRING (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_INTEGER (const int64_t& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_FLOAT (const double& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_BOOLEAN (const bool& v, const location_type& l);
-
-
     /// Build a parser object.
     NetconfParser (isc::netconf::ParserContext& ctx_yyarg);
     virtual ~NetconfParser ();
+
+    /// Parse.  An alias for parse ().
+    /// \returns  0 iff parsing succeeded.
+    int operator() ();
 
     /// Parse.
     /// \returns  0 iff parsing succeeded.
@@ -720,6 +715,197 @@ namespace isc { namespace netconf {
 
     /// Report a syntax error.
     void error (const syntax_error& err);
+
+    // Symbol constructors declarations.
+    static
+    symbol_type
+    make_END (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COMMA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COLON (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LSQUARE_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RSQUARE_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LCURLY_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RCURLY_BRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NULL_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NETCONF (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_USER_CONTEXT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COMMENT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_BOOT_UPDATE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBSCRIBE_CHANGES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_VALIDATE_CHANGES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MANAGED_SERVERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP4_SERVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DHCP6_SERVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_D2_SERVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CA_SERVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MODEL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONTROL_SOCKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SOCKET_TYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_UNIX (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HTTP (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_STDOUT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SOCKET_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SOCKET_URL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HOOKS_LIBRARIES (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LIBRARY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PARAMETERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LOGGING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LOGGERS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NAME (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUTPUT_OPTIONS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OUTPUT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DEBUGLEVEL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SEVERITY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLUSH (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAXSIZE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MAXVER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_START_JSON (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_START_NETCONF (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_START_SUB_NETCONF (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l);
+
+
 
   private:
     /// This class is not copyable.
@@ -757,7 +943,7 @@ namespace isc { namespace netconf {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short int yypact_[];
+  static const short yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -765,17 +951,17 @@ namespace isc { namespace netconf {
   static const unsigned char yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const short int yypgoto_[];
+  static const short yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const short int yydefgoto_[];
+  static const short yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
   // number is the opposite.  If YYTABLE_NINF, syntax error.
-  static const unsigned short int yytable_[];
+  static const unsigned short yytable_[];
 
-  static const short int yycheck_[];
+  static const short yycheck_[];
 
   // YYSTOS[STATE-NUM] -- The (internal number of the) accessing
   // symbol of state STATE-NUM.
@@ -796,14 +982,15 @@ namespace isc { namespace netconf {
     static const char* const yytname_[];
 #if NETCONF_DEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short int yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
     virtual void yystack_print_ ();
 
-    // Debugging.
+    /// Debugging level.
     int yydebug_;
+    /// Debug stream.
     std::ostream* yycdebug_;
 
     /// \brief Display a symbol type, value and location.
@@ -861,12 +1048,15 @@ namespace isc { namespace netconf {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
-      /// Copy construct.
-      stack_symbol_type (const stack_symbol_type& that);
+      /// Move or copy construction.
+      stack_symbol_type (YY_RVREF (stack_symbol_type) that);
       /// Steal the contents from \a sym to build this.
-      stack_symbol_type (state_type s, symbol_type& sym);
-      /// Assignment, needed by push_back.
-      stack_symbol_type& operator= (const stack_symbol_type& that);
+      stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) sym);
+#if !defined __cplusplus || __cplusplus < 201103L
+      /// Assignment, needed by push_back by some old implementations.
+      /// Moves the contents of that.
+      stack_symbol_type& operator= (stack_symbol_type& that);
+#endif
     };
 
     /// Stack type.
@@ -878,20 +1068,20 @@ namespace isc { namespace netconf {
     /// Push a new state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
-    /// \param s    the symbol
+    /// \param sym  the symbol
     /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, stack_symbol_type& s);
+    void yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym);
 
     /// Push a new look ahead token on the state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
     /// \param s    the state
     /// \param sym  the symbol (for its value and location).
-    /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, state_type s, symbol_type& sym);
+    /// \warning the contents of \a sym.value is stolen.
+    void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
 
-    /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned n = 1);
+    /// Pop \a n symbols from the stack.
+    void yypop_ (int n = 1);
 
     /// Constants.
     enum
@@ -972,36 +1162,37 @@ namespace isc { namespace netconf {
   template <typename Base>
   NetconfParser::basic_symbol<Base>::basic_symbol ()
     : value ()
+    , location ()
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
-    : Base (other)
+  NetconfParser::basic_symbol<Base>::basic_symbol (YY_RVREF (basic_symbol) other)
+    : Base (YY_MOVE (other))
     , value ()
-    , location (other.location)
+    , location (YY_MOVE (other.location))
   {
     switch (other.type_get ())
     {
       case 57: // value
       case 60: // map_value
       case 119: // socket_type_value
-        value.copy< ElementPtr > (other.value);
+        value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (other.value));
         break;
 
       case 48: // "boolean"
-        value.copy< bool > (other.value);
+        value.YY_MOVE_OR_COPY< bool > (YY_MOVE (other.value));
         break;
 
       case 47: // "floating point"
-        value.copy< double > (other.value);
+        value.YY_MOVE_OR_COPY< double > (YY_MOVE (other.value));
         break;
 
       case 46: // "integer"
-        value.copy< int64_t > (other.value);
+        value.YY_MOVE_OR_COPY< int64_t > (YY_MOVE (other.value));
         break;
 
       case 45: // "constant string"
-        value.copy< std::string > (other.value);
+        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (other.value));
         break;
 
       default:
@@ -1010,86 +1201,49 @@ namespace isc { namespace netconf {
 
   }
 
-  template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
-    : Base (t)
-    , value ()
-    , location (l)
-  {
-    (void) v;
-    switch (this->type_get ())
-    {
-      case 57: // value
-      case 60: // map_value
-      case 119: // socket_type_value
-        value.copy< ElementPtr > (v);
-        break;
-
-      case 48: // "boolean"
-        value.copy< bool > (v);
-        break;
-
-      case 47: // "floating point"
-        value.copy< double > (v);
-        break;
-
-      case 46: // "integer"
-        value.copy< int64_t > (v);
-        break;
-
-      case 45: // "constant string"
-        value.copy< std::string > (v);
-        break;
-
-      default:
-        break;
-    }
-}
-
 
   // Implementation of basic_symbol constructor for each type.
-
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (location_type) l)
     : Base (t)
-    , value ()
-    , location (l)
+    , location (YY_MOVE (l))
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr v, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (ElementPtr) v, YY_RVREF (location_type) l)
     : Base (t)
-    , value (v)
-    , location (l)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool v, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (bool) v, YY_RVREF (location_type) l)
     : Base (t)
-    , value (v)
-    , location (l)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double v, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (double) v, YY_RVREF (location_type) l)
     : Base (t)
-    , value (v)
-    , location (l)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t v, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (int64_t) v, YY_RVREF (location_type) l)
     : Base (t)
-    , value (v)
-    , location (l)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
   {}
 
   template <typename Base>
-  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+  NetconfParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (std::string) v, YY_RVREF (location_type) l)
     : Base (t)
-    , value (v)
-    , location (l)
+    , value (YY_MOVE (v))
+    , location (YY_MOVE (l))
   {}
+
 
 
   template <typename Base>
@@ -1161,30 +1315,30 @@ namespace isc { namespace netconf {
       case 57: // value
       case 60: // map_value
       case 119: // socket_type_value
-        value.move< ElementPtr > (s.value);
+        value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
       case 48: // "boolean"
-        value.move< bool > (s.value);
+        value.move< bool > (YY_MOVE (s.value));
         break;
 
       case 47: // "floating point"
-        value.move< double > (s.value);
+        value.move< double > (YY_MOVE (s.value));
         break;
 
       case 46: // "integer"
-        value.move< int64_t > (s.value);
+        value.move< int64_t > (YY_MOVE (s.value));
         break;
 
       case 45: // "constant string"
-        value.move< std::string > (s.value);
+        value.move< std::string > (YY_MOVE (s.value));
         break;
 
       default:
         break;
     }
 
-    location = s.location;
+    location = YY_MOVE (s.location);
   }
 
   // by_type.
@@ -1232,7 +1386,7 @@ namespace isc { namespace netconf {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
     static
-    const unsigned short int
+    const unsigned short
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
@@ -1243,293 +1397,341 @@ namespace isc { namespace netconf {
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
+
   // Implementation of make_symbol for each symbol type.
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_END (const location_type& l)
+  NetconfParser::make_END (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_END, l);
+    return symbol_type (token::TOKEN_END, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_COMMA (const location_type& l)
+  NetconfParser::make_COMMA (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_COMMA, l);
+    return symbol_type (token::TOKEN_COMMA, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_COLON (const location_type& l)
+  NetconfParser::make_COLON (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_COLON, l);
+    return symbol_type (token::TOKEN_COLON, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_LSQUARE_BRACKET (const location_type& l)
+  NetconfParser::make_LSQUARE_BRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LSQUARE_BRACKET, l);
+    return symbol_type (token::TOKEN_LSQUARE_BRACKET, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_RSQUARE_BRACKET (const location_type& l)
+  NetconfParser::make_RSQUARE_BRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RSQUARE_BRACKET, l);
+    return symbol_type (token::TOKEN_RSQUARE_BRACKET, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_LCURLY_BRACKET (const location_type& l)
+  NetconfParser::make_LCURLY_BRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LCURLY_BRACKET, l);
+    return symbol_type (token::TOKEN_LCURLY_BRACKET, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_RCURLY_BRACKET (const location_type& l)
+  NetconfParser::make_RCURLY_BRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RCURLY_BRACKET, l);
+    return symbol_type (token::TOKEN_RCURLY_BRACKET, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_NULL_TYPE (const location_type& l)
+  NetconfParser::make_NULL_TYPE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_NULL_TYPE, l);
+    return symbol_type (token::TOKEN_NULL_TYPE, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_NETCONF (const location_type& l)
+  NetconfParser::make_NETCONF (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_NETCONF, l);
+    return symbol_type (token::TOKEN_NETCONF, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_USER_CONTEXT (const location_type& l)
+  NetconfParser::make_USER_CONTEXT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_USER_CONTEXT, l);
+    return symbol_type (token::TOKEN_USER_CONTEXT, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_COMMENT (const location_type& l)
+  NetconfParser::make_COMMENT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_COMMENT, l);
+    return symbol_type (token::TOKEN_COMMENT, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_BOOT_UPDATE (const location_type& l)
+  NetconfParser::make_BOOT_UPDATE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_BOOT_UPDATE, l);
+    return symbol_type (token::TOKEN_BOOT_UPDATE, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_SUBSCRIBE_CHANGES (const location_type& l)
+  NetconfParser::make_SUBSCRIBE_CHANGES (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SUBSCRIBE_CHANGES, l);
+    return symbol_type (token::TOKEN_SUBSCRIBE_CHANGES, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_VALIDATE_CHANGES (const location_type& l)
+  NetconfParser::make_VALIDATE_CHANGES (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_VALIDATE_CHANGES, l);
+    return symbol_type (token::TOKEN_VALIDATE_CHANGES, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_MANAGED_SERVERS (const location_type& l)
+  NetconfParser::make_MANAGED_SERVERS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MANAGED_SERVERS, l);
+    return symbol_type (token::TOKEN_MANAGED_SERVERS, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_DHCP4_SERVER (const location_type& l)
+  NetconfParser::make_DHCP4_SERVER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DHCP4_SERVER, l);
+    return symbol_type (token::TOKEN_DHCP4_SERVER, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_DHCP6_SERVER (const location_type& l)
+  NetconfParser::make_DHCP6_SERVER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DHCP6_SERVER, l);
+    return symbol_type (token::TOKEN_DHCP6_SERVER, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_D2_SERVER (const location_type& l)
+  NetconfParser::make_D2_SERVER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_D2_SERVER, l);
+    return symbol_type (token::TOKEN_D2_SERVER, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_CA_SERVER (const location_type& l)
+  NetconfParser::make_CA_SERVER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_CA_SERVER, l);
+    return symbol_type (token::TOKEN_CA_SERVER, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_MODEL (const location_type& l)
+  NetconfParser::make_MODEL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MODEL, l);
+    return symbol_type (token::TOKEN_MODEL, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_CONTROL_SOCKET (const location_type& l)
+  NetconfParser::make_CONTROL_SOCKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_CONTROL_SOCKET, l);
+    return symbol_type (token::TOKEN_CONTROL_SOCKET, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_SOCKET_TYPE (const location_type& l)
+  NetconfParser::make_SOCKET_TYPE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
+    return symbol_type (token::TOKEN_SOCKET_TYPE, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_UNIX (const location_type& l)
+  NetconfParser::make_UNIX (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_UNIX, l);
+    return symbol_type (token::TOKEN_UNIX, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_HTTP (const location_type& l)
+  NetconfParser::make_HTTP (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HTTP, l);
+    return symbol_type (token::TOKEN_HTTP, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_STDOUT (const location_type& l)
+  NetconfParser::make_STDOUT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_STDOUT, l);
+    return symbol_type (token::TOKEN_STDOUT, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_SOCKET_NAME (const location_type& l)
+  NetconfParser::make_SOCKET_NAME (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SOCKET_NAME, l);
+    return symbol_type (token::TOKEN_SOCKET_NAME, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_SOCKET_URL (const location_type& l)
+  NetconfParser::make_SOCKET_URL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SOCKET_URL, l);
+    return symbol_type (token::TOKEN_SOCKET_URL, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_HOOKS_LIBRARIES (const location_type& l)
+  NetconfParser::make_HOOKS_LIBRARIES (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
+    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_LIBRARY (const location_type& l)
+  NetconfParser::make_LIBRARY (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LIBRARY, l);
+    return symbol_type (token::TOKEN_LIBRARY, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_PARAMETERS (const location_type& l)
+  NetconfParser::make_PARAMETERS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_PARAMETERS, l);
+    return symbol_type (token::TOKEN_PARAMETERS, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_LOGGING (const location_type& l)
+  NetconfParser::make_LOGGING (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LOGGING, l);
+    return symbol_type (token::TOKEN_LOGGING, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_LOGGERS (const location_type& l)
+  NetconfParser::make_LOGGERS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LOGGERS, l);
+    return symbol_type (token::TOKEN_LOGGERS, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_NAME (const location_type& l)
+  NetconfParser::make_NAME (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_NAME, l);
+    return symbol_type (token::TOKEN_NAME, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_OUTPUT_OPTIONS (const location_type& l)
+  NetconfParser::make_OUTPUT_OPTIONS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
+    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_OUTPUT (const location_type& l)
+  NetconfParser::make_OUTPUT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_OUTPUT, l);
+    return symbol_type (token::TOKEN_OUTPUT, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_DEBUGLEVEL (const location_type& l)
+  NetconfParser::make_DEBUGLEVEL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DEBUGLEVEL, l);
+    return symbol_type (token::TOKEN_DEBUGLEVEL, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_SEVERITY (const location_type& l)
+  NetconfParser::make_SEVERITY (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SEVERITY, l);
+    return symbol_type (token::TOKEN_SEVERITY, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_FLUSH (const location_type& l)
+  NetconfParser::make_FLUSH (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_FLUSH, l);
+    return symbol_type (token::TOKEN_FLUSH, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_MAXSIZE (const location_type& l)
+  NetconfParser::make_MAXSIZE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MAXSIZE, l);
+    return symbol_type (token::TOKEN_MAXSIZE, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_MAXVER (const location_type& l)
+  NetconfParser::make_MAXVER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MAXVER, l);
+    return symbol_type (token::TOKEN_MAXVER, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_START_JSON (const location_type& l)
+  NetconfParser::make_START_JSON (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_START_JSON, l);
+    return symbol_type (token::TOKEN_START_JSON, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_START_NETCONF (const location_type& l)
+  NetconfParser::make_START_NETCONF (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_START_NETCONF, l);
+    return symbol_type (token::TOKEN_START_NETCONF, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_START_SUB_NETCONF (const location_type& l)
+  NetconfParser::make_START_SUB_NETCONF (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_START_SUB_NETCONF, l);
+    return symbol_type (token::TOKEN_START_SUB_NETCONF, YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_STRING (const std::string& v, const location_type& l)
+  NetconfParser::make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_STRING, v, l);
+    return symbol_type (token::TOKEN_STRING, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_INTEGER (const int64_t& v, const location_type& l)
+  NetconfParser::make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_INTEGER, v, l);
+    return symbol_type (token::TOKEN_INTEGER, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_FLOAT (const double& v, const location_type& l)
+  NetconfParser::make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_FLOAT, v, l);
+    return symbol_type (token::TOKEN_FLOAT, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   NetconfParser::symbol_type
-  NetconfParser::make_BOOLEAN (const bool& v, const location_type& l)
+  NetconfParser::make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_BOOLEAN, v, l);
+    return symbol_type (token::TOKEN_BOOLEAN, YY_MOVE (v), YY_MOVE (l));
   }
 
 
-#line 14 "netconf_parser.yy" // lalr1.cc:379
+#line 14 "netconf_parser.yy" // lalr1.cc:404
 } } // isc::netconf
-#line 1533 "netconf_parser.h" // lalr1.cc:379
+#line 1735 "netconf_parser.h" // lalr1.cc:404
 
 
 
