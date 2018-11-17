@@ -309,10 +309,6 @@ module kea-dhcp-types {
         default "JSON";
         description "Packet format to use for DHCP-DDNS.";
       }
-      leaf always-include-fqdn {
-        type boolean;
-        description "???";
-      }
       leaf override-no-update {
         type boolean;
         default false;
