@@ -41,6 +41,7 @@ namespace yang {
 ///     "4o6-interface": "<dhpv4-over-dhcpv6 interface>",
 ///     "4o6-interface-id": "<dhpv4-over-dhcpv6 interface id>",
 ///     "4o6-subnet": "<dhpv4-over-dhcpv6 subnet>",
+///     "authoritative": <authoritative flag>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
 /// }
@@ -107,6 +108,7 @@ namespace yang {
 ///  +--rw subnet-4o6-interface?     string
 ///  +--rw subnet-4o6-interface-id?  string
 ///  +--rw subnet-4o6-subnet?        inet:ipv6-prefix
+///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
 ///  +--rw preferred-lifetime?       uint32
 ///  +--rw pd-pools                  pd-pool*

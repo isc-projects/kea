@@ -42,7 +42,7 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46] is using database-type as the list key:
 /// @code
-///  +--rw database                container
+///  +--rw database                (list)
 ///    |
 ///    +--rw database-type?        string
 ///    +--rw user?                 string

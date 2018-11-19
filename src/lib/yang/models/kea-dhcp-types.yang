@@ -15,7 +15,7 @@ module kea-dhcp-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-11-11 {
+  revision 2018-11-13 {
     description "Initial revision";
     reference "";
   }
@@ -758,6 +758,34 @@ module kea-dhcp-types {
         description "Option user context. Arbitrary JSON data can be
                      stored here.";
       }
+    }
+  }
+
+  grouping config-control {
+    description "Config control grouping.";
+    container config-control {
+      description "Config control.";
+      list config-databases {
+        key database-type;
+        description "List of databases.";
+        uses database;
+      }
+    }
+  }
+
+  grouping server-tag {
+    description "Server tag grouping.";
+    leaf server-tag {
+      type string;
+      description "Server tag.";
+    }
+  }
+
+  grouping dhcp-queue-control {
+    description "DHCP queue control grouping.";
+    leaf dhcp-queue-control {
+      type string;
+      description "DHCP queue control (JSON map).";
     }
   }
 

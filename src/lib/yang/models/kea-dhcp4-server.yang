@@ -12,7 +12,7 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-11;
+    revision-date 2018-11-13;
   }
   import kea-logging {
     prefix logging;
@@ -24,7 +24,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-11-12 {
+  revision 2018-11-13 {
     description "Initial revision";
     reference "";
   }
@@ -403,6 +403,7 @@ module kea-dhcp4-server {
     uses next-server;
     uses server-hostname;
     uses boot-file-name;
+    uses authoritative;
     uses kea:user-context {
       refine user-context {
         description "DHCPv4 server user context. Arbitrary JSON data can
@@ -415,7 +416,9 @@ module kea-dhcp4-server {
         description "Global host reservations.";
       }
     }
-    uses authoritative;
+    uses dhcp:config-control;
+    uses dhcp:server-tag;
+    uses dhcp:dhcp-queue-control;
   }
 
   container logging {

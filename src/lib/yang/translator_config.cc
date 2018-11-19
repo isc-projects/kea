@@ -111,7 +111,7 @@ TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
 }
 
 ElementPtr
-TranslatorConfig::getHooksKea(std::string xpath) {
+TranslatorConfig::getHooksKea(const std::string& xpath) {
     S_Iter_Value iter = getIter(xpath + "/*");
     if (iter) {
         ElementPtr hook_libs = Element::createList();
@@ -143,7 +143,7 @@ TranslatorConfig::getHooksKea(std::string xpath) {
 }
 
 isc::data::ElementPtr
-TranslatorConfig::getExpiredKea(std::string xpath) {
+TranslatorConfig::getExpiredKea(const std::string& xpath) {
     ElementPtr expired = Element::createMap();
 
     getParam(expired, xpath, "reclaim-timer-wait-time");
@@ -161,7 +161,7 @@ TranslatorConfig::getExpiredKea(std::string xpath) {
 }
 
 isc::data::ElementPtr
-TranslatorConfig::getDdnsKea(std::string xpath) {
+TranslatorConfig::getDdnsKea(const std::string& xpath) {
     ElementPtr ddns = Element::createMap();
     getParam(ddns, xpath, "enable-updates");
     getParam(ddns, xpath, "qualifying-suffix");
@@ -189,7 +189,23 @@ TranslatorConfig::getDdnsKea(std::string xpath) {
         return (ddns);
     }
 
-    // If not, return null
+    // If not, return null.
+    return (ElementPtr());
+}
+
+ElementPtr
+TranslatorConfig::getConfigControlKea(const string& xpath) {
+    ElementPtr config_ctrl = Element::createMap();
+    ConstElementPtr databases = getDatabases(xpath + "/config-databases");
+    if (databases && !databases->empty()) {
+        config_ctrl->set("config-databases", databases);
+    }
+    if (!config_ctrl->empty()) {
+        // If there's something to return, use it.
+        return (config_ctrl);
+    }
+
+    // If not, return null.
     return (ElementPtr());
 }
 
@@ -262,6 +278,17 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     ConstElementPtr hosts = getHosts(xpath + "/reservations");
     if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
+    }
+    ConstElementPtr config_ctrl =
+        getConfigControlKea(xpath + "/config-control");
+    if (config_ctrl) {
+        result->set("config-control", config_ctrl);
+    }
+    getParam(result, xpath, "server-tag");
+    ConstElementPtr queue_ctrl = getItem(xpath + "/dhcp-queue-control");
+    if (queue_ctrl) {
+        result->set("dhcp-queue-control",
+                    Element::fromJSON(queue_ctrl->stringValue()));
     }
     return (result);
 }
@@ -665,6 +692,23 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     ConstElementPtr hosts = elem->get("reservations");
     if (hosts && !hosts->empty()) {
         setHosts(xpath + "/reservations", hosts);
+    }
+    ConstElementPtr config_ctrl = elem->get("config-control");
+    if (config_ctrl && !config_ctrl->empty()) {
+        databases = config_ctrl->get("config-databases");
+        if (databases && !databases->empty()) {
+            setDatabases(xpath + "/config-control/config-databases",
+                         databases);
+        }
+    }
+    ConstElementPtr server_tag = elem->get("server-tag");
+    if (server_tag) {
+        setItem(xpath + "/server-tag", server_tag, SR_STRING_T);
+    }
+    ConstElementPtr queue_ctrl = elem->get("dhcp-queue-control");
+    if (queue_ctrl) {
+        ConstElementPtr repr = Element::create(queue_ctrl->str());
+        setItem(xpath + "/dhcp-queue-control", repr, SR_STRING_T);
     }
 }
 

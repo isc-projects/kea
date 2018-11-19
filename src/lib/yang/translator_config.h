@@ -51,10 +51,14 @@ namespace yang {
 ///     "next-server": <next server address>,
 ///     "server-hostname": <server hostname>,
 ///     "boot-file-name": <boot file name>,
+///     "authoritative": <authoritative flag>,
 ///     <user-context>,
 ///     <comment>,
 ///     "sanity-checks": { <sanity checks> },
-///     "reservations": [ <list of host reservations> ]
+///     "reservations": [ <list of host reservations> ],
+///     <config-control>,
+///     "server-tag": <server tag>,
+///     "dhcp-queue-control": { <DHCP queue control> }
 /// },
 /// "Logging": <logging>
 /// @endcode
@@ -91,9 +95,14 @@ namespace yang {
 /// +--rw next-server?                   inet:ipv4-address
 /// +--rw server-hostname?               string
 /// +--rw boot-file-name?                string
+/// +--rw authoritative?                 boolean
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw config-control
+///    +--rw config-databases            config-databases*
+/// +--rw server-tag                     string
+/// +--rw dhcp-queue-control             string
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -182,7 +191,10 @@ namespace yang {
 ///     <user-context>,
 ///     <comment>
 ///     "sanity-checks": { <sanity checks> },
-///     "reservations": [ <list of host reservations> ]
+///     "reservations": [ <list of host reservations> ],
+///     <config-control>,
+///     "server-tag": <server tag>,
+///     "dhcp-queue-control": { <DHCP queue control> }
 /// },
 /// "Logging": <logging>
 /// @endcode
@@ -220,6 +232,10 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw config-control
+///    +--rw config-databases            config-databases*
+/// +--rw server-tag                     string
+/// +--rw dhcp-queue-control             string
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -496,23 +512,29 @@ protected:
     void setServerKeaDhcpCommon(const std::string& xpath,
                                 isc::data::ConstElementPtr elem);
 
-    /// @brief Retrieves hooks configuration from sysrepo
+    /// @brief Retrieves hooks configuration from sysrepo.
     ///
-    /// @param xpath path to hooks configuration
-    /// @return ElementList with hooks configuration
-    isc::data::ElementPtr getHooksKea(std::string xpath);
+    /// @param xpath path to hooks configuration.
+    /// @return ElementList with hooks configuration.
+    isc::data::ElementPtr getHooksKea(const std::string& xpath);
 
-    /// @brief Retrieves expired leases processing parameters from sysrepo
+    /// @brief Retrieves expired leases processing parameters from sysrepo.
     ///
-    /// @param xpath path to expired leases configuration
-    /// @return ElementList with expired leases configuration
-    isc::data::ElementPtr getExpiredKea(std::string xpath);
+    /// @param xpath path to expired leases configuration.
+    /// @return ElementList with expired leases configuration.
+    isc::data::ElementPtr getExpiredKea(const std::string& xpath);
 
     /// @brief Retrieves DDNS configuration from sysrepo
     ///
-    /// @param xpath path to dhcp-ddns configuration
-    /// @return ElementList with dhcp-ddns configuration
-    isc::data::ElementPtr getDdnsKea(std::string xpath);
+    /// @param xpath path to dhcp-ddns configuration.
+    /// @return ElementList with dhcp-ddns configuration.
+    isc::data::ElementPtr getDdnsKea(const std::string& xpath);
+
+    /// @brief Retrieves configuration control from sysrepo.
+    ///
+    /// @param xpath path to configuration control.
+    /// @return ElementMap with configuration control.
+    isc::data::ElementPtr getConfigControlKea(const std::string& xpath);
 
     /// @brief setServer for kea-dhcp4-server:config.
     ///

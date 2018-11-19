@@ -137,6 +137,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp6Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
         case Parser6Context::PARSER_DHCP_DDNS:
             return isc::dhcp::Dhcp6Parser::make_SUB_DHCP_DDNS(driver.loc_);
+        case Parser6Context::PARSER_CONFIG_CONTROL:
+            return isc::dhcp::Dhcp6Parser::make_SUB_CONFIG_CONTROL(driver.loc_);
         case Parser6Context::PARSER_LOGGING:
             return isc::dhcp::Dhcp6Parser::make_SUB_LOGGING(driver.loc_);
         }
