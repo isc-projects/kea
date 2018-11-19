@@ -12,20 +12,19 @@ module kea-dhcp6-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-11;
+    revision-date 2018-11-13;
   }
   import kea-logging {
     prefix logging;
     revision-date 2018-11-11;
   }
 
-
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-11-12 {
+  revision 2018-11-13 {
     description "Initial revision";
     reference "";
   }
@@ -448,6 +447,9 @@ module kea-dhcp6-server {
         description "Global host reservations.";
       }
     }
+    uses dhcp:config-control;
+    uses dhcp:server-tag;
+    uses dhcp:dhcp-queue-control;
   }
 
   container logging {

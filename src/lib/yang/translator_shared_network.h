@@ -34,6 +34,7 @@ namespace yang {
 ///     "next-server": "<next server>",
 ///     "server-hostname": "<server hostname>",
 ///     "boot-file-name": "<boot file name>",
+///     "authoritative": <authoritative flag>,
 ///     "user-context": { <json map> },
 ///     "comment": "<comment>"
 /// }
@@ -80,6 +81,7 @@ namespace yang {
 ///  +--rw next-server?              inet:ipv4-address
 ///  +--rw server-hostname?          string
 ///  +--rw boot-file-name?           string
+///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
 ///  +--rw subnet6                   subnet6*
 ///  +--rw preferred-lifetime?       uint32
