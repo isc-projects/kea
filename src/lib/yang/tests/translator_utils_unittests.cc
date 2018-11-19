@@ -15,7 +15,7 @@ using namespace std;
 using namespace isc;
 using namespace isc::yang;
 using namespace isc::yang::test;
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif
 

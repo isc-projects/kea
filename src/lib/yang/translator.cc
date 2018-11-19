@@ -13,7 +13,7 @@
 using namespace std;
 using namespace isc::data;
 using namespace isc::util::encode;
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif
 

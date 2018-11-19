@@ -394,7 +394,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorConfig(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorConfig(S_Session session, const std::string& model);

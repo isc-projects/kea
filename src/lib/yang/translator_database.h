@@ -109,7 +109,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorDatabase(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorDatabase(S_Session session, const std::string& model);
@@ -166,7 +166,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorDatabases(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorDatabases(S_Session session, const std::string& model);

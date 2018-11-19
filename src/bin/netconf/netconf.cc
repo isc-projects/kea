@@ -22,7 +22,7 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::netconf;
 using namespace isc::yang;
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif
 

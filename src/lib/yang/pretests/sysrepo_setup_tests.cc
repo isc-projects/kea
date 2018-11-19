@@ -6,7 +6,7 @@
 
 #include <config.h>
 
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 #include <sysrepo-cpp/Session.hpp>
 #else
 #include <sysrepo-cpp/Session.h>
@@ -15,7 +15,7 @@
 #include <sstream>
 
 using namespace std;
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif
 
