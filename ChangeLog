@@ -1,3 +1,8 @@
+1479.	[build]		fdupont
+	Support for sysrepo 0.7.6 (and libyang 0.16-r2) was added.
+	Previous versions of sysrepo (and libyang) are still supported.
+	(Gitlab #176, !107, git 4304a10b21708afb2a7599c77bc7508a600333cb)
+
 1478.	[bug]		marcin
 	Performance improvements in the HTTP client code used in the
 	Kea High Availability.
