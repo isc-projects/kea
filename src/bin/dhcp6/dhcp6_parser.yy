@@ -2139,15 +2139,6 @@ control_agent_json_object: CONTROL_AGENT {
 
 // Config control information element
 
-config_control: LCURLY_BRACKET {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(m);
-    ctx.stack_.push_back(m);
-} config_control_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-};
-
-
 config_control: CONFIG_CONTROL {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("config-control", i);
@@ -2170,13 +2161,12 @@ sub_config_control: LCURLY_BRACKET {
 
 // This defines that subnet can have one or more parameters.
 config_control_params: config_control_param
-              | config_control_params COMMA config_control_param
-              ;
+                     | config_control_params COMMA config_control_param
+                     ;
 
 // This defines a list of allowed parameters for each subnet.
 config_control_param: config_databases
-            | unknown_map_entry
-            ;
+                    ;
 
 config_databases: CONFIG_DATABASES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
