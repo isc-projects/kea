@@ -13,7 +13,7 @@
   faster than they can be fulfilled.  Subsequently, the servers begin
   accumulating a backlog of pending queries.  The longer the high rate of
   traffic continues the farther behind the servers fall.  Depending on the
-  client implementations, those that fail to get leases either give or simply
+  client implementations, those that fail to get leases either give up or simply
   continue to retry forever.  In the former case, the server may eventually
   recover.  The latter case is vicious cycle from which the server is unable
   escape.
