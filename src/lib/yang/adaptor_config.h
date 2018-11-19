@@ -275,26 +275,6 @@ protected:
     /// @param dhcp The DHCPv6 server.
     static void sanitizeRelaySuppliedOptions(isc::data::ConstElementPtr dhcp);
 
-    /// @brief Remove authoritative flag from a subnet list.
-    ///
-    /// @param subnets The subnet list.
-    static void removeAuthoritativeSubnets(isc::data::ConstElementPtr subnets);
-
-    /// @brief Remove authoritative flag from a shared network list.
-    ///
-    /// Remove authoritative flag in each shared network and its
-    /// subnet4 children.
-    ///
-    /// @param networks The shared network list.
-    static void removeAuthoritativeSharedNetworks(isc::data::ConstElementPtr networks);
-
-    /// @brief Remove authoritative flags.
-    ///
-    /// Remove global, shared network and subnet4 authoritative flags.
-    ///
-    /// @param dhcp The DHCPv4 server.
-    static void removeAuthoritative(isc::data::ConstElementPtr dhcp);
-
     /// @brief Pre process a configuration.
     ///
     /// Assign subnet IDs, check and set default in options, etc.
