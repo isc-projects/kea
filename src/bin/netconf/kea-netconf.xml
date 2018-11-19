@@ -125,8 +125,7 @@
       lists all possible messages Kea can print with a brief
       description for each of them. Both documents are typically
       available in various formats (txt, html, pdf) with your Kea
-      distribution. The on-line version is available at
-      http://oldkea.isc.org/docs/.</para>
+      distribution. Kea documentation is available on-line at https://kb.isc.org/docs/kea-administrator-reference-manual.</para>
     <para>
       Kea source code is documented in the Kea Developer's Guide. Its
       on-line version is available at https://jenkins.isc.org/job/Kea_doc/doxygen/.
