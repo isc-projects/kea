@@ -253,8 +253,8 @@ IfaceMgr::IfaceMgr()
     // Ensure that PQMs have been created to guarantee we have
     // default packet queues in place.
     try {
-        PacketQueueMgr4::create();
-        PacketQueueMgr6::create();
+        packet_queue_mgr4_.reset(new PacketQueueMgr4());
+        packet_queue_mgr6_.reset(new PacketQueueMgr6());
     } catch (const std::exception& ex) {
         isc_throw(Unexpected, "Failed to create PacketQueueManagers: " << ex.what());
     }
@@ -357,14 +357,14 @@ void IfaceMgr::stopDHCPReceiver() {
     if (isReceiverRunning()) {
         receiver_->stop();
         receiver_.reset();
+    }
 
-        if (getPacketQueue4()) {
-            getPacketQueue4()->clear();
-        }
+    if (getPacketQueue4()) {
+        getPacketQueue4()->clear();
+    }
 
-        if (getPacketQueue6()) {
-            getPacketQueue6()->clear();
-        }
+    if (getPacketQueue6()) {
+        getPacketQueue6()->clear();
     }
 }
 
@@ -373,9 +373,6 @@ IfaceMgr::~IfaceMgr() {
     control_buf_len_ = 0;
 
     closeSockets();
-    // Explicitly delete PQM singletons.
-    PacketQueueMgr4::destroy();
-    PacketQueueMgr6::destroy();
 }
 
 bool
@@ -1780,16 +1777,16 @@ IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_
     if (enable_queue) {
         // Try to create the queue as configured.
         if (family == AF_INET) {
-            PacketQueueMgr4::instance().createPacketQueue(queue_control);
+            packet_queue_mgr4_->createPacketQueue(queue_control);
         } else {
-            PacketQueueMgr6::instance().createPacketQueue(queue_control);
+            packet_queue_mgr6_->createPacketQueue(queue_control);
         }
     } else {
         // Destroy the current queue (if one), this inherently disables threading.
         if (family == AF_INET) {
-            PacketQueueMgr4::instance().destroyPacketQueue();
+            packet_queue_mgr4_->destroyPacketQueue();
         } else {
-            PacketQueueMgr6::instance().destroyPacketQueue();
+            packet_queue_mgr6_->destroyPacketQueue();
         }
     }
 

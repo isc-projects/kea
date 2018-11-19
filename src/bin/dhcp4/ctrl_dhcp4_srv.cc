@@ -640,7 +640,7 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
             LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
-                      .arg(PacketQueueMgr4::instance().getPacketQueue()->getInfoStr());
+                      .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
         }
 
     } catch (const std::exception& ex) {
