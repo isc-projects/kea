@@ -31,30 +31,5 @@ PacketQueueMgr6::PacketQueueMgr6() {
         });
 }
 
-boost::scoped_ptr<PacketQueueMgr6>&
-PacketQueueMgr6::getPacketQueueMgr6Ptr() {
-    static boost::scoped_ptr<PacketQueueMgr6> packet_mgr;
-    return (packet_mgr);
-}
-
-void
-PacketQueueMgr6::create() {
-    getPacketQueueMgr6Ptr().reset(new PacketQueueMgr6());
-}
-
-void
-PacketQueueMgr6::destroy() {
-    getPacketQueueMgr6Ptr().reset();
-}
-
-PacketQueueMgr6&
-PacketQueueMgr6::instance() {
-    boost::scoped_ptr<PacketQueueMgr6>& packet_mgr = getPacketQueueMgr6Ptr();
-    if (!packet_mgr) {
-        create();
-    }
-    return (*packet_mgr);
-}
-
 } // end of isc::dhcp namespace
 } // end of isc namespace

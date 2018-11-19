@@ -866,13 +866,9 @@ TEST_F(IfaceMgrTest, packetQueue4) {
 
     // Verify that we can create a queue with default factory.
     data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 2000);
-    ASSERT_NO_THROW(PacketQueueMgr4::instance().createPacketQueue(config));
+    ASSERT_NO_THROW(ifacemgr.getPacketQueueMgr4()->createPacketQueue(config));
     CHECK_QUEUE_INFO(ifacemgr.getPacketQueue4(), "{ \"capacity\": 2000, \"queue-type\": \""
                      << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
-
-    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
-    // returns the same queue.
-    ASSERT_EQ(ifacemgr.getPacketQueue4(), PacketQueueMgr4::instance().getPacketQueue());
 }
 
 // Verify that we have the expected default DHCPv6 packet queue.
@@ -884,13 +880,9 @@ TEST_F(IfaceMgrTest, packetQueue6) {
 
     // Verify that we can create a queue with default factory.
     data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 2000);
-    ASSERT_NO_THROW(PacketQueueMgr6::instance().createPacketQueue(config));
+    ASSERT_NO_THROW(ifacemgr.getPacketQueueMgr6()->createPacketQueue(config));
     CHECK_QUEUE_INFO(ifacemgr.getPacketQueue6(), "{ \"capacity\": 2000, \"queue-type\": \""
                      << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
-
-    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
-    // returns the same queue.
-    ASSERT_EQ(ifacemgr.getPacketQueue6(), PacketQueueMgr6::instance().getPacketQueue());
 }
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
@@ -3282,12 +3274,10 @@ TEST_F(ReceiverTest, receiverClassBasics) {
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
     EXPECT_EQ("thread expired", receiver_->getLastError());
 
-    // This one is a little wonky, as a thread function expiring needs to be
-    // supported in Receiver.  There needs to be something in Receiver, so it
-    // nows the thread exited.  Thread exists but I think it's underlying
-    // impl does not.
+    // Thread is technically still running, so let's stop it.
     EXPECT_TRUE(receiver_->isRunning());
     ASSERT_NO_THROW(receiver_->stop());
+    ASSERT_FALSE(receiver_->isRunning());
 
     /// Now we'll test stopping a thread.
     /// Start the receiver, let it run a little and then tell it to stop.

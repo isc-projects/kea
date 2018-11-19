@@ -19,52 +19,23 @@ namespace dhcp {
 /// Implements the "manager" class which holds information about the
 /// supported DHCPv6 packet queue implementations and provides management
 /// of the current queue instance.
-///
-/// It is implemented as a singleton that can be accessed from any place
-/// within the server code. This includes server configuration, data
-/// fetching during normal server operation and data management, including
-/// processing of control commands implemented within hooks libraries.
 class PacketQueueMgr6 : public PacketQueueMgr<PacketQueue6Ptr>,
                         public boost::noncopyable {
 public:
     /// @brief Logical name of the pre-registered, default queue implementation
     static const std::string DEFAULT_QUEUE_TYPE6;
 
-    /// @brief virtual Destructor
-    virtual ~PacketQueueMgr6(){}
-
-    /// @brief Creates new instance of the @c PacketQueueMgr6.
-    ///
-    /// If an instance of the @c PacketQueueMgr6 already exists,
-    /// it will be replaced by the new instance. Thus, all factories
-    /// will be unregistered and config databases will be dropped.
-    static void create();
-
-    /// @brief Destroys the instance of the @c PacketQueueMgr6.
-    ///
-    /// If an instance of the @c PacketQueueMgr6 exists,
-    /// it will be destroyed.  Thus, all factories will be unregistered
-    /// and config databases will be dropped.
-    static void destroy();
-
-    /// @brief Returns a sole instance of the @c PacketQueueMgr6.
-    ///
-    /// This method is used to retrieve the instance of the of the 
-    /// @c PacketQueueMgr6 created by the @c create method. If the 
-    /// instance doesn't exist yet, it is created using the @c create
-    /// method.
-    static PacketQueueMgr6& instance();
-
-private:
-    /// @brief Private constructor.
+    /// @brief constructor.
     ///
     /// It registers a default factory for DHCPv6 queues.
     PacketQueueMgr6();
 
-    /// @brief Returns a pointer to the currently used instance of the
-    /// @c PacketQueueMgr6.
-    static boost::scoped_ptr<PacketQueueMgr6>& getPacketQueueMgr6Ptr();
+    /// @brief virtual Destructor
+    virtual ~PacketQueueMgr6(){}
 };
+
+/// @brief Defines a shared pointer to PacketQueueMgr6
+typedef boost::shared_ptr<PacketQueueMgr6> PacketQueueMgr6Ptr;
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

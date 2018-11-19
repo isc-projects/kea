@@ -1127,22 +1127,38 @@ public:
     /// @return true if there is a socket bound to the specified address.
     bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief DHCPv4 receiver packet queue.
+    /// @brief Fetches the DHCPv4 packet queue manager
+    ///
+    /// @return pointer to the packet queue mgr
+    PacketQueueMgr4Ptr getPacketQueueMgr4() {
+        return (packet_queue_mgr4_);
+    }
+
+    /// @brief Fetches the DHCPv4 receiver packet queue.
     ///
     /// Incoming packets are read by the receiver thread and
     /// added to this queue. @c receive4() dequeues and
     /// returns them.
+    /// @return pointer to the packet queue
     PacketQueue4Ptr getPacketQueue4() {
-        return (PacketQueueMgr4::instance().getPacketQueue());
+        return (packet_queue_mgr4_->getPacketQueue());
     }
 
-    /// @brief DHCPv6 receiver packet queue.
+    /// @brief Fetches the DHCPv6 packet queue manager
+    ///
+    /// @return pointer to the packet queue mgr
+    PacketQueueMgr6Ptr getPacketQueueMgr6() {
+        return (packet_queue_mgr6_);
+    }
+
+    /// @brief Fetches the DHCPv6 receiver packet queue.
     ///
     /// Incoming packets are read by the receiver thread and
     /// added to this queue. @c receive6() dequeues and
     /// returns them.
+    /// @return pointer to the packet queue
     PacketQueue6Ptr getPacketQueue6() {
-        return (PacketQueueMgr6::instance().getPacketQueue());
+        return (packet_queue_mgr6_->getPacketQueue());
     }
 
     /// @brief Starts DHCP packet receiver.
@@ -1467,6 +1483,12 @@ private:
 
     /// @brief Allows to use loopback
     bool allow_loopback_;
+
+    /// @brief Manager for DHCPv4 packet implementations and queues
+    PacketQueueMgr4Ptr packet_queue_mgr4_;
+
+    /// @brief Manager for DHCPv6 packet implementations and queues
+    PacketQueueMgr6Ptr packet_queue_mgr6_;
 
     /// DHCP packet receiver.
     ReceiverPtr receiver_;
