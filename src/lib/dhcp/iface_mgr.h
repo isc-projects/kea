@@ -475,15 +475,10 @@ public:
     };
 
     /// @brief Constructor
-    ///
-    /// It initializes the watch sockets and then instantiates and
-    /// starts the receiver's worker thread.
-    ///
-    /// @param thread_main function the receiver's thread should run
-    Receiver(const boost::function<void()>& thread_main);
+    Receiver(){};
 
     /// @brief Virtual destructor
-    virtual ~Receiver() {}
+    virtual ~Receiver(){}
 
     /// @brief Fetches the fd of a watch socket
     ///
@@ -515,6 +510,22 @@ public:
     ///
     /// @return true if the terminate watch socket is ready
     bool shouldTerminate();
+
+    /// @brief Creates and runs the thread.
+    ///
+    /// Creates teh receiver's thread, passing into it the given
+    /// function to run.
+    ///
+    /// @param thread_main function the receiver's thread should run
+    void start(const boost::function<void()>& thread_main);
+
+    /// @brief Returns true if the receiver thread is running
+    /// @todo - this may need additional logic to handle cases where
+    /// a thread function exits w/o the caller invoking @c
+    /// Receiver::stop().
+    bool isRunning() {
+        return (thread_ != 0);
+    }
 
     /// @brief Terminates the receiver thread
     ///
@@ -1152,9 +1163,10 @@ public:
     /// the packet queue is flushed.
     void stopDHCPReceiver();
 
-    /// @brief Returns true if there is a receiver currently running.
+    /// @brief Returns true if there is a receiver exists and its
+    /// thread is currently running.
     bool isReceiverRunning() const {
-        return (receiver_ != 0);
+        return (receiver_ != 0 && receiver_->isRunning());
     }
 
     /// @brief Configures DHCP packet queue
