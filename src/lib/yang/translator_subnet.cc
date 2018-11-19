@@ -112,7 +112,7 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
     if (rebind) {
         result->set("rebind-timer", rebind);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -285,7 +285,7 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr pools = elem->get("pools");
     if (pools && (pools->size() > 0)) {

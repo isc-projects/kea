@@ -15,7 +15,7 @@ module kea-dhcp-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-11-13 {
+  revision 2018-11-14 {
     description "Initial revision";
     reference "";
   }

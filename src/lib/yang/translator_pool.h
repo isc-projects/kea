@@ -52,7 +52,7 @@ namespace yang {
 /// +--rw prefix?                  inet:ipv[46]-prefix
 /// +--rw start-address            inet:ipv[46]-address
 /// +--rw end-address              inet:ipv[46]-address
-/// +--rw option-data-list         option-data*
+/// +--rw option-data*
 /// +--rw client-class?            string
 /// +--rw require-client-classes*  string
 /// +--rw user-context?            string

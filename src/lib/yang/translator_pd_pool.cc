@@ -160,7 +160,7 @@ TranslatorPdPool::getPdPoolKea(const string& xpath) {
     if (delegated) {
         result->set("delegated-len", delegated);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -258,7 +258,7 @@ TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     ConstElementPtr guard = elem->get("client-class");

@@ -54,18 +54,17 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/option-data-list (container)
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns'] (list instance)
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/code = 100
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/space = dns
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/data = 12121212
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/csv-format = false
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/always-send = false
 /// @endcode
 

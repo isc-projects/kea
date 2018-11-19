@@ -57,7 +57,7 @@ namespace yang {
 /// +--rw identifier-type          enumeration
 /// +--rw identifier               string
 /// +--rw hostname?                string
-/// +--rw option-data-list         option-data*
+/// +--rw option-data*
 /// +--rw client-classes*          string
 /// +--rw user-context?            string
 /// (DHCPv4 only)

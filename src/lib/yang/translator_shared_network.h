@@ -68,7 +68,7 @@ namespace yang {
 ///  +--rw valid-lifetime?           uint32
 ///  +--rw renew-timer?              uint32
 ///  +--rw rebind-timer?             uint32
-///  +--rw option-data-list          option-data*
+///  +--rw option-data*
 ///  +--rw interface?                string
 ///  +--rw client-class?             string
 ///  +--rw require-client-classes*   string

@@ -82,7 +82,7 @@ namespace yang {
 /// +--rw host-reservation-identifiers*  enumeration
 /// +--rw client-classes                 client-class*
 /// +--rw option-def-list                option-def*
-/// +--rw option-data-list               option-data*
+/// +--rw option-data*
 /// +--rw hook-library*
 ///    +--rw library                     string
 ///    +--rw parameters?                 string

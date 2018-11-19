@@ -243,7 +243,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (defs && !defs->empty()) {
         result->set("option-def", defs);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && !options->empty()) {
         result->set("option-data", options);
     }
@@ -536,7 +536,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && !options->empty()) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr hook_libs = elem->get("hooks-libraries");
     if (hook_libs) {
