@@ -87,7 +87,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
     if (rebind) {
         result->set("rebind-timer", rebind);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -201,7 +201,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr interface = elem->get("interface");
     if (interface) {

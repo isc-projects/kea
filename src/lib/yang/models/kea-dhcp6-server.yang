@@ -12,7 +12,7 @@ module kea-dhcp6-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-13;
+    revision-date 2018-11-14;
   }
   import kea-logging {
     prefix logging;
@@ -24,7 +24,7 @@ module kea-dhcp6-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-11-13 {
+  revision 2018-11-14 {
     description "Initial revision";
     reference "";
   }
@@ -265,27 +265,24 @@ module kea-dhcp6-server {
 
   grouping option-data-list {
     description "Option data list grouping.";
-    container option-data-list {
-      description "Option data list.";
-      list option-data {
-        key "code space";
-        description "Option data entry.";
-        leaf code {
-          type uint16;
-          mandatory true;
-          description "Option code.";
-        }
-        leaf space {
-          type string;
-          mandatory true;
-          description "Option space.";
-        }
-        uses dhcp:option-data-name;
-        uses dhcp:option-data-data;
-        uses dhcp:option-data-csv-format;
-        uses dhcp:option-data-always-send;
-        uses dhcp:option-data-user-context;
+    list option-data {
+      key "code space";
+      description "Option data entry.";
+      leaf code {
+        type uint16;
+        mandatory true;
+        description "Option code.";
       }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space.";
+      }
+      uses dhcp:option-data-name;
+      uses dhcp:option-data-data;
+      uses dhcp:option-data-csv-format;
+      uses dhcp:option-data-always-send;
+      uses dhcp:option-data-user-context;
     }
   }
 

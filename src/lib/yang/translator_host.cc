@@ -74,7 +74,7 @@ TranslatorHost::getHostKea(const string& xpath) {
             result->set("prefixes", prefixes);
         }
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -148,7 +148,7 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && (classes->size() > 0)) {

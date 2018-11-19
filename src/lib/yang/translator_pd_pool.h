@@ -52,7 +52,7 @@ namespace yang {
 ///  +--rw prefix?                  inet:ipv6-prefix
 ///  +--rw delegated-len?           uint8
 ///  +--rw excluded-prefix?         inet:ipv6-prefix
-///  +--rw option-data-list         option-data*
+///  +--rw option-data*
 ///  +--rw client-class?            string
 ///  +--rw require-client-classes*  string
 ///  +--rw user-context?            string
