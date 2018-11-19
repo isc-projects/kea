@@ -523,14 +523,6 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
               "10.0.0.0/24");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
               "deleted: "
-              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/"
-              "reservation-mode = all [default]");
-    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
-              "deleted: "
-              "/kea-dhcp4-server:config/subnet4/subnet4[id='1']/"
-              "match-client-id = true [default]");
-    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
-              "deleted: "
               "/kea-dhcp4-server:config/subnet4/subnet4[id='1'] "
               "(list instance)");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
@@ -544,14 +536,6 @@ TEST_F(NetconfAgentLogTest, logChanges2) {
               "created: "
               "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/subnet = "
               "10.0.0.0/24");
-    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
-              "created: "
-              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/"
-              "reservation-mode = all [default]");
-    addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
-              "created: "
-              "/kea-dhcp4-server:config/subnet4/subnet4[id='10']/"
-              "match-client-id = true [default]");
     addString("NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: "
               "moved: "
               "/kea-dhcp4-server:config/subnet4/subnet4[id='10'] "
