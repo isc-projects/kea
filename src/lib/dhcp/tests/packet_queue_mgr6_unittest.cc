@@ -27,15 +27,14 @@ public:
     /// Note that it instantiates the PQM singleton.
     PacketQueueMgr6Test()
         : default_queue_type_(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6) {
-        PacketQueueMgr6::create();
+        packet_queue_mgr6_.reset(new PacketQueueMgr6());
+
     }
 
     /// @brief Destructor
     ///
     /// It destroys the PQM singleton.
-    virtual ~PacketQueueMgr6Test(){
-        PacketQueueMgr6::destroy();
-    }
+    virtual ~PacketQueueMgr6Test(){}
 
     /// @brief Registers a queue type factory
     ///
@@ -71,7 +70,7 @@ public:
 
     /// @brief Fetches a pointer to the PQM singleton
     PacketQueueMgr6& mgr() {
-        return (PacketQueueMgr6::instance());
+        return (*packet_queue_mgr6_);
     };
 
     /// @brief Tests the current packet queue info against expected content
@@ -82,7 +81,11 @@ public:
         checkInfo((mgr().getPacketQueue()), exp_json);
     }
 
+    /// @brief default queue type used for a given test
     std::string default_queue_type_;
+
+    /// @brief Packet Queue manager instance
+    PacketQueueMgr6Ptr packet_queue_mgr6_;
 };
 
 // Verifies that DHCPv6 PQM provides a default queue factory
@@ -95,12 +98,6 @@ TEST_F(PacketQueueMgr6Test, defaultQueue) {
     ASSERT_NO_THROW(mgr().createPacketQueue(config));
     CHECK_QUEUE_INFO (mgr().getPacketQueue(), "{ \"capacity\": 2000, \"queue-type\": \""
                       << default_queue_type_ << "\", \"size\": 0 }");
-
-    // We should be able to recreate the manager.
-    ASSERT_NO_THROW(PacketQueueMgr6::create());
-
-    // Should not be a queue.
-    ASSERT_FALSE(mgr().getPacketQueue());
 }
 
 // Verifies that PQM registry and creation of custome queue implementations.

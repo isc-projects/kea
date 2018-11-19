@@ -41,15 +41,11 @@ public:
     /// Note that it instantiates the PQM singleton.
     PacketQueueMgr4Test()
         : default_queue_type_(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4) {
-        PacketQueueMgr4::create();
+        packet_queue_mgr4_.reset(new PacketQueueMgr4());
     }
 
     /// @brief Destructor
-    ///
-    /// It destroys the PQM singleton.
-    virtual ~PacketQueueMgr4Test(){
-        PacketQueueMgr4::destroy();
-    }
+    virtual ~PacketQueueMgr4Test(){}
 
     /// @brief Registers a queue type factory
     ///
@@ -85,7 +81,7 @@ public:
 
     /// @brief Fetches a pointer to the PQM singleton
     PacketQueueMgr4& mgr() {
-        return (PacketQueueMgr4::instance());
+        return (*packet_queue_mgr4_);
     };
 
     /// @brief Tests the current packet queue info against expected content
@@ -96,7 +92,11 @@ public:
         checkInfo((mgr().getPacketQueue()), exp_json);
     }
 
+    /// @brief default queue type used for a given test
     std::string default_queue_type_;
+
+    /// @brief Packet Queue manager instance
+    PacketQueueMgr4Ptr packet_queue_mgr4_;
 };
 
 // Verifies that DHCPv4 PQM provides a default queue factory
@@ -109,12 +109,6 @@ TEST_F(PacketQueueMgr4Test, defaultQueue) {
     ASSERT_NO_THROW(mgr().createPacketQueue(config));
     CHECK_QUEUE_INFO (mgr().getPacketQueue(), "{ \"capacity\": 2000, \"queue-type\": \""
                       << default_queue_type_ << "\", \"size\": 0 }");
-
-    // We should be able to recreate the manager.
-    ASSERT_NO_THROW(PacketQueueMgr4::create());
-
-    // Should not be a queue.
-    ASSERT_FALSE(mgr().getPacketQueue());
 }
 
 // Verifies that PQM registry and creation of custome queue implementations.
