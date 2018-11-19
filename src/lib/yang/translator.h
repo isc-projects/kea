@@ -14,7 +14,7 @@
 #error "config.h must be included before translator.h"
 #endif
 
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 #include <sysrepo-cpp/Session.hpp>
 #else
 #include <sysrepo-cpp/Session.h>
@@ -31,7 +31,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name (used and shared by derived classes).
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorBasic(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorBasic(S_Session session, const std::string& model);
@@ -47,7 +47,7 @@ public:
     /// @param s_val The value.
     /// @return The Element representing the sysrepo value.
     /// @throw NotImplemented when the value type is not supported.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     static isc::data::ElementPtr value(sysrepo::S_Val s_val);
 #else
     static isc::data::ElementPtr value(S_Val s_val);
@@ -77,7 +77,7 @@ public:
     ///
     /// @param elem The JSON element.
     /// @param type The sysrepo type.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     static sysrepo::S_Val value(isc::data::ConstElementPtr elem,
                                 sr_type_t type);
 #else
@@ -103,7 +103,7 @@ public:
     ///
     /// @param xpath The xpath of the list.
     /// @return An S_Iter_Value pointer. Null is the list does not exist.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Iter_Value getIter(const std::string& xpath);
 #else
     S_Iter_Value getIter(const std::string& xpath);
@@ -114,7 +114,7 @@ public:
     /// @param iter The iterator pointing to the previous element
     /// @return The xpath of the next element. Empty string when at
     /// the end of the list.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     std::string getNext(sysrepo::S_Iter_Value iter);
 #else
     std::string getNext(S_Iter_Value iter);
@@ -122,7 +122,7 @@ public:
 
 protected:
     /// @brief The sysrepo session.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session session_;
 #else
     S_Session session_;

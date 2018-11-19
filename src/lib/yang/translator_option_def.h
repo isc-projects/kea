@@ -83,7 +83,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorOptionDef(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorOptionDef(S_Session session, const std::string& model);
@@ -136,7 +136,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorOptionDefList(sysrepo::S_Session session,
                             const std::string& model);
 #else

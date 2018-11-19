@@ -240,7 +240,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorSubnet(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorSubnet(S_Session session, const std::string& model);
@@ -303,7 +303,7 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     TranslatorSubnets(sysrepo::S_Session session, const std::string& model);
 #else
     TranslatorSubnets(S_Session session, const std::string& model);

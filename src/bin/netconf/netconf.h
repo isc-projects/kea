@@ -18,7 +18,7 @@
 #include <netconf/http_control_socket.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 #include <sysrepo-cpp/Session.hpp>
 #else
 #include <sysrepo-cpp/Session.h>
@@ -79,7 +79,7 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     static int validate(sysrepo::S_Session sess,
                         const CfgServersMapPair& service_pair);
 #else
@@ -93,7 +93,7 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     static int update(sysrepo::S_Session sess,
                       const CfgServersMapPair& service_pair);
 #else
@@ -108,7 +108,7 @@ public:
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     static void logChanges(sysrepo::S_Session sess, const std::string& model);
 #else
     static void logChanges(S_Session sess, const std::string& model);
@@ -146,28 +146,28 @@ protected:
     void subscribeConfig(const CfgServersMapPair& service_pair);
 
     /// @brief Sysrepo connection.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Connection conn_;
 #else
     S_Connection conn_;
 #endif
 
     /// @brief Sysrepo startup datastore session.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session startup_sess_;
 #else
     S_Session startup_sess_;
 #endif
 
     /// @brief Sysrepo running datastore session.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session running_sess_;
 #else
     S_Session running_sess_;
 #endif
 
     /// @brief Subscription map.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     std::map<const std::string, sysrepo::S_Subscribe> subscriptions_;
 #else
     std::map<const std::string, S_Subscribe> subscriptions_;

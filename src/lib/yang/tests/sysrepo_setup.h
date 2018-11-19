@@ -36,7 +36,7 @@ public:
     void useModel(std::string model) {
         std::string full_name =
             "translator " + std::string(Name) + " unittests";
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
         conn_.reset(new sysrepo::Connection(full_name.c_str()));
         sess_.reset(new sysrepo::Session(conn_, SR_DS_CANDIDATE));
 #else
@@ -56,14 +56,14 @@ public:
     }
 
     /// @brief Sysrepo connection.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Connection conn_;
 #else
     S_Connection conn_;
 #endif
 
     /// @brief Sysrepo session.
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
     sysrepo::S_Session sess_;
 #else
     S_Session sess_;

@@ -34,7 +34,7 @@ using namespace isc::test;
 using namespace isc::yang;
 using namespace isc::yang::test;
 using namespace isc::util::thread;
-#ifndef HAVE_OLD_SYSREPO
+#ifndef HAVE_PRE_0_7_6_SYSREPO
 using namespace sysrepo;
 #endif
 
