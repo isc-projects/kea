@@ -659,7 +659,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
         if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, qc)) {
             LOG_INFO(dhcp6_logger, DHCP6_CONFIG_PACKET_QUEUE)
-                     .arg(PacketQueueMgr6::instance().getPacketQueue()->getInfoStr());
+                     .arg(IfaceMgr::instance().getPacketQueue6()->getInfoStr());
         }
 
     } catch (const std::exception& ex) {
