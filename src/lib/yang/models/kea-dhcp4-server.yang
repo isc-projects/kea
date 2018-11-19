@@ -8,12 +8,15 @@ module kea-dhcp4-server {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-09-14;
   }
   import kea-dhcp-types {
     prefix dhcp;
+    revision-date 2018-09-14;
   }
   import kea-logging {
     prefix logging;
+    revision-date 2018-09-14;
   }
 
   organization "Internet Systems Consortium";
@@ -21,7 +24,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-09-14 {
+  revision 2018-11-11 {
     description "Initial revision";
     reference "";
   }
@@ -86,6 +89,15 @@ module kea-dhcp4-server {
       type string;
       description "Boot file name (up to 128 bytes).";
     }
+  }
+
+  grouping authoritative {
+    description "Authoritative grouping.";
+    leaf authoritative {
+      type boolean;
+      description "NAK requests for unknown clients. If set to false
+                   ignore them.";
+      }
   }
 
   grouping relay {
@@ -201,6 +213,7 @@ module kea-dhcp4-server {
         type inet:ipv6-prefix;
         description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
       }
+      uses authoritative;
       uses dhcp:subnet-user-context;
     }
   }
@@ -312,6 +325,7 @@ module kea-dhcp4-server {
           description "Optional information about relay agent.";
           uses relay;
         }
+        uses authoritative;
         uses dhcp:network-reservation-mode;
         uses dhcp:network-client-class;
         uses dhcp:network-require-client-classes;
@@ -405,6 +419,7 @@ module kea-dhcp4-server {
         description "Global host reservations.";
       }
     }
+    uses authoritative;
   }
 
   container logging {
