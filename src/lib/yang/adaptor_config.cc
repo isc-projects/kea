@@ -523,52 +523,6 @@ AdaptorConfig::sanitizeRelaySuppliedOptions(ConstElementPtr dhcp) {
 }
 
 void
-AdaptorConfig::removeAuthoritativeSubnets(ConstElementPtr subnets) {
-    if (!subnets || subnets->empty()) {
-        // nothing to do here.
-        return;
-    }
-
-    for (size_t i = 0; i < subnets->size(); ++i) {
-        ElementPtr subnet = subnets->getNonConst(i);
-        ConstElementPtr auth = subnet->get("authoritative");
-        if (auth) {
-            subnet->remove("authoritative");
-        }
-    }
-}
-
-void
-AdaptorConfig::removeAuthoritativeSharedNetworks(ConstElementPtr networks) {
-    if (!networks || networks->empty()) {
-        // nothing to do here.
-        return;
-    }
-
-    for (size_t i = 0; i < networks->size(); ++i) {
-        ElementPtr network = networks->getNonConst(i);
-        ConstElementPtr auth = network->get("authoritative");
-        if (auth) {
-            network->remove("authoritative");
-        }
-        removeAuthoritativeSubnets(network->get("subnet4"));
-    }
-}
-
-void
-AdaptorConfig::removeAuthoritative(ConstElementPtr dhcp) {
-    removeAuthoritativeSubnets(dhcp->get("subnet4"));
-    removeAuthoritativeSharedNetworks(dhcp->get("shared-networks"));
-    ConstElementPtr auth = dhcp->get("authoritative");
-    if (!auth) {
-        // Done.
-        return;
-    }
-    ElementPtr mutable_dhcp = boost::const_pointer_cast<Element>(dhcp);
-    mutable_dhcp->remove("authoritative");
-}
-
-void
 AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
                           const string& space) {
     if (!dhcp) {
@@ -654,9 +608,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
 
     sanitizeDatabase(dhcp);
 
-    if (space == DHCP4_SPACE) {
-        removeAuthoritative(dhcp);
-    } else if (space == DHCP6_SPACE) {
+    if (space == DHCP6_SPACE) {
         sanitizeRelaySuppliedOptions(dhcp);
     }
 }

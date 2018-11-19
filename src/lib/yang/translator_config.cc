@@ -299,6 +299,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     getParam(result, xpath, "next-server");
     getParam(result, xpath, "server-hostname");
     getParam(result, xpath, "boot-file-name");
+    getParam(result, xpath, "authoritative");
     return (result);
 }
 
@@ -724,6 +725,10 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     ConstElementPtr boot = elem->get("boot-file-name");
     if (boot) {
         setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
+    }
+    ConstElementPtr auth = elem->get("authoritative");
+    if (auth) {
+        setItem(xpath + "/authoritative", auth, SR_BOOL_T);
     }
 }
 

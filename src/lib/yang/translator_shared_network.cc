@@ -128,6 +128,10 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
         if (match) {
             result->set("match-client-id", match);
         }
+        ConstElementPtr auth = getItem(xpath + "/authoritative");
+        if (auth) {
+            result->set("authoritative", auth);
+        }
         ConstElementPtr next = getItem(xpath + "/next-server");
         if (next) {
             result->set("next-server", next);
@@ -243,6 +247,10 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
         ConstElementPtr match = elem->get("match-client-id");
         if (match) {
             setItem(xpath + "/match-client-id", match, SR_BOOL_T);
+        }
+        ConstElementPtr auth = elem->get("authoritative");
+        if (auth) {
+            setItem(xpath + "/authoritative", auth, SR_BOOL_T);
         }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
