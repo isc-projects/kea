@@ -12,11 +12,11 @@ module kea-dhcp4-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-09-14;
+    revision-date 2018-11-11;
   }
   import kea-logging {
     prefix logging;
-    revision-date 2018-09-14;
+    revision-date 2018-11-11;
   }
 
   organization "Internet Systems Consortium";
@@ -24,7 +24,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-11-11 {
+  revision 2018-11-12 {
     description "Initial revision";
     reference "";
   }
@@ -60,7 +60,6 @@ module kea-dhcp4-server {
     description "Match client ID grouping.";
     leaf match-client-id {
       type boolean;
-      default true;
       description "Use client-id for lease lookups. If set to false, client-id
                    will be ignored.";
     }
@@ -350,7 +349,6 @@ module kea-dhcp4-server {
             description "DHCP service uses UDP sockets.";
           }
         }
-        default "raw";
         description "Type of sockets to use.";
       }
       leaf outbound-interface {
@@ -363,7 +361,6 @@ module kea-dhcp4-server {
             description "Use kernel routing.";
           }
         }
-        default "same-as-inbound";
         description "Control the interface used to send a response.";
       }
       uses dhcp:interfaces-re-detect;
@@ -397,7 +394,6 @@ module kea-dhcp4-server {
 
     leaf echo-client-id {
       type boolean;
-      default true;
       description "Send client-id back when the client sent it. This
                    is conformant with RFC6842, but some older, buggy
                    clients have problems with it.";
@@ -473,22 +469,18 @@ module kea-dhcp4-server {
         }
         leaf fqdn-fwd {
           type boolean;
-          default false;
           description "Lease FQDN forward flag.";
         }
         leaf fqdn-rev {
           type boolean;
-          default false;
           description "Lease FQDN reverse lag.";
         }
         leaf hostname {
           type string;
-          default "";
           description "Lease hostname.";
         }
         leaf state {
           type dhcp:lease-state;
-          default "default";
           description "Lease state.";
         }
         leaf user-context {

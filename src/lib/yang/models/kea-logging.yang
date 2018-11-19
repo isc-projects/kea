@@ -5,6 +5,7 @@ module kea-logging {
 
   import kea-types {
     prefix kea;
+    revision-date 2018-09-14;
   }
 
   organization "Internet Systems Consortium";
@@ -12,7 +13,7 @@ module kea-logging {
   description "This model defines a YANG data model that can be
     used to configure and manage logging of a Kea server.";
 
-  revision 2018-09-14 {
+  revision 2018-11-11 {
     description "Initial revision";
     reference "";
   }
@@ -48,12 +49,10 @@ module kea-logging {
             }
             leaf flush {
               type boolean;
-              default true;
               description "When true flush buffers after each message.";
             }
             leaf maxsize {
               type uint32;
-              default 10240000;
               description "Maximum size of output file before rotation.
                 Values below 204800 including 0 disable rotation.";
             }
@@ -61,7 +60,6 @@ module kea-logging {
               type uint32 {
                 range 1..max;
               }
-              default 1;
               description "Maximum version to keep a rotated output file.";
             }
           }

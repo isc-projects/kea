@@ -8,9 +8,11 @@ module kea-dhcp-ddns {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-09-14;
   }
   import kea-logging {
     prefix logging;
+    revision-date 2018-11-11;
   }
 
   organization "Internet Systems Consortium";
@@ -18,7 +20,7 @@ module kea-dhcp-ddns {
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
 
-  revision 2018-09-14 {
+  revision 2018-11-11 {
     description "Initial revision";
     reference "";
   }
@@ -61,7 +63,6 @@ module kea-dhcp-ddns {
             }
             leaf port {
               type uint16;
-              default 53;
               description "DNS server port.";
             }
             leaf user-context {
@@ -88,13 +89,11 @@ module kea-dhcp-ddns {
 
     leaf ip-address {
       type inet:ip-address;
-      default "127.0.0.1";
       description "IP address on which the server listens for requests.";
     }
 
     leaf port {
       type uint16;
-      default 53001;
       description "Port on which the server listens for requests.";
     }
 
@@ -114,7 +113,6 @@ module kea-dhcp-ddns {
           description "TCP transport";
         }
       }
-      default "UDP";
       description "Protocol to use when sending requests to the server.";
     }
 
@@ -124,7 +122,6 @@ module kea-dhcp-ddns {
           description "JSON format";
         }
       }
-      default "JSON";
       description "Packet format to use when sending requests to the server.";
     }
 
@@ -156,7 +153,6 @@ module kea-dhcp-ddns {
         leaf digest-bits {
            type uint16;
            units "bits";
-           default 0;
            description "Minimum truncated length. 0 means no truncation.";
         }
         leaf secret {
