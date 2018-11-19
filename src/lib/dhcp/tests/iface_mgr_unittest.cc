@@ -3265,8 +3265,11 @@ TEST_F(ReceiverTest, receiverClassBasics) {
     /// We'll create a receiver and let it run until it expires.  (Note this is more
     /// of a test of ReceiverTest itself and ensures our tests later for why we
     /// exited are sound.)
-    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
-                                                         Receiver::RCV_TERMINATE))));
+    receiver_.reset(new Receiver());
+    ASSERT_FALSE(receiver_->isRunning());
+    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_TERMINATE));
+    ASSERT_TRUE(receiver_->isRunning());
+
     // Wait long enough for thread to expire.
     nap(WORKER_MAX_PASSES + 1);
 
@@ -3279,10 +3282,18 @@ TEST_F(ReceiverTest, receiverClassBasics) {
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
     EXPECT_EQ("thread expired", receiver_->getLastError());
 
+    // This one is a little wonky, as a thread function expiring needs to be
+    // supported in Receiver.  There needs to be something in Receiver, so it
+    // nows the thread exited.  Thread exists but I think it's underlying
+    // impl does not.
+    EXPECT_TRUE(receiver_->isRunning());
+    ASSERT_NO_THROW(receiver_->stop());
+
     /// Now we'll test stopping a thread.
-    /// We'll create a Receiver, let it run a little and then tell it to stop.
-    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
-                                                         Receiver::RCV_TERMINATE))));
+    /// Start the receiver, let it run a little and then tell it to stop.
+    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_TERMINATE));
+    ASSERT_TRUE(receiver_->isRunning());
+
     // No watches should be ready.
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
@@ -3293,6 +3304,7 @@ TEST_F(ReceiverTest, receiverClassBasics) {
 
     // Tell it to stop.
     receiver_->stop();
+    ASSERT_FALSE(receiver_->isRunning());
 
     // It should have done less than the maximum number of passes.
     EXPECT_LT(passes_, WORKER_MAX_PASSES);
@@ -3305,9 +3317,10 @@ TEST_F(ReceiverTest, receiverClassBasics) {
 
 
     // Next we'll test error notification.
-    // We'll create a receiver that sets an error on the second pass.
-    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
-                                                         Receiver::RCV_ERROR))));
+    // Start the receiver with a thread that sets an error on the second pass.
+    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_ERROR));
+    ASSERT_TRUE(receiver_->isRunning());
+
     // No watches should be ready.
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
@@ -3322,6 +3335,7 @@ TEST_F(ReceiverTest, receiverClassBasics) {
 
     // Tell it to stop.
     receiver_->stop();
+    ASSERT_FALSE(receiver_->isRunning());
 
     // It should have done less than the maximum number of passes.
     EXPECT_LT(passes_, WORKER_MAX_PASSES);
@@ -3334,9 +3348,10 @@ TEST_F(ReceiverTest, receiverClassBasics) {
 
 
     // Finally, we'll test data ready notification.
-    // We'll create a receiver that indicates data ready on its second pass.
-    receiver_.reset(new Receiver(boost::bind(boost::bind(&ReceiverTest::worker, this,
-                                                         Receiver::RCV_READY))));
+    // We'll start the receiver with a thread that indicates data ready on its second pass.
+    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_READY));
+    ASSERT_TRUE(receiver_->isRunning());
+
     // No watches should be ready.
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
     ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
@@ -3350,6 +3365,7 @@ TEST_F(ReceiverTest, receiverClassBasics) {
 
     // Tell it to stop.
     receiver_->stop();
+    ASSERT_FALSE(receiver_->isRunning());
 
     // It should have done less than the maximum number of passes.
     EXPECT_LT(passes_, WORKER_MAX_PASSES);

@@ -179,7 +179,8 @@ bool Iface::delSocket(const uint16_t sockfd) {
     return (false); // socket not found
 }
 
-Receiver::Receiver(const boost::function<void()>& thread_main) {
+void
+Receiver::start(const boost::function<void()>& thread_main) {
     clearReady(RCV_ERROR);
     clearReady(RCV_READY);
     clearReady(RCV_TERMINATE);
@@ -219,9 +220,12 @@ Receiver::shouldTerminate() {
 
 void
 Receiver::stop() {
-    markReady(RCV_TERMINATE);
-    thread_->wait();
-    thread_.reset();
+    if (thread_) {
+        markReady(RCV_TERMINATE);
+        thread_->wait();
+        thread_.reset();
+    }
+
     clearReady(RCV_ERROR);
     clearReady(RCV_READY);
     last_error_ = "thread stopped";
@@ -353,14 +357,14 @@ void IfaceMgr::stopDHCPReceiver() {
     if (isReceiverRunning()) {
         receiver_->stop();
         receiver_.reset();
-    }
 
-    if (getPacketQueue4()) {
-        getPacketQueue4()->clear();
-    }
+        if (getPacketQueue4()) {
+            getPacketQueue4()->clear();
+        }
 
-    if (getPacketQueue6()) {
-        getPacketQueue6()->clear();
+        if (getPacketQueue6()) {
+            getPacketQueue6()->clear();
+        }
     }
 }
 
@@ -369,7 +373,6 @@ IfaceMgr::~IfaceMgr() {
     control_buf_len_ = 0;
 
     closeSockets();
-
     // Explicitly delete PQM singletons.
     PacketQueueMgr4::destroy();
     PacketQueueMgr6::destroy();
@@ -754,7 +757,9 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
                 return;
         }
 
-        receiver_.reset(new Receiver(boost::bind(boost::bind(&IfaceMgr::receiveDHCP4Packets, this))));
+        receiver_.reset(new Receiver());
+        receiver_->start(boost::bind(boost::bind(&IfaceMgr::receiveDHCP4Packets, this)));
+
         break;
     case AF_INET6:
         // If there's no queue, then has been disabled, simply return.
@@ -762,7 +767,8 @@ IfaceMgr::startDHCPReceiver(const uint16_t family) {
             return;
         }
 
-        receiver_.reset(new Receiver(boost::bind(boost::bind(&IfaceMgr::receiveDHCP6Packets, this))));
+        receiver_.reset(new Receiver());
+        receiver_->start(boost::bind(boost::bind(&IfaceMgr::receiveDHCP6Packets, this)));
         break;
     default:
         isc_throw (BadValue, "startDHCPReceiver: invalid family: " << family);
