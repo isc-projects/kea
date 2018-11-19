@@ -47,7 +47,6 @@ IfacesConfigParser::parse(const CfgIfacePtr& cfg,
     if (re_detect) {
         // Interface clear will drop opened socket information
         // so close them if the caller did not.
-        IfaceMgr::instance().stopDHCPReceiver();
         IfaceMgr::instance().closeSockets();
         IfaceMgr::instance().clearIfaces();
         IfaceMgr::instance().detectIfaces();
