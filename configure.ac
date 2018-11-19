@@ -872,7 +872,7 @@ DISTCHECK_SYSREPO_CONFIGURE_FLAG=
 sysrepo_config="no"
 AC_ARG_WITH([sysrepo],
   AC_HELP_STRING([--with-sysrepo=PATH],
-    [path to the Sysrepo 'sysrepo_config' script]),
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
