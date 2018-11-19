@@ -108,7 +108,7 @@ TranslatorPool::getPoolKea(const string& xpath) {
               << end_addr->stringValue();
         result->set("pool", Element::create(range.str()));
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -217,7 +217,7 @@ TranslatorPool::setPoolKea(const string& xpath, ConstElementPtr elem) {
     // Skip start-address and end-address as are the keys.
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     ConstElementPtr guard = elem->get("client-class");

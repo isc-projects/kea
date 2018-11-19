@@ -64,7 +64,7 @@ TranslatorClass::getClassKea(const string& xpath) {
     if (required) {
         result->set("only-if-required", required);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -126,7 +126,7 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     if (model_ == KEA_DHCP4_SERVER) {

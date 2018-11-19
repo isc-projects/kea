@@ -153,7 +153,7 @@ TranslatorOptionDataList::getOptionDataList(const string& xpath) {
 ConstElementPtr
 TranslatorOptionDataList::getOptionDataListKea(const string& xpath) {
     ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/option-data");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getOptionDataListKea: can't get iterator: "

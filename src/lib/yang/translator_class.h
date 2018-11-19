@@ -38,7 +38,7 @@ namespace yang {
 ///    +--rw name                string
 ///    +--rw test?               string
 ///    +--rw only-if-required?   boolean
-///    +--rw option-data-list    option-data*
+///    +--rw option-data*
 ///    +--rw option-def-list     option-def*
 ///    +--rw next-server?        inet:ipv4-address
 ///    +--rw server-hostname?    string
