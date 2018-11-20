@@ -24,7 +24,7 @@ module kea-dhcp6-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-11-18 {
+  revision 2018-11-19 {
     description "Initial revision";
     reference "";
   }
@@ -420,13 +420,8 @@ module kea-dhcp6-server {
     uses dhcp:config-control;
     uses dhcp:server-tag;
     uses dhcp:dhcp-queue-control;
-  }
-
-  container logging {
-    // config true;
-    description "Logging";
-
-    uses logging:configuration;
+    // Moved from logging
+    uses logging:loggers;
   }
 
   /*

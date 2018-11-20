@@ -70,16 +70,17 @@ namespace yang {
 /// ]
 /// @endcode
 /// @code
-///  /kea-dhcp4-server:logging (container)
-///  /kea-dhcp4-server:logging/logger[name='foo'] (list instance)
-///  /kea-dhcp4-server:logging/logger[name='foo']/name = foo
-///  /kea-dhcp4-server:logging/logger[name='foo']/
+///  /kea-dhcp4-server:config (container)
+///  /kea-dhcp4-server:config/...
+///  /kea-dhcp4-server:config/logger[name='foo'] (list instance)
+///  /kea-dhcp4-server:config/logger[name='foo']/name = foo
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar'] (list instance)
-///  /kea-dhcp4-server:logging/logger[name='foo']/
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar']/option = /bar
-///  /kea-dhcp4-server:logging/logger[name='foo']/
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar']/maxver = 10
-///  /kea-dhcp4-server:logging/logger[name='foo']/severity = WARN
+///  /kea-dhcp4-server:config/logger[name='foo']/severity = WARN
 /// @endcode
 
 /// @brief A translator class for converting a logger between

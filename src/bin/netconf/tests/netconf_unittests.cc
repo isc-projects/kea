@@ -78,8 +78,6 @@ void clearYang(NakedNetconfAgentPtr agent) {
     if (agent && (agent->startup_sess_)) {
         string xpath = "/kea-dhcp4-server:config";
         EXPECT_NO_THROW(agent->startup_sess_->delete_item(xpath.c_str()));
-        xpath = "/kea-dhcp4-server:logging";
-        EXPECT_NO_THROW(agent->startup_sess_->delete_item(xpath.c_str()));
         EXPECT_NO_THROW(agent->startup_sess_->commit());
     }
 }
@@ -373,7 +371,6 @@ public:
                       sr_notif_event_t /*event*/,
                       void* /*private_ctx*/) {
         NetconfAgent::logChanges(sess, "/kea-dhcp4-server:config");
-        NetconfAgent::logChanges(sess, "/kea-dhcp4-server:logging");
         finished = true;
         return (SR_ERR_OK);
     }

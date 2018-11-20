@@ -83,10 +83,15 @@ TranslatorConfig::getConfigIetf6() {
 ElementPtr
 TranslatorConfig::getConfigKea4() {
     ElementPtr result = Element::createMap();
-    result->set("Dhcp4", getServerKeaDhcp4());
-    ConstElementPtr logging = getServerKeaLogging();
-    if (logging && !logging->empty()) {
-        result->set("Logging", logging);
+    ElementPtr dhcp = getServerKeaDhcp4();
+    result->set("Dhcp4", dhcp);
+    ConstElementPtr loggers = dhcp->get("loggers");
+    if (loggers) {
+	dhcp->remove("loggers");
+
+	ElementPtr logging = Element::createMap();
+	logging->set("loggers", loggers);
+	result->set("Logging", logging);
     }
     return (result);
 }
@@ -94,10 +99,15 @@ TranslatorConfig::getConfigKea4() {
 ElementPtr
 TranslatorConfig::getConfigKea6() {
     ElementPtr result = Element::createMap();
-    result->set("Dhcp6", getServerKeaDhcp6());
-    ConstElementPtr logging = getServerKeaLogging();
-    if (logging && !logging->empty()) {
-        result->set("Logging", logging);
+    ElementPtr dhcp = getServerKeaDhcp6();
+    result->set("Dhcp6", dhcp);
+    ConstElementPtr loggers = dhcp->get("loggers");
+    if (loggers) {
+	dhcp->remove("loggers");
+
+	ElementPtr logging = Element::createMap();
+	logging->set("loggers", loggers);
+	result->set("Logging", logging);
     }
     return (result);
 }
@@ -291,6 +301,10 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         result->set("dhcp-queue-control",
                     Element::fromJSON(queue_ctrl->stringValue()));
     }
+    ConstElementPtr loggers = getLoggers(xpath);
+    if (loggers && !loggers->empty()) {
+        result->set("loggers", loggers);
+    }
     return (result);
 }
 
@@ -387,17 +401,6 @@ TranslatorConfig::getServerKeaDhcp6() {
     return (result);
 }
 
-ElementPtr
-TranslatorConfig::getServerKeaLogging() {
-    string xpath = "/" + model_ + ":logging";
-    ElementPtr result = Element::createMap();
-    ConstElementPtr loggers = getLoggers(xpath);
-    if (loggers && !loggers->empty()) {
-        result->set("loggers", loggers);
-    }
-    return (result);
-}
-
 void
 TranslatorConfig::setConfig(ConstElementPtr elem) {
     try {
@@ -455,7 +458,6 @@ TranslatorConfig::setConfigIetf6(ConstElementPtr elem) {
 void
 TranslatorConfig::delConfigKea() {
     delItem("/" + model_ + ":config");
-    delItem("/" + model_ + ":logging");
 }
 
 void
@@ -857,7 +859,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
 
 void
 TranslatorConfig::setServerKeaLogging(ConstElementPtr elem) {
-    string xpath = "/" + model_ + ":logging";
+    string xpath = "/" + model_ + ":config";
     ConstElementPtr loggers = elem->get("loggers");
     if (loggers) {
         setLoggers(xpath, loggers);
