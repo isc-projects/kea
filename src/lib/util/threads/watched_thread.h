@@ -111,7 +111,7 @@ public:
     /// -# READY - Marked as ready by the thread when it needs attention for a normal event
     /// (e.g. a thread used to receive data would mark READY when it has data available)
     /// -# TERMINATE - Marked as ready by WatchedThread owner to instruct the thread to
-    /// terminate.  Worker functions must monitor TERMINATa by periodically calling
+    /// terminate.  Worker functions must monitor TERMINATE by periodically calling
     /// @c shouldTerminate
     WatchSocket sockets_[TERMINATE + 1];
 
