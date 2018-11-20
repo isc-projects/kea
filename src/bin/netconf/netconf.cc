@@ -83,10 +83,6 @@ public:
         if (NetconfProcess::shut_down) {
             return (SR_ERR_DISCONNECT);
         }
-        NetconfAgent::logChanges(sess, xpath + "logging");
-        if (NetconfProcess::shut_down) {
-            return (SR_ERR_DISCONNECT);
-        }
         switch (event) {
         case SR_EV_VERIFY:
             return (NetconfAgent::validate(sess, service_pair_));

@@ -44,7 +44,7 @@ TEST_F(TranslatorLoggersTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Get empty.
-    const string& xpath = "/kea-dhcp4-server:logging";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr loggers;
     EXPECT_NO_THROW(loggers = t_obj_->getLoggers(xpath));
     ASSERT_TRUE(loggers);
@@ -57,7 +57,7 @@ TEST_F(TranslatorLoggersTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp6-server:logging";
+    const string& xpath = "/kea-dhcp6-server:config";
     const string& xlogger = xpath + "/logger[name='foo']";
     const string& xseverity = xlogger + "/severity";
    const string& xoption = xlogger + "/output-option[output='/bar']";
@@ -106,7 +106,7 @@ TEST_F(TranslatorLoggersTest, set) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4-server:logging";
+    const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr option = Element::createMap();
     option->set("output", Element::create(string("/bar")));
     option->set("maxver", Element::create(10));
@@ -153,10 +153,10 @@ TEST_F(TranslatorLoggersTest, set) {
 
     // Check the tree representation.
     S_Tree tree;
-    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:logging"));
+    EXPECT_NO_THROW(tree = sess_->get_subtree("/kea-dhcp4-server:config"));
     ASSERT_TRUE(tree);
     string expected =
-        "kea-dhcp4-server:logging (container)\n"
+        "kea-dhcp4-server:config (container)\n"
         " |\n"
         " -- logger (list instance)\n"
         "     |\n"
