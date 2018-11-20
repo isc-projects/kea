@@ -1,3 +1,7 @@
+1481.	[func]		fdupont
+	Cleaned up the keatest-module YANG test module.
+	(Gitlab #204,!98, git a830adcefd9306969216d35c51306df3610278bb)
+
 1480.	[func]		fdupont
 	The unused cconfiguration parameter "always-include-fqdn"
 	was removed. Configurations using it will be rejected as
