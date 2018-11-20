@@ -12,7 +12,7 @@ module kea-dhcp6-server {
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-14;
+    revision-date 2018-11-18;
   }
   import kea-logging {
     prefix logging;
@@ -24,7 +24,7 @@ module kea-dhcp6-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-11-16 {
+  revision 2018-11-18 {
     description "Initial revision";
     reference "";
   }
