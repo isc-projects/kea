@@ -1,3 +1,9 @@
+1480.	[func]		fdupont
+	The unused cconfiguration parameter "always-include-fqdn"
+	was removed. Configurations using it will be rejected as
+	it is no longer recognized.
+	(Gitlab #182,!128, git cafeba167e7c64370dd39eca4551f61acd89d3da)
+
 1479.	[build]		fdupont
 	Support for sysrepo 0.7.6 (and libyang 0.16-r2) was added.
 	Previous versions of sysrepo (and libyang) are still supported.
