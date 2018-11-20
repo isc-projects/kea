@@ -74,32 +74,6 @@ public:
     /// \brief Pointer to incremental generator.
     typedef boost::shared_ptr<IncrementalGenerator> IncrementalGeneratorPtr;
 
-    /// \brief Sets the due times for sending Solicit, Renew and Release.
-    ///
-    /// There are three class members that hold the due time for sending DHCP
-    /// messages:
-    /// - send_due_ - due time to send Solicit,
-    /// - renew_due_ - due time to send Renew,
-    /// - release_due_ - due time to send Release.
-    /// Some tests in this test suite need to modify these values relative to
-    /// the current time. This function modifies this values using time
-    /// offset values (positive or negative) specified as a difference in
-    /// seconds between current time and the due time.
-    ///
-    /// \param send_secs An offset of the due time for Solicit.
-    /// \param renew_secs An offset of the due time for Renew.
-    /// \param release_secs An offset of the due time for Release.
-    void setRelativeDueTimes(const int send_secs, const int renew_secs = 0,
-                             const int release_secs = 0) {
-        ptime now = microsec_clock::universal_time();
-        // Use now to avoid unused but set warning
-        ASSERT_FALSE(now.is_special());
-        basic_rate_control_.setRelativeDue(send_secs);
-        renew_rate_control_.setRelativeDue(renew_secs);
-        release_rate_control_.setRelativeDue(release_secs);
-
-    }
-
     using TestControl::checkExitConditions;
     using TestControl::createMessageFromReply;
     using TestControl::createRequestFromAck;
@@ -112,7 +86,6 @@ public:
     using TestControl::generateClientId;
     using TestControl::generateDuid;
     using TestControl::generateMacAddress;
-    using TestControl::getCurrentTimeout;
     using TestControl::getTemplateBuffer;
     using TestControl::initPacketTemplates;
     using TestControl::initializeStatsMgr;
@@ -138,7 +111,6 @@ public:
     using TestControl::macaddr_gen_;
     using TestControl::first_packet_serverid_;
     using TestControl::interrupted_;
-    using TestControl::testDiags;
     using TestControl::template_packets_v4_;
     using TestControl::template_packets_v6_;
     using TestControl::ack_storage_;
@@ -494,7 +466,7 @@ public:
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
         for (int i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
             // id wll be used by the TestControl class for DHCPDISCOVER.
@@ -559,7 +531,7 @@ public:
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
         uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
@@ -701,7 +673,7 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
 
         // Send a number of DHCPDISCOVER messages. Each generated message will
         // be assigned a different transaction id, starting from 1 to 10.
@@ -908,7 +880,7 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
 
         // Send a number of Solicit messages. Each generated Solicit will be
         // assigned a different transaction id, starting from 1 to 10.
@@ -1107,12 +1079,9 @@ public:
 
 // This test verifies that the class members are reset to expected values.
 TEST_F(TestControlTest, reset) {
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l ethx -r 50 -f 30 -F 10 -a 3 all"));
+    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l ethx -r 50 -f 30 -F 10 all"));
     NakedTestControl tc;
     tc.reset();
-    EXPECT_EQ(3, tc.basic_rate_control_.getAggressivity());
-    EXPECT_EQ(3, tc.renew_rate_control_.getAggressivity());
-    EXPECT_EQ(3, tc.release_rate_control_.getAggressivity());
     EXPECT_EQ(50, tc.basic_rate_control_.getRate());
     EXPECT_EQ(30, tc.renew_rate_control_.getRate());
     EXPECT_EQ(10, tc.release_rate_control_.getRate());
@@ -1404,7 +1373,7 @@ TEST_F(TestControlTest, Packet4) {
         // We have to create the socket to setup some parameters of
         // outgoing packet.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
         // Set parameters on outgoing packet.
@@ -1437,7 +1406,7 @@ TEST_F(TestControlTest, Packet6) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
@@ -1470,7 +1439,7 @@ TEST_F(TestControlTest, Packet6Relayed) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        BetterSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
@@ -1793,150 +1762,6 @@ TEST_F(TestControlTest, createRelease) {
     testCreateRenewRelease(DHCPV6_RELEASE);
 }
 
-// This test verifies that the current timeout value for waiting for
-// the server's responses is valid. The timeout value corresponds to the
-// time period between now and the next message to be sent from the
-// perfdhcp to a server.
-TEST_F(TestControlTest, getCurrentTimeout) {
-    // Process the command line: set the rate for Discovers to 10,
-    // and set Renew rate to 0 (-f flag absent).
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -4 -l lo -r 10 ::1"));
-    NakedTestControl tc;
-    // Make sure that the renew rate is 0.
-    ASSERT_EQ(0, CommandOptions::instance().getRenewRate());
-    // Simulate the case when we are already behind the due time for
-    // the next Discover to be sent.
-    tc.setRelativeDueTimes(-3);
-    // Expected timeout value is 0, which means that perfdhcp should
-    // not wait for server's response but rather send the next
-    // message to a server immediately.
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-    // Now, let's do set the due time to a value in the future. The returned
-    // timeout value should be somewhere between now and this time in the
-    // future. The value of ten seconds ahead should be safe and guarantee
-    // that the returned timeout value is non-zero, even though there is a
-    // delay between setting the send_due_ value and invoking the function.
-    tc.setRelativeDueTimes(10);
-    uint32_t timeout = tc.getCurrentTimeout();
-    EXPECT_GT(timeout, 0);
-    EXPECT_LE(timeout, 10000000);
-}
-
-// This test verifies that the current timeout value for waiting for the
-// server's responses is valid. In this case, we are simulating that perfdhcp
-// sends Renew requests to the server, apart from the regular 4-way exchanges.
-// The timeout value depends on both the due time to send next Solicit and the
-// due time to send Renew - the timeout should be adjusted to the due time
-// that occurs sooner.
-TEST_F(TestControlTest, getCurrentTimeoutRenew) {
-    // Set the Solicit rate to 10 and the Renew rate 5.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 ::1"));
-    NakedTestControl tc;
-
-    // Make sure, that the Renew rate has been set to 5.
-    ASSERT_EQ(5, CommandOptions::instance().getRenewRate());
-    // The send_due_ is in the past, the renew_due_ is in the future.
-    tc.setRelativeDueTimes(-3, 3);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    // Swap the due times from the previous check. The effect should be the
-    // same.
-    tc.setRelativeDueTimes(3, -3);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    // Set both due times to the future. The renew due time is to occur
-    // sooner. The timeout should be a value between now and the
-    // renew due time.
-    tc.setRelativeDueTimes(10, 5);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
-
-    // Repeat the same check, but swap the due times.
-    tc.setRelativeDueTimes(5, 10);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
-
-}
-
-// This test verifies that the current timeout value for waiting for the
-// server's responses is valid. In this case, we are simulating that perfdhcp
-// sends Release requests to the server, apart from the regular 4-way exchanges.
-TEST_F(TestControlTest, getCurrentTimeoutRelease) {
-    // Set the Solicit rate to 10 and the Release rate 5.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -F 5 ::1"));
-    NakedTestControl tc;
-
-    // Make sure, that the Release rate has been set to 5.
-    ASSERT_EQ(5, CommandOptions::instance().getReleaseRate());
-    // The send_due_ is in the past, the renew_due_ is in the future.
-    tc.setRelativeDueTimes(-3, 0, 3);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    // Swap the due times from the previous check. The effect should be the
-    // same.
-    tc.setRelativeDueTimes(3, 0, -3);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    // Set both due times to the future. The renew due time is to occur
-    // sooner. The timeout should be a value between now and the
-    // release due time.
-    tc.setRelativeDueTimes(10, 0, 5);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
-
-    // Repeat the same check, but swap the due times.
-    tc.setRelativeDueTimes(5, 0, 10);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
-
-}
-
-// This test verifies that the current timeout value for waiting for the
-// server's responses is valid. In this case, we are simulating that perfdhcp
-// sends both Renew and Release requests to the server, apart from the regular
-// 4-way exchanges.
-TEST_F(TestControlTest, getCurrentTimeoutRenewRelease) {
-    // Set the Solicit rate to 10 and, Renew rate to 5, Release rate to 3.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l lo -r 10 -f 5 -F 3 ::1"));
-    NakedTestControl tc;
-
-    // Make sure the Renew and Release rates has been set to a non-zero value.
-    ASSERT_EQ(5, CommandOptions::instance().getRenewRate());
-    ASSERT_EQ(3, CommandOptions::instance().getReleaseRate());
-
-    // If any of the due times is in the past, the timeout value should be 0,
-    // to indicate that the next message should be sent immediately.
-    tc.setRelativeDueTimes(-3, 3, 5);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    tc.setRelativeDueTimes(-3, 5, 3);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    tc.setRelativeDueTimes(3, -3, 5);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    tc.setRelativeDueTimes(3, 2, -5);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    tc.setRelativeDueTimes(-3, -2, -5);
-    EXPECT_EQ(0, tc.getCurrentTimeout());
-
-    // If due times are in the future, the timeout value should be aligned to
-    // the due time which occurs the soonest.
-    tc.setRelativeDueTimes(10, 9, 8);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 8000000);
-
-    tc.setRelativeDueTimes(10, 8, 9);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 8000000);
-
-    tc.setRelativeDueTimes(5, 8, 9);
-    EXPECT_GT(tc.getCurrentTimeout(), 0);
-    EXPECT_LE(tc.getCurrentTimeout(), 5000000);
-
-}
-
 // Test checks if sendDiscover really includes custom options
 TEST_F(TestControlTest, sendDiscoverExtraOpts) {
 
@@ -1958,7 +1783,7 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
     // Socket is needed to send packets through the interface.
     int sock_handle = 0;
     ASSERT_NO_THROW(sock_handle = tc.openSocket());
-    TestControl::TestControlSocket sock(sock_handle);
+    BetterSocket sock(sock_handle);
 
     // Make tc send the packet. The first packet of each type is saved in templates.
     ASSERT_NO_THROW(tc.sendDiscover4(sock));

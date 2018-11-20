@@ -33,9 +33,9 @@ main(int argc, char* argv[]) {
         }
     } catch(isc::Exception& e) {
         ret_code = 1;
+        command_options.usage();
         std::cerr << "Error parsing command line options: "
                   << e.what() << std::endl;
-        command_options.usage();
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }

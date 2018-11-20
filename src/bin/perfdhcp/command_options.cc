@@ -23,6 +23,7 @@
 #include <stdint.h>
 #include <unistd.h>
 #include <fstream>
+#include <thread>
 
 #ifdef HAVE_OPTRESET
 extern int optreset;
@@ -136,7 +137,6 @@ CommandOptions::reset() {
     localname_.clear();
     is_interface_ = false;
     preload_ = 0;
-    aggressivity_ = 1;
     local_port_ = 0;
     seeded_ = false;
     seed_ = 0;
@@ -155,6 +155,11 @@ CommandOptions::reset() {
     v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
     extra_opts_.clear();
+    if (std::thread::hardware_concurrency() == 1) {
+        single_thread_mode_ = true;
+    } else {
+        single_thread_mode_ = false;
+    }
 }
 
 bool
@@ -221,8 +226,8 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
-                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:")) != -1) {
+    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:L:M:"
+                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:g:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -253,11 +258,6 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case '6':
             check(ipversion_ == 4, "IP version already set to 4");
             ipversion_ = 6;
-            break;
-
-        case 'a':
-            aggressivity_ = positiveInteger("value of aggressivity: -a<value>"
-                                            " must be a positive integer");
             break;
 
         case 'b':
@@ -337,6 +337,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                                             " positive integer");
             break;
 
+        case 'g': {
+            auto optarg_text = std::string(optarg);
+            if (optarg_text == "single") {
+                single_thread_mode_ = true;
+            } else if (optarg_text == "multi") {
+                single_thread_mode_ = false;
+            } else {
+                isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+            }
+            break;
+        }
         case 'h':
             usage();
             return (true);
@@ -523,7 +534,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             break;
 
         default:
-            isc_throw(isc::InvalidParameter, "unknown command line option");
+            isc_throw(isc::InvalidParameter, "wrong command line option");
         }
     }
 
@@ -866,6 +877,17 @@ CommandOptions::validate() const {
           "use -I<ip-offset>");
     check((!getMacListFile().empty() && base_.size() > 0),
           "Can't use -b with -M option");
+
+    auto nthreads = std::thread::hardware_concurrency();
+    if (nthreads == 1 && isSingleThreaded() == false) {
+        std::cout << "WARNING: Currently system can run only 1 thread in parallel." << std::endl
+                  << "WARNING: Better results are achieved when run in single-threaded mode." << std::endl
+                  << "WARNING: To switch use -g single option." << std::endl;
+    } else if (nthreads > 1 && isSingleThreaded()) {
+        std::cout << "WARNING: Currently system can run more than 1 thread in parallel." << std::endl
+                  << "WARNING: Better results are achieved when run in multi-threaded mode." << std::endl
+                  << "WARNING: To switch use -g multi option." << std::endl;
+    }
 }
 
 void
@@ -963,7 +985,6 @@ CommandOptions::printCommandLine() const {
     if (preload_ != 0) {
         std::cout << "preload=" << preload_ <<  std::endl;
     }
-    std::cout << "aggressivity=" << aggressivity_ << std::endl;
     if (getLocalPort() != 0) {
         std::cout << "local-port=" << local_port_ <<  std::endl;
     }
@@ -1016,6 +1037,11 @@ CommandOptions::printCommandLine() const {
     if (!server_name_.empty()) {
         std::cout << "server=" << server_name_ << std::endl;
     }
+    if (single_thread_mode_) {
+        std::cout << "single-thread-mode" << std::endl;
+    } else {
+        std::cout << "multi-thread-mode" << std::endl;
+    }
 }
 
 void
@@ -1026,7 +1052,7 @@ CommandOptions::usage() const {
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
-        "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
+        "         [-L<local-port>] [-s<seed>] [-i] [-B] [-g<single/multi>]\n"
         "         [-W<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
@@ -1054,8 +1080,6 @@ CommandOptions::usage() const {
         "-1: Take the server-ID option from the first received message.\n"
         "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
         "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-        "-a<aggressivity>: When the target sending rate is not yet reached,\n"
-        "    control how many exchanges are initiated before the next pause.\n"
         "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
         "    clients.  This can be specified multiple times, each instance is\n"
         "    in the <type>=<value> form, for instance:\n"
@@ -1079,6 +1103,10 @@ CommandOptions::usage() const {
         "    with the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the release-rate (given by -F<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
+        "-g  Select thread mode: 'single' or 'multi'. In multi-thread mode packets\n"
+        "    are received in separate thread. This allows better utilisation of CPUs."
+        "    If more than 1 CPU is present then multi-thread mode is default otherwise"
+        "    single-thread is default."
         "-h: Print this help.\n"
         "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
         "    whether -6 is given.\n"

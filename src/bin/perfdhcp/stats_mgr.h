@@ -682,9 +682,14 @@ public:
         /// perfdhcp.
         void printMainStats() const {
             using namespace std;
-            cout << "sent packets: " << getSentPacketsNum() << endl
+            auto sent = getSentPacketsNum();
+            auto drops = getDroppedPacketsNum();
+            double drops_ratio = 100 * static_cast<double>(drops) / static_cast<double>(sent);
+
+            cout << "sent packets: " << sent << endl
                  << "received packets: " << getRcvdPacketsNum() << endl
-                 << "drops: " << getDroppedPacketsNum() << endl;
+                 << "drops: " << drops << endl
+                 << "drops ratio: " << drops_ratio << " %" << endl;
             //                 << "orphans: " << getOrphans() << endl;
         }
 
@@ -1379,6 +1384,17 @@ private:
 
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
 };
+
+/// Statistics Manager for DHCPv4.
+typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
+/// Pointer to Statistics Manager for DHCPv4;
+typedef boost::shared_ptr<StatsMgr4> StatsMgr4Ptr;
+/// Statistics Manager for DHCPv6.
+typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
+/// Pointer to Statistics Manager for DHCPv6.
+typedef boost::shared_ptr<StatsMgr6> StatsMgr6Ptr;
+/// Packet exchange type.
+typedef StatsMgr<>::ExchangeType ExchangeType;
 
 } // namespace perfdhcp
 } // namespace isc

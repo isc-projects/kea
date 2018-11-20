@@ -30,6 +30,7 @@ run_unittests_SOURCES += packet_storage_unittest.cc
 run_unittests_SOURCES += rate_control_unittest.cc
 run_unittests_SOURCES += stats_mgr_unittest.cc
 run_unittests_SOURCES += test_control_unittest.cc
+run_unittests_SOURCES += receiver_unittest.cc
 run_unittests_SOURCES += command_options_helper.h
 
 run_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
