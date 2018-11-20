@@ -84,6 +84,10 @@ public:
     /// This function is used to remove the factory function for a given type.
     /// Typically, it would be called when unloading the hook library which
     /// loaded the type, and thus called by the library's @c unload function.
+    /// In addition to removing the factory, it will also destroy the current
+    /// queue if it is of the same queue-type as the factory being removed.
+    /// This avoids the nastiness that occurs when objecs are left in existence
+    /// after their library is unloaded.
     ///
     /// @param queue_type queue type, e.g. "kea-ring4".
     ///
