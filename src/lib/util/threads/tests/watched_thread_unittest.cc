@@ -158,7 +158,7 @@ TEST_F(WatchedThreadTest, watchedThreadClassBasics) {
     ASSERT_FALSE(wthread_->isReady(WatchedThread::TERMINATE));
 
     // Wait a little while.
-    nap(3);
+    nap(6);
 
     // It should now indicate an error.
     ASSERT_TRUE(wthread_->isReady(WatchedThread::ERROR));
@@ -189,7 +189,7 @@ TEST_F(WatchedThreadTest, watchedThreadClassBasics) {
     ASSERT_FALSE(wthread_->isReady(WatchedThread::TERMINATE));
 
     // Wait a little while.
-    nap(8);
+    nap(6);
 
     // It should now indicate data ready.
     ASSERT_TRUE(wthread_->isReady(WatchedThread::READY));
