@@ -25,6 +25,8 @@ libperfdhcp_la_SOURCES += pkt_transform.cc pkt_transform.h
 libperfdhcp_la_SOURCES += rate_control.cc rate_control.h
 libperfdhcp_la_SOURCES += stats_mgr.h
 libperfdhcp_la_SOURCES += test_control.cc test_control.h
+libperfdhcp_la_SOURCES += receiver.cc receiver.h
+libperfdhcp_la_SOURCES += better_socket.cc better_socket.h
 
 sbin_PROGRAMS = perfdhcp
 perfdhcp_SOURCES = main.cc

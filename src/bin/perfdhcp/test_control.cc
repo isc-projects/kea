@@ -14,12 +14,12 @@
 #include <dhcp/option6_ia.h>
 #include <util/unittests/check_valgrind.h>
 #include "test_control.h"
+#include "receiver.h"
 #include "command_options.h"
 #include "perf_pkt4.h"
 #include "perf_pkt6.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/foreach.hpp>
 
 #include <algorithm>
 #include <fstream>
@@ -42,11 +42,18 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
-ptime late_exit_target_time_ = ptime(not_a_date_time);
 
+/// \brief Find if diagnostic flag has been set.
+///
+/// \param diag diagnostic flag (a,e,i,s,r,t,T).
+/// \return true if diagnostics flag has been set.
 bool
-TestControl::hasLateExitCommenced() const {
-    return !late_exit_target_time_.is_not_a_date_time();
+testDiags(const char diag) {
+    std::string diags(CommandOptions::instance().getDiags());
+    if (diags.find(diag) != std::string::npos) {
+        return (true);
+    }
+    return (false);
 }
 
 bool
@@ -100,38 +107,6 @@ TestControl::haveAllPacketsBeenReceived() const {
     return (responses == requests);
 }
 
-TestControl::TestControlSocket::TestControlSocket(const int socket) :
-    SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
-    ifindex_(0), valid_(true) {
-    try {
-        initSocketData();
-    } catch (const Exception&) {
-        valid_ = false;
-    }
-}
-
-TestControl::TestControlSocket::~TestControlSocket() {
-    IfacePtr iface = IfaceMgr::instance().getIface(ifindex_);
-    if (iface) {
-        iface->delSocket(sockfd_);
-    }
-}
-
-void
-TestControl::TestControlSocket::initSocketData() {
-    BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
-        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
-            if (s.sockfd_ == sockfd_) {
-                ifindex_ = iface->getIndex();
-                addr_ = s.addr_;
-                return;
-            }
-        }
-    }
-    isc_throw(BadValue, "interface for for specified socket "
-              "descriptor not found");
-}
-
 TestControl&
 TestControl::instance() {
     static TestControl test_control;
@@ -141,21 +116,6 @@ TestControl::instance() {
 TestControl::TestControl()
     : number_generator_(0, CommandOptions::instance().getMacsFromFile().size()) {
   reset();
-}
-
-void
-TestControl::checkLateMessages(RateControl& rate_control) {
-    // If diagnostics is disabled, there is no need to log late sent messages.
-    // If it is enabled and the rate control object indicates that the last
-    // sent message was late, bump up the counter in Stats Manager.
-    if (rate_control.isLateSent() && testDiags('i')) {
-        CommandOptions& options = CommandOptions::instance();
-        if (options.getIpVersion() == 4) {
-            stats_mgr4_->incrementCounter("latesend");
-        } else if (options.getIpVersion() == 6) {
-            stats_mgr6_->incrementCounter("latesend");
-        }
-    }
 }
 
 void
@@ -216,8 +176,6 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
         }
         pkt_to->addOption(option);
     }
-
-
 }
 
 std::string
@@ -635,36 +593,6 @@ TestControl::generateDuid(uint8_t& randomized) {
     }
 }
 
-uint32_t
-TestControl::getCurrentTimeout() const {
-    CommandOptions& options = CommandOptions::instance();
-    ptime now(microsec_clock::universal_time());
-    // Check that we haven't passed the moment to send the next set of
-    // packets.
-    if (now >= basic_rate_control_.getDue() ||
-        (options.getRenewRate() != 0 && now >= renew_rate_control_.getDue()) ||
-        (options.getReleaseRate() != 0 &&
-         now >= release_rate_control_.getDue())) {
-        return (0);
-    }
-
-    // Let's assume that the due time for Solicit is the soonest.
-    ptime due = basic_rate_control_.getDue();
-    // If we are sending Renews and due time for Renew occurs sooner,
-    // set the due time to Renew due time.
-    if ((options.getRenewRate()) != 0 && (renew_rate_control_.getDue() < due)) {
-        due = renew_rate_control_.getDue();
-    }
-    // If we are sending Releases and the due time for Release occurs
-    // sooner than the current due time, let's use the due for Releases.
-    if ((options.getReleaseRate() != 0) &&
-        (release_rate_control_.getDue() < due)) {
-        due = release_rate_control_.getDue();
-    }
-    // Return the timeout in microseconds.
-    return (time_period(now, due).length().total_microseconds());
-}
-
 int
 TestControl::getElapsedTimeOffset() const {
     int elp_offset = CommandOptions::instance().getIpVersion() == 4 ?
@@ -822,15 +750,9 @@ TestControl::initializeStatsMgr() {
     }
     if (testDiags('i')) {
         if (options.getIpVersion() == 4) {
-            stats_mgr4_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr4_->addCustomCounter("shortwait", "Short waits for packets");
-            stats_mgr4_->addCustomCounter("multircvd", "Multiple packets receives");
-            stats_mgr4_->addCustomCounter("latercvd", "Late received packets");
         } else if (options.getIpVersion() == 6) {
-            stats_mgr6_->addCustomCounter("latesend", "Late sent packets");
             stats_mgr6_->addCustomCounter("shortwait", "Short waits for packets");
-            stats_mgr6_->addCustomCounter("multircvd", "Multiple packets receives");
-            stats_mgr6_->addCustomCounter("latercvd", "Late received packets");
         }
     }
 }
@@ -936,7 +858,7 @@ TestControl::openSocket() const {
 }
 
 void
-TestControl::sendPackets(const TestControlSocket& socket,
+TestControl::sendPackets(const BetterSocket& socket,
                          const uint64_t packets_num,
                          const bool preload /* = false */) {
     CommandOptions& options = CommandOptions::instance();
@@ -962,22 +884,11 @@ TestControl::sendPackets(const TestControlSocket& socket,
                 sendSolicit6(socket, template_buffers_[0], preload);
             }
         }
-        // If we preload server we don't want to receive any packets.
-        if (!preload) {
-            uint64_t latercvd = receivePackets(socket);
-            if (testDiags('i')) {
-                if (options.getIpVersion() == 4) {
-                    stats_mgr4_->incrementCounter("latercvd", latercvd);
-                } else if (options.getIpVersion() == 6) {
-                    stats_mgr6_->incrementCounter("latercvd", latercvd);
-                }
-            }
-        }
     }
 }
 
 uint64_t
-TestControl::sendMultipleRequests(const TestControlSocket& socket,
+TestControl::sendMultipleRequests(const BetterSocket& socket,
                                   const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
         if (!sendRequestFromAck(socket)) {
@@ -988,7 +899,7 @@ TestControl::sendMultipleRequests(const TestControlSocket& socket,
 }
 
 uint64_t
-TestControl::sendMultipleMessages6(const TestControlSocket& socket,
+TestControl::sendMultipleMessages6(const BetterSocket& socket,
                                    const uint32_t msg_type,
                                    const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
@@ -1226,7 +1137,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
 }
 
 void
-TestControl::processReceivedPacket4(const TestControlSocket& socket,
+TestControl::processReceivedPacket4(const BetterSocket& socket,
                             const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
         Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
@@ -1269,7 +1180,7 @@ TestControl::processReceivedPacket4(const TestControlSocket& socket,
 }
 
 void
-TestControl::processReceivedPacket6(const TestControlSocket& socket,
+TestControl::processReceivedPacket6(const BetterSocket& socket,
                             const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
     if (packet_type == DHCPV6_ADVERTISE) {
@@ -1324,58 +1235,19 @@ TestControl::processReceivedPacket6(const TestControlSocket& socket,
     }
 }
 
-uint64_t
-TestControl::receivePackets(const TestControlSocket& socket) {
-    bool receiving = true;
-    uint64_t received = 0;
-    while (receiving) {
+void
+TestControl::consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket) {
+    PktPtr pkt;
+    while (pkt = receiver.getPkt()) {
         if (CommandOptions::instance().getIpVersion() == 4) {
-            Pkt4Ptr pkt4;
-            try {
-                pkt4 = IfaceMgr::instance().receive4(0, getCurrentTimeout());
-            } catch (const Exception& e) {
-                std::cerr << "Failed to receive DHCPv4 packet: "
-                          << e.what() <<  std::endl;
-            }
-            if (!pkt4) {
-                receiving = false;
-            } else {
-                ++received;
-                if ((received > 1) && testDiags('i')) {
-                    stats_mgr4_->incrementCounter("multircvd");
-                }
-
-                /// @todo: Add packet exception handling here. Right now any
-                /// malformed packet will cause perfdhcp to abort.
-                pkt4->unpack();
-                processReceivedPacket4(socket, pkt4);
-            }
-        } else if (CommandOptions::instance().getIpVersion() == 6) {
-            Pkt6Ptr pkt6;
-            try {
-                pkt6 = IfaceMgr::instance().receive6(0, getCurrentTimeout());
-            } catch (const Exception& e) {
-                std::cerr << "Failed to receive DHCPv6 packet: "
-                          << e.what() << std::endl;
-            }
-            if (!pkt6) {
-                receiving  = false;
-            } else {
-                ++received;
-                if ((received > 1) && testDiags('i')) {
-                    stats_mgr6_->incrementCounter("multircvd");
-                }
-
-                /// @todo: Add packet exception handling here. Right now any
-                /// malformed packet will cause perfdhcp to abort.
-                pkt6->unpack();
-                processReceivedPacket6(socket, pkt6);
-            }
+            Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
+            processReceivedPacket4(socket, pkt4);
+        } else {
+            Pkt6Ptr pkt6 = boost::dynamic_pointer_cast<Pkt6>(pkt);
+            processReceivedPacket6(socket, pkt6);
         }
     }
-    return (received);
 }
-
 void
 TestControl::registerOptionFactories4() const {
     static bool factories_registered = false;
@@ -1454,11 +1326,8 @@ TestControl::registerOptionFactories() const {
 void
 TestControl::reset() {
     CommandOptions& options = CommandOptions::instance();
-    basic_rate_control_.setAggressivity(options.getAggressivity());
     basic_rate_control_.setRate(options.getRate());
-    renew_rate_control_.setAggressivity(options.getAggressivity());
     renew_rate_control_.setRate(options.getRenewRate());
-    release_rate_control_.setAggressivity(options.getAggressivity());
     release_rate_control_.setRate(options.getReleaseRate());
 
     transid_gen_.reset();
@@ -1502,7 +1371,7 @@ TestControl::run() {
     printDiagnostics();
     // Option factories have to be registered.
     registerOptionFactories();
-    TestControlSocket socket(openSocket());
+    BetterSocket socket(openSocket());
     if (!socket.valid_) {
         isc_throw(Unexpected, "invalid socket descriptor");
     }
@@ -1521,21 +1390,27 @@ TestControl::run() {
     // If user interrupts the program we will exit gracefully.
     signal(SIGINT, TestControl::handleInterrupt);
 
+    // Initialize Statistics Manager. Release previous if any.
+    initializeStatsMgr();
+
+    Receiver receiver(socket);
+
     // Preload server with the number of packets.
-    sendPackets(socket, options.getPreload(), true);
+    if (options.getPreload() > 0) {
+        sendPackets(socket, options.getPreload(), true);
+    }
 
     // Fork and run command specified with -w<wrapped-command>
     if (!options.getWrapped().empty()) {
         runWrapped();
     }
 
-    // Initialize Statistics Manager. Release previous if any.
-    initializeStatsMgr();
+    receiver.start();
+
     for (;;) {
         // Calculate number of packets to be sent to stay
         // catch up with rate.
         uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
-        checkLateMessages(basic_rate_control_);
         if ((packets_due == 0) && testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("shortwait");
@@ -1544,9 +1419,9 @@ TestControl::run() {
             }
         }
 
-        // @todo: set non-zero timeout for packets once we implement
-        // microseconds timeout in IfaceMgr.
-        receivePackets(socket);
+        // Pull some packets from receiver thread, process them, update some stats
+        // and respond to the server if needed.
+        consumeReceivedPackets(receiver, socket);
 
         // If test period finished, maximum number of packet drops
         // has been reached or test has been interrupted we have to
@@ -1555,17 +1430,14 @@ TestControl::run() {
             break;
         }
 
-        if (!hasLateExitCommenced()) {
-            // Initiate new DHCP packet exchanges.
-            sendPackets(socket, packets_due);
-        }
+        // Initiate new DHCP packet exchanges.
+        sendPackets(socket, packets_due);
 
         // If -f<renew-rate> option was specified we have to check how many
         // Renew packets should be sent to catch up with a desired rate.
         if (options.getRenewRate() != 0) {
             uint64_t renew_packets_due =
                 renew_rate_control_.getOutboundMessageCount();
-            checkLateMessages(renew_rate_control_);
 
             // Send multiple renews to satisfy the desired rate.
             if (options.getIpVersion() == 4) {
@@ -1580,7 +1452,6 @@ TestControl::run() {
         if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
             uint64_t release_packets_due =
                 release_rate_control_.getOutboundMessageCount();
-            checkLateMessages(release_rate_control_);
             // Send Release messages.
             sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
         }
@@ -1599,6 +1470,9 @@ TestControl::run() {
         // searches in the long list of Reply packets increases CPU utilization.
         cleanCachedPackets();
     }
+
+    receiver.stop();
+
     printStats();
 
     if (!options.getWrapped().empty()) {
@@ -1676,9 +1550,8 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 }
 
 void
-TestControl::sendDiscover4(const TestControlSocket& socket,
+TestControl::sendDiscover4(const BetterSocket& socket,
                            const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
@@ -1726,10 +1599,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendDiscover4(const TestControlSocket& socket,
+TestControl::sendDiscover4(const BetterSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
-    basic_rate_control_.updateSendTime();
     // Get the first argument if multiple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
@@ -1778,10 +1650,7 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
 }
 
 bool
-TestControl::sendRequestFromAck(const TestControlSocket& socket) {
-    // Update timestamp of last sent renewal.
-    renew_rate_control_.updateSendTime();
-
+TestControl::sendRequestFromAck(const BetterSocket& socket) {
     // Get one of the recorded DHCPACK messages.
     Pkt4Ptr ack = ack_storage_.getRandom();
     if (!ack) {
@@ -1809,17 +1678,11 @@ TestControl::sendRequestFromAck(const TestControlSocket& socket) {
 
 bool
 TestControl::sendMessageFromReply(const uint16_t msg_type,
-                                  const TestControlSocket& socket) {
+                                  const BetterSocket& socket) {
     // We only permit Release or Renew messages to be sent using this function.
     if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
         isc_throw(isc::BadValue, "invalid message type " << msg_type
                   << " to be sent, expected DHCPV6_RENEW or DHCPV6_RELEASE");
-    }
-    // We track the timestamp of last Release and Renew in different variables.
-    if (msg_type == DHCPV6_RENEW) {
-        renew_rate_control_.updateSendTime();
-    } else {
-        release_rate_control_.updateSendTime();
     }
     Pkt6Ptr reply = reply_storage_.getRandom();
     if (!reply) {
@@ -1845,7 +1708,7 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
 }
 
 void
-TestControl::sendRequest4(const TestControlSocket& socket,
+TestControl::sendRequest4(const BetterSocket& socket,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     // Use the same transaction id as the one used in the discovery packet.
@@ -1911,7 +1774,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendRequest4(const TestControlSocket& socket,
+TestControl::sendRequest4(const BetterSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
@@ -2025,7 +1888,7 @@ TestControl::sendRequest4(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendRequest6(const TestControlSocket& socket,
+TestControl::sendRequest6(const BetterSocket& socket,
                           const Pkt6Ptr& advertise_pkt6) {
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
@@ -2082,7 +1945,7 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendRequest6(const TestControlSocket& socket,
+TestControl::sendRequest6(const BetterSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const Pkt6Ptr& advertise_pkt6) {
     // Get the second argument if multiple the same arguments specified
@@ -2201,9 +2064,8 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const TestControlSocket& socket,
+TestControl::sendSolicit6(const BetterSocket& socket,
                           const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
@@ -2253,10 +2115,9 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const TestControlSocket& socket,
+TestControl::sendSolicit6(const BetterSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
@@ -2303,7 +2164,7 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
 
 
 void
-TestControl::setDefaults4(const TestControlSocket& socket,
+TestControl::setDefaults4(const BetterSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
@@ -2329,7 +2190,7 @@ TestControl::setDefaults4(const TestControlSocket& socket,
 }
 
 void
-TestControl::setDefaults6(const TestControlSocket& socket,
+TestControl::setDefaults6(const BetterSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
@@ -2380,15 +2241,6 @@ TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
     for (auto entry : extra_opts) {
         pkt->addOption(entry.second);
     }
-}
-
-bool
-TestControl::testDiags(const char diag) const {
-    std::string diags(CommandOptions::instance().getDiags());
-    if (diags.find(diag) != std::string::npos) {
-        return (true);
-    }
-    return (false);
 }
 
 }  // namespace perfdhcp

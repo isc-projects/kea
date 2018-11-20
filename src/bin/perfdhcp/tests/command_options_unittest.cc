@@ -235,7 +235,6 @@ protected:
         EXPECT_EQ("", opt.getLocalName());
         EXPECT_FALSE(opt.isInterface());
         EXPECT_EQ(0, opt.getPreload());
-        EXPECT_EQ(1, opt.getAggressivity());
         EXPECT_EQ(0, opt.getLocalPort());
         EXPECT_FALSE(opt.isSeeded());
         EXPECT_EQ(0, opt.getSeed());
@@ -695,21 +694,6 @@ TEST_F(CommandOptionsTest, Diagnostics) {
     // Negative test cases
     // No diagnostics string specified
     EXPECT_THROW(process("perfdhcp -l ethx -i -x all"),
-                 isc::InvalidParameter);
-}
-
-TEST_F(CommandOptionsTest, Aggressivity) {
-    CommandOptions& opt = CommandOptions::instance();
-    process("perfdhcp -a 10 -l 192.168.0.1 all");
-    EXPECT_EQ(10, opt.getAggressivity());
-
-    // Negative test cases
-    // Aggressivity must be non negative integer
-    EXPECT_THROW(process("perfdhcp -l ethx -a 0 all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -l ethx -a all"),
-                 isc::InvalidParameter);
-    EXPECT_THROW(process("perfdhcp -a -2 -l ethx -a 3 all"),
                  isc::InvalidParameter);
 }
 

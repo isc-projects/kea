@@ -47,7 +47,6 @@
             <arg choice="opt" rep="norepeat"><option>-1</option></arg>
             <arg choice="opt" rep="norepeat"><option>-4|-6</option></arg>
             <arg choice="opt" rep="norepeat"><option>-A <replaceable class="parameter">encapsulation-level</replaceable></option></arg>
-            <arg choice="opt" rep="norepeat"><option>-a <replaceable class="parameter">aggressivity</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-b <replaceable class="parameter">base</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-B</option></arg>
             <arg choice="opt" rep="norepeat"><option>-c</option></arg>
@@ -57,6 +56,7 @@
             <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">time-offset</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">renew-rate</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-F <replaceable class="parameter">release-rate</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-g <replaceable class="parameter">thread-mode</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-h</option></arg>
             <arg choice="opt" rep="norepeat"><option>-i</option></arg>
             <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
@@ -249,18 +249,6 @@
             </varlistentry>
 
             <varlistentry>
-                <term><option>-a <replaceable class="parameter">aggressivity</replaceable></option></term>
-                <listitem>
-                    <para>
-                        When the target sending rate is not yet reached,
-                        control how many exchanges are initiated before the
-                        next pause. This is a positive integer and defaults
-                        to 1.
-                    </para>
-                </listitem>
-            </varlistentry>
-
-            <varlistentry>
                 <term><option>-b <replaceable class="parameter">basetype=value</replaceable></option></term>
                 <listitem>
                     <para>
@@ -345,6 +333,18 @@
               </listitem>
             </varlistentry>
 
+            <varlistentry>
+              <term><option>-g <replaceable class="parameter">thread-mode</replaceable></option></term>
+              <listitem>
+                <para>
+                    Thread operation mode can be either 'single' or 'multi'. In multi-thread mode packets
+                    are received in separate thread. This allows better utilisation of CPUs.
+                    In single CPU system it is better to run in 1 thread to avoid blocking of threads each other.
+                    If more than 1 CPU is present in the system then multi-thread mode is default otherwise
+                    single-thread is default.
+                </para>
+              </listitem>
+            </varlistentry>
 
             <varlistentry>
                 <term><option>-h</option></term>
