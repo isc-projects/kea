@@ -3603,6 +3603,8 @@ should include options from the isc option space:
       </simpara></listitem>
 
       </itemizedlist>
+      The parameter can be specified in global, subnet and shared network
+      level.
       </para>
 
       <para>

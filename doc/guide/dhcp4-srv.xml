@@ -3975,6 +3975,8 @@ It is merely echoed by the server
       </simpara></listitem>
 
       </itemizedlist>
+      The parameter can be specified in global, subnet and shared network
+      level.
       </para>
 
       <para>
