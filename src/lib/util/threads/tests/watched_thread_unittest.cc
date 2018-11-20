@@ -41,7 +41,7 @@ public:
 
     /// @brief Worker function to be used by the WatchedThread's thread
     ///
-    /// The function runs 5 passes through an "event" loop.
+    /// The function runs 10 passes through an "event" loop.
     /// On each pass:
     /// - check terminate command
     /// - instigate the desired event (second pass only)
@@ -88,7 +88,7 @@ public:
     int passes_;
 };
 
-const int WatchedThreadTest::WORKER_MAX_PASSES = 5;
+const int WatchedThreadTest::WORKER_MAX_PASSES = 10;
 
 /// Verifies the basic operation of the WatchedThread class.
 /// It checks that a WatchedThread can be created, can be stopped,
@@ -131,7 +131,7 @@ TEST_F(WatchedThreadTest, watchedThreadClassBasics) {
     ASSERT_FALSE(wthread_->isReady(WatchedThread::TERMINATE));
 
     // Wait a little while.
-    nap(8);
+    nap(3);
 
     // Tell it to stop.
     wthread_->stop();
@@ -158,7 +158,7 @@ TEST_F(WatchedThreadTest, watchedThreadClassBasics) {
     ASSERT_FALSE(wthread_->isReady(WatchedThread::TERMINATE));
 
     // Wait a little while.
-    nap(8);
+    nap(3);
 
     // It should now indicate an error.
     ASSERT_TRUE(wthread_->isReady(WatchedThread::ERROR));
