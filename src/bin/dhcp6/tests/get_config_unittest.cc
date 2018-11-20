@@ -6026,7 +6026,6 @@ const char* UNPARSED_CONFIGS[] = {
 "{\n"
 "        \"decline-probation-period\": 86400,\n"
 "        \"dhcp-ddns\": {\n"
-"            \"always-include-fqdn\": false,\n"
 "            \"enable-updates\": false,\n"
 "            \"generated-prefix\": \"myhost\",\n"
 "            \"hostname-char-replacement\": \"\",\n"
