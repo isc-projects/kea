@@ -183,13 +183,10 @@ module kea-dhcp-types {
       description "Lease database.";
       uses database;
     }
-    container hosts-databases {
-      description "Hosts databases.";
-      list hosts-database {
-        key database-type;
-        description "List of databases.";
-        uses database;
-      }
+    list hosts-database {
+      key database-type;
+      description "List of databases.";
+      uses database;
     }
   }
 
@@ -765,7 +762,7 @@ module kea-dhcp-types {
     description "Config control grouping.";
     container config-control {
       description "Config control.";
-      list config-databases {
+      list config-database {
         key database-type;
         description "List of databases.";
         uses database;

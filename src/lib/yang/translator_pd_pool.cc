@@ -300,7 +300,7 @@ ElementPtr
 TranslatorPdPools::getPdPools(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath);
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getPdPools: can't get iterator: " << xpath);
