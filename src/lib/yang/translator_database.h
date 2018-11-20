@@ -79,20 +79,19 @@ namespace yang {
 /// @endcode
 /// @code
 /// /kea-dhcp6-server:config (container)
-/// /kea-dhcp6-server:config/hosts-databases (container)
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql'] (list instance)
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/type = mysql
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/name = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/user = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/password = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/host = localhost
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/port = 3306
 /// @endcode
 

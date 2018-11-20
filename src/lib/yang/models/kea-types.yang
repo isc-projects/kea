@@ -55,20 +55,17 @@ module kea-types {
 
   grouping hooks-libraries {
     description "Hooks libraries grouping.";
-    container hooks-libraries {
-      description "Hook libraries.";
-      list hook-library {
-        key library;
-        description "List of hook library.";
-        leaf library {
-          type string;
-          mandatory true;
-          description "Path to the DSO.";
-        }
-        leaf parameters {
-          type string;
-          description "Parameters (JSON value).";
-        }
+    list hook-library {
+      key library;
+      description "List of hook library.";
+      leaf library {
+        type string;
+        mandatory true;
+        description "Path to the DSO.";
+      }
+      leaf parameters {
+        type string;
+        description "Parameters (JSON value).";
       }
     }
   }

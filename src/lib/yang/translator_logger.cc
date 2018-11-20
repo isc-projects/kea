@@ -54,7 +54,7 @@ TranslatorLogger::getLoggerKea(const string& xpath) {
     }
     ElementPtr result = Element::createMap();
     result->set("name", name);
-    ConstElementPtr options = getOutputOptions(xpath + "/output-options");
+    ConstElementPtr options = getOutputOptions(xpath);
     if (options && (options->size() > 0)) {
         result->set("output_options", options);
     }
@@ -99,7 +99,7 @@ TranslatorLogger::getOutputOption(const string& xpath) {
 
 ElementPtr
 TranslatorLogger::getOutputOptions(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/output-option");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getOutputOptions: can't get iterator: "
@@ -140,7 +140,7 @@ TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
     // Skip name as it is the key.
     ConstElementPtr options = elem->get("output_options");
     if (options && (options->size() > 0)) {
-        setOutputOptions(xpath + "/output-options", options);
+        setOutputOptions(xpath, options);
     }
     ConstElementPtr debuglevel = elem->get("debuglevel");
     if (debuglevel) {
@@ -193,7 +193,7 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
         }
         string output = option->get("output")->stringValue();
         ostringstream key;
-        key << xpath << "/option[output='" << output << "']";
+        key << xpath << "/output-option[output='" << output << "']";
         setOutputOption(key.str(), option);
     }
 }
@@ -226,7 +226,7 @@ TranslatorLoggers::getLoggers(const string& xpath) {
 
 ElementPtr
 TranslatorLoggers::getLoggersKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/logger");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getLoggersKea: can't get iterator: " << xpath);

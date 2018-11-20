@@ -615,7 +615,32 @@
         "subnet6": [],
 
         // Global valid lifetime value.
-        "valid-lifetime": 6000
+        "valid-lifetime": 6000,
+
+        // Configuration control.
+        "config-control":
+        {
+            // Only configuration databases entry is defined.
+            "config-databases": [
+                {
+                    // Name of the database to connect to.
+                    "name": "config",
+
+                    // Type of the database, e.g. "mysql", "pgsql", "cql".
+                    "type": "mysql"
+                }
+            ]
+        },
+
+        // Server tag.
+        "server-tag": "my DHCPv6 server",
+
+        // DHCP queue control parameters.
+        "dhcp-queue-control":
+        {
+            // Queue type is mandatory.
+            "queue-type": "kea-ring6"
+        }
     },
 
     // Logging configuration begins here.

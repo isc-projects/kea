@@ -76,14 +76,14 @@ namespace yang {
 ///  +--rw relay                     ip-addresses*
 ///  +--rw user-context?             string
 ///  (DHCPv4 only)
-///  +--rw subnet4                   subnet4*
+///  +--rw subnet4*
 ///  +--rw match-client-id?          boolean
 ///  +--rw next-server?              inet:ipv4-address
 ///  +--rw server-hostname?          string
 ///  +--rw boot-file-name?           string
 ///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
-///  +--rw subnet6                   subnet6*
+///  +--rw subnet6*
 ///  +--rw preferred-lifetime?       uint32
 ///  +--rw interface-id?             string
 ///  +--rw rapid-commit?             boolean
@@ -106,19 +106,14 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/shared-networks (container)
-///  /kea-dhcp6-server:config/shared-networks/
-///     shared-network[name='foo'] (list instance)
-///  /kea-dhcp6-server:config/shared-networks/shared-network[name='foo']/
-///     name = foo
-///  /kea-dhcp6-server:config/shared-networks/shared-network[name='foo']/
-///     subnet6 (container)
-///  /kea-dhcp6-server:config/shared-networks/shared-network[name='foo']/
-///     subnet6/subnet6[id='123'] (list instance)
-///  /kea-dhcp6-server:config/shared-networks/shared-network[name='foo']/
-///     subnet6/subnet6[id='123']/id = 123
-///  /kea-dhcp6-server:config/shared-networks/shared-network[name='foo']/
-///     subnet6/subnet6[id='123']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/shared-network[name='foo'] (list instance)
+///  /kea-dhcp6-server:config/shared-network[name='foo']/name = foo
+///  /kea-dhcp6-server:config/shared-network[name='foo']/
+///     subnet6[id='123'] (list instance)
+///  /kea-dhcp6-server:config/shared-network[name='foo']/
+///     subnet6[id='123']/id = 123
+///  /kea-dhcp6-server:config/shared-network[name='foo']/
+///     subnet6[id='123']/subnet = 2001:db8::/48
 /// @endcode
 
 /// @brief A translator class for converting a shared network between
