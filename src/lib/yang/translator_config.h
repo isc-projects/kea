@@ -55,6 +55,7 @@ namespace yang {
 ///     <user-context>,
 ///     <comment>,
 ///     "sanity-checks": { <sanity checks> },
+///     "reservation-mode": <host reservation mode>,
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
@@ -99,6 +100,7 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw reservation-mode?              enumeration
 /// +--rw host*
 /// +--rw config-control
 ///    +--rw config-database*
@@ -189,6 +191,7 @@ namespace yang {
 ///     <user-context>,
 ///     <comment>
 ///     "sanity-checks": { <sanity checks> },
+///     "reservation-mode": <host reservation mode>,
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
@@ -230,6 +233,7 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw reservation-mode?              enumeration
 /// +--rw host*
 /// +--rw config-control
 ///    +--rw config-database*

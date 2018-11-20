@@ -8,11 +8,11 @@ module kea-dhcp-ddns {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-09-14;
+    revision-date 2018-11-20;
   }
   import kea-logging {
     prefix logging;
-    revision-date 2018-11-16;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
@@ -20,7 +20,7 @@ module kea-dhcp-ddns {
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
 
-  revision 2018-11-19 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }

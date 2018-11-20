@@ -8,14 +8,14 @@ module kea-dhcp-types {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-09-14;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-11-18 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -519,24 +519,6 @@ module kea-dhcp-types {
     leaf reservation-mode {
       type host-reservation-mode;
       description "Reservation mode entry.";
-    }
-  }
-
-  grouping subnet-reservation-mode {
-    description "Reservation mode grouping for a subnet.";
-    uses reservation-mode {
-      refine reservation-mode {
-        description "Subnet host reservation mode.";
-      }
-    }
-  }
-
-  grouping network-reservation-mode {
-    description "Reservation mode grouping for a shared network.";
-    uses reservation-mode {
-      refine reservation-mode {
-        description "Shared network host reservation mode.";
-      }
     }
   }
 

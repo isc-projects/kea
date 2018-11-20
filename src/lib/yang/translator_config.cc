@@ -87,11 +87,11 @@ TranslatorConfig::getConfigKea4() {
     result->set("Dhcp4", dhcp);
     ConstElementPtr loggers = dhcp->get("loggers");
     if (loggers) {
-	dhcp->remove("loggers");
+        dhcp->remove("loggers");
 
-	ElementPtr logging = Element::createMap();
-	logging->set("loggers", loggers);
-	result->set("Logging", logging);
+        ElementPtr logging = Element::createMap();
+        logging->set("loggers", loggers);
+        result->set("Logging", logging);
     }
     return (result);
 }
@@ -103,11 +103,11 @@ TranslatorConfig::getConfigKea6() {
     result->set("Dhcp6", dhcp);
     ConstElementPtr loggers = dhcp->get("loggers");
     if (loggers) {
-	dhcp->remove("loggers");
+        dhcp->remove("loggers");
 
-	ElementPtr logging = Element::createMap();
-	logging->set("loggers", loggers);
-	result->set("Logging", logging);
+        ElementPtr logging = Element::createMap();
+        logging->set("loggers", loggers);
+        result->set("Logging", logging);
     }
     return (result);
 }
@@ -286,6 +286,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         sanity->set("lease-checks", checks);
         result->set("sanity-checks", sanity);
     }
+    getParam(result, xpath, "reservation-mode");
     ConstElementPtr hosts = getHosts(xpath);
     if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
@@ -691,6 +692,10 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         if (checks) {
             setItem(xpath + "/sanity-checks/lease-checks", checks, SR_ENUM_T);
         }
+    }
+    ConstElementPtr hr_mode = elem->get("reservation-mode");
+    if (hr_mode) {
+        setItem(xpath + "/reservation-mode", hr_mode, SR_ENUM_T);
     }
     ConstElementPtr hosts = elem->get("reservations");
     if (hosts && !hosts->empty()) {

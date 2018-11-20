@@ -8,15 +8,15 @@ module kea-dhcp6-server {
   }
   import kea-types {
     prefix kea;
-    revision-date 2018-09-14;
+    revision-date 2018-11-20;
   }
   import kea-dhcp-types {
     prefix dhcp;
-    revision-date 2018-11-18;
+    revision-date 2018-11-20;
   }
   import kea-logging {
     prefix logging;
-    revision-date 2018-11-16;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
@@ -24,7 +24,7 @@ module kea-dhcp6-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-11-19 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -209,7 +209,7 @@ module kea-dhcp6-server {
           description "Subnet host reservations list.";
         }
       }
-      uses dhcp:subnet-reservation-mode;
+      uses dhcp:reservation-mode;
       container relay {
         description "Optional information about relay agent.";
         uses relay;
@@ -312,7 +312,7 @@ module kea-dhcp6-server {
         description "Optional information about relay agent.";
         uses relay;
       }
-      uses dhcp:network-reservation-mode;
+      uses dhcp:reservation-mode;
       uses dhcp:network-client-class;
       uses dhcp:require-client-classes;
       uses preferred-lifetime;
@@ -412,6 +412,7 @@ module kea-dhcp6-server {
       }
     }
     uses dhcp:sanity-checks;
+    uses dhcp:reservation-mode;
     uses reservations {
       refine host {
         description "Global host reservations list.";
