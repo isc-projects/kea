@@ -16,7 +16,7 @@ namespace isc {
 namespace util {
 namespace thread {
 
-/// @brief Provides a thread and controls for receiving packets.
+/// @brief Provides a thread and controls for monitoring its activities
 ///
 /// Given a "worker function", this class creates a thread which
 /// runs the function and provides the means to monitor the thread
@@ -28,9 +28,9 @@ public:
     /// @brief Enumerates the list of watch sockets used to mark events
     /// These are used as arguments to watch socket accessor methods.
     enum WatchType {
-        RCV_ERROR = 0,
-        RCV_READY = 1,
-        RCV_TERMINATE = 2
+        ERROR = 0,
+        READY = 1,
+        TERMINATE = 2
     };
 
     /// @brief Constructor
@@ -61,39 +61,35 @@ public:
     /// @param watch_type indicates which watch socket to clear
     void clearReady(WatchType watch_type);
 
-    /// @brief Checks if the receiver thread should terminate
+    /// @brief Checks if the thread should terminate
     ///
-    /// Performs a "one-shot" check of the receiver's terminate
-    /// watch socket.  If it is ready, return true and then clear
-    /// it, otherwise return false.
+    /// Performs a "one-shot" check of the terminate watch socket.
+    /// If it is ready, return true and then clear it, otherwise
+    /// return false.
     ///
     /// @return true if the terminate watch socket is ready
     bool shouldTerminate();
 
     /// @brief Creates and runs the thread.
     ///
-    /// Creates teh receiver's thread, passing into it the given
-    /// function to run.
+    /// Creates the thread, passing into it the given function to run.
     ///
-    /// @param thread_main function the receiver's thread should run
+    /// @param thread_main function the thread should run
     void start(const boost::function<void()>& thread_main);
 
-    /// @brief Returns true if the receiver thread is running
-    /// @todo - this may need additional logic to handle cases where
-    /// a thread function exits w/o the caller invoking @c
-    /// WatchedThread::stop().
+    /// @brief Returns true if the thread is running
     bool isRunning() {
         return (thread_ != 0);
     }
 
-    /// @brief Terminates the receiver thread
+    /// @brief Terminates the thread
     ///
     /// It marks the terminate watch socket ready, and then waits for the
-    /// thread to stop.  At this point, the receiver is defunct.  This is
+    /// thread to stop.  At this point, the thread is defunct.  This is
     /// not done in the destructor to avoid race conditions.
     void stop();
 
-    /// @brief Sets the receiver error state
+    /// @brief Sets the error state
     ///
     /// This records the given error message and sets the error watch
     /// socket to ready.
@@ -101,7 +97,7 @@ public:
     /// @param error_msg
     void setError(const std::string& error_msg);
 
-    /// @brief Fetches the error message text for the most recent socket error
+    /// @brief Fetches the error message text for the most recent error
     ///
     /// @return string containing the error message
     std::string getLastError();
@@ -109,17 +105,17 @@ public:
     /// @brief Error message of the last error encountered
     std::string last_error_;
 
-    /// @brief DHCP watch sockets that are used to communicate with the owning thread
+    /// @brief WatchSockets that are used to communicate with the owning thread
     /// There are three:
-    /// -# RCV_ERROR - packet receive error watch socket.
-    /// Marked as ready when the DHCP packet receiver experiences an I/O error.
-    /// -# RCV_READY - Marked as ready when the DHCP packet receiver adds a packet
-    /// to the packet queue.
-    /// -# RCV_TERMINATE Packet receiver terminate watch socket.
-    /// Marked as ready when the DHCP packet receiver thread should terminate.
-    WatchSocket sockets_[RCV_TERMINATE + 1];
+    /// -# ERROR - Marked as ready by the thread when it experiences an error.
+    /// -# READY - Marked as ready by the thread when it needs attention for a normal event
+    /// (e.g. a thread used to receive data would mark READY when it has data available)
+    /// -# TERMINATE - Marked as ready by WatchedThread owner to instruct the thread to
+    /// terminate.  Worker functions must monitor TERMINATa by periodically calling
+    /// @c shouldTerminate
+    WatchSocket sockets_[TERMINATE + 1];
 
-    /// DHCP packet receiver thread.
+    /// @brief Current thread instance
     thread::ThreadPtr thread_ ;
 };
 
