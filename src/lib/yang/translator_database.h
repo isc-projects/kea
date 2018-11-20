@@ -42,7 +42,7 @@ namespace yang {
 ///
 /// YANG syntax for kea-dhcp[46] is using database-type as the list key:
 /// @code
-///  +--rw database                container
+///  +--rw database                (list)
 ///    |
 ///    +--rw database-type?        string
 ///    +--rw user?                 string
@@ -79,20 +79,19 @@ namespace yang {
 /// @endcode
 /// @code
 /// /kea-dhcp6-server:config (container)
-/// /kea-dhcp6-server:config/hosts-databases (container)
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql'] (list instance)
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/type = mysql
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/name = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/user = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/password = kea
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/host = localhost
-/// /kea-dhcp6-server:config/hosts-databases/
+/// /kea-dhcp6-server:config/
 ///    hosts-database[database-type='mysql']/port = 3306
 /// @endcode
 
@@ -177,7 +176,7 @@ public:
 
     /// @brief Get and translate database accesses from YANG to JSON.
     ///
-    /// @param xpath The xpath of databases.
+    /// @param xpath The xpath of databases including the list name.
     /// @return JSON representation of databases.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ConstElementPtr getDatabases(const std::string& xpath);
@@ -186,7 +185,7 @@ public:
     ///
     /// Null elem argument removes the database list.
     ///
-    /// @param xpath The xpath of databases.
+    /// @param xpath The xpath of databases including the list name.
     /// @param elem The JSON element.
     void setDatabases(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
@@ -194,14 +193,14 @@ public:
 protected:
     /// @brief getDatabases JSON for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of databases.
+    /// @param xpath The xpath of databases including the list name.
     /// @return JSON representation of  databases.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getDatabasesKea(const std::string& xpath);
 
     /// @brief setDatabases for kea-dhcp[46]-server models.
     ///
-    /// @param xpath The xpath of databases.
+    /// @param xpath The xpath of databases including the list name.
     /// @param elem The JSON element.
     /// @throw BadValue on database without tyoe,
     void setDatabasesKea(const std::string& xpath,

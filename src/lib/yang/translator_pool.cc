@@ -108,7 +108,7 @@ TranslatorPool::getPoolKea(const string& xpath) {
               << end_addr->stringValue();
         result->set("pool", Element::create(range.str()));
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -217,7 +217,7 @@ TranslatorPool::setPoolKea(const string& xpath, ConstElementPtr elem) {
     // Skip start-address and end-address as are the keys.
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     ConstElementPtr guard = elem->get("client-class");
@@ -279,25 +279,55 @@ TranslatorPools::~TranslatorPools() {
 ElementPtr
 TranslatorPools::getPools(const string& xpath) {
     try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
-        if (!iter) {
-            // Can't happen.
-            isc_throw(Unexpected, "getPools can't get iterator: " << xpath);
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getPoolsIetf(xpath));
+        } else if ((model_ == KEA_DHCP4_SERVER) ||
+                   (model_ == KEA_DHCP6_SERVER)) {
+            return (getPoolsKea(xpath));
         }
-        for (;;) {
-            const string& pool = getNext(iter);
-            if (pool.empty()) {
-                break;
-            }
-            result->add(getPool(pool));
-        }
-        return (result);
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pools at '" << xpath
                   << "': " << ex.what());
     }
+    isc_throw(NotImplemented,
+              "getPools not implemented for the model: " << model_);
+}
+
+ElementPtr
+TranslatorPools::getPoolsIetf(const string& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/address-pool");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPoolsIetf can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPool(pool));
+    }
+    return (result);
+}
+
+ElementPtr
+TranslatorPools::getPoolsKea(const string& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/pool");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPoolsKea can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPool(pool));
+    }
+    return (result);
 }
 
 void

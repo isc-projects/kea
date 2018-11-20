@@ -8,9 +8,11 @@ module kea-ctrl-agent {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-11-20;
   }
   import kea-logging {
     prefix logging;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
@@ -18,7 +20,7 @@ module kea-ctrl-agent {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea control agent.";
 
-  revision 2018-09-14 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -33,13 +35,11 @@ module kea-ctrl-agent {
 
     leaf http-host {
       type inet:ip-address;
-      default "127.0.0.1";
       description "IP address to which HTTP service will be bound.";
     }
 
     leaf http-port {
       type uint16;
-      default 8000;
       description "Port to which HTTP service will be bound.";
     }
 
@@ -76,12 +76,8 @@ module kea-ctrl-agent {
       type kea:user-context;
       description "Control agent user context.";
     }
-  }
 
-  container logging {
-    // config true;
-    description "Logging";
-
-    uses logging:configuration;
+    // Moved from logging
+    uses logging:loggers;
   }
 }
