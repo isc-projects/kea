@@ -6547,10 +6547,8 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
 
             // Fetch the queue control info.
             staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-
             // Make sure the staged queue config exists.
             ASSERT_TRUE(staged_control);
-
             // Now build the expected queue control content.
             if (scenario.json_.empty()) {
                 exp_control = Element::createMap();
