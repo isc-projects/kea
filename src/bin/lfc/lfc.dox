@@ -21,7 +21,7 @@ the lease files and keep only the most recent instance of each lease.  When it f
 reading the leases it will write the unique leases to the output file.
 
 The design documentation for kea-lfc can be found here:
-<a href="http://oldkea.isc.org/wiki/LFCDesign"> LFC Design</a>
+<a href="https://gitlab.isc.org/isc-projects/kea/wikis/Lease-File-Cleanup-design"> LFC Design</a>
 
 While kea-lfc can be started externally, there is usually no need to do this as the
 Kea servers will run it on a periodic basis.
