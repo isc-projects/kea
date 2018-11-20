@@ -1,3 +1,11 @@
+1483.	[func]		tmark
+	Use of congestion handling is now optional via the 'enable-queue'
+	flag added to 'dhcp-queue-control'.  It is disabled by default.
+	When disabled Kea's DHCPv4 and DHCPv6 servers will consume packets
+	directly from interface sockets in the main thread (i.e. employs pre 
+	Kea 1.5 technique). 
+	(Gitlab #260, !120, git 9e304fae48d0d0658fd39a21aba9da528b4cc6f4)
+
 1482.	[func]		fdupont
 	The configuration parameter "reservation-mode" can be specified
 	at global (new), subnet and shared network levels.
