@@ -7,7 +7,7 @@ module kea-types {
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea types and groupings.";
 
-  revision 2018-09-14 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
