@@ -93,14 +93,21 @@ public:
         // Look for it.
         auto index = factories_.find(queue_type);
 
-        // If it's there remove it
-        if (index != factories_.end()) {
-            factories_.erase(index);
-            return (true);
-
+        // Not there so nothing to do.
+        if (index == factories_.end()) {
+            return (false);
         }
 
-        return (false);
+        // If the queue is of the type being unregistered, then remove it. We don't
+        // a queue instance outliving its library.
+        if ((packet_queue_) && (packet_queue_->getQueueType() == queue_type)) {
+            packet_queue_.reset();
+        }
+
+        // Remove the factory.
+        factories_.erase(index);
+
+        return (true);
     }
 
     /// @brief Create an instance of a packet queue.
