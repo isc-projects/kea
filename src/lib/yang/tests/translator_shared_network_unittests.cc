@@ -44,7 +44,7 @@ TEST_F(TranslatorSharedNetworksTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Get the shared network list and check if it is empty.
-    const string& xpath = "/kea-dhcp4-server:config/shared-networks";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr networks;
     EXPECT_NO_THROW(networks = t_obj_->getSharedNetworks(xpath));
     ASSERT_TRUE(networks);
@@ -58,9 +58,9 @@ TEST_F(TranslatorSharedNetworksTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111 in shared network foo.
-    const string& xpath = "/kea-dhcp6-server:config/shared-networks";
+    const string& xpath = "/kea-dhcp6-server:config";
     const string& xnetwork = xpath + "/shared-network[name='foo']";
-    const string& xsubnet = xnetwork + "/subnet6/subnet6[id='111']/subnet";
+    const string& xsubnet = xnetwork + "/subnet6[id='111']/subnet";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
 
@@ -93,7 +93,7 @@ TEST_F(TranslatorSharedNetworksTest, setEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4-server:config/shared-networks";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr networks = Element::createList();
     EXPECT_NO_THROW(t_obj_->setSharedNetworks(xpath, networks));
 
@@ -116,7 +116,7 @@ TEST_F(TranslatorSharedNetworksTest, set) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set one shared network.
-    const string& xpath = "/kea-dhcp6-server:config/shared-networks";
+    const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr networks = Element::createList();
     ElementPtr share = Element::createMap();
     ElementPtr subnets = Element::createList();
@@ -144,19 +144,15 @@ TEST_F(TranslatorSharedNetworksTest, set) {
     string expected =
         "kea-dhcp6-server:config (container)\n"
         " |\n"
-        " -- shared-networks (container)\n"
+        " -- shared-network (list instance)\n"
         "     |\n"
-        "     -- shared-network (list instance)\n"
+        "     -- name = foo\n"
+        "     |\n"
+        "     -- subnet6 (list instance)\n"
         "         |\n"
-        "         -- name = foo\n"
+        "         -- id = 123\n"
         "         |\n"
-        "         -- subnet6 (container)\n"
-        "             |\n"
-        "             -- subnet6 (list instance)\n"
-        "                 |\n"
-        "                 -- id = 123\n"
-        "                 |\n"
-        "                 -- subnet = 2001:db8::/48\n";
+        "         -- subnet = 2001:db8::/48\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.
@@ -175,7 +171,7 @@ TEST_F(TranslatorSharedNetworksTest, set) {
 TEST_F(TranslatorSharedNetworksTest, getList) {
     useModel(KEA_DHCP6_SERVER);
 
-    const string& xpath = "/kea-dhcp6-server:config/shared-networks";
+    const string& xpath = "/kea-dhcp6-server:config";
 
     // Those two networks will be added.
     const string& xnetwork1 = xpath + "/shared-network[name='foo']";
@@ -198,22 +194,22 @@ TEST_F(TranslatorSharedNetworksTest, getList) {
         "[ " + exp_net1 + ", " + exp_net2 + " ]";
 
     // Create the subnet1: 2001:db8:1::/48 #1 in shared network foo.
-    const string& xsubnet1 = xnetwork1 + "/subnet6/subnet6[id='1']/subnet";
+    const string& xsubnet1 = xnetwork1 + "/subnet6[id='1']/subnet";
     S_Val v_subnet1(new Val("2001:db8:1::/48", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xsubnet1.c_str(), v_subnet1));
 
     // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
-    const string& xsubnet2 = xnetwork1 + "/subnet6/subnet6[id='2']/subnet";
+    const string& xsubnet2 = xnetwork1 + "/subnet6[id='2']/subnet";
     S_Val v_subnet2(new Val("2001:db8:2::/48", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xsubnet2.c_str(), v_subnet2));
 
     // Create the subnet1: 2001:db8:101::/48 #101 in shared network foo.
-    const string& xsubnet3 = xnetwork2 + "/subnet6/subnet6[id='101']/subnet";
+    const string& xsubnet3 = xnetwork2 + "/subnet6[id='101']/subnet";
     S_Val v_subnet(new Val("2001:db8:101::/48", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xsubnet3.c_str(), v_subnet));
 
     // Create the subnet2: 2001:db8:2::/48 #2 in shared network foo.
-    const string& xsubnet4 = xnetwork2 + "/subnet6/subnet6[id='102']/subnet";
+    const string& xsubnet4 = xnetwork2 + "/subnet6[id='102']/subnet";
     S_Val v_subnet4(new Val("2001:db8:102::/48", SR_STRING_T));
     EXPECT_NO_THROW(sess_->set_item(xsubnet4.c_str(), v_subnet4));
 

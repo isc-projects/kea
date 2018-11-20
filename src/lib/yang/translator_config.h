@@ -69,8 +69,8 @@ namespace yang {
 /// +--rw renew-timer?                   uint32
 /// +--rw rebind-timer?                  uint32
 /// +--rw decline-probation-period?      uint32
-/// +--rw subnet4                        subnet4*
-/// +--rw shared-networks                shared-network*
+/// +--rw subnet4*
+/// +--rw shared-network*
 /// +--rw interfaces-config
 ///    +--rw interfaces*                 string
 ///    +--rw dhcp-socket-type?           enumeration
@@ -78,10 +78,10 @@ namespace yang {
 ///    +--rw re-detect?                  boolean
 ///    +--rw user-context?               string
 /// +--rw lease-database!                <database>
-/// +--rw hosts-databases                hosts-database*
+/// +--rw hosts-database*
 /// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-classes                 client-class*
-/// +--rw option-def-list                option-def*
+/// +--rw client-class*
+/// +--rw option-def*
 /// +--rw option-data*
 /// +--rw hook-library*
 ///    +--rw library                     string
@@ -99,8 +99,9 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw host*
 /// +--rw config-control
-///    +--rw config-databases            config-databases*
+///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string
 /// @endcode
@@ -139,17 +140,13 @@ namespace yang {
 /// @code
 /// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
 ///   <subnet4>
-///     <subnet4>
-///       <id>1</id>
-///       <pools>
-///         <pool>
-///           <start-address>10.0.35.64</start-address>
-///           <end-address>10.0.35.95</end-address>
-///           <prefix>10.0.35.64/27</prefix>
-///         </pool>
-///       </pools>
-///       <subnet>10.0.35.0/24</subnet>
-///     </subnet4>
+///     <id>1</id>
+///     <pool>
+///       <start-address>10.0.35.64</start-address>
+///       <end-address>10.0.35.95</end-address>
+///       <prefix>10.0.35.64/27</prefix>
+///     </pool>
+///     <subnet>10.0.35.0/24</subnet>
 ///   </subnet4>
 ///   <interfaces-config>
 ///     <interfaces>eth1</interfaces>
@@ -206,20 +203,20 @@ namespace yang {
 /// +--rw renew-timer?                   uint32
 /// +--rw rebind-timer?                  uint32
 /// +--rw decline-probation-period?      uint32
-/// +--rw subnet6                        subnet6*
-/// +--rw shared-networks                shared-network*
+/// +--rw subnet6*
+/// +--rw shared-network*
 /// +--rw interfaces-config
 ///    +--rw interfaces*                 string
 ///    +--rw re-detect?                  boolean
 ///    +--rw user-context?               string
 /// +--rw lease-database!                <database>
-/// +--rw hosts-databases                hosts-database*
+/// +--rw hosts-database*
 /// +--rw relay-supplied-options*        string
 /// +--rw mac-sources*                   string
 /// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-classes                 client-class*
-/// +--rw option-def-list                option-def*
-/// +--rw option-data-list               option-data*
+/// +--rw client-class*
+/// +--rw option-def*
+/// +--rw option-data*
 /// +--rw hook-library*
 ///    +--rw library                     string
 ///    +--rw parameters?                 string
@@ -232,8 +229,9 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
+/// +--rw host*
 /// +--rw config-control
-///    +--rw config-databases            config-databases*
+///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string
 /// @endcode
@@ -271,17 +269,13 @@ namespace yang {
 /// @code
 /// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
 ///   <subnet6>
-///     <subnet6>
-///       <id>1</id>
-///       <pools>
-///         <pool>
-///           <start-address>2001:db8::1:0</start-address>
-///           <end-address>2001:db8::1:ffff</end-address>
-///           <prefix>2001:db8::1:0/112</prefix>
-///         </pool>
-///       </pools>
-///       <subnet>2001:db8::/64</subnet>
-///     </subnet6>
+///     <id>1</id>
+///     <pool>
+///       <start-address>2001:db8::1:0</start-address>
+///       <end-address>2001:db8::1:ffff</end-address>
+///       <prefix>2001:db8::1:0/112</prefix>
+///     </pool>
+///     <subnet>2001:db8::/64</subnet>
 ///   </subnet6>
 ///   <interfaces-config>
 ///     <interfaces>eth1</interfaces>
@@ -303,7 +297,7 @@ namespace yang {
 /// YANG syntax for kea-*:logging is:
 /// @code
 /// +--rw logging
-///    +--rw loggers
+///    +--rw logger*
 /// @endcode
 ///
 /// Example of Logging simple configuration:
@@ -333,18 +327,16 @@ namespace yang {
 /// with a kea server model and exported to XML format:
 /// @code
 /// <logging xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
-///   <loggers>
-///     <logger>
-///       <name>kea-dhcp6</name>
-///       <output-options>
-///         <option>
-///           <output>stderr</output>
-///         </option>
-///       </output-options>
-///       <debuglevel>99</debuglevel>
-///       <severity>DEBUG</severity>
-///     </logger>
-///   </loggers>
+///   <logger>
+///     <name>kea-dhcp6</name>
+///     <output-options>
+///       <option>
+///         <output>stderr</output>
+///       </option>
+///     </output-options>
+///     <debuglevel>99</debuglevel>
+///     <severity>DEBUG</severity>
+///   </logger>
 /// </logging>
 /// @endcode
 ///

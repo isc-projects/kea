@@ -39,7 +39,7 @@ namespace yang {
 ///    +--rw test?               string
 ///    +--rw only-if-required?   boolean
 ///    +--rw option-data*
-///    +--rw option-def-list     option-def*
+///    +--rw option-def*
 ///    +--rw next-server?        inet:ipv4-address
 ///    +--rw server-hostname?    string
 ///    +--rw boot-file-name?     string
@@ -58,15 +58,10 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/client-classes (container)
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo'] (list instance)
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/name = foo
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/test = ''==''
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/ only-if-required = false
+///  /kea-dhcp6-server:config/client-class[name='foo'] (list instance)
+///  /kea-dhcp6-server:config/client-class[name='foo']/name = foo
+///  /kea-dhcp6-server:config/client-class[name='foo']/test = ''==''
+///  /kea-dhcp6-server:config/client-class[name='foo']/only-if-required = false
 /// @endcode
 
 /// @brief A translator class for converting a client class between

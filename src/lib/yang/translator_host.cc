@@ -195,7 +195,7 @@ ElementPtr
 TranslatorHosts::getHosts(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath + "/host");
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getHosts can't get iterator: " << xpath);

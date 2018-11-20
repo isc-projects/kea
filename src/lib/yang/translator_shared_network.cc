@@ -295,7 +295,7 @@ ElementPtr
 TranslatorSharedNetworks::getSharedNetworks(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath + "/shared-network");
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getSharedNetworks: can't get iterator: "

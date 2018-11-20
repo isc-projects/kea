@@ -96,16 +96,14 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/subnet6 (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111'] (list instance)
+///  /kea-dhcp6-server:config/subnet6[id='111']/id = 111
+///  /kea-dhcp6-server:config/subnet6[id='111']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56' (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56'/prefix = 2001:db8:0:1000::/56
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56'/delegated-len = 64
 /// @endcode
 

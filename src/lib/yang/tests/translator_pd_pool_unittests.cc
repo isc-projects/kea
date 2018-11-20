@@ -47,7 +47,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyIetf) {
     // Get the pd-pool list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
-        "/network-range[network-range-id='111']/pd-pools";
+        "/network-range[network-range-id='111']/pd-pools/pd-pool";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
@@ -62,7 +62,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
 
     // Get the pd-pool list and check if it is empty.
     const string& xpath =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools";
+        "/kea-dhcp6-server:config/subnet6[id='111']/pd-pool";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
@@ -104,7 +104,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(subnet + "/pd-pools"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(subnet + "/pd-pools/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -117,14 +117,13 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& subnet_subnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Create the pd-pool 2001:db8:0:1000::/64.
-    const string& xpath = subnet + "/pd-pools";
     const string& prefix = "2001:db8:0:1000::/56";
     ostringstream spool;
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
@@ -145,7 +144,7 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -172,7 +171,7 @@ TEST_F(TranslatorPdPoolsTest, setEmptyIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     EXPECT_EQ(0, pools->size());
@@ -184,20 +183,19 @@ TEST_F(TranslatorPdPoolsTest, setEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& subnet_subnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Set empty list.
-    const string& xpath = subnet + "/pd-pools";
     ConstElementPtr pools = Element::createList();
     EXPECT_NO_THROW(t_obj_->setPdPools(xpath, pools));
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     EXPECT_EQ(0, pools->size());
@@ -227,7 +225,7 @@ TEST_F(TranslatorPdPoolsTest, setIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -270,14 +268,13 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& subnet_subnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Set one pool.
-    const string& xpath = subnet + "/pd-pools";
     ElementPtr pools = Element::createList();
     ElementPtr pool = Element::createMap();
     pool->set("prefix", Element::create(string("2001:db8:0:1000::")));
@@ -288,7 +285,7 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -301,21 +298,17 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
     string expected =
         "kea-dhcp6-server:config (container)\n"
         " |\n"
-        " -- subnet6 (container)\n"
+        " -- subnet6 (list instance)\n"
         "     |\n"
-        "     -- subnet6 (list instance)\n"
+        "     -- id = 111\n"
+        "     |\n"
+        "     -- subnet = 2001:db8::/48\n"
+        "     |\n"
+        "     -- pd-pool (list instance)\n"
         "         |\n"
-        "         -- id = 111\n"
+        "         -- prefix = 2001:db8:0:1000::/56\n"
         "         |\n"
-        "         -- subnet = 2001:db8::/48\n"
-        "         |\n"
-        "         -- pd-pools (container)\n"
-        "             |\n"
-        "             -- pd-pool (list instance)\n"
-        "                 |\n"
-        "                 -- prefix = 2001:db8:0:1000::/56\n"
-        "                 |\n"
-        "                 -- delegated-len = 64\n";
+        "         -- delegated-len = 64\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.
@@ -328,14 +321,13 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& subnet_subnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(subnet_subnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Create the first pd-pool 2001:db8:0:1000::/56.
-    const string& xpath = subnet + "/pd-pools";
     const string& prefix = "2001:db8:0:1000::/56";
     ostringstream spool;
     spool << xpath + "/pd-pool[prefix='" << prefix << "']";
@@ -345,10 +337,9 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
     EXPECT_NO_THROW(sess_->set_item(x_delegated.c_str(), s_delegated));
 
     // Create the second pd-pool 2001:db8:0:2000::/56
-    const string& xpath2 = subnet + "/pd-pools";
     const string& prefix2 = "2001:db8:0:2000::/56";
     ostringstream spool2;
-    spool2 << xpath2 + "/pd-pool[prefix='" << prefix2 << "']";
+    spool2 << xpath + "/pd-pool[prefix='" << prefix2 << "']";
     const string& x_delegated2 = spool2.str() + "/delegated-len";
     uint8_t dl2 = 60;
     S_Val s_delegated2(new Val(dl2, SR_UINT8_T));
@@ -357,7 +348,7 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
 
     // Get the pools list.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath2));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
     ASSERT_TRUE(pools);
 
     // Check that both of them are returned properly.

@@ -162,7 +162,7 @@ TranslatorOptionDefList::getOptionDefList(const string& xpath) {
 ConstElementPtr
 TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
     ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/option-def");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getOptionDefListKea: can't get iterator: "

@@ -56,18 +56,17 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/option-def-list (container)
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc'] (list instance)
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc']/code = 100
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc']/space = isc
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc']/name = foo
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc']/type = string
-///  /kea-dhcp6-server:config/option-def-list/
+///  /kea-dhcp6-server:config/
 ///     option-def[code='100'][space='isc']/array = false
 /// @endcode
 

@@ -79,8 +79,8 @@ namespace yang {
 ///  +--rw network-prefix        inet:ipv4-prefix
 ///  +--rw option-set-id?
 ///     /server/server-config/option-sets/option-set/option-set-id
-///  +--rw address-pools         address-pool* [pool-id]
-///  +--rw pd-pools              pd-pool* [pool-id]
+///  +--rw address-pool*         [pool-id]
+///  +--rw pd-pool*              [pool-id]
 ///  +--rw host-reservations     host-reservation* [cli-id]
 /// @endcode
 ///
@@ -90,13 +90,13 @@ namespace yang {
 ///  +--rw renew-timer?              uint32
 ///  +--rw rebind-timer?             uint32
 ///  +--rw option-data*
-///  +--rw pools                     pool*
+///  +--rw pool*
 ///  +--rw subnet                    inet:ip-prefix
 ///  +--rw interface?                string
 ///  +--rw id                        uint32
 ///  +--rw client-class?             string
 ///  +--rw require-client-classes*   string
-///  +--rw reservations              host*
+///  +--rw host*
 ///  +--rw reservation-mode?         enumeration
 ///  +--rw relay                     ip-addresses*
 ///  +--rw user-context?             string
@@ -111,7 +111,7 @@ namespace yang {
 ///  +--rw authoritative?            boolean
 ///  (DHCPv6 only)
 ///  +--rw preferred-lifetime?       uint32
-///  +--rw pd-pools                  pd-pool*
+///  +--rw pd-pool*
 ///  +--rw interface-id?             string
 ///  +--rw rapid-commit?             boolean
 /// @endcode
@@ -204,31 +204,29 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp4-server:config (container)
-///  /kea-dhcp4-server:config/subnet4 (container)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123'] (list instance)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/id = 123
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools (container)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123'] (list instance)
+///  /kea-dhcp4-server:config/subnet4[id='123']/id = 123
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.0'][end-address='10.0.1.15'] (list instance)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.0'][end-address='10.0.1.15']/
 ///     start-address = 10.0.1.0
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.0'][end-address='10.0.1.15']/
 ///     end-address = 10.0.1.15
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.0'][end-address='10.0.1.15']/
 ///     prefix = 10.0.1.0/28
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.200'][end-address='10.0.1.222']
 ///     (list instance)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.200'][end-address='10.0.1.222']/
 ///     start-address = 10.0.1.200
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/pools/
+///  /kea-dhcp4-server:config/subnet4[id='123']/
 ///     pool[start-address='10.0.1.200'][end-address='10.0.1.222']/
 ///     end-address = 10.0.1.222
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='123']/subnet = 10.0.1.0/24
+///  /kea-dhcp4-server:config/subnet4[id='123']/subnet = 10.0.1.0/24
 /// @endcode
 
 /// @brief A translator class for converting a subnet between YANG and JSON.
@@ -339,10 +337,8 @@ protected:
     ///
     /// @param xpath The xpath of the subnet list.
     /// @param elem The JSON element.
-    /// @param subsel The subnet list name.
     void setSubnetsKea(const std::string& xpath,
-                       isc::data::ConstElementPtr elem,
-                       const std::string& subsel);
+                       isc::data::ConstElementPtr elem);
 };
 
 }; // end of namespace isc::yang

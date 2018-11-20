@@ -255,7 +255,7 @@ TranslatorDatabases::getDatabases(const string& xpath) {
 
 ElementPtr
 TranslatorDatabases::getDatabasesKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath);
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getDatabasesKea can't get iterator: " << xpath);
@@ -297,7 +297,6 @@ void
 TranslatorDatabases::setDatabasesKea(const string& xpath,
                                      ConstElementPtr elem) {
     if (!elem) {
-        delItem(xpath + "/hosts-database");
         delItem(xpath);
         return;
     }
@@ -308,7 +307,7 @@ TranslatorDatabases::setDatabasesKea(const string& xpath,
         }
         string type = database->get("type")->stringValue();
         ostringstream key;
-        key << xpath << "/hosts-database[database-type='" << type << "']";
+        key << xpath << "[database-type='" << type << "']";
         setDatabase(key.str(), database, true);
     }
 }
