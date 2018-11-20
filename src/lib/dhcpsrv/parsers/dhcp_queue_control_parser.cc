@@ -18,15 +18,6 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
-DHCPQueueControlParser::DHCPQueueControlParser(const uint16_t family)
-    : family_(family) {
-    // @todo Not sure we need family but just in case.
-    if (family_ != AF_INET && family_ != AF_INET6) {
-        isc_throw(BadValue, "DHCPQueueControlParser - invalid family: "
-                 << family_ << ", must be AF_INET or AF_INET6");
-    }
-}
-
 data::ElementPtr 
 DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
     // All we really do here is verify that it is a map that
@@ -36,12 +27,17 @@ DHCPQueueControlParser::parse(const isc::data::ConstElementPtr& control_elem) {
         isc_throw(DhcpConfigError, "dhcp-queue-control must be a map");
     }
 
-    ConstElementPtr elem  = control_elem->get("queue-type");
-    if (!elem) {
-        isc_throw(DhcpConfigError, "queue-type is required");
-    } else {
-        if (elem->getType() != Element::string) {
-            isc_throw(DhcpConfigError, "queue-type must be a string");
+    // enable-queue is mandatory.
+    bool enable_queue = getBoolean(control_elem, "enable-queue");
+
+    if (enable_queue) {
+        ConstElementPtr elem  = control_elem->get("queue-type");
+        if (!elem) {
+            isc_throw(DhcpConfigError, "when queue is enabled, queue-type is required");
+        } else {
+            if (elem->getType() != Element::string) {
+                isc_throw(DhcpConfigError, "queue-type must be a string");
+            }
         }
     }
 

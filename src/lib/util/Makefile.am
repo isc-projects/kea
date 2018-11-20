@@ -97,4 +97,5 @@ libkea_util_random_include_HEADERS = \
 libkea_util_threads_includedir = $(pkgincludedir)/util/threads
 libkea_util_threads_include_HEADERS = \
 	threads/sync.h \
-	threads/thread.h
+	threads/thread.h \
+	threads/watched_thread.h

@@ -447,6 +447,222 @@ public:
         ++errors_count_;
     }
 
+    /// @brief Tests the ability to send and receive DHCPv6 packets
+    ///
+    /// This test calls @r IfaceMgr::configureDHCPPacketQueue, passing in the
+    /// given queue configuration.  It then calls IfaceMgr::startDHCPReceiver
+    /// and verifies whether or not the receive thread has been started as
+    /// expected.  Next it creates a generic DHCPv6 packet and sends it over
+    /// the loop back interface.  It invokes IfaceMgr::receive6 to receive the
+    /// packet sent, and compares to the packets for equality.
+    ///
+    /// @param dhcp_queue_control dhcp-queue-control contents to use for the test
+    /// @param exp_queue_enabled flag that indicates if packet queuing is expected
+    /// to be enabled.
+    void sendReceive6Test(data::ConstElementPtr dhcp_queue_control, bool exp_queue_enabled) {
+        scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+        // Testing socket operation in a portable way is tricky
+        // without interface detection implemented
+        // let's assume that every supported OS have lo interface
+        IOAddress lo_addr("::1");
+        int socket1 = 0, socket2 = 0;
+        EXPECT_NO_THROW(
+            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
+            socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10546);
+        );
+
+        EXPECT_GE(socket1, 0);
+        EXPECT_GE(socket2, 0);
+
+        // Configure packet queueing as desired.
+        bool queue_enabled = false;
+        ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, dhcp_queue_control));
+
+        // Verify that we have a queue only if we expected one.
+        ASSERT_EQ(exp_queue_enabled, queue_enabled);
+
+        // Thread should only start when there is a packet queue.
+        ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET6));
+        ASSERT_TRUE(queue_enabled == ifacemgr->isDHCPReceiverRunning());
+
+        // If the thread is already running, trying to start it again should fail.
+        if (queue_enabled) {
+            ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET6), InvalidOperation);
+            // Should still have one running.
+            ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+        }
+
+        // Let's build our DHCPv6 packet.
+        // prepare dummy payload
+        uint8_t data[128];
+        for (uint8_t i = 0; i < 128; i++) {
+            data[i] = i;
+        }
+
+        Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
+        sendPkt->repack();
+        sendPkt->setRemotePort(10547);
+        sendPkt->setRemoteAddr(IOAddress("::1"));
+        sendPkt->setIndex(1);
+        sendPkt->setIface(LOOPBACK);
+
+        // Send the packet.
+        EXPECT_EQ(true, ifacemgr->send(sendPkt));
+
+        // Now, let's try and receive it.
+        Pkt6Ptr rcvPkt;
+        rcvPkt = ifacemgr->receive6(10);
+        ASSERT_TRUE(rcvPkt); // received our own packet
+
+        // let's check that we received what was sent
+        ASSERT_EQ(sendPkt->data_.size(), rcvPkt->data_.size());
+        EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
+                            rcvPkt->data_.size()));
+
+        EXPECT_EQ(sendPkt->getRemoteAddr(), rcvPkt->getRemoteAddr());
+
+        // since we opened 2 sockets on the same interface and none of them is multicast,
+        // none is preferred over the other for sending data, so we really should not
+        // assume the one or the other will always be chosen for sending data. Therefore
+        // we should accept both values as source ports.
+        EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
+
+        // Stop the thread.  This should be no harm/no foul if we're not
+        // queueuing.  Either way, we should not have a thread afterwards.
+        ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
+        ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+    }
+
+
+    /// @brief Tests the ability to send and receive DHCPv4 packets
+    ///
+    /// This test calls @r IfaceMgr::configureDHCPPacketQueue, passing in the
+    /// given queue configuration.  It then calls IfaceMgr::startDHCPReceiver
+    /// and verifies whether or not the receive thread has been started as
+    /// expected.  Next it creates a DISCOVER packet and sends it over
+    /// the loop back interface.  It invokes IfaceMgr::receive4 to receive the
+    /// packet sent, and compares to the packets for equality.
+    ///
+    /// @param dhcp_queue_control dhcp-queue-control contents to use for the test
+    /// @param exp_queue_enabled flag that indicates if packet queuing is expected
+    /// to be enabled.
+    void sendReceive4Test(data::ConstElementPtr dhcp_queue_control, bool exp_queue_enabled) {
+        scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+        // Testing socket operation in a portable way is tricky
+        // without interface detection implemented.
+        // Let's assume that every supported OS has lo interface
+        IOAddress lo_addr("127.0.0.1");
+        int socket1 = 0;
+        EXPECT_NO_THROW(
+            socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
+        );
+
+        EXPECT_GE(socket1, 0);
+
+        // Configure packet queueing as desired.
+        bool queue_enabled = false;
+        ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, dhcp_queue_control));
+
+        // Verify that we have a queue only if we expected one.
+        ASSERT_EQ(exp_queue_enabled, queue_enabled);
+
+        // Thread should only start when there is a packet queue.
+        ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
+        ASSERT_TRUE(queue_enabled == ifacemgr->isDHCPReceiverRunning());
+
+        // If the thread is already running, trying to start it again should fail.
+        if (queue_enabled) {
+            ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET), InvalidOperation);
+            // Should still have one running.
+            ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+        }
+
+        // Let's construct the packet to send.
+        boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
+        sendPkt->setLocalAddr(IOAddress("127.0.0.1"));
+        sendPkt->setLocalPort(DHCP4_SERVER_PORT + 10000 + 1);
+        sendPkt->setRemotePort(DHCP4_SERVER_PORT + 10000);
+        sendPkt->setRemoteAddr(IOAddress("127.0.0.1"));
+        sendPkt->setIndex(1);
+        sendPkt->setIface(string(LOOPBACK));
+        sendPkt->setHops(6);
+        sendPkt->setSecs(42);
+        sendPkt->setCiaddr(IOAddress("192.0.2.1"));
+        sendPkt->setSiaddr(IOAddress("192.0.2.2"));
+        sendPkt->setYiaddr(IOAddress("192.0.2.3"));
+        sendPkt->setGiaddr(IOAddress("192.0.2.4"));
+
+        // Unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present.
+        // Workarounds (creating DHCP Message Type Option by hand) are no longer
+        // needed as setDhcpType() is called in constructor.
+
+        uint8_t sname[] = "That's just a string that will act as SNAME";
+        sendPkt->setSname(sname, strlen((const char*)sname));
+        uint8_t file[] = "/another/string/that/acts/as/a/file_name.txt";
+        sendPkt->setFile(file, strlen((const char*)file));
+
+        ASSERT_NO_THROW(
+            sendPkt->pack();
+        );
+
+        // OK, Send the PACKET!
+        EXPECT_NO_THROW(ifacemgr->send(sendPkt));
+
+        // Now let's try and receive it.
+        boost::shared_ptr<Pkt4> rcvPkt;
+        ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
+        ASSERT_TRUE(rcvPkt); // received our own packet
+        ASSERT_NO_THROW(
+            rcvPkt->unpack();
+        );
+
+        // let's check that we received what was sent
+        EXPECT_EQ(sendPkt->len(), rcvPkt->len());
+        EXPECT_EQ("127.0.0.1", rcvPkt->getRemoteAddr().toText());
+        EXPECT_EQ(sendPkt->getRemotePort(), rcvPkt->getLocalPort());
+        EXPECT_EQ(sendPkt->getHops(), rcvPkt->getHops());
+        EXPECT_EQ(sendPkt->getOp(),   rcvPkt->getOp());
+        EXPECT_EQ(sendPkt->getSecs(), rcvPkt->getSecs());
+        EXPECT_EQ(sendPkt->getFlags(), rcvPkt->getFlags());
+        EXPECT_EQ(sendPkt->getCiaddr(), rcvPkt->getCiaddr());
+        EXPECT_EQ(sendPkt->getSiaddr(), rcvPkt->getSiaddr());
+        EXPECT_EQ(sendPkt->getYiaddr(), rcvPkt->getYiaddr());
+        EXPECT_EQ(sendPkt->getGiaddr(), rcvPkt->getGiaddr());
+        EXPECT_EQ(sendPkt->getTransid(), rcvPkt->getTransid());
+        EXPECT_TRUE(sendPkt->getSname() == rcvPkt->getSname());
+        EXPECT_TRUE(sendPkt->getFile() == rcvPkt->getFile());
+        EXPECT_EQ(sendPkt->getHtype(), rcvPkt->getHtype());
+        EXPECT_EQ(sendPkt->getHlen(), rcvPkt->getHlen());
+
+        // since we opened 2 sockets on the same interface and none of them is multicast,
+        // none is preferred over the other for sending data, so we really should not
+        // assume the one or the other will always be chosen for sending data. We should
+        // skip checking source port of sent address.
+
+        // Close the socket. Further we will test if errors are reported
+        // properly on attempt to use closed socket.
+        close(socket1);
+
+        // @todo Closing the socket does NOT cause a read error out of the
+        // receiveDHCP<X>Packets() select.  Apparently this is because the
+        // thread is already inside the select when the socket is closed,
+        // and (at least under Centos 7.5), this does not interrupt the
+        // select.  For now, we'll only test this for direct receive.
+        if (!queue_enabled) {
+            EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
+        }
+
+        // Verify write fails.
+        EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
+
+        // Stop the thread.  This should be no harm/no foul if we're not
+        // queueuing.  Either way, we should not have a thread afterwards.
+        ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
+        ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+    }
+
     /// Holds the invocation counter for ifaceMgrErrorHandler.
     int errors_count_;
 
@@ -645,33 +861,29 @@ TEST_F(IfaceMgrTest, clearIfaces) {
 TEST_F(IfaceMgrTest, packetQueue4) {
     NakedIfaceMgr ifacemgr;
 
-    // Get the default queue.
-    PacketQueue4Ptr q4 = ifacemgr.getPacketQueue4();
-    ASSERT_TRUE(q4);
+    // Should not have a queue at start up.
+    ASSERT_FALSE(ifacemgr.getPacketQueue4());
 
-    // Verify that the queue is what we expect.
-    checkInfo(q4, "{ \"capacity\": 500, \"queue-type\": \"kea-ring4\", \"size\": 0 }");
-
-    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
-    // returns the same queue.
-    ASSERT_EQ(ifacemgr.getPacketQueue4(), PacketQueueMgr4::instance().getPacketQueue());
+    // Verify that we can create a queue with default factory.
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 2000);
+    ASSERT_NO_THROW(ifacemgr.getPacketQueueMgr4()->createPacketQueue(config));
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue4(), "{ \"capacity\": 2000, \"queue-type\": \""
+                     << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
 }
 
 // Verify that we have the expected default DHCPv6 packet queue.
 TEST_F(IfaceMgrTest, packetQueue6) {
     NakedIfaceMgr ifacemgr;
 
-    // Get the default queue.
-    PacketQueue6Ptr q6 = ifacemgr.getPacketQueue6();
+    // Should not have a queue at start up.
+    ASSERT_FALSE(ifacemgr.getPacketQueue6());
 
-    // Verify that we have a default queue and its info is correct.
-    checkInfo(q6, "{ \"capacity\": 500, \"queue-type\": \"kea-ring6\", \"size\": 0 }");
-
-    // Verify that fetching the queue via IfaceMgr and PacketQueueMgr
-    // returns the same queue.
-    ASSERT_EQ(ifacemgr.getPacketQueue6(), PacketQueueMgr6::instance().getPacketQueue());
+    // Verify that we can create a queue with default factory.
+    data::ConstElementPtr config = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 2000);
+    ASSERT_NO_THROW(ifacemgr.getPacketQueueMgr6()->createPacketQueue(config));
+    CHECK_QUEUE_INFO(ifacemgr.getPacketQueue6(), "{ \"capacity\": 2000, \"queue-type\": \""
+                     << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
 }
-
 
 TEST_F(IfaceMgrTest, receiveTimeout6) {
     using namespace boost::posix_time;
@@ -681,10 +893,10 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547)
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547)
     );
     // Socket is open if result is non-negative.
     ASSERT_GE(socket1, 0);
@@ -732,19 +944,20 @@ TEST_F(IfaceMgrTest, receiveTimeout6) {
 
 TEST_F(IfaceMgrTest, receiveTimeout4) {
     using namespace boost::posix_time;
-    std::cout << "Testing DHCPv6 packet reception timeouts."
+    std::cout << "Testing DHCPv4 packet reception timeouts."
               << " Test will block for a few seconds when waiting"
               << " for timeout to occur." << std::endl;
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
     // Open socket on the lo interface.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     ASSERT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10067)
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10067)
     );
     // Socket is open if returned value is non-negative.
     ASSERT_GE(socket1, 0);
+
     // Start receiver.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
 
@@ -780,8 +993,8 @@ TEST_F(IfaceMgrTest, receiveTimeout4) {
     EXPECT_LE(duration.total_microseconds(), 700000);
 
     // Test with invalid fractional timeout values.
-    EXPECT_THROW(ifacemgr->receive6(0, 1000000), isc::BadValue);
-    EXPECT_THROW(ifacemgr->receive6(2, 1000005), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive4(0, 1000000), isc::BadValue);
+    EXPECT_THROW(ifacemgr->receive4(2, 1000005), isc::BadValue);
 
     // Stop receiver.
     EXPECT_NO_THROW(ifacemgr->stopDHCPReceiver());
@@ -802,10 +1015,10 @@ TEST_F(IfaceMgrTest, multipleSockets) {
     init_sockets.push_back(socket1);
 
     // Create socket #2
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket2 = 0;
     ASSERT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromRemoteAddress(lo_addr, PORT2);
     );
     ASSERT_GE(socket2, 0);
     init_sockets.push_back(socket2);
@@ -881,19 +1094,19 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
 
     Pkt6 pkt6(DHCPV6_SOLICIT, 123);
     pkt6.setIface(LOOPBACK);
 
     // Bind multicast socket to port 10547
-    int socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
+    int socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10547);
     EXPECT_GE(socket1, 0); // socket >= 0
 
     EXPECT_EQ(socket1, ifacemgr->getSocket(pkt6));
 
     // Bind unicast socket to port 10548
-    int socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10548);
+    int socket2 = ifacemgr->openSocket(LOOPBACK, lo_addr, 10548);
     EXPECT_GE(socket2, 0);
 
     // Removed code for binding socket twice to the same address/port
@@ -912,7 +1125,7 @@ TEST_F(IfaceMgrTest, sockets6) {
 
     // Use non-existing interface name.
     EXPECT_THROW(
-        ifacemgr->openSocket("non_existing_interface", loAddr, 10548),
+        ifacemgr->openSocket("non_existing_interface", lo_addr, 10548),
         BadValue
     );
 
@@ -961,18 +1174,18 @@ TEST_F(IfaceMgrTest, socketsFromAddress) {
 
     // Open v6 socket on loopback interface and bind to port
     int socket1 = 0;
-    IOAddress loAddr6("::1");
+    IOAddress lo_addr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromAddress(loAddr6, PORT1);
+        socket1 = ifacemgr->openSocketFromAddress(lo_addr6, PORT1);
     );
     // socket descriptor must be non-negative integer
     EXPECT_GE(socket1, 0);
 
     // Open v4 socket on loopback interface and bind to different port
     int socket2 = 0;
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromAddress(lo_addr, PORT2);
     );
     // socket descriptor must be positive integer
     EXPECT_GE(socket2, 0);
@@ -998,17 +1211,17 @@ TEST_F(IfaceMgrTest, socketsFromRemoteAddress) {
     // Loopback address is the only one that we know
     // so let's treat it as remote address.
     int socket1 = 0;
-    IOAddress loAddr6("::1");
+    IOAddress lo_addr6("::1");
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocketFromRemoteAddress(loAddr6, PORT1);
+        socket1 = ifacemgr->openSocketFromRemoteAddress(lo_addr6, PORT1);
     );
     EXPECT_GE(socket1, 0);
 
     // Open v4 socket to connect to remote address.
     int socket2 = 0;
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     EXPECT_NO_THROW(
-        socket2 = ifacemgr->openSocketFromRemoteAddress(loAddr, PORT2);
+        socket2 = ifacemgr->openSocketFromRemoteAddress(lo_addr, PORT2);
     );
     EXPECT_GE(socket2, 0);
 
@@ -1034,7 +1247,7 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
 
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     IOAddress mcastAddr("ff02::1:2");
 
     // bind multicast socket to port 10547
@@ -1055,165 +1268,42 @@ TEST_F(IfaceMgrTest, DISABLED_sockets6Mcast) {
     close(socket2);
 }
 
+// Verifies that basic DHPCv6 packet send and receive operates
+// in either direct or indirect mode.
 TEST_F(IfaceMgrTest, sendReceive6) {
+    data::ElementPtr queue_control;
 
-    // testing socket operation in a portable way is tricky
-    // without interface detection implemented
+    // Given an empty pointer, queueing should be disabled.
+    // This should do direct reception.
+    sendReceive6Test(queue_control, false);
 
-    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Now let's populate queue control.
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
+    // With queueing disabled, we should use direct reception.
+    sendReceive6Test(queue_control, false);
 
-    // let's assume that every supported OS have lo interface
-    IOAddress loAddr("::1");
-    int socket1 = 0, socket2 = 0;
-    EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, 10547);
-        socket2 = ifacemgr->openSocket(LOOPBACK, loAddr, 10546);
-    );
-
-    EXPECT_GE(socket1, 0);
-    EXPECT_GE(socket2, 0);
-
-    ifacemgr->startDHCPReceiver(AF_INET6);
-
-    // prepare dummy payload
-    uint8_t data[128];
-    for (uint8_t i = 0; i < 128; i++) {
-        data[i] = i;
-    }
-    Pkt6Ptr sendPkt = Pkt6Ptr(new Pkt6(data, 128));
-
-    sendPkt->repack();
-
-    sendPkt->setRemotePort(10547);
-    sendPkt->setRemoteAddr(IOAddress("::1"));
-    sendPkt->setIndex(1);
-    sendPkt->setIface(LOOPBACK);
-
-    Pkt6Ptr rcvPkt;
-
-    EXPECT_EQ(true, ifacemgr->send(sendPkt));
-
-    rcvPkt = ifacemgr->receive6(10);
-
-    ASSERT_TRUE(rcvPkt); // received our own packet
-
-    // let's check that we received what was sent
-    ASSERT_EQ(sendPkt->data_.size(), rcvPkt->data_.size());
-    EXPECT_EQ(0, memcmp(&sendPkt->data_[0], &rcvPkt->data_[0],
-                        rcvPkt->data_.size()));
-
-    EXPECT_EQ(sendPkt->getRemoteAddr(), rcvPkt->getRemoteAddr());
-
-    // since we opened 2 sockets on the same interface and none of them is multicast,
-    // none is preferred over the other for sending data, so we really should not
-    // assume the one or the other will always be chosen for sending data. Therefore
-    // we should accept both values as source ports.
-    EXPECT_TRUE((rcvPkt->getRemotePort() == 10546) || (rcvPkt->getRemotePort() == 10547));
-
-    ifacemgr->stopDHCPReceiver();
+    // Queuing enabled, indirection reception should work.
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
+    sendReceive6Test(queue_control, true);
 }
 
+// Verifies that basic DHPCv4 packet send and receive operates
+// in either direct or indirect mode.
 TEST_F(IfaceMgrTest, sendReceive4) {
+    data::ElementPtr queue_control;
 
-    // testing socket operation in a portable way is tricky
-    // without interface detection implemented
+    // Given an empty pointer, queueing should be disabled.
+    // This should do direct reception.
+    sendReceive4Test(queue_control, false);
 
-    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+    // Now let's populate queue control.
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
+    // With queueing disabled, we should use direct reception.
+    sendReceive4Test(queue_control, false);
 
-    // let's assume that every supported OS have lo interface
-    IOAddress loAddr("127.0.0.1");
-    int socket1 = 0;
-    EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
-    );
-
-    EXPECT_GE(socket1, 0);
-
-    ifacemgr->startDHCPReceiver(AF_INET);
-
-    boost::shared_ptr<Pkt4> sendPkt(new Pkt4(DHCPDISCOVER, 1234) );
-
-    sendPkt->setLocalAddr(IOAddress("127.0.0.1"));
-
-    sendPkt->setLocalPort(DHCP4_SERVER_PORT + 10000 + 1);
-    sendPkt->setRemotePort(DHCP4_SERVER_PORT + 10000);
-    sendPkt->setRemoteAddr(IOAddress("127.0.0.1"));
-    sendPkt->setIndex(1);
-    sendPkt->setIface(string(LOOPBACK));
-    sendPkt->setHops(6);
-    sendPkt->setSecs(42);
-    sendPkt->setCiaddr(IOAddress("192.0.2.1"));
-    sendPkt->setSiaddr(IOAddress("192.0.2.2"));
-    sendPkt->setYiaddr(IOAddress("192.0.2.3"));
-    sendPkt->setGiaddr(IOAddress("192.0.2.4"));
-
-    // Unpack() now checks if mandatory DHCP_MESSAGE_TYPE is present.
-    // Workarounds (creating DHCP Message Type Option by hand) are no longer
-    // needed as setDhcpType() is called in constructor.
-
-    uint8_t sname[] = "That's just a string that will act as SNAME";
-    sendPkt->setSname(sname, strlen((const char*)sname));
-    uint8_t file[] = "/another/string/that/acts/as/a/file_name.txt";
-    sendPkt->setFile(file, strlen((const char*)file));
-
-    ASSERT_NO_THROW(
-        sendPkt->pack();
-    );
-
-    boost::shared_ptr<Pkt4> rcvPkt;
-
-    EXPECT_NO_THROW(ifacemgr->send(sendPkt));
-
-    ASSERT_NO_THROW(rcvPkt = ifacemgr->receive4(10));
-    ASSERT_TRUE(rcvPkt); // received our own packet
-
-    ASSERT_NO_THROW(
-        rcvPkt->unpack();
-    );
-
-    // let's check that we received what was sent
-    EXPECT_EQ(sendPkt->len(), rcvPkt->len());
-
-    EXPECT_EQ("127.0.0.1", rcvPkt->getRemoteAddr().toText());
-    EXPECT_EQ(sendPkt->getRemotePort(), rcvPkt->getLocalPort());
-
-    // now let's check content
-    EXPECT_EQ(sendPkt->getHops(), rcvPkt->getHops());
-    EXPECT_EQ(sendPkt->getOp(),   rcvPkt->getOp());
-    EXPECT_EQ(sendPkt->getSecs(), rcvPkt->getSecs());
-    EXPECT_EQ(sendPkt->getFlags(), rcvPkt->getFlags());
-    EXPECT_EQ(sendPkt->getCiaddr(), rcvPkt->getCiaddr());
-    EXPECT_EQ(sendPkt->getSiaddr(), rcvPkt->getSiaddr());
-    EXPECT_EQ(sendPkt->getYiaddr(), rcvPkt->getYiaddr());
-    EXPECT_EQ(sendPkt->getGiaddr(), rcvPkt->getGiaddr());
-    EXPECT_EQ(sendPkt->getTransid(), rcvPkt->getTransid());
-    EXPECT_TRUE(sendPkt->getSname() == rcvPkt->getSname());
-    EXPECT_TRUE(sendPkt->getFile() == rcvPkt->getFile());
-    EXPECT_EQ(sendPkt->getHtype(), rcvPkt->getHtype());
-    EXPECT_EQ(sendPkt->getHlen(), rcvPkt->getHlen());
-
-    // since we opened 2 sockets on the same interface and none of them is multicast,
-    // none is preferred over the other for sending data, so we really should not
-    // assume the one or the other will always be chosen for sending data. We should
-    // skip checking source port of sent address.
-
-
-    // Close the socket. Further we will test if errors are reported
-    // properly on attempt to use closed socket.
-    close(socket1);
-
-#if 0
-    // @todo Closing the socket does NOT cause a read error out of the
-    // receiveDHCP<X>Packets() select.  Apparently this is because the
-    // thread is already inside the select when the socket is closed,
-    // and (at least under Centos 7.5), this does not interrupt the
-    // select.
-    EXPECT_THROW(ifacemgr->receive4(10), SocketReadError);
-#endif
-
-    EXPECT_THROW(ifacemgr->send(sendPkt), SocketWriteError);
-
-    ifacemgr->stopDHCPReceiver();
+    // Queuing enabled, indirection reception should work.
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+    sendReceive4Test(queue_control, true);
 }
 
 // Verifies that it is possible to set custom packet filter object
@@ -1236,10 +1326,10 @@ TEST_F(IfaceMgrTest, setPacketFilter) {
 
     // Try to open socket using IfaceMgr. It should call the openSocket() function
     // on the packet filter object we have set.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
     );
 
     // Check that openSocket function was called.
@@ -1276,10 +1366,10 @@ TEST_F(IfaceMgrTest, setPacketFilter6) {
 
     // Try to open socket using IfaceMgr. It should call the openSocket()
     // function on the packet filter object we have set.
-    IOAddress loAddr("::1");
+    IOAddress lo_addr("::1");
     int socket1 = 0;
     EXPECT_NO_THROW(
-        socket1 = iface_mgr->openSocket(LOOPBACK, loAddr,
+        socket1 = iface_mgr->openSocket(LOOPBACK, lo_addr,
                                         DHCP6_SERVER_PORT + 10000);
     );
     // Check that openSocket function has been actually called on the packet
@@ -1335,7 +1425,7 @@ TEST_F(IfaceMgrTest, setMatchingPacketFilter) {
 // socket bound to the same address and port. Failing to open the fallback
 // socket should preclude the raw socket from being open.
 TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     int socket1 = -1, socket2 = -1;
     // Create two instances of IfaceMgr.
     boost::scoped_ptr<NakedIfaceMgr> iface_mgr1(new NakedIfaceMgr());
@@ -1348,7 +1438,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // PktFilterInet.
     EXPECT_NO_THROW(iface_mgr1->setMatchingPacketFilter(false));
     // Let's open a loopback socket with handy unpriviliged port number
-    socket1 = iface_mgr1->openSocket(LOOPBACK, loAddr,
+    socket1 = iface_mgr1->openSocket(LOOPBACK, lo_addr,
                                      DHCP4_SERVER_PORT + 10000);
 
     EXPECT_GE(socket1, 0);
@@ -1359,7 +1449,7 @@ TEST_F(IfaceMgrTest, checkPacketFilterRawSocket) {
     // The socket is open and bound. Another attempt to open socket and
     // bind to the same address and port should result in an exception.
     EXPECT_THROW(
-        socket2 = iface_mgr2->openSocket(LOOPBACK, loAddr,
+        socket2 = iface_mgr2->openSocket(LOOPBACK, lo_addr,
                                          DHCP4_SERVER_PORT + 10000),
         isc::dhcp::SocketConfigError
     );
@@ -1417,12 +1507,12 @@ TEST_F(IfaceMgrTest, socket4) {
     scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
 
     // Let's assume that every supported OS have lo interface.
-    IOAddress loAddr("127.0.0.1");
+    IOAddress lo_addr("127.0.0.1");
     // Use unprivileged port (it's convenient for running tests as non-root).
     int socket1 = 0;
 
     EXPECT_NO_THROW(
-        socket1 = ifacemgr->openSocket(LOOPBACK, loAddr, DHCP4_SERVER_PORT + 10000);
+        socket1 = ifacemgr->openSocket(LOOPBACK, lo_addr, DHCP4_SERVER_PORT + 10000);
     );
 
     EXPECT_GE(socket1, 0);
@@ -2951,5 +3041,142 @@ TEST_F(IfaceMgrTest, DISABLED_getSocket) {
     ifacemgr->closeSockets();
 }
 
+// Verifies DHCPv4 behavior of configureDHCPPacketQueue()
+TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // First let's make sure there is no queue and no thread.
+    ASSERT_FALSE(ifacemgr->getPacketQueue4());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    bool queue_enabled = false;
+    // Given an empty pointer, we should default to no queue.
+    data::ConstElementPtr queue_control;
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
+    EXPECT_FALSE(queue_enabled);
+    EXPECT_FALSE(ifacemgr->getPacketQueue4());
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Verify that calling startDHCPReceiver with no queue, does NOT start the thread.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's try with a populated queue control, but with enable-queue = false.
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
+    EXPECT_FALSE(queue_enabled);
+    EXPECT_FALSE(ifacemgr->getPacketQueue4());
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's enable the queue.
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
+    ASSERT_TRUE(queue_enabled);
+    // Verify we have correctly created the queue.
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue4(), "{ \"capacity\": 500, \"queue-type\": \""
+                     << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Calling startDHCPReceiver with a queue, should start the thread.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+
+    // Verify that calling startDHCPReceiver when the thread is running, throws.
+    ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET), InvalidOperation);
+
+    // Create a disabled config.
+    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
+
+    // Trying to reconfigure with a running thread should throw.
+    ASSERT_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control),
+                 InvalidOperation);
+
+    // We should still have our queue and the thread should still be running.
+    EXPECT_TRUE(ifacemgr->getPacketQueue4());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's stop stop the thread.
+    ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+    // Stopping the thread should not destroy the queue.
+    ASSERT_TRUE(ifacemgr->getPacketQueue4());
+
+    // Reconfigure with the queue turned off.  We should have neither queue nor thread.
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
+    EXPECT_FALSE(ifacemgr->getPacketQueue4());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+}
+
+// Verifies DHCPv6 behavior of configureDHCPPacketQueue()
+TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
+    scoped_ptr<NakedIfaceMgr> ifacemgr(new NakedIfaceMgr());
+
+    // First let's make sure there is no queue and no thread.
+    ASSERT_FALSE(ifacemgr->getPacketQueue6());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    bool queue_enabled = false;
+    // Given an empty pointer, we should default to no queue.
+    data::ConstElementPtr queue_control;
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
+    EXPECT_FALSE(queue_enabled);
+    EXPECT_FALSE(ifacemgr->getPacketQueue6());
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Verify that calling startDHCPReceiver with no queue, does NOT start the thread.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's try with a populated queue control, but with enable-queue = false.
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
+    EXPECT_FALSE(queue_enabled);
+    EXPECT_FALSE(ifacemgr->getPacketQueue6());
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's enable the queue.
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
+    ASSERT_TRUE(queue_enabled);
+    // Verify we have correctly created the queue.
+    CHECK_QUEUE_INFO(ifacemgr->getPacketQueue6(), "{ \"capacity\": 500, \"queue-type\": \""
+                     << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
+    // configureDHCPPacketQueue() should never start the thread.
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+
+    // Calling startDHCPReceiver with a queue, should start the thread.
+    ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET6));
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+
+    // Verify that calling startDHCPReceiver when the thread is running, throws.
+    ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET6), InvalidOperation);
+
+    // Create a disabled config.
+    queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
+
+    // Trying to reconfigure with a running thread should throw.
+    ASSERT_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control),
+                 InvalidOperation);
+
+    // We should still have our queue and the thread should still be running.
+    EXPECT_TRUE(ifacemgr->getPacketQueue6());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
+
+    // Now let's stop stop the thread.
+    ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+    // Stopping the thread should not destroy the queue.
+    ASSERT_TRUE(ifacemgr->getPacketQueue6());
+
+    // Reconfigure with the queue turned off.  We should have neither queue nor thread.
+    ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
+    EXPECT_FALSE(ifacemgr->getPacketQueue6());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
+}
 
 }
