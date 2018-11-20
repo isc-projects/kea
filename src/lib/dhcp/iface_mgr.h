@@ -18,14 +18,12 @@
 #include <dhcp/pkt_filter6.h>
 #include <util/optional_value.h>
 #include <util/watch_socket.h>
-#include <util/threads/thread.h>
-#include <util/threads/sync.h>
+#include <util/threads/watched_thread.h>
 
 #include <boost/function.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/scoped_array.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/circular_buffer.hpp>
 
 #include <list>
 #include <vector>
@@ -677,46 +675,28 @@ public:
     /// @return true if sending was successful
     bool send(const Pkt4Ptr& pkt);
 
-    /// @brief Tries to receive DHCPv6 message over open IPv6 sockets.
+    /// @brief Receive IPv4 packets or data from external sockets
     ///
-    /// Attempts to receive a single DHCPv6 message over any of the open IPv6
-    /// sockets. If reception is successful and all information about its
-    /// sender is obtained, Pkt6 object is created and returned.
-    ///
-    /// This method also checks if data arrived over registered external socket.
-    /// This data may be of a different protocol family than AF_INET6.
+    /// Wrapper around calls to either @c receive4Direct or @c
+    /// receive4Indirect.  The former is called when packet queuing is
+    /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
     ///
-    /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
-    /// packet.
-    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
-    /// interrupted by a signal.
-    ///
-    /// @return Pkt6 object representing received packet (or NULL)
+    /// @return Pkt4 object representing received packet (or NULL)
     Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec = 0);
 
-    /// @brief Tries to receive IPv4 packet over open IPv4 sockets.
+    /// @brief Receive IPv4 packets or data from external sockets
     ///
-    /// Attempts to receive a single DHCPv4 message over any of the open
-    /// IPv4 sockets. If reception is successful and all information about
-    /// its sender is obtained, Pkt4 object is created and returned.
-    ///
-    /// This method also checks if data arrived over registered external socket.
-    /// This data may be of a different protocol family than AF_INET.
+    /// Wrapper around calls to either @c receive4Direct or @c
+    /// receive4Indirect.  The former is called when packet queuing is
+    /// disabled, the latter when it is enabled.
     ///
     /// @param timeout_sec specifies integral part of the timeout (in seconds)
     /// @param timeout_usec specifies fractional part of the timeout
     /// (in microseconds)
-    ///
-    /// @throw isc::BadValue if timeout_usec is greater than one million
-    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
-    /// packet.
-    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
-    /// interrupted by a signal.
     ///
     /// @return Pkt4 object representing received packet (or NULL)
     Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec = 0);
@@ -808,6 +788,9 @@ public:
     /// but it is not running, it is down, or is a loopback interface when
     /// loopback is not allowed, an error is reported.
     ///
+    /// If sockets were successfully opened, it calls @ startDHCPReceiver to
+    /// start the receiver thread (if packet queueing is enabled).
+    ///
     /// On the systems with multiple interfaces, it is often desired that the
     /// failure to open a socket on a particular interface doesn't cause a
     /// fatal error and sockets should be opened on remaining interfaces.
@@ -856,6 +839,9 @@ public:
     /// The type of the socket being open depends on the selected Packet Filter
     /// represented by a class derived from @c isc::dhcp::PktFilter abstract
     /// class.
+    ///
+    /// If sockets were successfully opened, it calls @ startDHCPReceiver to
+    /// start the receiver thread (if packet queueing is enabled).
     ///
     /// It is possible to specify whether sockets should be broadcast capable.
     /// In most of the cases, the sockets should support broadcast traffic, e.g.
@@ -916,6 +902,10 @@ public:
                       IfaceMgrErrorMsgCallback error_handler = 0);
 
     /// @brief Closes all open sockets.
+    ///
+    /// It calls @c stopDHCPReceiver to stop the receiver thread and then
+    /// it closes all open interface sockets.
+    ///
     /// Is used in destructor, but also from Dhcpv4Srv and Dhcpv6Srv classes.
     void closeSockets();
 
@@ -1026,28 +1016,45 @@ public:
     /// @return true if there is a socket bound to the specified address.
     bool hasOpenSocket(const isc::asiolink::IOAddress& addr) const;
 
-    /// @brief DHCPv4 receiver packet queue.
+    /// @brief Fetches the DHCPv4 packet queue manager
+    ///
+    /// @return pointer to the packet queue mgr
+    PacketQueueMgr4Ptr getPacketQueueMgr4() {
+        return (packet_queue_mgr4_);
+    }
+
+    /// @brief Fetches the DHCPv4 receiver packet queue.
     ///
     /// Incoming packets are read by the receiver thread and
     /// added to this queue. @c receive4() dequeues and
     /// returns them.
+    /// @return pointer to the packet queue
     PacketQueue4Ptr getPacketQueue4() {
-        return (PacketQueueMgr4::instance().getPacketQueue());
+        return (packet_queue_mgr4_->getPacketQueue());
     }
 
-    /// @brief DHCPv6 receiver packet queue.
+    /// @brief Fetches the DHCPv6 packet queue manager
+    ///
+    /// @return pointer to the packet queue mgr
+    PacketQueueMgr6Ptr getPacketQueueMgr6() {
+        return (packet_queue_mgr6_);
+    }
+
+    /// @brief Fetches the DHCPv6 receiver packet queue.
     ///
     /// Incoming packets are read by the receiver thread and
     /// added to this queue. @c receive6() dequeues and
     /// returns them.
+    /// @return pointer to the packet queue
     PacketQueue6Ptr getPacketQueue6() {
-        return (PacketQueueMgr6::instance().getPacketQueue());
+        return (packet_queue_mgr6_->getPacketQueue());
     }
 
     /// @brief Starts DHCP packet receiver.
     ///
     /// Starts the DHCP packet receiver thread for the given.
-    /// protocol, AF_NET or AF_INET6
+    /// protocol, AF_NET or AF_INET6, if the packet queue
+    /// exists, otherwise it simply returns.
     ///
     /// @param family indicates which receiver to start,
     /// (AF_INET or AF_INET6)
@@ -1057,8 +1064,40 @@ public:
 
     /// @brief Stops the DHCP packet receiver.
     ///
-    /// Stops the receiver and deletes the dedicated thread.
+    /// If the thread exists, it is stopped, deleted, and
+    /// the packet queue is flushed.
     void stopDHCPReceiver();
+
+    /// @brief Returns true if there is a receiver exists and its
+    /// thread is currently running.
+    bool isDHCPReceiverRunning() const {
+        return (dhcp_receiver_ != 0 && dhcp_receiver_->isRunning());
+    }
+
+    /// @brief Configures DHCP packet queue
+    ///
+    /// If the given configuration enables packet queueing, then the
+    /// appropriate queue is created. Otherwise, the existing queue is
+    /// destroyed. If the receiver thread is running when this function
+    /// is invoked, it will throw.
+    ///
+    /// @param family indicates which receiver to start,
+    /// (AF_INET or AF_INET6)
+    /// @parm queue_control configuration containing "dhcp-queue-control"
+    /// content
+    /// @return true if packet queueuing has been enabled, false otherwise
+    /// @throw InvalidOperation if the receiver thread is currently running.
+    bool configureDHCPPacketQueue(const uint16_t family,
+                                  data::ConstElementPtr queue_control);
+
+    /// @brief Convenience method for adding an descriptor to a set
+    ///
+    /// @param fd descriptor to add
+    /// @param[out] maxfd maximum fd value in the set.  If the new fd is
+    /// larger than it's current value, it will be updated to new fd value
+    /// @param sockets pointer to the set of sockets
+    /// @throw BadValue if sockets is null
+    static void addFDtoSet(int fd, int& maxfd, fd_set* sockets);
 
     // don't use private, we need derived classes in tests
 protected:
@@ -1086,6 +1125,50 @@ protected:
                     const uint16_t port, const bool receive_bcast = false,
                     const bool send_bcast = false);
 
+    /// @brief Receive IPv4 packets directly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv4 message over any of the open
+    /// IPv4 sockets. If reception is successful and all information about
+    /// its sender is obtained, an Pkt4 object is created and returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt4 object representing received packet (or NULL)
+    Pkt4Ptr receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    /// @brief Receive IPv4 packets indirectly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv4 message from the packet queue.
+    /// The queue is populated by the receiver thread.  If a packet is waiting
+    /// in the queue, a Pkt4 returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt4 object representing received packet (or NULL)
+    Pkt4Ptr receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
     /// @brief Opens IPv6 socket.
     ///
     /// Please do not use this method directly. Use openSocket instead.
@@ -1102,6 +1185,51 @@ protected:
     /// @return socket descriptor
     int openSocket6(Iface& iface, const isc::asiolink::IOAddress& addr,
                     uint16_t port, const bool join_multicast);
+
+    /// @brief Receive IPv6 packets directly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv6 message over any of the open
+    /// IPv6 sockets. If reception is successful and all information about
+    /// its sender is obtained, an Pkt6 object is created and returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt6 object representing received packet (or NULL)
+    Pkt6Ptr receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
+    /// @brief Receive IPv6 packets indirectly or data from external sockets.
+    ///
+    /// Attempts to receive a single DHCPv6 message from the packet queue.
+    /// The queue is populated by the receiver thread.  If a packet is waiting
+    /// in the queue, a Pkt6 returned.
+    ///
+    /// This method also checks if data arrived over registered external socket.
+    /// This data may be of a different protocol family than AF_INET.
+    ///
+    /// @param timeout_sec specifies integral part of the timeout (in seconds)
+    /// @param timeout_usec specifies fractional part of the timeout
+    /// (in microseconds)
+    ///
+    /// @throw isc::BadValue if timeout_usec is greater than one million
+    /// @throw isc::dhcp::SocketReadError if error occurred when receiving a
+    /// packet.
+    /// @throw isc::dhcp::SignalInterruptOnSelect when a call to select() is
+    /// interrupted by a signal.
+    ///
+    /// @return Pkt6 object representing received packet (or NULL)
+    Pkt6Ptr receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec = 0);
+
 
     /// @brief Stub implementation of network interface detection.
     ///
@@ -1245,28 +1373,14 @@ private:
     /// @brief Allows to use loopback
     bool allow_loopback_;
 
-    /// @brief Error message of the last DHCP packet receive error.
-    std::string receiver_error_;
+    /// @brief Manager for DHCPv4 packet implementations and queues
+    PacketQueueMgr4Ptr packet_queue_mgr4_;
 
-    /// @brief DHCP packet receive error watch socket.
-    /// Marked as ready when the DHCP packet receiver experiences
-    /// an I/O error.
-    isc::util::WatchSocket error_watch_;
+    /// @brief Manager for DHCPv6 packet implementations and queues
+    PacketQueueMgr6Ptr packet_queue_mgr6_;
 
-    /// @brief DHCP packet receive watch socket.
-    /// Marked as ready when the DHCP packet receiver adds a packet
-    /// to the packet queue.
-    isc::util::WatchSocket receive_watch_;
-
-    /// @brief Packet receiver terminate watch socket.
-    /// Marked as ready when the DHCP packet receiver thread should terminate.
-    isc::util::WatchSocket terminate_watch_;
-
-    /// DHCP packet receiver mutex.
-    isc::util::thread::Mutex receiver_lock_;
-
-    /// DHCP packet receiver thread.
-    isc::util::thread::ThreadPtr receiver_thread_;
+    /// DHCP packet receiver.
+    isc::util::thread::WatchedThreadPtr dhcp_receiver_;
 };
 
 }; // namespace isc::dhcp

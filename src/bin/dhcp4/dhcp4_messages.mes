@@ -136,9 +136,9 @@ with the same option code for a particular subnet. Adding multiple options
 is uncommon for DHCPv4, but is not prohibited.
 
 % DHCP4_CONFIG_PACKET_QUEUE DHCPv4 packet queue info after configuration: %1
-This debug message is emitted during DHCPv4 server configuration, immediately
-after configuring the DHCPv4 packet queue.  The information shown depends
-upon the packet queue type selected.
+This informational message is emitted during DHCPv4 server configuration,
+immediately after configuring the DHCPv4 packet queue.  The information
+shown depends upon the packet queue type selected.
 
 % DHCP4_CONFIG_RECEIVED received configuration %1
 A debug message listing the configuration received by the DHCPv4 server.

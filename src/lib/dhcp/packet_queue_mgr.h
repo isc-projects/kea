@@ -68,7 +68,7 @@ public:
     /// @return true if the queue type has been successfully registered, false
     /// if the type already exists.
     bool registerPacketQueueFactory(const std::string& queue_type,
-                                    const Factory& factory) {
+                                    Factory factory) {
         // Check if this backend has been already registered.
         if (factories_.count(queue_type)) {
             return (false);
@@ -84,6 +84,10 @@ public:
     /// This function is used to remove the factory function for a given type.
     /// Typically, it would be called when unloading the hook library which
     /// loaded the type, and thus called by the library's @c unload function.
+    /// In addition to removing the factory, it will also destroy the current
+    /// queue if it is of the same queue-type as the factory being removed.
+    /// This avoids the nastiness that occurs when objecs are left in existence
+    /// after their library is unloaded.
     ///
     /// @param queue_type queue type, e.g. "kea-ring4".
     ///
@@ -93,14 +97,21 @@ public:
         // Look for it.
         auto index = factories_.find(queue_type);
 
-        // If it's there remove it
-        if (index != factories_.end()) {
-            factories_.erase(index);
-            return (true);
-
+        // Not there so nothing to do.
+        if (index == factories_.end()) {
+            return (false);
         }
 
-        return (false);
+        // If the queue is of the type being unregistered, then remove it. We don't
+        // a queue instance outliving its library.
+        if ((packet_queue_) && (packet_queue_->getQueueType() == queue_type)) {
+            packet_queue_.reset();
+        }
+
+        // Remove the factory.
+        factories_.erase(index);
+
+        return (true);
     }
 
     /// @brief Create an instance of a packet queue.
@@ -156,6 +167,12 @@ public:
     /// @brief Returns underlying packet queue.
     PacketQueueTypePtr getPacketQueue() const {
         return (packet_queue_);
+    }
+
+    /// @brief Destroys the current packet queue.
+    /// Any queued packets will be discarded.
+    void destroyPacketQueue() {
+        packet_queue_.reset();
     }
 
 protected:
