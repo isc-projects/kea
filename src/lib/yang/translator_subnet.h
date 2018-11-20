@@ -84,7 +84,7 @@ namespace yang {
 ///  +--rw host-reservations     host-reservation* [cli-id]
 /// @endcode
 ///
-/// YANG syntax for kea-dhcp[46] is with id as the key:
+/// YANG syntax for kea-dhcp[46]-server is with id as the key:
 /// @code
 ///  +--rw valid-lifetime?           uint32
 ///  +--rw renew-timer?              uint32
@@ -278,13 +278,13 @@ protected:
     void setSubnetIetf6(const std::string& xpath,
                         isc::data::ConstElementPtr elem);
 
-    /// @brief getSubnet for kea-dhcp[46].
+    /// @brief getSubnet for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the subnet.
     /// @return JSON representation of the subnet.
     isc::data::ElementPtr getSubnetKea(const std::string& xpath);
 
-    /// @brief setSubnet for kea-dhcp[46].
+    /// @brief setSubnet for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the subnet.
     /// @param elem The JSON element.
@@ -326,6 +326,13 @@ public:
     void setSubnets(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
+    /// @brief getSubnets common part.
+    ///
+    /// @param xpath The xpath of the subnet list.
+    /// @param subsel The subnet list name.
+    isc::data::ElementPtr getSubnetsCommon(const std::string& xpath,
+                                           const std::string& subsel);
+
     /// @brief setSubnets for ietf-dhcpv6-server.
     ///
     /// @param xpath The xpath of the subnet list.
@@ -333,12 +340,14 @@ protected:
     void setSubnetsIetf6(const std::string& xpath,
                          isc::data::ConstElementPtr elem);
 
-    /// @brief setSubnets for kea-dhcp[46].
+    /// @brief setSubnets for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the subnet list.
     /// @param elem The JSON element.
+    /// @param subsel The subnet list name.
     void setSubnetsKea(const std::string& xpath,
-                       isc::data::ConstElementPtr elem);
+                       isc::data::ConstElementPtr elem,
+                       const std::string& subsel);
 };
 
 }; // end of namespace isc::yang

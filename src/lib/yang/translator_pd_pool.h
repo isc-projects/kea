@@ -159,14 +159,14 @@ protected:
     void setPdPoolIetf6(const std::string& xpath,
                         isc::data::ConstElementPtr elem);
 
-    /// @brief getPdPool for kea-dhcp6.
+    /// @brief getPdPool for kea-dhcp6-server.
     ///
     /// @param xpath The xpath of the pd-pool.
     /// @return JSON representation of the pd-pool.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolKea(const std::string& xpath);
 
-    /// @brief setPdPool for kea-dhcp6.
+    /// @brief setPdPool for kea-dhcp6-server.
     ///
     /// @param xpath The xpath of the pd-pool.
     /// @param elem The JSON element.
@@ -209,6 +209,12 @@ public:
     void setPdPools(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
+    /// @brief getPdPools common part.
+    ///
+    /// @param xpath The xpath of the pd-pool list.
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPdPoolsCommon(const std::string& xpath);
+
     /// @brief setPdPools using pool-id.
     ///
     /// @param xpath The xpath of the pd-pool list.

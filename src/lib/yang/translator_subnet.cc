@@ -58,12 +58,12 @@ TranslatorSubnet::getSubnetIetf6(const string& xpath) {
     ElementPtr result = Element::createMap();
     /// @todo timers
     /// @todo: option-data
-    ConstElementPtr pools = getPools(xpath + "/address-pools/address-pool");
+    ConstElementPtr pools = getPools(xpath + "/address-pools");
     if (pools) {
         /// Set empty list too.
         result->set("pools", pools);
     }
-    pools = getPdPools(xpath + "/pd-pools/pd-pool");
+    pools = getPdPools(xpath + "/pd-pools");
     if (pools && (pools->size() > 0)) {
         result->set("pd-pools", pools);
     }
@@ -116,12 +116,12 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr pools = getPools(xpath + "/pool");
+    ConstElementPtr pools = getPools(xpath);
     if (pools && (pools->size() > 0)) {
         result->set("pools", pools);
     }
     if (model_ == KEA_DHCP6_SERVER) {
-        pools = getPdPools(xpath + "/pd-pool");
+        pools = getPdPools(xpath);
         if (pools && (pools->size() > 0)) {
             result->set("pd-pools", pools);
         }
@@ -408,25 +408,39 @@ TranslatorSubnets::~TranslatorSubnets() {
 ElementPtr
 TranslatorSubnets::getSubnets(const string& xpath) {
     try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath);
-        if (!iter) {
-            /// Can't happen.
-            isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getSubnetsCommon(xpath, "network-range"));
+        } else if (model_ == KEA_DHCP4_SERVER) {
+            return (getSubnetsCommon(xpath, "subnet4"));
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            return (getSubnetsCommon(xpath, "subnet6"));
         }
-        for (;;) {
-            const string& subnet = getNext(iter);
-            if (subnet.empty()) {
-                break;
-            }
-            result->add(getSubnet(subnet));
-        }
-        return (result);
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting subnets at '" << xpath
                   << "': " << ex.what());
     }
+    isc_throw(NotImplemented,
+              "getSubnets not implemented for the model: " << model_);
+}
+
+ElementPtr
+TranslatorSubnets::getSubnetsCommon(const string& xpath,
+                                    const std::string& subsel) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/" + subsel);
+    if (!iter) {
+        /// Can't happen.
+        isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& subnet = getNext(iter);
+        if (subnet.empty()) {
+            break;
+        }
+        result->add(getSubnet(subnet));
+    }
+    return (result);
 }
 
 void
@@ -434,9 +448,10 @@ TranslatorSubnets::setSubnets(const string& xpath, ConstElementPtr elem) {
     try {
         if (model_ == IETF_DHCPV6_SERVER) {
             setSubnetsIetf6(xpath, elem);
-        } else if ((model_ == KEA_DHCP4_SERVER) ||
-                   (model_ == KEA_DHCP6_SERVER)) {
-            setSubnetsKea(xpath, elem);
+        } else if (model_ == KEA_DHCP4_SERVER) {
+            setSubnetsKea(xpath, elem, "subnet4");
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            setSubnetsKea(xpath, elem, "subnet6");
         } else {
             isc_throw(NotImplemented,
                       "setSubnets not implemented for the model: " << model_);
@@ -464,14 +479,16 @@ TranslatorSubnets::setSubnetsIetf6(const string& xpath, ConstElementPtr elem) {
 }
 
 void
-TranslatorSubnets::setSubnetsKea(const string& xpath, ConstElementPtr elem) {
+TranslatorSubnets::setSubnetsKea(const string& xpath, ConstElementPtr elem,
+                                 const std::string& subsel) {
     for (size_t i = 0; i < elem->size(); ++i) {
         ConstElementPtr subnet = elem->get(i);
         if (!subnet->contains("id")) {
             isc_throw(BadValue, "subnet without id: " << subnet->str());
         }
         ostringstream prefix;
-        prefix << xpath << "[id='" << subnet->get("id")->intValue() << "']";
+        prefix << xpath << "/" << subsel << "[id='"
+               << subnet->get("id")->intValue() << "']";
         setSubnet(prefix.str(), subnet);
     }
 }

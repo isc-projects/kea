@@ -47,7 +47,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyIetf) {
     // Get the pd-pool list and check if it is empty.
     const string& xpath =
         "/ietf-dhcpv6-server:server/server-config/network-ranges"
-        "/network-range[network-range-id='111']/pd-pools/pd-pool";
+        "/network-range[network-range-id='111']/pd-pools";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
@@ -61,8 +61,7 @@ TEST_F(TranslatorPdPoolsTest, getEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Get the pd-pool list and check if it is empty.
-    const string& xpath =
-        "/kea-dhcp6-server:config/subnet6[id='111']/pd-pool";
+    const string& xpath = "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr pools;
     EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
@@ -104,7 +103,7 @@ TEST_F(TranslatorPdPoolsTest, getIetf) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(subnet + "/pd-pools/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(subnet + "/pd-pools"));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -144,7 +143,7 @@ TEST_F(TranslatorPdPoolsTest, getKea) {
 
     // Get the pd-pool list and check if the pd-pool is in it.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -171,7 +170,7 @@ TEST_F(TranslatorPdPoolsTest, setEmptyIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     EXPECT_EQ(0, pools->size());
@@ -195,7 +194,7 @@ TEST_F(TranslatorPdPoolsTest, setEmptyKea) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     EXPECT_EQ(0, pools->size());
@@ -225,7 +224,7 @@ TEST_F(TranslatorPdPoolsTest, setIetf) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -285,7 +284,7 @@ TEST_F(TranslatorPdPoolsTest, setKea) {
 
     // Get it back.
     pools.reset();
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
     ASSERT_EQ(Element::list, pools->getType());
     ASSERT_EQ(1, pools->size());
@@ -348,7 +347,7 @@ TEST_F(TranslatorPdPoolsTest, getListKea) {
 
     // Get the pools list.
     ConstElementPtr pools;
-    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath + "/pd-pool"));
+    EXPECT_NO_THROW(pools = t_obj_->getPdPools(xpath));
     ASSERT_TRUE(pools);
 
     // Check that both of them are returned properly.

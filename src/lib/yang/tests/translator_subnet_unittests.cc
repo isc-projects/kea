@@ -45,8 +45,7 @@ TEST_F(TranslatorSubnetsTest, getEmptyIetf) {
 
     // Get the subnet list and check if it is empty.
     const string& xpath =
-        "/ietf-dhcpv6-server:server/server-config/"
-        "network-ranges/network-range";
+        "/ietf-dhcpv6-server:server/server-config/network-ranges";
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
@@ -60,7 +59,7 @@ TEST_F(TranslatorSubnetsTest, getEmptyKea) {
     useModel(KEA_DHCP6_SERVER);
 
     // Get the subnet list and check if it is empty.
-    const string& xpath = "/kea-dhcp6-server:config/subnet6";
+    const string& xpath = "/kea-dhcp6-server:config";
     ConstElementPtr subnets;
     EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
@@ -91,7 +90,7 @@ TEST_F(TranslatorSubnetsTest, getIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/network-range"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -121,7 +120,7 @@ TEST_F(TranslatorSubnetsTest, getKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/subnet6"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -177,7 +176,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsIetf) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/network-range"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -233,7 +232,7 @@ TEST_F(TranslatorSubnetsTest, getPoolsKea) {
 
     // Get the subnet list and check if the subnet is in it.
     ConstElementPtr subnets;
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/subnet6"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -253,7 +252,7 @@ TEST_F(TranslatorSubnetsTest, setEmptyIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/network-range"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     EXPECT_EQ(0, subnets->size());
@@ -270,7 +269,7 @@ TEST_F(TranslatorSubnetsTest, setEmptyKea) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4-server:config/subnet4";
+    const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
     EXPECT_NO_THROW(t_obj_->setSubnets(xpath, subnets));
 
@@ -305,7 +304,7 @@ TEST_F(TranslatorSubnetsTest, setIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/network-range"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -318,7 +317,7 @@ TEST_F(TranslatorSubnetsTest, setKea) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set one subnet.
-    const string& xpath = "/kea-dhcp4-server:config/subnet4";
+    const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
     ElementPtr subnet = Element::createMap();
     subnet->set("subnet", Element::create(string("10.0.1.0/24")));
@@ -367,7 +366,7 @@ TEST_F(TranslatorSubnetsTest, setTwoIetf) {
 
     // Get it back.
     subnets.reset();
-    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath + "/network-range"));
+    EXPECT_NO_THROW(subnets = t_obj_->getSubnets(xpath));
     ASSERT_TRUE(subnets);
     ASSERT_EQ(Element::list, subnets->getType());
     ASSERT_EQ(1, subnets->size());
@@ -424,7 +423,7 @@ TEST_F(TranslatorSubnetsTest, setTwoKea) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set one subnet.
-    const string& xpath = "/kea-dhcp4-server:config/subnet4";
+    const string& xpath = "/kea-dhcp4-server:config";
     ElementPtr subnets = Element::createList();
     ElementPtr subnet = Element::createMap();
     subnet->set("subnet", Element::create(string("10.0.1.0/24")));

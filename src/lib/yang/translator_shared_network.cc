@@ -65,7 +65,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
         isc_throw(Unexpected, "getSharedNetworkKea requires name: " << xpath);
     }
     result->set("name", name);
-    ConstElementPtr subnets = getSubnets(xpath + "/" + subsel);
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && (subnets->size() > 0)) {
         result->set(subsel, subnets);
     }
@@ -179,7 +179,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
     // Skip name which is the key.
     ConstElementPtr subnets = elem->get(subsel);
     if (subnets && (subnets->size() > 0)) {
-        setSubnets(xpath + "/" + subsel, subnets);
+        setSubnets(xpath, subnets);
     }
     if (subsel == "subnet6") {
         ConstElementPtr preferred = elem->get("preferred-lifetime");

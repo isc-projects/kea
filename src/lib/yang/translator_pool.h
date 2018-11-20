@@ -177,14 +177,14 @@ protected:
     void setPoolIetf6(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
 
-    /// @brief getPool for kea-dhcp[46].
+    /// @brief getPool for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the pool.
     /// @return JSON representation of the pool.
     /// @throw BadValue on a pool without prefix and start or end address.
     isc::data::ElementPtr getPoolKea(const std::string& xpath);
 
-    /// @brief setPool for kea-dhcp[46].
+    /// @brief setPool for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the pool.
     /// @param elem The JSON element.
@@ -224,6 +224,16 @@ public:
     void setPools(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
+    /// @brief getPools for ietf-dhcpv6-server.
+    ///
+    /// @param xpath The xpath of the pool list.
+    isc::data::ElementPtr getPoolsIetf(const std::string& xpath);
+
+    /// @brief getPools for kea-dhcp[46]-server.
+    ///
+    /// @param xpath The xpath of the pool list.
+    isc::data::ElementPtr getPoolsKea(const std::string& xpath);
+
     /// @brief setPools using pool-id.
     ///
     /// @param xpath The xpath of the pool list.
