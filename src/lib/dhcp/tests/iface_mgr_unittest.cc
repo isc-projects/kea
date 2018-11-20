@@ -484,13 +484,13 @@ public:
 
         // Thread should only start when there is a packet queue.
         ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET6));
-        ASSERT_TRUE(queue_enabled == ifacemgr->isReceiverRunning());
+        ASSERT_TRUE(queue_enabled == ifacemgr->isDHCPReceiverRunning());
 
         // If the thread is already running, trying to start it again should fail.
         if (queue_enabled) {
             ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET6), InvalidOperation);
             // Should still have one running.
-            ASSERT_TRUE(ifacemgr->isReceiverRunning());
+            ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
         }
 
         // Let's build our DHCPv6 packet.
@@ -531,7 +531,7 @@ public:
         // Stop the thread.  This should be no harm/no foul if we're not
         // queueuing.  Either way, we should not have a thread afterwards.
         ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
-        ASSERT_FALSE(ifacemgr->isReceiverRunning());
+        ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     }
 
 
@@ -570,13 +570,13 @@ public:
 
         // Thread should only start when there is a packet queue.
         ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
-        ASSERT_TRUE(queue_enabled == ifacemgr->isReceiverRunning());
+        ASSERT_TRUE(queue_enabled == ifacemgr->isDHCPReceiverRunning());
 
         // If the thread is already running, trying to start it again should fail.
         if (queue_enabled) {
             ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET), InvalidOperation);
             // Should still have one running.
-            ASSERT_TRUE(ifacemgr->isReceiverRunning());
+            ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
         }
 
         // Let's construct the packet to send.
@@ -660,7 +660,7 @@ public:
         // Stop the thread.  This should be no harm/no foul if we're not
         // queueuing.  Either way, we should not have a thread afterwards.
         ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
-        ASSERT_FALSE(ifacemgr->isReceiverRunning());
+        ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     }
 
     /// Holds the invocation counter for ifaceMgrErrorHandler.
@@ -3047,7 +3047,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
 
     // First let's make sure there is no queue and no thread.
     ASSERT_FALSE(ifacemgr->getPacketQueue4());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     bool queue_enabled = false;
     // Given an empty pointer, we should default to no queue.
@@ -3056,11 +3056,11 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue4());
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Verify that calling startDHCPReceiver with no queue, does NOT start the thread.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's try with a populated queue control, but with enable-queue = false.
     queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
@@ -3068,7 +3068,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue4());
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's enable the queue.
     queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
@@ -3078,11 +3078,11 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
     CHECK_QUEUE_INFO(ifacemgr->getPacketQueue4(), "{ \"capacity\": 500, \"queue-type\": \""
                      << PacketQueueMgr4::DEFAULT_QUEUE_TYPE4 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Calling startDHCPReceiver with a queue, should start the thread.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
-    ASSERT_TRUE(ifacemgr->isReceiverRunning());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
     // Verify that calling startDHCPReceiver when the thread is running, throws.
     ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET), InvalidOperation);
@@ -3096,18 +3096,18 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest4) {
 
     // We should still have our queue and the thread should still be running.
     EXPECT_TRUE(ifacemgr->getPacketQueue4());
-    ASSERT_TRUE(ifacemgr->isReceiverRunning());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's stop stop the thread.
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     // Stopping the thread should not destroy the queue.
     ASSERT_TRUE(ifacemgr->getPacketQueue4());
 
     // Reconfigure with the queue turned off.  We should have neither queue nor thread.
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET, queue_control));
     EXPECT_FALSE(ifacemgr->getPacketQueue4());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 }
 
 // Verifies DHCPv6 behavior of configureDHCPPacketQueue()
@@ -3116,7 +3116,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
 
     // First let's make sure there is no queue and no thread.
     ASSERT_FALSE(ifacemgr->getPacketQueue6());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     bool queue_enabled = false;
     // Given an empty pointer, we should default to no queue.
@@ -3125,11 +3125,11 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue6());
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Verify that calling startDHCPReceiver with no queue, does NOT start the thread.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET));
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's try with a populated queue control, but with enable-queue = false.
     queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, false);
@@ -3137,7 +3137,7 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     EXPECT_FALSE(queue_enabled);
     EXPECT_FALSE(ifacemgr->getPacketQueue6());
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's enable the queue.
     queue_control = makeQueueConfig(PacketQueueMgr6::DEFAULT_QUEUE_TYPE6, 500, true);
@@ -3147,11 +3147,11 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
     CHECK_QUEUE_INFO(ifacemgr->getPacketQueue6(), "{ \"capacity\": 500, \"queue-type\": \""
                      << PacketQueueMgr6::DEFAULT_QUEUE_TYPE6 << "\", \"size\": 0 }");
     // configureDHCPPacketQueue() should never start the thread.
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 
     // Calling startDHCPReceiver with a queue, should start the thread.
     ASSERT_NO_THROW(ifacemgr->startDHCPReceiver(AF_INET6));
-    ASSERT_TRUE(ifacemgr->isReceiverRunning());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
     // Verify that calling startDHCPReceiver when the thread is running, throws.
     ASSERT_THROW(ifacemgr->startDHCPReceiver(AF_INET6), InvalidOperation);
@@ -3165,206 +3165,18 @@ TEST_F(IfaceMgrTest, configureDHCPPacketQueueTest6) {
 
     // We should still have our queue and the thread should still be running.
     EXPECT_TRUE(ifacemgr->getPacketQueue6());
-    ASSERT_TRUE(ifacemgr->isReceiverRunning());
+    ASSERT_TRUE(ifacemgr->isDHCPReceiverRunning());
 
     // Now let's stop stop the thread.
     ASSERT_NO_THROW(ifacemgr->stopDHCPReceiver());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
     // Stopping the thread should not destroy the queue.
     ASSERT_TRUE(ifacemgr->getPacketQueue6());
 
     // Reconfigure with the queue turned off.  We should have neither queue nor thread.
     ASSERT_NO_THROW(queue_enabled = ifacemgr->configureDHCPPacketQueue(AF_INET6, queue_control));
     EXPECT_FALSE(ifacemgr->getPacketQueue6());
-    ASSERT_FALSE(ifacemgr->isReceiverRunning());
-}
-
-/// @brief Test Fixture for testing isc:dhcp::Receiver
-class ReceiverTest : public ::testing::Test {
-public:
-    /// @brief Maximum number of passes allowed in worker event loop
-    static const int WORKER_MAX_PASSES;
-
-    /// @brief Constructor.
-    ReceiverTest() {}
-
-    /// @brief Destructor.
-    ~ReceiverTest() {
-    }
-
-    /// @brief Sleeps for a given number of event periods sleep
-    /// Each period is 50 ms.
-    void nap(int periods) {
-        usleep(periods * 50 * 1000);
-    };
-
-    /// @brief Worker function to be used by the Receiver's thread
-    ///
-    /// The function runs 5 passes through an "event" loop.
-    /// On each pass:
-    /// - check terminate command
-    /// - instigate the desired event (second pass only)
-    /// - naps for 1 period (50ms)
-    ///
-    /// @param watch_type type of event that should occur
-    void worker(Receiver::WatchType watch_type) {
-        for (passes_ = 1; passes_ < WORKER_MAX_PASSES; ++passes_) {
-
-            // Stop if we're told to do it.
-            if (receiver_->shouldTerminate()) {
-                return;
-            }
-
-            // On the second pass, set the event.
-            if (passes_ == 2) {
-                switch (watch_type) {
-                case Receiver::RCV_ERROR:
-                    receiver_->setError("we have an error");
-                    break;
-                case Receiver::RCV_READY:
-                    receiver_->markReady(watch_type);
-                    break;
-                case Receiver::RCV_TERMINATE:
-                default:
-                    // Do nothing, we're waiting to be told to stop.
-                    break;
-                }
-            }
-
-            // Take a nap.
-            nap(1);
-        }
-
-        // Indicate why we stopped.
-        receiver_->setError("thread expired");
-    }
-
-    /// @brief Current receiver instance.
-    ReceiverPtr receiver_;
-
-    /// @brief Counter used to track the number of passes made
-    /// within the thread worker function.
-    int passes_;
-};
-
-const int ReceiverTest::WORKER_MAX_PASSES = 5;
-
-/// Verifies the basic operation of the Receiver class.
-/// It checks that a Receiver can be created, can be stopped,
-/// and that in set and clear sockets.
-TEST_F(ReceiverTest, receiverClassBasics) {
-
-    /// We'll create a receiver and let it run until it expires.  (Note this is more
-    /// of a test of ReceiverTest itself and ensures our tests later for why we
-    /// exited are sound.)
-    receiver_.reset(new Receiver());
-    ASSERT_FALSE(receiver_->isRunning());
-    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_TERMINATE));
-    ASSERT_TRUE(receiver_->isRunning());
-
-    // Wait long enough for thread to expire.
-    nap(WORKER_MAX_PASSES + 1);
-
-    // It should have done the maximum number of passes.
-    EXPECT_EQ(passes_, WORKER_MAX_PASSES);
-
-    // Error should be ready and error text should be "thread expired".
-    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-    EXPECT_EQ("thread expired", receiver_->getLastError());
-
-    // Thread is technically still running, so let's stop it.
-    EXPECT_TRUE(receiver_->isRunning());
-    ASSERT_NO_THROW(receiver_->stop());
-    ASSERT_FALSE(receiver_->isRunning());
-
-    /// Now we'll test stopping a thread.
-    /// Start the receiver, let it run a little and then tell it to stop.
-    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_TERMINATE));
-    ASSERT_TRUE(receiver_->isRunning());
-
-    // No watches should be ready.
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-
-    // Wait a little while.
-    nap(2);
-
-    // Tell it to stop.
-    receiver_->stop();
-    ASSERT_FALSE(receiver_->isRunning());
-
-    // It should have done less than the maximum number of passes.
-    EXPECT_LT(passes_, WORKER_MAX_PASSES);
-
-    // No watches should be ready.  Error text should be "thread stopped".
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-    EXPECT_EQ("thread stopped", receiver_->getLastError());
-
-
-    // Next we'll test error notification.
-    // Start the receiver with a thread that sets an error on the second pass.
-    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_ERROR));
-    ASSERT_TRUE(receiver_->isRunning());
-
-    // No watches should be ready.
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-
-    // Wait a little while.
-    nap(2);
-
-    // It should now indicate an error.
-    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_ERROR));
-    EXPECT_EQ("we have an error", receiver_->getLastError());
-
-    // Tell it to stop.
-    receiver_->stop();
-    ASSERT_FALSE(receiver_->isRunning());
-
-    // It should have done less than the maximum number of passes.
-    EXPECT_LT(passes_, WORKER_MAX_PASSES);
-
-    // No watches should be ready.  Error text should be "thread stopped".
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-    EXPECT_EQ("thread stopped", receiver_->getLastError());
-
-
-    // Finally, we'll test data ready notification.
-    // We'll start the receiver with a thread that indicates data ready on its second pass.
-    receiver_->start(boost::bind(&ReceiverTest::worker, this, Receiver::RCV_READY));
-    ASSERT_TRUE(receiver_->isRunning());
-
-    // No watches should be ready.
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-
-    // Wait a little while.
-    nap(2);
-
-    // It should now indicate data ready.
-    ASSERT_TRUE(receiver_->isReady(Receiver::RCV_READY));
-
-    // Tell it to stop.
-    receiver_->stop();
-    ASSERT_FALSE(receiver_->isRunning());
-
-    // It should have done less than the maximum number of passes.
-    EXPECT_LT(passes_, WORKER_MAX_PASSES);
-
-    // No watches should be ready.  Error text should be "thread stopped".
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_ERROR));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_READY));
-    ASSERT_FALSE(receiver_->isReady(Receiver::RCV_TERMINATE));
-    EXPECT_EQ("thread stopped", receiver_->getLastError());
+    ASSERT_FALSE(ifacemgr->isDHCPReceiverRunning());
 }
 
 }

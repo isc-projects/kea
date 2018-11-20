@@ -116,9 +116,8 @@ TEST_F(PacketQueueMgr6Test, customQueueType) {
 
     // Now unregister the factory.
     ASSERT_NO_THROW(mgr().unregisterPacketQueueFactory("custom-queue"));
-
-    // Verify we did not lose the queue.
-    checkMyInfo("{ \"capacity\": 2000, \"queue-type\": \"custom-queue\", \"size\": 0 }");
+    // Queue should be gone too.
+    ASSERT_FALSE(mgr().getPacketQueue());
 
     // Try and recreate the custom queue, type should be invalid.
     ASSERT_THROW(mgr().createPacketQueue(config), InvalidQueueType);

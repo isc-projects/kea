@@ -9,6 +9,8 @@
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="congestion-handling">
   <title>Congestion Handling in DHCPv4 and DHCPv6</title>
+  <section xml:id="congeston-handling-background">
+  <title>What is Congestion?</title>
   <para>Congestion occurs when servers are subjected to client queries
   faster than they can be fulfilled.  Subsequently, the servers begin
   accumulating a backlog of pending queries.  The longer the high rate of
@@ -42,7 +44,9 @@
   relevant, or worse are redundant. In other words, the packets waiting in
   the FIFO socket buffers become increasingly stale.
   </para>
-
+  </section>
+  <section xml:id="congeston-handling-solution">
+  <title>Configuring Congestion Handling</title>
   <para>Kea 1.5 introduces a new feature referred to as Congestion Handling.
   Congestion handling offers the ability to configure the server to use a
   separate thread to read packets from the interface socket buffers. As the
@@ -145,4 +149,5 @@
   <para>
   The number of parameters and plug-ins is expected to grow over time.
   </para>
+</section>
 </chapter>
