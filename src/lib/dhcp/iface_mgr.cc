@@ -179,69 +179,6 @@ bool Iface::delSocket(const uint16_t sockfd) {
     return (false); // socket not found
 }
 
-void
-Receiver::start(const boost::function<void()>& thread_main) {
-    clearReady(RCV_ERROR);
-    clearReady(RCV_READY);
-    clearReady(RCV_TERMINATE);
-    last_error_ = "no error";
-    thread_.reset(new isc::util::thread::Thread(thread_main));
-}
-
-int
-Receiver::getWatchFd(WatchType watch_type) {
-    return(sockets_[watch_type].getSelectFd());
-}
-
-void
-Receiver::markReady(WatchType watch_type)  {
-    sockets_[watch_type].markReady();
-}
-
-bool
-Receiver::isReady(WatchType watch_type) {
-    return (sockets_[watch_type].isReady());
-}
-
-void
-Receiver::clearReady(WatchType watch_type) {
-    sockets_[watch_type].clearReady();
-}
-
-bool
-Receiver::shouldTerminate() {
-    if (sockets_[RCV_TERMINATE].isReady()) {
-        clearReady(RCV_TERMINATE);
-        return (true);
-    }
-
-    return (false);
-}
-
-void
-Receiver::stop() {
-    if (thread_) {
-        markReady(RCV_TERMINATE);
-        thread_->wait();
-        thread_.reset();
-    }
-
-    clearReady(RCV_ERROR);
-    clearReady(RCV_READY);
-    last_error_ = "thread stopped";
-}
-
-void
-Receiver::setError(const std::string& error_msg) {
-    last_error_ = error_msg;
-    markReady(RCV_ERROR);
-}
-
-std::string
-Receiver::getLastError() {
-    return (last_error_);
-}
-
 IfaceMgr::IfaceMgr()
     :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
      control_buf_(new char[control_buf_len_]),
@@ -354,10 +291,11 @@ void IfaceMgr::closeSockets() {
 }
 
 void IfaceMgr::stopDHCPReceiver() {
-    if (isReceiverRunning()) {
-        receiver_->stop();
-        receiver_.reset();
+    if (isDHCPReceiverRunning()) {
+        dhcp_receiver_->stop();
     }
+
+    dhcp_receiver_.reset();
 
     if (getPacketQueue4()) {
         getPacketQueue4()->clear();
@@ -743,29 +681,31 @@ IfaceMgr::openSockets6(const uint16_t port,
 
 void
 IfaceMgr::startDHCPReceiver(const uint16_t family) {
-    if (isReceiverRunning()) {
+    if (isDHCPReceiverRunning()) {
         isc_throw(InvalidOperation, "a receiver thread already exists");
     }
 
     switch (family) {
     case AF_INET:
-        // If there's no queue, then has been disabled, simply return.
+        // If the queue doesn't exist, packet queing has been configured
+        // as disabled. If there is no queue, we do not create a reciever.
         if(!getPacketQueue4()) {
-                return;
+            return;
         }
 
-        receiver_.reset(new Receiver());
-        receiver_->start(boost::bind(boost::bind(&IfaceMgr::receiveDHCP4Packets, this)));
+        dhcp_receiver_.reset(new WatchedThread());
+        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP4Packets, this));
 
         break;
     case AF_INET6:
-        // If there's no queue, then has been disabled, simply return.
+        // If the queue doesn't exist, packet queing has been configured
+        // as disabled. If there is no queue, we do not create a reciever.
         if(!getPacketQueue6()) {
             return;
         }
 
-        receiver_.reset(new Receiver());
-        receiver_->start(boost::bind(boost::bind(&IfaceMgr::receiveDHCP6Packets, this)));
+        dhcp_receiver_.reset(new WatchedThread());
+        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP6Packets, this));
         break;
     default:
         isc_throw (BadValue, "startDHCPReceiver: invalid family: " << family);
@@ -1024,7 +964,7 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
 }
 
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
-    if (isReceiverRunning()) {
+    if (isDHCPReceiverRunning()) {
         return (receive4Indirect(timeout_sec, timeout_usec));
     }
 
@@ -1046,15 +986,15 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            add_fd(s.socket_, maxfd, &sockets);
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
     // Add Receiver ready watch socket
-    add_fd(receiver_->getWatchFd(Receiver::RCV_READY), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_READY), maxfd, &sockets);
 
     // Add Receiver error watch socket
-    add_fd(receiver_->getWatchFd(Receiver::RCV_ERROR), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_ERROR), maxfd, &sockets);
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1097,9 +1037,9 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // We only check external sockets if select detected an event.
     if (result > 0) {
         // Check for receiver thread read errors.
-        if (receiver_->isReady(Receiver::RCV_ERROR)) {
-            string msg = receiver_->getLastError();
-            receiver_->clearReady(Receiver::RCV_ERROR);
+        if (dhcp_receiver_->isReady(WatchedThread::RCV_ERROR)) {
+            string msg = dhcp_receiver_->getLastError();
+            dhcp_receiver_->clearReady(WatchedThread::RCV_ERROR);
             isc_throw(SocketReadError, msg);
         }
 
@@ -1125,7 +1065,7 @@ Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /
     // If we're here it should only be because there are DHCP packets waiting.
     Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
     if (!pkt) {
-        receiver_->clearReady(Receiver::RCV_READY);
+        dhcp_receiver_->clearReady(WatchedThread::RCV_READY);
     }
 
     return (pkt);
@@ -1152,7 +1092,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set
-                add_fd(s.sockfd_, maxfd, &sockets);
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
             }
         }
     }
@@ -1161,7 +1101,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add this socket to listening set
-            add_fd(s.socket_, maxfd, &sockets);
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
@@ -1235,7 +1175,7 @@ Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* 
 
 Pkt6Ptr
 IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
-    if (isReceiverRunning()) {
+    if (isDHCPReceiverRunning()) {
         return (receive6Indirect(timeout_sec, timeout_usec));
     }
 
@@ -1243,9 +1183,9 @@ IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
 }
 
 void
-IfaceMgr::add_fd(int fd, int& maxfd, fd_set* sockets) {
+IfaceMgr::addFDtoSet(int fd, int& maxfd, fd_set* sockets) {
     if (!sockets) {
-        isc_throw(BadValue, "add_fd: sockets can't be null");
+        isc_throw(BadValue, "addFDtoSet: sockets can't be null");
     }
 
     FD_SET(fd, sockets);
@@ -1276,7 +1216,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set
-                add_fd(s.sockfd_, maxfd, &sockets);
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
             }
         }
     }
@@ -1285,7 +1225,7 @@ IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ )
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add it to the set as well
-            add_fd(s.socket_, maxfd, &sockets);
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
@@ -1372,15 +1312,15 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add it to the set as well
-            add_fd(s.socket_, maxfd, &sockets);
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
     // Add Receiver ready watch socket
-    add_fd(receiver_->getWatchFd(Receiver::RCV_READY), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_READY), maxfd, &sockets);
 
     // Add Receiver error watch socket
-    add_fd(receiver_->getWatchFd(Receiver::RCV_ERROR), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_ERROR), maxfd, &sockets);
 
     // Set timeout for our next select() call.  If there are
     // no DHCP packets to read, then we'll wait for a finite
@@ -1423,9 +1363,9 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // We only check external sockets if select detected an event.
     if (result > 0) {
         // Check for receiver thread read errors.
-        if (receiver_->isReady(Receiver::RCV_ERROR)) {
-            string msg = receiver_->getLastError();
-            receiver_->clearReady(Receiver::RCV_ERROR);
+        if (dhcp_receiver_->isReady(WatchedThread::RCV_ERROR)) {
+            string msg = dhcp_receiver_->getLastError();
+            dhcp_receiver_->clearReady(WatchedThread::RCV_ERROR);
             isc_throw(SocketReadError, msg);
         }
 
@@ -1451,7 +1391,7 @@ IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // If we're here it should only be because there are DHCP packets waiting.
     Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
     if (!pkt) {
-        receiver_->clearReady(Receiver::RCV_READY);
+        dhcp_receiver_->clearReady(WatchedThread::RCV_READY);
     }
 
     return (pkt);
@@ -1466,7 +1406,7 @@ IfaceMgr::receiveDHCP4Packets() {
     FD_ZERO(&sockets);
 
     // Add terminate watch socket.
-    add_fd(receiver_->getWatchFd(Receiver::RCV_TERMINATE), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_TERMINATE), maxfd, &sockets);
 
     // Add Interface sockets.
     BOOST_FOREACH(iface, ifaces_) {
@@ -1474,14 +1414,14 @@ IfaceMgr::receiveDHCP4Packets() {
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
                 // Add this socket to listening set.
-                add_fd(s.sockfd_, maxfd, &sockets);
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
             }
         }
     }
 
     for (;;) {
         // Check the watch socket.
-        if (receiver_->shouldTerminate()) {
+        if (dhcp_receiver_->shouldTerminate()) {
             return;
         }
 
@@ -1495,7 +1435,7 @@ IfaceMgr::receiveDHCP4Packets() {
         int result = select(maxfd + 1, &rd_set, 0, 0, 0);
 
         // Re-check the watch socket.
-        if (receiver_->shouldTerminate()) {
+        if (dhcp_receiver_->shouldTerminate()) {
             return;
         }
 
@@ -1507,7 +1447,7 @@ IfaceMgr::receiveDHCP4Packets() {
             // This thread should not get signals?
             if (errno != EINTR) {
                 // Signal the error to receive4.
-                receiver_->setError(strerror(errno));
+                dhcp_receiver_->setError(strerror(errno));
                 // We need to sleep in case of the error condition to
                 // prevent the thread from tight looping when result
                 // gets negative.
@@ -1522,7 +1462,7 @@ IfaceMgr::receiveDHCP4Packets() {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
                     receiveDHCP4Packet(*iface, s);
                     // Can take time so check one more time the watch socket.
-                    if (receiver_->shouldTerminate()) {
+                    if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
                 }
@@ -1541,7 +1481,7 @@ IfaceMgr::receiveDHCP6Packets() {
     FD_ZERO(&sockets);
 
     // Add terminate watch socket.
-    add_fd(receiver_->getWatchFd(Receiver::RCV_TERMINATE), maxfd, &sockets);
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::RCV_TERMINATE), maxfd, &sockets);
 
     // Add Interface sockets.
     BOOST_FOREACH(iface, ifaces_) {
@@ -1549,14 +1489,14 @@ IfaceMgr::receiveDHCP6Packets() {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
                 // Add this socket to listening set.
-                add_fd(s.sockfd_ , maxfd, &sockets);
+                addFDtoSet(s.sockfd_ , maxfd, &sockets);
             }
         }
     }
 
     for (;;) {
         // Check the watch socket.
-        if (receiver_->shouldTerminate()) {
+        if (dhcp_receiver_->shouldTerminate()) {
             return;
         }
 
@@ -1570,7 +1510,7 @@ IfaceMgr::receiveDHCP6Packets() {
         int result = select(maxfd + 1, &rd_set, 0, 0, 0);
 
         // Re-check the watch socket.
-        if (receiver_->shouldTerminate()) {
+        if (dhcp_receiver_->shouldTerminate()) {
             return;
         }
 
@@ -1581,7 +1521,7 @@ IfaceMgr::receiveDHCP6Packets() {
             // This thread should not get signals?
             if (errno != EINTR) {
                 // Signal the error to receive6.
-                receiver_->setError(strerror(errno));
+                dhcp_receiver_->setError(strerror(errno));
                 // We need to sleep in case of the error condition to
                 // prevent the thread from tight looping when result
                 // gets negative.
@@ -1596,7 +1536,7 @@ IfaceMgr::receiveDHCP6Packets() {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
                     receiveDHCP6Packet(s);
                     // Can take time so check one more time the watch socket.
-                    if (receiver_->shouldTerminate()) {
+                    if (dhcp_receiver_->shouldTerminate()) {
                         return;
                     }
                 }
@@ -1612,7 +1552,7 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
         // Signal the error to receive4.
-        receiver_->setError(strerror(errno));
+        dhcp_receiver_->setError(strerror(errno));
         return;
     }
     if (len == 0) {
@@ -1625,14 +1565,14 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     try {
         pkt = packet_filter_->receive(iface, socket_info);
     } catch (const std::exception& ex) {
-        receiver_->setError(strerror(errno));
+        dhcp_receiver_->setError(strerror(errno));
     } catch (...) {
-        receiver_->setError("packet filter receive() failed");
+        dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
         getPacketQueue4()->enqueuePacket(pkt, socket_info);
-        receiver_->markReady(Receiver::RCV_READY);
+        dhcp_receiver_->markReady(WatchedThread::RCV_READY);
     }
 }
 
@@ -1643,7 +1583,7 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
         // Signal the error to receive6.
-        receiver_->setError(strerror(errno));
+        dhcp_receiver_->setError(strerror(errno));
         return;
     }
     if (len == 0) {
@@ -1656,14 +1596,14 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
     try {
         pkt = packet_filter6_->receive(socket_info);
     } catch (const std::exception& ex) {
-        receiver_->setError(ex.what());
+        dhcp_receiver_->setError(ex.what());
     } catch (...) {
-        receiver_->setError("packet filter receive() failed");
+        dhcp_receiver_->setError("packet filter receive() failed");
     }
 
     if (pkt) {
         getPacketQueue6()->enqueuePacket(pkt, socket_info);
-        receiver_->markReady(Receiver::RCV_READY);
+        dhcp_receiver_->markReady(WatchedThread::RCV_READY);
     }
 }
 
@@ -1759,9 +1699,9 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
 
 bool
 IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_control) {
-    if (isReceiverRunning()) {
+    if (isDHCPReceiverRunning()) {
         isc_throw(InvalidOperation, "Cannot reconfigure queueing"
-                                    " while receiver thread is running");
+                                    " while DHCP receiver thread is running");
     }
 
     bool enable_queue = false;
