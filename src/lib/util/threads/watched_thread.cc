@@ -13,9 +13,9 @@ namespace thread {
 
 void
 WatchedThread::start(const boost::function<void()>& thread_main) {
-    clearReady(RCV_ERROR);
-    clearReady(RCV_READY);
-    clearReady(RCV_TERMINATE);
+    clearReady(ERROR);
+    clearReady(READY);
+    clearReady(TERMINATE);
     last_error_ = "no error";
     thread_.reset(new Thread(thread_main));
 }
@@ -42,8 +42,8 @@ WatchedThread::clearReady(WatchType watch_type) {
 
 bool
 WatchedThread::shouldTerminate() {
-    if (sockets_[RCV_TERMINATE].isReady()) {
-        clearReady(RCV_TERMINATE);
+    if (sockets_[TERMINATE].isReady()) {
+        clearReady(TERMINATE);
         return (true);
     }
 
@@ -53,20 +53,20 @@ WatchedThread::shouldTerminate() {
 void
 WatchedThread::stop() {
     if (thread_) {
-        markReady(RCV_TERMINATE);
+        markReady(TERMINATE);
         thread_->wait();
         thread_.reset();
     }
 
-    clearReady(RCV_ERROR);
-    clearReady(RCV_READY);
+    clearReady(ERROR);
+    clearReady(READY);
     last_error_ = "thread stopped";
 }
 
 void
 WatchedThread::setError(const std::string& error_msg) {
     last_error_ = error_msg;
-    markReady(RCV_ERROR);
+    markReady(ERROR);
 }
 
 std::string
