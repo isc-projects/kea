@@ -1,3 +1,8 @@
+1482.	[func]		fdupont
+	The configuration parameter "reservation-mode" can be specified
+	at global (new), subnet and shared network levels.
+	(Gitlab #268,!126, git xxx)
+
 1481.	[func]		fdupont
 	Cleaned up the keatest-module YANG test module.
 	(Gitlab #204,!98, git a830adcefd9306969216d35c51306df3610278bb)
