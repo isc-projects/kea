@@ -72,7 +72,7 @@ TranslatorConfig::getConfigIetf6() {
     result->set("Dhcp6", dhcp6);
     string xpath = "/" + model_ + ":server/server-config";
     ConstElementPtr ranges =
-        getSubnets(xpath + "/network-ranges/network-range");
+        getSubnets(xpath + "/network-ranges");
     if (ranges && !ranges->empty()) {
         dhcp6->set("subnet6", ranges);
     }
@@ -299,7 +299,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     string xpath = "/kea-dhcp4-server:config";
     ElementPtr result = getServerKeaDhcpCommon(xpath);
     // Handle subnets.
-    ConstElementPtr subnets = getSubnets(xpath + "/subnet4");
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && !subnets->empty()) {
         result->set("subnet4", subnets);
     }
@@ -338,7 +338,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     // Handle DHCPv6 specific global parameters.
     getParam(result, xpath, "preferred-lifetime");
     // Handle subnets.
-    ConstElementPtr subnets = getSubnets(xpath + "/subnet6");
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && !subnets->empty()) {
         result->set("subnet6", subnets);
     }
@@ -718,7 +718,7 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     setServerKeaDhcpCommon(xpath, elem);
     ConstElementPtr subnets = elem->get("subnet4");
     if (subnets) {
-        setSubnets(xpath + "/subnet4", subnets);
+        setSubnets(xpath, subnets);
     }
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
@@ -786,7 +786,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     }
     ConstElementPtr subnets = elem->get("subnet6");
     if (subnets) {
-        setSubnets(xpath + "/subnet6", subnets);
+        setSubnets(xpath, subnets);
     }
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
