@@ -104,6 +104,7 @@ namespace yang {
 ///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string
+/// +--rw logger*
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -234,6 +235,7 @@ namespace yang {
 ///    +--rw config-database*
 /// +--rw server-tag                     string
 /// +--rw dhcp-queue-control             string
+/// +--rw logger*
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -294,15 +296,10 @@ namespace yang {
 /// }
 /// @endcode
 ///
-/// YANG syntax for kea-*:logging is:
-/// @code
-/// +--rw logging
-///    +--rw logger*
-/// @endcode
-///
 /// Example of Logging simple configuration:
 /// @code
 /// {
+///     ...
 ///     "Logging":
 ///     {
 ///         "loggers":
@@ -326,7 +323,8 @@ namespace yang {
 /// The same configuration wrote into YANG datastore using @c setConfig()
 /// with a kea server model and exported to XML format:
 /// @code
-/// <logging xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+///   ...
 ///   <logger>
 ///     <name>kea-dhcp6</name>
 ///     <output-options>
@@ -337,10 +335,8 @@ namespace yang {
 ///     <debuglevel>99</debuglevel>
 ///     <severity>DEBUG</severity>
 ///   </logger>
-/// </logging>
+/// </config>
 /// @endcode
-///
-/// Note that sysrepo uses one XML document per container in the model.
 
 /// Inheritance graph between translators is:
 ///
@@ -389,7 +385,6 @@ namespace yang {
 /// Currently supports the following models:
 /// - kea-dhcp4-server
 /// - kea-dhcp6-server
-/// - kea-logging
 /// - ietf-dhcpv6-server (partial)
 class TranslatorConfig : virtual public TranslatorControlSocket,
     virtual public TranslatorDatabases,
@@ -478,12 +473,6 @@ protected:
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getServerKeaDhcp6();
 
-    /// @brief getServer for kea-*:logging.
-    ///
-    /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getServerKeaLogging();
-
     /// @brief delConfig for kea-dhcp[46]-server.
     void delConfigKea();
 
@@ -538,7 +527,7 @@ protected:
     /// @param elem The JSON element.
     void setServerKeaDhcp6(isc::data::ConstElementPtr elem);
 
-    /// @brief setServer for kea-*:logging.
+    /// @brief set Logging part for kea-*:config.
     ///
     /// @param elem The JSON element.
     void setServerKeaLogging(isc::data::ConstElementPtr elem);

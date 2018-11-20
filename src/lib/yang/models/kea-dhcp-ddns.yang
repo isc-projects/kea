@@ -20,7 +20,7 @@ module kea-dhcp-ddns {
   description "This model defines a YANG data model that can be
     used to configure and manage a Kea DHCP-DDNS server.";
 
-  revision 2018-11-16 {
+  revision 2018-11-19 {
     description "Initial revision";
     reference "";
   }
@@ -170,12 +170,8 @@ module kea-dhcp-ddns {
       type kea:user-context;
       description "DHCP-DDNS server user context.";
     }
-  }
 
-  container logging {
-    // config true;
-    description "Logging";
-
-    uses logging:configuration;
+    // Moved from logging
+    uses logging:loggers;
   }
 }
