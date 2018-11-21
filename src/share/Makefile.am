@@ -1,1 +1,1 @@
-SUBDIRS = database
+SUBDIRS = database yang

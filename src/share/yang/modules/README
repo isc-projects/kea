@@ -1,0 +1,74 @@
+Developer tools:
+
+Get revision from file content:
+
+yanglint -f yin xxx | grep '<revision date=' | head -1 | sed \
+ 's/.*<revision date="\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)".*/\1/'
+
+Get revision from file name:
+
+echo xxx | sed 's/.*@\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)\..*/\1/'
+
+Get hash:
+
+yanglint -f yin xxx | openssl dgst -sha256
+
+Check revisions:
+
+for m in *.yang
+do
+    rev1=`yanglint -f yin $m | grep '<revision date=' | head -1 | sed \
+ 's/.*<revision date="\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)".*/\1/'`
+    rev2=`echo $m | sed \
+ 's/.*@\([0-9][0-9][0-9][0-9]-[0-9][0-9]-[0-9][0-9]\)\..*/\1/'`
+
+    if test $rev1 != $rev2
+    then
+        echo revision mismatch on $m
+    fi
+done
+
+Check hashes:
+
+for m in *.yang
+do
+    hash1=`yanglint -f yin $m | openssl dgst -sha256`
+    h=hashes/`basename $m .yang`.hash
+    if test -f $h
+    then
+        hash2=`cat $h`
+        if test $hash1 != $hash2
+        then
+            echo hash mismatch on $m
+        fi
+    else
+        echo missing hash for $m
+    fi
+done
+
+Build module / revision table:
+
+for m in ietf-dhcpv6-types*.yang \
+         ietf-dhcpv6-options*.yang \
+         ietf-dhcpv6-server*.yang \
+         kea-types*.yang \
+         kea-logging*.yang \
+         kea-dhcp-types*.yang \
+         kea-dhcp4-server*.yang \
+         kea-dhcp6-server*.yang \
+         kea-ctrl-agent*.yang \
+         kea-dhcp-ddns*.yang \
+         keatest-module*.yang \
+         end-marker
+do
+    if test $m = "end-marker"
+    then
+        echo '{ "", "" }'
+    else
+        b=`echo $m | sed 's/\(.*\)@.*/\1/'`
+        r=`echo $m | sed 's/.*@\(.*\)\.yang/\1/'`
+        echo '{ "'$b'", "'$r'" },'
+    fi
+done
+
+
