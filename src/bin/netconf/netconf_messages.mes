@@ -52,6 +52,30 @@ configuration from a Kea server.
 The warning message indicates that the configuration change logging
 encountered an unexpected condition. Details of it will be logged.
 
+% NETCONF_MODULE_INSTALL Sysrepo (un)installs a module: %1 (revision %2)
+This warning message indicates that sysrepo reports the installation
+or uninstallation of a module used by Kea. The name and revision of
+the module are printed.
+
+% METCONF_MODULE_MISSING_ERR Missing essential module %1 in sysrepo
+This fatal error message indicates that a module required by Netconf
+configuration is not available in the sysrepo repository.  The name of
+the module is printed.
+
+% METCONF_MODULE_MISSING_WARN Missing module %1 in sysrepo
+This warning message indicates that a module used by Kea is not
+available in the sysrepo repository. The name of the module is printed.
+
+% METCONF_MODULE_REVISION_ERR Essential module %1 does have the right revision: expected %2, got %3
+This fatal error message indicates that a module required by Netconf
+configuration is not at the right revision in the sysrepo repository.
+The name, expected and available revisions of the module are printed.
+
+% METCONF_MODULE_REVISION_WARN Module %1 does have the right revision: expected %2, got %3
+This warning message indicates that a module used by Kea is not at the
+right revision in the sysrepo repository. The name, expected and
+available revisions of the module are printed.
+
 % NETCONF_RUN_EXIT application is exiting the event loop
 This is a debug message issued when the Netconf application exits its
 event loop. This is a normal step during kea-netconf shutdown.
