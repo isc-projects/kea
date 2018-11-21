@@ -52,11 +52,13 @@ public:
 
     /// @brief Initialize sysrepo sessions.
     ///
-    /// Must be called before init.
+    /// Must be called before init. Collect the list of available
+    /// modules with their revisions.
     void initSysrepo();
 
     /// @brief Initialization.
     ///
+    /// Check available modules / revisions.
     /// Get and display Kea server configurations.
     /// Load Kea server configurations from YANG datastore.
     /// Subscribe configuration changes in YANG datastore.
@@ -118,6 +120,22 @@ public:
     bool cancel_;
 
 protected:
+    /// @brief Check essential module availability.
+    ///
+    /// Emit a fatal error if an essential one (i.e. required in
+    /// a further phase) is missing or does not have the expected revision.
+    /// The caller (init) will exit().
+    ///
+    /// @param module_name The module name.
+    /// @return true if available, false if not.
+    bool checkModule(const std::string& module_name) const;
+
+    /// @brief Check module availability.
+    ///
+    /// Emit a warning if a module is missing or does not have
+    /// the expected revision.
+    void checkModules() const;
+
     /// @brief Get and display Kea server configuration.
     ///
     /// Retrieves current configuration via control socket (unix or http)
@@ -165,6 +183,9 @@ protected:
 #else
     S_Session running_sess_;
 #endif
+
+    /// @brief Available modules and revisions in Sysrepo.
+    std::map<const std::string, const std::string> modules_;
 
     /// @brief Subscription map.
 #ifndef HAVE_PRE_0_7_6_SYSREPO

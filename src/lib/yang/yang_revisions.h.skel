@@ -15,19 +15,10 @@ namespace yang {
 
 // Table of module name / revision.
 static const std::map<std::string, std::string> YANG_REVISIONS = {
-#ifdef KEATEST_MODULE
-    { "keatest-module", "2018-11-20" },
-#endif // KEATEST_MODULE
-    { "ietf-dhcpv6-types", "2018-09-04" },
-    { "ietf-dhcpv6-options", "2018-09-04" },
-    { "ietf-dhcpv6-server", "2018-09-04" },
-    { "kea-types", "2018-11-20" },
-    { "kea-logging", "2018-11-20" },
-    { "kea-dhcp-types", "2018-11-20" },
-    { "kea-dhcp4-server", "2018-11-20" },
-    { "kea-dhcp6-server", "2018-11-20" },
-    { "kea-ctrl-agent", "2018-11-20" },
-    { "kea-dhcp-ddns", "2018-11-20" }
+// Fill this by:
+// cd .../src/share/yang/modules
+// sh utils/gen-revisions.sh > r
+// insert the r file here
 };
 
 }; // end of namespace isc::yang

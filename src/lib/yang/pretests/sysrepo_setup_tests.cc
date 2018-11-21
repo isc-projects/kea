@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#define KEATEST_MODULE
 #include <yang/yang_revisions.h>
 
 #ifndef HAVE_PRE_0_7_6_SYSREPO

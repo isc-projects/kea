@@ -361,6 +361,7 @@ TEST_F(NetconfAgentTest, initSysrepo) {
     EXPECT_TRUE(agent_->conn_);
     EXPECT_TRUE(agent_->startup_sess_);
     EXPECT_TRUE(agent_->running_sess_);
+    EXPECT_EQ(1, agent_->subscriptions_.size());
 }
 
 /// @brief Default change callback (print changes and return OK).
@@ -771,8 +772,9 @@ TEST_F(NetconfAgentTest, subscribeConfig) {
     // Try subscribeConfig.
     EXPECT_EQ(0, agent_->subscriptions_.size());
     ASSERT_NO_THROW(agent_->initSysrepo());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_EQ(2, agent_->subscriptions_.size());
 
     /// Unsubscribe.
     EXPECT_NO_THROW(agent_->subscriptions_.clear());
@@ -841,9 +843,9 @@ TEST_F(NetconfAgentTest, update) {
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_EQ(2, agent_->subscriptions_.size());
 
     // Launch server.
     thread_.reset(new Thread([this]() { fakeServer(); signalStopped(); }));
@@ -973,9 +975,9 @@ TEST_F(NetconfAgentTest, validate) {
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_EQ(2, agent_->subscriptions_.size());
 
     // Launch server twice.
     thread_.reset(new Thread([this]()
@@ -1136,9 +1138,9 @@ TEST_F(NetconfAgentTest, noValidate) {
     CfgServersMapPair service_pair = *servers_map->begin();
 
     // Subscribe YANG changes.
-    EXPECT_EQ(0, agent_->subscriptions_.size());
-    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
     EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_NO_THROW(agent_->subscribeConfig(service_pair));
+    EXPECT_EQ(2, agent_->subscriptions_.size());
 
     // Change configuration (add invalid user context).
     const YRTree tree1 = {
