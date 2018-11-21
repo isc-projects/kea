@@ -74,7 +74,7 @@ TranslatorHost::getHostKea(const string& xpath) {
             result->set("prefixes", prefixes);
         }
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -148,7 +148,7 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && (classes->size() > 0)) {
@@ -195,7 +195,7 @@ ElementPtr
 TranslatorHosts::getHosts(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath + "/host");
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getHosts can't get iterator: " << xpath);

@@ -40,11 +40,10 @@ namespace yang {
 /// YANG syntax for kea-logging is with name as the logger list key and
 /// output as the output option list key.
 /// @code
-///  +--rw logger               container
+///  +--rw logger               (list)
 ///     |
 ///     +--rw name?             string
-///     +--rw output-options    container
-///     |  +--rw option*        [output]
+///     +--rw output-option*
 ///     |     +--rw output      string
 ///     |     +--rw maxver?     uint32
 ///     |     +--rw maxsize?    uint32
@@ -71,19 +70,17 @@ namespace yang {
 /// ]
 /// @endcode
 /// @code
-///  /kea-dhcp4-server:logging (container)
-///  /kea-dhcp4-server:logging/loggers (container)
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo'] (list instance)
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/name = foo
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/
-///     output-options (container)
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///  /kea-dhcp4-server:config (container)
+///  /kea-dhcp4-server:config/...
+///  /kea-dhcp4-server:config/logger[name='foo'] (list instance)
+///  /kea-dhcp4-server:config/logger[name='foo']/name = foo
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar'] (list instance)
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar']/option = /bar
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/output-options/
+///  /kea-dhcp4-server:config/logger[name='foo']/
 ///     option[output='/bar']/maxver = 10
-///  /kea-dhcp4-server:logging/loggers/logger[name='foo']/severity = WARN
+///  /kea-dhcp4-server:config/logger[name='foo']/severity = WARN
 /// @endcode
 
 /// @brief A translator class for converting a logger between

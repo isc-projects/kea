@@ -8,21 +8,23 @@ module kea-dhcp6-server {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-11-20;
   }
   import kea-dhcp-types {
     prefix dhcp;
+    revision-date 2018-11-20;
   }
   import kea-logging {
     prefix logging;
+    revision-date 2018-11-20;
   }
-
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv6 server.";
 
-  revision 2018-09-14 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -77,7 +79,6 @@ module kea-dhcp6-server {
     description "Rapid commit grouping.";
     leaf rapid-commit {
       type boolean;
-      default false;
       description "Rapid commit entry.";
     }
   }
@@ -106,13 +107,10 @@ module kea-dhcp6-server {
 
   grouping reservations {
     description "Host reservations grouping.";
-    container reservations {
-      description "Host reservations container.";
-      list host {
-        key "identifier-type identifier";
-        description "Host reservation entry.";
-        uses host;
-      }
+    list host {
+      key "identifier-type identifier";
+      description "Host reservation list.";
+      uses host;
     }
   }
 
@@ -127,69 +125,63 @@ module kea-dhcp6-server {
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
-      container pools {
-        description "List of pools.";
-        list pool {
-          key "start-address end-address";
-          ordered-by user;
-          description "Pool entry.";
-          leaf prefix {
-            type inet:ipv6-prefix;
-            description "Pool prefix.";
-          }
-          leaf start-address {
-            type inet:ipv6-address;
-            mandatory true;
-            description "First IPv6 address in a pool.";
-          }
-          leaf end-address {
-            type inet:ipv6-address;
-            mandatory true;
-            description "Last IPv6 address in a pool.";
-          }
-          uses option-data-list;
-          uses dhcp:pool-client-class;
-          uses dhcp:pool-require-client-classes;
-          uses dhcp:pool-user-context;
+      list pool {
+        key "start-address end-address";
+        ordered-by user;
+        description "Pool list.";
+        leaf prefix {
+          type inet:ipv6-prefix;
+          description "Pool prefix.";
         }
+        leaf start-address {
+          type inet:ipv6-address;
+          mandatory true;
+          description "First IPv6 address in a pool.";
+        }
+        leaf end-address {
+          type inet:ipv6-address;
+          mandatory true;
+          description "Last IPv6 address in a pool.";
+        }
+        uses option-data-list;
+        uses dhcp:pool-client-class;
+        uses dhcp:pool-require-client-classes;
+        uses dhcp:pool-user-context;
       }
-      container pd-pools {
-        description "List of prefix delegation pools.";
-        list pd-pool {
-          key prefix;
-          ordered-by user;
-          description "Prefix delegation pool entry.";
-          leaf prefix {
-            type inet:ipv6-prefix;
-            mandatory true;
-            description "IPv6 pool prefix.";
+      list pd-pool {
+        key prefix;
+        ordered-by user;
+        description "Prefix delegation pool list.";
+        leaf prefix {
+          type inet:ipv6-prefix;
+          mandatory true;
+          description "IPv6 pool prefix.";
+        }
+        leaf delegated-len {
+          type uint8;
+          description "Prefix pool delegated length.";
+        }
+        uses option-data-list;
+        uses dhcp:client-class {
+          refine client-class {
+            description "Prefix pool client class guard. (only
+                         clients belonging to this class will be
+                         allowed in this pool).";
           }
-          leaf delegated-len {
-            type uint8;
-            description "Prefix pool delegated length.";
+        }
+        uses dhcp:require-client-classes {
+          refine require-client-classes {
+            description "Prefix pool require client classes.";
           }
-          uses option-data-list;
-          uses dhcp:client-class {
-            refine client-class {
-              description "Prefix pool client class guard. (only
-                           clients belonging to this class will be
-                           allowed in this pool).";
-            }
-          }
-          uses dhcp:require-client-classes {
-            refine require-client-classes {
-              description "Prefix pool require client classes.";
-            }
-          }
-          leaf excluded-prefix {
-            type inet:ipv6-prefix;
-            description "Prefix pool excluded prefix.";
-          }
-          uses kea:user-context {
-            refine user-context {
-              description "Prefix pool user context. Arbitrary JSON data
-                           can be stored here.";
-            }
+        }
+        leaf excluded-prefix {
+          type inet:ipv6-prefix;
+          description "Prefix pool excluded prefix.";
+        }
+        uses kea:user-context {
+          refine user-context {
+            description "Prefix pool user context. Arbitrary JSON data
+                         can be stored here.";
           }
         }
       }
@@ -213,11 +205,11 @@ module kea-dhcp6-server {
       uses dhcp:subnet-client-class;
       uses dhcp:require-client-classes;
       uses reservations {
-        refine reservations {
-          description "Subnet host reservations.";
+        refine host {
+          description "Subnet host reservations list.";
         }
       }
-      uses dhcp:subnet-reservation-mode;
+      uses dhcp:reservation-mode;
       container relay {
         description "Optional information about relay agent.";
         uses relay;
@@ -226,65 +218,64 @@ module kea-dhcp6-server {
     }
   }
 
-  grouping client-class {
-    description "Client class grouping.";
-    uses dhcp:class-name;
-    uses dhcp:class-test;
-    uses dhcp:class-only-if-required;
-    uses option-data-list;
-    uses dhcp:class-user-context;
+  grouping client-classes {
+    description "Client classes grouping.";
+    list client-class {
+      key name;
+      ordered-by user;
+      description "List of client classes.";
+      uses dhcp:class-name;
+      uses dhcp:class-test;
+      uses dhcp:class-only-if-required;
+      uses option-data-list;
+      uses dhcp:class-user-context;
+    }
   }
 
   grouping option-def-list {
     description "Option definition list grouping.";
-    container option-def-list {
-      description "Option definition list.";
-      list option-def {
-        key "code space";
-        description "Option definition entry.";
-        leaf code {
-          type uint16;
-          mandatory true;
-          description "Option code to be used by the new option definition.";
-        }
-        leaf space {
-          type string;
-          mandatory true;
-          description "Option space for the new option (typically dhcp6).";
-        }
-        uses dhcp:option-def-name;
-        uses dhcp:option-def-type;
-        uses dhcp:option-def-record-types;
-        uses dhcp:option-def-encapsulate;
-        uses dhcp:option-def-array;
-        uses dhcp:option-def-user-context;
+    list option-def {
+      key "code space";
+      description "Option definition entry.";
+      leaf code {
+        type uint16;
+        mandatory true;
+        description "Option code to be used by the new option definition.";
       }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space for the new option (typically dhcp6).";
+      }
+      uses dhcp:option-def-name;
+      uses dhcp:option-def-type;
+      uses dhcp:option-def-record-types;
+      uses dhcp:option-def-encapsulate;
+      uses dhcp:option-def-array;
+      uses dhcp:option-def-user-context;
     }
   }
 
   grouping option-data-list {
     description "Option data list grouping.";
-    container option-data-list {
-      description "Option data list.";
-      list option-data {
-        key "code space";
-        description "Option data entry.";
-        leaf code {
-          type uint16;
-          mandatory true;
-          description "Option code.";
-        }
-        leaf space {
-          type string;
-          mandatory true;
-          description "Option space.";
-        }
-        uses dhcp:option-data-name;
-        uses dhcp:option-data-data;
-        uses dhcp:option-data-csv-format;
-        uses dhcp:option-data-always-send;
-        uses dhcp:option-data-user-context;
+    list option-data {
+      key "code space";
+      description "Option data entry.";
+      leaf code {
+        type uint16;
+        mandatory true;
+        description "Option code.";
       }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space.";
+      }
+      uses dhcp:option-data-name;
+      uses dhcp:option-data-data;
+      uses dhcp:option-data-csv-format;
+      uses dhcp:option-data-always-send;
+      uses dhcp:option-data-user-context;
     }
   }
 
@@ -301,48 +292,37 @@ module kea-dhcp6-server {
     uses dhcp:renew-timer;
     uses dhcp:rebind-timer;
     uses dhcp:decline-probation-period;
+    uses subnet6-list;
 
-    container subnet6 {
-      description "Global subnet6 list.";
+    list shared-network {
+      key name;
+      uses dhcp:network-name;
+      description "List of IPv4 shared networks.";
       uses subnet6-list;
-    }
-
-    container shared-networks {
-      description "Defines a list of IPv6 shared networks.";
-      list shared-network {
-        key name;
-        uses dhcp:network-name;
-        description "List of IPv4 shared networks.";
-        container subnet6 {
-          description "List of IPv6 subnets that belong to this shared
-                       network.";
-          uses subnet6-list;
+      uses dhcp:network-interface;
+      uses interface-id {
+        refine interface-id {
+          description "Shared network interface-id option.";
         }
-        uses dhcp:network-interface;
-        uses interface-id {
-          refine interface-id {
-            description "Shared network interface-id option.";
-          }
-        }
-        uses dhcp:renew-timer;
-        uses dhcp:rebind-timer;
-        uses option-data-list;
-        container relay {
-          description "Optional information about relay agent.";
-          uses relay;
-        }
-        uses dhcp:network-reservation-mode;
-        uses dhcp:network-client-class;
-        uses dhcp:require-client-classes;
-        uses preferred-lifetime;
-        uses rapid-commit {
-          refine rapid-commit {
-            description "Shared network rapid commit flag.";
-          }
-        }
-        uses dhcp:valid-lifetime;
-        uses dhcp:network-user-context;
       }
+      uses dhcp:renew-timer;
+      uses dhcp:rebind-timer;
+      uses option-data-list;
+      container relay {
+        description "Optional information about relay agent.";
+        uses relay;
+      }
+      uses dhcp:reservation-mode;
+      uses dhcp:network-client-class;
+      uses dhcp:require-client-classes;
+      uses preferred-lifetime;
+      uses rapid-commit {
+        refine rapid-commit {
+          description "Shared network rapid commit flag.";
+        }
+      }
+      uses dhcp:valid-lifetime;
+      uses dhcp:network-user-context;
     }
 
     container interfaces-config {
@@ -373,16 +353,7 @@ module kea-dhcp6-server {
       description "Host reservation identifiers.";
     }
 
-    container client-classes {
-      description "Client classes.";
-      list client-class {
-        key name;
-        ordered-by user;
-        description "List of client classes.";
-        uses client-class;
-      }
-    }
-
+    uses client-classes;
     uses option-def-list;
     uses option-data-list;
     uses kea:hooks-libraries;
@@ -423,7 +394,6 @@ module kea-dhcp6-server {
       }
       leaf persist {
         type boolean;
-        default true;
         description "Server DUID persist flag.";
       }
       leaf user-context {
@@ -442,18 +412,17 @@ module kea-dhcp6-server {
       }
     }
     uses dhcp:sanity-checks;
+    uses dhcp:reservation-mode;
     uses reservations {
-      refine reservations {
-        description "Global host reservations.";
+      refine host {
+        description "Global host reservations list.";
       }
     }
-  }
-
-  container logging {
-    // config true;
-    description "Logging";
-
-    uses logging:configuration;
+    uses dhcp:config-control;
+    uses dhcp:server-tag;
+    uses dhcp:dhcp-queue-control;
+    // Moved from logging
+    uses logging:loggers;
   }
 
   /*
@@ -528,22 +497,18 @@ module kea-dhcp6-server {
         }
         leaf fqdn-fwd {
           type boolean;
-          default false;
           description "Lease FQDN forward flag.";
         }
         leaf fqdn-rev {
           type boolean;
-          default false;
           description "Lease FQDN reverse lag.";
         }
         leaf hostname {
           type string;
-          default "";
           description "Lease hostname.";
         }
         leaf state {
           type dhcp:lease-state;
-          default "default";
           description "Lease state.";
         }
         leaf user-context {

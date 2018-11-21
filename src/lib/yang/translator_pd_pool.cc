@@ -160,7 +160,7 @@ TranslatorPdPool::getPdPoolKea(const string& xpath) {
     if (delegated) {
         result->set("delegated-len", delegated);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -258,7 +258,7 @@ TranslatorPdPool::setPdPoolKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     ConstElementPtr guard = elem->get("client-class");
@@ -299,25 +299,35 @@ TranslatorPdPools::~TranslatorPdPools() {
 ElementPtr
 TranslatorPdPools::getPdPools(const string& xpath) {
     try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
-        if (!iter) {
-            // Can't happen.
-            isc_throw(Unexpected, "getPdPools: can't get iterator: " << xpath);
+        if ((model_ == IETF_DHCPV6_SERVER) ||
+            (model_ == KEA_DHCP6_SERVER)) {
+            return (getPdPoolsCommon(xpath));
         }
-        for (;;) {
-            const string& pool = getNext(iter);
-            if (pool.empty()) {
-                break;
-            }
-            result->add(getPdPool(pool));
-        }
-        return (result);
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pd-pools at '" << xpath
                   << "': " << ex.what());
     }
+    isc_throw(NotImplemented,
+              "getPdPools not implemented for the model: " << model_);
+}
+
+ElementPtr
+TranslatorPdPools::getPdPoolsCommon(const string& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/pd-pool");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPdPools: can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPdPool(pool));
+    }
+    return (result);
 }
 
 void

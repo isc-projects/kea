@@ -8,13 +8,14 @@ module kea-dhcp-types {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
   contact "kea-dev@lists.isc.org";
   description "This file defines some commonly used Kea DHCP types and
                groupings.";
-  revision 2018-09-14 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -37,7 +38,6 @@ module kea-dhcp-types {
         description "Allows only global host reservations.";
       }
     }
-    default "all";
     description "Host reservation mode.";
   }
 
@@ -53,7 +53,6 @@ module kea-dhcp-types {
         description "Expired-reclaimed";
       }
     }
-    default "default";
     description "Defines state of the lease.";
   }
 
@@ -112,7 +111,6 @@ module kea-dhcp-types {
     }
     leaf persist {
       type boolean;
-      default true;
       description "Write lease to disk file. This parameter applies only to
                    memfile backend.";
     }
@@ -123,12 +121,10 @@ module kea-dhcp-types {
     leaf lfc-interval {
       type uint32;
       units "seconds";
-      default 3600;
       description "Interval between two lease file cleanups.";
     }
     leaf readonly {
       type boolean;
-      default false;
       description "If set to true, the database will be connected in
                    read-only mode. This does not make sense for lease
                    databases, only for host reservations and possibly
@@ -151,13 +147,11 @@ module kea-dhcp-types {
     }
     leaf max-reconnect-tries {
       type uint32;
-      default 0;
       description "Maximum of recovery attempts before exit.";
     }
     leaf reconnect-wait-time {
       type uint32;
       units "milliseconds";
-      default 0;
       description "Waiting delay between two recovery attempts.";
     }
     leaf request-timeout {
@@ -168,12 +162,10 @@ module kea-dhcp-types {
     leaf tcp-keepalive {
       type uint32;
       units "seconds";
-      default 0;
       description "TCP keepalive for the database connection.";
     }
     leaf tcp-nodelay {
       type boolean;
-      default true;
       description "TCP nodelay for the database connection.";
     }
     uses kea:user-context {
@@ -191,13 +183,10 @@ module kea-dhcp-types {
       description "Lease database.";
       uses database;
     }
-    container hosts-databases {
-      description "Hosts databases.";
-      list hosts-database {
-        key database-type;
-        description "List of databases.";
-        uses database;
-      }
+    list hosts-database {
+      key database-type;
+      description "List of databases.";
+      uses database;
     }
   }
 
@@ -208,35 +197,29 @@ module kea-dhcp-types {
       leaf reclaim-timer-wait-time {
         type uint32;
         units "seconds";
-        default 10;
         description "Interval between reclamation cycles.";
       }
       leaf flush-reclaimed-timer-wait-time {
         type uint32;
         units "seconds";
-        default 25;
         description "Interval between reclaimed leases collection.";
       }
       leaf hold-reclaimed-time {
         type uint32;
         units "seconds";
-        default 3600;
         description "Hold timer for re-assignment.";
       }
       leaf max-reclaim-leases {
         type uint32;
-        default 100;
         description "Maximum number of reclaimed leases per cycle.";
       }
       leaf max-reclaim-time {
         type uint32;
         units "milliseconds";
-        default 250;
         description "Maximum duration of a reclamation cycle.";
       }
       leaf unwarned-reclaim-cycles {
         type uint32;
-        default 5;
         description "Maximum numbers of uncomplete cycles before warning.";
       }
     }
@@ -257,7 +240,6 @@ module kea-dhcp-types {
       description "DHCP-DDNS client setup.";
       leaf enable-updates {
         type boolean;
-        default false;
         description "Enable DHCP-DDNS updates.";
       }
       leaf qualifying-suffix {
@@ -266,12 +248,10 @@ module kea-dhcp-types {
       }
       leaf server-ip {
         type inet:ip-address;
-        default "127.0.0.1";
         description "DHCP-DDNS server IP address.";
       }
       leaf server-port {
         type uint16;
-        default 53001;
         description "DHCP-DDNS server port.";
       }
       leaf sender-ip {
@@ -284,7 +264,6 @@ module kea-dhcp-types {
       }
       leaf max-queue-size {
         type uint32;
-        default 1024;
         description "Maximum DHCP-DDNS queue size.";
       }
       leaf ncr-protocol {
@@ -296,7 +275,6 @@ module kea-dhcp-types {
             description "TCP transport";
           }
         }
-        default "UDP";
         description "Protocol to use for DHCP-DDNS communication.
                      Currently only UDP is supported.";
       }
@@ -306,17 +284,14 @@ module kea-dhcp-types {
             description "JSON format";
           }
         }
-        default "JSON";
         description "Packet format to use for DHCP-DDNS.";
       }
       leaf override-no-update {
         type boolean;
-        default false;
         description "Ignore client request and send update.";
       }
       leaf override-client-update {
         type boolean;
-        default false;
         description "Ignore client delegation.";
       }
       leaf replace-client-name {
@@ -334,12 +309,10 @@ module kea-dhcp-types {
             description "When the client did not send a name.";
           }
         }
-        default "never";
         description "Replace the name provided by the client.";
       }
       leaf generated-prefix {
         type string;
-        default "myhost";
         description "DHCP-DDNS generated prefix.";
       }
       leaf hostname-char-set {
@@ -386,7 +359,6 @@ module kea-dhcp-types {
             description "When a check fails reject the lease.";
           }
         }
-        default "warn";
         description "Lease checks: verify subnet-id consistency on memfile
                      loading.";
       }
@@ -550,29 +522,10 @@ module kea-dhcp-types {
     }
   }
 
-  grouping subnet-reservation-mode {
-    description "Reservation mode grouping for a subnet.";
-    uses reservation-mode {
-      refine reservation-mode {
-        description "Subnet host reservation mode.";
-      }
-    }
-  }
-
-  grouping network-reservation-mode {
-    description "Reservation mode grouping for a shared network.";
-    uses reservation-mode {
-      refine reservation-mode {
-        description "Shared network host reservation mode.";
-      }
-    }
-  }
-
   grouping interfaces-re-detect {
     description "Interfaces re-detect grouping.";
     leaf re-detect {
       type boolean;
-      default false;
       description "Re-detect interfaces at each reconfiguration.";
     }
   }
@@ -599,7 +552,6 @@ module kea-dhcp-types {
     description "Client class only-if-required grouping.";
     leaf only-if-required {
       type boolean;
-      default false;
       description "Client class only if required flag.";
     }
   }
@@ -660,7 +612,6 @@ module kea-dhcp-types {
     description "Option data csv-format grouping.";
     leaf csv-format {
       type boolean;
-      default true;
       description "If true, the option is specified as comma separated
                    values.  If false, it is expected as a hex string.";
     }
@@ -670,7 +621,6 @@ module kea-dhcp-types {
     description "Option data always-send grouping.";
     leaf always-send {
       type boolean;
-      default false;
       description "Defines whether to always send the option,
                    regardless if the client requested it or not.";
     }
@@ -680,7 +630,6 @@ module kea-dhcp-types {
     description "Option data array grouping.";
     leaf array {
       type boolean;
-      default false;
       description "Option definition array flag.";
     }
   }
@@ -690,7 +639,6 @@ module kea-dhcp-types {
     leaf decline-probation-period {
       type uint32;
       units "seconds";
-      default 86400;
       description "Decline probabation period.";
     }
   }
@@ -789,6 +737,34 @@ module kea-dhcp-types {
         description "Option user context. Arbitrary JSON data can be
                      stored here.";
       }
+    }
+  }
+
+  grouping config-control {
+    description "Config control grouping.";
+    container config-control {
+      description "Config control.";
+      list config-database {
+        key database-type;
+        description "List of databases.";
+        uses database;
+      }
+    }
+  }
+
+  grouping server-tag {
+    description "Server tag grouping.";
+    leaf server-tag {
+      type string;
+      description "Server tag.";
+    }
+  }
+
+  grouping dhcp-queue-control {
+    description "DHCP queue control grouping.";
+    leaf dhcp-queue-control {
+      type string;
+      description "DHCP queue control (JSON map).";
     }
   }
 

@@ -57,7 +57,7 @@ namespace yang {
 /// +--rw identifier-type          enumeration
 /// +--rw identifier               string
 /// +--rw hostname?                string
-/// +--rw option-data-list         option-data*
+/// +--rw option-data*
 /// +--rw client-classes*          string
 /// +--rw user-context?            string
 /// (DHCPv4 only)
@@ -82,24 +82,21 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp4-server:config (container)
-///  /kea-dhcp4-server:config/subnet4 (container)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111'] (list instance)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/id = 111
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/subnet = 10.0.0.0/24
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/
-///     reservations (container)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///  /kea-dhcp4-server:config/subnet4[id='111'] (list instance)
+///  /kea-dhcp4-server:config/subnet4[id='111']/id = 111
+///  /kea-dhcp4-server:config/subnet4[id='111']/subnet = 10.0.0.0/24
+///  /kea-dhcp4-server:config/subnet4[id='111']/
 ///     host[identifier-type='flex-id'][identifier='00:ff'] (list instance)
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///  /kea-dhcp4-server:config/subnet4[id='111']/
 ///     host[identifier-type='flex-id'][identifier='00:ff']/
 ///     identifier-type = flex-id
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///  /kea-dhcp4-server:config/subnet4[id='111']/
 ///     host[identifier-type='flex-id'][identifier='00:ff']/
 ///     identifier = 00:ff
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///  /kea-dhcp4-server:config/subnet4[id='111']/
 ///     host[identifier-type='flex-id'][identifier='00:ff']/
 ///     hostname = foo
-///  /kea-dhcp4-server:config/subnet4/subnet4[id='111']/reservations/
+///  /kea-dhcp4-server:config/subnet4[id='111']/
 ///     host[identifier-type='flex-id'][identifier='00:ff']/
 ///     ip-address = 10.0.0.1
 /// @endcode

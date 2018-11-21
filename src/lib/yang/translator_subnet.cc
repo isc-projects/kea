@@ -112,16 +112,16 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
     if (rebind) {
         result->set("rebind-timer", rebind);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
-    ConstElementPtr pools = getPools(xpath + "/pools");
+    ConstElementPtr pools = getPools(xpath);
     if (pools && (pools->size() > 0)) {
         result->set("pools", pools);
     }
     if (model_ == KEA_DHCP6_SERVER) {
-        pools = getPdPools(xpath + "/pd-pools");
+        pools = getPdPools(xpath);
         if (pools && (pools->size() > 0)) {
             result->set("pd-pools", pools);
         }
@@ -160,7 +160,7 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
     if (required && (required->size() > 0)) {
         result->set("require-client-classes", required);
     }
-    ConstElementPtr hosts = getHosts(xpath + "/reservations");
+    ConstElementPtr hosts = getHosts(xpath);
     if (hosts && (hosts->size() > 0)) {
         result->set("reservations", hosts);
     }
@@ -178,6 +178,10 @@ TranslatorSubnet::getSubnetKea(const string& xpath) {
         ConstElementPtr match = getItem(xpath + "/match-client-id");
         if (match) {
             result->set("match-client-id", match);
+        }
+        ConstElementPtr auth = getItem(xpath + "/authoritative");
+        if (auth) {
+            result->set("authoritative", auth);
         }
         ConstElementPtr next = getItem(xpath + "/next-server");
         if (next) {
@@ -281,16 +285,16 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr pools = elem->get("pools");
     if (pools && (pools->size() > 0)) {
-        setPools(xpath + "/pools", pools);
+        setPools(xpath, pools);
     }
     if (model_ == KEA_DHCP6_SERVER) {
         pools = elem->get("pd-pools");
         if (pools && (pools->size() > 0)) {
-            setPdPools(xpath + "/pd-pools", pools);
+            setPdPools(xpath, pools);
         }
     }
     ConstElementPtr subnet = elem->get("subnet");
@@ -326,7 +330,7 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr hosts = elem->get("reservations");
     if (hosts && (hosts->size() > 0)) {
-        setHosts(xpath + "/reservations", hosts);
+        setHosts(xpath, hosts);
     }
     ConstElementPtr mode = elem->get("reservation-mode");
     if (mode) {
@@ -348,6 +352,10 @@ TranslatorSubnet::setSubnetKea(const string& xpath, ConstElementPtr elem) {
         ConstElementPtr match = elem->get("match-client-id");
         if (match) {
             setItem(xpath + "/match-client-id", match, SR_BOOL_T);
+        }
+        ConstElementPtr auth = elem->get("authoritative");
+        if (auth) {
+            setItem(xpath + "/authoritative", auth, SR_BOOL_T);
         }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
@@ -400,25 +408,39 @@ TranslatorSubnets::~TranslatorSubnets() {
 ElementPtr
 TranslatorSubnets::getSubnets(const string& xpath) {
     try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
-        if (!iter) {
-            /// Can't happen.
-            isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getSubnetsCommon(xpath, "network-range"));
+        } else if (model_ == KEA_DHCP4_SERVER) {
+            return (getSubnetsCommon(xpath, "subnet4"));
+        } else if (model_ == KEA_DHCP6_SERVER) {
+            return (getSubnetsCommon(xpath, "subnet6"));
         }
-        for (;;) {
-            const string& subnet = getNext(iter);
-            if (subnet.empty()) {
-                break;
-            }
-            result->add(getSubnet(subnet));
-        }
-        return (result);
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting subnets at '" << xpath
                   << "': " << ex.what());
     }
+    isc_throw(NotImplemented,
+              "getSubnets not implemented for the model: " << model_);
+}
+
+ElementPtr
+TranslatorSubnets::getSubnetsCommon(const string& xpath,
+                                    const std::string& subsel) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/" + subsel);
+    if (!iter) {
+        /// Can't happen.
+        isc_throw(Unexpected, "getSubnets: can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& subnet = getNext(iter);
+        if (subnet.empty()) {
+            break;
+        }
+        result->add(getSubnet(subnet));
+    }
+    return (result);
 }
 
 void
