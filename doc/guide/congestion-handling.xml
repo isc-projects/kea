@@ -97,6 +97,11 @@
         false, the server will process packets directly from the socket buffers
         in the main thread (as done in all releases prior Kea 1.5).  Packet
         queuing is disabled by default.
+<note>
+        For Kea 1.5.0-beta2, enable-queue is ENABLED by default.  This was
+        done to expose the feature to more testing. We will finalize the
+        default setting prior to releasing Kea 1.5.0.
+</note>
         </simpara>
       </listitem>
       <listitem>

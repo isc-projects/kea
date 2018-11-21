@@ -137,7 +137,7 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
 
 /// @brief This table defines default values for dhcp-queue-control in DHCPv4.
 const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
-    { "enable-queue",   Element::boolean, "false"},
+    { "enable-queue",   Element::boolean, "true"},
     { "queue-type", Element::string,  "kea-ring4"},
     { "capacity",  Element::integer, "500"}
 };
