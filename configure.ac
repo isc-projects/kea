@@ -1659,6 +1659,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
+                 src/share/yang/Makefile
+                 src/share/yang/modules/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])

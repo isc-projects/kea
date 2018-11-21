@@ -64,7 +64,8 @@ libkea_yang_include_HEADERS = \
 	translator_pool.h \
 	translator_shared_network.h \
 	translator_subnet.h \
-	yang_models.h
+	yang_models.h \
+	yang_revisions.h
 
 EXTRA_DIST = yang.dox
 # Distribute yang modules.

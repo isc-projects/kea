@@ -12,8 +12,6 @@ CLEANFILES = *.gcno *.gcda
 TESTS_ENVIRONMENT = \
 	$(LIBTOOL) --mode=execute $(VALGRIND_COMMAND)
 
-EXTRA_DIST = keatest-module.yang
-
 TESTS =
 if HAVE_GTEST
 TESTS += run_unittests
