@@ -120,6 +120,15 @@ public:
     bool cancel_;
 
 protected:
+    /// @brief Get and display Kea server configuration.
+    ///
+    /// Retrieves current configuration via control socket (unix or http)
+    /// from a running Kea server. If boot-update is set to false, this
+    /// operation is a no-op.
+    ///
+    /// @param service_pair The service name and configuration pair.
+    void keaConfig(const CfgServersMapPair& service_pair);
+
     /// @brief Check essential module availability.
     ///
     /// Emit a fatal error if an essential one (i.e. required in
@@ -135,15 +144,6 @@ protected:
     /// Emit a warning if a module is missing or does not have
     /// the expected revision.
     void checkModules() const;
-
-    /// @brief Get and display Kea server configuration.
-    ///
-    /// Retrieves current configuration via control socket (unix or http)
-    /// from a running Kea server. If boot-update is set to false, this
-    /// operation is a no-op.
-    ///
-    /// @param service_pair The service name and configuration pair.
-    void keaConfig(const CfgServersMapPair& service_pair);
 
     /// @brief Retrieve Kea server configuration from the YANG startup
     ///        datastore and applies it to servers.

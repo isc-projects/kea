@@ -16,6 +16,7 @@
 #include <cc/command_interpreter.h>
 #include <util/threads/thread.h>
 #include <yang/yang_models.h>
+#include <yang/yang_revisions.h>
 #include <yang/translator_config.h>
 #include <yang/testutils/translator_test.h>
 #include <testutils/log_utils.h>
@@ -60,11 +61,14 @@ public:
     /// Export protected methods and fields.
     using NetconfAgent::keaConfig;
     using NetconfAgent::initSysrepo;
+    using NetconfAgent::checkModule;
+    using NetconfAgent::checkModules;
     using NetconfAgent::yangConfig;
     using NetconfAgent::subscribeConfig;
     using NetconfAgent::conn_;
     using NetconfAgent::startup_sess_;
     using NetconfAgent::running_sess_;
+    using NetconfAgent::modules_;
     using NetconfAgent::subscriptions_;
 };
 
@@ -79,50 +83,6 @@ void clearYang(NakedNetconfAgentPtr agent) {
         string xpath = "/kea-dhcp4-server:config";
         EXPECT_NO_THROW(agent->startup_sess_->delete_item(xpath.c_str()));
         EXPECT_NO_THROW(agent->startup_sess_->commit());
-    }
-}
-
-/// @brief Prune JSON configuration.
-///
-/// Typically remove defaults and other extra entries.
-///
-/// @param expected The expected configuration (the model).
-/// @param other The other configuration (the to be pruned).
-/// @return A copy of the other configuration with extra entries in maps
-/// removed so it can be directly compared to expected.
-ConstElementPtr prune(ConstElementPtr expected, ConstElementPtr other) {
-    if (!expected || !other) {
-        isc_throw(BadValue, "prune on null");
-    }
-    if ((expected->getType() == Element::list) &&
-        (other->getType() == Element::list)) {
-        // Handle ordered list.
-        ElementPtr result = Element::createList();
-        for (size_t i = 0; i < other->size(); ++i) {
-            if (i > expected->size()) {
-                // Add extra elements.
-                result->add(copy(other->get(i)));
-            } else {
-                // Add pruned element.
-                result->add(copy(prune(expected->get(i), other->get(i))));
-            }
-        }
-        return (result);
-    } else if ((expected->getType() == Element::map) &&
-               (other->getType() == Element::map)) {
-        // Handle map.
-        ElementPtr result = Element::createMap();
-        for (auto it : expected->mapValue()) {
-            ConstElementPtr item = other->get(it.first);
-            if (item) {
-                // Set pruned item.
-                result->set(it.first, copy(prune(it.second, item)));
-            }
-        }
-        return (result);
-    } else {
-        // Not list or map: just return it.
-        return (other);
     }
 }
 
@@ -362,6 +322,94 @@ TEST_F(NetconfAgentTest, initSysrepo) {
     EXPECT_TRUE(agent_->startup_sess_);
     EXPECT_TRUE(agent_->running_sess_);
     EXPECT_EQ(1, agent_->subscriptions_.size());
+    EXPECT_LE(16, agent_->modules_.size());
+    // No way to check the module_install callback (BTW is ther
+    // an API to install modules? If none only system tests can
+    // do something)...
+}
+
+/// Verifies the checkModule method emits expected errors.
+TEST_F(NetconfAgentLogTest, checkModule) {
+    // keatest-module should not be in YANG_REVISIONS.
+    EXPECT_EQ(0, YANG_REVISIONS.count("keatest-module"));
+    // But kea-dhcp[46]-server must be in.
+    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp4-server"));
+    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
+
+    // kea-dhcp[46]-server should be available.
+    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
+    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
+    EXPECT_TRUE(agent_->checkModule("kea-dhcp4-server"));
+    EXPECT_TRUE(agent_->checkModule("kea-dhcp6-server"));
+
+    // Unknown module should emit a missing error.
+    EXPECT_EQ(0, agent_->modules_.count("does-not-exist"));
+    EXPECT_FALSE(agent_->checkModule("does-not-exist"));
+    addString("METCONF_MODULE_MISSING_ERR Missing essential module "
+              "does-not-exist in sysrepo");
+
+    // Patch the found revision to get a revision error.
+    const string& module = "kea-dhcp4-server";
+    auto it4 = agent_->modules_.find(module);
+    if (it4 != agent_->modules_.end()) {
+        agent_->modules_.erase(it4);
+    }
+    // The module was written far after 20180714...
+    const string& bad_revision = "2018-07-14";
+    agent_->modules_.insert(make_pair(module, bad_revision));
+    EXPECT_FALSE(agent_->checkModule(module));
+    ostringstream msg;
+    msg << "METCONF_MODULE_REVISION_ERR Essential module " << module
+        << " does have the right revision: expected "
+        << YANG_REVISIONS.at(module) << ", got " << bad_revision;
+    addString(msg.str());
+
+    // Enable this for debugging.
+    // logCheckVerbose(true);
+    EXPECT_TRUE(checkFile());
+}
+
+/// Verifies the checkModules method emits expected warnings.
+TEST_F(NetconfAgentLogTest, checkModules) {
+    // kea-dhcp[46]-server must be in YANG_REVISIONS.
+    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp4-server"));
+    ASSERT_EQ(1, YANG_REVISIONS.count("kea-dhcp6-server"));
+
+    // kea-dhcp[46]-server should be available.
+    EXPECT_NO_THROW(agent_->initSysrepo());
+    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp4-server"));
+    EXPECT_EQ(1, agent_->modules_.count("kea-dhcp6-server"));
+
+    // Run checkModules but it will be indirectly check as
+    // emitting nothing.
+    ASSERT_NO_THROW(agent_->checkModules());
+
+    // Remove kea-dhcp6-server.
+    const string& module = "kea-dhcp6-server";
+    auto it6 = agent_->modules_.find(module);
+    if (it6 != agent_->modules_.end()) {
+        agent_->modules_.erase(it6);
+    }
+    ASSERT_NO_THROW(agent_->checkModules());
+    ostringstream mmsg;
+    mmsg << "METCONF_MODULE_MISSING_WARN Missing module " << module
+         << " in sysrepo";
+    addString(mmsg.str());
+
+    // Add it back with a bad revision.
+    const string& bad_revision = "2018-07-14";
+    agent_->modules_.insert(make_pair(module, bad_revision));
+    ASSERT_NO_THROW(agent_->checkModules());
+    ostringstream rmsg;
+    rmsg << "METCONF_MODULE_REVISION_WARN Module " << module
+         << " does have the right revision: expected "
+         << YANG_REVISIONS.at(module) << ", got " << bad_revision;
+    addString(rmsg.str());
+
+    // Enable this for debugging.
+    // logCheckVerbose(true);
+    EXPECT_TRUE(checkFile());
 }
 
 /// @brief Default change callback (print changes and return OK).
@@ -597,10 +645,9 @@ TEST_F(NetconfAgentTest, keaConfig) {
         "}";
     ConstElementPtr expected;
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    ConstElementPtr pruned = prune(expected, request);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*request));
     // Alternative showing more for debugging...
-    // EXPECT_EQ(prettyPrint(expected), prettyPrint(pruned));
+    // EXPECT_EQ(prettyPrint(expected), prettyPrint(request));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
@@ -614,8 +661,7 @@ TEST_F(NetconfAgentTest, keaConfig) {
         "    }\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, response);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*response));
 }
 
 /// Verifies the yangConfig method works as expected: apply YANG config
@@ -714,8 +760,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "}";
     ConstElementPtr expected;
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    ConstElementPtr pruned = prune(expected, request);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*request));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
@@ -726,8 +771,7 @@ TEST_F(NetconfAgentTest, yangConfig) {
         "\"result\": 0\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, response);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*response));
 }
 
 /// Verifies the subscribeConfig method works as expected.
@@ -897,8 +941,7 @@ TEST_F(NetconfAgentTest, update) {
         "}";
     ConstElementPtr expected;
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    ConstElementPtr pruned = prune(expected, request);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*request));
 
     // Check response.
     ASSERT_EQ(1, responses_.size());
@@ -909,8 +952,7 @@ TEST_F(NetconfAgentTest, update) {
         "\"result\": 0\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, response);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*response));
 }
 
 /// Verifies the validate method works as expected: test new YANG configuration
@@ -1034,8 +1076,7 @@ TEST_F(NetconfAgentTest, validate) {
         "}";
     ConstElementPtr expected;
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    ConstElementPtr pruned = prune(expected, request);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*request));
 
     request_str = requests_[1];
     ASSERT_NO_THROW(request = Element::fromJSON(request_str));
@@ -1057,8 +1098,7 @@ TEST_F(NetconfAgentTest, validate) {
         "  }\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, request);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*request));
 
     // Check responses.
     ASSERT_EQ(2, responses_.size());
@@ -1069,8 +1109,7 @@ TEST_F(NetconfAgentTest, validate) {
         "\"result\": 0\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, response);
-    EXPECT_TRUE(expected->equals(*pruned));
+    EXPECT_TRUE(expected->equals(*response));
 
     response_str = responses_[1];
     ASSERT_NO_THROW(response = Element::fromJSON(response_str));
@@ -1078,9 +1117,7 @@ TEST_F(NetconfAgentTest, validate) {
         "\"result\": 0\n"
         "}";
     ASSERT_NO_THROW(expected = Element::fromJSON(expected_str));
-    pruned = prune(expected, response);
-    EXPECT_TRUE(expected->equals(*pruned));
-
+    EXPECT_TRUE(expected->equals(*response));
 }
 
 /// Verifies what happens when the validate method returns an error.
