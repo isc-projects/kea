@@ -1023,7 +1023,7 @@ done in dependency order and reverse dependency order accordingly.
     &lt;subnet&gt;2001:db8:1::/64&lt;/subnet&gt;
   &lt;/subnet6&gt;
   &lt;subnet6&gt;
-    &lt;id&gt;1&lt;/id&gt;
+    &lt;id&gt;2&lt;/id&gt;
     &lt;pool&gt;
       &lt;start-address&gt;2001:db8:2::&lt;/start-address&gt;
       &lt;end-address&gt;2001:db8:2::ffff&lt;/end-address&gt;
