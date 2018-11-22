@@ -638,7 +638,10 @@
         // DHCP queue control parameters.
         "dhcp-queue-control":
         {
-            // Queue type is mandatory.
+            // Enable queue is mandatory.
+            "enable-queue": true,
+
+            // Queue type was mandatory.
             "queue-type": "kea-ring6"
         }
     },
