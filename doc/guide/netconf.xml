@@ -351,7 +351,8 @@ done in dependency order and reverse dependency order accordingly.
       monitor any configuration changes as they appear in the sysrepo. Such
       changes can be done using <command>sysrepocfg</command> tool or remotely
       using any NETCONF client. For details, please see Sysrepo
-      documentation. Those tools can be used to modify YANG configurations in
+      documentation or <xref linkend="operation-example"/>.
+      Those tools can be used to modify YANG configurations in
       the running datastore. Note committed configurations are only updated in
       the running datastore: to keep them between server reboots they must be
       copied to the startup datastore.
@@ -851,34 +852,34 @@ done in dependency order and reverse dependency order accordingly.
     <section xml:id="operation-example-errors">
       <title>Error handling in Netconf Operation Example</title>
       <para>
-	There are 4 ways for a configuration to be bad:
+        There are 4 ways for a configuration to be bad:
         <orderedlist>
-	  <listitem>
-	    <simpara>
+          <listitem>
+            <simpara>
               The configuration does not comply with the YANG schema.
             </simpara>
-	  </listitem>
-	    <simpara>
-	      The configuration can not be translated from YANG to
+          </listitem>
+            <simpara>
+              The configuration can not be translated from YANG to
               the Kea JSON.
             </simpara>
-	  <listitem>
-	    <simpara>
-	      The configuration is rejected by the Kea server.
-	    </simpara>
-	  </listitem>
-	  <listitem>
-	    <simpara>
-	      The configuration was validated by the Kea server but
+          <listitem>
+            <simpara>
+              The configuration is rejected by the Kea server.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              The configuration was validated by the Kea server but
               can not be applied.
-	    </simpara>
-	  </listitem>
-	</orderedlist>
+            </simpara>
+          </listitem>
+        </orderedlist>
       </para>
 
       <para>
-	In the first case the configuration in
-	the <filename>BAD-schema.xml</filename> file:
+        In the first case the configuration in
+        the <filename>BAD-schema.xml</filename> file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
   &lt;subnet4&gt;
@@ -933,8 +934,8 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-	In the third case the configuration is presented to the
-	Kea DHCPv6 server and fails to validate as in the
+        In the third case the configuration is presented to the
+        Kea DHCPv6 server and fails to validate as in the
         <filename>BAD-config.xml</filename> file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
@@ -961,15 +962,18 @@ done in dependency order and reverse dependency order accordingly.
       <para>
         In the last case the problem is detected too late and
         the change must be reverted, for instance using the startup
-        datastore as a backup.
+        datastore as a backup, or with other words use the
+	<command>sysrepocfg</command> <option>--permanent</option> /
+        <option>-p</option> option (or simlar feature of NETCONF clients)
+        with care.
       </para>
     </section>
 
     <section xml:id="operation-example-2pools">
       <title>Netconf Operation Example with Two Pools</title>
       <para>
-	This example adds a second pool to the initial (i.e. startup)
-	configuration in the <filename>twopools.xml</filename> file:
+        This example adds a second pool to the initial (i.e. startup)
+        configuration in the <filename>twopools.xml</filename> file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
   &lt;subnet6&gt;
@@ -1082,7 +1086,7 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-	The corresponding Kea configuration in JSON is:
+        The corresponding Kea configuration in JSON is:
 <screen>
 {
   "Dhcp6": {
@@ -1109,19 +1113,33 @@ done in dependency order and reverse dependency order accordingly.
     "loggers": [
       {
         "name": "kea-dhcp6",
-	"output_options": [
-	  {
-	    "output": "stderr"
-	  }
-	],
-	"severity": "DEBUG",
-	"debuglevel": 99
+        "output_options": [
+          {
+            "output": "stderr"
+          }
+        ],
+        "severity": "DEBUG",
+        "debuglevel": 99
       }
    ]
  }
 }
 </screen>
       </para>
+
+      <para>
+        To finish one of the previous examples can be replayed using
+        <command>sysrepocfg</command> in edit mode by:
+<screen>
+ # sysrepocfg -d running -f xml -e <userinput>vi</userinput> kea-dhcp6-server
+</screen>
+        or of course using a netconf client like
+        <command>netopeer2-cli</command> from the
+        <uri xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="https://github.com/CESNET/Netopeer2">
+        Netopeer2</uri> NETCONF Toolset.
+      </para>
+
     </section>
   </section>
 
