@@ -29,7 +29,7 @@ libkea_yang_la_SOURCES += translator_subnet.cc translator_subnet.h
 libkea_yang_la_SOURCES += translator_shared_network.cc
 libkea_yang_la_SOURCES += translator_shared_network.h
 libkea_yang_la_SOURCES += translator_config.cc translator_config.h
-libkea_yang_la_SOURCES += yang_models.h
+libkea_yang_la_SOURCES += yang_models.h yang_revisions.h
 
 libkea_yang_la_LIBADD =  $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
