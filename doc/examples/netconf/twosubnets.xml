@@ -9,7 +9,7 @@
     <subnet>2001:db8:1::/64</subnet>
   </subnet6>
   <subnet6>
-    <id>1</id>
+    <id>2</id>
     <pool>
       <start-address>2001:db8:2::</start-address>
       <end-address>2001:db8:2::ffff</end-address>
