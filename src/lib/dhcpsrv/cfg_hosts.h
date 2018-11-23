@@ -241,6 +241,13 @@ public:
     /// @param addr specified address.
     virtual bool del(const SubnetID& subnet_id, const asiolink::IOAddress& addr);
 
+    /// @brief Attempts to delete all hosts for a given IPv4 subnet.
+    ///
+    /// @param subnet_id Identifier of the subnet for which reservation should
+    /// be deleted.
+    /// @return Number of deleted hosts.
+    virtual size_t delAll4(const SubnetID& subnet_id);
+
     /// @brief Attempts to delete a host by (subnet4-id, identifier, identifier-type)
     ///
     /// This method supports v4 only.
@@ -255,6 +262,13 @@ public:
     virtual bool del4(const SubnetID& subnet_id,
                       const Host::IdentifierType& identifier_type,
                       const uint8_t* identifier_begin, const size_t identifier_len);
+
+    /// @brief Attempts to delete all hosts for a given IPv6 subnet.
+    ///
+    /// @param subnet_id Identifier of the subnet for which reservation should
+    /// be deleted.
+    /// @return Number of deleted hosts.
+    virtual size_t delAll6(const SubnetID& subnet_id);
 
     /// @brief Attempts to delete a host by (subnet6-id, identifier, identifier-type)
     ///
