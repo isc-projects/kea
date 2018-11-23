@@ -235,6 +235,54 @@ TEST_F(CfgHostsTest, getAll4ByAddress) {
     EXPECT_EQ(25, *subnet_ids.rbegin());
 }
 
+// This test checks that all reservations for the specified IPv4 subnet can
+// be deleted.
+TEST_F(CfgHostsTest, deleteAll4) {
+    CfgHosts cfg;
+    // Add hosts.
+    for (unsigned i = 0; i < 25; ++i) {
+        // Hosts will differ by hostname. It is easier than differentiating by
+        // IPv4 address because if they all have zero IPv4 address it is
+        // easier to retrieve all of them to check the host counts.
+        std::ostringstream s;
+        s << "hostname" << i;
+
+        // Add host identified by the HW address.
+        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                 "hw-address",
+                                 SubnetID(1 + i % 2), SUBNET_ID_UNUSED,
+                                 IOAddress::IPV4_ZERO_ADDRESS(),
+                                 "hostname")));
+    }
+
+    // Get all inserted hosts.
+    HostCollection hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
+    std::set<uint32_t> subnet_ids;
+    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
+         ++host) {
+        subnet_ids.insert((*host)->getIPv4SubnetID());
+    }
+    // Make sure there are two unique subnets: 1 and 2.
+    ASSERT_EQ(2, subnet_ids.size());
+    EXPECT_EQ(1, *subnet_ids.begin());
+    EXPECT_EQ(2, *subnet_ids.rbegin());
+
+    // Delete all hosts for subnet id 2. There should be 12 of them.
+    EXPECT_EQ(12, cfg.delAll4(SubnetID(2)));
+
+    // Gather the host counts again.
+    subnet_ids.clear();
+    hosts = cfg.getAll4(IOAddress::IPV4_ZERO_ADDRESS());
+    for (HostCollection::const_iterator host = hosts.begin(); host != hosts.end();
+         ++host) {
+        subnet_ids.insert((*host)->getIPv4SubnetID());
+    }
+    // We should only have hosts for one subnet and it should be the subnet
+    // with ID of 1.
+    ASSERT_EQ(1, subnet_ids.size());
+    EXPECT_EQ(1, *subnet_ids.begin());
+}
+
 // This test checks that the reservations can be retrieved for the particular
 // host connected to the specific IPv4 subnet (by subnet id).
 TEST_F(CfgHostsTest, get4) {
@@ -406,6 +454,53 @@ TEST_F(CfgHostsTest, get6) {
         ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
         EXPECT_EQ(increase(IOAddress("2001:db8:2::1"), i),
                   reservations.first->second.getPrefix());
+    }
+}
+
+// This test checks that all reservations for the specified IPv6 subnet can
+// be deleted.
+TEST_F(CfgHostsTest, deleteAll6) {
+    CfgHosts cfg;
+    // Add hosts.
+    for (unsigned i = 0; i < 25; ++i) {
+        // Add host identified by HW address. The subnet for which we're
+        // adding the host has id of 1 for even values of i and 2 for
+        // odd values of i.
+        HostPtr host = HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                        "hw-address",
+                                        SubnetID(10), SubnetID(1 + i % 2),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i)));
+        cfg.add(host);
+    }
+
+    // Delete all hosts for subnet id. There should be 13 of them.
+    EXPECT_EQ(13, cfg.delAll6(SubnetID(1)));
+
+    for (unsigned i = 0; i < 25; ++i) {
+        // Calculate subnet id for the given i.
+        SubnetID subnet_id = 1 + i % 2;
+
+        // Try to retrieve host by HW address.
+        HostPtr host = cfg.get6(subnet_id, Host::IDENT_HWADDR,
+                                &hwaddrs_[i]->hwaddr_[0],
+                                hwaddrs_[i]->hwaddr_.size());
+        // The host should exist for subnet id of 2.
+        if (subnet_id == 2) {
+            ASSERT_TRUE(host);
+            EXPECT_EQ(subnet_id, host->getIPv6SubnetID());
+            IPv6ResrvRange reservations =
+                host->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+            ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
+            EXPECT_EQ(increase(IOAddress("2001:db8:1::1"), i),
+                      reservations.first->second.getPrefix());
+
+        } else {
+            // All hosts for subnet id 2 should be gone.
+            EXPECT_FALSE(host);
+        }
     }
 }
 

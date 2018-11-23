@@ -67,6 +67,20 @@ typedef boost::multi_index_container<
             // Index using values returned by the @c Host::getIPv4Reservation.
             boost::multi_index::const_mem_fun<Host, const asiolink::IOAddress&,
                                                &Host::getIPv4Reservation>
+        >,
+
+        // Third index is used to search for the host using IPv4 subnet id
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getIPv4SubnetID
+            boost::multi_index::const_mem_fun<Host, SubnetID,
+                                              &Host::getIPv4SubnetID>
+        >,
+
+        // Forth index is used to search for the host using IPv6 subnet id
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getIPv6SubnetID
+            boost::multi_index::const_mem_fun<Host, SubnetID,
+                                              &Host::getIPv6SubnetID>
         >
     >
 > HostContainer;
@@ -90,6 +104,26 @@ typedef HostContainer::nth_index<1>::type HostContainerIndex1;
 /// @brief Results range returned using the @c HostContainerIndex1.
 typedef std::pair<HostContainerIndex1::iterator,
                   HostContainerIndex1::iterator> HostContainerIndex1Range;
+
+/// @brief Third index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using a
+/// IPv4 subnet id.
+typedef HostContainer::nth_index<2>::type HostContainerIndex2;
+
+/// @brief Results range returned using the @c HostContainerIndex2.
+typedef std::pair<HostContainerIndex2::iterator,
+                  HostContainerIndex2::iterator> HostContainerIndex2Range;
+
+/// @brief Forth index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using a
+/// IPv6 subnet id.
+typedef HostContainer::nth_index<3>::type HostContainerIndex3;
+
+/// @brief Results range returned using the @c HostContainerIndex3.
+typedef std::pair<HostContainerIndex3::iterator,
+                  HostContainerIndex3::iterator> HostContainerIndex3Range;
 
 /// @brief Defines one entry for the Host Container for v6 hosts
 ///
@@ -167,6 +201,13 @@ typedef boost::multi_index_container<
                     &HostResrv6Tuple::getKey
                 >
            >
+        >,
+
+        // Third index is used to search for the host using IPv6 subnet id
+        boost::multi_index::ordered_non_unique<
+            // Index using values returned by the @c Host::getIPv6SubnetID
+            boost::multi_index::member<HostResrv6Tuple, const SubnetID,
+                                       &HostResrv6Tuple::subnet_id_>
         >
     >
 > HostContainer6;
@@ -190,6 +231,16 @@ typedef HostContainer6::nth_index<1>::type HostContainer6Index1;
 /// @brief Results range returned using the @c HostContainer6Index1.
 typedef std::pair<HostContainer6Index1::iterator,
                   HostContainer6Index1::iterator> HostContainer6Index1Range;
+
+/// @brief Third index type in the @c HostContainer6.
+///
+/// This index allows for searching for @c Host objects using a
+/// IPv6 subnet id.
+typedef HostContainer6::nth_index<2>::type HostContainer6Index2;
+
+/// @brief Results range returned using the @c HostContainer6Index2.
+typedef std::pair<HostContainer6Index2::iterator,
+                  HostContainer6Index2::iterator> HostContainer6Index2Range;
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
