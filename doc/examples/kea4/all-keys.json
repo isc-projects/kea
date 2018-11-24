@@ -661,7 +661,8 @@
         // Global valid lifetime value.
         "valid-lifetime": 6000,
 
-        // Configuration control.
+        // Configuration control (currently not used, i.e. this syntax
+        // is already defined but corresponding feature is not implemented).
         "config-control":
         {
             // Only configuration databases entry is defined.
