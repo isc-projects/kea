@@ -76,6 +76,18 @@
     </para>
 
     <para>
+    In YANG configurations and state data are described in the YANG syntax
+    in module files named:
+<userinput>"module-name"</userinput><option>[@<userinput>"revision"</userinput>]</option>.yang
+    </para>
+
+    <para>
+    The revision part is optional and has YYYY-MM-DD format. An alternate
+    XML syntax YIN is defined but less user friendly. Top level modules
+    are named in kea models (short version of schema models).
+    </para>
+
+    <para>
       List currently installed YANG modules:
 <screen>
   $ sysrepoctl -l
@@ -174,7 +186,17 @@ ietf-dhcpv6-server         | 2018-03-04 | Installed   | root:root           | 66
 ietf-dhcpv6-options        | 2018-03-04 | Imported    |                     |             |                               |
 ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |             |                               |
 </screen>
-</para>
+    </para>
+
+    <para>
+To install a new revision of a module it must be first uninstalled, e.g. by:
+<screen>
+sudo sysrepoctl -u -m kea-dhcp4-server
+</screen>
+If the module is used (i.e. imported) by other modules it can be unstalled
+only after modules using it, i.e. installation and uninstallation must be
+done in dependency order and reverse dependency order.
+    </para>
 
   </section>
 
