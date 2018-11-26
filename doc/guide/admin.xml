@@ -1,16 +1,14 @@
-+++
-date = "2018-11-26T16:42:26+01:00"
-title = "Kea Database Administration"
-draft = false
-weight = 160
-description = "Databases and Database Version Numbers"
-bref="Using the optional database backend feature of Kea."
-toc = true
+<!--
+ - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
 
-markdown = "xml"
-
-+++
-<title>Kea Database Administration</title>
+<!-- Converted by db4-upgrade version 1.1 -->
+<chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="admin">
+  <title>Kea Database Administration</title>
 
   <section xml:id="kea-database-version">
     <title>Databases and Database Version Numbers</title>
