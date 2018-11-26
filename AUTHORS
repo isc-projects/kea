@@ -13,7 +13,8 @@ Primary developers:
  - Thomas Markwalder (DDNS, user_chk, global host reservations)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
- - Francis Dupont (crypto, perfdhcp, control agent, netconf)
+ - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
+                   radius, netconf)
  - Shawn Routhier (lease file cleanup)
  - Michal Nowikowski (testing)
 
