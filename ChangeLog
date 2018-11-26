@@ -1,3 +1,9 @@
+1485.	[func]		fdupont
+	Simplified and updated Kea YANG models. For instance the list of
+	loggers was moved from the removed logging container to global
+	config parameters.
+	(Gitlab #204, !97, git 1de6c2987ec9067b7c1baa577c6dcd6ddd1b30fb)
+
 1484.	[bug]		marcin
 	Resolved issues with MySQL backend failing to insert a lease
 	to the MariaDB database on OpenSUSE. This fix may also
