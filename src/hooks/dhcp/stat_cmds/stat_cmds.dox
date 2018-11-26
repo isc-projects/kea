@@ -49,7 +49,7 @@ As with other hooks, this one keeps its code in a separate namespace which
 corresponds to the file name of the library: isc::stat_cmds.
 
 For background on the design and design choices please refer to: <a
-href="http://oldkea.isc.org/wiki/SharedLeaseStorageStats">Shared Lease Stats Design</a>
+href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/shared-lease-storage-statistics">Shared Lease Stats Design</a>
 
 @section stat_cmdsCode Stat Commands Code Overview
 
