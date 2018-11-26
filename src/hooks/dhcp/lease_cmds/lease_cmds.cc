@@ -961,7 +961,7 @@ LeaseCmdsImpl::lease6WipeHandler(CalloutHandle& handle) {
         /// - of specific type (v6)
         /// - from specific shared network
         /// - from specific pool
-        /// see https://kea.isc.org/ticket/5543#comment:6 for background.
+        /// see https://oldkea.isc.org/ticket/5543#comment:6 for background.
 
         // The subnet-id parameter is now optional.
         if (cmd_args_ && cmd_args_->contains("subnet-id")) {

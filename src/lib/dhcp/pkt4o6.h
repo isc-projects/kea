@@ -24,7 +24,9 @@ namespace dhcp {
 ///
 /// This is an implementation of the DHCPv4-query/response DHCPv6 messages
 /// defined in RFC 7341 (http://ietf.org/rfc/rfc7341.txt).
-/// See also http://oldkea.isc.org/wiki/Dhcp4o6Design for design discussions.
+/// See also
+/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design
+/// for design discussions.
 class Pkt4o6 : public Pkt4 {
 public:
 

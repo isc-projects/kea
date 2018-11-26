@@ -156,7 +156,8 @@ TEST_F(ObservationTest, timers) {
 }
 
 // Checks whether an integer statistic can generate proper JSON structures.
-// See http://oldkea.isc.org/wiki/StatsDesign for details.
+// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+/// for details.
 TEST_F(ObservationTest, integerToJSON) {
 
     a.setValue(static_cast<int64_t>(1234));
@@ -169,7 +170,9 @@ TEST_F(ObservationTest, integerToJSON) {
 }
 
 // Checks whether a floating point statistic can generate proper JSON
-// structures. See http://oldkea.isc.org/wiki/StatsDesign for details.
+// structures. See
+/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+/// for details.
 TEST_F(ObservationTest, floatToJSON) {
 
     // Let's use a value that converts easily to floating point.
@@ -184,7 +187,8 @@ TEST_F(ObservationTest, floatToJSON) {
 }
 
 // Checks whether a time duration statistic can generate proper JSON structures.
-// See http://oldkea.isc.org/wiki/StatsDesign for details.
+// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design for
+// details.
 TEST_F(ObservationTest, durationToJSON) {
 
     // 1 hour 2 minutes 3 seconds and 4 milliseconds
@@ -198,7 +202,8 @@ TEST_F(ObservationTest, durationToJSON) {
 }
 
 // Checks whether a string statistic can generate proper JSON structures.
-// See http://oldkea.isc.org/wiki/StatsDesign for details.
+// See https://gitlab.isc.org/isc-projects/kea/wikis/designs/Stats-design
+// for details.
 TEST_F(ObservationTest, stringToJSON) {
 
     //

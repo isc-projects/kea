@@ -547,8 +547,7 @@ Debian and Ubuntu:
           When unit tests are built with Kea (the --with-gtest configuration option is specified),
           the databases must be manually pre-configured for the unit tests to run.
           The details of this configuration can be found in the
-          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
-          Guide</link>.
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
         </simpara>
       </note>
 

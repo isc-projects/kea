@@ -30,7 +30,7 @@ implementation and, therefore, this documentation purposely avoids using
 the word "Failover" in the context of this library.
 
 The HA feature design can be found at
-<a href="https://kea.isc.org/wiki/HADesign">Kea HA Design page</a>.
+<a href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/High-Availability-Design">Kea HA Design page</a>.
 
 @section haWhyHookLibrary Why Hook Library?
 
