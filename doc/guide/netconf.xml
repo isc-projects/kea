@@ -194,8 +194,8 @@ To install a new revision of a module it must be first uninstalled, e.g. by:
 sudo sysrepoctl -u -m kea-dhcp4-server
 </screen>
 If the module is used (i.e. imported) by other modules it can be unstalled
-only after modules using it, i.e. installation and uninstallation must be
-done in dependency order and reverse dependency order.
+only after modules using it. Installation and uninstallation must be
+done in dependency order and reverse dependency order accordingly.
     </para>
 
   </section>
