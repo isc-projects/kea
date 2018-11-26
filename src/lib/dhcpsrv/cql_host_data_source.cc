@@ -2049,7 +2049,7 @@ bool
 CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, address));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2058,7 +2058,7 @@ CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2067,7 +2067,7 @@ CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 ConstHostCollection
