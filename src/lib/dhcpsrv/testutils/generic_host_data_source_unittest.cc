@@ -1364,6 +1364,12 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del(subnet1, IOAddress("192.0.2.1")));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById4() {
@@ -1399,6 +1405,14 @@ void GenericHostDataSourceTest::testDeleteById4() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 // Test checks when a IPv4 host with options is deleted that the options are
@@ -1446,6 +1460,14 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
 
     // Check the options are indeed gone.
     EXPECT_EQ(0, countDBOptions4());
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById6() {
@@ -1482,6 +1504,14 @@ void GenericHostDataSourceTest::testDeleteById6() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById6Options() {
@@ -1530,6 +1560,14 @@ void GenericHostDataSourceTest::testDeleteById6Options() {
 
     // Check the options are indeed gone.
     EXPECT_EQ(0, countDBReservations6());
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void
