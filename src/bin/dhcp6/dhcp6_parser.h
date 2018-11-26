@@ -1717,8 +1717,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1025,     ///< Last index in yytable_.
-      yynnts_ = 390,  ///< Number of nonterminal symbols.
+      yylast_ = 1020,     ///< Last index in yytable_.
+      yynnts_ = 389,  ///< Number of nonterminal symbols.
       yyfinal_ = 32, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,

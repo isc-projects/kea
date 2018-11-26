@@ -1693,8 +1693,8 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1005,     ///< Last index in yytable_.
-      yynnts_ = 374,  ///< Number of nonterminal symbols.
+      yylast_ = 1000,     ///< Last index in yytable_.
+      yynnts_ = 373,  ///< Number of nonterminal symbols.
       yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
