@@ -182,7 +182,7 @@
 
           <listitem>
             <simpara>
-              <command>kea-netconf</command> ?~@~T
+              <command>kea-netconf</command> -
               Kea netconf is an agent that provides a YANG/NETCONF interface
               for the Kea environment.
             </simpara>
