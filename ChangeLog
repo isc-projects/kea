@@ -1,3 +1,7 @@
+1488.	[doc]		marcin
+	Added stat_cmds to the list of available hooks libraries.
+	(Gitlab #85,!142, git 08615372b4f869fe61b13559efa33d0d9794d79b)
+
 1487.	[doc]		marcin
 	Corrected broken links and various typos in Kea documentation
 	which had been identified during Kea 1.5.0 beta1 release
