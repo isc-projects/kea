@@ -522,16 +522,17 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
                 </simplelist>
               </entry>
               <entry>
-                The Statistics Commands library provides additional commmands for
-                retrieving accurate DHCP lease statistics for the Kea DHCP servers
-                instances sharing the same lease database. This setup is common
-                in deployments where DHCP service redundancy is required and shared
-                lease database is used to avoid lease data replication between the
-                DHCP servers. Kea 1.4.0 release introduced the feature which allows
-                for tracking lease allocations on the database level, thus making
-                statistics accessible to all connected DHCP servers. The Statistics
-                Commands hooks library utilizes this feature and returns lease
-                statistics for all subnets respectively.
+                The Statistics Commands library provides additional commmands
+                for retrieving accurate DHCP lease statistics for Kea DHCP
+                servers that share the same lease database. This setup is
+                common in deployments where DHCP service redundancy is required
+                and a shared lease database is used to avoid lease data
+                replication between the DHCP servers. A feature was introduced
+                in Kea 1.4.0 that allows tracking lease allocations within the
+                lease database, thus making the statistics accessible to all
+                connected DHCP servers. The Statistics Commands hooks library
+                utilizes this feature and returns lease statistics for all
+                subnets respectively.
               </entry>
             </row>
             <row>
