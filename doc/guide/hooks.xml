@@ -512,6 +512,29 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               </entry>
             </row>
             <row>
+              <entry>Statistics Commands</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>
+                The Statistics Commands library provides additional commmands for
+                retrieving accurate DHCP lease statistics for the Kea DHCP servers
+                instances sharing the same lease database. This setup is common
+                in deployments where DHCP service redundancy is required and shared
+                lease database is used to avoid lease data replication between the
+                DHCP servers. Kea 1.4.0 release introduced the feature which allows
+                for tracking lease allocations on the database level, thus making
+                statistics accessible to all connected DHCP servers. The Statistics
+                Commands hooks library utilizes this feature and returns lease
+                statistics for all subnets respectively.
+              </entry>
+            </row>
+            <row>
               <entry>Radius</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
@@ -2543,11 +2566,11 @@ both the command and the response.
     <!-- section high-availability-library -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
 
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-stat-cmds.xml"/>
+
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-stat-cmds.xml"/>
 
   </section>
 
