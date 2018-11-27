@@ -268,6 +268,105 @@ TEST_F(ExpressionParserTest, nameEmpty) {
                  DhcpConfigError);
 }
 
+// Verifies that the function checking if specified client class parameters
+// are supported does not throw if all specified DHCPv4 client class
+// parameters are recognized.
+TEST_F(ClientClassDefParserTest, checkAllSupported4) {
+    std::string cfg_text =
+        "{\n"
+        "    \"name\": \"foo\","
+        "    \"test\": \"member('ALL')\","
+        "    \"option-def\": [ ],\n"
+        "    \"option-data\": [ ],\n"
+        "    \"user-context\": { },\n"
+        "    \"only-if-required\": false,\n"
+        "    \"next-server\": \"192.0.2.3\",\n"
+        "    \"server-hostname\": \"myhost\",\n"
+        "    \"boot-file-name\": \"efi\""
+        "}\n";
+
+    ElementPtr config_element = Element::fromJSON(cfg_text);
+
+    ClientClassDefParser parser;
+    EXPECT_NO_THROW(parser.checkParametersSupported(config_element, AF_INET));
+}
+
+// Verifies that the function checking if specified client class parameters
+// are supported does not throw if all specified DHCPv6 client class
+// parameters are recognized.
+TEST_F(ClientClassDefParserTest, checkAllSupported6) {
+    std::string cfg_text =
+        "{\n"
+        "    \"name\": \"foo\","
+        "    \"test\": \"member('ALL')\","
+        "    \"option-def\": [ ],\n"
+        "    \"option-data\": [ ],\n"
+        "    \"user-context\": { },\n"
+        "    \"only-if-required\": false\n"
+        "}\n";
+
+    ElementPtr config_element = Element::fromJSON(cfg_text);
+
+    ClientClassDefParser parser;
+    EXPECT_NO_THROW(parser.checkParametersSupported(config_element, AF_INET6));
+}
+
+// Verifies that the function checking if specified client class parameters
+// are supported throws if DHCPv4 specific parameters are specified for the
+// DHCPv6 client class.
+TEST_F(ClientClassDefParserTest, checkParams4Unsupported6) {
+    std::string cfg_text =
+        "{\n"
+        "    \"name\": \"foo\","
+        "    \"test\": \"member('ALL')\","
+        "    \"option-def\": [ ],\n"
+        "    \"option-data\": [ ],\n"
+        "    \"user-context\": { },\n"
+        "    \"only-if-required\": false,\n"
+        "    \"next-server\": \"192.0.2.3\",\n"
+        "    \"server-hostname\": \"myhost\",\n"
+        "    \"boot-file-name\": \"efi\""
+        "}\n";
+
+    ElementPtr config_element = Element::fromJSON(cfg_text);
+
+    ClientClassDefParser parser;
+    EXPECT_THROW(parser.checkParametersSupported(config_element, AF_INET6),
+                 DhcpConfigError);
+}
+
+// Verifies that the function checking if specified DHCPv4 client class
+// parameters are supported throws if one of the parameters is not recognized.
+TEST_F(ClientClassDefParserTest, checkParams4Unsupported) {
+    std::string cfg_text =
+        "{\n"
+        "    \"name\": \"foo\","
+        "    \"unsupported\": \"member('ALL')\""
+        "}\n";
+
+    ElementPtr config_element = Element::fromJSON(cfg_text);
+
+    ClientClassDefParser parser;
+    EXPECT_THROW(parser.checkParametersSupported(config_element, AF_INET),
+                 DhcpConfigError);
+}
+
+// Verifies that the function checking if specified DHCPv6 client class
+// parameters are supported throws if one of the parameters is not recognized.
+TEST_F(ClientClassDefParserTest, checkParams6Unsupported) {
+    std::string cfg_text =
+        "{\n"
+        "    \"name\": \"foo\","
+        "    \"unsupported\": \"member('ALL')\""
+        "}\n";
+
+    ElementPtr config_element = Element::fromJSON(cfg_text);
+
+    ClientClassDefParser parser;
+    EXPECT_THROW(parser.checkParametersSupported(config_element, AF_INET6),
+                 DhcpConfigError);
+}
+
 // Verifies you can create a class with only a name
 // Whether that's useful or not, remains to be seen.
 // For now the class allows it.
