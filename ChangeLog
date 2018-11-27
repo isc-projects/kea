@@ -1,3 +1,7 @@
+1489.	[doc]		fdupont
+	Added examples of global host reservations.
+	(Gitlab #136, !143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
+
 1488.	[doc]		marcin
 	Added stat_cmds to the list of available hooks libraries.
 	(Gitlab #85,!142, git 08615372b4f869fe61b13559efa33d0d9794d79b)
