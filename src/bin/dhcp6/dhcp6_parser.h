@@ -65,8 +65,14 @@ using namespace std;
 # include <string>
 # include <vector>
 
+#if defined __cplusplus
+# define YY_CPLUSPLUS __cplusplus
+#else
+# define YY_CPLUSPLUS 199711L
+#endif
+
 // Support move semantics when possible.
-#if defined __cplusplus && 201103L <= __cplusplus
+#if 201103L <= YY_CPLUSPLUS
 # define YY_MOVE           std::move
 # define YY_MOVE_OR_COPY   move
 # define YY_MOVE_REF(Type) Type&&
@@ -158,7 +164,7 @@ using namespace std;
 
 #line 14 "dhcp6_parser.yy" // lalr1.cc:404
 namespace isc { namespace dhcp {
-#line 162 "dhcp6_parser.h" // lalr1.cc:404
+#line 168 "dhcp6_parser.h" // lalr1.cc:404
 
   /// A stack with random access from its top.
   template <typename T, typename S = std::vector<T> >
@@ -324,7 +330,7 @@ namespace isc { namespace dhcp {
       return *new (yyas_<T> ()) T ();
     }
 
-# if defined __cplusplus && 201103L <= __cplusplus
+# if 201103L <= YY_CPLUSPLUS
     /// Instantiate a \a T in here from \a t.
     template <typename T, typename U>
     T&
@@ -412,7 +418,7 @@ namespace isc { namespace dhcp {
     void
     move (self_type& other)
     {
-# if defined __cplusplus && 201103L <= __cplusplus
+# if 201103L <= YY_CPLUSPLUS
       emplace<T> (std::move (other.as<T> ()));
 # else
       emplace<T> ();
@@ -421,7 +427,7 @@ namespace isc { namespace dhcp {
       other.destroy<T> ();
     }
 
-# if defined __cplusplus && 201103L <= __cplusplus
+# if 201103L <= YY_CPLUSPLUS
     /// Move the content of \a other to this.
     template <typename T>
     void
@@ -742,12 +748,36 @@ namespace isc { namespace dhcp {
 
 
       /// Constructor for valueless symbols, and symbols from each type.
-      basic_symbol (typename Base::kind_type t, YY_RVREF (location_type) l);
-      basic_symbol (typename Base::kind_type t, YY_RVREF (ElementPtr) v, YY_RVREF (location_type) l);
-      basic_symbol (typename Base::kind_type t, YY_RVREF (bool) v, YY_RVREF (location_type) l);
-      basic_symbol (typename Base::kind_type t, YY_RVREF (double) v, YY_RVREF (location_type) l);
-      basic_symbol (typename Base::kind_type t, YY_RVREF (int64_t) v, YY_RVREF (location_type) l);
-      basic_symbol (typename Base::kind_type t, YY_RVREF (std::string) v, YY_RVREF (location_type) l);
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, ElementPtr&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, double&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const double& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, int64_t&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
+#endif
 
 
       /// Destroy the symbol.
@@ -769,7 +799,7 @@ namespace isc { namespace dhcp {
       location_type location;
 
     private:
-#if !defined __cplusplus || __cplusplus < 201103L
+#if YY_CPLUSPLUS < 201103L
       /// Assignment operator.
       basic_symbol& operator= (const basic_symbol& other);
 #endif
@@ -1682,7 +1712,7 @@ namespace isc { namespace dhcp {
       stack_symbol_type (YY_RVREF (stack_symbol_type) that);
       /// Steal the contents from \a sym to build this.
       stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) sym);
-#if !defined __cplusplus || __cplusplus < 201103L
+#if YY_CPLUSPLUS < 201103L
       /// Assignment, needed by push_back by some old implementations.
       /// Moves the contents of that.
       stack_symbol_type& operator= (stack_symbol_type& that);
@@ -1849,47 +1879,94 @@ namespace isc { namespace dhcp {
 
 
   // Implementation of basic_symbol constructor for each type.
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, location_type&& l)
     : Base (t)
-    , location (YY_MOVE (l))
+    , location (std::move (l))
   {}
-
+#else
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (ElementPtr) v, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
-    , value (YY_MOVE (v))
-    , location (YY_MOVE (l))
+    , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (bool) v, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, ElementPtr&& v, location_type&& l)
     : Base (t)
-    , value (YY_MOVE (v))
-    , location (YY_MOVE (l))
+    , value (std::move (v))
+    , location (std::move (l))
   {}
-
+#else
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (double) v, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const ElementPtr& v, const location_type& l)
     : Base (t)
-    , value (YY_MOVE (v))
-    , location (YY_MOVE (l))
+    , value (v)
+    , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (int64_t) v, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, bool&& v, location_type&& l)
     : Base (t)
-    , value (YY_MOVE (v))
-    , location (YY_MOVE (l))
+    , value (std::move (v))
+    , location (std::move (l))
   {}
-
+#else
   template <typename Base>
-  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, YY_RVREF (std::string) v, YY_RVREF (location_type) l)
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const bool& v, const location_type& l)
     : Base (t)
-    , value (YY_MOVE (v))
-    , location (YY_MOVE (l))
+    , value (v)
+    , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, double&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const double& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, int64_t&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int64_t& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  Dhcp6Parser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
+    : Base (t)
+    , value (v)
+    , location (l)
+  {}
+#endif
 
 
   template <typename Base>
@@ -3273,7 +3350,7 @@ namespace isc { namespace dhcp {
 
 #line 14 "dhcp6_parser.yy" // lalr1.cc:404
 } } // isc::dhcp
-#line 3277 "dhcp6_parser.h" // lalr1.cc:404
+#line 3354 "dhcp6_parser.h" // lalr1.cc:404
 
 
 
