@@ -100,6 +100,18 @@ public:
                isc::data::ConstElementPtr client_class_def,
                uint16_t family,
                bool append_error_position = true);
+
+    /// @brief Iterates over class parameters and checks if they are supported.
+    ///
+    /// This method should be called by hooks libraries which do not use Bison
+    /// to validate class syntax prior to parsing the client class information.
+    ///
+    /// @param class_def_cfg class configuration entry.
+    /// @param family the address family of the client class.
+    ///
+    /// @throw DhcpConfigError if any of the parameters is not supported.
+    void checkParametersSupported(const isc::data::ConstElementPtr& class_def_cfg,
+                                  const uint16_t family);
 };
 
 /// @brief Defines a pointer to a ClientClassDefParser
