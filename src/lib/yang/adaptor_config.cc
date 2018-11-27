@@ -586,6 +586,7 @@ AdaptorConfig::preProcess(ElementPtr dhcp, const string& subsel,
     ConstElementPtr hosts = dhcp->get("reservations");
     if (hosts) {
         if (!hosts->empty()) {
+            sanitizeHostList(hosts);
             sanitizeOptionHosts(hosts, space, codes);
         } else {
             dhcp->remove("reservations");

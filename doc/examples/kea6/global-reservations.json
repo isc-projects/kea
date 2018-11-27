@@ -1,0 +1,152 @@
+// This is an example configuration file for DHCPv6 server in Kea
+// that showcases how to do globalhost reservations. It is
+// assumed that one subnet (2001:db8:1::/64) is available directly
+// over ethX interface.
+
+{ "Dhcp6":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// We need to specify the the database used to store leases. As of
+// September 2016, four database backends are supported: MySQL,
+// PostgreSQL, Cassandra, and the in-memory database, Memfile.
+// We'll use memfile  because it doesn't require any prior set up.
+  "lease-database": {
+      "type": "memfile",
+      "lfc-interval": 3600
+  },
+
+// This is pretty basic stuff, it has nothing to do with reservations.
+  "preferred-lifetime": 3000,
+  "valid-lifetime": 4000,
+  "renew-timer": 1000,
+  "rebind-timer": 2000,
+
+// Kea supports three types of identifiers in DHCPv6: hw-address (hardware/MAC
+// address of the client), duid (DUID inserted by the client) and flex-id
+// (flexible identifier available when flex_id hook library is loaded) When told
+// to do so, Kea can check for each of these identifier types, but it takes a
+// costly database lookup to do so. It is therefore useful from a performance
+// perspective to use only the reservation types that are actually used in a
+// given network.
+    "host-reservation-identifiers": [ "duid", "hw-address", "flex-id" ],
+
+// This directive tells Kea that reservations are global.
+    "reservation-mode": "global",
+
+// Host reservations. Define several reservations.
+    "reservations": [
+
+// This is a simple host reservation. The host with DUID matching
+// the specified value will get an address of 2001:db8:1::100.
+// Note it is not recommended but still allowed to reverse addresses at
+// the global scope: as it breaks the link between the reservation and
+// the subnet it can lead to a client localized in another subnet than
+// its address belongs to.
+        {
+            "duid": "01:02:03:04:05:0A:0B:0C:0D:0E",
+            "ip-addresses": [ "2001:db8:1::100" ]
+        },
+
+// This is similar to the previous one, but this time the reservation
+// is done based on hardware/MAC address. The server will do its best to
+// extract the hardware/MAC address from received packets (see
+// 'mac-sources' directive for details). This particular reservation
+// also specifies two extra options to be available for this client. If
+// there are options with the same code specified in a global, subnet or
+// class scope, the values defined at host level take precedence.
+        {
+            "hw-address": "00:01:02:03:04:05",
+            "ip-addresses": [ "2001:db8:1::101" ],
+            "option-data": [
+            {
+                "name": "dns-servers",
+                "data": "3000:1::234"
+            },
+            {
+                "name": "nis-servers",
+                "data": "3000:1::234"
+            }],
+            "client-classes": [ "special_snowflake", "office" ]
+        },
+
+// This is a bit more advanced reservation. The client with the specified
+// DUID will get a reserved address, a reserved prefix and a hostname.
+// At least one of the three must be specified in a reservation.
+// Finally, this reservation features vendor specific options for CableLabs,
+// which happen to use enterprise-id 4491. Those particular values will
+// be returned only to the client that has a DUID matching this reservation.
+        {
+            "duid": "01:02:03:04:05:06:07:08:09:0A",
+            "ip-addresses": [ "2001:db8:1:cafe::1" ],
+            "prefixes": [ "2001:db8:2:abcd::/64" ],
+            "hostname": "foo.example.com",
+            "option-data": [ {
+                "name": "vendor-opts",
+                "data": "4491"
+            },
+            {
+                "name": "tftp-servers",
+                "space": "vendor-4491",
+                "data": "3000:1::234"
+            } ]
+        },
+
+// This reservation is using flexible identifier. Instead of relying
+// on specific field, sysadmin can define an expression similar to what
+// is used for client classification,
+// e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+// that expression for incoming packet, the reservation is matched.
+// Expression can be specified either as hex or plain text using single
+// quotes.
+// Note: flexible identifier requires flex_id hook library to be
+//loaded to work.
+         {
+             "flex-id": "'somevalue'",
+             "ip-addresses": [ "2001:db8:1:cafe::2" ]
+         }
+      ],
+
+// The following list defines subnets. Subnet, pools and interface definitions
+// are the same as in the regular scenario.
+  "subnet6": [
+    {
+      "subnet": "2001:db8::/47",
+
+      "pools": [ { "pool": "2001:db8::/64" } ],
+
+      "pd-pools": [
+          {
+              "prefix": "2001:db8:1:8000::",
+              "prefix-len": 56,
+              "delegated-len": 64
+          }
+      ],
+      "interface": "ethX"
+    }
+  ]
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp6",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "debuglevel": 0,
+            "severity": "INFO"
+        }
+    ]
+}
+
+}

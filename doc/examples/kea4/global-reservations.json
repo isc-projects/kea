@@ -1,0 +1,157 @@
+// This is an example configuration file for the DHCPv4 server in Kea.
+// It contains one subnet and two global reservations for the clients
+// identified by the MAC addresses.
+{ "Dhcp4":
+
+{
+// Kea is told to listen on ethX interface only.
+  "interfaces-config": {
+    "interfaces": [ "ethX" ]
+  },
+
+// We need to specify the the database used to store leases. As of September
+// 2016, four database backends are supported: MySQL, PostgreSQL, Cassandra, and
+// the in-memory database, Memfile.  We'll use memfile because it doesn't
+// require any prior set up.
+  "lease-database": {
+      "type": "memfile",
+      "lfc-interval": 3600
+  },
+
+// Addresses will be assigned with a lifetime of 4000 seconds.
+  "valid-lifetime": 4000,
+
+// Renew and rebind timers are commented out. This implies that options
+// 58 and 59 will not be sent to the client. In this case it is up to
+// the client to pick the timer values according to RFC2131. Uncomment the
+// timers to send these options to the client.
+//  "renew-timer": 1000,
+//  "rebind-timer": 2000,
+
+// Kea supports reservations by several different types of identifiers:
+// hw-address (hardware/MAC address of the client), duid (DUID inserted by the
+// client), client-id (client identifier inserted by the client), circuit-id
+// (circuit identifier inserted by the relay agent) and flex-id (flexible
+// identifier available when flex_id hook library is loaded). When told to do
+// so, Kea can check for all of those identifier types, but it takes a costly
+// database lookup to do so. It is therefore useful from a performance
+// perspective to use only the reservation types that are actually used in a
+// given network.
+
+// The example below is not optimal from a performance perspective, but it
+// nicely showcases the host reservation capabilities. Please use the minimum
+// set of identifier types used in your network.
+"host-reservation-identifiers": [ "circuit-id", "hw-address", "duid",
+                                  "client-id", "flex-id" ],
+
+// This directive tells Kea that reservations are global.
+"reservation-mode": "global",
+
+// Define some reservations at the global scope.
+"reservations": [
+
+// This is a reservation for a specific hardware/MAC address. It's a very
+// simple reservation: just an address and nothing else.
+// Note it is not recommended but still allowed to reverse addresses at
+// the global scope: as it breaks the link between the reservation and
+// the subnet it can lead to a client localized in another subnet than
+// its address belongs to.
+  {
+     "hw-address": "1a:1b:1c:1d:1e:1f",
+     "ip-address": "192.0.2.201"
+  },
+
+// This is a reservation for a specific client-id. It also shows
+// the this client will get a reserved hostname. A hostname can be defined
+// for any identifier type, not just client-id. Either a hostname or
+// an address is required.
+  {
+     "client-id": "01:11:22:33:44:55:66",
+     "hostname": "special-snowflake"
+  },
+
+// The third reservation is based on DUID. This reservation also
+// defines special option values for this particular client. If
+// the domain-name-servers option would have been defined on a global,
+// subnet or class level, the host specific values take preference.
+  {
+     "duid": "01:02:03:04:05",
+     "ip-address": "192.0.2.203",
+     "option-data": [ {
+         "name": "domain-name-servers",
+         "data": "10.1.1.202,10.1.1.203"
+     } ]
+  },
+
+// The fourth reservation is based on circuit-id. This is an option inserted
+// by the relay agent that forwards the packet from client to the server.
+// In this example the host is also assigned vendor specific options.
+  {
+     "circuit-id": "01:11:22:33:44:55:66",
+     "ip-address": "192.0.2.204",
+     "option-data": [
+         {
+             "name": "vivso-suboptions",
+             "data": "4491"
+         },
+         {
+             "name": "tftp-servers",
+             "space": "vendor-4491",
+             "data": "10.1.1.202,10.1.1.203"
+         }
+     ]
+  },
+
+// This reservation is for a client that needs specific DHCPv4 fields to be
+// set. Three supported fields are next-server, server-hostname and
+// boot-file-name
+  {
+     "client-id": "01:0a:0b:0c:0d:0e:0f",
+     "ip-address": "192.0.2.205",
+     "next-server": "192.0.2.1",
+     "server-hostname": "hal9000",
+     "boot-file-name": "/dev/null"
+  },
+
+// This reservation is using flexible identifier. Instead of relying
+// on specific field, sysadmin can define an expression similar to what
+// is used for client classification,
+// e.g. substring(relay[0].option[17],0,6). Then, based on the value of
+// that expression for incoming packet, the reservation is matched.
+// Expression can be specified either as hex or plain text using single
+// quotes.
+// Note: flexible identifier requires flex_id hook library to be
+// loaded to work.
+  {
+     "flex-id": "s0mEVaLue",
+     "ip-address": "192.0.2.206"
+  }
+],
+  // Define a subnet.
+  "subnet4": [
+    {
+       "pools": [ { "pool":  "192.0.2.1 - 192.0.2.200" } ],
+       "subnet": "192.0.2.0/24",
+       "interface": "eth0"
+    }
+  ]
+},
+
+// The following configures logging. It assumes that messages with at
+// least informational level (info, warn, error and fatal) should be
+// logged to stdout.
+"Logging": {
+    "loggers": [
+        {
+            "name": "kea-dhcp4",
+            "output_options": [
+                {
+                    "output": "stdout"
+                }
+            ],
+            "severity": "INFO"
+        }
+    ]
+}
+
+}
