@@ -228,12 +228,16 @@ ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_
     }
 
     // Common v4 and v6 parameters supported for the client class.
-    static std::set<std::string> supported_params = { "name", "test", "option-def",
-                                                      "option-data", "user-context",
+    static std::set<std::string> supported_params = { "name",
+                                                      "test",
+                                                      "option-data",
+                                                      "user-context",
                                                       "only-if-required" };
 
     // The v4 client class supports additional parmeters.
-    static std::set<std::string> supported_params_v4 = { "next-server", "server-hostname",
+    static std::set<std::string> supported_params_v4 = { "option-def",
+                                                         "next-server",
+                                                         "server-hostname",
                                                          "boot-file-name" };
 
     // Iterate over the specified parameters and check if they are all supported.
