@@ -278,6 +278,7 @@ TEST(ParserTest, file) {
     configs.push_back("comments.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
+    configs.push_back("global-reservations.json");
     configs.push_back("hooks.json");
     configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");
