@@ -271,7 +271,7 @@ namespace isc { namespace agent {
         break;
     }
 
-#if defined __cplusplus && 201103L <= __cplusplus
+#if 201103L <= YY_CPLUSPLUS
     // that is emptied.
     that.state = empty_state;
 #endif
@@ -312,7 +312,7 @@ namespace isc { namespace agent {
     that.type = empty_symbol;
   }
 
-#if !defined __cplusplus || __cplusplus < 201103L
+#if YY_CPLUSPLUS < 201103L
   AgentParser::stack_symbol_type&
   AgentParser::stack_symbol_type::operator= (stack_symbol_type& that)
   {
@@ -446,7 +446,7 @@ namespace isc { namespace agent {
   void
   AgentParser::yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym)
   {
-#if defined __cplusplus && 201103L <= __cplusplus
+#if 201103L <= YY_CPLUSPLUS
     yypush_ (m, stack_symbol_type (s, std::move (sym)));
 #else
     stack_symbol_type ss (s, sym);
