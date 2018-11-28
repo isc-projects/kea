@@ -1,3 +1,10 @@
+1490.	[bug]		marcin
+	Applied fixes in Cassandra Host Manager which prevents Kea
+	crash during an attempt to delete non-existing reservation.
+	In particular, this crash was observed as a result of sending
+	reservation-del command over RESTful API.
+	(Gitlab #27,!138, git 8666ed4754ffd27f3aa46a2cf3e4b161a1d877ee)
+
 1489.	[doc]		fdupont
 	Added examples of global host reservations.
 	(Gitlab #136, !143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
