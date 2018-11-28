@@ -714,6 +714,10 @@ done in dependency order and reverse dependency order accordingly.
 
   <section xml:id="operation-example">
     <title>Step by Step Netconf Operation Example</title>
+    <note><para>Copies of example configurations presented within this section
+    can be found in the Kea source code, under <filename>doc/examples/kea6</filename>
+    and <filename>doc/examples/netconf</filename>.</para></note>
+
  
    <section xml:id="operation-example-setup">
       <title>Setup of Netconf Operation Example</title>
@@ -733,9 +737,13 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        The Kea DHCPv6 server must be launched with a configuration
-        specifying a control socket so <command>kea-netconf</command>
-        can push configuration to it:
+        The Kea DHCPv6 server must be launched with the configuration
+        specifying a control socket used to receive control commands.
+        The <command>kea-netconf</command> process uses this socket
+        to communicate with the DHCPv6 server, i.e. it pushes
+        translated configurations to that server using control commands.
+        The following is the example control socket specification for the
+        Kea DHCPv6 server:
 <screen>
 {
     "Dhcp6": {
@@ -746,66 +754,22 @@ done in dependency order and reverse dependency order accordingly.
     }
 }
 </screen>
-        Launched when the configuration is in the
-        <filename>boot.json</filename> file by:
+        In order to launch the Kea DHCPv6 server using configuration
+        contained within <filename>boot.json</filename> file, run:
 <screen>
  # kea-dhcp6 -d -c <userinput>boot.json</userinput>
 </screen>
-        The current configuration can be dumped by:
+        The current configuration of the server can be fetched via
+        control socket by running:
 <screen>
  # echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea6-sock '-,ignoreeof'
 </screen>
       </para>
 
       <para>
-        A more complete startup configuration must be installed in the
-        sysrepo datastore. The configuration in
-        <filename>startup.xml</filename> is:
-<screen>
-&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
-  &lt;subnet6&gt;
-    &lt;id&gt;1&lt;/id&gt;
-    &lt;pool&gt;
-      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
-      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
-      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
-    &lt;/pool&gt;
-    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
-  &lt;/subnet6&gt;
-  &lt;interfaces-config&gt;
-    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
-  &lt;/interfaces-config&gt;
-  &lt;control-socket&gt;
-    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
-    &lt;socket-type&gt;unix&lt;/socket-type&gt;
-  &lt;/control-socket&gt;
-&lt;/config&gt;
-</screen>
-        and can be installed by:
-<screen>
- # sysrepocfg -d startup -f xml -i <userinput>startup.xml</userinput> kea-dhcp6-server
-</screen>
-        A copy of these configurations are in the netconf example directory.
-      </para>
-
-      <para>
-        <command>kea-netconf</command> will push the configuration
-        found in the sysrepo startup datastore to all Kea servers during
-        its initialization phase. After it subscribes to module changes
-        in the sysrepo running datastore. This action copies the
-        configuration from the startup datastore to the running datastore
-        and enables the running datastore making it available.
-      </para>
-
-      <para>
-        Changes to the running datastore are applied after validation
-        to Kea servers. Note they are not by default copied back to the
-        startup datastore, i.e. changes are not permanent.
-      </para>
-
-      <para>
-        <command>kea-netconf</command> configuration to manage the
-        Kea DHCPv6 server in the <filename>netconf.json</filename> is:
+        The following is the example <filename>netconf.json</filename>
+        configuration for <command>kea-netconf</command>, to manage the Kea
+        DHCPv6 server:
 <screen>
 {
     "Netconf":
@@ -841,28 +805,81 @@ done in dependency order and reverse dependency order accordingly.
     }
 }
 </screen>
-        Note in production you should not need to log at the DEBUG level.
+        Note that in production you should not need to log at the DEBUG level.
+      </para>
+      <para>
         The Kea Netconf agent is lanched by:
 <screen>
  # kea-netconf -d -c <userinput>netconf.json</userinput>
 </screen>
       </para>
+
+      <para>
+        Now that both <filename>kea-netconf</filename> and
+        <filename>kea-dhcp6</filename> are running, it is possible to populate
+        updated to configuration to the DHCPv6 server. The following is
+        the configuration extracted from the <filename>startup.xml</filename>:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+        In order to populate this new configuration:
+<screen>
+ # sysrepocfg -d startup -f xml -i <userinput>startup.xml</userinput> kea-dhcp6-server
+</screen>
+      </para>
+
+      <para>
+        <command>kea-netconf</command> will push the configuration
+        found in the sysrepo startup datastore to all Kea servers during
+        its initialization phase, after it subscribes to module changes
+        in the sysrepo running datastore. This action copies the
+        configuration from the startup datastore to the running datastore
+        and enables the running datastore making it available.
+      </para>
+
+      <para>
+        Changes to the running datastore are applied after validation
+        to the Kea servers. Note they are not by default copied back to the
+        startup datastore, i.e. changes are not permanent.
+      </para>
+
     </section>
 
     <section xml:id="operation-example-errors">
       <title>Error handling in Netconf Operation Example</title>
       <para>
-        There are 4 ways for a configuration to be bad:
+        There are four classes of isssues with the configurations applied via
+        netconf:
+
         <orderedlist>
           <listitem>
             <simpara>
               The configuration does not comply with the YANG schema.
             </simpara>
           </listitem>
+          <listitem>
             <simpara>
-              The configuration can not be translated from YANG to
+              The configuration cannot be translated from YANG to
               the Kea JSON.
             </simpara>
+          </listitem>
           <listitem>
             <simpara>
               The configuration is rejected by the Kea server.
@@ -871,15 +888,15 @@ done in dependency order and reverse dependency order accordingly.
           <listitem>
             <simpara>
               The configuration was validated by the Kea server but
-              can not be applied.
+              cannot be applied.
             </simpara>
           </listitem>
         </orderedlist>
       </para>
 
       <para>
-        In the first case the configuration in
-        the <filename>BAD-schema.xml</filename> file:
+        In the first case, the following <filename>BAD-schema.xml</filename>
+        configuration file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
   &lt;subnet4&gt;
@@ -907,8 +924,8 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        In the second case the configuration is rejected by
-        <command>kea-netconf</command>, for instance for the
+        In the second case, the configuration is rejected by
+        <command>kea-netconf</command>. For example, the
         <filename>BAD-translator.xml</filename> file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
@@ -934,7 +951,7 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        In the third case the configuration is presented to the
+        In the third case, the configuration is presented to the
         Kea DHCPv6 server and fails to validate as in the
         <filename>BAD-config.xml</filename> file:
 <screen>
@@ -960,9 +977,9 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        In the last case the problem is detected too late and
-        the change must be reverted, for instance using the startup
-        datastore as a backup, or with other words use the
+        In the last case, the misconfiguration is detected too late and
+        the change must be reverted in sysrepo, e.g. using the startup
+        datastore as a backup. For this reason, please use the
 	<command>sysrepocfg</command> <option>--permanent</option> /
         <option>-p</option> option (or simlar feature of NETCONF clients)
         with care.
@@ -1080,9 +1097,6 @@ done in dependency order and reverse dependency order accordingly.
   &lt;/logger&gt;
 &lt;/config&gt;
 </screen>
-        Note in Kea models the "loggers" list was moved in global
-        parameters and the "Logging" global object removed as it is
-        planned in a future release for Kea JSON configurations.
       </para>
 
       <para>
@@ -1128,8 +1142,8 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        To finish one of the previous examples can be replayed using
-        <command>sysrepocfg</command> in edit mode by:
+        Finally, any of the previous examples can be replayed using
+        <command>sysrepocfg</command> in edit mode as follows:
 <screen>
  # sysrepocfg -d running -f xml -e <userinput>vi</userinput> kea-dhcp6-server
 </screen>
