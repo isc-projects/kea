@@ -1479,6 +1479,7 @@ AC_CONFIG_FILES([Makefile
                  doc/docgen/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
+                 ext/coroutine/Makefile
                  kea_version.h
                  m4macros/Makefile
                  src/Makefile
