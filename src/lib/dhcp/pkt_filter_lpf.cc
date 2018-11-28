@@ -305,6 +305,7 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     buf.writeData(pkt->getBuffer().getData(), pkt->getBuffer().getLength());
 
     sockaddr_ll sa;
+    memset(&sa, 0x0, sizeof(sa));
     sa.sll_family = AF_PACKET;
     sa.sll_ifindex = iface.getIndex();
     sa.sll_protocol = htons(ETH_P_IP);
