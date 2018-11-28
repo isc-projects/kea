@@ -1,3 +1,10 @@
+1491.	[build]		tomek
+	coroutine.hpp from Boost 1.68 has been added the Kea source.
+	It is used only if the Boost library provided by the system
+	is very old and does not include that header. This effectively
+	reverts the change done in Kea 1.4.0.
+	(Gitlab #293,!45, git df0f507b8b750c8dff1f537cad5b5748b7841852)
+
 1491.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0 beta2 release.
 	Also, generated logger message files are now installed with Kea.
