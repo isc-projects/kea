@@ -600,3 +600,7 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
    limitations under the License.
 
 --- end of Apache 2.0 license -----------------------------------------------
+
+The ext/coroutine code is externally maintained and distributed under
+the Boost Software License, Version 1.0.  (See its accompanying file
+LICENSE_1_0.txt.)

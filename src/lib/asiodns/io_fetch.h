@@ -7,11 +7,17 @@
 #ifndef IO_FETCH_H
 #define IO_FETCH_H 1
 
+#include <config.h>
+
 #include <boost/shared_array.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+#ifdef HAVE_BOOST_ASIO_COROUTINE_HPP
 #include <boost/asio/coroutine.hpp>
+#else
+#include <ext/coroutine/coroutine.hpp>
+#endif
 
 #include <boost/system/error_code.hpp>
 #include <asiolink/io_address.h>

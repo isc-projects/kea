@@ -10,6 +10,8 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
+#include <config.h>
+
 #include <unistd.h>             // for some network system calls
 
 #include <functional>
@@ -22,7 +24,11 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
+#ifndef HAVE_BOOST_ASIO_COROUTINE_HPP
+#include <ext/coroutine/coroutine.hpp>
+#else
 #include <boost/asio/coroutine.hpp>
+#endif
 
 namespace isc {
 namespace asiolink {
