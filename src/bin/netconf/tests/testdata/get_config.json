@@ -1,43 +1,11 @@
 {
     "Netconf": {
-        "boot-update": false,
-        "hooks-libraries": [
-            {
-                "library": "/tmp/ky/src/bin/netconf/tests/.libs/libbasic.so",
-                "parameters": {
-                    "param1": "foo"
-                }
-            }
-        ],
+        "boot-update": true,
+        "hooks-libraries": [ ],
         "managed-servers": {
-            "ca": {
-                "boot-update": false,
-                "control-socket": {
-                    "socket-name": "",
-                    "socket-type": "http",
-                    "socket-url": "http://127.0.0.1:8000/"
-                },
-                "model": "kea-ctrl-agent",
-                "subscribe-changes": true,
-                "validate-changes": true
-            },
-            "d2": {
-                "boot-update": false,
-                "control-socket": {
-                    "socket-name": "",
-                    "socket-type": "stdout",
-                    "socket-url": "http://127.0.0.1:8000/",
-                    "user-context": {
-                        "in-use": false
-                    }
-                },
-                "model": "kea-dhcp-ddns",
-                "subscribe-changes": true,
-                "validate-changes": true
-            },
             "dhcp4": {
-                "comment": "DHCP4 server",
-                "boot-update": false,
+                "comment": "Kea DHCP4 server serving network on floor 13",
+                "boot-update": true,
                 "control-socket": {
                     "socket-name": "/tmp/kea4-ctrl-socket",
                     "socket-type": "unix",
@@ -45,19 +13,10 @@
                 },
                 "model": "kea-dhcp4-server",
                 "subscribe-changes": true,
-                "validate-changes": true
-            },
-            "dhcp6": {
-                "boot-update": false,
-                "control-socket": {
-                    "socket-name": "/tmp/kea6-ctrl-socket",
-                    "socket-type": "unix",
-                    "socket-url": "http://127.0.0.1:8000/"
-                },
-                "model": "kea-dhcp6-server",
-                "subscribe-changes": true,
-                "validate-changes": true
+                "validate-changes": false
             }
-        }
+        },
+        "subscribe-changes": true,
+        "validate-changes": true
     }
 }
