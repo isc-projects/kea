@@ -77,7 +77,7 @@ fi
 AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
 
-AC_CHECK_HEADER(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
+AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
