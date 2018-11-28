@@ -1,3 +1,8 @@
+1491.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 beta2 release.
+	Also, generated logger message files are now installed with Kea.
+	(Gitlab #62,!144, git 7dc8d73a58504fd81a49b1c54651388d53d98d53)
+
 1490.	[bug]		marcin
 	Applied fixes in Cassandra Host Manager which prevents Kea
 	crash during an attempt to delete non-existing reservation.
