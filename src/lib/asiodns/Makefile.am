@@ -44,6 +44,7 @@ libkea_asiodns_la_LIBADD += $(LOG4CPLUS_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_asiodns_includedir = $(pkgincludedir)/asiodns
 libkea_asiodns_include_HEADERS = \
+	asiodns_messages.h \
 	io_fetch.h \
 	logger.h
 

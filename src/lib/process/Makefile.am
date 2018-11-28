@@ -62,11 +62,15 @@ libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_process_includedir = $(pkgincludedir)/process
 libkea_process_include_HEADERS = \
+	config_base.h \
 	config_ctl_info.h \
 	config_ctl_parser.h \
+	daemon.h \
 	d_cfg_mgr.h \
 	d_controller.h \
 	d_log.h \
 	d_process.h \
 	io_service_signal.h \
+	logging_info.h \
+	log_parser.h \
 	process_messages.h
