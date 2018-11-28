@@ -715,8 +715,9 @@ done in dependency order and reverse dependency order accordingly.
   <section xml:id="operation-example">
     <title>Step by Step Netconf Operation Example</title>
     <note><para>Copies of example configurations presented within this section
-    can be found in the Kea source code, under <filename>doc/examples/kea6</filename>
-    and <filename>doc/examples/netconf</filename>.</para></note>
+    can be found in the Kea source code, under
+    <filename>doc/examples/netconf/kea-dhcp6-operations</filename>.
+    </para></note>
 
  
    <section xml:id="operation-example-setup">
@@ -815,8 +816,8 @@ done in dependency order and reverse dependency order accordingly.
       </para>
 
       <para>
-        Now that both <filename>kea-netconf</filename> and
-        <filename>kea-dhcp6</filename> are running, it is possible to populate
+        Now that both <command>kea-netconf</command> and
+        <command>kea-dhcp6</command> are running, it is possible to populate
         updated to configuration to the DHCPv6 server. The following is
         the configuration extracted from the <filename>startup.xml</filename>:
 <screen>
@@ -980,7 +981,7 @@ done in dependency order and reverse dependency order accordingly.
         In the last case, the misconfiguration is detected too late and
         the change must be reverted in sysrepo, e.g. using the startup
         datastore as a backup. For this reason, please use the
-	<command>sysrepocfg</command> <option>--permanent</option> /
+        <command>sysrepocfg</command> <option>--permanent</option> /
         <option>-p</option> option (or simlar feature of NETCONF clients)
         with care.
       </para>
