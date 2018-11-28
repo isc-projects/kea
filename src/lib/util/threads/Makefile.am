@@ -11,7 +11,7 @@ libkea_threads_la_SOURCES += watched_thread.h watched_thread.cc
 libkea_threads_la_LIBADD  = $(top_builddir)/src/lib/util/libkea-util.la
 libkea_threads_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_threads_la_LDFLAGS  = -no-undefined -version-info 1:0:0
+libkea_threads_la_LDFLAGS  = -no-undefined -version-info 2:0:0
 
 
 CLEANFILES = *.gcno *.gcda
