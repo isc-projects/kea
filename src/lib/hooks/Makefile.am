@@ -71,6 +71,7 @@ libkea_hooks_include_HEADERS = \
 	hooks_config.h \
 	hooks_log.h \
 	hooks_manager.h \
+	hooks_messages.h \
 	hooks_parser.h \
 	libinfo.h \
 	library_handle.h \
