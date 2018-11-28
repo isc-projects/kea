@@ -1291,6 +1291,10 @@ fi
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
+# Use our 'coroutine' header from ext
+# CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+
+#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
