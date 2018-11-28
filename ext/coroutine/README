@@ -1,0 +1,12 @@
+This directory contains a coroutine.hpp header file. This self-contained
+header is needed by Kea. It is part of Boost library for a long time.
+Unfortunately, RedHat (and CentOS) provide only a very old version
+of Boost that doesn't have coroutine.hpp header included.
+
+This caused Kea to require building new version of Boost on RHEL and
+CentOS, just for the sake of getting this 9KB header. Note that although
+the coroutine is included in Boost, it does not include anything from
+Boost and is self contained.
+
+This header and the whole directory will be removed eventually once
+RHEL and CentOS start providing more modern Boost version.
