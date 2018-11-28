@@ -376,8 +376,8 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("comments.json");
-    configs.push_back("simple.json");
     configs.push_back("simple-dhcp4.json");
+    configs.push_back("simple-dhcp6.json");
 
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
@@ -464,7 +464,7 @@ TEST(ParserTest, errors) {
     testError("<?include\n",
               ParserContext::PARSER_JSON,
               "Directive not closed.");
-    string file = string(CFG_EXAMPLES) + "/" + "simple.json";
+    string file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";
     testError("<?include \"" + file + "\"\n",
               ParserContext::PARSER_JSON,
               "Directive not closed.");

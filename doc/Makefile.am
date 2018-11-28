@@ -74,7 +74,7 @@ nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twopools.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twosubnets.xml
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
-nobase_dist_doc_DATA += examples/netconf/simple.json
+nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 
 # These are files that document our APIs. They're not really needed as the
 # content is included in the api.xml, but may be useful for people who

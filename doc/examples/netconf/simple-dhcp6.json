@@ -1,6 +1,6 @@
 // This is a simple example of a configuration for Netconf that handles
-// DHCPv4 configuration. This example provides YANG interface for
-// DHCPv4 server only.
+// DHCPv6 configuration. This example provides YANG interface for
+// DHCPv6 server only.
 {
     "Netconf":
     {
@@ -18,13 +18,14 @@
         // the YANG model to use and the control channel.
         "managed-servers":
         {
-            // This is how Netconf can communicate with the DHCPv4 server.
-            "dhcp4":
+            // This is how Netconf can communicate with the DHCPv6 server.
+            "dhcp6":
             {
                 // Eventually, the kea-netconf will be able to handle multiple
-                // models. However, for the time being the only choice for
-                // DHCPv4 server is kea-dhcp4-server model.
-                "model": "kea-dhcp4-server",
+                // models. However, for the time being the choices for
+                // DHCPv6 server are kea-dhcp6-server and
+                /// ietf-dhcpv6-server models but only the first is usable.
+                "model": "kea-dhcp6-server",
 
                 // The three control flags can be defined in this scope too
                 // and takes precedence over global and default values.
@@ -53,15 +54,15 @@
                 // - "unix" which uses the local control channel supported by
                 //   "dhcp4" and "dhcp6" servers ("d2" support is coming in Kea 1.5)
                 // - "http" which uses the Control Agent (CA) to manage itself or
-                //   to forward commands to "dhcp4" or "dhcp6" (not yet supported).
+                //   to forward commands to "dhcp4" or "dhcp6" (not yest supported).
                 "control-socket":
                 {
                     "socket-type": "unix",
-                    "socket-name": "/tmp/kea4-ctrl-socket"
+                    "socket-name": "/tmp/kea6-ctrl-socket"
                 },
 
                 // Comment is optional. You can put some notes here.
-                "comment": "Kea DHCP4 server serving network on floor 13"
+                "comment": "Kea DHCP6 server serving network on floor 13"
             }
 
         }
