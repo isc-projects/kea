@@ -13,6 +13,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 
+// We want to use coroutine.hpp from the system's boost headers if possible.
+// However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
+// this header. So we can resort to our bundled version, but only if necessary.
 #ifdef HAVE_BOOST_ASIO_COROUTINE_HPP
 #include <boost/asio/coroutine.hpp>
 #else

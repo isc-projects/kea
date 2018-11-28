@@ -24,6 +24,9 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
+// We want to use coroutine.hpp from the system's boost headers if possible.
+// However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
+// this header. So we can resort to our bundled version, but only if necessary.
 #ifndef HAVE_BOOST_ASIO_COROUTINE_HPP
 #include <ext/coroutine/coroutine.hpp>
 #else
