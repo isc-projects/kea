@@ -1,3 +1,8 @@
+1492.	[doc]		fdupont
+	Added a step by step netconf operation example in the
+	Kea Administrators's Guide.
+	(Gitlab #195,!131, git 994a826caf3c1a9f5f84d8b703a3b202120e91b6)
+
 1491.	[build]		tomek
 	coroutine.hpp from Boost 1.68 has been added the Kea source.
 	It is used only if the Boost library provided by the system
