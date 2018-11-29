@@ -9,12 +9,20 @@
 #ifndef NETCONF_H
 #define NETCONF_H
 
+#ifndef HAVE_SYSREPO
+#error "config.h must be included before netconf.h"
+#endif
+
 #include <netconf/netconf_cfg_mgr.h>
 #include <netconf/control_socket.h>
 #include <netconf/http_control_socket.h>
 #include <netconf/stdout_control_socket.h>
 #include <netconf/unix_control_socket.h>
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+#include <sysrepo-cpp/Session.hpp>
+#else
 #include <sysrepo-cpp/Session.h>
+#endif
 #include <map>
 
 namespace isc {
@@ -71,7 +79,12 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    static int validate(sysrepo::S_Session sess,
+                        const CfgServersMapPair& service_pair);
+#else
     static int validate(S_Session sess, const CfgServersMapPair& service_pair);
+#endif
 
     /// @brief Update.
     ///
@@ -80,7 +93,12 @@ public:
     /// @param sess The sysrepo running datastore session.
     /// @param service_pair The service name and configuration pair.
     /// @return return code for sysrepo.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    static int update(sysrepo::S_Session sess,
+                      const CfgServersMapPair& service_pair);
+#else
     static int update(S_Session sess, const CfgServersMapPair& service_pair);
+#endif
 
     /// @brief Log changes.
     ///
@@ -90,7 +108,11 @@ public:
     ///
     /// @param sess The sysrepo running datastore session.
     /// @param model The model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    static void logChanges(sysrepo::S_Session sess, const std::string& model);
+#else
     static void logChanges(S_Session sess, const std::string& model);
+#endif
 
     /// @brief Cancel flag.
     bool cancel_;
@@ -124,16 +146,32 @@ protected:
     void subscribeConfig(const CfgServersMapPair& service_pair);
 
     /// @brief Sysrepo connection.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    sysrepo::S_Connection conn_;
+#else
     S_Connection conn_;
+#endif
 
     /// @brief Sysrepo startup datastore session.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    sysrepo::S_Session startup_sess_;
+#else
     S_Session startup_sess_;
+#endif
 
     /// @brief Sysrepo running datastore session.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    sysrepo::S_Session running_sess_;
+#else
     S_Session running_sess_;
+#endif
 
     /// @brief Subscription map.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    std::map<const std::string, sysrepo::S_Subscribe> subscriptions_;
+#else
     std::map<const std::string, S_Subscribe> subscriptions_;
+#endif
 };
 
 } // namespace netconf

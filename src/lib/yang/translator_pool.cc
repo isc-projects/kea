@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <asiolink/io_address.h>
 #include <asiolink/addr_utilities.h>
 #include <yang/adaptor.h>
@@ -16,15 +18,17 @@ using namespace std;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::dhcp;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorPool::TranslatorPool(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
-      TranslatorOptionDataList(session, model),
-      model_(model) {
+      TranslatorOptionDataList(session, model) {
 }
 
 TranslatorPool::~TranslatorPool() {
@@ -104,7 +108,7 @@ TranslatorPool::getPoolKea(const string& xpath) {
               << end_addr->stringValue();
         result->set("pool", Element::create(range.str()));
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -213,7 +217,7 @@ TranslatorPool::setPoolKea(const string& xpath, ConstElementPtr elem) {
     // Skip start-address and end-address as are the keys.
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     ConstElementPtr guard = elem->get("client-class");
@@ -263,11 +267,10 @@ TranslatorPool::getAddresses(const string& prefix,
 }
 
 TranslatorPools::TranslatorPools(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
-      TranslatorPool(session, model),
-      model_(model) {
+      TranslatorPool(session, model) {
 }
 
 TranslatorPools::~TranslatorPools() {
@@ -276,25 +279,55 @@ TranslatorPools::~TranslatorPools() {
 ElementPtr
 TranslatorPools::getPools(const string& xpath) {
     try {
-        ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
-        if (!iter) {
-            // Can't happen.
-            isc_throw(Unexpected, "getPools can't get iterator: " << xpath);
+        if (model_ == IETF_DHCPV6_SERVER) {
+            return (getPoolsIetf(xpath));
+        } else if ((model_ == KEA_DHCP4_SERVER) ||
+                   (model_ == KEA_DHCP6_SERVER)) {
+            return (getPoolsKea(xpath));
         }
-        for (;;) {
-            const string& pool = getNext(iter);
-            if (pool.empty()) {
-                break;
-            }
-            result->add(getPool(pool));
-        }
-        return (result);
     } catch (const sysrepo_exception& ex) {
         isc_throw(SysrepoError,
                   "sysrepo error getting pools at '" << xpath
                   << "': " << ex.what());
     }
+    isc_throw(NotImplemented,
+              "getPools not implemented for the model: " << model_);
+}
+
+ElementPtr
+TranslatorPools::getPoolsIetf(const string& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/address-pool");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPoolsIetf can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPool(pool));
+    }
+    return (result);
+}
+
+ElementPtr
+TranslatorPools::getPoolsKea(const string& xpath) {
+    ElementPtr result = Element::createList();
+    S_Iter_Value iter = getIter(xpath + "/pool");
+    if (!iter) {
+        // Can't happen.
+        isc_throw(Unexpected, "getPoolsKea can't get iterator: " << xpath);
+    }
+    for (;;) {
+        const string& pool = getNext(iter);
+        if (pool.empty()) {
+            break;
+        }
+        result->add(getPool(pool));
+    }
+    return (result);
 }
 
 void

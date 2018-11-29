@@ -391,7 +391,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "dhcp-queue-control") {
-                DHCPQueueControlParser parser(AF_INET);
+                DHCPQueueControlParser parser;
                 srv_cfg->setDHCPQueueControl(parser.parse(config_pair.second));
                 continue;
             }
@@ -545,7 +545,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||
                  (config_pair.first == "boot-file-name") ||
-                 (config_pair.first == "server-tag")) {
+                 (config_pair.first == "server-tag") ||
+                 (config_pair.first == "reservation-mode")) {
                 continue;
             }
 

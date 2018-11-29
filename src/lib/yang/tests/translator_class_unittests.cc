@@ -18,6 +18,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -42,7 +45,7 @@ TEST_F(TranslatorClassesTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Get the client class list and check if it is empty.
-    const string& xpath = "/kea-dhcp4-server:config/client-classes";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes;
     EXPECT_NO_THROW(classes = t_obj_->getClasses(xpath));
     EXPECT_FALSE(classes);
@@ -54,7 +57,7 @@ TEST_F(TranslatorClassesTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the client class.
-    const string& xpath = "/kea-dhcp6-server:config/client-classes";
+    const string& xpath = "/kea-dhcp6-server:config";
     const string& xclass = xpath + "/client-class[name='foo']";
     const string& xtest = xclass + "/test";
     S_Val v_test(new Val("not member('ALL')", SR_STRING_T));
@@ -84,7 +87,7 @@ TEST_F(TranslatorClassesTest, setEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4-server:config/client-classes";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr classes = Element::createList();
     EXPECT_NO_THROW(t_obj_->setClasses(xpath, classes));
 
@@ -105,7 +108,7 @@ TEST_F(TranslatorClassesTest, set) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set one client class.
-    const string& xpath = "/kea-dhcp6-server:config/client-classes";
+    const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr classes = Element::createList();
     ElementPtr cclass = Element::createMap();
     cclass->set("name", Element::create(string("foo")));
@@ -129,15 +132,13 @@ TEST_F(TranslatorClassesTest, set) {
     string expected =
         "kea-dhcp6-server:config (container)\n"
         " |\n"
-        " -- client-classes (container)\n"
+        " -- client-class (list instance)\n"
         "     |\n"
-        "     -- client-class (list instance)\n"
-        "         |\n"
-        "         -- name = foo\n"
-        "         |\n"
-        "         -- test = ''==''\n"
-        "         |\n"
-        "         -- only-if-required = false\n";
+        "     -- name = foo\n"
+        "     |\n"
+        "     -- test = ''==''\n"
+        "     |\n"
+        "     -- only-if-required = false\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.

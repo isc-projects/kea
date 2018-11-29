@@ -520,7 +520,7 @@
                 identification, which can be used as an index into the
                 <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="kea-messages.html"><citetitle>Kea Messages
                 Manual</citetitle></link>
-                (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/docs/kea-messages.html">http://oldkea.isc.org/docs/kea-messages.html</uri>)
+                (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html">https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html</uri>)
                 from which more information can be obtained.
               </para>
             </listitem>

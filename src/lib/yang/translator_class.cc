@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_class.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,17 +13,19 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorClass::TranslatorClass(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorOptionDef(session, model),
-      TranslatorOptionDefList(session, model),
-      model_(model) {
+      TranslatorOptionDefList(session, model) {
 }
 
 TranslatorClass::~TranslatorClass() {
@@ -60,12 +64,12 @@ TranslatorClass::getClassKea(const string& xpath) {
     if (required) {
         result->set("only-if-required", required);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
     if (model_ == KEA_DHCP4_SERVER) {
-        ConstElementPtr defs = getOptionDefList(xpath +"/option-def-list");
+        ConstElementPtr defs = getOptionDefList(xpath);
         if (defs && (defs->size() > 0)) {
             result->set("option-def", defs);
         }
@@ -122,13 +126,13 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
         created = true;
     }
     if (model_ == KEA_DHCP4_SERVER) {
         ConstElementPtr defs = elem->get("option-def");
         if (defs) {
-            setOptionDefList(xpath + "/option-def-list", defs);
+            setOptionDefList(xpath, defs);
             created = true;
         }
         ConstElementPtr next = elem->get("next-server");
@@ -161,13 +165,12 @@ TranslatorClass::setClassKea(const string& xpath, ConstElementPtr elem) {
 }
 
 TranslatorClasses::TranslatorClasses(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorOptionDef(session, model),
       TranslatorOptionDefList(session, model),
-      TranslatorClass(session, model),
-      model_(model) {
+      TranslatorClass(session, model) {
 }
 
 TranslatorClasses::~TranslatorClasses() {
@@ -191,7 +194,7 @@ TranslatorClasses::getClasses(const string& xpath) {
 
 ElementPtr
 TranslatorClasses::getClassesKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/client-class");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getClassesKea: can't get iterator: " << xpath);

@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ library. This file provides information needed to understand and perhaps extend
 this library.
 
 This documentation is stand-alone: you should have read and understood <a
-href="http://oldkea.isc.org/docs/devel/">Kea Developer's Guide</a> and in
+href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</a> and in
 particular its section about hooks.
 
 @section lease_cmds Lease Commands Overview

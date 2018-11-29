@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_option_def.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,13 +13,16 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorOptionDef::TranslatorOptionDef(S_Session session,
                                          const string& model)
-    : TranslatorBasic(session), model_(model) {
+    : TranslatorBasic(session, model) {
 }
 
 TranslatorOptionDef::~TranslatorOptionDef() {
@@ -131,8 +136,8 @@ TranslatorOptionDef::setOptionDefKea(const string& xpath,
 
 TranslatorOptionDefList::TranslatorOptionDefList(S_Session session,
                                                  const string& model)
-    : TranslatorBasic(session), TranslatorOptionDef(session, model),
-      model_(model) {
+    : TranslatorBasic(session, model),
+      TranslatorOptionDef(session, model) {
 }
 
 TranslatorOptionDefList::~TranslatorOptionDefList() {
@@ -157,7 +162,7 @@ TranslatorOptionDefList::getOptionDefList(const string& xpath) {
 ConstElementPtr
 TranslatorOptionDefList::getOptionDefListKea(const string& xpath) {
     ElementPtr result = Element::createList();
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/option-def");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getOptionDefListKea: can't get iterator: "

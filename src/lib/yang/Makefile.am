@@ -39,7 +39,7 @@ libkea_yang_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_yang_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_yang_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS) $(SYSREPO_LIBS)
 
-libkea_yang_la_LDFLAGS = -no-undefined -version-info 0:0:0
+libkea_yang_la_LDFLAGS = -no-undefined -version-info 1:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_yang_includedir = $(pkgincludedir)/yang
@@ -67,20 +67,5 @@ libkea_yang_include_HEADERS = \
 	yang_models.h
 
 EXTRA_DIST = yang.dox
-# Distribute yang models.
-EXTRA_DIST += models/ietf-dhcpv6-client.yang
-EXTRA_DIST += models/ietf-dhcpv6-options.yang
-EXTRA_DIST += models/ietf-dhcpv6-relay.yang
-EXTRA_DIST += models/ietf-dhcpv6-server.yang
-EXTRA_DIST += models/ietf-dhcpv6-types.yang
-EXTRA_DIST += models/ietf-inet-types.yang
-EXTRA_DIST += models/ietf-yang-types.yang
-EXTRA_DIST += models/kea-ctrl-agent.yang
-EXTRA_DIST += models/kea-dhcp-ddns.yang
-EXTRA_DIST += models/kea-dhcp-types.yang
-EXTRA_DIST += models/kea-dhcp4-server.yang
-EXTRA_DIST += models/kea-dhcp6-server.yang
-EXTRA_DIST += models/kea-logging.yang
-EXTRA_DIST += models/kea-types.yang
 
 CLEANFILES = *.gcno *.gcda

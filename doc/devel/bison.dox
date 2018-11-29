@@ -41,7 +41,7 @@ this step is called phase 2.
 
 Other issues with the old parsers are discussed here: @ref dhcpv6ConfigParserBison (this section is
 focused on DHCPv6, but the same issues affected DHCPv4 and D2) and here:
-http://oldkea.isc.org/wiki/SimpleParser.
+https://gitlab.isc.org/isc-projects/kea/wikis/designs/simple-parser-design.
 
 @section parserBisonIntro Flex/Bison Based Parser
 

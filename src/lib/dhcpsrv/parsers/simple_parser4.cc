@@ -67,7 +67,8 @@ const SimpleDefaults SimpleParser4::GLOBAL4_DEFAULTS = {
     { "next-server",              Element::string,  "0.0.0.0" },
     { "server-hostname",          Element::string,  "" },
     { "boot-file-name",           Element::string,  "" },
-    { "server-tag",               Element::string,  "" }
+    { "server-tag",               Element::string,  "" },
+    { "reservation-mode",         Element::string,  "all" }
 };
 
 /// @brief This table defines default values for each IPv4 subnet.
@@ -81,7 +82,6 @@ const SimpleDefaults SimpleParser4::SUBNET4_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
-    { "reservation-mode", Element::string,  "all" },
     { "4o6-interface",    Element::string,  "" },
     { "4o6-interface-id", Element::string,  "" },
     { "4o6-subnet",       Element::string,  "" },
@@ -103,8 +103,7 @@ const SimpleDefaults SimpleParser4::SHARED_SUBNET4_DEFAULTS = {
 /// @brief This table defines default values for each IPv4 shared network.
 const SimpleDefaults SimpleParser4::SHARED_NETWORK4_DEFAULTS = {
     { "client-class",     Element::string, "" },
-    { "interface",        Element::string, "" },
-    { "reservation-mode", Element::string, "all" }
+    { "interface",        Element::string, "" }
 };
 
 /// @brief This table defines default values for interfaces for DHCPv4.
@@ -135,6 +134,14 @@ const ParamsList SimpleParser4::INHERIT_TO_SUBNET4 = {
     "server-hostname",
     "valid-lifetime"
 };
+
+/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
+const SimpleDefaults SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS = {
+    { "enable-queue",   Element::boolean, "true"},
+    { "queue-type", Element::string,  "kea-ring4"},
+    { "capacity",  Element::integer, "500"}
+};
+
 
 /// @}
 
@@ -188,6 +195,19 @@ size_t SimpleParser4::setAllDefaults(isc::data::ElementPtr global) {
             }
         }
     }
+
+    // Set the defaults for dhcp-queue-control.  If the element isn't
+    // there we'll add it.
+    ConstElementPtr queue_control = global->get("dhcp-queue-control");
+    ElementPtr mutable_cfg;
+    if (queue_control) {
+        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("dhcp-queue-control", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL4_DEFAULTS);
 
     return (cnt);
 }

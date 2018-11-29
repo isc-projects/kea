@@ -54,6 +54,7 @@ libkea_dhcp_ddns_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 libkea_dhcp_ddns_includedir = $(pkgincludedir)/dhcp_ddns
 libkea_dhcp_ddns_include_HEADERS = \
 	dhcp_ddns_log.h \
+	dhcp_ddns_messages.h \
 	ncr_io.h \
 	ncr_msg.h \
 	ncr_udp.h

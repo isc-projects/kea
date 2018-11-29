@@ -52,7 +52,7 @@ namespace yang {
 /// +--rw prefix?                  inet:ipv[46]-prefix
 /// +--rw start-address            inet:ipv[46]-address
 /// +--rw end-address              inet:ipv[46]-address
-/// +--rw option-data-list         option-data*
+/// +--rw option-data*
 /// +--rw client-class?            string
 /// +--rw require-client-classes*  string
 /// +--rw user-context?            string
@@ -108,18 +108,16 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/subnet6 (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///  /kea-dhcp6-server:config/subnet6[id='111'] (list instance)
+///  /kea-dhcp6-server:config/subnet6[id='111']/id = 111
+///  /kea-dhcp6-server:config/subnet6[id='111']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']
 ///     (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
 ///     start-address = 2001:db8::1
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pool[start-address='2001:db8::1'][end-address='2001:db8::100']/
 ///     end-address = 2001:db8::100
 /// @endcode
@@ -130,7 +128,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorPool(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPool(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPool();
@@ -175,22 +177,19 @@ protected:
     void setPoolIetf6(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
 
-    /// @brief getPool for kea-dhcp[46].
+    /// @brief getPool for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the pool.
     /// @return JSON representation of the pool.
     /// @throw BadValue on a pool without prefix and start or end address.
     isc::data::ElementPtr getPoolKea(const std::string& xpath);
 
-    /// @brief setPool for kea-dhcp[46].
+    /// @brief setPool for kea-dhcp[46]-server.
     ///
     /// @param xpath The xpath of the pool.
     /// @param elem The JSON element.
     /// @throw BadValue on a pool without a well formed prefix.
     void setPoolKea(const std::string& xpath, isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting pools between YANG and JSON.
@@ -203,7 +202,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorPools(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPools(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPools();
@@ -221,6 +224,16 @@ public:
     void setPools(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
+    /// @brief getPools for ietf-dhcpv6-server.
+    ///
+    /// @param xpath The xpath of the pool list.
+    isc::data::ElementPtr getPoolsIetf(const std::string& xpath);
+
+    /// @brief getPools for kea-dhcp[46]-server.
+    ///
+    /// @param xpath The xpath of the pool list.
+    isc::data::ElementPtr getPoolsKea(const std::string& xpath);
+
     /// @brief setPools using pool-id.
     ///
     /// @param xpath The xpath of the pool list.
@@ -235,9 +248,6 @@ protected:
     /// @throw BadValue on a pool without a prefix.
     void setPoolsByAddresses(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

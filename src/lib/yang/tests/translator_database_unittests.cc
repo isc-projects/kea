@@ -17,6 +17,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -150,7 +153,7 @@ TEST_F(TranslatorDatabasesTest, getEmpty) {
     useModel(KEA_DHCP6_SERVER);
 
     // Get empty.
-    const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
+    const string& xpath = "/kea-dhcp6-server:config/hosts-database";
     ConstElementPtr databases;
     EXPECT_NO_THROW(databases = t_obj_->getDatabases(xpath));
     EXPECT_FALSE(databases);
@@ -162,9 +165,8 @@ TEST_F(TranslatorDatabasesTest, get) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
-    const string& xdatabase =
-        xpath + "/hosts-database[database-type='mysql']";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-database";
+    const string& xdatabase = xpath + "[database-type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";
@@ -222,7 +224,7 @@ TEST_F(TranslatorDatabasesTest, set) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp6-server:config/hosts-databases";
+    const string& xpath = "/kea-dhcp6-server:config/hosts-database";
     ElementPtr database = Element::createMap();
     database->set("type", Element::create(string("memfile")));
     database->set("lfc-interval", Element::create(3600));
@@ -259,9 +261,8 @@ TEST_F(TranslatorDatabasesTest, setEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
-    const string& xdatabase =
-        xpath + "/hosts-database[database-type='mysql']";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-database";
+    const string& xdatabase = xpath + "[database-type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";
@@ -294,9 +295,8 @@ TEST_F(TranslatorDatabasesTest, setEmpties) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set a value.
-    const string& xpath = "/kea-dhcp4-server:config/hosts-databases";
-    const string& xdatabase =
-        xpath + "/hosts-database[database-type='mysql']";
+    const string& xpath = "/kea-dhcp4-server:config/hosts-database";
+    const string& xdatabase = xpath + "[database-type='mysql']";
     const string& xname = xdatabase + "/name";
     const string& xuser = xdatabase + "/user";
     const string& xpassword = xdatabase + "/password";

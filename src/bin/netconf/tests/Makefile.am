@@ -1,20 +1,6 @@
-SHTESTS =
+SUBDIRS = . shtests
 
-SHTESTS += netconf_tests.sh
-
-noinst_SCRIPTS = netconf_tests.sh
-
-EXTRA_DIST = netconf_tests.sh.in
-EXTRA_DIST += testdata/get_config.json
-
-# test using command-line arguments, so use check-local target instead of TESTS
-check-local:
-	for shtest in $(SHTESTS) ; do \
-	echo Running test: $$shtest ; \
-	export KEA_LOCKFILE_DIR=$(abs_top_builddir); \
-	export KEA_PIDFILE_DIR=$(abs_top_builddir); \
-	${SHELL} $(abs_builddir)/$$shtest || exit ; \
-	done
+EXTRA_DIST = testdata/get_config.json
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src -I$(top_builddir)/src
@@ -26,7 +12,7 @@ AM_CPPFLAGS += $(BOOST_INCLUDES)
 
 CLEANFILES = *.json *.log
 
-DISTCLEANFILES = netconf_tests.sh test_data_files_config.h test_libraries.h
+DISTCLEANFILES = test_data_files_config.h test_libraries.h
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 

@@ -52,7 +52,7 @@ namespace yang {
 ///  +--rw prefix?                  inet:ipv6-prefix
 ///  +--rw delegated-len?           uint8
 ///  +--rw excluded-prefix?         inet:ipv6-prefix
-///  +--rw option-data-list         option-data*
+///  +--rw option-data*
 ///  +--rw client-class?            string
 ///  +--rw require-client-classes*  string
 ///  +--rw user-context?            string
@@ -96,16 +96,14 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/subnet6 (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111'] (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/id = 111
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet = 2001:db8::/48
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools (container)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111'] (list instance)
+///  /kea-dhcp6-server:config/subnet6[id='111']/id = 111
+///  /kea-dhcp6-server:config/subnet6[id='111']/subnet = 2001:db8::/48
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56' (list instance)
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56'/prefix = 2001:db8:0:1000::/56
-///  /kea-dhcp6-server:config/subnet6/subnet6[id='111']/pd-pools/
+///  /kea-dhcp6-server:config/subnet6[id='111']/
 ///     pd-pool[prefix='2001:db8:0:1000::/56'/delegated-len = 64
 /// @endcode
 
@@ -122,7 +120,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorPdPool(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPdPool(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPdPool();
@@ -157,22 +159,19 @@ protected:
     void setPdPoolIetf6(const std::string& xpath,
                         isc::data::ConstElementPtr elem);
 
-    /// @brief getPdPool for kea-dhcp6.
+    /// @brief getPdPool for kea-dhcp6-server.
     ///
     /// @param xpath The xpath of the pd-pool.
     /// @return JSON representation of the pd-pool.
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getPdPoolKea(const std::string& xpath);
 
-    /// @brief setPdPool for kea-dhcp6.
+    /// @brief setPdPool for kea-dhcp6-server.
     ///
     /// @param xpath The xpath of the pd-pool.
     /// @param elem The JSON element.
     void setPdPoolKea(const std::string& xpath,
                       isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a pd-pool list between
@@ -188,7 +187,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorPdPools(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorPdPools(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorPdPools();
@@ -206,6 +209,12 @@ public:
     void setPdPools(const std::string& xpath, isc::data::ConstElementPtr elem);
 
 protected:
+    /// @brief getPdPools common part.
+    ///
+    /// @param xpath The xpath of the pd-pool list.
+    /// @throw SysrepoError when sysrepo raises an error.
+    isc::data::ElementPtr getPdPoolsCommon(const std::string& xpath);
+
     /// @brief setPdPools using pool-id.
     ///
     /// @param xpath The xpath of the pd-pool list.
@@ -220,9 +229,6 @@ protected:
     /// @throw BadValue on pd-pool without prefix or prefix length.
     void setPdPoolsPrefix(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

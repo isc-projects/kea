@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.5.0-beta1, kea-dev@lists.isc.org)
+AC_INIT(kea,1.5.0-beta2, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -872,7 +872,7 @@ DISTCHECK_SYSREPO_CONFIGURE_FLAG=
 sysrepo_config="no"
 AC_ARG_WITH([sysrepo],
   AC_HELP_STRING([--with-sysrepo=PATH],
-    [path to the Sysrepo 'sysrepo_config' script]),
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
@@ -941,11 +941,19 @@ if test "$SYSREPO_CONFIG" != "" ; then
     )
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.h>],
-                              [Connection("conn-name");])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
-             AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.])]
+        [AC_LANG_PROGRAM(
+            [#include <sysrepo-cpp/Session.hpp>],
+            [sysrepo::Connection("conn-name");])],
+        [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <sysrepo-cpp/Session.h>],
+                [Connection("conn-name");])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... old])
+             AC_DEFINE([HAVE_PRE_0_7_6_SYSREPO], [1], [Using sysrepo < 0.7.6])],
+             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
+              AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.)])]
+        )]
     )
 
     CPPFLAGS=$CPPFLAGS_SAVED
@@ -1283,6 +1291,10 @@ fi
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
+# Use our 'coroutine' header from ext
+# CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+
+#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
@@ -1471,6 +1483,7 @@ AC_CONFIG_FILES([Makefile
                  doc/docgen/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
+                 ext/coroutine/Makefile
                  kea_version.h
                  m4macros/Makefile
                  src/Makefile
@@ -1513,7 +1526,8 @@ AC_CONFIG_FILES([Makefile
                  src/bin/lfc/tests/Makefile
                  src/bin/netconf/Makefile
                  src/bin/netconf/tests/Makefile
-                 src/bin/netconf/tests/netconf_tests.sh
+                 src/bin/netconf/tests/shtests/Makefile
+                 src/bin/netconf/tests/shtests/netconf_tests.sh
                  src/bin/netconf/tests/test_data_files_config.h
                  src/bin/netconf/tests/test_libraries.h
                  src/bin/perfdhcp/Makefile

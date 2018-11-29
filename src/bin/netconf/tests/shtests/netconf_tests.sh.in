@@ -5,9 +5,9 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 # Path to the temporary configuration file.
-CFG_FILE=@abs_top_builddir@/src/bin/netconf/tests/test_config.json
+CFG_FILE=@abs_top_builddir@/src/bin/netconf/tests/shtests/test_config.json
 # Path to the Kea log file.
-LOG_FILE=@abs_top_builddir@/src/bin/netconf/tests/test.log
+LOG_FILE=@abs_top_builddir@/src/bin/netconf/tests/shtests/test.log
 # Expected version
 EXPECTED_VERSION="@PACKAGE_VERSION@"
 

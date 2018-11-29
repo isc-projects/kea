@@ -1,4 +1,96 @@
-Kea 1.5.0-beta released on Nov 9, 2018
+Kea 1.5.0-beta2 released on Nov 30, 2018
+
+1492.	[doc]		fdupont
+	Added a step by step netconf operation example in the
+	Kea Administrators's Guide.
+	(Gitlab #195,!131, git 994a826caf3c1a9f5f84d8b703a3b202120e91b6)
+
+1491.	[build]		tomek
+	coroutine.hpp from Boost 1.68 has been added the Kea source.
+	It is used only if the Boost library provided by the system
+	is very old and does not include that header. This effectively
+	reverts the change done in Kea 1.4.0.
+	(Gitlab #293,!45, git df0f507b8b750c8dff1f537cad5b5748b7841852)
+
+1491.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 beta2 release.
+	Also, generated logger message files are now installed with Kea.
+	(Gitlab #62,!144, git 7dc8d73a58504fd81a49b1c54651388d53d98d53)
+
+1490.	[bug]		marcin
+	Applied fixes in Cassandra Host Manager which prevents Kea
+	crash during an attempt to delete non-existing reservation.
+	In particular, this crash was observed as a result of sending
+	reservation-del command over RESTful API.
+	(Gitlab #27,!138, git 8666ed4754ffd27f3aa46a2cf3e4b161a1d877ee)
+
+1489.	[doc]		fdupont
+	Added examples of global host reservations.
+	(Gitlab #136, !143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
+
+1488.	[doc]		marcin
+	Added stat_cmds to the list of available hooks libraries.
+	(Gitlab #85,!142, git 08615372b4f869fe61b13559efa33d0d9794d79b)
+
+1487.	[doc]		marcin
+	Corrected broken links and various typos in Kea documentation
+	which had been identified during Kea 1.5.0 beta1 release
+	process.
+	(Gitlab #263,!137, git 79a224288efa1e1c51b0f2ec11ff646563b306e1)
+
+1486.	[func]		tmark
+	For Kea 1.5.0-beta2, congestion handling has been enabled by
+	default. This was done to expose the feature to more testing.
+	We will finalize the default setting prior to releasing Kea 1.5.0.
+	(Gitlab #276,!132, git fda1f985997412a58d3b4eee4a1ca0588d3f3beb)
+
+1485.	[func]		fdupont
+	Simplified and updated Kea YANG models. For instance the list of
+	loggers was moved from the removed logging container to global
+	config parameters.
+	(Gitlab #204, !97, git 1de6c2987ec9067b7c1baa577c6dcd6ddd1b30fb)
+
+1484.	[bug]		marcin
+	Resolved issues with MySQL backend failing to insert a lease
+	to the MariaDB database on OpenSUSE. This fix may also
+	improve stability of the MySQL backend on other systems running
+	MariaDB.
+	(Gitlab #53,!125, git 038eddbc7b904289e4b74b5ef2406cb57f79a646)
+
+1483.	[func]		tmark
+	Use of congestion handling is now optional via the 'enable-queue'
+	flag added to 'dhcp-queue-control'.  It is disabled by default.
+	When disabled Kea's DHCPv4 and DHCPv6 servers will consume packets
+	directly from interface sockets in the main thread (i.e. employs
+	pre Kea 1.5 technique).
+	(Gitlab #260, !120, git 9e304fae48d0d0658fd39a21aba9da528b4cc6f4)
+
+1482.	[func]		fdupont
+	The configuration parameter "reservation-mode" can be specified
+	at global (new), subnet and shared network levels.
+	(Gitlab #268,!126, git c72d381c39868308c7d11c7d4def3bdae0a0e04e)
+
+1481.	[func]		fdupont
+	Cleaned up the keatest-module YANG test module.
+	(Gitlab #204,!98, git a830adcefd9306969216d35c51306df3610278bb)
+
+1480.	[func]		fdupont
+	The unused configuration parameter "always-include-fqdn"
+	was removed. Configurations using it will be rejected as
+	it is no longer recognized.
+	(Gitlab #182,!128, git cafeba167e7c64370dd39eca4551f61acd89d3da)
+
+1479.	[build]		fdupont
+	Support for sysrepo 0.7.6 (and libyang 0.16-r2) was added.
+	Previous versions of sysrepo (and libyang) are still supported.
+	(Gitlab #176, !107, git 4304a10b21708afb2a7599c77bc7508a600333cb)
+
+1478.	[bug]		marcin
+	Performance improvements in the HTTP client code used in the
+	Kea High Availability.
+	(Gitlab #57,!122, git 7bd97af1f3d7670cd64cadf0d0cb9ddbe4e74909)
+
+Kea 1.5.0-beta1 released on Nov 9, 2018
 
 1477.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0 beta release.

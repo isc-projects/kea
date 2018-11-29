@@ -1621,6 +1621,11 @@ CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {
 
 bool
 CqlHostDataSourceImpl::insertOrDelete(const HostPtr& host, bool insert) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     // Get option space names and vendor space names and combine them within a
     // single list.
 
@@ -1859,6 +1864,11 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
                                                      const IPv6Resrv* const reservation,
                                                      const std::list<std::string>& option_spaces,
                                                      const ConstCfgOptionPtr cfg_option) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     bool result = true;
 
     // For each option space retrieve all options and insert them into
@@ -1897,6 +1907,11 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithReservations(bool insert,
                                                           const ConstCfgOptionPtr cfg_option4,
                                                           const std::list<std::string>& option_spaces6,
                                                           const ConstCfgOptionPtr cfg_option6) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     bool result = true;
 
     // If host has no reservation, add entries with null reservation.
@@ -1979,6 +1994,11 @@ CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
                                           const IPv6Resrv* const reservation,
                                           const std::string& option_space,
                                           const OptionDescriptor& option_descriptor) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     AnyArray assigned_values;
 
     std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
@@ -2049,7 +2069,7 @@ bool
 CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, address));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2058,7 +2078,7 @@ CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2067,7 +2087,7 @@ CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 ConstHostCollection

@@ -18,6 +18,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -42,7 +45,7 @@ TEST_F(TranslatorOptionDefListTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Get the option definition list and check if it is empty.
-    const string& xpath = "/kea-dhcp4-server:config/option-def-list";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = t_obj_->getOptionDefList(xpath));
     ASSERT_TRUE(options);
@@ -56,7 +59,7 @@ TEST_F(TranslatorOptionDefListTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the option code 100.
-    const string& xpath = "/kea-dhcp6-server:config/option-def-list";
+    const string& xpath = "/kea-dhcp6-server:config";
     const string& xdef = xpath + "/option-def[code='100'][space='isc']";
     const string& xname = xdef + "/name";
     const string& xtype = xdef + "/type";
@@ -95,7 +98,7 @@ TEST_F(TranslatorOptionDefListTest, setEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4-server:config/option-def-list";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr defs = Element::createList();
     EXPECT_NO_THROW(t_obj_->setOptionDefList(xpath, defs));
 
@@ -117,7 +120,7 @@ TEST_F(TranslatorOptionDefListTest, set) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set one option def.
-    const string& xpath = "/kea-dhcp6-server:config/option-def-list";
+    const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr defs = Element::createList();
     ElementPtr def = Element::createMap();
     def->set("code", Element::create(100));
@@ -142,19 +145,17 @@ TEST_F(TranslatorOptionDefListTest, set) {
     string expected =
         "kea-dhcp6-server:config (container)\n"
         " |\n"
-        " -- option-def-list (container)\n"
+        " -- option-def (list instance)\n"
         "     |\n"
-        "     -- option-def (list instance)\n"
-        "         |\n"
-        "         -- code = 100\n"
-        "         |\n"
-        "         -- space = isc\n"
-        "         |\n"
-        "         -- name = foo\n"
-        "         |\n"
-        "         -- type = string\n"
-        "         |\n"
-        "         -- array = false\n";
+        "     -- code = 100\n"
+        "     |\n"
+        "     -- space = isc\n"
+        "     |\n"
+        "     -- name = foo\n"
+        "     |\n"
+        "     -- type = string\n"
+        "     |\n"
+        "     -- array = false\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.

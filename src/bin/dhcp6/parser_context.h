@@ -91,6 +91,9 @@ public:
         /// This will parse the input as dhcp-ddns. (D2 client config)
         PARSER_DHCP_DDNS,
 
+        /// This will parse the input as config-control.
+        PARSER_CONFIG_CONTROL,
+
         /// This will parse the content of Logging.
         PARSER_LOGGING
 
@@ -245,7 +248,7 @@ public:
         /// Used while parsing shared-networks structures.
         SHARED_NETWORK,
 
-        /// Used while parsing Dhcp6/Subnet6/reservation-mode.
+        /// Used while parsing Dhcp6/reservation-mode.
         RESERVATION_MODE,
 
         /// Used while parsing Dhcp6/option-def structures.

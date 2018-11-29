@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -121,7 +121,7 @@ the cache sets its own values for the debug/file attributes.
 
 More information about the logging hierarchy can be found in the section
 on Logging configuration in the <a
-href="http://oldkea.isc.org/docs/kea-guide.html#logging">Kea Administrator
+href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#logging">Kea Administrator
 Reference Manual</a>.
 
 @subsection logSeparationUseText Separation of Messages Use from Message Text

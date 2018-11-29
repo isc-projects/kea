@@ -18,6 +18,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -42,7 +45,7 @@ TEST_F(TranslatorOptionDataListTest, getEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Get the option data list and check if it is empty.
-    const string& xpath = "/kea-dhcp4-server:config/option-data-list";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options;
     EXPECT_NO_THROW(options = t_obj_->getOptionDataList(xpath));
     ASSERT_TRUE(options);
@@ -56,7 +59,7 @@ TEST_F(TranslatorOptionDataListTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the option code 100.
-    const string& xpath = "/kea-dhcp6-server:config/option-data-list";
+    const string& xpath = "/kea-dhcp6-server:config";
     const string& xoption = xpath + "/option-data[code='100'][space='dns']";
     const string& xformat = xoption + "/csv-format";
     const string& xdata = xoption + "/data";
@@ -95,7 +98,7 @@ TEST_F(TranslatorOptionDataListTest, setEmpty) {
     useModel(KEA_DHCP4_SERVER);
 
     // Set empty list.
-    const string& xpath = "/kea-dhcp4-server:config/option-data-list";
+    const string& xpath = "/kea-dhcp4-server:config";
     ConstElementPtr options = Element::createList();
     EXPECT_NO_THROW(t_obj_->setOptionDataList(xpath, options));
 
@@ -117,7 +120,7 @@ TEST_F(TranslatorOptionDataListTest, set) {
     useModel(KEA_DHCP6_SERVER);
 
     // Set one option data.
-    const string& xpath = "/kea-dhcp6-server:config/option-data-list";
+    const string& xpath = "/kea-dhcp6-server:config";
     ElementPtr options = Element::createList();
     ElementPtr option = Element::createMap();
     option->set("code", Element::create(100));
@@ -142,19 +145,17 @@ TEST_F(TranslatorOptionDataListTest, set) {
     string expected =
         "kea-dhcp6-server:config (container)\n"
         " |\n"
-        " -- option-data-list (container)\n"
+        " -- option-data (list instance)\n"
         "     |\n"
-        "     -- option-data (list instance)\n"
-        "         |\n"
-        "         -- code = 100\n"
-        "         |\n"
-        "         -- space = dns\n"
-        "         |\n"
-        "         -- data = 12121212\n"
-        "         |\n"
-        "         -- csv-format = false\n"
-        "         |\n"
-        "         -- always-send = false\n";
+        "     -- code = 100\n"
+        "     |\n"
+        "     -- space = dns\n"
+        "     |\n"
+        "     -- data = 12121212\n"
+        "     |\n"
+        "     -- csv-format = false\n"
+        "     |\n"
+        "     -- always-send = false\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.

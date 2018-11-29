@@ -24,6 +24,7 @@
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <process/config_ctl_info.h>
@@ -4121,7 +4122,6 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -4158,7 +4158,6 @@ TEST_F(Dhcp4ParserTest, d2ClientConfig) {
     EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
@@ -4185,7 +4184,6 @@ TEST_F(Dhcp4ParserTest, invalidD2ClientConfig) {
         "     \"server-port\" : 5301, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -4930,6 +4928,60 @@ TEST_F(Dhcp4ParserTest, hostReservationPerSubnet) {
     subnet = subnets->selectSubnet(IOAddress("192.0.5.1"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
+}
+
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified globally.
+TEST_F(Dhcp4ParserTest, hostReservationGlobal) {
+
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 2 subnets with :
+    ///       - 192.0.2.0/24 (all reservations enabled)
+    ///       - 192.0.3.0/24 (reservations not specified)
+    const char* hr_config =
+        "{ "
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"reservation-mode\": \"out-of-pool\", "
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/24\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"reservation-mode\": \"all\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"192.0.3.0/24\" } ],"
+        "    \"subnet\": \"192.0.3.0/24\""
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP4(hr_config));
+    extractConfig(hr_config);
+    ConstElementPtr result;
+    EXPECT_NO_THROW(result = configureDhcp4Server(*srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(result, 0);
+
+    // Let's get all subnets and check that there are 4 of them.
+    ConstCfgSubnets4Ptr subnets = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+    ASSERT_TRUE(subnets);
+    const Subnet4Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(2, subnet_col->size()); // We expect 2 subnets
+
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet4Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("192.0.2.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("192.0.3.1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 }
 
 /// Check that the decline-probation-period has a default value when not
@@ -6437,33 +6489,44 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
         ""
         },
         {
-        "valid entry",
+        "queue disabled",
         "{ \n"
-        "   \"queue-type\": \"some-type\", \n"
-        "   \"capacity\": 75 \n"
+        "   \"enable-queue\": false \n"
         "} \n"
         },
         {
-        "valid arbitrary content",
+        "queue disabled, arbitrary content allowed",
         "{ \n"
-        "       \"queue-type\": \"some-type\", \n"
-        "       \"capacity\": 90, \n"
-        "       \"user-context\": { \"comment\": \"some text\" },\n"
-        "       \"random-bool\" : false, \n"
-        "       \"random-int\" : 1234 \n"
+        "   \"enable-queue\": false, \n"
+        "   \"foo\": \"bogus\", \n"
+        "   \"random-int\" : 1234 \n"
+        "} \n"
+        },
+        {
+        "queue enabled, with queue-type",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": \"some-type\" \n"
+        "} \n"
+        },
+        {
+        "queue enabled with queue-type and arbitrary content",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": \"some-type\", \n"
+        "   \"foo\": \"bogus\", \n"
+        "   \"random-int\" : 1234 \n"
         "} \n"
         }
     };
 
     // Let's check the default. It should be empty.
-    data::ConstElementPtr control;
-    control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-    ASSERT_FALSE(control);
+    data::ConstElementPtr staged_control;
+    staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+    ASSERT_FALSE(staged_control);
 
-    // Iterate over the incorrect scenarios and verify they
-    // fail as expected. Note, we use parseDHCP4() directly
-    // as all of the errors above are enforced by the grammar.
-    data::ConstElementPtr exp_elems;
+    // Iterate over the valid scenarios and verify they succeed.
+    data::ElementPtr exp_control;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
@@ -6474,7 +6537,6 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
             std::stringstream os;
             os << "{ " + genIfaceConfig();
             if (!scenario.json_.empty()) {
-
                os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
             }
 
@@ -6484,20 +6546,26 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
             configure(os.str(), CONTROL_RESULT_SUCCESS, "");
 
             // Fetch the queue control info.
-            control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-
-            // If JSON does not contain queue control,
-            // the pointer stored in staging should be empty.
+            staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+            // Make sure the staged queue config exists.
+            ASSERT_TRUE(staged_control);
+            // Now build the expected queue control content.
             if (scenario.json_.empty()) {
-                ASSERT_FALSE(control);
-                continue;
+                exp_control = Element::createMap();
+            } else {
+                try {
+                    exp_control = boost::const_pointer_cast<Element>(Element::fromJSON(scenario.json_));
+                } catch (const std::exception& ex) {
+                    ADD_FAILURE() << " cannot convert expected JSON, test is broken:"
+                                << ex.what();
+                }
             }
 
-            // Make sure the staged config is correct.
-            ASSERT_TRUE(control);
-            ASSERT_NO_THROW(exp_elems = Element::fromJSON(scenario.json_))
-                            << " cannot convert expected JSON, test is broken";
-            EXPECT_TRUE(control->equals(*exp_elems));
+            // Add the defaults to expected queue control.
+            SimpleParser4::setDefaults(exp_control, SimpleParser4::DHCP_QUEUE_CONTROL4_DEFAULTS);
+
+            // Verify that the staged queue control equals the expected queue control.
+            EXPECT_TRUE(staged_control->equals(*exp_control));
         }
     }
 }
@@ -6507,24 +6575,36 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
     struct Scenario {
         std::string description_;
         std::string json_;
+        std::string exp_error_;
     };
 
     std::vector<Scenario> scenarios = {
         {
-            "not a map",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet4\": [  ],  \n"
-            "   \"dhcp-queue-control\": 75 \n"
-            "} \n"
+        "not a map",
+        "75 \n",
+        "<string>:2.24-25: syntax error, unexpected integer, expecting {"
         },
         {
-            "queue type missing",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet4\": [  ],  \n"
-            "   \"dhcp-queue-control\": { \n"
-            "       \"capacity\": 100 \n"
-            "   } \n"
-            "} \n"
+        "enable-queue missing",
+        "{ \n"
+        "   \"enable-type\": \"some-type\" \n"
+        "} \n",
+        "<string>:2.2-21: 'enable-queue' is required: (<string>:2:24)"
+        },
+        {
+        "enable-queue not boolean",
+        "{ \n"
+        "   \"enable-queue\": \"always\" \n"
+        "} \n",
+        "<string>:2.2-21: 'enable-queue' must be boolean: (<string>:2:24)"
+        },
+        {
+        "queue enabled, type not a string",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": 7777 \n"
+        "} \n",
+        "<string>:2.2-21: 'queue-type' must be a string: (<string>:2:24)"
         }
     };
 
@@ -6534,10 +6614,23 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
-            EXPECT_THROW(parseDHCP4(scenario.json_), Dhcp4ParseError);
+            // Construct the config JSON
+            std::stringstream os;
+            os << "{ " + genIfaceConfig();
+            os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
+            os << "} \n";
+
+            std::string error_msg = "";
+            try {
+                ASSERT_TRUE(parseDHCP4(os.str(), false)) << "parser returned empty element";
+            } catch(const std::exception& ex) {
+                error_msg = ex.what();
+            }
+
+            ASSERT_FALSE(error_msg.empty()) << "parseDHCP4 should have thrown";
+            EXPECT_EQ(scenario.exp_error_, error_msg);
         }
     }
 }
-
 
 }

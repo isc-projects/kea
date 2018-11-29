@@ -211,8 +211,8 @@ Debian and Ubuntu:
         </itemizedlist>
 
         <para>
-          Visit the user-contributed wiki at
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/Install">http://oldkea.isc.org/wiki/Install</uri>
+          Visit ISC's Knowledgebase at
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/installing-kea">https://kb.isc.org/docs/installing-kea</uri>
           for system-specific installation tips.
         </para>
     </section>
@@ -286,7 +286,7 @@ Debian and Ubuntu:
           your code. Please consult
           <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
           how to fork a Github repository.
-          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/docs/devel/">Kea
+          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
           Developer's Guide</link> contains more information about the process, as
           well as describing the requirements for contributed code to be accepted by ISC.
         </para>
@@ -547,8 +547,7 @@ Debian and Ubuntu:
           When unit tests are built with Kea (the --with-gtest configuration option is specified),
           the databases must be manually pre-configured for the unit tests to run.
           The details of this configuration can be found in the
-          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
-          Guide</link>.
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
         </simpara>
       </note>
 

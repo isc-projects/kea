@@ -8,12 +8,15 @@ module kea-dhcp4-server {
   }
   import kea-types {
     prefix kea;
+    revision-date 2018-11-20;
   }
   import kea-dhcp-types {
     prefix dhcp;
+    revision-date 2018-11-20;
   }
   import kea-logging {
     prefix logging;
+    revision-date 2018-11-20;
   }
 
   organization "Internet Systems Consortium";
@@ -21,7 +24,7 @@ module kea-dhcp4-server {
   description "This model defines a YANG data model that can be
                used to configure and manage a Kea DHCPv4 server.";
 
-  revision 2018-09-14 {
+  revision 2018-11-20 {
     description "Initial revision";
     reference "";
   }
@@ -57,7 +60,6 @@ module kea-dhcp4-server {
     description "Match client ID grouping.";
     leaf match-client-id {
       type boolean;
-      default true;
       description "Use client-id for lease lookups. If set to false, client-id
                    will be ignored.";
     }
@@ -86,6 +88,15 @@ module kea-dhcp4-server {
       type string;
       description "Boot file name (up to 128 bytes).";
     }
+  }
+
+  grouping authoritative {
+    description "Authoritative grouping.";
+    leaf authoritative {
+      type boolean;
+      description "NAK requests for unknown clients. If set to false
+                   ignore them.";
+      }
   }
 
   grouping relay {
@@ -119,13 +130,10 @@ module kea-dhcp4-server {
 
   grouping reservations {
     description "Host reservations grouping.";
-    container reservations {
-      description "Host reservations container.";
-      list host {
-        key "identifier-type identifier";
-        description "Host reservation entry.";
-        uses host;
-      }
+    list host {
+      key "identifier-type identifier";
+      description "Host reservation list.";
+      uses host;
     }
   }
 
@@ -139,32 +147,29 @@ module kea-dhcp4-server {
       uses dhcp:renew-timer;
       uses dhcp:rebind-timer;
       uses option-data-list;
-      container pools {
-        description "List of pools.";
-        list pool {
-          key "start-address end-address";
-          ordered-by user;
-          description "Pool entry.";
-          leaf prefix {
-            type inet:ipv4-prefix;
-            description "Defines a pool of dynamic IPv4 addresses to be managed
-                         by the server.";
-          }
-          leaf start-address {
-            type inet:ipv4-address;
-            mandatory true;
-            description "First IPv4 address in a pool.";
-          }
-          leaf end-address {
-            type inet:ipv4-address;
-            mandatory true;
-            description "Last IPv4 address in a pool.";
-          }
-          uses option-data-list;
-          uses dhcp:pool-client-class;
-          uses dhcp:pool-require-client-classes;
-          uses dhcp:pool-user-context;
+      list pool {
+        key "start-address end-address";
+        ordered-by user;
+        description "Pool list.";
+        leaf prefix {
+          type inet:ipv4-prefix;
+          description "Defines a pool of dynamic IPv4 addresses to be managed
+                       by the server.";
         }
+        leaf start-address {
+          type inet:ipv4-address;
+          mandatory true;
+          description "First IPv4 address in a pool.";
+        }
+        leaf end-address {
+          type inet:ipv4-address;
+          mandatory true;
+          description "Last IPv4 address in a pool.";
+        }
+        uses option-data-list;
+        uses dhcp:pool-client-class;
+        uses dhcp:pool-require-client-classes;
+        uses dhcp:pool-user-context;
       }
       leaf subnet {
         type inet:ipv4-prefix;
@@ -176,11 +181,11 @@ module kea-dhcp4-server {
       uses dhcp:subnet-client-class;
       uses dhcp:subnet-require-client-classes;
       uses reservations {
-        refine reservations {
-          description "Subnet host reservations.";
+        refine host {
+          description "Subnet host reservations list.";
         }
       }
-      uses dhcp:subnet-reservation-mode;
+      uses dhcp:reservation-mode;
       container relay {
         description "Optional information about relay agent.";
         uses relay;
@@ -201,73 +206,73 @@ module kea-dhcp4-server {
         type inet:ipv6-prefix;
         description "Subnet DHCPv4-over-DHCPv6 IPv6 prefix.";
       }
+      uses authoritative;
       uses dhcp:subnet-user-context;
     }
   }
 
-  grouping client-class {
+  grouping client-classes {
     description "Client class grouping.";
-    uses dhcp:class-name;
-    uses dhcp:class-test;
-    uses dhcp:class-only-if-required;
-    uses option-def-list;
-    uses option-data-list;
-    uses next-server;
-    uses server-hostname;
-    uses boot-file-name;
-    uses dhcp:class-user-context;
+    list client-class {
+      key name;
+      ordered-by user;
+      description "List of client classes.";
+      uses dhcp:class-name;
+      uses dhcp:class-test;
+      uses dhcp:class-only-if-required;
+      uses option-def-list;
+      uses option-data-list;
+      uses next-server;
+      uses server-hostname;
+      uses boot-file-name;
+      uses dhcp:class-user-context;
+    }
   }
 
   grouping option-def-list {
     description "Option definition list grouping.";
-    container option-def-list {
-      description "List with custom option definitions.";
-      list option-def {
-        key "code space";
-        description "Option definition entry.";
-        leaf code {
-          type uint8;
-          mandatory true;
-          description "Option code to be used by the new option definition.";
-        }
-        leaf space {
-          type string;
-          mandatory true;
-          description "Option space for the new option (typically dhcp4).";
-        }
-        uses dhcp:option-def-name;
-        uses dhcp:option-def-type;
-        uses dhcp:option-def-record-types;
-        uses dhcp:option-def-encapsulate;
-        uses dhcp:option-def-array;
-        uses dhcp:option-def-user-context;
+    list option-def {
+      key "code space";
+      description "Option definition entry.";
+      leaf code {
+        type uint8;
+        mandatory true;
+        description "Option code to be used by the new option definition.";
       }
-    }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space for the new option (typically dhcp4).";
+      }
+      uses dhcp:option-def-name;
+      uses dhcp:option-def-type;
+      uses dhcp:option-def-record-types;
+      uses dhcp:option-def-encapsulate;
+      uses dhcp:option-def-array;
+      uses dhcp:option-def-user-context;
+     }
   }
 
   grouping option-data-list {
     description "Option data list grouping.";
-    container option-data-list {
-      description "Option data list.";
-      list option-data {
-        key "code space";
-        description "Option data entry.";
-        leaf code {
-          type uint8;
-          mandatory true;
-          description "Option code.";
-        }
-        leaf space {
-          type string;
-          mandatory true;
-          description "Option space.";
-        }
-        uses dhcp:option-data-name;
-        uses dhcp:option-data-data;
-        uses dhcp:option-data-csv-format;
-        uses dhcp:option-data-always-send;
-        uses dhcp:option-data-user-context;
+    list option-data {
+      key "code space";
+      description "Option data entry.";
+      leaf code {
+        type uint8;
+        mandatory true;
+        description "Option code.";
       }
+      leaf space {
+        type string;
+        mandatory true;
+        description "Option space.";
+      }
+      uses dhcp:option-data-name;
+      uses dhcp:option-data-data;
+      uses dhcp:option-data-csv-format;
+      uses dhcp:option-data-always-send;
+      uses dhcp:option-data-user-context;
     }
   }
 
@@ -283,41 +288,31 @@ module kea-dhcp4-server {
     uses dhcp:renew-timer;
     uses dhcp:rebind-timer;
     uses dhcp:decline-probation-period;
+    uses subnet4-list;
 
-    container subnet4 {
-      description "Global list of IPv4 subnets.";
+    list shared-network {
+      key name;
+      description "List of IPv4 shared networks.";
+      uses dhcp:network-name;
       uses subnet4-list;
-    }
-
-    container shared-networks {
-      description "Defines a list of IPv4 shared networks.";
-      list shared-network {
-        key name;
-        description "List of IPv4 shared networks.";
-        uses dhcp:network-name;
-        container subnet4 {
-          description "List of IPv4 subnets that belong to this shared
-                       network.";
-          uses subnet4-list;
-        }
-        uses dhcp:network-interface;
-        uses dhcp:renew-timer;
-        uses dhcp:rebind-timer;
-        uses option-data-list;
-        uses match-client-id;
-        uses next-server;
-        uses server-hostname;
-        uses boot-file-name;
-        container relay {
-          description "Optional information about relay agent.";
-          uses relay;
-        }
-        uses dhcp:network-reservation-mode;
-        uses dhcp:network-client-class;
-        uses dhcp:network-require-client-classes;
-        uses dhcp:valid-lifetime;
-        uses dhcp:network-user-context;
+      uses dhcp:network-interface;
+      uses dhcp:renew-timer;
+      uses dhcp:rebind-timer;
+      uses option-data-list;
+      uses match-client-id;
+      uses next-server;
+      uses server-hostname;
+      uses boot-file-name;
+      container relay {
+        description "Optional information about relay agent.";
+        uses relay;
       }
+      uses authoritative;
+      uses dhcp:reservation-mode;
+      uses dhcp:network-client-class;
+      uses dhcp:network-require-client-classes;
+      uses dhcp:valid-lifetime;
+      uses dhcp:network-user-context;
     }
 
     container interfaces-config {
@@ -336,7 +331,6 @@ module kea-dhcp4-server {
             description "DHCP service uses UDP sockets.";
           }
         }
-        default "raw";
         description "Type of sockets to use.";
       }
       leaf outbound-interface {
@@ -349,7 +343,6 @@ module kea-dhcp4-server {
             description "Use kernel routing.";
           }
         }
-        default "same-as-inbound";
         description "Control the interface used to send a response.";
       }
       uses dhcp:interfaces-re-detect;
@@ -363,16 +356,7 @@ module kea-dhcp4-server {
       description "Host reservation identifiers.";
     }
 
-    container client-classes {
-      description "Client classes.";
-      list client-class {
-        key name;
-        ordered-by user;
-        description "List of client classes.";
-        uses client-class;
-      }
-    }
-
+    uses client-classes;
     uses option-def-list;
     uses option-data-list;
     uses kea:hooks-libraries;
@@ -383,7 +367,6 @@ module kea-dhcp4-server {
 
     leaf echo-client-id {
       type boolean;
-      default true;
       description "Send client-id back when the client sent it. This
                    is conformant with RFC6842, but some older, buggy
                    clients have problems with it.";
@@ -393,6 +376,7 @@ module kea-dhcp4-server {
     uses next-server;
     uses server-hostname;
     uses boot-file-name;
+    uses authoritative;
     uses kea:user-context {
       refine user-context {
         description "DHCPv4 server user context. Arbitrary JSON data can
@@ -400,18 +384,17 @@ module kea-dhcp4-server {
       }
     }
     uses dhcp:sanity-checks;
+    uses dhcp:reservation-mode;
     uses reservations {
-      refine reservations {
-        description "Global host reservations.";
+      refine host {
+        description "Global host reservations list.";
       }
     }
-  }
-
-  container logging {
-    // config true;
-    description "Logging";
-
-    uses logging:configuration;
+    uses dhcp:config-control;
+    uses dhcp:server-tag;
+    uses dhcp:dhcp-queue-control;
+    // Moved from logging
+    uses logging:loggers;
   }
 
   /*
@@ -458,22 +441,18 @@ module kea-dhcp4-server {
         }
         leaf fqdn-fwd {
           type boolean;
-          default false;
           description "Lease FQDN forward flag.";
         }
         leaf fqdn-rev {
           type boolean;
-          default false;
           description "Lease FQDN reverse lag.";
         }
         leaf hostname {
           type string;
-          default "";
           description "Lease hostname.";
         }
         leaf state {
           type dhcp:lease-state;
-          default "default";
           description "Lease state.";
         }
         leaf user-context {

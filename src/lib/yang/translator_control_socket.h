@@ -74,7 +74,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorControlSocket(sysrepo::S_Session session,
+                            const std::string& model);
+#else
     TranslatorControlSocket(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorControlSocket();
@@ -112,9 +117,6 @@ protected:
     /// @throw BadValue on control socket without socket type or name.
     void setControlSocketKea(const std::string& xpath,
                              isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

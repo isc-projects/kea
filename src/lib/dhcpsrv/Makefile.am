@@ -229,7 +229,7 @@ libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_dhcpsrv_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcpsrv_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 12:0:0
+libkea_dhcpsrv_la_LDFLAGS  = -no-undefined -version-info 13:0:0
 libkea_dhcpsrv_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 if HAVE_MYSQL
 libkea_dhcpsrv_la_LDFLAGS += $(MYSQL_LIBS)
@@ -255,11 +255,13 @@ libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine.h \
 	alloc_engine_log.h \
+	alloc_engine_messages.h \
 	assignable_network.h \
 	base_host_data_source.h \
 	cache_host_data_source.h \
 	callout_handle_store.h \
 	cfg_4o6.h \
+	cfg_consistency.h \
 	cfg_db_access.h \
 	cfg_duid.h \
 	cfg_expiration.h \
@@ -286,11 +288,14 @@ libkea_dhcpsrv_include_HEADERS = \
 	d2_client_mgr.h \
 	db_type.h \
 	dhcp4o6_ipc.h \
+	dhcpsrv_log.h \
+	dhcpsrv_messages.h \
 	host.h \
 	host_container.h \
 	host_data_source_factory.h \
 	host_mgr.h \
 	hosts_log.h \
+	hosts_messages.h \
 	key_from_key.h \
 	lease.h \
 	lease_file_loader.h \
@@ -303,6 +308,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	network.h \
 	network_state.h \
 	pool.h \
+	sanity_checker.h \
 	shared_network.h \
 	srv_config.h \
 	subnet.h \
@@ -343,6 +349,7 @@ libkea_dhcpsrv_parsers_include_HEADERS = \
 	parsers/ifaces_config_parser.h \
 	parsers/option_data_parser.h \
 	parsers/dhcp_queue_control_parser.h \
+	parsers/sanity_checks_parser.h \
 	parsers/shared_network_parser.h \
 	parsers/shared_networks_list_parser.h \
 	parsers/simple_parser4.h \

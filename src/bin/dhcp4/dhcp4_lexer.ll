@@ -135,6 +135,8 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
             return isc::dhcp::Dhcp4Parser::make_SUB_HOOKS_LIBRARY(driver.loc_);
         case Parser4Context::PARSER_DHCP_DDNS:
             return isc::dhcp::Dhcp4Parser::make_SUB_DHCP_DDNS(driver.loc_);
+        case Parser4Context::PARSER_CONFIG_CONTROL:
+            return isc::dhcp::Dhcp4Parser::make_SUB_CONFIG_CONTROL(driver.loc_);
         case Parser4Context::PARSER_LOGGING:
             return isc::dhcp::Dhcp4Parser::make_SUB_LOGGING(driver.loc_);
         }
@@ -766,6 +768,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"reservation-mode\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::SUBNET4:
     case isc::dhcp::Parser4Context::SHARED_NETWORK:
         return isc::dhcp::Dhcp4Parser::make_RESERVATION_MODE(driver.loc_);
@@ -1337,15 +1340,6 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_NCR_FORMAT(driver.loc_);
     default:
         return isc::dhcp::Dhcp4Parser::make_STRING("ncr-format", driver.loc_);
-    }
-}
-
-\"always-include-fqdn\" {
-    switch(driver.ctx_) {
-    case isc::dhcp::Parser4Context::DHCP_DDNS:
-        return isc::dhcp::Dhcp4Parser::make_ALWAYS_INCLUDE_FQDN(driver.loc_);
-    default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("always-include-fqdn", driver.loc_);
     }
 }
 

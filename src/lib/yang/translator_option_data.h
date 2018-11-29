@@ -54,18 +54,17 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/option-data-list (container)
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns'] (list instance)
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/code = 100
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/space = dns
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/data = 12121212
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/csv-format = false
-///  /kea-dhcp6-server:config/option-data-list/
+///  /kea-dhcp6-server:config/
 ///     option-data[code='100'][space='dns']/always-send = false
 /// @endcode
 
@@ -80,7 +79,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorOptionData(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorOptionData(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionData();
@@ -114,9 +117,6 @@ protected:
     /// @param elem The JSON element.
     void setOptionDataKea(const std::string& xpath,
                           isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting an option data list between
@@ -130,7 +130,12 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorOptionDataList(sysrepo::S_Session session,
+                             const std::string& model);
+#else
     TranslatorOptionDataList(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorOptionDataList();
@@ -162,9 +167,6 @@ protected:
     /// @throw BadValue on option data without code or space.
     void setOptionDataListKea(const std::string& xpath,
                               isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

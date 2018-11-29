@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_host.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,15 +13,17 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorHost::TranslatorHost(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
-      TranslatorOptionDataList(session, model),
-      model_(model) {
+      TranslatorOptionDataList(session, model) {
 }
 
 TranslatorHost::~TranslatorHost() {
@@ -70,7 +74,7 @@ TranslatorHost::getHostKea(const string& xpath) {
             result->set("prefixes", prefixes);
         }
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -144,7 +148,7 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && (classes->size() > 0)) {
@@ -178,11 +182,10 @@ TranslatorHost::setHostKea(const string& xpath, ConstElementPtr elem) {
 }
 
 TranslatorHosts::TranslatorHosts(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
-      TranslatorHost(session, model),
-      model_(model) {
+      TranslatorHost(session, model) {
 }
 
 TranslatorHosts::~TranslatorHosts() {
@@ -192,7 +195,7 @@ ElementPtr
 TranslatorHosts::getHosts(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath + "/host");
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getHosts can't get iterator: " << xpath);

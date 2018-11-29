@@ -49,4 +49,6 @@ libkea_database_include_HEADERS = \
 	database_connection.h \
 	dbaccess_parser.h \
 	db_exceptions.h \
-	db_log.h
+	db_log.h \
+	db_messages.h \
+	server_selector.h

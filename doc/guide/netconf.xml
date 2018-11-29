@@ -76,6 +76,18 @@
     </para>
 
     <para>
+    In YANG configurations and state data are described in the YANG syntax
+    in module files named:
+<userinput>"module-name"</userinput><option>[@<userinput>"revision"</userinput>]</option>.yang
+    </para>
+
+    <para>
+    The revision part is optional and has YYYY-MM-DD format. An alternate
+    XML syntax YIN is defined but less user friendly. Top level modules
+    are named in kea models (short version of schema models).
+    </para>
+
+    <para>
       List currently installed YANG modules:
 <screen>
   $ sysrepoctl -l
@@ -83,8 +95,8 @@
 
 After installation the result should be similar to this:
 <screen>
-Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/
-Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.5/build/repository/data/
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.6/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.6/build/repository/data/
 (Do not alter contents of these directories manually)
 
 Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
@@ -113,9 +125,9 @@ src/lib/libyang/models. To install models, do the following:
 
 <screen>
 cd src/lib/yang/models
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g ietf-dhcpv6-server.yang
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g kea-dhcp4-server.yang
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g kea-dhcp6-server.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp4-server.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp6-server.yang
 </screen>
 
 Note the first -s parameter specifies the location of your YANG schema
@@ -125,15 +137,15 @@ under the SYSREPO_REPO name.
 
 The installation should look similar to the following:
 <screen>
-$ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.5/build/repository/yang -s . -g ietf-dhcpv6-server.yang
+$ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server.yang
 Installing a new module from file 'ietf-dhcpv6-server.yang'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcpv6-server@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-server@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv6-server' imports 'ietf-dhcpv6-options'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcpv6-options@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-options@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv6-options' imports 'ietf-dhcpv6-types'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcpv6-types@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-types@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv6-server' imports 'ietf-dhcpv6-types'...
-Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.5/build/repository/yang/ietf-dhcpv6-types@2018-07-14.yang'...
+Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-types@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv6-server' imports 'ietf-interfaces'...
 Schema of the module ietf-interfaces is already installed, skipping...
 Installing data files for module 'ietf-dhcpv6-server'...
@@ -153,8 +165,8 @@ You can confirm whether the models are imported correctly by using sysrepoctl -l
 
 <screen>
 $ sysrepoctl -l
-Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.5/build/repository/yang/
-Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.5/build/repository/data/
+Sysrepo schema directory: /home/thomson/devel/sysrepo-0.7.6/build/repository/yang/
+Sysrepo data directory:   /home/thomson/devel/sysrepo-0.7.6/build/repository/data/
 (Do not alter contents of these directories manually)
 
 Module Name                | Revision   | Conformance | Data Owner          | Permissions | Submodules                    | Enabled Features
@@ -174,7 +186,17 @@ ietf-dhcpv6-server         | 2018-03-04 | Installed   | root:root           | 66
 ietf-dhcpv6-options        | 2018-03-04 | Imported    |                     |             |                               |
 ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |             |                               |
 </screen>
-</para>
+    </para>
+
+    <para>
+To install a new revision of a module it must be first uninstalled, e.g. by:
+<screen>
+sudo sysrepoctl -u -m kea-dhcp4-server
+</screen>
+If the module is used (i.e. imported) by other modules it can be unstalled
+only after modules using it. Installation and uninstallation must be
+done in dependency order and reverse dependency order accordingly.
+    </para>
 
   </section>
 
@@ -329,7 +351,8 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
       monitor any configuration changes as they appear in the sysrepo. Such
       changes can be done using <command>sysrepocfg</command> tool or remotely
       using any NETCONF client. For details, please see Sysrepo
-      documentation. Those tools can be used to modify YANG configurations in
+      documentation or <xref linkend="operation-example"/>.
+      Those tools can be used to modify YANG configurations in
       the running datastore. Note committed configurations are only updated in
       the running datastore: to keep them between server reboots they must be
       copied to the startup datastore.
@@ -687,6 +710,452 @@ ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |   
         </simpara>
       </listitem>
     </itemizedlist>
+  </section>
+
+  <section xml:id="operation-example">
+    <title>Step by Step Netconf Operation Example</title>
+    <note><para>Copies of example configurations presented within this section
+    can be found in the Kea source code, under
+    <filename>doc/examples/netconf/kea-dhcp6-operations</filename>.
+    </para></note>
+
+ 
+   <section xml:id="operation-example-setup">
+      <title>Setup of Netconf Operation Example</title>
+      <para>
+        The test box has an Ethernet interface named eth1.
+        On some systems it is possible to rename interfaces,
+        for instance on a Linux with an ens38 interface:
+<screen>
+ # ip link set down dev <userinput>ens38</userinput>
+ # ip link set name eth1 dev <userinput>ens38</userinput>
+ # ip link set up dev eth1
+</screen>
+        The interface must have an address in the test prefix:
+<screen>
+ # ip -6 addr add 2001:db8::1/64 dev eth1
+</screen>
+      </para>
+
+      <para>
+        The Kea DHCPv6 server must be launched with the configuration
+        specifying a control socket used to receive control commands.
+        The <command>kea-netconf</command> process uses this socket
+        to communicate with the DHCPv6 server, i.e. it pushes
+        translated configurations to that server using control commands.
+        The following is the example control socket specification for the
+        Kea DHCPv6 server:
+<screen>
+{
+    "Dhcp6": {
+        "control-socket": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea6-sock"
+        }
+    }
+}
+</screen>
+        In order to launch the Kea DHCPv6 server using configuration
+        contained within <filename>boot.json</filename> file, run:
+<screen>
+ # kea-dhcp6 -d -c <userinput>boot.json</userinput>
+</screen>
+        The current configuration of the server can be fetched via
+        control socket by running:
+<screen>
+ # echo '{ "command": "config-get" }' | socat UNIX:/tmp/kea6-sock '-,ignoreeof'
+</screen>
+      </para>
+
+      <para>
+        The following is the example <filename>netconf.json</filename>
+        configuration for <command>kea-netconf</command>, to manage the Kea
+        DHCPv6 server:
+<screen>
+{
+    "Netconf":
+    {
+        "managed-servers":
+        {
+            "dhcp6":
+            {
+                "control-socket":
+                {
+                    "socket-type": "unix",
+                    "socket-name": "/tmp/kea6-sock"
+                }
+            }
+        }
+    },
+    "Logging":
+    {
+        "loggers":
+        [
+            {
+                "name": "kea-netconf",
+                "output_options":
+                [
+                    {
+                        "output": "stderr"
+                    }
+                ],
+                "severity": "DEBUG",
+                "debuglevel": 99
+            }
+        ]
+    }
+}
+</screen>
+        Note that in production you should not need to log at the DEBUG level.
+      </para>
+      <para>
+        The Kea Netconf agent is lanched by:
+<screen>
+ # kea-netconf -d -c <userinput>netconf.json</userinput>
+</screen>
+      </para>
+
+      <para>
+        Now that both <command>kea-netconf</command> and
+        <command>kea-dhcp6</command> are running, it is possible to populate
+        updated to configuration to the DHCPv6 server. The following is
+        the configuration extracted from the <filename>startup.xml</filename>:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+        In order to populate this new configuration:
+<screen>
+ # sysrepocfg -d startup -f xml -i <userinput>startup.xml</userinput> kea-dhcp6-server
+</screen>
+      </para>
+
+      <para>
+        <command>kea-netconf</command> will push the configuration
+        found in the sysrepo startup datastore to all Kea servers during
+        its initialization phase, after it subscribes to module changes
+        in the sysrepo running datastore. This action copies the
+        configuration from the startup datastore to the running datastore
+        and enables the running datastore making it available.
+      </para>
+
+      <para>
+        Changes to the running datastore are applied after validation
+        to the Kea servers. Note they are not by default copied back to the
+        startup datastore, i.e. changes are not permanent.
+      </para>
+
+    </section>
+
+    <section xml:id="operation-example-errors">
+      <title>Error handling in Netconf Operation Example</title>
+      <para>
+        There are four classes of isssues with the configurations applied via
+        netconf:
+
+        <orderedlist>
+          <listitem>
+            <simpara>
+              The configuration does not comply with the YANG schema.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              The configuration cannot be translated from YANG to
+              the Kea JSON.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              The configuration is rejected by the Kea server.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              The configuration was validated by the Kea server but
+              cannot be applied.
+            </simpara>
+          </listitem>
+        </orderedlist>
+      </para>
+
+      <para>
+        In the first case, the following <filename>BAD-schema.xml</filename>
+        configuration file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet4&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+        is directly rejected by <command>sysrepocfg</command>:
+<screen>
+ # sysrepocfg -d running -f xml -i <userinput>BAD-schema.xml</userinput> kea-dhcp6-server
+</screen>
+      </para>
+
+      <para>
+        In the second case, the configuration is rejected by
+        <command>kea-netconf</command>. For example, the
+        <filename>BAD-translator.xml</filename> file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+  &lt;user-context&gt;bad&lt;/user-context&gt;
+&lt;/config&gt;
+</screen>
+      </para>
+
+      <para>
+        In the third case, the configuration is presented to the
+        Kea DHCPv6 server and fails to validate as in the
+        <filename>BAD-config.xml</filename> file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8:1::0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8:1::ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8:1::0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+      </para>
+
+      <para>
+        In the last case, the misconfiguration is detected too late and
+        the change must be reverted in sysrepo, e.g. using the startup
+        datastore as a backup. For this reason, please use the
+        <command>sysrepocfg</command> <option>--permanent</option> /
+        <option>-p</option> option (or simlar feature of NETCONF clients)
+        with care.
+      </para>
+    </section>
+
+    <section xml:id="operation-example-2pools">
+      <title>Netconf Operation Example with Two Pools</title>
+      <para>
+        This example adds a second pool to the initial (i.e. startup)
+        configuration in the <filename>twopools.xml</filename> file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::2:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::2:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::2:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+        This configuration is installed by:
+<screen>
+ # sysrepocfg -d running -f xml -i <userinput>twopools.xml</userinput> kea-dhcp6-server
+</screen>
+      </para>
+    </section>
+
+    <section xml:id="operation-example-2subnets">
+      <title>Netconf Operation Example with Two Subnets</title>
+      <para>
+        This example specifies two subnets in the
+         <filename>twosubnets.xml</filename> file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8:1::&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8:1::ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8:1::/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8:1::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;2&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8:2::&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8:2::ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8:2::/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8:2::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+&lt;/config&gt;
+</screen>
+        This configuration is installed by:
+<screen>
+ # sysrepocfg -d running -f xml -i <userinput>twosubnets.xml</userinput> kea-dhcp6-server
+</screen>
+      </para>
+    </section>
+
+    <section xml:id="operation-example-logging">
+      <title>Netconf Operation Example with Logging</title>
+      <para>
+        This example adds a Logging section to the initial (i.e. startup)
+        configuration in the <filename>logging.xml</filename> file:
+<screen>
+&lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
+  &lt;interfaces-config&gt;
+    &lt;interfaces&gt;eth1&lt;/interfaces&gt;
+  &lt;/interfaces-config&gt;
+  &lt;subnet6&gt;
+    &lt;id&gt;1&lt;/id&gt;
+    &lt;pool&gt;
+      &lt;start-address&gt;2001:db8::1:0&lt;/start-address&gt;
+      &lt;end-address&gt;2001:db8::1:ffff&lt;/end-address&gt;
+      &lt;prefix&gt;2001:db8::1:0/112&lt;/prefix&gt;
+    &lt;/pool&gt;
+    &lt;subnet&gt;2001:db8::/64&lt;/subnet&gt;
+  &lt;/subnet6&gt;
+  &lt;control-socket&gt;
+    &lt;socket-name&gt;/tmp/kea6-sock&lt;/socket-name&gt;
+    &lt;socket-type&gt;unix&lt;/socket-type&gt;
+  &lt;/control-socket&gt;
+  &lt;logger&gt;
+    &lt;name&gt;kea-dhcp6&lt;/name&gt;
+    &lt;output-option&gt;
+      &lt;output&gt;stderr&lt;/output&gt;
+    &lt;/output-option&gt;
+    &lt;debuglevel&gt;99&lt;/debuglevel&gt;
+    &lt;severity&gt;DEBUG&lt;/severity&gt;
+  &lt;/logger&gt;
+&lt;/config&gt;
+</screen>
+      </para>
+
+      <para>
+        The corresponding Kea configuration in JSON is:
+<screen>
+{
+  "Dhcp6": {
+    "control-socket": {
+      "socket-name": "/tmp/kea6-sock",
+      "socket-type": "unix"
+    },
+    "interfaces-config": {
+      "interfaces": [ "eth1" ]
+    },
+    "subnet6": [
+      {
+        "id": 1,
+        "pools": [
+          {
+            "pool": "2001:db8::1:0/112"
+          }
+        ],
+        "subnet": "2001:db8::/64"
+      }
+    ]
+  },
+  "Logging": {
+    "loggers": [
+      {
+        "name": "kea-dhcp6",
+        "output_options": [
+          {
+            "output": "stderr"
+          }
+        ],
+        "severity": "DEBUG",
+        "debuglevel": 99
+      }
+   ]
+ }
+}
+</screen>
+      </para>
+
+      <para>
+        Finally, any of the previous examples can be replayed using
+        <command>sysrepocfg</command> in edit mode as follows:
+<screen>
+ # sysrepocfg -d running -f xml -e <userinput>vi</userinput> kea-dhcp6-server
+</screen>
+        or of course using a netconf client like
+        <command>netopeer2-cli</command> from the
+        <uri xmlns:xlink="http://www.w3.org/1999/xlink"
+              xlink:href="https://github.com/CESNET/Netopeer2">
+        Netopeer2</uri> NETCONF Toolset.
+      </para>
+
+    </section>
   </section>
 
 </chapter>

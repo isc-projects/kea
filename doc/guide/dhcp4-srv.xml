@@ -424,8 +424,8 @@ be followed by a comma and another object definition.</para>
   operates on the copy of the original lease file, rather than on the lease
   file used by the server to record lease updates. There are also other files
   being created as a side effect of the lease file cleanup. The detailed
-  description of the LFC is located on the Kea wiki:
-  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/LFCDesign">http://oldkea.isc.org/wiki/LFCDesign</uri>.
+  description of the LFC is located in the Kea Administrator's Reference Manual:
+  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc">https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc</uri>.
   </para>
 
 </section>
@@ -3797,7 +3797,7 @@ It is merely echoed by the server
 }</screen>
 
 <para>
- Options defined on host level have the highest priority. In other words,
+ Options defined at host level have the highest priority. In other words,
  if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
@@ -3909,7 +3909,7 @@ It is merely echoed by the server
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information. <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xlink:href="http://oldkea.isc.org/wiki/HostReservationsHowTo">http://oldkea.isc.org/wiki/HostReservationsHowTo</uri>
+        xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
         provides some examples how to conduct common host reservation operations.
       </para>
 
@@ -3975,6 +3975,8 @@ It is merely echoed by the server
       </simpara></listitem>
 
       </itemizedlist>
+      The parameter can be specified at global, subnet and shared network
+      levels.
       </para>
 
       <para>
@@ -3999,6 +4001,7 @@ It is merely echoed by the server
 "Dhcp4": {
 
     <userinput>
+    "reservation-mode": "global",
     "reservations": [
        {
         "hw-address": "01:bb:cc:dd:ee:ff",
@@ -4013,18 +4016,12 @@ It is merely echoed by the server
     "subnet4": [
     {
         "subnet": "192.0.2.0/24",
-        <userinput>"reservation-mode": "global"</userinput>,
-        ...
-    },
-    {
-        "subnet": "192.0.8.0/24",
-        <userinput>"reservation-mode": "global"</userinput>,
         ...
     }
     ]
 }
 </screen>
-  For more details regarding global erservations, see <xref linkend="global-reservations4"/>.
+  For more details regarding global reservations, see <xref linkend="global-reservations4"/>.
 
       </para>
 
@@ -4227,7 +4224,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             // and it must be unique among all shared networks.
             "name": "my-secret-lair-level-1",
 
-            // Subnet selector can be specifed on the shared network level.
+            // Subnet selector can be specifed at the shared network level.
             // Subnets from this shared network will be selected for directly
             // connected clients sending requests to server's "eth0" interface.
             "interface": "eth0",
@@ -4347,12 +4344,12 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     <para>It is possible to specify interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
     via relays) using local network interface. It is sufficient to specify
-    it once on the shared network level. As all subnets in a shared network are
+    it once at the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
     to attempt to define a shared network using subnets that are reachable over
     different interfaces. It is allowed to specify interface parameter on each
     subnet, although its value must be the same for each subnet. Thus it's
-    usually more convenient to specify it once on the shared network level.
+    usually more convenient to specify it once at the shared network level.
 <screen>
 "shared-networks": [
     {
@@ -4412,9 +4409,9 @@ for each subnet. Here's an example:
         ]
     }
 ]</screen>
-In this particular case the relay IP address specified on network level doesn't
+In this particular case the relay IP address specified at network level doesn't
 have much sense, as it is overridden in both subnets, but it was left there
-as an example of how one could be defined on network level. Note that the
+as an example of how one could be defined at network level. Note that the
 relay agent IP address typically belongs to the subnet it relays packets from,
 but this is not a strict requirement. Therefore Kea accepts any value here
 as long as it is valid IPv4 address.</para>
@@ -4610,7 +4607,7 @@ autogenerated IDs are not stable across configuration changes.</para>
 
       <para>
         It is possible to override default server identifier values by specifying
-        "dhcp-server-identifier" option. This option is only supported on the
+        "dhcp-server-identifier" option. This option is only supported at the
         global, shared network and subnet level. It must not be specified
         on client class and host reservation level.
       </para>
@@ -5287,7 +5284,7 @@ autogenerated IDs are not stable across configuration changes.</para>
         </para>
 
         <para>
-          User contexts can be specified on either global scope,
+          User contexts can be specified at either global scope,
           shared network, subnet, pool, client class, option data or
           definition level, and host reservation. One other useful
           usage is the ability to store comments or descriptions.
@@ -5378,17 +5375,6 @@ autogenerated IDs are not stable across configuration changes.</para>
             sending ICMP echo request.</simpara>
           </listitem>
       </itemizedlist>
-    </section>
-
-    <section id="congestion-control4">
-      <title>Congestion control in DHCPv4</title>
-
-      <para>For details see
-      <link
-      xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/congestion-control">
-      https://gitlab.isc.org/isc-projects/kea/wikis/congestion-control</link>
-      </para>
     </section>
 
     <section id="dhcp4-srv-examples">

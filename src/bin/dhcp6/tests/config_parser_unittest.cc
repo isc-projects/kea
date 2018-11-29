@@ -21,6 +21,7 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_expiration.h>
 #include <dhcpsrv/cfg_hosts.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
@@ -4575,7 +4576,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -4613,7 +4613,6 @@ TEST_F(Dhcp6ParserTest, d2ClientConfig) {
     EXPECT_EQ(2048, d2_client_config->getMaxQueueSize());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
@@ -4640,7 +4639,6 @@ TEST_F(Dhcp6ParserTest, invalidD2ClientConfig) {
         "     \"server-port\" : 5301, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
@@ -5187,11 +5185,12 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
 
     /// - Configuration:
     ///   - only addresses (no prefixes)
-    ///   - 4 subnets with:
+    ///   - 5 subnets with:
     ///       - 2001:db8:1::/64 (all reservations enabled)
     ///       - 2001:db8:2::/64 (out-of-pool reservations)
     ///       - 2001:db8:3::/64 (reservations disabled)
-    ///       - 2001:db8:3::/64 (reservations not specified)
+    ///       - 2001:db8:4::/64 (global reservations)
+    ///       - 2001:db8:5::/64 (reservations not specified)
     const char* HR_CONFIG =
         "{"
         "\"preferred-lifetime\": 3000,"
@@ -5234,11 +5233,11 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     checkResult(status, 0);
     CfgMgr::instance().commit();
 
-    // Let's get all subnets and check that there are 4 of them.
+    // Let's get all subnets and check that there are 5 of them.
     ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
     ASSERT_TRUE(subnets);
     const Subnet6Collection* subnet_col = subnets->getAll();
-    ASSERT_EQ(5, subnet_col->size()); // We expect 4 subnets
+    ASSERT_EQ(5, subnet_col->size()); // We expect 5 subnets
 
     // Let's check if the parsed subnets have correct HR modes.
 
@@ -5267,6 +5266,63 @@ TEST_F(Dhcp6ParserTest, hostReservationPerSubnet) {
     subnet = subnets->selectSubnet(IOAddress("2001:db8:5::1"));
     ASSERT_TRUE(subnet);
     EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
+}
+
+/// The goal of this test is to verify that Host Reservation modes can be
+/// specified globally.
+TEST_F(Dhcp6ParserTest, hostReservationGlobal) {
+
+    /// - Configuration:
+    ///   - only addresses (no prefixes)
+    ///   - 2 subnets with:
+    ///       - 2001:db8:1::/64 (all reservations enabled)
+    ///       - 2001:db8:2::/64 (reservations not specified)
+    const char* HR_CONFIG =
+        "{"
+        "\"preferred-lifetime\": 3000,"
+        "\"rebind-timer\": 2000, "
+        "\"renew-timer\": 1000, "
+        "\"reservation-mode\": \"out-of-pool\", "
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8:1::/64\" } ],"
+        "    \"subnet\": \"2001:db8:1::/48\", "
+        "    \"reservation-mode\": \"all\""
+        " },"
+        " {"
+        "    \"pools\": [ { \"pool\": \"2001:db8:2::/64\" } ],"
+        "    \"subnet\": \"2001:db8:2::/48\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    ConstElementPtr json;
+    ASSERT_NO_THROW(json = parseDHCP6(HR_CONFIG));
+    extractConfig(HR_CONFIG);
+
+    ConstElementPtr status;
+    EXPECT_NO_THROW(status = configureDhcp6Server(srv_, json));
+
+    // returned value should be 0 (success)
+    checkResult(status, 0);
+    CfgMgr::instance().commit();
+
+    // Let's get all subnets and check that there are 2 of them.
+    ConstCfgSubnets6Ptr subnets = CfgMgr::instance().getCurrentCfg()->getCfgSubnets6();
+    ASSERT_TRUE(subnets);
+    const Subnet6Collection* subnet_col = subnets->getAll();
+    ASSERT_EQ(2, subnet_col->size()); // We expect 2 subnets
+
+    // Let's check if the parsed subnets have correct HR modes.
+
+    // Subnet 1
+    Subnet6Ptr subnet;
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:1::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode());
+
+    // Subnet 2
+    subnet = subnets->selectSubnet(IOAddress("2001:db8:2::1"));
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ(Network::HR_OUT_OF_POOL, subnet->getHostReservationMode());
 }
 
 /// The goal of this test is to verify that configuration can include
@@ -6938,33 +6994,44 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
         ""
         },
         {
-        "valid entry",
+        "queue disabled",
         "{ \n"
-        "   \"queue-type\": \"some-type\", \n"
-        "   \"capacity\": 75 \n"
+        "   \"enable-queue\": false \n"
         "} \n"
         },
         {
-        "valid arbitrary content",
+        "queue disabled, arbitrary content allowed",
         "{ \n"
-        "       \"queue-type\": \"some-type\", \n"
-        "       \"capacity\": 90, \n"
-        "       \"user-context\": { \"comment\": \"some text\" },\n"
-        "       \"random-bool\" : false, \n"
-        "       \"random-int\" : 1236 \n"
+        "   \"enable-queue\": false, \n"
+        "   \"foo\": \"bogus\", \n"
+        "   \"random-int\" : 1234 \n"
+        "} \n"
+        },
+        {
+        "queue enabled, with queue-type",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": \"some-type\" \n"
+        "} \n"
+        },
+        {
+        "queue enabled with queue-type and arbitrary content",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": \"some-type\", \n"
+        "   \"foo\": \"bogus\", \n"
+        "   \"random-int\" : 1234 \n"
         "} \n"
         }
     };
 
     // Let's check the default. It should be empty.
-    data::ConstElementPtr control;
-    control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
-    ASSERT_FALSE(control);
+    data::ConstElementPtr staged_control;
+    staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+    ASSERT_FALSE(staged_control);
 
-    // Iterate over the incorrect scenarios and verify they
-    // fail as expected. Note, we use parseDHCP6() directly
-    // as all of the errors above are enforced by the grammar.
-    data::ConstElementPtr exp_elems;
+    // Iterate over the valid scenarios and verify they succeed.
+    data::ElementPtr exp_control;
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
@@ -6975,7 +7042,6 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             std::stringstream os;
             os << "{ " + genIfaceConfig();
             if (!scenario.json_.empty()) {
-
                os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
             }
 
@@ -6985,20 +7051,28 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControl) {
             configure(os.str(), CONTROL_RESULT_SUCCESS, "");
 
             // Fetch the queue control info.
-            control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+            staged_control = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
 
-            // If JSON does not contain queue control,
-            // the pointer stored in staging should be empty.
+            // Make sure the staged queue config exists.
+            ASSERT_TRUE(staged_control);
+
+            // Now build the expected queue control content.
             if (scenario.json_.empty()) {
-                ASSERT_FALSE(control);
-                continue;
+                exp_control = Element::createMap();
+            } else {
+                try {
+                    exp_control = boost::const_pointer_cast<Element>(Element::fromJSON(scenario.json_));
+                } catch (const std::exception& ex) {
+                    ADD_FAILURE() << " cannot convert expected JSON, test is broken:"
+                                << ex.what();
+                }
             }
 
-            // Make sure the staged config is correct.
-            ASSERT_TRUE(control);
-            ASSERT_NO_THROW(exp_elems = Element::fromJSON(scenario.json_))
-                            << " cannot convert expected JSON, test is broken";
-            EXPECT_TRUE(control->equals(*exp_elems));
+            // Add the defaults to expected queue control.
+            SimpleParser6::setDefaults(exp_control, SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS);
+
+            // Verify that the staged queue control equals the expected queue control.
+            EXPECT_TRUE(staged_control->equals(*exp_control));
         }
     }
 }
@@ -7008,24 +7082,36 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
     struct Scenario {
         std::string description_;
         std::string json_;
+        std::string exp_error_;
     };
 
     std::vector<Scenario> scenarios = {
         {
-            "not a map",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet6\": [  ],  \n"
-            "   \"dhcp-queue-control\": 75 \n"
-            "} \n"
+        "not a map",
+        "75 \n",
+        "<string>:2.24-25: syntax error, unexpected integer, expecting {"
         },
         {
-            "queue type missing",
-            "{ " + genIfaceConfig() + ", \n" +
-            "   \"subnet6\": [  ],  \n"
-            "   \"dhcp-queue-control\": { \n"
-            "       \"capacity\": 100 \n"
-            "   } \n"
-            "} \n"
+        "enable-queue missing",
+        "{ \n"
+        "   \"enable-type\": \"some-type\" \n"
+        "} \n",
+        "<string>:2.2-21: 'enable-queue' is required: (<string>:2:24)"
+        },
+        {
+        "enable-queue not boolean",
+        "{ \n"
+        "   \"enable-queue\": \"always\" \n"
+        "} \n",
+        "<string>:2.2-21: 'enable-queue' must be boolean: (<string>:2:24)"
+        },
+        {
+        "queue type not a string",
+        "{ \n"
+        "   \"enable-queue\": true, \n"
+        "   \"queue-type\": 7777 \n"
+        "} \n",
+        "<string>:2.2-21: 'queue-type' must be a string: (<string>:2:24)"
         }
     };
 
@@ -7035,7 +7121,21 @@ TEST_F(Dhcp6ParserTest, dhcpQueueControlInvalid) {
     for (auto scenario : scenarios) {
         SCOPED_TRACE(scenario.description_);
         {
-            EXPECT_THROW(parseDHCP6(scenario.json_), Dhcp6ParseError);
+            // Construct the config JSON
+            std::stringstream os;
+            os << "{ " + genIfaceConfig();
+            os << ",\n \"dhcp-queue-control\": "  <<  scenario.json_;
+            os << "} \n";
+
+            std::string error_msg = "";
+            try {
+                ASSERT_TRUE(parseDHCP6(os.str(), false)) << "parser returned empty element";
+            } catch(const std::exception& ex) {
+                error_msg = ex.what();
+            }
+
+            ASSERT_FALSE(error_msg.empty()) << "parseDHCP6 should have thrown";
+            EXPECT_EQ(scenario.exp_error_, error_msg);
         }
     }
 }

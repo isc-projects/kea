@@ -32,18 +32,7 @@ const YRTree testTree = {
       SR_IDENTITYREF_T, true },
     { "/keatest-module:main/enum", "maybe", SR_ENUM_T, true },
     { "/keatest-module:main/raw", "Zm9vYmFy", SR_BINARY_T, true },
-    { "/keatest-module:transfer", "", SR_CONTAINER_T, false },
-    { "/keatest-module:transfer/interval", "30", SR_UINT16_T, false },
-    { "/keatest-module:interface", "", SR_CONTAINER_T, false },
-    { "/keatest-module:top-level-default", "default value",
-      SR_STRING_T, false },
-    { "/keatest-module:university", "", SR_CONTAINER_T, false },
-    { "/keatest-module:university/students", "", SR_CONTAINER_T, false },
-    { "/keatest-module:university/classes", "", SR_CONTAINER_T, false },
-    { "/keatest-module:leafref-chain", "", SR_CONTAINER_T, false },
-    { "/keatest-module:kernel-modules", "", SR_CONTAINER_T, false },
-    { "/keatest-module:tpdfs", "", SR_CONTAINER_T, false },
-    { "/keatest-module:tpdfs/unival", "disabled", SR_STRING_T, false }
+    { "/keatest-module:kernel-modules", "", SR_CONTAINER_T, false }
 };
 
 /// @brief A subnet with two pools with ietf-dhcpv6-server model.
@@ -300,45 +289,40 @@ const YRTree validTreeIetf6 = {
 const std::string subnetOptionsModelKeaDhcp4 = KEA_DHCP4_SERVER;
 const YRTree subnetOptionsTreeKeaDhcp4 = {
     { "/kea-dhcp4-server:config", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp4-server:config/subnet4", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']", "",
+    { "/kea-dhcp4-server:config/subnet4[id='111']", "",
       SR_LIST_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/id",
+    { "/kea-dhcp4-server:config/subnet4[id='111']/id",
       "111", SR_UINT32_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list",
-      "", SR_CONTAINER_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']", "", SR_LIST_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/code",
       "100", SR_UINT8_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/space",
       "dns", SR_STRING_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/data",
       "12121212", SR_STRING_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/csv-format",
       "false", SR_BOOL_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/option-data-list/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "option-data[code='100'][space='dns']/always-send",
       "false", SR_BOOL_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/pools",
-      "", SR_CONTAINER_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/pools/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']",
       "", SR_LIST_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/pools/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/start-address",
       "10.0.1.0", SR_STRING_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/pools/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/end-address",
       "10.0.1.255", SR_STRING_T, false },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/pools/"
+    { "/kea-dhcp4-server:config/subnet4[id='111']/"
       "pool[start-address='10.0.1.0'][end-address='10.0.1.255']/prefix",
       "10.0.1.0/24", SR_STRING_T, true },
-    { "/kea-dhcp4-server:config/subnet4/subnet4[id='111']/subnet",
+    { "/kea-dhcp4-server:config/subnet4[id='111']/subnet",
       "10.0.0.0/8", SR_STRING_T, true }
 };
 
@@ -347,53 +331,47 @@ const YRTree subnetOptionsTreeKeaDhcp4 = {
 const std::string subnetOptionsModelKeaDhcp6 = KEA_DHCP6_SERVER;
 const YRTree subnetOptionsTreeKeaDhcp6 = {
     { "/kea-dhcp6-server:config", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp6-server:config/subnet6", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']", "",
+    { "/kea-dhcp6-server:config/subnet6[id='111']", "",
       SR_LIST_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/id",
+    { "/kea-dhcp6-server:config/subnet6[id='111']/id",
       "111", SR_UINT32_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools",
-      "", SR_CONTAINER_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']",
       "", SR_LIST_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "start-address", "2001:db8::1:0", SR_STRING_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "end-address", "2001:db8::1:ffff", SR_STRING_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
       "prefix", "2001:db8::1:0/112", SR_STRING_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list", "", SR_CONTAINER_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
-      "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']",
+      "option-data[code='100'][space='dns']",
       "", SR_LIST_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']/code",
+      "option-data[code='100'][space='dns']/code",
       "100", SR_UINT16_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']/space",
+      "option-data[code='100'][space='dns']/space",
       "dns", SR_STRING_T, false },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']/data",
+      "option-data[code='100'][space='dns']/data",
       "12121212", SR_STRING_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']/csv-format",
+      "option-data[code='100'][space='dns']/csv-format",
       "false", SR_BOOL_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/pools/"
+    { "/kea-dhcp6-server:config/subnet6[id='111']/"
       "pool[start-address='2001:db8::1:0'][end-address='2001:db8::1:ffff']/"
-      "option-data-list/option-data[code='100'][space='dns']/always-send",
+      "option-data[code='100'][space='dns']/always-send",
       "false", SR_BOOL_T, true },
-    { "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/subnet",
+    { "/kea-dhcp6-server:config/subnet6[id='111']/subnet",
       "2001:db8::/48", SR_STRING_T, true }
 };
 

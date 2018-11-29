@@ -22,7 +22,145 @@ namespace yang {
 ///
 /// This translator supports kea-dhcp4-server, kea-dhcp6-server and
 /// partially ietf-dhcpv6-server.
+
+/// JSON syntax for kea-dhcp4 is:
+/// @code
+/// "Dhcp4": {
+///     "valid-lifetime": <valid lifetime>,
+///     "renew-timer": <renew timer>,
+///     "rebind-timer": <rebind timer>,
+///     "decline-probation-period": <decline probation period>,
+///     "subnet4": [ <list of subnet4> ],
+///     <shared-networks>,
+///     "interfaces-config": {
+///         "interfaces" [ <list of interface names / specs> ],
+///         ...
+///     },
+///     <databases>,
+///     <host-reservation-identifiers>,
+///     <client-classes>,
+///     <option-def>,
+///     <option-data>,
+///     <hooks-libraries>,
+///     <expired-leases-processing>,
+///     <dhcp4o6-port>,
+///     <control-socket>,
+///     <dhcp-ddns>,
+///     "echo-client-id": <echo client id flag>,
+///     "match-client-id": <match client id flag>,
+///     "next-server": <next server address>,
+///     "server-hostname": <server hostname>,
+///     "boot-file-name": <boot file name>,
+///     "authoritative": <authoritative flag>,
+///     <user-context>,
+///     <comment>,
+///     "sanity-checks": { <sanity checks> },
+///     "reservation-mode": <host reservation mode>,
+///     "reservations": [ <list of host reservations> ],
+///     <config-control>,
+///     "server-tag": <server tag>,
+///     "dhcp-queue-control": { <DHCP queue control> }
+/// },
+/// "Logging": <logging>
+/// @endcode
 ///
+/// YANG syntax for kea-dhcp4-server:config is:
+/// @code
+/// +--rw valid-lifetime?                uint32
+/// +--rw renew-timer?                   uint32
+/// +--rw rebind-timer?                  uint32
+/// +--rw decline-probation-period?      uint32
+/// +--rw subnet4*
+/// +--rw shared-network*
+/// +--rw interfaces-config
+///    +--rw interfaces*                 string
+///    +--rw dhcp-socket-type?           enumeration
+///    +--rw outbound-interface?         enumeration
+///    +--rw re-detect?                  boolean
+///    +--rw user-context?               string
+/// +--rw lease-database!                <database>
+/// +--rw hosts-database*
+/// +--rw host-reservation-identifiers*  enumeration
+/// +--rw client-class*
+/// +--rw option-def*
+/// +--rw option-data*
+/// +--rw hook-library*
+///    +--rw library                     string
+///    +--rw parameters?                 string
+/// +--rw expired-leases-processing      <expired-leases-processing>
+/// +--rw dhcp4o6-port?                  uint16
+/// +--rw control-socket!                <control-socket>
+/// +--rw dhcp-ddns                      <dhcp-ddns>
+/// +--rw echo-client-id?                boolean
+/// +--rw match-client-id?               boolean
+/// +--rw next-server?                   inet:ipv4-address
+/// +--rw server-hostname?               string
+/// +--rw boot-file-name?                string
+/// +--rw authoritative?                 boolean
+/// +--rw user-context?                  string
+/// +--rw sanity-checks
+///    +--rw lease-checks?               enumeration
+/// +--rw reservation-mode?              enumeration
+/// +--rw host*
+/// +--rw config-control
+///    +--rw config-database*
+/// +--rw server-tag                     string
+/// +--rw dhcp-queue-control             string
+/// +--rw logger*
+/// @endcode
+///
+/// Example of kea-dhcp6 simple configuration:
+/// @code
+/// {
+///     "Dhcp4": {
+///         "interfaces-config":
+///     {
+///         "interfaces": [ "eth1" ]
+///     },
+///         "control-socket": {
+///             "socket-type": "unix",
+///             "socket-name": "/tmp/kea4-sock"
+///         },
+///     "subnet4":
+///     [
+///         {
+///             "subnet": "10.0.35.0/24",
+///             "pools":
+///             [
+///                 {
+///                     "pool": "10.0.35.64/27"
+///                 }
+///             ]
+///         }
+///     ]
+///     }
+/// }
+///
+/// @endcode
+///
+/// The same configuration wrote into YANG datastore using @c setConfig()
+/// with the kea-dhcp4-model and exported to XML format:
+/// @code
+/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+///   <subnet4>
+///     <id>1</id>
+///     <pool>
+///       <start-address>10.0.35.64</start-address>
+///       <end-address>10.0.35.95</end-address>
+///       <prefix>10.0.35.64/27</prefix>
+///     </pool>
+///     <subnet>10.0.35.0/24</subnet>
+///   </subnet4>
+///   <interfaces-config>
+///     <interfaces>eth1</interfaces>
+///   </interfaces-config>
+///   <control-socket>
+///     <socket-name>/tmp/kea4-sock</socket-name>
+///     <socket-type>unix</socket-type>
+///   </control-socket>
+/// </config>
+/// @endcode
+
 /// JSON syntax for kea-dhcp6 is:
 /// @code
 /// "Dhcp6": {
@@ -52,11 +190,15 @@ namespace yang {
 ///     <dhcp-ddns>,
 ///     <user-context>,
 ///     <comment>
+///     "sanity-checks": { <sanity checks> },
+///     "reservation-mode": <host reservation mode>,
+///     "reservations": [ <list of host reservations> ],
+///     <config-control>,
+///     "server-tag": <server tag>,
+///     "dhcp-queue-control": { <DHCP queue control> }
 /// },
 /// "Logging": <logging>
 /// @endcode
-///
-/// @todo: add kea-dhcp4 syntax and expand logging.
 ///
 /// YANG syntax for kea-dhcp6-server:config is:
 /// @code
@@ -65,20 +207,20 @@ namespace yang {
 /// +--rw renew-timer?                   uint32
 /// +--rw rebind-timer?                  uint32
 /// +--rw decline-probation-period?      uint32
-/// +--rw subnet6                        subnet6*
-/// +--rw shared-networks                shared-network*
+/// +--rw subnet6*
+/// +--rw shared-network*
 /// +--rw interfaces-config
 ///    +--rw interfaces*                 string
 ///    +--rw re-detect?                  boolean
 ///    +--rw user-context?               string
 /// +--rw lease-database!                <database>
-/// +--rw hosts-databases                hosts-database*
+/// +--rw hosts-database*
 /// +--rw relay-supplied-options*        string
 /// +--rw mac-sources*                   string
 /// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-classes                 client-class*
-/// +--rw option-def-list                option-def*
-/// +--rw option-data-list               option-data*
+/// +--rw client-class*
+/// +--rw option-def*
+/// +--rw option-data*
 /// +--rw hook-library*
 ///    +--rw library                     string
 ///    +--rw parameters?                 string
@@ -91,49 +233,13 @@ namespace yang {
 /// +--rw user-context?                  string
 /// +--rw sanity-checks
 ///    +--rw lease-checks?               enumeration
-/// @endcode
-///
-/// YANG syntax for kea-dhcp4-server:config is:
-/// @code
-/// +--rw valid-lifetime?                uint32
-/// +--rw renew-timer?                   uint32
-/// +--rw rebind-timer?                  uint32
-/// +--rw decline-probation-period?      uint32
-/// +--rw subnet4                        subnet4*
-/// +--rw shared-networks                shared-network*
-/// +--rw interfaces-config
-///    +--rw interfaces*                 string
-///    +--rw dhcp-socket-type?           enumeration
-///    +--rw outbound-interface?         enumeration
-///    +--rw re-detect?                  boolean
-///    +--rw user-context?               string
-/// +--rw lease-database!                <database>
-/// +--rw hosts-databases                hosts-database*
-/// +--rw host-reservation-identifiers*  enumeration
-/// +--rw client-classes                 client-class*
-/// +--rw option-def-list                option-def*
-/// +--rw option-data-list               option-data*
-/// +--rw hook-library*
-///    +--rw library                     string
-///    +--rw parameters?                 string
-/// +--rw expired-leases-processing      <expired-leases-processing>
-/// +--rw dhcp4o6-port?                  uint16
-/// +--rw control-socket!                <control-socket>
-/// +--rw dhcp-ddns                      <dhcp-ddns>
-/// +--rw echo-client-id?                boolean
-/// +--rw match-client-id?               boolean
-/// +--rw next-server?                   inet:ipv4-address
-/// +--rw server-hostname?               string
-/// +--rw boot-file-name?                string
-/// +--rw user-context?                  string
-/// +--rw sanity-checks
-///    +--rw lease-checks?               enumeration
-/// @endcode
-///
-/// YANG syntax for kea-*:logging is:
-/// @code
-/// +--rw logging
-///    +--rw loggers
+/// +--rw reservation-mode?              enumeration
+/// +--rw host*
+/// +--rw config-control
+///    +--rw config-database*
+/// +--rw server-tag                     string
+/// +--rw dhcp-queue-control             string
+/// +--rw logger*
 /// @endcode
 ///
 /// Example of kea-dhcp6 simple configuration:
@@ -169,17 +275,13 @@ namespace yang {
 /// @code
 /// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
 ///   <subnet6>
-///     <subnet6>
-///       <id>1</id>
-///       <pools>
-///         <pool>
-///           <start-address>2001:db8::1:0</start-address>
-///           <end-address>2001:db8::1:ffff</end-address>
-///           <prefix>2001:db8::1:0/112</prefix>
-///         </pool>
-///       </pools>
-///       <subnet>2001:db8::/64</subnet>
-///     </subnet6>
+///     <id>1</id>
+///     <pool>
+///       <start-address>2001:db8::1:0</start-address>
+///       <end-address>2001:db8::1:ffff</end-address>
+///       <prefix>2001:db8::1:0/112</prefix>
+///     </pool>
+///     <subnet>2001:db8::/64</subnet>
 ///   </subnet6>
 ///   <interfaces-config>
 ///     <interfaces>eth1</interfaces>
@@ -190,7 +292,56 @@ namespace yang {
 ///   </control-socket>
 /// </config>
 /// @endcode
+
+/// JSON syntax for the logging part of kea servers is:
+/// @code
+/// "Logging": {
+///     "loggers": [ <list of loggers> '
+/// }
+/// @endcode
 ///
+/// Example of Logging simple configuration:
+/// @code
+/// {
+///     ...
+///     "Logging":
+///     {
+///         "loggers":
+///         [
+///             {
+///                 "name": "kea-dhcp6",
+///                 "output_options":
+///                 [
+///                     {
+///                         "output": "stderr"
+///                     }
+///                 ],
+///                 "severity": "DEBUG",
+///                 "debuglevel": 99
+///             }
+///         ]
+///     }
+/// }
+/// @endcode
+///
+/// The same configuration wrote into YANG datastore using @c setConfig()
+/// with a kea server model and exported to XML format:
+/// @code
+/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
+///   ...
+///   <logger>
+///     <name>kea-dhcp6</name>
+///     <output-options>
+///       <option>
+///         <output>stderr</output>
+///       </option>
+///     </output-options>
+///     <debuglevel>99</debuglevel>
+///     <severity>DEBUG</severity>
+///   </logger>
+/// </config>
+/// @endcode
+
 /// Inheritance graph between translators is:
 ///
 ///        +-----------------------------------------+
@@ -232,13 +383,12 @@ namespace yang {
 ///
 ///  'XXX (list)' stands for 'XXX list --- XXX' which is a common motif
 ///  (only database shows direct dependencies on both the list and the element)
-///
+
 /// @brief A translator class for converting the config between YANG and JSON.
 ///
 /// Currently supports the following models:
 /// - kea-dhcp4-server
 /// - kea-dhcp6-server
-/// - kea-logging
 /// - ietf-dhcpv6-server (partial)
 class TranslatorConfig : virtual public TranslatorControlSocket,
     virtual public TranslatorDatabases,
@@ -251,7 +401,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorConfig(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorConfig(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorConfig();
@@ -323,12 +477,6 @@ protected:
     /// @throw SysrepoError when sysrepo raises an error.
     isc::data::ElementPtr getServerKeaDhcp6();
 
-    /// @brief getServer for kea-*:logging.
-    ///
-    /// @return JSON representation of the config.
-    /// @throw SysrepoError when sysrepo raises an error.
-    isc::data::ElementPtr getServerKeaLogging();
-
     /// @brief delConfig for kea-dhcp[46]-server.
     void delConfigKea();
 
@@ -349,23 +497,29 @@ protected:
     void setServerKeaDhcpCommon(const std::string& xpath,
                                 isc::data::ConstElementPtr elem);
 
-    /// @brief Retrieves hooks configuration from sysrepo
+    /// @brief Retrieves hooks configuration from sysrepo.
     ///
-    /// @param xpath path to hooks configuration
-    /// @return ElementList with hooks configuration
-    isc::data::ElementPtr getHooksKea(std::string xpath);
+    /// @param xpath path to hooks configuration.
+    /// @return ElementList with hooks configuration.
+    isc::data::ElementPtr getHooksKea(const std::string& xpath);
 
-    /// @brief Retrieves expired leases processing parameters from sysrepo
+    /// @brief Retrieves expired leases processing parameters from sysrepo.
     ///
-    /// @param xpath path to expired leases configuration
-    /// @return ElementList with expired leases configuration
-    isc::data::ElementPtr getExpiredKea(std::string xpath);
+    /// @param xpath path to expired leases configuration.
+    /// @return ElementList with expired leases configuration.
+    isc::data::ElementPtr getExpiredKea(const std::string& xpath);
 
     /// @brief Retrieves DDNS configuration from sysrepo
     ///
-    /// @param xpath path to dhcp-ddns configuration
-    /// @return ElementList with dhcp-ddns configuration
-    isc::data::ElementPtr getDdnsKea(std::string xpath);
+    /// @param xpath path to dhcp-ddns configuration.
+    /// @return ElementList with dhcp-ddns configuration.
+    isc::data::ElementPtr getDdnsKea(const std::string& xpath);
+
+    /// @brief Retrieves configuration control from sysrepo.
+    ///
+    /// @param xpath path to configuration control.
+    /// @return ElementMap with configuration control.
+    isc::data::ElementPtr getConfigControlKea(const std::string& xpath);
 
     /// @brief setServer for kea-dhcp4-server:config.
     ///
@@ -377,7 +531,7 @@ protected:
     /// @param elem The JSON element.
     void setServerKeaDhcp6(isc::data::ConstElementPtr elem);
 
-    /// @brief setServer for kea-*:logging.
+    /// @brief set Logging part for kea-*:config.
     ///
     /// @param elem The JSON element.
     void setServerKeaLogging(isc::data::ConstElementPtr elem);
@@ -392,9 +546,6 @@ protected:
     /// @param name name of the parameter
     void getParam(isc::data::ElementPtr& storage, const std::string& xpath,
                   const std::string& name);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

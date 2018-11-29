@@ -30,6 +30,14 @@ template<typename PacketQueuePtrType> void checkInfo(PacketQueuePtrType queue, c
     EXPECT_TRUE(exp_elems->equals(*info));
 }
 
+#define CHECK_QUEUE_INFO(queue, stream) \
+    { \
+        std::ostringstream oss__; \
+        oss__ << stream; \
+        checkInfo(queue, oss__.str().c_str());\
+    }
+
+
 template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue, 
                                                      const std::string& name, size_t exp_value) {
     ASSERT_TRUE(queue) << "packet queue ptr is null";
@@ -46,7 +54,7 @@ template<typename PacketQueuePtrType> void checkIntStat(PacketQueuePtrType queue
     EXPECT_EQ(exp_value, value) << "stat: " << name << " is wrong" << std::endl;;
 }
 
-extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity);
+extern data::ElementPtr makeQueueConfig(const std::string& queue_type, size_t capacity, bool enable_queue=true);
 
 }; // end of namespace isc::dhcp::test
 }; // end of namespace isc::dhcp

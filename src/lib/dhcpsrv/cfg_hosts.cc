@@ -600,6 +600,18 @@ CfgHosts::del(const SubnetID& /*subnet_id*/, const asiolink::IOAddress& /*addr*/
     return (false);
 }
 
+size_t
+CfgHosts::delAll4(const SubnetID& subnet_id) {
+    HostContainerIndex2& idx = hosts_.get<2>();
+    size_t erased = idx.erase(subnet_id);
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL_ALL_SUBNET4)
+        .arg(erased)
+        .arg(subnet_id);
+
+    return (erased);
+}
+
 bool
 CfgHosts::del4(const SubnetID& /*subnet_id*/,
                const Host::IdentifierType& /*identifier_type*/,
@@ -608,6 +620,24 @@ CfgHosts::del4(const SubnetID& /*subnet_id*/,
     /// @todo: Implement host removal
     isc_throw(NotImplemented, "sorry, not implemented");
     return (false);
+}
+
+size_t
+CfgHosts::delAll6(const SubnetID& subnet_id) {
+    // Delete IPv6 reservations.
+    HostContainer6Index2& idx6 = hosts6_.get<2>();
+    size_t erased_addresses = idx6.erase(subnet_id);
+
+    // Delete hosts.
+    HostContainerIndex3& idx = hosts_.get<3>();
+    size_t erased_hosts = idx.erase(subnet_id);
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_DEL_ALL_SUBNET6)
+        .arg(erased_hosts)
+        .arg(erased_addresses)
+        .arg(subnet_id);
+
+    return (erased_hosts);
 }
 
 bool

@@ -18,6 +18,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -43,7 +46,7 @@ TEST_F(TranslatorHostsTest, getEmpty) {
 
     // Get the host reservation list and check if it is empty.
     const string& xpath =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']/reservations";
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     ConstElementPtr hosts;
     EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);
@@ -57,14 +60,13 @@ TEST_F(TranslatorHostsTest, get) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& xsubnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Create the host reservation for 2001:db8::1.
-    const string& xpath = subnet + "/reservations";
     ostringstream shost;
     shost << xpath + "/host[identifier-type='hw-address']"
           << "[identifier='00:01:02:03:04:05']";
@@ -99,14 +101,13 @@ TEST_F(TranslatorHostsTest, setEmpty) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& xsubnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Set empty list.
-    const string& xpath = subnet + "/reservations";
     ConstElementPtr hosts = Element::createList();
     EXPECT_NO_THROW(t_obj_->setHosts(xpath, hosts));
 
@@ -124,14 +125,13 @@ TEST_F(TranslatorHostsTest, set) {
     useModel(KEA_DHCP4_SERVER);
 
     // Create the subnet 10.0.0.0/14 #111.
-    const string& subnet =
-        "/kea-dhcp4-server:config/subnet4/subnet4[id='111']";
+    const string& xpath =
+        "/kea-dhcp4-server:config/subnet4[id='111']";
     S_Val v_subnet(new Val("10.0.0.0/24", SR_STRING_T));
-    const string& xsubnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Set one host.
-    const string& xpath = subnet + "/reservations";
     ElementPtr hosts = Element::createList();
     ElementPtr host = Element::createMap();
     host->set("flex-id", Element::create(string("00:ff")));
@@ -155,25 +155,21 @@ TEST_F(TranslatorHostsTest, set) {
     string expected =
         "kea-dhcp4-server:config (container)\n"
         " |\n"
-        " -- subnet4 (container)\n"
+        " -- subnet4 (list instance)\n"
         "     |\n"
-        "     -- subnet4 (list instance)\n"
+        "     -- id = 111\n"
+        "     |\n"
+        "     -- subnet = 10.0.0.0/24\n"
+        "     |\n"
+        "     -- host (list instance)\n"
         "         |\n"
-        "         -- id = 111\n"
+        "         -- identifier-type = flex-id\n"
         "         |\n"
-        "         -- subnet = 10.0.0.0/24\n"
+        "         -- identifier = 00:ff\n"
         "         |\n"
-        "         -- reservations (container)\n"
-        "             |\n"
-        "             -- host (list instance)\n"
-        "                 |\n"
-        "                 -- identifier-type = flex-id\n"
-        "                 |\n"
-        "                 -- identifier = 00:ff\n"
-        "                 |\n"
-        "                 -- hostname = foo\n"
-        "                 |\n"
-        "                 -- ip-address = 10.0.0.1\n";
+        "         -- hostname = foo\n"
+        "         |\n"
+        "         -- ip-address = 10.0.0.1\n";
     EXPECT_EQ(expected, tree->to_string(100));
 
     // Check it validates.
@@ -186,14 +182,13 @@ TEST_F(TranslatorHostsTest, getMany) {
     useModel(KEA_DHCP6_SERVER);
 
     // Create the subnet 2001:db8::/48 #111.
-    const string& subnet =
-        "/kea-dhcp6-server:config/subnet6/subnet6[id='111']";
+    const string& xpath =
+        "/kea-dhcp6-server:config/subnet6[id='111']";
     S_Val v_subnet(new Val("2001:db8::/48", SR_STRING_T));
-    const string& xsubnet = subnet + "/subnet";
-    EXPECT_NO_THROW(sess_->set_item(xsubnet.c_str(), v_subnet));
+    const string& subnet = xpath + "/subnet";
+    EXPECT_NO_THROW(sess_->set_item(subnet.c_str(), v_subnet));
 
     // Create the host reservation for 2001:db8::1.
-    const string& xpath = subnet + "/reservations";
     ostringstream shost;
     shost << xpath + "/host[identifier-type='hw-address']"
           << "[identifier='00:01:02:03:04:05']";
@@ -202,7 +197,6 @@ TEST_F(TranslatorHostsTest, getMany) {
     EXPECT_NO_THROW(sess_->set_item(xaddr.c_str(), s_addr));
 
     // Create another reservation for 2001:db8::2
-    const string xpath2 = subnet + "/reservations";
     ostringstream shost2;
     shost2 << xpath + "/host[identifier-type='hw-address']"
            << "[identifier='00:01:0a:0b:0c:0d']";
@@ -212,8 +206,7 @@ TEST_F(TranslatorHostsTest, getMany) {
 
     // Get the host.
     ConstElementPtr hosts;
-    string hosts_path = subnet + "/reservations";
-    EXPECT_NO_THROW(hosts = t_obj_->getHosts(hosts_path));
+    EXPECT_NO_THROW(hosts = t_obj_->getHosts(xpath));
     ASSERT_TRUE(hosts);
 
     EXPECT_EQ(hosts->str(),

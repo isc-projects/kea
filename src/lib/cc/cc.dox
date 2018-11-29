@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ over time (DHCP configuration is significantly more complex than DNS, with
 more interdependent values) and as of Kea 1.1 release it became very difficult
 to manage. The decision has been made to significantly refactor or even
 partially rewrite the parser code. The design for this effort is documented
-here: http://oldkea.isc.org/wiki/SimpleParser It discusses the original issues
+here: https://gitlab.isc.org/isc-projects/kea/wikis/designs/simple-parser-design. It discusses the original issues
 and the proposed architecture.
 
 There are several aspects of this new approach. The base class for all

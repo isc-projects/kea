@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_logger.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,12 +13,15 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorLogger::TranslatorLogger(S_Session session, const string& model)
-    : TranslatorBasic(session), model_(model) {
+    : TranslatorBasic(session, model) {
 }
 
 TranslatorLogger::~TranslatorLogger() {
@@ -49,7 +54,7 @@ TranslatorLogger::getLoggerKea(const string& xpath) {
     }
     ElementPtr result = Element::createMap();
     result->set("name", name);
-    ConstElementPtr options = getOutputOptions(xpath + "/output-options");
+    ConstElementPtr options = getOutputOptions(xpath);
     if (options && (options->size() > 0)) {
         result->set("output_options", options);
     }
@@ -94,7 +99,7 @@ TranslatorLogger::getOutputOption(const string& xpath) {
 
 ElementPtr
 TranslatorLogger::getOutputOptions(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/output-option");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getOutputOptions: can't get iterator: "
@@ -135,7 +140,7 @@ TranslatorLogger::setLoggerKea(const string& xpath, ConstElementPtr elem) {
     // Skip name as it is the key.
     ConstElementPtr options = elem->get("output_options");
     if (options && (options->size() > 0)) {
-        setOutputOptions(xpath + "/output-options", options);
+        setOutputOptions(xpath, options);
     }
     ConstElementPtr debuglevel = elem->get("debuglevel");
     if (debuglevel) {
@@ -188,15 +193,14 @@ TranslatorLogger::setOutputOptions(const string& xpath, ConstElementPtr elem) {
         }
         string output = option->get("output")->stringValue();
         ostringstream key;
-        key << xpath << "/option[output='" << output << "']";
+        key << xpath << "/output-option[output='" << output << "']";
         setOutputOption(key.str(), option);
     }
 }
 
 TranslatorLoggers::TranslatorLoggers(S_Session session, const string& model)
-    : TranslatorBasic(session),
-      TranslatorLogger(session, model),
-      model_(model) {
+    : TranslatorBasic(session, model),
+      TranslatorLogger(session, model) {
 }
 
 TranslatorLoggers::~TranslatorLoggers() {
@@ -222,7 +226,7 @@ TranslatorLoggers::getLoggers(const string& xpath) {
 
 ElementPtr
 TranslatorLoggers::getLoggersKea(const string& xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+    S_Iter_Value iter = getIter(xpath + "/logger");
     if (!iter) {
         // Can't happen.
         isc_throw(Unexpected, "getLoggersKea: can't get iterator: " << xpath);

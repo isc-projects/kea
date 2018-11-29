@@ -642,7 +642,8 @@ public:
     /// @brief Reclaims expired IPv6 leases.
     ///
     /// This method retrieves a collection of expired leases and reclaims them.
-    /// See http://oldkea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// See
+    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/lease-expiration#leases-reclamation-routine
     /// for the details.
     ///
     /// This method is executed periodically to act upon expired leases. This
@@ -700,7 +701,8 @@ public:
     /// @brief Reclaims expired IPv4 leases.
     ///
     /// This method retrieves a collection of expired leases and reclaims them.
-    /// See http://oldkea.isc.org/wiki/LeaseExpirationDesign#LeasesReclamationRoutine
+    /// See
+    /// https://gitlab.isc.org/isc-projects/kea/wikis/designs/lease-expiration#leases-reclamation-routine
     /// for the details.
     ///
     /// This method is executed periodically to act upon expired leases. This

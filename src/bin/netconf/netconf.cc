@@ -22,6 +22,9 @@ using namespace isc::config;
 using namespace isc::data;
 using namespace isc::netconf;
 using namespace isc::yang;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -77,10 +80,6 @@ public:
             .arg(event_type.str());
         string xpath = "/" + service_pair_.second->getModel() + ":";
         NetconfAgent::logChanges(sess, xpath + "config");
-        if (NetconfProcess::shut_down) {
-            return (SR_ERR_DISCONNECT);
-        }
-        NetconfAgent::logChanges(sess, xpath + "logging");
         if (NetconfProcess::shut_down) {
             return (SR_ERR_DISCONNECT);
         }

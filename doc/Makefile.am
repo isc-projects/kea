@@ -25,6 +25,7 @@ nobase_dist_doc_DATA += examples/kea4/classify.json
 nobase_dist_doc_DATA += examples/kea4/classify2.json
 nobase_dist_doc_DATA += examples/kea4/comments.json
 nobase_dist_doc_DATA += examples/kea4/dhcpv4-over-dhcpv6.json
+nobase_dist_doc_DATA += examples/kea4/global-reservations.json
 nobase_dist_doc_DATA += examples/kea4/ha-load-balancing-primary.json
 nobase_dist_doc_DATA += examples/kea4/hooks.json
 nobase_dist_doc_DATA += examples/kea4/hooks-radius.json
@@ -46,6 +47,7 @@ nobase_dist_doc_DATA += examples/kea6/classify2.json
 nobase_dist_doc_DATA += examples/kea6/comments.json
 nobase_dist_doc_DATA += examples/kea6/dhcpv4-over-dhcpv6.json
 nobase_dist_doc_DATA += examples/kea6/duid.json
+nobase_dist_doc_DATA += examples/kea6/global-reservations.json
 nobase_dist_doc_DATA += examples/kea6/ha-hot-standby.json
 nobase_dist_doc_DATA += examples/kea6/hooks.json
 nobase_dist_doc_DATA += examples/kea6/iPXE.json
@@ -60,9 +62,18 @@ nobase_dist_doc_DATA += examples/kea6/simple.json
 nobase_dist_doc_DATA += examples/kea6/softwire46.json
 nobase_dist_doc_DATA += examples/kea6/stateless.json
 nobase_dist_doc_DATA += examples/kea6/with-ddns.json
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-config.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-schema.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/BAD-translator.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/boot.json
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/logging.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/netconf.json
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/startup.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twopools.xml
+nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twosubnets.xml
 nobase_dist_doc_DATA += examples/netconf/comments.json
-nobase_dist_doc_DATA += examples/netconf/simple.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
+nobase_dist_doc_DATA += examples/netconf/simple.json
 
 # These are files that document our APIs. They're not really needed as the
 # content is included in the api.xml, but may be useful for people who

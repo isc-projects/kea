@@ -21,6 +21,9 @@ using namespace isc;
 using namespace isc::data;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -332,6 +335,7 @@ TEST_F(ConfigTest, examples4) {
         "classify2.json",
         "comments.json",
         "dhcpv4-over-dhcpv6.json",
+        "global-reservations.json",
         "hooks.json",
         "leases-expiration.json",
         "multiple-options.json",
@@ -370,6 +374,7 @@ TEST_F(ConfigTest, examples6) {
         "comments.json",
         "dhcpv4-over-dhcpv6.json",
         "duid.json",
+        "global-reservations.json",
         "hooks.json",
         "iPXE.json",
         "leases-expiration.json",

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,7 @@ carrying out DDNS conversations with the appropriate DNS servers such that they
 update the DNS data.
 
 The design documentation for D2 can be found here:
-<a href="http://oldkea.isc.org/wiki/DhcpDdnsDesign">D2 Design</a>.
+<a href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/ddns-design">D2 Design</a>.
 
 This document contains several UML diagrams, and a few conventions used within
 these diagrams are worth noting:

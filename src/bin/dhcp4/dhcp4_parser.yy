@@ -183,7 +183,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
   OVERRIDE_NO_UPDATE "override-no-update"
   OVERRIDE_CLIENT_UPDATE "override-client-update"
   REPLACE_CLIENT_NAME "replace-client-name"
@@ -465,6 +464,7 @@ global_param: valid_lifetime
             | reservations
             | config_control
             | server_tag
+            | reservation_mode
             | unknown_map_entry
             ;
 
@@ -1844,11 +1844,31 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
     ElementPtr qc = $4;
     ctx.stack_.back()->set("dhcp-queue-control", qc);
 
-    if (!qc->contains("queue-type")) {
+    // Doing this manually, because dhcp-queue-control
+    // content is otherwise arbitrary
+    if (!qc->contains("enable-queue")) {
         std::stringstream msg;
-        msg << "'queue-type' is required: ";
-        msg  << qc->getPosition().str() << ")";
+        msg << "'enable-queue' is required: ";
+        msg  << "(" << qc->getPosition().str() << ")";
         error(@1, msg.str());
+    }
+
+    ConstElementPtr enable_queue = qc->get("enable-queue");
+    if (enable_queue->getType() != Element::boolean) {
+        std::stringstream msg;
+        msg << "'enable-queue' must be boolean: ";
+        msg  << "(" << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
+    if (qc->contains("queue-type")) {
+        ConstElementPtr queue_type = qc->get("queue-type");
+        if (queue_type->getType() != Element::string) {
+            std::stringstream msg;
+            msg << "'queue-type' must be a string: ";
+            msg  << "(" << qc->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
     }
 
     ctx.leave();
@@ -1891,7 +1911,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | always_include_fqdn
                | override_no_update
                | override_client_update
                | replace_client_name
@@ -1965,11 +1984,6 @@ ncr_format: NCR_FORMAT {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
-};
-
-always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("always-include-fqdn", b);
 };
 
 override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
@@ -2056,15 +2070,6 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.leave();
 };
 
-config_control: LCURLY_BRACKET {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(m);
-    ctx.stack_.push_back(m);
-} config_control_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-};
-
-
 config_control: CONFIG_CONTROL {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("config-control", i);
@@ -2087,13 +2092,12 @@ sub_config_control: LCURLY_BRACKET {
 
 // This defines that subnet can have one or more parameters.
 config_control_params: config_control_param
-              | config_control_params COMMA config_control_param
-              ;
+                     | config_control_params COMMA config_control_param
+                     ;
 
 // This defines a list of allowed parameters for each subnet.
 config_control_param: config_databases
-            | unknown_map_entry
-            ;
+                    ;
 
 config_databases: CONFIG_DATABASES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));

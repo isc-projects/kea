@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.0.5.
+// A Bison parser, made by GNU Bison 3.2.1.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -30,6 +30,7 @@
 // This special exception was added by the Free Software Foundation in
 // version 2.2 of Bison.
 
+
 /**
  ** \file parser.h
  ** Define the isc::eval::parser class.
@@ -37,10 +38,13 @@
 
 // C++ LALR(1) parser skeleton written by Akim Demaille.
 
+// Undocumented macros, especially those whose name start with YY_,
+// are private implementation details.  Do not rely on them.
+
 #ifndef YY_EVAL_PARSER_H_INCLUDED
 # define YY_EVAL_PARSER_H_INCLUDED
 // //                    "%code requires" blocks.
-#line 17 "parser.yy" // lalr1.cc:379
+#line 17 "parser.yy" // lalr1.cc:404
 
 #include <string>
 #include <eval/token.h>
@@ -51,7 +55,7 @@
 using namespace isc::dhcp;
 using namespace isc::eval;
 
-#line 55 "parser.h" // lalr1.cc:379
+#line 59 "parser.h" // lalr1.cc:404
 
 # include <cassert>
 # include <cstdlib> // std::abort
@@ -59,7 +63,27 @@ using namespace isc::eval;
 # include <stdexcept>
 # include <string>
 # include <vector>
-# include "stack.hh"
+
+#if defined __cplusplus
+# define YY_CPLUSPLUS __cplusplus
+#else
+# define YY_CPLUSPLUS 199711L
+#endif
+
+// Support move semantics when possible.
+#if 201103L <= YY_CPLUSPLUS
+# define YY_MOVE           std::move
+# define YY_MOVE_OR_COPY   move
+# define YY_MOVE_REF(Type) Type&&
+# define YY_RVREF(Type)    Type&&
+# define YY_COPY(Type)     Type
+#else
+# define YY_MOVE
+# define YY_MOVE_OR_COPY   copy
+# define YY_MOVE_REF(Type) Type&
+# define YY_RVREF(Type)    const Type&
+# define YY_COPY(Type)     const Type&
+#endif
 # include "location.hh"
 #include <typeinfo>
 #ifndef YYASSERT
@@ -86,15 +110,6 @@ using namespace isc::eval;
 # define YY_ATTRIBUTE_UNUSED YY_ATTRIBUTE ((__unused__))
 #endif
 
-#if !defined _Noreturn \
-     && (!defined __STDC_VERSION__ || __STDC_VERSION__ < 201112)
-# if defined _MSC_VER && 1200 <= _MSC_VER
-#  define _Noreturn __declspec (noreturn)
-# else
-#  define _Noreturn YY_ATTRIBUTE ((__noreturn__))
-# endif
-#endif
-
 /* Suppress unused-variable warnings by "using" E.  */
 #if ! defined lint || defined __GNUC__
 # define YYUSE(E) ((void) (E))
@@ -102,7 +117,7 @@ using namespace isc::eval;
 # define YYUSE(E) /* empty */
 #endif
 
-#if defined __GNUC__ && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
+#if defined __GNUC__ && ! defined __ICC && 407 <= __GNUC__ * 100 + __GNUC_MINOR__
 /* Suppress an incorrect diagnostic about yylval being uninitialized.  */
 # define YY_IGNORE_MAYBE_UNINITIALIZED_BEGIN \
     _Pragma ("GCC diagnostic push") \
@@ -121,6 +136,18 @@ using namespace isc::eval;
 # define YY_INITIAL_VALUE(Value) /* Nothing. */
 #endif
 
+# ifndef YY_NULLPTR
+#  if defined __cplusplus
+#   if 201103L <= __cplusplus
+#    define YY_NULLPTR nullptr
+#   else
+#    define YY_NULLPTR 0
+#   endif
+#  else
+#   define YY_NULLPTR ((void*)0)
+#  endif
+# endif
+
 /* Debug traces.  */
 #ifndef EVALDEBUG
 # if defined YYDEBUG
@@ -134,9 +161,128 @@ using namespace isc::eval;
 # endif /* ! defined YYDEBUG */
 #endif  /* ! defined EVALDEBUG */
 
-#line 14 "parser.yy" // lalr1.cc:379
+#line 14 "parser.yy" // lalr1.cc:404
 namespace isc { namespace eval {
-#line 140 "parser.h" // lalr1.cc:379
+#line 167 "parser.h" // lalr1.cc:404
+
+  /// A stack with random access from its top.
+  template <typename T, typename S = std::vector<T> >
+  class stack
+  {
+  public:
+    // Hide our reversed order.
+    typedef typename S::reverse_iterator iterator;
+    typedef typename S::const_reverse_iterator const_iterator;
+    typedef typename S::size_type size_type;
+
+    stack (size_type n = 200)
+      : seq_ (n)
+    {}
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    T&
+    operator[] (size_type i)
+    {
+      return seq_[size () - 1 - i];
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    T&
+    operator[] (int i)
+    {
+      return operator[] (size_type (i));
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    const T&
+    operator[] (size_type i) const
+    {
+      return seq_[size () - 1 - i];
+    }
+
+    /// Random access.
+    ///
+    /// Index 0 returns the topmost element.
+    const T&
+    operator[] (int i) const
+    {
+      return operator[] (size_type (i));
+    }
+
+    /// Steal the contents of \a t.
+    ///
+    /// Close to move-semantics.
+    void
+    push (YY_MOVE_REF (T) t)
+    {
+      seq_.push_back (T ());
+      operator[](0).move (t);
+    }
+
+    void
+    pop (int n = 1)
+    {
+      for (; 0 < n; --n)
+        seq_.pop_back ();
+    }
+
+    void
+    clear ()
+    {
+      seq_.clear ();
+    }
+
+    size_type
+    size () const
+    {
+      return seq_.size ();
+    }
+
+    const_iterator
+    begin () const
+    {
+      return seq_.rbegin ();
+    }
+
+    const_iterator
+    end () const
+    {
+      return seq_.rend ();
+    }
+
+  private:
+    stack (const stack&);
+    stack& operator= (const stack&);
+    /// The wrapped container.
+    S seq_;
+  };
+
+  /// Present a slice of the top of a stack.
+  template <typename T, typename S = stack<T> >
+  class slice
+  {
+  public:
+    slice (const S& stack, int range)
+      : stack_ (stack)
+      , range_ (range)
+    {}
+
+    const T&
+    operator[] (int i) const
+    {
+      return stack_[range_ - i];
+    }
+
+  private:
+    const S& stack_;
+    int range_;
+  };
 
 
 
@@ -153,16 +299,17 @@ namespace isc { namespace eval {
 
     /// Empty construction.
     variant ()
-      : yytypeid_ (YY_NULLPTR)
+      : yybuffer_ ()
+      , yytypeid_ (YY_NULLPTR)
     {}
 
     /// Construct and fill.
     template <typename T>
-    variant (const T& t)
+    variant (YY_RVREF (T) t)
       : yytypeid_ (&typeid (T))
     {
       YYASSERT (sizeof (T) <= S);
-      new (yyas_<T> ()) T (t);
+      new (yyas_<T> ()) T (YY_MOVE (t));
     }
 
     /// Destruction, allowed only if empty.
@@ -174,23 +321,54 @@ namespace isc { namespace eval {
     /// Instantiate an empty \a T in here.
     template <typename T>
     T&
-    build ()
+    emplace ()
     {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
-      return *new (yyas_<T> ()) T;
+      return *new (yyas_<T> ()) T ();
     }
 
+# if 201103L <= YY_CPLUSPLUS
+    /// Instantiate a \a T in here from \a t.
+    template <typename T, typename U>
+    T&
+    emplace (U&& u)
+    {
+      YYASSERT (!yytypeid_);
+      YYASSERT (sizeof (T) <= S);
+      yytypeid_ = & typeid (T);
+      return *new (yyas_<T> ()) T (std::forward <U>(u));
+    }
+# else
     /// Instantiate a \a T in here from \a t.
     template <typename T>
     T&
-    build (const T& t)
+    emplace (const T& t)
     {
       YYASSERT (!yytypeid_);
       YYASSERT (sizeof (T) <= S);
       yytypeid_ = & typeid (T);
       return *new (yyas_<T> ()) T (t);
+    }
+# endif
+
+    /// Instantiate an empty \a T in here.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build ()
+    {
+      return emplace<T> ();
+    }
+
+    /// Instantiate a \a T in here from \a t.
+    /// Obsolete, use emplace.
+    template <typename T>
+    T&
+    build (const T& t)
+    {
+      return emplace<T> (t);
     }
 
     /// Accessor to a built \a T.
@@ -198,6 +376,7 @@ namespace isc { namespace eval {
     T&
     as ()
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -208,6 +387,7 @@ namespace isc { namespace eval {
     const T&
     as () const
     {
+      YYASSERT (yytypeid_);
       YYASSERT (*yytypeid_ == typeid (T));
       YYASSERT (sizeof (T) <= S);
       return *yyas_<T> ();
@@ -218,7 +398,7 @@ namespace isc { namespace eval {
     /// Both variants must be built beforehand, because swapping the actual
     /// data requires reading it (with as()), and this is not possible on
     /// unconstructed variants: it would require some dynamic testing, which
-    /// should not be the variant's responsability.
+    /// should not be the variant's responsibility.
     /// Swapping between built and (possibly) non-built is done with
     /// variant::move ().
     template <typename T>
@@ -237,17 +417,32 @@ namespace isc { namespace eval {
     void
     move (self_type& other)
     {
-      build<T> ();
+# if 201103L <= YY_CPLUSPLUS
+      emplace<T> (std::move (other.as<T> ()));
+# else
+      emplace<T> ();
       swap<T> (other);
+# endif
       other.destroy<T> ();
     }
+
+# if 201103L <= YY_CPLUSPLUS
+    /// Move the content of \a other to this.
+    template <typename T>
+    void
+    move (self_type&& other)
+    {
+      emplace<T> (std::move (other.as<T> ()));
+      other.destroy<T> ();
+    }
+#endif
 
     /// Copy the content of \a other to this.
     template <typename T>
     void
     copy (const self_type& other)
     {
-      build<T> (other.as<T> ());
+      emplace<T> (other.as<T> ());
     }
 
     /// Destroy the stored \a T.
@@ -261,7 +456,7 @@ namespace isc { namespace eval {
 
   private:
     /// Prohibit blind copies.
-    self_type& operator=(const self_type&);
+    self_type& operator= (const self_type&);
     variant (const self_type&);
 
     /// Accessor to raw memory as \a T.
@@ -304,40 +499,40 @@ namespace isc { namespace eval {
     union union_type
     {
       // option_repr_type
-      char dummy1[sizeof(TokenOption::RepresentationType)];
+      char dummy1[sizeof (TokenOption::RepresentationType)];
 
       // pkt4_field
-      char dummy2[sizeof(TokenPkt4::FieldType)];
+      char dummy2[sizeof (TokenPkt4::FieldType)];
 
       // pkt6_field
-      char dummy3[sizeof(TokenPkt6::FieldType)];
+      char dummy3[sizeof (TokenPkt6::FieldType)];
 
       // pkt_metadata
-      char dummy4[sizeof(TokenPkt::MetadataType)];
+      char dummy4[sizeof (TokenPkt::MetadataType)];
 
       // relay6_field
-      char dummy5[sizeof(TokenRelay6Field::FieldType)];
+      char dummy5[sizeof (TokenRelay6Field::FieldType)];
 
       // nest_level
-      char dummy6[sizeof(int8_t)];
+      char dummy6[sizeof (int8_t)];
 
       // "constant string"
       // "integer"
       // "constant hexstring"
       // "option name"
       // "ip address"
-      char dummy7[sizeof(std::string)];
+      char dummy7[sizeof (std::string)];
 
       // option_code
-      char dummy8[sizeof(uint16_t)];
+      char dummy8[sizeof (uint16_t)];
 
       // integer_expr
       // enterprise_id
-      char dummy9[sizeof(uint32_t)];
+      char dummy9[sizeof (uint32_t)];
 };
 
     /// Symbol semantic values.
-    typedef variant<sizeof(union_type)> semantic_type;
+    typedef variant<sizeof (union_type)> semantic_type;
 #else
     typedef EVALSTYPE semantic_type;
 #endif
@@ -427,7 +622,7 @@ namespace isc { namespace eval {
     /// A complete symbol.
     ///
     /// Expects its Base type to provide access to the symbol type
-    /// via type_get().
+    /// via type_get ().
     ///
     /// Provide access to semantic value and location.
     template <typename Base>
@@ -439,36 +634,62 @@ namespace isc { namespace eval {
       /// Default constructor.
       basic_symbol ();
 
-      /// Copy constructor.
-      basic_symbol (const basic_symbol& other);
+      /// Move or copy constructor.
+      basic_symbol (YY_RVREF (basic_symbol) other);
+
 
       /// Constructor for valueless symbols, and symbols from each type.
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, TokenOption::RepresentationType&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, TokenPkt4::FieldType&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const TokenPkt4::FieldType& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, TokenPkt6::FieldType&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const TokenPkt6::FieldType& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, TokenPkt::MetadataType&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const TokenPkt::MetadataType& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, TokenRelay6Field::FieldType&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, int8_t&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const int8_t& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, uint16_t&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const uint16_t& v, const location_type& l);
+#endif
+# if 201103L <= YY_CPLUSPLUS
+      basic_symbol (typename Base::kind_type t, uint32_t&& v, location_type&& l);
+#else
+      basic_symbol (typename Base::kind_type t, const uint32_t& v, const location_type& l);
+#endif
 
-  basic_symbol (typename Base::kind_type t, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const TokenPkt4::FieldType v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const TokenPkt6::FieldType v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const TokenPkt::MetadataType v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const int8_t v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const uint16_t v, const location_type& l);
-
-  basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l);
-
-
-      /// Constructor for symbols with semantic value.
-      basic_symbol (typename Base::kind_type t,
-                    const semantic_type& v,
-                    const location_type& l);
 
       /// Destroy the symbol.
       ~basic_symbol ();
@@ -489,8 +710,10 @@ namespace isc { namespace eval {
       location_type location;
 
     private:
+#if YY_CPLUSPLUS < 201103L
       /// Assignment operator.
       basic_symbol& operator= (const basic_symbol& other);
+#endif
     };
 
     /// Type access provider for token (enum) based symbols.
@@ -530,223 +753,13 @@ namespace isc { namespace eval {
     /// "External" symbols: returned by the scanner.
     typedef basic_symbol<by_type> symbol_type;
 
-    // Symbol constructors declarations.
-    static inline
-    symbol_type
-    make_END (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LPAREN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RPAREN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_NOT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_AND (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_EQUAL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_OPTION (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RELAY4 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RELAY6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MEMBER (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PEERADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LINKADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LBRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_RBRACKET (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DOT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TEXT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HEX (const location_type& l);
-
-    static inline
-    symbol_type
-    make_EXISTS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PKT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_IFACE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SRC (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DST (const location_type& l);
-
-    static inline
-    symbol_type
-    make_LEN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PKT4 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CHADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HLEN (const location_type& l);
-
-    static inline
-    symbol_type
-    make_HTYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CIADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_GIADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_YIADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SIADDR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_SUBSTRING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_ALL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_COMA (const location_type& l);
-
-    static inline
-    symbol_type
-    make_CONCAT (const location_type& l);
-
-    static inline
-    symbol_type
-    make_IFELSE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TOHEXSTRING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_PKT6 (const location_type& l);
-
-    static inline
-    symbol_type
-    make_MSGTYPE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TRANSID (const location_type& l);
-
-    static inline
-    symbol_type
-    make_VENDOR_CLASS (const location_type& l);
-
-    static inline
-    symbol_type
-    make_VENDOR (const location_type& l);
-
-    static inline
-    symbol_type
-    make_ANY (const location_type& l);
-
-    static inline
-    symbol_type
-    make_DATA (const location_type& l);
-
-    static inline
-    symbol_type
-    make_ENTERPRISE (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TOPLEVEL_BOOL (const location_type& l);
-
-    static inline
-    symbol_type
-    make_TOPLEVEL_STRING (const location_type& l);
-
-    static inline
-    symbol_type
-    make_STRING (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_INTEGER (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_HEXSTRING (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_OPTION_NAME (const std::string& v, const location_type& l);
-
-    static inline
-    symbol_type
-    make_IP_ADDRESS (const std::string& v, const location_type& l);
-
-
     /// Build a parser object.
     EvalParser (EvalContext& ctx_yyarg);
     virtual ~EvalParser ();
+
+    /// Parse.  An alias for parse ().
+    /// \returns  0 iff parsing succeeded.
+    int operator() ();
 
     /// Parse.
     /// \returns  0 iff parsing succeeded.
@@ -773,6 +786,221 @@ namespace isc { namespace eval {
 
     /// Report a syntax error.
     void error (const syntax_error& err);
+
+    // Symbol constructors declarations.
+    static
+    symbol_type
+    make_END (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LPAREN (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RPAREN (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_NOT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_AND (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_EQUAL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OPTION (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RELAY4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RELAY6 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MEMBER (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PEERADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LINKADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LBRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_RBRACKET (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DOT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TEXT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HEX (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_EXISTS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PKT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_IFACE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SRC (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DST (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_LEN (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PKT4 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CHADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HLEN (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HTYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CIADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_GIADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_YIADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SIADDR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_SUBSTRING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ALL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_COMA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_CONCAT (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_IFELSE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TOHEXSTRING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_PKT6 (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_MSGTYPE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TRANSID (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_VENDOR_CLASS (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_VENDOR (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ANY (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_DATA (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_ENTERPRISE (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TOPLEVEL_BOOL (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_TOPLEVEL_STRING (YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_INTEGER (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_HEXSTRING (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_OPTION_NAME (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+    static
+    symbol_type
+    make_IP_ADDRESS (YY_COPY (std::string) v, YY_COPY (location_type) l);
+
+
 
   private:
     /// This class is not copyable.
@@ -810,7 +1038,7 @@ namespace isc { namespace eval {
     // Tables.
   // YYPACT[STATE-NUM] -- Index in YYTABLE of the portion describing
   // STATE-NUM.
-  static const short int yypact_[];
+  static const short yypact_[];
 
   // YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
   // Performed when YYTABLE does not specify something else to do.  Zero
@@ -818,10 +1046,10 @@ namespace isc { namespace eval {
   static const unsigned char yydefact_[];
 
   // YYPGOTO[NTERM-NUM].
-  static const short int yypgoto_[];
+  static const short yypgoto_[];
 
   // YYDEFGOTO[NTERM-NUM].
-  static const short int yydefgoto_[];
+  static const short yydefgoto_[];
 
   // YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
   // positive, shift that token.  If negative, reduce the rule whose
@@ -849,14 +1077,15 @@ namespace isc { namespace eval {
     static const char* const yytname_[];
 #if EVALDEBUG
   // YYRLINE[YYN] -- Source line where rule number YYN was defined.
-  static const unsigned short int yyrline_[];
+  static const unsigned short yyrline_[];
     /// Report on the debug stream that the rule \a r is going to be reduced.
     virtual void yy_reduce_print_ (int r);
     /// Print the state stack on the debug stream.
     virtual void yystack_print_ ();
 
-    // Debugging.
+    /// Debugging level.
     int yydebug_;
+    /// Debug stream.
     std::ostream* yycdebug_;
 
     /// \brief Display a symbol type, value and location.
@@ -914,12 +1143,15 @@ namespace isc { namespace eval {
       typedef basic_symbol<by_state> super_type;
       /// Construct an empty symbol.
       stack_symbol_type ();
-      /// Copy construct.
-      stack_symbol_type (const stack_symbol_type& that);
+      /// Move or copy construction.
+      stack_symbol_type (YY_RVREF (stack_symbol_type) that);
       /// Steal the contents from \a sym to build this.
-      stack_symbol_type (state_type s, symbol_type& sym);
-      /// Assignment, needed by push_back.
-      stack_symbol_type& operator= (const stack_symbol_type& that);
+      stack_symbol_type (state_type s, YY_MOVE_REF (symbol_type) sym);
+#if YY_CPLUSPLUS < 201103L
+      /// Assignment, needed by push_back by some old implementations.
+      /// Moves the contents of that.
+      stack_symbol_type& operator= (stack_symbol_type& that);
+#endif
     };
 
     /// Stack type.
@@ -931,20 +1163,20 @@ namespace isc { namespace eval {
     /// Push a new state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
-    /// \param s    the symbol
+    /// \param sym  the symbol
     /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, stack_symbol_type& s);
+    void yypush_ (const char* m, YY_MOVE_REF (stack_symbol_type) sym);
 
     /// Push a new look ahead token on the state on the stack.
     /// \param m    a debug message to display
     ///             if null, no trace is output.
     /// \param s    the state
     /// \param sym  the symbol (for its value and location).
-    /// \warning the contents of \a s.value is stolen.
-    void yypush_ (const char* m, state_type s, symbol_type& sym);
+    /// \warning the contents of \a sym.value is stolen.
+    void yypush_ (const char* m, state_type s, YY_MOVE_REF (symbol_type) sym);
 
-    /// Pop \a n symbols the three stacks.
-    void yypop_ (unsigned n = 1);
+    /// Pop \a n symbols from the stack.
+    void yypop_ (int n = 1);
 
     /// Constants.
     enum
@@ -1025,38 +1257,39 @@ namespace isc { namespace eval {
   template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol ()
     : value ()
+    , location ()
   {}
 
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (const basic_symbol& other)
-    : Base (other)
+  EvalParser::basic_symbol<Base>::basic_symbol (YY_RVREF (basic_symbol) other)
+    : Base (YY_MOVE (other))
     , value ()
-    , location (other.location)
+    , location (YY_MOVE (other.location))
   {
     switch (other.type_get ())
     {
       case 62: // option_repr_type
-        value.copy< TokenOption::RepresentationType > (other.value);
+        value.YY_MOVE_OR_COPY< TokenOption::RepresentationType > (YY_MOVE (other.value));
         break;
 
       case 66: // pkt4_field
-        value.copy< TokenPkt4::FieldType > (other.value);
+        value.YY_MOVE_OR_COPY< TokenPkt4::FieldType > (YY_MOVE (other.value));
         break;
 
       case 67: // pkt6_field
-        value.copy< TokenPkt6::FieldType > (other.value);
+        value.YY_MOVE_OR_COPY< TokenPkt6::FieldType > (YY_MOVE (other.value));
         break;
 
       case 64: // pkt_metadata
-        value.copy< TokenPkt::MetadataType > (other.value);
+        value.YY_MOVE_OR_COPY< TokenPkt::MetadataType > (YY_MOVE (other.value));
         break;
 
       case 68: // relay6_field
-        value.copy< TokenRelay6Field::FieldType > (other.value);
+        value.YY_MOVE_OR_COPY< TokenRelay6Field::FieldType > (YY_MOVE (other.value));
         break;
 
       case 63: // nest_level
-        value.copy< int8_t > (other.value);
+        value.YY_MOVE_OR_COPY< int8_t > (YY_MOVE (other.value));
         break;
 
       case 50: // "constant string"
@@ -1064,16 +1297,16 @@ namespace isc { namespace eval {
       case 52: // "constant hexstring"
       case 53: // "option name"
       case 54: // "ip address"
-        value.copy< std::string > (other.value);
+        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (other.value));
         break;
 
       case 61: // option_code
-        value.copy< uint16_t > (other.value);
+        value.YY_MOVE_OR_COPY< uint16_t > (YY_MOVE (other.value));
         break;
 
       case 60: // integer_expr
       case 65: // enterprise_id
-        value.copy< uint32_t > (other.value);
+        value.YY_MOVE_OR_COPY< uint32_t > (YY_MOVE (other.value));
         break;
 
       default:
@@ -1082,133 +1315,156 @@ namespace isc { namespace eval {
 
   }
 
-  template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const semantic_type& v, const location_type& l)
-    : Base (t)
-    , value ()
-    , location (l)
-  {
-    (void) v;
-    switch (this->type_get ())
-    {
-      case 62: // option_repr_type
-        value.copy< TokenOption::RepresentationType > (v);
-        break;
-
-      case 66: // pkt4_field
-        value.copy< TokenPkt4::FieldType > (v);
-        break;
-
-      case 67: // pkt6_field
-        value.copy< TokenPkt6::FieldType > (v);
-        break;
-
-      case 64: // pkt_metadata
-        value.copy< TokenPkt::MetadataType > (v);
-        break;
-
-      case 68: // relay6_field
-        value.copy< TokenRelay6Field::FieldType > (v);
-        break;
-
-      case 63: // nest_level
-        value.copy< int8_t > (v);
-        break;
-
-      case 50: // "constant string"
-      case 51: // "integer"
-      case 52: // "constant hexstring"
-      case 53: // "option name"
-      case 54: // "ip address"
-        value.copy< std::string > (v);
-        break;
-
-      case 61: // option_code
-        value.copy< uint16_t > (v);
-        break;
-
-      case 60: // integer_expr
-      case 65: // enterprise_id
-        value.copy< uint32_t > (v);
-        break;
-
-      default:
-        break;
-    }
-}
-
 
   // Implementation of basic_symbol constructor for each type.
-
+# if 201103L <= YY_CPLUSPLUS
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, location_type&& l)
+    : Base (t)
+    , location (std::move (l))
+  {}
+#else
   template <typename Base>
   EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const location_type& l)
     : Base (t)
-    , value ()
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, TokenOption::RepresentationType&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenOption::RepresentationType& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt4::FieldType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, TokenPkt4::FieldType&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt4::FieldType& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt6::FieldType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, TokenPkt6::FieldType&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt6::FieldType& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt::MetadataType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, TokenPkt::MetadataType&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenPkt::MetadataType& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, TokenRelay6Field::FieldType&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const TokenRelay6Field::FieldType& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int8_t v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, int8_t&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const int8_t& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, std::string&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const std::string& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint16_t v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, uint16_t&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint16_t& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint32_t v, const location_type& l)
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, uint32_t&& v, location_type&& l)
+    : Base (t)
+    , value (std::move (v))
+    , location (std::move (l))
+  {}
+#else
+  template <typename Base>
+  EvalParser::basic_symbol<Base>::basic_symbol (typename Base::kind_type t, const uint32_t& v, const location_type& l)
     : Base (t)
     , value (v)
     , location (l)
   {}
+#endif
 
 
   template <typename Base>
@@ -1297,27 +1553,27 @@ namespace isc { namespace eval {
     switch (this->type_get ())
     {
       case 62: // option_repr_type
-        value.move< TokenOption::RepresentationType > (s.value);
+        value.move< TokenOption::RepresentationType > (YY_MOVE (s.value));
         break;
 
       case 66: // pkt4_field
-        value.move< TokenPkt4::FieldType > (s.value);
+        value.move< TokenPkt4::FieldType > (YY_MOVE (s.value));
         break;
 
       case 67: // pkt6_field
-        value.move< TokenPkt6::FieldType > (s.value);
+        value.move< TokenPkt6::FieldType > (YY_MOVE (s.value));
         break;
 
       case 64: // pkt_metadata
-        value.move< TokenPkt::MetadataType > (s.value);
+        value.move< TokenPkt::MetadataType > (YY_MOVE (s.value));
         break;
 
       case 68: // relay6_field
-        value.move< TokenRelay6Field::FieldType > (s.value);
+        value.move< TokenRelay6Field::FieldType > (YY_MOVE (s.value));
         break;
 
       case 63: // nest_level
-        value.move< int8_t > (s.value);
+        value.move< int8_t > (YY_MOVE (s.value));
         break;
 
       case 50: // "constant string"
@@ -1325,23 +1581,23 @@ namespace isc { namespace eval {
       case 52: // "constant hexstring"
       case 53: // "option name"
       case 54: // "ip address"
-        value.move< std::string > (s.value);
+        value.move< std::string > (YY_MOVE (s.value));
         break;
 
       case 61: // option_code
-        value.move< uint16_t > (s.value);
+        value.move< uint16_t > (YY_MOVE (s.value));
         break;
 
       case 60: // integer_expr
       case 65: // enterprise_id
-        value.move< uint32_t > (s.value);
+        value.move< uint32_t > (YY_MOVE (s.value));
         break;
 
       default:
         break;
     }
 
-    location = s.location;
+    location = YY_MOVE (s.location);
   }
 
   // by_type.
@@ -1389,7 +1645,7 @@ namespace isc { namespace eval {
     // YYTOKNUM[NUM] -- (External) token number corresponding to the
     // (internal) symbol number NUM (which must be that of a token).  */
     static
-    const unsigned short int
+    const unsigned short
     yytoken_number_[] =
     {
        0,   256,   257,   258,   259,   260,   261,   262,   263,   264,
@@ -1401,329 +1657,383 @@ namespace isc { namespace eval {
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
+
   // Implementation of make_symbol for each symbol type.
+  inline
   EvalParser::symbol_type
-  EvalParser::make_END (const location_type& l)
+  EvalParser::make_END (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_END, l);
+    return symbol_type (token::TOKEN_END, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_LPAREN (const location_type& l)
+  EvalParser::make_LPAREN (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LPAREN, l);
+    return symbol_type (token::TOKEN_LPAREN, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_RPAREN (const location_type& l)
+  EvalParser::make_RPAREN (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RPAREN, l);
+    return symbol_type (token::TOKEN_RPAREN, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_NOT (const location_type& l)
+  EvalParser::make_NOT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_NOT, l);
+    return symbol_type (token::TOKEN_NOT, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_AND (const location_type& l)
+  EvalParser::make_AND (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_AND, l);
+    return symbol_type (token::TOKEN_AND, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_OR (const location_type& l)
+  EvalParser::make_OR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_OR, l);
+    return symbol_type (token::TOKEN_OR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_EQUAL (const location_type& l)
+  EvalParser::make_EQUAL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_EQUAL, l);
+    return symbol_type (token::TOKEN_EQUAL, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_OPTION (const location_type& l)
+  EvalParser::make_OPTION (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_OPTION, l);
+    return symbol_type (token::TOKEN_OPTION, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_RELAY4 (const location_type& l)
+  EvalParser::make_RELAY4 (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RELAY4, l);
+    return symbol_type (token::TOKEN_RELAY4, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_RELAY6 (const location_type& l)
+  EvalParser::make_RELAY6 (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RELAY6, l);
+    return symbol_type (token::TOKEN_RELAY6, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_MEMBER (const location_type& l)
+  EvalParser::make_MEMBER (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MEMBER, l);
+    return symbol_type (token::TOKEN_MEMBER, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_PEERADDR (const location_type& l)
+  EvalParser::make_PEERADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_PEERADDR, l);
+    return symbol_type (token::TOKEN_PEERADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_LINKADDR (const location_type& l)
+  EvalParser::make_LINKADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LINKADDR, l);
+    return symbol_type (token::TOKEN_LINKADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_LBRACKET (const location_type& l)
+  EvalParser::make_LBRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LBRACKET, l);
+    return symbol_type (token::TOKEN_LBRACKET, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_RBRACKET (const location_type& l)
+  EvalParser::make_RBRACKET (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_RBRACKET, l);
+    return symbol_type (token::TOKEN_RBRACKET, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_DOT (const location_type& l)
+  EvalParser::make_DOT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DOT, l);
+    return symbol_type (token::TOKEN_DOT, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_TEXT (const location_type& l)
+  EvalParser::make_TEXT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_TEXT, l);
+    return symbol_type (token::TOKEN_TEXT, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_HEX (const location_type& l)
+  EvalParser::make_HEX (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HEX, l);
+    return symbol_type (token::TOKEN_HEX, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_EXISTS (const location_type& l)
+  EvalParser::make_EXISTS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_EXISTS, l);
+    return symbol_type (token::TOKEN_EXISTS, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_PKT (const location_type& l)
+  EvalParser::make_PKT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_PKT, l);
+    return symbol_type (token::TOKEN_PKT, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_IFACE (const location_type& l)
+  EvalParser::make_IFACE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_IFACE, l);
+    return symbol_type (token::TOKEN_IFACE, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_SRC (const location_type& l)
+  EvalParser::make_SRC (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SRC, l);
+    return symbol_type (token::TOKEN_SRC, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_DST (const location_type& l)
+  EvalParser::make_DST (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DST, l);
+    return symbol_type (token::TOKEN_DST, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_LEN (const location_type& l)
+  EvalParser::make_LEN (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_LEN, l);
+    return symbol_type (token::TOKEN_LEN, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_PKT4 (const location_type& l)
+  EvalParser::make_PKT4 (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_PKT4, l);
+    return symbol_type (token::TOKEN_PKT4, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_CHADDR (const location_type& l)
+  EvalParser::make_CHADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_CHADDR, l);
+    return symbol_type (token::TOKEN_CHADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_HLEN (const location_type& l)
+  EvalParser::make_HLEN (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HLEN, l);
+    return symbol_type (token::TOKEN_HLEN, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_HTYPE (const location_type& l)
+  EvalParser::make_HTYPE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HTYPE, l);
+    return symbol_type (token::TOKEN_HTYPE, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_CIADDR (const location_type& l)
+  EvalParser::make_CIADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_CIADDR, l);
+    return symbol_type (token::TOKEN_CIADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_GIADDR (const location_type& l)
+  EvalParser::make_GIADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_GIADDR, l);
+    return symbol_type (token::TOKEN_GIADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_YIADDR (const location_type& l)
+  EvalParser::make_YIADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_YIADDR, l);
+    return symbol_type (token::TOKEN_YIADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_SIADDR (const location_type& l)
+  EvalParser::make_SIADDR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SIADDR, l);
+    return symbol_type (token::TOKEN_SIADDR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_SUBSTRING (const location_type& l)
+  EvalParser::make_SUBSTRING (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_SUBSTRING, l);
+    return symbol_type (token::TOKEN_SUBSTRING, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_ALL (const location_type& l)
+  EvalParser::make_ALL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_ALL, l);
+    return symbol_type (token::TOKEN_ALL, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_COMA (const location_type& l)
+  EvalParser::make_COMA (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_COMA, l);
+    return symbol_type (token::TOKEN_COMA, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_CONCAT (const location_type& l)
+  EvalParser::make_CONCAT (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_CONCAT, l);
+    return symbol_type (token::TOKEN_CONCAT, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_IFELSE (const location_type& l)
+  EvalParser::make_IFELSE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_IFELSE, l);
+    return symbol_type (token::TOKEN_IFELSE, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_TOHEXSTRING (const location_type& l)
+  EvalParser::make_TOHEXSTRING (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_TOHEXSTRING, l);
+    return symbol_type (token::TOKEN_TOHEXSTRING, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_PKT6 (const location_type& l)
+  EvalParser::make_PKT6 (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_PKT6, l);
+    return symbol_type (token::TOKEN_PKT6, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_MSGTYPE (const location_type& l)
+  EvalParser::make_MSGTYPE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_MSGTYPE, l);
+    return symbol_type (token::TOKEN_MSGTYPE, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_TRANSID (const location_type& l)
+  EvalParser::make_TRANSID (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_TRANSID, l);
+    return symbol_type (token::TOKEN_TRANSID, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_VENDOR_CLASS (const location_type& l)
+  EvalParser::make_VENDOR_CLASS (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_VENDOR_CLASS, l);
+    return symbol_type (token::TOKEN_VENDOR_CLASS, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_VENDOR (const location_type& l)
+  EvalParser::make_VENDOR (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_VENDOR, l);
+    return symbol_type (token::TOKEN_VENDOR, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_ANY (const location_type& l)
+  EvalParser::make_ANY (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_ANY, l);
+    return symbol_type (token::TOKEN_ANY, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_DATA (const location_type& l)
+  EvalParser::make_DATA (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_DATA, l);
+    return symbol_type (token::TOKEN_DATA, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_ENTERPRISE (const location_type& l)
+  EvalParser::make_ENTERPRISE (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_ENTERPRISE, l);
+    return symbol_type (token::TOKEN_ENTERPRISE, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_TOPLEVEL_BOOL (const location_type& l)
+  EvalParser::make_TOPLEVEL_BOOL (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_TOPLEVEL_BOOL, l);
+    return symbol_type (token::TOKEN_TOPLEVEL_BOOL, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_TOPLEVEL_STRING (const location_type& l)
+  EvalParser::make_TOPLEVEL_STRING (YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_TOPLEVEL_STRING, l);
+    return symbol_type (token::TOKEN_TOPLEVEL_STRING, YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_STRING (const std::string& v, const location_type& l)
+  EvalParser::make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_STRING, v, l);
+    return symbol_type (token::TOKEN_STRING, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_INTEGER (const std::string& v, const location_type& l)
+  EvalParser::make_INTEGER (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_INTEGER, v, l);
+    return symbol_type (token::TOKEN_INTEGER, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_HEXSTRING (const std::string& v, const location_type& l)
+  EvalParser::make_HEXSTRING (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_HEXSTRING, v, l);
+    return symbol_type (token::TOKEN_HEXSTRING, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_OPTION_NAME (const std::string& v, const location_type& l)
+  EvalParser::make_OPTION_NAME (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_OPTION_NAME, v, l);
+    return symbol_type (token::TOKEN_OPTION_NAME, YY_MOVE (v), YY_MOVE (l));
   }
 
+  inline
   EvalParser::symbol_type
-  EvalParser::make_IP_ADDRESS (const std::string& v, const location_type& l)
+  EvalParser::make_IP_ADDRESS (YY_COPY (std::string) v, YY_COPY (location_type) l)
   {
-    return symbol_type (token::TOKEN_IP_ADDRESS, v, l);
+    return symbol_type (token::TOKEN_IP_ADDRESS, YY_MOVE (v), YY_MOVE (l));
   }
 
 
-#line 14 "parser.yy" // lalr1.cc:379
+#line 14 "parser.yy" // lalr1.cc:404
 } } // isc::eval
-#line 1727 "parser.h" // lalr1.cc:379
+#line 2037 "parser.h" // lalr1.cc:404
 
 
 

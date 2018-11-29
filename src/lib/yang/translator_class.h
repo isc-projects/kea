@@ -38,8 +38,8 @@ namespace yang {
 ///    +--rw name                string
 ///    +--rw test?               string
 ///    +--rw only-if-required?   boolean
-///    +--rw option-data-list    option-data*
-///    +--rw option-def-list     option-def*
+///    +--rw option-data*
+///    +--rw option-def*
 ///    +--rw next-server?        inet:ipv4-address
 ///    +--rw server-hostname?    string
 ///    +--rw boot-file-name?     string
@@ -58,15 +58,10 @@ namespace yang {
 /// @endcode
 /// @code
 ///  /kea-dhcp6-server:config (container)
-///  /kea-dhcp6-server:config/client-classes (container)
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo'] (list instance)
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/name = foo
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/test = ''==''
-///  /kea-dhcp6-server:config/client-classes/
-///     client-class[name='foo']/ only-if-required = false
+///  /kea-dhcp6-server:config/client-class[name='foo'] (list instance)
+///  /kea-dhcp6-server:config/client-class[name='foo']/name = foo
+///  /kea-dhcp6-server:config/client-class[name='foo']/test = ''==''
+///  /kea-dhcp6-server:config/client-class[name='foo']/only-if-required = false
 /// @endcode
 
 /// @brief A translator class for converting a client class between
@@ -82,7 +77,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorClass(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorClass(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorClass();
@@ -114,9 +113,6 @@ protected:
     /// @param elem The JSON element.
     void setClassKea(const std::string& xpath,
                      isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 /// @brief A translator class for converting a client class list between
@@ -131,7 +127,11 @@ public:
     ///
     /// @param session Sysrepo session.
     /// @param model Model name.
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+    TranslatorClasses(sysrepo::S_Session session, const std::string& model);
+#else
     TranslatorClasses(S_Session session, const std::string& model);
+#endif
 
     /// @brief Destructor.
     virtual ~TranslatorClasses();
@@ -165,9 +165,6 @@ protected:
     /// @throw BadValue on client class without name.
     void setClassesKea(const std::string& xpath,
                        isc::data::ConstElementPtr elem);
-
-    /// @brief The model.
-    std::string model_;
 };
 
 }; // end of namespace isc::yang

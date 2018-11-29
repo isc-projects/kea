@@ -15,6 +15,9 @@ using namespace std;
 using namespace isc;
 using namespace isc::yang;
 using namespace isc::yang::test;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace {
 
@@ -150,7 +153,7 @@ TEST(YangReprTrest, getTestErrors) {
 
     // Change a path.
     YRTree badpath = testTree;
-    badpath[22].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
+    badpath[14].xpath_ = "/keatest-module:kernel-module"; // removed final 's'
     EXPECT_FALSE(repr.verify(badpath, sess, cerr));
 
     // Change a value.

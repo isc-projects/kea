@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_config.h>
 #include <yang/adaptor_config.h>
 #include <yang/yang_models.h>
@@ -11,12 +13,15 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorConfig::TranslatorConfig(S_Session session, const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorControlSocket(session, model),
       TranslatorDatabase(session, model),
       TranslatorDatabases(session, model),
@@ -37,8 +42,7 @@ TranslatorConfig::TranslatorConfig(S_Session session, const string& model)
       TranslatorSharedNetwork(session, model),
       TranslatorSharedNetworks(session, model),
       TranslatorLogger(session, model),
-      TranslatorLoggers(session, model),
-      model_(model) {
+      TranslatorLoggers(session, model) {
 }
 
 TranslatorConfig::~TranslatorConfig() {
@@ -67,7 +71,8 @@ TranslatorConfig::getConfigIetf6() {
     ElementPtr dhcp6 = Element::createMap();
     result->set("Dhcp6", dhcp6);
     string xpath = "/" + model_ + ":server/server-config";
-    ConstElementPtr ranges = getSubnets(xpath + "/network-ranges");
+    ConstElementPtr ranges =
+        getSubnets(xpath + "/network-ranges");
     if (ranges && !ranges->empty()) {
         dhcp6->set("subnet6", ranges);
     }
@@ -78,9 +83,14 @@ TranslatorConfig::getConfigIetf6() {
 ElementPtr
 TranslatorConfig::getConfigKea4() {
     ElementPtr result = Element::createMap();
-    result->set("Dhcp4", getServerKeaDhcp4());
-    ConstElementPtr logging = getServerKeaLogging();
-    if (logging && !logging->empty()) {
+    ElementPtr dhcp = getServerKeaDhcp4();
+    result->set("Dhcp4", dhcp);
+    ConstElementPtr loggers = dhcp->get("loggers");
+    if (loggers) {
+        dhcp->remove("loggers");
+
+        ElementPtr logging = Element::createMap();
+        logging->set("loggers", loggers);
         result->set("Logging", logging);
     }
     return (result);
@@ -89,9 +99,14 @@ TranslatorConfig::getConfigKea4() {
 ElementPtr
 TranslatorConfig::getConfigKea6() {
     ElementPtr result = Element::createMap();
-    result->set("Dhcp6", getServerKeaDhcp6());
-    ConstElementPtr logging = getServerKeaLogging();
-    if (logging && !logging->empty()) {
+    ElementPtr dhcp = getServerKeaDhcp6();
+    result->set("Dhcp6", dhcp);
+    ConstElementPtr loggers = dhcp->get("loggers");
+    if (loggers) {
+        dhcp->remove("loggers");
+
+        ElementPtr logging = Element::createMap();
+        logging->set("loggers", loggers);
         result->set("Logging", logging);
     }
     return (result);
@@ -107,8 +122,8 @@ TranslatorConfig::getParam(ElementPtr& storage, const std::string& xpath,
 }
 
 ElementPtr
-TranslatorConfig::getHooksKea(std::string xpath) {
-    S_Iter_Value iter = getIter(xpath + "/*");
+TranslatorConfig::getHooksKea(const std::string& xpath) {
+    S_Iter_Value iter = getIter(xpath + "/hook-library");
     if (iter) {
         ElementPtr hook_libs = Element::createList();
         for (;;) {
@@ -139,7 +154,7 @@ TranslatorConfig::getHooksKea(std::string xpath) {
 }
 
 isc::data::ElementPtr
-TranslatorConfig::getExpiredKea(std::string xpath) {
+TranslatorConfig::getExpiredKea(const std::string& xpath) {
     ElementPtr expired = Element::createMap();
 
     getParam(expired, xpath, "reclaim-timer-wait-time");
@@ -157,7 +172,7 @@ TranslatorConfig::getExpiredKea(std::string xpath) {
 }
 
 isc::data::ElementPtr
-TranslatorConfig::getDdnsKea(std::string xpath) {
+TranslatorConfig::getDdnsKea(const std::string& xpath) {
     ElementPtr ddns = Element::createMap();
     getParam(ddns, xpath, "enable-updates");
     getParam(ddns, xpath, "qualifying-suffix");
@@ -168,8 +183,6 @@ TranslatorConfig::getDdnsKea(std::string xpath) {
     getParam(ddns, xpath, "max-queue-size");
     getParam(ddns, xpath, "ncr-protocol");
     getParam(ddns, xpath, "ncr-format");
-    /// @todo: remove this one when it will be removed from the syntax.
-    getParam(ddns, xpath, "always-include-fqdn");
     getParam(ddns, xpath, "override-no-update");
     getParam(ddns, xpath, "override-client-update");
     getParam(ddns, xpath, "replace-client-name");
@@ -187,7 +200,23 @@ TranslatorConfig::getDdnsKea(std::string xpath) {
         return (ddns);
     }
 
-    // If not, return null
+    // If not, return null.
+    return (ElementPtr());
+}
+
+ElementPtr
+TranslatorConfig::getConfigControlKea(const string& xpath) {
+    ElementPtr config_ctrl = Element::createMap();
+    ConstElementPtr databases = getDatabases(xpath + "/config-database");
+    if (databases && !databases->empty()) {
+        config_ctrl->set("config-databases", databases);
+    }
+    if (!config_ctrl->empty()) {
+        // If there's something to return, use it.
+        return (config_ctrl);
+    }
+
+    // If not, return null.
     return (ElementPtr());
 }
 
@@ -200,11 +229,11 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     getParam(result, xpath, "rebind-timer");
     getParam(result, xpath, "decline-probation-period");
 
-    ConstElementPtr networks = getSharedNetworks(xpath + "/shared-networks");
+    ConstElementPtr networks = getSharedNetworks(xpath);
     if (networks && !networks->empty()) {
         result->set("shared-networks", networks);
     }
-    ConstElementPtr classes = getClasses(xpath + "/client-classes");
+    ConstElementPtr classes = getClasses(xpath);
     if (classes && !classes->empty()) {
         result->set("client-classes", classes);
     }
@@ -212,7 +241,7 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (database) {
         result->set("lease-database", database);
     }
-    ConstElementPtr databases = getDatabases(xpath + "/hosts-databases");
+    ConstElementPtr databases = getDatabases(xpath + "/hosts-database");
     if (databases && !databases->empty()) {
         result->set("hosts-databases", databases);
     }
@@ -221,15 +250,15 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
     if (host_ids) {
         result->set("host-reservation-identifiers", host_ids);
     }
-    ConstElementPtr defs = getOptionDefList(xpath + "/option-def-list");
+    ConstElementPtr defs = getOptionDefList(xpath);
     if (defs && !defs->empty()) {
         result->set("option-def", defs);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && !options->empty()) {
         result->set("option-data", options);
     }
-    ConstElementPtr hooks = getHooksKea(xpath + "/hooks-libraries");
+    ConstElementPtr hooks = getHooksKea(xpath);
     if (hooks && !hooks->empty()) {
         result->set("hooks-libraries", hooks);
     }
@@ -257,9 +286,25 @@ TranslatorConfig::getServerKeaDhcpCommon(const string& xpath) {
         sanity->set("lease-checks", checks);
         result->set("sanity-checks", sanity);
     }
-    ConstElementPtr hosts = getHosts(xpath + "/reservations");
+    getParam(result, xpath, "reservation-mode");
+    ConstElementPtr hosts = getHosts(xpath);
     if (hosts && !hosts->empty()) {
         result->set("reservations", hosts);
+    }
+    ConstElementPtr config_ctrl =
+        getConfigControlKea(xpath + "/config-control");
+    if (config_ctrl) {
+        result->set("config-control", config_ctrl);
+    }
+    getParam(result, xpath, "server-tag");
+    ConstElementPtr queue_ctrl = getItem(xpath + "/dhcp-queue-control");
+    if (queue_ctrl) {
+        result->set("dhcp-queue-control",
+                    Element::fromJSON(queue_ctrl->stringValue()));
+    }
+    ConstElementPtr loggers = getLoggers(xpath);
+    if (loggers && !loggers->empty()) {
+        result->set("loggers", loggers);
     }
     return (result);
 }
@@ -269,7 +314,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     string xpath = "/kea-dhcp4-server:config";
     ElementPtr result = getServerKeaDhcpCommon(xpath);
     // Handle subnets.
-    ConstElementPtr subnets = getSubnets(xpath + "/subnet4");
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && !subnets->empty()) {
         result->set("subnet4", subnets);
     }
@@ -297,6 +342,7 @@ TranslatorConfig::getServerKeaDhcp4() {
     getParam(result, xpath, "next-server");
     getParam(result, xpath, "server-hostname");
     getParam(result, xpath, "boot-file-name");
+    getParam(result, xpath, "authoritative");
     return (result);
 }
 
@@ -307,7 +353,7 @@ TranslatorConfig::getServerKeaDhcp6() {
     // Handle DHCPv6 specific global parameters.
     getParam(result, xpath, "preferred-lifetime");
     // Handle subnets.
-    ConstElementPtr subnets = getSubnets(xpath + "/subnet6");
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && !subnets->empty()) {
         result->set("subnet6", subnets);
     }
@@ -352,17 +398,6 @@ TranslatorConfig::getServerKeaDhcp6() {
     }
     if (!server_id->empty()) {
         result->set("server-id", server_id);
-    }
-    return (result);
-}
-
-ElementPtr
-TranslatorConfig::getServerKeaLogging() {
-    string xpath = "/" + model_ + ":logging";
-    ElementPtr result = Element::createMap();
-    ConstElementPtr loggers = getLoggers(xpath + "/loggers");
-    if (loggers && !loggers->empty()) {
-        result->set("loggers", loggers);
     }
     return (result);
 }
@@ -424,7 +459,6 @@ TranslatorConfig::setConfigIetf6(ConstElementPtr elem) {
 void
 TranslatorConfig::delConfigKea() {
     delItem("/" + model_ + ":config");
-    delItem("/" + model_ + ":logging");
 }
 
 void
@@ -472,11 +506,11 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     }
     ConstElementPtr networks = elem->get("shared-networks");
     if (networks) {
-        setSharedNetworks(xpath + "/shared-networks", networks);
+        setSharedNetworks(xpath, networks);
     }
     ConstElementPtr classes = elem->get("client-classes");
     if (classes && !classes->empty()) {
-        setClasses(xpath + "/client-classes", classes);
+        setClasses(xpath, classes);
     }
     ConstElementPtr database = elem->get("lease-database");
     if (database) {
@@ -484,14 +518,14 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     }
     ConstElementPtr databases = elem->get("hosts-databases");
     if (databases && !databases->empty()) {
-        setDatabases(xpath + "/hosts-databases", databases);
+        setDatabases(xpath + "/hosts-database", databases);
     } else {
         // Reuse of database from lease-database.
         database = elem->get("hosts-database");
         if (database) {
             ElementPtr list = Element::createList();
             list->add(copy(database));
-            setDatabases(xpath + "/hosts-databases", list);
+            setDatabases(xpath + "/hosts-database", list);
         }
     }
     ConstElementPtr host_ids = elem->get("host-reservation-identifiers");
@@ -502,11 +536,11 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
     }
     ConstElementPtr defs = elem->get("option-def");
     if (defs && !defs->empty()) {
-        setOptionDefList(xpath + "/option-def-list", defs);
+        setOptionDefList(xpath, defs);
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && !options->empty()) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr hook_libs = elem->get("hooks-libraries");
     if (hook_libs) {
@@ -516,7 +550,7 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
                 continue;
             }
             ostringstream hook_lib;
-            hook_lib << xpath << "/hooks-libraries/hook-library[library='"
+            hook_lib << xpath << "/hook-library[library='"
                      << name->stringValue() << "']";
             ConstElementPtr params = lib->get("parameters");
             if (params) {
@@ -612,11 +646,6 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         if (format) {
             setItem(xpath + "/dhcp-ddns/ncr-format", format, SR_ENUM_T);
         }
-        ConstElementPtr always = ddns->get("always-include-fqdn");
-        if (always) {
-            setItem(xpath + "/dhcp-ddns/always-include-fqdn", always,
-                    SR_BOOL_T);
-        }
         ConstElementPtr no_up = ddns->get("override-no-update");
         if (no_up) {
             setItem(xpath + "/dhcp-ddns/override-no-update", no_up, SR_BOOL_T);
@@ -664,9 +693,29 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
             setItem(xpath + "/sanity-checks/lease-checks", checks, SR_ENUM_T);
         }
     }
+    ConstElementPtr hr_mode = elem->get("reservation-mode");
+    if (hr_mode) {
+        setItem(xpath + "/reservation-mode", hr_mode, SR_ENUM_T);
+    }
     ConstElementPtr hosts = elem->get("reservations");
     if (hosts && !hosts->empty()) {
-        setHosts(xpath + "/reservations", hosts);
+        setHosts(xpath, hosts);
+    }
+    ConstElementPtr config_ctrl = elem->get("config-control");
+    if (config_ctrl && !config_ctrl->empty()) {
+        databases = config_ctrl->get("config-databases");
+        if (databases && !databases->empty()) {
+            setDatabases(xpath + "/config-control/config-database", databases);
+        }
+    }
+    ConstElementPtr server_tag = elem->get("server-tag");
+    if (server_tag) {
+        setItem(xpath + "/server-tag", server_tag, SR_STRING_T);
+    }
+    ConstElementPtr queue_ctrl = elem->get("dhcp-queue-control");
+    if (queue_ctrl) {
+        ConstElementPtr repr = Element::create(queue_ctrl->str());
+        setItem(xpath + "/dhcp-queue-control", repr, SR_STRING_T);
     }
 }
 
@@ -676,7 +725,7 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     setServerKeaDhcpCommon(xpath, elem);
     ConstElementPtr subnets = elem->get("subnet4");
     if (subnets) {
-        setSubnets(xpath + "/subnet4", subnets);
+        setSubnets(xpath, subnets);
     }
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
@@ -728,6 +777,10 @@ TranslatorConfig::setServerKeaDhcp4(ConstElementPtr elem) {
     if (boot) {
         setItem(xpath + "/boot-file-name", boot, SR_STRING_T);
     }
+    ConstElementPtr auth = elem->get("authoritative");
+    if (auth) {
+        setItem(xpath + "/authoritative", auth, SR_BOOL_T);
+    }
 }
 
 void
@@ -740,7 +793,7 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
     }
     ConstElementPtr subnets = elem->get("subnet6");
     if (subnets) {
-        setSubnets(xpath + "/subnet6", subnets);
+        setSubnets(xpath, subnets);
     }
     ConstElementPtr if_config = elem->get("interfaces-config");
     if (if_config) {
@@ -811,10 +864,10 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
 
 void
 TranslatorConfig::setServerKeaLogging(ConstElementPtr elem) {
-    string xpath = "/" + model_ + ":logging";
+    string xpath = "/" + model_ + ":config";
     ConstElementPtr loggers = elem->get("loggers");
     if (loggers) {
-        setLoggers(xpath + "/loggers", loggers);
+        setLoggers(xpath, loggers);
     }
 }
 

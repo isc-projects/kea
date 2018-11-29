@@ -4,6 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
+
 #include <yang/translator_shared_network.h>
 #include <yang/adaptor.h>
 #include <yang/yang_models.h>
@@ -11,13 +13,16 @@
 
 using namespace std;
 using namespace isc::data;
+#ifndef HAVE_PRE_0_7_6_SYSREPO
+using namespace sysrepo;
+#endif
 
 namespace isc {
 namespace yang {
 
 TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
                                                  const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -27,8 +32,7 @@ TranslatorSharedNetwork::TranslatorSharedNetwork(S_Session session,
       TranslatorHost(session, model),
       TranslatorHosts(session, model),
       TranslatorSubnet(session, model),
-      TranslatorSubnets(session, model),
-      model_(model) {
+      TranslatorSubnets(session, model) {
 }
 
 TranslatorSharedNetwork::~TranslatorSharedNetwork() {
@@ -61,7 +65,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
         isc_throw(Unexpected, "getSharedNetworkKea requires name: " << xpath);
     }
     result->set("name", name);
-    ConstElementPtr subnets = getSubnets(xpath + "/" + subsel);
+    ConstElementPtr subnets = getSubnets(xpath);
     if (subnets && (subnets->size() > 0)) {
         result->set(subsel, subnets);
     }
@@ -83,7 +87,7 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
     if (rebind) {
         result->set("rebind-timer", rebind);
     }
-    ConstElementPtr options = getOptionDataList(xpath + "/option-data-list");
+    ConstElementPtr options = getOptionDataList(xpath);
     if (options && (options->size() > 0)) {
         result->set("option-data", options);
     }
@@ -123,6 +127,10 @@ TranslatorSharedNetwork::getSharedNetworkKea(const string& xpath,
         ConstElementPtr match = getItem(xpath + "/match-client-id");
         if (match) {
             result->set("match-client-id", match);
+        }
+        ConstElementPtr auth = getItem(xpath + "/authoritative");
+        if (auth) {
+            result->set("authoritative", auth);
         }
         ConstElementPtr next = getItem(xpath + "/next-server");
         if (next) {
@@ -171,7 +179,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
     // Skip name which is the key.
     ConstElementPtr subnets = elem->get(subsel);
     if (subnets && (subnets->size() > 0)) {
-        setSubnets(xpath + "/" + subsel, subnets);
+        setSubnets(xpath, subnets);
     }
     if (subsel == "subnet6") {
         ConstElementPtr preferred = elem->get("preferred-lifetime");
@@ -193,7 +201,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
     }
     ConstElementPtr options = elem->get("option-data");
     if (options && (options->size() > 0)) {
-        setOptionDataList(xpath + "/option-data-list", options);
+        setOptionDataList(xpath, options);
     }
     ConstElementPtr interface = elem->get("interface");
     if (interface) {
@@ -240,6 +248,10 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
         if (match) {
             setItem(xpath + "/match-client-id", match, SR_BOOL_T);
         }
+        ConstElementPtr auth = elem->get("authoritative");
+        if (auth) {
+            setItem(xpath + "/authoritative", auth, SR_BOOL_T);
+        }
         ConstElementPtr next = elem->get("next-server");
         if (next) {
             setItem(xpath + "/next-server", next, SR_STRING_T);
@@ -262,7 +274,7 @@ TranslatorSharedNetwork::setSharedNetworkKea(const string& xpath,
 
 TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
                                                    const string& model)
-    : TranslatorBasic(session),
+    : TranslatorBasic(session, model),
       TranslatorOptionData(session, model),
       TranslatorOptionDataList(session, model),
       TranslatorPool(session, model),
@@ -273,8 +285,7 @@ TranslatorSharedNetworks::TranslatorSharedNetworks(S_Session session,
       TranslatorHosts(session, model),
       TranslatorSubnet(session, model),
       TranslatorSubnets(session, model),
-      TranslatorSharedNetwork(session, model),
-      model_(model) {
+      TranslatorSharedNetwork(session, model) {
 }
 
 TranslatorSharedNetworks::~TranslatorSharedNetworks() {
@@ -284,7 +295,7 @@ ElementPtr
 TranslatorSharedNetworks::getSharedNetworks(const string& xpath) {
     try {
         ElementPtr result = Element::createList();
-        S_Iter_Value iter = getIter(xpath + "/*");
+        S_Iter_Value iter = getIter(xpath + "/shared-network");
         if (!iter) {
             // Can't happen.
             isc_throw(Unexpected, "getSharedNetworks: can't get iterator: "
