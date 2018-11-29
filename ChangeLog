@@ -1,3 +1,5 @@
+Kea 1.5.0-beta2 released on Nov 30, 2018
+
 1492.	[doc]		fdupont
 	Added a step by step netconf operation example in the
 	Kea Administrators's Guide.
@@ -73,7 +75,7 @@
 	(Gitlab #204,!98, git a830adcefd9306969216d35c51306df3610278bb)
 
 1480.	[func]		fdupont
-	The unused cconfiguration parameter "always-include-fqdn"
+	The unused configuration parameter "always-include-fqdn"
 	was removed. Configurations using it will be rejected as
 	it is no longer recognized.
 	(Gitlab #182,!128, git cafeba167e7c64370dd39eca4551f61acd89d3da)
@@ -88,7 +90,7 @@
 	Kea High Availability.
 	(Gitlab #57,!122, git 7bd97af1f3d7670cd64cadf0d0cb9ddbe4e74909)
 
-Kea 1.5.0-beta released on Nov 9, 2018
+Kea 1.5.0-beta1 released on Nov 9, 2018
 
 1477.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0 beta release.
