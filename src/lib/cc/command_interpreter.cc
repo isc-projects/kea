@@ -179,6 +179,17 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
                   "Invalid answer specified, does not contain mandatory 'command'");
     }
 
+    // Make sure that all specified parameters are supported.
+    auto command_params = command->mapValue();
+    for (auto param : command_params) {
+        if ((param.first != CONTROL_COMMAND) &&
+            (param.first != CONTROL_ARGUMENTS) &&
+            (param.first != CONTROL_SERVICE)) {
+            isc_throw(CtrlChannelError, "Received command contains unsupported "
+                      "parameter '" << param.first << "'");
+        }
+    }
+
     ConstElementPtr cmd = command->get(CONTROL_COMMAND);
     if (cmd->getType() != Element::string) {
         isc_throw(CtrlChannelError,
