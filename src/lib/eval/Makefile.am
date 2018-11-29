@@ -113,7 +113,6 @@ libkea_eval_include_HEADERS = \
 	eval_context.h \
 	eval_context_decl.h \
 	eval_log.h \
-	eval_messages.h \
 	evaluate.h \
 	parser.h \
 	token.h

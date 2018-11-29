@@ -72,5 +72,4 @@ libkea_process_include_HEADERS = \
 	d_process.h \
 	io_service_signal.h \
 	logging_info.h \
-	log_parser.h \
-	process_messages.h
+	log_parser.h
