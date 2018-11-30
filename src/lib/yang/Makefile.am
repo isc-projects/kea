@@ -67,5 +67,20 @@ libkea_yang_include_HEADERS = \
 	yang_models.h
 
 EXTRA_DIST = yang.dox
+# Distribute yang modules.
+EXTRA_DIST += models/ietf-dhcpv6-client.yang
+EXTRA_DIST += models/ietf-dhcpv6-options.yang
+EXTRA_DIST += models/ietf-dhcpv6-relay.yang
+EXTRA_DIST += models/ietf-dhcpv6-server.yang
+EXTRA_DIST += models/ietf-dhcpv6-types.yang
+EXTRA_DIST += models/ietf-inet-types.yang
+EXTRA_DIST += models/ietf-yang-types.yang
+EXTRA_DIST += models/kea-ctrl-agent.yang
+EXTRA_DIST += models/kea-dhcp-ddns.yang
+EXTRA_DIST += models/kea-dhcp-types.yang
+EXTRA_DIST += models/kea-dhcp4-server.yang
+EXTRA_DIST += models/kea-dhcp6-server.yang
+EXTRA_DIST += models/kea-logging.yang
+EXTRA_DIST += models/kea-types.yang
 
 CLEANFILES = *.gcno *.gcda
