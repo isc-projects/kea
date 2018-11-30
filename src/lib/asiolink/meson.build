@@ -1,0 +1,35 @@
+sources = [
+  'asiolink.h',
+  'asio_wrapper.h',
+  'addr_utilities.cc',
+  'addr_utilities.h',
+  'dummy_io_cb.h',
+  'interval_timer.cc',
+  'interval_timer.h',
+  'io_acceptor.h',
+  'io_address.cc',
+  'io_address.h',
+  'io_asio_socket.h',
+  'io_endpoint.cc',
+  'io_endpoint.h',
+  'io_error.h',
+  'io_service.h',
+  'io_service.cc',
+  'io_socket.h',
+  'io_socket.cc',
+  'tcp_acceptor.h',
+  'tcp_endpoint.h',
+  'tcp_socket.h',
+  'udp_endpoint.h',
+  'udp_socket.h',
+  'unix_domain_socket.cc',
+  'unix_domain_socket.h',
+  'unix_domain_socket_acceptor.h',
+  'unix_domain_socket_endpoint.h']
+
+
+
+asiolink_lib = static_library('kea-asiolink',
+                              sources,
+                              include_directories : [lib_inc, configuration_inc],
+                              install : true)

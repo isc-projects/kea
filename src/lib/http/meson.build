@@ -1,0 +1,58 @@
+sources = [
+  'client.cc',
+  'client.h',
+  'connection.cc',
+  'connection.h',
+  'connection_pool.cc',
+  'connection_pool.h',
+  'date_time.cc',
+  'date_time.h',
+  'http_log.cc',
+  'http_log.h',
+  'header_context.h',
+  'http_acceptor.h',
+  'http_header.cc',
+  'http_header.h',
+  'http_message.cc',
+  'http_message.h',
+  'http_message_parser_base.cc',
+  'http_message_parser_base.h',
+  'http_types.h',
+  'listener.cc',
+  'listener.h',
+  'post_request.cc',
+  'post_request.h',
+  'post_request_json.cc',
+  'post_request_json.h',
+  'request.cc',
+  'request.h',
+  'request_context.h',
+  'request_parser.cc',
+  'request_parser.h',
+  'response.cc',
+  'response.h',
+  'response_parser.cc',
+  'response_parser.h',
+  'response_context.h',
+  'response_creator.cc',
+  'response_creator.h',
+  'response_creator_factory.h',
+  'response_json.cc',
+  'response_json.h',
+  'url.cc',
+  'url.h']
+
+
+http_messages_ch = custom_target('http_messages.[ch]',
+                                 output : ['http_messages.cc',
+                                           'http_messages.h'],
+                                 input : 'http_messages.mes',
+                                 command : [kea_msg_compiler, '-d', meson.current_build_dir(), '@INPUT@'])
+sources += http_messages_ch
+
+
+
+http_lib = static_library('kea-http',
+                          sources,
+                          include_directories : [lib_inc, configuration_inc],
+                          install : true)
