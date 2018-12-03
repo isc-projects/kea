@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,9 +139,9 @@ TEST(Option4ClientFqdnTest, constructFromWire) {
         Option4ClientFqdn::FLAG_S | Option4ClientFqdn::FLAG_E, // flags
         0,                                                     // RCODE1
         0,                                                     // RCODE2
-        6, 109, 121, 104, 111, 115, 116,                       // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101,                   // example.
-        3, 99, 111, 109, 0                                     // com.
+        6, 77, 121, 104, 111, 115, 116,                        // Myhost.
+        7, 69, 120, 97, 109, 112, 108, 101,                    // Example.
+        3, 67, 111, 109, 0                                     // Com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -171,9 +171,9 @@ TEST(Option4ClientFqdnTest, constructFromWireASCII) {
         Option4ClientFqdn::FLAG_S,            // flags
         0,                                    // RCODE1
         0,                                    // RCODE2
-        109, 121, 104, 111, 115, 116, 46,     // myhost.
-        101, 120, 97, 109, 112, 108, 101, 46, // example.
-        99, 111, 109, 46                      // com.
+        77, 121, 104, 111, 115, 116, 46,      // Myhost.
+        69, 120, 97, 109, 112, 108, 101, 46,  // Example.
+        67, 111, 109, 46                      // Com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -251,7 +251,7 @@ TEST(Option4ClientFqdnTest, constructFromWirePartial) {
         Option4ClientFqdn::FLAG_N | Option4ClientFqdn:: FLAG_E,  // flags
         255,                                                     // RCODE1
         255,                                                     // RCODE2
-        6, 109, 121, 104, 111, 115, 116                          // myhost
+        6, 77, 121, 104, 111, 115, 116                           // Myhost
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -353,7 +353,7 @@ TEST(Option4ClientFqdnTest, assignment) {
     Option4ClientFqdn option(Option4ClientFqdn::FLAG_S |
                              Option4ClientFqdn::FLAG_E,
                              Option4ClientFqdn::RCODE_SERVER(),
-                             "myhost.example.com",
+                             "myhost.Example.com",
                              Option4ClientFqdn::FULL);
 
     // Verify that the values have been set correctly.
@@ -368,10 +368,10 @@ TEST(Option4ClientFqdnTest, assignment) {
     Option4ClientFqdn option2(Option4ClientFqdn::FLAG_N |
                               Option4ClientFqdn::FLAG_E,
                               Option4ClientFqdn::RCODE_SERVER(),
-                              "myhost",
+                              "Myhost",
                               Option4ClientFqdn::PARTIAL);
 
-    // Verify tha the values have been set correctly.
+    // Verify that the values have been set correctly.
     ASSERT_FALSE(option2.getFlag(Option4ClientFqdn::FLAG_S));
     ASSERT_TRUE(option2.getFlag(Option4ClientFqdn::FLAG_E));
     ASSERT_FALSE(option2.getFlag(Option4ClientFqdn::FLAG_O));
@@ -585,7 +585,7 @@ TEST(Option4ClientFqdnTest, setDomainName) {
         option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
                                            Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_SERVER(),
-                                           "myhost.example.com",
+                                           "myhost.Example.com",
                                            Option4ClientFqdn::FULL))
     );
     ASSERT_TRUE(option);
@@ -593,13 +593,13 @@ TEST(Option4ClientFqdnTest, setDomainName) {
     ASSERT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
 
     // Partial domain-name.
-    ASSERT_NO_THROW(option->setDomainName("myhost",
+    ASSERT_NO_THROW(option->setDomainName("myHost",
                                           Option4ClientFqdn::PARTIAL));
     EXPECT_EQ("myhost", option->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::PARTIAL, option->getDomainNameType());
 
     // Fully qualified domain-name.
-    ASSERT_NO_THROW(option->setDomainName("example.com",
+    ASSERT_NO_THROW(option->setDomainName("example.Com",
                                           Option4ClientFqdn::FULL));
     EXPECT_EQ("example.com.", option->getDomainName());
     EXPECT_EQ(Option4ClientFqdn::FULL, option->getDomainNameType());
@@ -623,7 +623,7 @@ TEST(Option4ClientFqdnTest, resetDomainName) {
         option.reset(new Option4ClientFqdn(Option4ClientFqdn::FLAG_S |
                                            Option4ClientFqdn::FLAG_E,
                                            Option4ClientFqdn::RCODE_CLIENT(),
-                                           "myhost.example.com",
+                                           "Myhost.Example.com",
                                            Option4ClientFqdn::FULL))
     );
     ASSERT_TRUE(option);
@@ -643,7 +643,7 @@ TEST(Option4ClientFqdnTest, pack) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
                                            Option4ClientFqdn::RCODE_CLIENT(),
-                                           "myhost.example.com"))
+                                           "Myhost.Example.Com"))
     );
     ASSERT_TRUE(option);
 
@@ -669,6 +669,8 @@ TEST(Option4ClientFqdnTest, pack) {
     EXPECT_EQ(0, memcmp(ref_data, buf.getData(), buf.getLength()));
 }
 
+// This test verifies on-wire format of the Client FQDN option
+// output in deprecated ASCII format.
 TEST(Option4ClientFqdnTest, packASCII) {
     // Create option instance. Check that constructor doesn't throw.
     const uint8_t flags = Option4ClientFqdn::FLAG_S;
@@ -676,7 +678,7 @@ TEST(Option4ClientFqdnTest, packASCII) {
     ASSERT_NO_THROW(
         option.reset(new Option4ClientFqdn(flags,
                                            Option4ClientFqdn::RCODE_CLIENT(),
-                                           "myhost.example.com"))
+                                           "Myhost.Example.Com"))
     );
     ASSERT_TRUE(option);
 
