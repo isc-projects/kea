@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <dhcp/packet_queue_ring.h>
 #include <dhcp/packet_queue_mgr4.h>
 
 #include <boost/scoped_ptr.hpp>

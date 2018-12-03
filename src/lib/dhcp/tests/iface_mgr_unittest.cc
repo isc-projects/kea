@@ -609,6 +609,7 @@ public:
 
         // OK, Send the PACKET!
         EXPECT_NO_THROW(ifacemgr->send(sendPkt));
+        (ifacemgr->send(sendPkt));
 
         // Now let's try and receive it.
         boost::shared_ptr<Pkt4> rcvPkt;
@@ -1294,16 +1295,26 @@ TEST_F(IfaceMgrTest, sendReceive4) {
 
     // Given an empty pointer, queueing should be disabled.
     // This should do direct reception.
-    sendReceive4Test(queue_control, false);
+    {
+        SCOPED_TRACE("no queue control");
+        sendReceive4Test(queue_control, false);
+    }
 
-    // Now let's populate queue control.
-    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
-    // With queueing disabled, we should use direct reception.
-    sendReceive4Test(queue_control, false);
+    {
+        // Now let's populate queue control.
+        SCOPED_TRACE("queue control disabled");
+        queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, false);
+        // With queueing disabled, we should use direct reception.
+        sendReceive4Test(queue_control, false);
+    }
 
-    // Queuing enabled, indirection reception should work.
-    queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
-    sendReceive4Test(queue_control, true);
+    {
+        // Now let's populate queue control.
+        SCOPED_TRACE("queue control enabled");
+        // Queuing enabled, indirection reception should work.
+        queue_control = makeQueueConfig(PacketQueueMgr4::DEFAULT_QUEUE_TYPE4, 500, true);
+        sendReceive4Test(queue_control, true);
+    }
 }
 
 // Verifies that it is possible to set custom packet filter object

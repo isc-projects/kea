@@ -1456,17 +1456,24 @@ IfaceMgr::receiveDHCP4Packets() {
             continue;
         }
 
-        // Let's find out which interface/socket has data.
+        // Iterate over interface sockets and read a packet from each ready socket
+        Pkt4PtrSocketInfoList pkt_list;
+        Pkt4Ptr pkt;
         BOOST_FOREACH(iface, ifaces_) {
             BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
-                    receiveDHCP4Packet(*iface, s);
-                    // Can take time so check one more time the watch socket.
-                    if (dhcp_receiver_->shouldTerminate()) {
-                        return;
+                    pkt = receiveDHCP4Packet(*iface, s);
+                    if (pkt) {
+                        pkt_list.push_back(Pkt4PtrSocketInfoPair(pkt, s));
                     }
                 }
             }
+        }
+
+        // If we read any packets push them onto the queue
+        if (pkt_list.size()) {
+            getPacketQueue4()->enqueuePackets(pkt_list);
+            dhcp_receiver_->markReady(WatchedThread::READY);
         }
     }
 
@@ -1530,37 +1537,44 @@ IfaceMgr::receiveDHCP6Packets() {
             continue;
         }
 
-        // Let's find out which interface/socket has data.
+        // Iterate over interface sockets and read a packet from each ready socket
+        Pkt6PtrSocketInfoList pkt_list;
+        Pkt6Ptr pkt;
         BOOST_FOREACH(iface, ifaces_) {
             BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
                 if (FD_ISSET(s.sockfd_, &sockets)) {
-                    receiveDHCP6Packet(s);
-                    // Can take time so check one more time the watch socket.
-                    if (dhcp_receiver_->shouldTerminate()) {
-                        return;
+                    pkt = receiveDHCP6Packet(s);
+                    if (pkt) {
+                        pkt_list.push_back(Pkt6PtrSocketInfoPair(pkt, s));
                     }
                 }
             }
         }
+
+        // If we read any packets push them onto the queue
+        if (pkt_list.size()) {
+            getPacketQueue6()->enqueuePackets(pkt_list);
+            dhcp_receiver_->markReady(WatchedThread::READY);
+        }
     }
 }
 
-void
+Pkt4Ptr
 IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
     int len;
+    Pkt4Ptr pkt;
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
         // Signal the error to receive4.
         dhcp_receiver_->setError(strerror(errno));
-        return;
-    }
-    if (len == 0) {
-        // Nothing to read.
-        return;
+        return (pkt);
     }
 
-    Pkt4Ptr pkt;
+    if (len == 0) {
+        // Nothing to read.
+        return (pkt);
+    }
 
     try {
         pkt = packet_filter_->receive(iface, socket_info);
@@ -1570,28 +1584,24 @@ IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
-    if (pkt) {
-        getPacketQueue4()->enqueuePacket(pkt, socket_info);
-        dhcp_receiver_->markReady(WatchedThread::READY);
-    }
+    return(pkt);
 }
 
-void
+Pkt6Ptr
 IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
+    Pkt6Ptr pkt;
     int len;
 
     int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
     if (result < 0) {
         // Signal the error to receive6.
         dhcp_receiver_->setError(strerror(errno));
-        return;
+        return (pkt);
     }
     if (len == 0) {
         // Nothing to read.
-        return;
+        return (pkt);
     }
-
-    Pkt6Ptr pkt;
 
     try {
         pkt = packet_filter6_->receive(socket_info);
@@ -1601,10 +1611,7 @@ IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
         dhcp_receiver_->setError("packet filter receive() failed");
     }
 
-    if (pkt) {
-        getPacketQueue6()->enqueuePacket(pkt, socket_info);
-        dhcp_receiver_->markReady(WatchedThread::READY);
-    }
+    return(pkt);
 }
 
 uint16_t

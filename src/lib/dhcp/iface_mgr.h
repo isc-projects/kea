@@ -1310,21 +1310,25 @@ private:
     /// watch socket, and exits if it is marked ready.  This is method
     /// is used as the worker function in the thread created by @c
     /// startDHCP4Receiver().  It currently uses select() to monitor
-    /// socket readiness.  If the select errors out (other than EINTR),
-    /// it marks the "error" watch socket as ready.
+    /// socket readiness.  When any interface socket is ready, it
+    /// iterates over all of the interface sockets reading one packet
+    /// per ready socket into a list.  It then passes that list to
+    /// queue, and sets the "ready" watch socket.  If the select
+    /// errors out (other than EINTR), it marks the "error" watch socket
+    /// as ready.
     void receiveDHCP4Packets();
 
     /// @brief Receives a single DHCPv4 packet from an interface socket
     ///
     /// Called by @c receiveDHPC4Packets when a socket fd is flagged as
     /// ready. It uses the DHCPv4 packet filter to receive a single packet
-    /// from the given interface socket, adds it to the packet queue, and
-    /// marks the "receive" watch socket ready. If an error occurs during
-    /// the read, the "error" watch socket is marked ready.
+    /// from the given interface socket and returns it. If an error occurs
+    /// during the read, the "error" watch socket is marked ready.
     ///
     /// @param iface interface
     /// @param socket_info structure holding socket information
-    void receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info);
+    /// @return A pointer to the packet read, or an empty pointer
+    Pkt4Ptr receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info);
 
     /// @brief DHCPv6 receiver method.
     ///
@@ -1333,20 +1337,24 @@ private:
     /// watch socket, and exits if it is marked ready.  This is method
     /// is used as the worker function in the thread created by @c
     /// startDHCP6Receiver().  It currently uses select() to monitor
-    /// socket readiness.  If the select errors out (other than EINTR),
-    /// it marks the "error" watch socket as ready.
+    /// socket readiness.  When any interface socket is ready, it
+    /// iterates over all of the interface sockets reading one packet
+    /// per ready socket into a list.  It then passes that list to
+    /// queue, and sets the "ready" watch socket.  If the select
+    /// errors out (other than EINTR), it marks the "error" watch socket
+    /// as ready.
     void receiveDHCP6Packets();
 
     /// @brief Receives a single DHCPv6 packet from an interface socket
     ///
     /// Called by @c receiveDHPC6Packets when a socket fd is flagged as
     /// ready. It uses the DHCPv6 packet filter to receive a single packet
-    /// from the given interface socket, adds it to the packet queue, and
-    /// marks the "receive" watch socket ready. If an error occurs during
-    /// the read, the "error" watch socket is marked ready.
+    /// from the given interface socket and returns it. If an error occurs
+    /// during the read, the "error" watch socket is marked ready.
     ///
     /// @param socket_info structure holding socket information
-    void receiveDHCP6Packet(const SocketInfo& socket_info);
+    /// @return A pointer to the packet read, or an empty pointer
+    Pkt6Ptr receiveDHCP6Packet(const SocketInfo& socket_info);
 
     /// Holds instance of a class derived from PktFilter, used by the
     /// IfaceMgr to open sockets and send/receive packets through these
