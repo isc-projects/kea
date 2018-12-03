@@ -42,7 +42,7 @@ public:
     /// @param domain_name A domain name carried by the option given in the
     /// textual format.
     /// @param name_type A value which indicates whether domain-name
-    /// is partial of fully qualified.
+    /// is partial or fully qualified.
     Option6ClientFqdnImpl(const uint8_t flags,
                           const std::string& domain_name,
                           const Option6ClientFqdn::DomainNameType name_type);
