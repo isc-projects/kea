@@ -195,6 +195,19 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
+          FreeRADIUS client when --with-freeradius configuration flag used.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r1 or later) when
+          --with-sysrepo configuration flag used.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
           googletest (version 1.8 or later), when using the --with-gtest configuration
           option to build the unit tests.
         </para>
