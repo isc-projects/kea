@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -69,6 +69,10 @@ class Option6ClientFqdnImpl;
 /// instance of this option which has empty domain-name. Clients use empty
 /// domain-names to indicate that server should generate complete fully
 /// qualified domain-name.
+///
+/// Since domain names are case insensitive (see RFC 4343), this class
+/// converts them to lower case format regardless if they are received over
+/// the wire or created from strings.
 ///
 /// <b>Design choice:</b> This class uses pimpl idiom to separate the interface
 /// from implementation specifics. Implementations may use different approaches

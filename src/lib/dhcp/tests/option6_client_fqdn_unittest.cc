@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -146,9 +146,9 @@ TEST(Option6ClientFqdnTest, copyConstructEmptyDomainName) {
 TEST(Option6ClientFqdnTest, constructFromWire) {
     const uint8_t in_data[] = {
         Option6ClientFqdn::FLAG_S,           // flags
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
-        3, 99, 111, 109, 0                   // com.
+        6, 77, 121, 104, 111, 115, 116,      // Myhost.
+        7, 69, 120, 97, 109, 112, 108, 101,  // Example.
+        3, 67, 111, 109, 0                   // Com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -210,7 +210,7 @@ TEST(Option6ClientFqdnTest, constructFromWireTruncated) {
 TEST(Option6ClientFqdnTest, constructFromWirePartial) {
     const uint8_t in_data[] = {
         Option6ClientFqdn::FLAG_N,           // flags
-        6, 109, 121, 104, 111, 115, 116      // myhost
+        6, 77, 121, 104, 111, 115, 116       // Myhost
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
@@ -274,7 +274,7 @@ TEST(Option6ClientFqdnTest, assignment) {
 
     // Create first option.
     Option6ClientFqdn option(Option6ClientFqdn::FLAG_S,
-                             "myhost.example.com",
+                             "Myhost.Example.Com",
                              Option6ClientFqdn::FULL);
 
     // Verify that the values have been set correctly.
@@ -514,13 +514,13 @@ TEST(Option6ClientFqdnTest, setDomainName) {
     ASSERT_EQ(Option6ClientFqdn::FULL, option->getDomainNameType());
 
     // Partial domain-name.
-    ASSERT_NO_THROW(option->setDomainName("myhost",
+    ASSERT_NO_THROW(option->setDomainName("Myhost",
                                           Option6ClientFqdn::PARTIAL));
     EXPECT_EQ("myhost", option->getDomainName());
     EXPECT_EQ(Option6ClientFqdn::PARTIAL, option->getDomainNameType());
 
     // Fully qualified domain-name.
-    ASSERT_NO_THROW(option->setDomainName("example.com",
+    ASSERT_NO_THROW(option->setDomainName("Example.com",
                                           Option6ClientFqdn::FULL));
     EXPECT_EQ("example.com.", option->getDomainName());
     EXPECT_EQ(Option6ClientFqdn::FULL, option->getDomainNameType());
@@ -664,8 +664,8 @@ TEST(Option6ClientFqdnTest, unpack) {
 
     const uint8_t in_data[] = {
         Option6ClientFqdn::FLAG_S,           // flags
-        6, 109, 121, 104, 111, 115, 116,     // myhost.
-        7, 101, 120, 97, 109, 112, 108, 101, // example.
+        6, 77, 121, 104, 111, 115, 116,      // Myhost.
+        7, 69, 120, 97, 109, 112, 108, 101,  // Example.
         3, 99, 111, 109, 0                   // com.
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
@@ -703,7 +703,7 @@ TEST(Option6ClientFqdnTest, unpackPartial) {
 
     const uint8_t in_data[] = {
         Option6ClientFqdn::FLAG_S,           // flags
-        6, 109, 121, 104, 111, 115, 116      // myhost
+        6, 77, 121, 104, 111, 115, 116       // Myhost
     };
     size_t in_data_size = sizeof(in_data) / sizeof(in_data[0]);
     OptionBuffer in_buf(in_data, in_data + in_data_size);
