@@ -201,7 +201,7 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r1 or later) when
+          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r2 or later) when
           --with-sysrepo configuration flag used.
         </para>
         </listitem>
