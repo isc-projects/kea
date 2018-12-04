@@ -496,13 +496,14 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 lease database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
     </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
@@ -662,13 +663,14 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 host database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp4": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
     </para>
 
   </para>
