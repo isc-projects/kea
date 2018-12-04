@@ -62,7 +62,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
@@ -1721,9 +1721,12 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // send back a hostname option, send this option with a reserved
         // name for this client.
         if (should_send_hostname) {
-            const std::string& hostname =
-                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
-                                                             false);
+            std::string hostname =
+                d2_mgr.qualifyName(ctx->currentHost()->getHostname(), false);
+
+            // Convert hostname to lower case.
+            boost::algorithm::to_lower(hostname);
+
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESERVED_HOSTNAME_ASSIGNED)
                 .arg(ex.getQuery()->getLabel())
@@ -1812,6 +1815,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         if (sanitizer) {
             hostname = sanitizer->scrub(hostname);
         }
+
+        // Convert hostname to lower case.
+        boost::algorithm::to_lower(hostname);
 
         if (label_count == 2) {
             // If there are two labels, it means that the client has specified

@@ -1070,7 +1070,8 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Case in a hostname should be ignored.
+    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
@@ -1145,11 +1146,11 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same FQDN. Server
-    // should generate no NameChangeRequests.
+    // Create another Request message with the same FQDN. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
     Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
-                                       "myhost.example.com.",
+                                       "Myhost.Example.Com.",
                                        Option4ClientFqdn::FULL, true);
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
@@ -1186,9 +1187,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same Hostname. Server
-    // should generate no NameChangeRequests.
-    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Create another Request message with the same Hostname. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
+    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
