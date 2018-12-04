@@ -6,6 +6,12 @@
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
+]>
+
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
 
@@ -85,7 +91,7 @@
       <para>
         1. Download the package. You will receive detailed instructions how to
         get it separately. This will be a file with a name similar to
-        kea-premium-1.4.0.tar.gz. Your name may differ depending on which
+        kea-premium-%keaversion;.tar.gz. Your name may differ depending on which
         package you got.
       </para>
 
@@ -94,26 +100,26 @@
         open-source Kea package still on your system (from when you installed
         Kea), skip this step.  Otherwise extract the Kea source from the
         original tarball you downloaded.  For example, if you downloaded Kea
-        1.4.0., you should have a tarball called kea-1.4.0.tar.gz on your
+        %keaversion;., you should have a tarball called kea-%keaversion;.tar.gz on your
         system. Unpack this tarball:
 
 <screen>
-$ <userinput>tar zxvf kea-1.5.0.tar.gz</userinput>
+$ <userinput>tar zxvf kea-%keaversion;.tar.gz</userinput>
 </screen>
 
-        This will unpack the tarball into the kea-1.5.0 subdirectory of your
+        This will unpack the tarball into the kea-%keaversion; subdirectory of your
         current working directory.
       </para>
 
       <para>
         3. Unpack the Kea premium tarball into the directory into which Kea was
         unpacked. For example, assuming that you followed step 2 and that Kea
-        1.5.0 has been unpacked into a kea-1.5.0 subdirectory and that the Kea
-        premium tarball is in your current directory, the following steps will
+        %keaversion; has been unpacked into a kea-%keaversion; subdirectory and that
+        the Kea premium tarball is in your current directory, the following steps will
         unpack the premium tarball into the correct location:
 <screen>
-  $ <userinput>cd kea-1.5.0</userinput>
-  $ <userinput>tar xvf ../kea-premium-1.5.0.tar.gz</userinput>
+  $ <userinput>cd kea-%keaversion;</userinput>
+  $ <userinput>tar xvf ../kea-premium-%keaversion;.tar.gz</userinput>
 </screen>
         Note that unpacking the Kea premium package will put the files into a
         directory named premium. Regardless of the name of your package, the
@@ -137,8 +143,8 @@ $ <userinput>tar zxvf kea-1.5.0.tar.gz</userinput>
 <screen>
 Package:
   Name:            kea
-  Version:         1.5.0
-  Extended version:1.5.0 (tarball)
+  Version:         %keaversion;
+  Extended version:%keaversion; (tarball)
   OS Family:       Linux
   Using GNU sed:   yes
   Premium package: yes
@@ -237,7 +243,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
 
         <note>
           <para>
-          The library reloading behavior has changed in Kea 1.1. Libraries are
+          The library reloading behavior has changed in Kea 1.1.0. Libraries are
           reloaded, even if their list hasn't changed. Kea does that, because
           the parameters specified for the library (or the files those
           parameters point to) may have changed.

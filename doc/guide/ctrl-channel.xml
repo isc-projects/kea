@@ -24,9 +24,7 @@
     on-line reconfiguration without requiring server shutdown.
     Both servers can be instructed to open control sockets, which
     is a communication channel. The server is able to receive
-    commands on that channel, act on them and report back status.
-    While the set of commands in Kea 1.2.0 is limited,
-    the number is expected to grow over time.</para>
+    commands on that channel, act on them and report back status.</para>
 
     <para>The DHCPv4 and DHCPv6 servers receive commands over the
     unix domain sockets. The details how to configure these sockets,
