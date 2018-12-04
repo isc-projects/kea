@@ -32,6 +32,9 @@ extern const char *CONTROL_TEXT;
 /// @brief String used for arguments map ("arguments")
 extern const char *CONTROL_ARGUMENTS;
 
+/// @brief String used for service list ("service")
+extern const char *CONTROL_SERVICE;
+
 /// @brief Status code indicating a successful operation
 const int CONTROL_RESULT_SUCCESS = 0;
 
