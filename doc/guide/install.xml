@@ -195,7 +195,7 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          FreeRADIUS client when --with-freeradius configuration flag used.
+          FreeRADIUS client library when --with-freeradius configuration flag used.
         </para>
         </listitem>
 
