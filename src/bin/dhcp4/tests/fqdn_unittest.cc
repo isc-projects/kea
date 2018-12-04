@@ -883,8 +883,11 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
 TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
+    // Comparison should be case insensitive, so turning some of the
+    // characters of the old lease hostname to upper case should not
+    // trigger NCRs.
     Lease4Ptr old_lease = createLease(IOAddress("192.0.2.3"),
-                                      "myhost.example.com.", true, true);
+                                      "Myhost.Example.Com.", true, true);
     old_lease->valid_lft_ += 100;
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
