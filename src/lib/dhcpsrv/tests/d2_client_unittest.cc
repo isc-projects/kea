@@ -1143,7 +1143,7 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
         "full FQDN, name unchanged",
         "One.123.example.com.",
         Option4ClientFqdn::FULL,
-        "One.123.example.com."
+        "one.123.example.com."
         },
         {
         "partial FQDN, name unchanged, but qualified",
