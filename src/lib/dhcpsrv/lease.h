@@ -188,6 +188,8 @@ struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
+    /// The comparison of the hostname is case insensitive.
+    ///
     /// @param other Lease which FQDN data is to be compared with our lease.
     ///
     /// @return Boolean value which indicates whether FQDN data of the other

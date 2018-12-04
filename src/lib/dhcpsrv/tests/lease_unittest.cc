@@ -453,6 +453,9 @@ TEST_F(Lease4Test, hasIdenticalFqdn) {
     Lease4 lease = createLease4("myhost.example.com.", true, true);
     EXPECT_TRUE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
                                                      true, true)));
+    // Case insensitive comparison.
+    EXPECT_TRUE(lease.hasIdenticalFqdn(createLease4("myHOst.ExamplE.coM.",
+                                                     true, true)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("other.example.com.",
                                                      true, true)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease4("myhost.example.com.",
@@ -1031,6 +1034,9 @@ TEST(Lease6Test, decline) {
 TEST(Lease6Test, hasIdenticalFqdn) {
     Lease6 lease = createLease6("myhost.example.com.", true, true);
     EXPECT_TRUE(lease.hasIdenticalFqdn(createLease6("myhost.example.com.",
+                                                    true, true)));
+    // Case insensitive comparison.
+    EXPECT_TRUE(lease.hasIdenticalFqdn(createLease6("myHOst.ExamplE.coM.",
                                                     true, true)));
     EXPECT_FALSE(lease.hasIdenticalFqdn(createLease6("other.example.com.",
                                                      true, true)));
