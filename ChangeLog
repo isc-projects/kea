@@ -1,3 +1,7 @@
+1494.	[bug]		marcin
+	Kea servers reject commands with unsupported parameters.
+	(Gitlab #253,!147, git 7fc55489887c0e8f32db5c1fe9f46fa1cc2a4407)
+
 1493.	[bug]		marcin
 	Names carried in DHCPv4 Client FQDN option, Hostname option and
 	stored in the lease database are case insensitive.
