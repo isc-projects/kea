@@ -904,7 +904,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->registerTimer("Dhcp4DbReconnectTimer",
                             boost::bind(&ControlledDhcpv4Srv::dbReconnect, this,
                                         db_reconnect_ctl),
-                            db_reconnect_ctl->retryInterval() * 1000,
+                            db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }
 
