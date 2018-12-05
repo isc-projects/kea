@@ -1,3 +1,10 @@
+1495.	[bug]		marcin
+	Corrected an issue in the Memfile lease backend which caused
+	errors while reading leases with very long lifetimes. Many
+	thanks to Shawn Routhier from Infoblox for finding and reporting
+	the issue.
+	(Gitlab #303,!151, git ab92ab6fcd414f1efc7c5de6a641274da7c04e92)
+
 1494.	[bug]		marcin
 	Kea servers reject commands with unsupported parameters.
 	(Gitlab #253,!147, git 7fc55489887c0e8f32db5c1fe9f46fa1cc2a4407)
