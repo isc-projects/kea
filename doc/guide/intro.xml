@@ -35,7 +35,7 @@
       <title>Supported Platforms</title>
       <para>
         Kea is officially supported on CentOS, Fedora, Ubuntu, Debian and FreeBSD systems.
-        It is also likely to work on many other platforms. Kea-%keaversion; builds have been tested on:
+        It is also likely to work on many other platforms. Kea-&keaversion; builds have been tested on:
         <itemizedlist>
           <listitem>CentOS Linux — 7.1804 (aka 7.5)</listitem>
           <listitem>Fedora — 27, 28</listitem>
