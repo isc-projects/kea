@@ -439,7 +439,7 @@ TEST_F(CSVLeaseFile4Test, highLeaseLifetime) {
     Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
                                hwaddr0_,
                                NULL, 0,
-                               0xFFFFFFFF, 50, 80, time(NULL),
+                               0xFFFFFFFF, 50, 80, time(0),
                                8, true, true,
                                "host.example.com"));
     // Write this lease out to the lease file.
