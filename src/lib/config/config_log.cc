@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,6 +14,8 @@ namespace isc {
 namespace config {
 
 isc::log::Logger command_logger("commands");
+
+extern const int DBG_COMMAND = isc::log::DBGLVL_COMMAND;
 
 } // namespace nsas
 } // namespace isc

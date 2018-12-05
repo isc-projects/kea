@@ -37,7 +37,7 @@ namespace db {
 ///
 /// Record detailed tracing. This is generally reserved for tracing access to
 /// the lease database.
-const int DB_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+extern const int DB_DBG_TRACE_DETAIL;
 
 ///@}
 

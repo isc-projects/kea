@@ -26,19 +26,19 @@ namespace netconf {
 /// @brief Traces normal operations.
 ///
 /// E.g. sending a command to a server etc.
-const int NETCONF_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int NETCONF_DBG_TRACE;
 
 /// @brief Records the results of the commands.
 ///
 /// Using the example of tracing commands to a server, this will just record
 /// the summary results.
-const int NETCONF_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int NETCONF_DBG_RESULTS;
 
 /// @brief Additional information.
 ///
 /// Record detailed tracing. This is generally reserved for tracing
 /// configurations from or to a server.
-const int NETCONF_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int NETCONF_DBG_TRACE_DETAIL_DATA;
 
 ///@}
 

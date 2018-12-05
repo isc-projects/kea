@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,23 +19,23 @@ namespace dhcp {
 /// Defines the levels used to output debug messages from the @c AllocEngine.
 
 /// @brief Traces normal operations
-const int ALLOC_ENGINE_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int ALLOC_ENGINE_DBG_TRACE;
 
 /// @brief Records the results of various operations.
 ///
 /// Messages logged at this level will typically contain summary of the
 /// data retrieved.
-const int ALLOC_ENGINE_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int ALLOC_ENGINE_DBG_RESULTS;
 
 /// @brief Record detailed traces
 ///
 /// Messages logged at this level will log detailed tracing information.
-const int ALLOC_ENGINE_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+extern const int ALLOC_ENGINE_DBG_TRACE_DETAIL;
 
 /// @brief Records detailed results of various operations.
 ///
 /// Messages logged at this level will contain detailed results.
-const int ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int ALLOC_ENGINE_DBG_TRACE_DETAIL_DATA;
 
 //@}
 

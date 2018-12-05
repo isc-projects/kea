@@ -14,6 +14,11 @@
 namespace isc {
 namespace netconf {
 
+extern const int NETCONF_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int NETCONF_DBG_RESULTS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int NETCONF_DBG_TRACE_DETAIL_DATA =
+    isc::log::DBGLVL_TRACE_DETAIL_DATA;
+
 const char* NETCONF_LOGGER_NAME = "netconf";
 
 isc::log::Logger netconf_logger(NETCONF_LOGGER_NAME);
