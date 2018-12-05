@@ -91,7 +91,7 @@
       <para>
         1. Download the package. You will receive detailed instructions how to
         get it separately. This will be a file with a name similar to
-        kea-premium-%keaversion;.tar.gz. Your name may differ depending on which
+        kea-premium-&keaversion;.tar.gz. Your name may differ depending on which
         package you got.
       </para>
 
@@ -100,26 +100,26 @@
         open-source Kea package still on your system (from when you installed
         Kea), skip this step.  Otherwise extract the Kea source from the
         original tarball you downloaded.  For example, if you downloaded Kea
-        %keaversion;., you should have a tarball called kea-%keaversion;.tar.gz on your
+        &keaversion;., you should have a tarball called kea-&keaversion;.tar.gz on your
         system. Unpack this tarball:
 
 <screen>
-$ <userinput>tar zxvf kea-%keaversion;.tar.gz</userinput>
+$ <userinput>tar zxvf kea-&keaversion;.tar.gz</userinput>
 </screen>
 
-        This will unpack the tarball into the kea-%keaversion; subdirectory of your
+        This will unpack the tarball into the kea-&keaversion; subdirectory of your
         current working directory.
       </para>
 
       <para>
         3. Unpack the Kea premium tarball into the directory into which Kea was
         unpacked. For example, assuming that you followed step 2 and that Kea
-        %keaversion; has been unpacked into a kea-%keaversion; subdirectory and that
+        &keaversion; has been unpacked into a kea-&keaversion; subdirectory and that
         the Kea premium tarball is in your current directory, the following steps will
         unpack the premium tarball into the correct location:
 <screen>
-  $ <userinput>cd kea-%keaversion;</userinput>
-  $ <userinput>tar xvf ../kea-premium-%keaversion;.tar.gz</userinput>
+  $ <userinput>cd kea-&keaversion;</userinput>
+  $ <userinput>tar xvf ../kea-premium-&keaversion;.tar.gz</userinput>
 </screen>
         Note that unpacking the Kea premium package will put the files into a
         directory named premium. Regardless of the name of your package, the
@@ -143,8 +143,8 @@ $ <userinput>tar zxvf kea-%keaversion;.tar.gz</userinput>
 <screen>
 Package:
   Name:            kea
-  Version:         %keaversion;
-  Extended version:%keaversion; (tarball)
+  Version:         &keaversion;
+  Extended version:&keaversion; (tarball)
   OS Family:       Linux
   Using GNU sed:   yes
   Premium package: yes

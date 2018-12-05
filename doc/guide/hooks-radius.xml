@@ -157,7 +157,7 @@ $ sudo ./b2 install
 $ git clone https://github.com/isc-projects/kea
 
 # Get a tarball and extract it
-$ tar zxvf kea-%keaversion;.tar.gz
+$ tar zxvf kea-&keaversion;.tar.gz
 </screen>
 
 The next step is to extract premium Kea package that contains Radius repository
@@ -166,7 +166,7 @@ a premium/ subdirectory.
 
 <screen>
   $ cd kea
-  $ tar zxvf ../kea-premium-radius-%keaversion;.tar.gz
+  $ tar zxvf ../kea-premium-radius-&keaversion;.tar.gz
 </screen>
 
 Once this is done, make sure the kea sources look similar to this:
@@ -226,8 +226,8 @@ should look as follows:</para>
 
 Package:
   Name:              kea
-  Version:           %keaversion;
-  Extended version:  %keaversion; (tarball)
+  Version:           &keaversion;
+  Extended version:  &keaversion; (tarball)
   OS Family:         Linux
 
   Hooks directory:   /usr/local/lib/hooks
