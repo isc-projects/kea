@@ -3111,7 +3111,7 @@ It is merely echoed by the server
       the lease. Moreover,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc4361">RFC 4361</link> gives
       the recommendation to use a DUID
-      (see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315">RFC 3315</link>,
+      (see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc8415">RFC 8415</link>,
       the DHCPv6 specification)
       carried as "client identifier" when dual stack networks are in use
       to provide consistent identification information of the client, regardless
