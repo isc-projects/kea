@@ -4455,11 +4455,11 @@ as long as it is valid IPv4 address.</para>
       the clients when client classification is in use, to assure that the
       desired subnet is selected for a given client type.</para>
 
-      <para>If a subnet is associated with some classes, only the clients
-      belonging to any of these classes can use this subnet. If there are no
+      <para>If a subnet is associated with a class, only the clients
+      belonging to this class can use this subnet. If there are no
       classes specified for a subnet, any client connected to a given shared
       network can use this subnet. A common mistake is to assume that the
-      subnet including client classes is preferred over subnets without
+      subnet including a client class is preferred over subnets without
       client classes. Consider the following example:
 
 <screen>
@@ -4505,7 +4505,7 @@ as long as it is valid IPv4 address.</para>
       where cable modems should use one subnet and other devices should use
       another subnet within the same shared network. In this case it is required
       to apply classification on all subnets. The following example defines two
-      classes of devices. The subnet selection is  made based on option 93 values.
+      classes of devices. The subnet selection is made based on option 93 values.
 <screen>
 {
     "client-classes": [
