@@ -18,9 +18,9 @@ isc::log::Logger hooks_logger("hooks");
 
 isc::log::Logger callouts_logger("callouts");
 
-const int HOOKS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
-const int HOOKS_DBG_CALLS = isc::log::DBGLVL_TRACE_BASIC_DATA;
-const int HOOKS_DBG_EXTENDED_CALLS = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int HOOKS_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int HOOKS_DBG_CALLS = isc::log::DBGLVL_TRACE_BASIC_DATA;
+extern const int HOOKS_DBG_EXTENDED_CALLS = isc::log::DBGLVL_TRACE_DETAIL_DATA;
 
 
 } // namespace hooks

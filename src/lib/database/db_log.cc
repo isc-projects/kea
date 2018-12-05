@@ -17,6 +17,9 @@ using namespace isc::log;
 namespace isc {
 namespace db {
 
+/// @brief Database logging levels.
+extern const int DB_DBG_TRACE_DETAIL = isc::log::DBGLVL_TRACE_DETAIL;
+
 /// @brief Map of translated messages.
 const DbLogger::MessageMap db_message_map = {
     { DB_INVALID_ACCESS,       DATABASE_INVALID_ACCESS },
