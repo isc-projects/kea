@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <dhcp/packet_queue_ring.h>
 #include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/tests/packet_queue_testutils.h>
 
