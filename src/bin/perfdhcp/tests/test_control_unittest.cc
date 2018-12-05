@@ -387,7 +387,7 @@ public:
             EXPECT_TRUE(std::equal(new_duid.begin(), new_duid.begin() + 4,
                                    duid_llt_and_hw));
 
-            // As described in RFC3315: 'the time value is the time
+            // As described in RFC 8415: 'the time value is the time
             // that the DUID is generated represented in seconds
             // since midnight (UTC), January 1, 2000, modulo 2^32.'
             uint32_t duid_time = 0;

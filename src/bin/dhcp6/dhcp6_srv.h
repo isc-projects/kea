@@ -193,9 +193,9 @@ protected:
 
     /// @brief Check if the message can be sent to unicast.
     ///
-    /// This function checks if the received message conforms to the section 15
-    /// of RFC3315 which says that: "A server MUST discard any Solicit, Confirm,
-    /// Rebind or Information-request messages it receives with a unicast
+    /// This function checks if the received message conforms to the section 16
+    /// of RFC 8415 which says that: "A server MUST discard any Solicit, Confirm,
+    /// Rebind or Information-request messages it receives with a Layer 3 unicast
     /// destination address.
     ///
     /// @param pkt DHCPv6 message to be checked.
@@ -284,7 +284,7 @@ protected:
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
     /// This function processes Confirm message from the client according
-    /// to section 18.2.2. of RFC3315. It discards the Confirm message if
+    /// to section 18.3.3. of RFC 8415. It discards the Confirm message if
     /// the message sent by the client contains no addresses, i.e. it has
     /// no IA_NA options or all IA_NA options contain no IAAddr options.
     ///
@@ -396,18 +396,6 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
-    /// @todo The behavior of this function will need to be extended to support
-    /// draft-ietf-dhc-dhcpv6-stateful-issues. This draft modifies the behavior
-    /// described in RFC3315 with respect to Renew and Rebind processing. Key
-    /// changes are (version -05):
-    /// - Renewing and Rebinding client MAY request additional bindings by
-    /// putting an IA for all bindings it desires but has been unable to obtain.
-    /// Server MAY allocate addresses if it finds that they are appropriate for
-    /// the link that client is attached to.
-    /// - When receiving Rebind, if the server determines that the addresses are
-    /// not appropriate for the link the client is attached to, the server MAY
-    /// send the IA with address lifetimes set to 0 or discard the message.
-    ///
     /// @param query client's message (Renew or Rebind)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
@@ -449,8 +437,8 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
-    /// As RFC 3315 requires that a single status code be sent for the whole message,
-    /// this method may update the passed general_status: it is set to SUCCESS when
+    /// The server sends top-level Status Code option. This method may update the
+    /// passed value of that option, i.e. general_status. It is set to SUCCESS when
     /// message processing begins, but may be updated to some error code if the
     /// release process fails.
     ///

@@ -86,7 +86,7 @@ class OptionIntArray;
 /// this is a single value the option type points to the data type of the
 /// value. For example, DHCPv6 option 8 comprises a two-byte option code, a
 /// two-byte option length and two-byte field that carries a uint16 value
-/// (RFC 3315 - http://ietf.org/rfc/rfc3315.txt).  In such a case, the option
+/// (RFC 8415 - http://ietf.org/rfc/rfc8415.txt).  In such a case, the option
 /// type is defined as "uint16". Length and string tuples are a length
 /// on one (DHCPv4) or two (DHCPv6) bytes followed by a string of
 /// the given length.
@@ -96,7 +96,7 @@ class OptionIntArray;
 ///
 /// Array types should be used when the option contains multiple contiguous
 /// data values of the same type laid. For example, DHCPv6 option 6 includes
-/// multiple fields holding uint16 codes of requested DHCPv6 options (RFC 3315).
+/// multiple fields holding uint16 codes of requested DHCPv6 options (RFC 8415).
 /// Such an option can be represented with this class by setting the option
 /// type to "uint16" and the array indicator (array_type) to true.  The number
 /// of elements in the array is effectively unlimited (although it is actually

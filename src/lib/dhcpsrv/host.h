@@ -715,9 +715,9 @@ private:
     /// @brief key for authentication .
     ///
     /// key is a 16 byte value to be used in the authentication field.
-    /// Server replies will contain the below key in authentication field as specified in the RFC 3315bis. 
-    //  While sending reconfigure message authentication field 
-    /// shall contain MD5 hash computed using this key.
+    /// Server replies will contain the below key in authentication field
+    /// as specified in the RFC 8415. While sending reconfigure message
+    /// authentication field shall contain MD5 hash computed using this key.
     AuthKey key_;
 };
 
