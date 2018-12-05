@@ -258,7 +258,7 @@ void Dhcpv6Srv::sendPacket(const Pkt6Ptr& packet) {
 bool
 Dhcpv6Srv::testServerID(const Pkt6Ptr& pkt) {
     /// @todo Currently we always check server identifier regardless if
-    /// it is allowed in the received message or not (per RFC3315).
+    /// it is allowed in the received message or not (per RFC 8415).
     /// If the server identifier is not allowed in the message, the
     /// sanityCheck function should deal with it.
     OptionPtr server_id = pkt->getOption(D6O_SERVERID);
@@ -2115,7 +2115,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     // information about client's leases from lease database. We treat this
     // as no binding for the client.
     if (!subnet) {
-        // Per RFC3633, section 12.2, if there is no binding and we are
+        // Per RFC 8415, section 18.3.4, if there is no binding and we are
         // processing a Renew, the NoBinding status code should be returned.
         if (query->getType() == DHCPV6_RENEW) {
             // Insert status code NoBinding
@@ -2124,7 +2124,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
                                                " for this duid/iaid."));
             return (ia_rsp);
 
-        // Per RFC3633, section 12.2, if there is no binding and we are
+        // Per RFC 8415, section 18.3.5, if there is no binding and we are
         // processing Rebind, the message has to be discarded (assuming that
         // the server doesn't know if the prefix in the IA_PD option is
         // appropriate for the client's link). The exception being thrown
@@ -2132,8 +2132,14 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
         // be discarded.
         } else {
 
-            /// @todo: RFC3315bis will probably change that behavior. Client
-            /// may rebind prefixes and addresses at the same time.
+            /// @todo: We may consider in which cases we could determine
+            /// whether the delegated prefixes are appropriate for the
+            /// link to which the client's interface is attached. Just not
+            /// being able to select the subnet may not be enough, because
+            /// there might be other DHCP servers around that are configured
+            /// to handle that subnet. Therefore we don't fully follow all
+            /// the paths in section 18.3.5 of RFC 8415 to respond with
+            /// zero lifetimes for the prefixes being rebound.
             isc_throw(DHCPv6DiscardMessageError, "no subnet found for the"
                       " client sending Rebind to extend lifetime of the"
                       " prefix (DUID=" << duid->toText() << ", IAID="
@@ -2318,15 +2324,15 @@ void
 Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
                          AllocEngine::ClientContext6& ctx) {
 
-    // We need to release addresses for all IA_NA options in the client's
+    // We need to release addresses for all IA options in the client's
     // RELEASE message.
-    // @todo Add support for IA_TA
-    // @todo Add support for IA_PD
-    // @todo Consider supporting more than one address in a single IA_NA.
-    // That was envisaged by RFC3315, but it never happened. The only
-    // software that supports that is Dibbler, but its author seriously doubts
-    // if anyone is really using it. Clients that want more than one address
-    // just include more instances of IA_NA options.
+
+    /// @todo Add support for IA_TA
+    /// @todo Consider supporting more than one address in a single IA.
+    /// It is allowed by RFC 8415, but it is not widely implemented. The only
+    /// software that supports that is Dibbler, but its author seriously doubts
+    /// if anyone is really using it. Clients that want more than one address
+    /// or prefix just include more instances of IA options.
 
     // Let's set the status to be success by default. We can override it with
     // error status if needed. The important thing to understand here is that
@@ -2368,9 +2374,7 @@ Dhcpv6Srv::releaseLeases(const Pkt6Ptr& release, Pkt6Ptr& reply,
         }
     }
 
-    // To be pedantic, we should also include status code in the top-level
-    // scope, not just in each IA_NA. See RFC3315, section 18.2.6.
-    // This behavior will likely go away in RFC3315bis.
+    // Include top-level status code as well.
     reply->addOption(createStatusCode(*release, general_status,
                      "Summary status for all processed IA_NAs"));
 }
@@ -3081,16 +3085,17 @@ Dhcpv6Srv::declineIA(const Pkt6Ptr& decline, const DuidPtr& duid,
             LOG_INFO(lease6_logger, DHCP6_DECLINE_FAIL_NO_LEASE)
                 .arg(decline->getLabel()).arg(decline_addr->getAddress().toText());
 
-            // RFC3315, section 18.2.7: "For each IA in the Decline message for
-            // which the server has no binding information, the server adds an
-            // IA option using the IAID from the Release message and includes
-            // a Status Code option with the value NoBinding in the IA option.
+            // According to RFC 8415, section 18.3.8:
+            // "For each IA in the Decline message for which the server has no
+            // binding information, the server adds an IA option using the IAID
+            // from the Decline message and includes a Status Code option with
+            // the value NoBinding in the IA option".
             setStatusCode(ia_rsp, createStatusCode(*decline, *ia_rsp, STATUS_NoBinding,
                                   "Server does not know about such an address."));
 
-            // RFC3315, section 18.2.7:  The server ignores addresses not
-            // assigned to the IA (though it may choose to log an error if it
-            // finds such an address).
+            // In the same section of RFC 8415:
+            // "The server ignores addresses not assigned to the IAs (though it may"
+            // choose to log an error if it finds such addresses)."
             continue; // There may be other addresses.
         }
 

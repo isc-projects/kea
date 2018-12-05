@@ -23,7 +23,7 @@ typedef boost::shared_ptr<Option6Auth> Option6AuthPtr;
 
 /// @brief This class represents Authentication (11) DHCPv6 option.
 ///
-/// For details, see draft-ietf-rfc3315bis-13, Section 21.11.
+/// For details, see RFC 8415 Section 21.11.
 class Option6Auth: public Option {
 
 public:

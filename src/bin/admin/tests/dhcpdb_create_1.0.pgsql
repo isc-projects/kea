@@ -55,7 +55,7 @@ CREATE TABLE lease6 (
     pref_lifetime BIGINT,                       -- Preferred lifetime
     lease_type SMALLINT,                        -- Lease type (see lease6_types
                                                 --    table for possible values)
-    iaid INT,                                   -- See Section 10 of RFC 3315
+    iaid INT,                                   -- See Section 12 of RFC 8415
     prefix_len SMALLINT,                        -- For IA_PD only
     fqdn_fwd BOOLEAN,                           -- Has forward DNS update been performed by a server
     fqdn_rev BOOLEAN,                           -- Has reverse DNS update been performed by a server

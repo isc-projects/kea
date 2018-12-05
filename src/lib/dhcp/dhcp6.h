@@ -18,7 +18,7 @@
 
 /* DHCPv6 Option codes: */
 enum DHCPv6OptionType {
-   D6O_CLIENTID                            = 1, /* RFC3315 */
+   D6O_CLIENTID                            = 1, /* RFC 8415 */
    D6O_SERVERID                            = 2,
    D6O_IA_NA                               = 3,
    D6O_IA_TA                               = 4,
@@ -167,7 +167,7 @@ enum DHCPv6OptionType {
 };
 
 /*
- * Status Codes, from RFC 3315 section 24.4, and RFC 3633, 5007, 5460.
+ * Status Codes, from RFC 8415 section 21.13, 5007, 5460.
  */
 enum DHCPv6StatusCode {
    STATUS_Success                    = 0,
@@ -207,7 +207,7 @@ enum DHCPv6StatusCode {
 };
 
 /*
- * DHCPv6 message types, defined in section 5.3 of RFC 3315
+ * DHCPv6 message types, defined in section 7.3 of RFC 8415
  */
 enum DHCPv6MessageType {
    DHCPV6_SOLICIT              = 1,
@@ -256,7 +256,7 @@ enum DHCPv6MessageType {
 extern const char *dhcpv6_type_names[];
 extern const int dhcpv6_type_name_max;
 
-// DUID type definitions (RFC3315 section 9).
+// DUID type definitions (RFC 8415 section 11).
 // see isc::dhcp::DUID::DUIDType enum in dhcp/duid.h
 
 // Define hardware types
@@ -296,7 +296,7 @@ static const uint16_t IAPREFIX_OFFSET = 25;
 static const uint16_t LQ_QUERY_OFFSET = 17;
 
 /*
- * DHCPv6 well-known multicast addresses, from section 5.1 of RFC 3315
+ * DHCPv6 well-known multicast addresses, from section 7.1 of RFC 8415
  */
 // TODO
 #define ALL_DHCP_RELAY_AGENTS_AND_SERVERS "ff02::1:2"
@@ -306,7 +306,7 @@ static const uint16_t DHCP6_CLIENT_PORT = 546;
 static const uint16_t DHCP6_SERVER_PORT = 547;
 
 /*
- * DHCPv6 Retransmission Constants (RFC3315 section 5.5, RFC 5007)
+ * DHCPv6 Retransmission Constants (RFC 8415 section 7.6, RFC 5007)
  */
 
 // TODO

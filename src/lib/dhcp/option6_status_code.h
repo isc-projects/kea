@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,7 +20,7 @@ class Option6StatusCode;
 /// @brief Pointer to the @c isc::dhcp::Option6StatusCode.
 typedef boost::shared_ptr<Option6StatusCode> Option6StatusCodePtr;
 
-/// @brief This class represents Status Code option (13) from RFC3315.
+/// @brief This class represents Status Code option (13) from RFC 8415.
 class Option6StatusCode: public Option {
 public:
     /// @brief Constructor, used for options constructed (during transmission).

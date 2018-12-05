@@ -829,7 +829,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 /// @todo Extend PD tests to cover same prefix by different length.
 
 // This test checks that the Rebind message is discarded by the server if it
-// has been sent to unicast address (RFC3315, section 15).
+// has been sent to unicast address (RFC 8415, section 18.4).
 TEST_F(RebindTest, unicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -840,7 +840,7 @@ TEST_F(RebindTest, unicast) {
     Lease6 lease_client = client.getLease(0);
     // Set the unicast destination address for the Rebind message.
     // The Rebind should be discarded when sent to unicast address,
-    // according to section 15 of RFC3315.
+    // according to section 18.4 of RFC 8415.
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     // Send the Rebind message to a unicast address.
     ASSERT_NO_THROW(client.doRebind());

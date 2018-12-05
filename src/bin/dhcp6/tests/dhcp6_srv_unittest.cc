@@ -361,7 +361,7 @@ TEST_F(Dhcpv6SrvTest, DUID) {
 
         // No failure here. There's really no way for test LL DUID. It doesn't
         // even make sense to check if that Link Layer is actually present on
-        // a physical interface. RFC3315 says a server should write its DUID
+        // a physical interface. RFC 8415 says a server should write its DUID
         // and keep it despite hardware changes.
         break;
     }
@@ -1274,7 +1274,7 @@ TEST_F(Dhcpv6SrvTest, testUnicast) {
             << "server accepts message type "
             << static_cast<int>(not_allowed_unicast[i])
             << "being sent to unicast address; this message should"
-            " be discarded according to section 15 of RFC3315";
+            " be discarded according to section 18.4 of RFC 8415";
     }
     // Explicitly list client/relay message types which are allowed to
     // be sent to unicast.

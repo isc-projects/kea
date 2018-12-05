@@ -518,7 +518,7 @@ and is described in @ref dhcpv6ClassifierFull.
 
 For each incoming packet, @ref isc::dhcp::Dhcpv6Srv::classifyPacket() method is
 called.  It attempts to extract content of the vendor class option and interprets
-as a name of the class. Although the RFC3315 says that the vendor class may
+as a name of the class. Although the RFC 8415 says that the vendor class may
 contain more than one chunk of data, the existing code handles only one data
 block, because that is what actual devices use. For now, the code has been
 tested with two classes used in cable modem networks: eRouter1.0 and docsis3.0,
