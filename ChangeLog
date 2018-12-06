@@ -1,3 +1,12 @@
+1496.	[doc]		marcin
+	Updated Kea documentation to reference RFC 8415, which is the
+	new DHCPv6 specification. It obsoletes a number of RFCs:
+	RFC 3315 (previous DHCPv6 specification), RFC 3633, RFC 3736,
+	RFC 4242, RFC 7083, RFC 7283 and RFC 7550. Kea documentation
+	now refers to RFC 8415 where appropriate instead of obsoleted
+	RFCs.
+	(Gitlab #288,!158, git 974b033a8de7a8e671156c33efeb13d4ac847c96)
+
 1495.	[bug]		marcin
 	Corrected an issue in the Memfile lease backend which caused
 	errors while reading leases with very long lifetimes. Many
