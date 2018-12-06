@@ -132,6 +132,25 @@ create_config() {
     printf "%b" ${cfg} > ${CFG_FILE}
 }
 
+# Stores the netconf configuration specified as a parameter in the
+# configuration file which name has been set in the ${NETCONF_CFG_FILE}
+# variable.
+create_netconf_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${NETCONF_CFG_FILE} ]; then
+        test_lib_error "create_netconf_config requires NETCONF_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_netconf_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating Netconf configuration file: %s.\n" ${NETCONF_CFG_FILE}
+    printf "%b" ${cfg} > ${NETCONF_CFG_FILE}
+}
+
 # Stores the keactrl configuration specified as a parameter in the
 # configuration file which name has been set in the ${KEACTRL_CFG_FILE}
 # variable.
