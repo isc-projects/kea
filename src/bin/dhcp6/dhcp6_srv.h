@@ -413,11 +413,46 @@ protected:
     /// This function is called by the logic which processes Renew and Rebind
     /// messages to extend the lifetime of the existing prefix.
     ///
-    /// The behavior of this function is different in that when there is no
-    /// binding found in the lease database for the particular client the
-    /// NoBinding status code is returned when processing Renew, the exception
-    /// is thrown when there is no binding and the Rebind message is processed
-    /// (see RFC3633, section 12.2. for details).
+    /// The behavior of this function is different than @c extendIA_NA in that
+    /// when there is no subnet found for the rebinding case, the Rebind message
+    /// is discarded by the server. That behavior is based on the following
+    /// statement from the RFC 8415, section 18.3.5:
+    ///
+    /// "If the server chooses to not include any IAs containing IA Address or
+    /// IA Prefix options with lifetimes of 0 and the server does not include
+    /// any other IAs with leases and/or status codes, the server does not send
+    /// a Reply message.  In this situation, the server discards the Rebind
+    /// message".
+    ///
+    /// @todo We should consider unification of the server behavior for address
+    /// assignment and prefix delegation with respect to Rebind message
+    /// processing. The RFC 8415, section 18.3.5 doesn't really differentiate
+    /// between IA_NA and IA_PD in how they should be processed by the server.
+    /// The intention of the spec is as follows:
+    ///
+    /// - If the server finds a lease but addresses and/or prefixes are not
+    ///   appropriate anymore, it sends them with zero lifetimes.
+    /// - If the server doesn't find a lease the server checks if the addresses
+    ///   and/or prefixes the client sends are appropriate and sends them back
+    ///   with zero lifetimes if they aren't.
+    /// - The server may choose to not respond at all, if it cannot determine
+    ///   whether the addresses and/or prefixes are appropriate and it doesn't
+    ///   allocate any other addresses and/or prefixes.
+    /// - If the server cannot find the leases included in the Rebind, the
+    ///   server may either allocate the leases or simply return NoBinding.
+    ///
+    /// The @c extendIA_PD function drops the Rebind message if it cannot find
+    /// the client entry (as a result of not finding a subnet for the client),
+    /// the @c extendIA_NA function sends NoBinding status code in that case.
+    /// Perhaps we should introduce an "Authoritative" configuration flag which,
+    /// if enabled, would cause the server to always respond, either indicating
+    /// that the address/prefix is inappropriate (with zero lifetimes) or that
+    /// there is no binding (NoBinding status code) for both addresses and
+    /// prefixes. When the "Authoritative" flag is disabled the server would
+    /// drop the Rebind for which there is neither subnet selected nor client
+    /// entry found (as it could be handled by another DHCP server). If nothing
+    /// else we could consider unifying the behavior of @c extendIA_NA and
+    /// @c extendIA_PD with respect to Rebind processing.
     ///
     /// @param query client's message
     /// @param ctx client context (contains subnet, duid and other parameters)

@@ -586,7 +586,7 @@ public:
     ///
     /// This method is typically called to specify IA_NA options to be
     /// sent to the server during 4-way handshakes and during lease
-    /// renewal to request allocation of new leases (as per RFC7550).
+    /// renewal to request allocation of new leases (as per RFC 8415).
     ///
     /// @param iaid IAID.
     /// @param address IPv6 address to be included in the IA_NA. It defaults
@@ -607,7 +607,7 @@ public:
     ///
     /// This method is typically called to specify IA_PD options to be
     /// sent to the server during 4-way handshakes and during lease
-    /// renewal to request allocation of new leases (as per RFC7550).
+    /// renewal to request allocation of new leases (as per RFC 8415).
     ///
     /// @param iaid IAID.
     /// @param prefix_len Prefix length.

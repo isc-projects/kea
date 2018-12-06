@@ -525,7 +525,7 @@ Dhcp6Client::doRenew() {
     copyIAsFromLeases(query);
 
     // During the Renew the client may request additional bindings per
-    // RFC7550.
+    // RFC 8415.
     appendRequestedIAs(query);
 
     // Add Client FQDN if configured.
@@ -549,7 +549,7 @@ Dhcp6Client::doRebind() {
     copyIAsFromLeases(query);
 
     // During the Rebind the client may request additional bindings per
-    // RFC7550.
+    // RFC 8415.
     appendRequestedIAs(query);
 
     // Add Client FQDN if configured.

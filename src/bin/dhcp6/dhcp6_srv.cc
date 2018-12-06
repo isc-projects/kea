@@ -2086,7 +2086,7 @@ Dhcpv6Srv::extendIA_NA(const Pkt6Ptr& query, const Pkt6Ptr& answer,
     if (leases.empty()) {
 
         // The server wasn't able allocate new lease and renew an existing
-        // lease. In that case, the server sends NoAddrsAvail per RFC7550.
+        // lease. In that case, the server sends NoAddrsAvail per RFC 8415.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoAddrsAvail,
                                            "Sorry, no addresses could be"
@@ -2269,7 +2269,7 @@ Dhcpv6Srv::extendIA_PD(const Pkt6Ptr& query,
     if (leases.empty()) {
 
         // The server wasn't able allocate new lease and renew an existing
-        // lease. In that case, the server sends NoPrefixAvail per RFC7550.
+        // lease. In that case, the server sends NoPrefixAvail per RFC 8415.
         ia_rsp->addOption(createStatusCode(*query, *ia_rsp,
                                            STATUS_NoPrefixAvail,
                                            "Sorry, no prefixes could be"

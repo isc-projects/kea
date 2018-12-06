@@ -790,9 +790,11 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     client.config_.leases_[0].addr_ = IOAddress("2001:db8:1:10::");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong prefix. The server will discover that the client has a binding
-    // but the prefix will not match. According to the RFC3633, section 12.2.
-    // the server has to return the lease with lifetimes set to 0, when there
-    // is a binding for the client but the prefix doesn't match.
+    // but the prefix will not match. According to the RFC 8415, section 18.3.5
+    // the server may return delegated prefix with lifetime of 0 when it
+    // finds that the lease entry for the particular IAID but the prefix
+    // is not appropriate. This constitues explicit notification to the
+    // client to not use this prefix.
     ASSERT_NO_THROW(client.doRebind());
     // Make sure that the server has discarded client's message. In such case,
     // the message sent back to the client should be NULL.

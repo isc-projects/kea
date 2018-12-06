@@ -946,9 +946,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>.  A
-        subnet may have one or more prefix delegation pools.  Each pool has a
-        prefixed address, which is specified as a prefix
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
+        section 6.3.  A subnet may have one or more prefix delegation pools.
+        Each pool has a prefixed address, which is specified as a prefix
         (<command>prefix</command>) and a prefix length
         (<command>prefix-len</command>), as well as a delegated prefix length
         (<command>delegated-len</command>). The delegated length must not be

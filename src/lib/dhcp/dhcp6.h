@@ -42,14 +42,14 @@ enum DHCPv6OptionType {
    D6O_SIP_SERVERS_ADDR                    = 22, /* RFC3319 */
    D6O_NAME_SERVERS                        = 23, /* RFC3646 */
    D6O_DOMAIN_SEARCH                       = 24, /* RFC3646 */
-   D6O_IA_PD                               = 25, /* RFC3633 */
-   D6O_IAPREFIX                            = 26, /* RFC3633 */
+   D6O_IA_PD                               = 25, /* RFC8415 */
+   D6O_IAPREFIX                            = 26, /* RFC8415 */
    D6O_NIS_SERVERS                         = 27, /* RFC3898 */
    D6O_NISP_SERVERS                        = 28, /* RFC3898 */
    D6O_NIS_DOMAIN_NAME                     = 29, /* RFC3898 */
    D6O_NISP_DOMAIN_NAME                    = 30, /* RFC3898 */
    D6O_SNTP_SERVERS                        = 31, /* RFC4075 */
-   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC4242 */
+   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415 */
    D6O_BCMCS_SERVER_D                      = 33, /* RFC4280 */
    D6O_BCMCS_SERVER_A                      = 34, /* RFC4280 */
    // 35 is unassigned
@@ -99,8 +99,8 @@ enum DHCPv6OptionType {
    D6O_CLIENT_LINKLAYER_ADDR               = 79, /* RFC6939 */
    D6O_LINK_ADDRESS                        = 80, /* RFC6977 */
 // D6O_RADIUS                              = 81, /* RFC7037 */
-   D6O_SOL_MAX_RT                          = 82, /* RFC7083 */
-   D6O_INF_MAX_RT                          = 83, /* RFC7083 */
+   D6O_SOL_MAX_RT                          = 82, /* RFC8415 */
+   D6O_INF_MAX_RT                          = 83, /* RFC8415 */
 // D6O_ADDRSEL                             = 84, /* RFC7078 */
 // D6O_ADDRSEL_TABLE                       = 85, /* RFC7078 */
 // D6O_V6_PCP_SERVER                       = 86, /* RFC7291 */
@@ -353,7 +353,7 @@ static const uint16_t DHCP6_SERVER_PORT = 547;
  */
 #define DUID_TIME_EPOCH 946684800
 
-/* Information-Request Time option (RFC 4242) */
+/* Information-Request Time option (RFC 8415) */
 
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600
