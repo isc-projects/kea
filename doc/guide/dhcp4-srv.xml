@@ -673,6 +673,17 @@ causes the server to exit immediately upon detecting the loss of connectivity.
 The default value for Cassandra is 2000 ms.
     </para>
 
+    <warning>
+      <para>
+        Current Kea release has a flaw whereby the values of <command>reconnect-wait-time</command>
+        and <command>max-reconnect-tries</command> specified in the <command>lease-database</command>
+        override the setting of those parameters in the <command>hosts-database</command>. The
+        parameters specified within the <command>hosts-database</command> are only effective
+        when <command>memfile</command> is used as a lease database backend. This behavior will
+        be corrected in the future releases of Kea.
+      </para>
+    </warning>
+
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
