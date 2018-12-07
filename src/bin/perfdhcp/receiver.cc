@@ -21,7 +21,7 @@ Receiver::start() {
         return;
     }
     assert(run_flag_.test_and_set() == false);
-    recv_thread_ = move(unique_ptr<thread>(new thread{&Receiver::run, this}));
+    recv_thread_.reset(new thread{&Receiver::run, this});
 }
 
 void

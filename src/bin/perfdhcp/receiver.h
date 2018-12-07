@@ -37,9 +37,11 @@ typedef boost::shared_ptr<Pkt> PktPtr;
 /// in main thread packets can be consumed from the queue using getPkt
 /// method.
 class Receiver {
+public:
     /// \brief Socket for receiving.
     const BetterSocket& socket_;
 
+private:
     /// \brief Flag indicating if thread should run (true) or not (false).
     boost::atomic_flag run_flag_;
 

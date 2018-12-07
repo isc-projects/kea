@@ -1238,7 +1238,7 @@ TestControl::processReceivedPacket6(const BetterSocket& socket,
 void
 TestControl::consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket) {
     PktPtr pkt;
-    while (pkt = receiver.getPkt()) {
+    while ((pkt = receiver.getPkt())) {
         if (CommandOptions::instance().getIpVersion() == 4) {
             Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
             processReceivedPacket4(socket, pkt4);
