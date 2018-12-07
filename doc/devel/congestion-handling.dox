@@ -144,7 +144,7 @@ an isc::data::MapElement instance containing the contents of the configuration
 element "dhcp-queue-control" from the Kea server's configuration. It will
 always have the following two values:
 
--# "queue-enable" - used by isc::dhcp::IfaceMgr to know whether or not
+-# "enable-queue" - used by isc::dhcp::IfaceMgr to know whether or not
 congestion handling is enabled. Your implementation need not do anything
 with this value.
 

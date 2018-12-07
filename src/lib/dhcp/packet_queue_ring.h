@@ -73,9 +73,6 @@ public:
     /// that the packet has NOT been unpacked at this point. The default 
     /// implementation simply returns false (i.e. keep the packet).
     ///
-    /// @param packet the packet under consideration
-    /// @param source the socket the packet came from
-    ///
     /// @return true if the packet should be dropped, false if it should be
     /// kept.
     virtual bool shouldDropPacket(PacketTypePtr /* packet */,
@@ -91,12 +88,6 @@ public:
     /// processed.  Derivations are expected to provide implementations
     /// based on their own requirements.  The default implemenation is to
     /// to simply return without skipping any packets.
-    ///
-    /// @param from end of the queue from which packets should discarded
-    /// This is passed in from @c dequeuePackets.
-    ///
-    /// @param from specifies the end of the queue from which packets
-    /// should be discarded.
     ///
     /// @return The number of packets discarded.
     virtual int eatPackets(const QueueEnd& /* from */) {
