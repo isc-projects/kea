@@ -7,10 +7,10 @@
 #ifndef TEST_CONTROL_H
 #define TEST_CONTROL_H
 
-#include "packet_storage.h"
-#include "rate_control.h"
-#include "stats_mgr.h"
-#include "receiver.h"
+#include <perfdhcp/packet_storage.h>
+#include <perfdhcp/rate_control.h>
+#include <perfdhcp/stats_mgr.h>
+#include <perfdhcp/receiver.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
@@ -523,7 +523,7 @@ protected:
     /// \brief Pull packets from receiver and process them.
 
     /// It runs in a loop until there are no packets in receiver.
-    void consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket);
+    unsigned int consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket);
 
     /// \brief Process received DHCPv4 packet.
     ///

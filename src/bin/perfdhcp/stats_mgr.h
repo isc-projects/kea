@@ -684,7 +684,7 @@ public:
             using namespace std;
             auto sent = getSentPacketsNum();
             auto drops = getDroppedPacketsNum();
-            double drops_ratio = 100 * static_cast<double>(drops) / static_cast<double>(sent);
+            double drops_ratio = 100.0 * static_cast<double>(drops) / static_cast<double>(sent);
 
             cout << "sent packets: " << sent << endl
                  << "received packets: " << getRcvdPacketsNum() << endl

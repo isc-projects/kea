@@ -53,9 +53,6 @@ TEST(RateControl, constructor) {
     // will be set correctly.
     NakedRateControl rc2(5);
     EXPECT_EQ(5, rc2.getRate());
-
-    // The negative value of rate is not acceptable.
-    EXPECT_THROW(RateControl(-1), isc::BadValue);
 }
 
 // Check the rate accessor.

@@ -6,8 +6,10 @@
 
 #include <config.h>
 
+#include <perfdhcp/rate_control.h>
+
 #include <exceptions/exceptions.h>
-#include "rate_control.h"
+
 
 namespace isc {
 namespace perfdhcp {
@@ -18,12 +20,8 @@ RateControl::RateControl()
     : rate_(0), total_pkts_sent_count_(0) {
 }
 
-RateControl::RateControl(const int rate)
+RateControl::RateControl(const unsigned int rate)
     : rate_(rate), total_pkts_sent_count_(0) {
-    if (rate_ < 0) {
-        isc_throw(isc::BadValue, "invalid value of rate " << rate
-                  << ", expected non-negative value");
-    }
 }
 
 uint64_t

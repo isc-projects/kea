@@ -41,7 +41,7 @@ struct BetterSocket : public dhcp::SocketInfo {
     /// \brief Destructor of the socket wrapper class.
     ///
     /// Destructor closes wrapped socket.
-    ~BetterSocket();
+    virtual ~BetterSocket();
 
 private:
     /// \brief Initialize socket data.

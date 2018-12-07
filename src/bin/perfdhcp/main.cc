@@ -4,14 +4,15 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <iostream>
-#include <stdint.h>
-
 #include <config.h>
+
+#include <perfdhcp/test_control.h>
+#include <perfdhcp/command_options.h>
+
 #include <exceptions/exceptions.h>
 
-#include "test_control.h"
-#include "command_options.h"
+#include <iostream>
+#include <stdint.h>
 
 using namespace isc::perfdhcp;
 

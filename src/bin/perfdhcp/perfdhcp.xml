@@ -337,11 +337,11 @@
               <term><option>-g <replaceable class="parameter">thread-mode</replaceable></option></term>
               <listitem>
                 <para>
-                    Thread operation mode can be either 'single' or 'multi'. In multi-thread mode packets
-                    are received in separate thread. This allows better utilisation of CPUs.
-                    In single CPU system it is better to run in 1 thread to avoid blocking of threads each other.
-                    If more than 1 CPU is present in the system then multi-thread mode is default otherwise
-                    single-thread is default.
+                  <replaceable class="parameter">thread-mode</replaceable> can be either 'single' or 'multi'.
+                  In multi-thread mode packets are received in separate thread. This allows better utilisation of CPUs.
+                  In single CPU system it is better to run in 1 thread to avoid blocking of threads each other.
+                  If more than 1 CPU is present in the system then multi-thread mode is default otherwise
+                  single-thread is default.
                 </para>
               </listitem>
             </varlistentry>

@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-#include "better_socket.h"
+#include <perfdhcp/better_socket.h>
 
 #include <dhcp/iface_mgr.h>
 
@@ -45,8 +45,7 @@ BetterSocket::initSocketData() {
             }
         }
     }
-    isc_throw(BadValue, "interface for for specified socket "
-              "descriptor not found");
+    isc_throw(BadValue, "interface for specified socket descriptor not found");
 }
 
 }
