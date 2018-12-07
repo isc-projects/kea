@@ -4,12 +4,13 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include "receiver.h"
-#include "command_options.h"
+#include <perfdhcp/receiver.h>
+#include <perfdhcp/command_options.h>
 
 #include <dhcp/iface_mgr.h>
 
 using namespace std;
+using namespace isc::dhcp;
 
 namespace isc {
 namespace perfdhcp {
@@ -50,16 +51,15 @@ PktPtr
 Receiver::getPkt() {
     if (single_threaded_) {
         // In single thread mode read packet directly from the socket and return it.
-        auto pkt = readPktFromSocket();
-        return pkt;
+        return readPktFromSocket();
     } else {
         // In multi thread mode read packet from the queue which is feed by Receiver thread.
         unique_lock<mutex> lock(pkt_queue_mutex_);
         if (pkt_queue_.empty()) {
             if (CommandOptions::instance().getIpVersion() == 4) {
-                return Pkt4Ptr{nullptr};
+                return Pkt4Ptr();
             } else {
-                return Pkt6Ptr{nullptr};
+                return Pkt6Ptr();
             }
         }
         auto pkt = pkt_queue_.front();
@@ -76,8 +76,12 @@ Receiver::run() {
         while (run_flag_.test_and_set()) {
             receivePackets();
         }
+    } catch (const exception& e) {
+        cerr << "Something went wrong: " << e.what() << endl;
+        usleep(1000);
     } catch (...) {
-        cout << "SOMETHING WENT WRONG" << endl;
+        cerr << "Something went wrong" << endl;
+        usleep(1000);
     }
 }
 
@@ -101,7 +105,7 @@ Receiver::readPktFromSocket() {
             pkt = IfaceMgr::instance().receive6(0, timeout);
         }
     } catch (const Exception& e) {
-        cerr << "Failed to receive DHCP packet: " << e.what() <<  endl;
+        cerr << "Failed to receive DHCP packet: " << e.what() << endl;
     }
     if (!pkt) {
         return nullptr;
@@ -121,10 +125,10 @@ Receiver::receivePackets() {
             break;
         }
 
-        // Drop packet if not supported.
+        // Drop the packet if not supported. Do not bother main thread about it.
         if (pkt->getType() == DHCPOFFER || pkt->getType() == DHCPACK ||
             pkt->getType() == DHCPV6_ADVERTISE || pkt->getType() == DHCPV6_REPLY) {
-            // Otherwise push to another thread.
+            // Otherwise push the packet to the queue, to main thread.
             unique_lock<mutex> lock(pkt_queue_mutex_);
             pkt_queue_.push(pkt);
         }

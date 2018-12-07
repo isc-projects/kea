@@ -44,7 +44,7 @@ public:
     /// \brief Constructor which sets desired rate.
     ///
     /// \param rate A desired rate.
-    RateControl(const int rate);
+    RateControl(const unsigned int rate);
 
     /// \brief Returns number of messages to be sent "now".
     ///
@@ -72,7 +72,7 @@ public:
     uint64_t getOutboundMessageCount();
 
     /// \brief Returns the rate.
-    int getRate() const {
+    unsigned int getRate() const {
         return (rate_);
     }
 
@@ -90,7 +90,7 @@ protected:
     boost::posix_time::ptime currentTime();
 
     /// \brief Holds a desired rate value.
-    int rate_;
+    unsigned int rate_;
 
     /// \brief Holds number of packets send from the beginning.
 

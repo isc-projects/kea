@@ -6,8 +6,8 @@
 
 #pragma once
 
-#include "better_socket.h"
-#include "command_options.h"
+#include <perfdhcp/better_socket.h>
+#include <perfdhcp/command_options.h>
 
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
@@ -17,13 +17,10 @@
 #include <mutex>
 #include <boost/atomic.hpp>
 
-using namespace std;
-using namespace isc::dhcp;
-
 namespace isc {
 namespace perfdhcp {
 
-typedef boost::shared_ptr<Pkt> PktPtr;
+typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
 /// \brief A receviving DHCP packets class.
 ///
@@ -46,13 +43,13 @@ private:
     boost::atomic_flag run_flag_;
 
     /// \brief Thread for receiving packets.
-    unique_ptr<thread> recv_thread_;
+    std::unique_ptr<std::thread> recv_thread_;
 
     /// \brief Queue for passing packets from receiver thread to main thread.
-    queue<PktPtr> pkt_queue_;
+    std::queue<PktPtr> pkt_queue_;
 
     /// \brief Mutex for controlling access to the queue.
-    mutex pkt_queue_mutex_;
+    std::mutex pkt_queue_mutex_;
 
     /// \brief Single- or thread-mode indicator.
     bool single_threaded_;

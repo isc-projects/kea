@@ -7,9 +7,9 @@
 #ifndef PKT_TRANSFORM_H
 #define PKT_TRANSFORM_H
 
-#include <dhcp/option.h>
+#include <perfdhcp/localized_option.h>
 
-#include "localized_option.h"
+#include <dhcp/option.h>
 
 namespace isc {
 namespace perfdhcp {

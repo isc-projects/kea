@@ -7,9 +7,9 @@
 #ifndef COMMAND_OPTIONS_H
 #define COMMAND_OPTIONS_H
 
-#include <boost/noncopyable.hpp>
-
 #include <dhcp/option.h>
+
+#include <boost/noncopyable.hpp>
 #include <stdint.h>
 #include <string>
 #include <vector>
@@ -507,13 +507,13 @@ private:
     LeaseType lease_type_;
 
     /// Rate in exchange per second
-    int rate_;
+    unsigned int rate_;
 
     /// A rate at which DHCPv6 Renew messages are sent.
-    int renew_rate_;
+    unsigned int renew_rate_;
 
     /// A rate at which DHCPv6 Release messages are sent.
-    int release_rate_;
+    unsigned int release_rate_;
 
     /// Delay between generation of two consecutive performance reports
     int report_delay_;

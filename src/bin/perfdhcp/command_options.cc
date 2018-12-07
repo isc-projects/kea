@@ -6,7 +6,8 @@
 
 #include <config.h>
 
-#include "command_options.h"
+#include <perfdhcp/command_options.h>
+
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
@@ -16,7 +17,6 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1105,8 +1105,8 @@ CommandOptions::usage() const {
         "    to or less than the exchange rate.\n"
         "-g  Select thread mode: 'single' or 'multi'. In multi-thread mode packets\n"
         "    are received in separate thread. This allows better utilisation of CPUs."
-        "    If more than 1 CPU is present then multi-thread mode is default otherwise"
-        "    single-thread is default."
+        "    If more than 1 CPU is present then multi-thread mode is the default,"
+        "    otherwise single-thread is the default."
         "-h: Print this help.\n"
         "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
         "    whether -6 is given.\n"

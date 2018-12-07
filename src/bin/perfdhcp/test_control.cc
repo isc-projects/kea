@@ -6,6 +6,12 @@
 
 #include <config.h>
 
+#include <perfdhcp/test_control.h>
+#include <perfdhcp/receiver.h>
+#include <perfdhcp/command_options.h>
+#include <perfdhcp/perf_pkt4.h>
+#include <perfdhcp/perf_pkt6.h>
+
 #include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
 #include <dhcp/libdhcp++.h>
@@ -13,14 +19,8 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/option6_ia.h>
 #include <util/unittests/check_valgrind.h>
-#include "test_control.h"
-#include "receiver.h"
-#include "command_options.h"
-#include "perf_pkt4.h"
-#include "perf_pkt6.h"
 
 #include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <algorithm>
 #include <fstream>
 #include <stdio.h>
@@ -1235,10 +1235,12 @@ TestControl::processReceivedPacket6(const BetterSocket& socket,
     }
 }
 
-void
+unsigned int
 TestControl::consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket) {
+    unsigned int pkt_count = 0;
     PktPtr pkt;
     while ((pkt = receiver.getPkt())) {
+        pkt_count += 1;
         if (CommandOptions::instance().getIpVersion() == 4) {
             Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
             processReceivedPacket4(socket, pkt4);
@@ -1247,6 +1249,7 @@ TestControl::consumeReceivedPackets(Receiver& receiver, const BetterSocket& sock
             processReceivedPacket6(socket, pkt6);
         }
     }
+    return pkt_count;
 }
 void
 TestControl::registerOptionFactories4() const {
@@ -1421,7 +1424,14 @@ TestControl::run() {
 
         // Pull some packets from receiver thread, process them, update some stats
         // and respond to the server if needed.
-        consumeReceivedPackets(receiver, socket);
+        auto pkt_count = consumeReceivedPackets(receiver, socket);
+
+        // If there is nothing to do in this loop iteration then do some sleep to make
+        // CPU idle for a moment, to not consume 100% CPU all the time
+        // but only if it is not that high request rate expected.
+        if (options.getRate() < 10000 && packets_due == 0 && pkt_count == 0) {
+            usleep(1);
+        }
 
         // If test period finished, maximum number of packet drops
         // has been reached or test has been interrupted we have to

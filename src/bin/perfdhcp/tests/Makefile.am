@@ -1,6 +1,6 @@
 SUBDIRS = . testdata
 
-AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib -I$(top_builddir)/src/bin  -I$(top_srcdir)/src/bin
 AM_CPPFLAGS += -I$(srcdir)/.. -I$(builddir)/..
 AM_CPPFLAGS += -DTEST_DATA_DIR=\"$(abs_srcdir)/testdata\"
 AM_CPPFLAGS += $(BOOST_INCLUDES)
