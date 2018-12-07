@@ -104,7 +104,9 @@
             <varlistentry>
               <term>reload</term>
               <listitem>
-                <para>Instructs the servers to re-read the kea configuration file.</para>
+                <para>Instructs the servers to re-read the kea
+                configuration file. This command is not supported by
+                the Netconf agent.</para>
               </listitem>
             </varlistentry>
 

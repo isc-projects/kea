@@ -259,8 +259,9 @@ check_kea_conf() {
 #   is dhcp4
 run_conditional() {
     local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent, netconf
-    local command="${2}"      # Command to execute
+    local commands="${2}"     # Commands to execute
     local check_file_cfg=${3} # Check if server enabled in the configuration file
+    local is_all=0            # is all servers or a specific one
 
     # If keyword "all" is not on the list of servers we will have to check
     # if our specific server is on the list. If, not return.
@@ -270,10 +271,20 @@ run_conditional() {
         if [ ${_inlist} -eq 0 ]; then
             return
         fi
+    else
+        is_all=1
     fi
     # Return for for netconf when not available.
     if [ ${server} = "netconf" ]; then
         if [ ${have_netconf} -eq 0 ]; then
+            return
+        fi
+        # reload is not supported for netconf.
+        if [ ${command} = "reload" ]; then
+            if [ ${is_all} -eq 1 ]; then
+                return
+            fi
+            log_warning "netconf does not support reload"
             return
         fi
     fi
@@ -285,10 +296,10 @@ run_conditional() {
     # Get the location of the current Kea configuration file. This will be used
     # to check that the file exists before it is used.
     local kea_config_location=$( eval printf "%s" "\$kea_${server}_config_file" )
-    # Run the command if we ignore the configuration setting or if the
+    # Run the commands if we ignore the configuration setting or if the
     # setting is "yes".
     if [ ${check_file_cfg} -eq 0 ] || [ "${file_config}" = "yes" ]; then
-        ${command}
+        ${commands}
     fi
 }
 
@@ -358,7 +369,7 @@ do
             # Validate that the specified server names are correct.
             for s in ${servers}
             do
-                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent"
+                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent netconf"
                 if [ ${_inlist} -eq 0 ]; then
                     log_error "invalid server name: ${s}"
                     exit 1
