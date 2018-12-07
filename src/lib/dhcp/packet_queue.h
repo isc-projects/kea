@@ -107,7 +107,7 @@ public:
     /// This method calls @c getInfo() and then converts that into JSON text.
     ///
     /// @return string of JSON text
-    virtual std::string getInfoStr() const {
+    std::string getInfoStr() const {
        data::ElementPtr info = getInfo();
        std::ostringstream os;
        info->toJSON(os);

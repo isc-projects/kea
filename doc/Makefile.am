@@ -8,6 +8,7 @@ EXTRA_DIST += devel/mainpage.dox
 EXTRA_DIST += devel/terminology.dox
 EXTRA_DIST += devel/unit-tests.dox
 EXTRA_DIST += devel/doc.dox
+EXTRA_DIST += devel/congestion-handling.dox
 
 nobase_dist_doc_DATA  = examples/agent/comments.json
 nobase_dist_doc_DATA += examples/agent/simple.json

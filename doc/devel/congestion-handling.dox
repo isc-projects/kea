@@ -1,0 +1,453 @@
+// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+//
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v. 2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+/**
+
+@page congestionHandling Congestion Handling in Kea DHCP4/DHCP6
+
+@section background What is Congestion?
+Congestion occurs when servers are subjected to client queries
+faster than they can be fulfilled.  Subsequently, the servers begin
+accumulating a backlog of pending queries.  The longer the high rate of
+traffic continues the farther behind the servers fall.  Depending on the
+client implementations, those that fail to get leases either give up or simply
+continue to retry forever.  In the former case, the server may eventually
+recover.  The latter case is vicious cycle from which the server is unable
+to escape.
+
+In a well-planned deployment, the number and capacity of servers is matched
+to the maximum client loads expected.  As long as capacity is matched to
+load, congestion does not occur. If the load is routinely too heavy, then
+the deployment needs to be re-evaluated.  Congestion typically occurs when
+there is a network event that causes overly large numbers of clients to
+simultaneously need leases such as recovery after a network outage.
+
+@section introduction Congestion Handling Overview
+
+Kea 1.5 introduces a new feature referred to as Congestion Handling. The
+goal of Congestion Handling is to help the servers mitigate the peak
+in traffic by fulfilling as many of the most relevant requests as possible
+until it subsides.
+
+Prior to Kea 1.5, kea-dhcp4 and kea-dhcp6 read inbound packets directly
+from the interface sockets in the main application thread.  This meant that
+packets waiting to be processed were held in socket buffers themselves. Once
+these buffers fill any new packets are discarded. Under swamped conditions
+the servers can end up processing client packets that may no longer be
+relevant, or worse are redundant. In other words, the packets waiting in
+the FIFO socket buffers become increasingly stale.
+
+Congestion Handling offers the ability to configure the server to use a
+separate thread to read packets from the interface socket buffers. As the
+thread reads packets from the buffers they are added to an internal "packet
+queue". The server's main application thread process packets from this queue
+rather than the socket buffers.  By structuring it this way, we've introduced
+a configurable layer which can make decisions on which packets to process,
+how to store them, and the order in which they are processed by the server.
+
+The default packet queue implementation for both kea-dhcp4 and kea-dhcp6
+is a simple ring buffer.  Once it reaches capacity, new packets get added to
+the back of queue by discarding packets from the front of queue.  Rather than
+always discarding the newest packets, we now always discard the oldest
+packets.  The capacity of the buffer, (i.e the maximum number of packets the
+buffer can contain) is configurable.
+
+@section custom-implementations  Custom Packet Queues
+
+It is possible to replace the default packet queue implementation with a
+custom implementation by registering it with your Kea server via a hook
+library.  The steps for doing this are listed below:
+
+-# Develop a derivation of the interface isc::dhcp::PacketQueue
+-# Registering and un-registering your implementation via Hook library
+-# Configure your Kea server to use your derivation
+
+(If you are not familiar with writing Kea hook libraries, you may wish to
+read @ref hooksdgDevelopersGuide before continuing).
+
+@subsection packet-queue-derivation Developing isc::dhcp::PacketQueue Derivations
+    @subsection packet-queue-derivation-basics The Basics
+
+Your custom packet queue must derive from the class template,
+isc::dhcp::PacketQueue.  The class is almost entirely abstract and
+deliberately brief to provide developers wide latitude in the internals
+of their solutions.
+
+The template argument, PacketTypePtr, is expected to be either
+isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr, depending upon which
+protocol the implementation will handle.  Please note that the
+while following text and examples largely focus on DHCPv4 out
+of convenience as the concepts are identical for DHCPv6. For
+completeness there are code snippets at the end of this
+chapter for DHCPv6.
+
+The two primary functions of interest are:
+
+-# isc::dhcp::PacketQueue::enqueuePacket() - This function is invoked by
+the receiver thread each time a packet has been read from a interface
+socket buffer and should be added to the queue.  It is passed a pointer to
+the unpacked client packet (isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr), and
+a reference to the isc::dhcp::SocketInfo describing the interface socket
+from which the packet was read.  Your derivation is free to use whatever
+logic you deem appropriate to decide if a given packet should be added
+to the queue or dropped.  The socket information is passed along to be used
+(or not) in your decision making.  The simplest derivation would add every
+packet, every time.
+
+-# isc::dhcp::PacketQueue::dequeuePacket() - This function is invoked by the
+server's main thread whenever the receiver thread indicates that packets are
+ready.  Which packet is dequeued and returned is entirely up to your
+derivation.
+
+The remaining functions that you'll need to implement are self-explanatory.
+
+How your actual "queue" is implemented is entirely up to you.  Kea's default
+implementation using a ring buffer based on Boost's boost::circular_buffer
+(please refer to isc::dhcp::PacketQueueRing, isc::dhcp::PacketQueueRing4 and
+isc::dhcpPacketQueueRing6).  The most critical aspects to remember when
+developing your implementation are:
+
+-# It MUST be thread safe since queuing and dequeing packets are done by
+separate threads. (You might considering using isc::util::thread::Mutex and
+isc::util::thread::Mutex::Locker).
+
+-# Its efficiency (or lack thereof) will have a direct impact on server
+performance.  You will have to consider the dynamics of your deployment
+to determine where the trade-off between the volume of packets responded
+to versus preferring to respond to some subset of those packets lies.
+
+    @subsection packet-queue-derivation-factory Defining a Factory
+
+isc::dhcp::IfaceMgr using two derivations of isc::dhcp::PacketQueueMgr (one for
+DHCPv4 and one for DHCPv6), to register queue implementations and instantiate
+the appropriate queue type based the current configuration.  In order to
+register your queue implementation your hook library must provide a factory
+function that will be used to create packet queues. This function will be
+invoked by the server during the configuration process to instantiate the
+appropriate queue type.  For DHCPv4, the factory should be as follows:
+
+@code
+    PackQueue4Ptr factory(isc::data::ConstElementPtr parameters)
+@endcode
+
+and for DHCPv6:
+
+@code
+    PackQueue6Ptr factory(isc::data::ConstElementPtr parameters)
+@endcode
+
+The factory's only argument is an isc::data::ConstElementPtr. This is will be
+an isc::data::MapElement instance containing the contents of the configuration
+element "dhcp-queue-control" from the Kea server's configuration. It will
+always have the following two values:
+
+-# "queue-enable" - used by isc::dhcp::IfaceMgr to know whether or not
+congestion handling is enabled. Your implementation need not do anything
+with this value.
+
+-# "queue-type"  - name of the registered queue implementation to use.
+It is used by isc::dhcp::IfaceMgr to invoke the appropriate queue factory.
+Your implementation must pass this value through to the isc::dhcp::PacketQueue
+constructor.
+
+Beyond that you may add whatever additional values you may require.  In
+other words, the content is arbitrary so long as it is valid JSON. It is
+up to your factory implementation to examine the contents and use them
+to construct a queue instance.
+
+    @subsection packet-queue-derivation-example An Example
+
+Let's suppose you wish develop a queue for DHCPv4 and your implementation
+requires two configurable parameters: capacity and threshold.  Your class
+declaration might look something like this:
+
+@code
+class YourPacketQueue4 : public isc::dhcp::PacketQueue<isc::dhcp::Pkt4Ptr> {
+public:
+
+    // Logical name you will register your factory under.
+    static const std::string QUEUE_TYPE;
+
+    // Factory for instantiating queue instances.
+    static isc::dhcp::PacketQueue4Ptr factory(isc::data::ConstElementPtr params);
+
+    // Constructor
+    YourPacketQueue4(const std::string& queue_type, size_t capacity, size_t threshold)
+        : isc::dhcp::PacketQueue<isc::dhcp::Pkt4Ptr>(queue_type) {
+
+        // your constructor steps here
+    }
+
+    // Adds a packet to your queue using your secret formula based on threshold.
+    virtual void enqueuePacket(isc::dhcp::Pkt4Ptr packet, const dhcp::SocketInfo& source);
+
+    // Fetches the next packet to process from your queue using your other secret formula.
+    virtual isc::dhcp::Pkt4Ptr dequeuePacket();
+
+    :   // Imagine you prototyped the rest of the functions
+
+};
+@endcode
+
+Your factory implementation would then look something like this:
+
+@code
+
+const std::string QUEUE_TYPE = "Your-Q4";
+
+isc::dhcp::PacketQueue4Ptr
+YourPacketQueue4::factory(isc::data::ConstElementPtr parameters) {
+
+    // You need queue-type to pass into the base class.
+    // It's guaranteed to be here.
+    std::string queue_type = isc::data::SimpleParser::getString(parameters, "queue-type");
+
+    // Now you need to fetch your required parameters.
+    size_t capacity;
+    try {
+        capacity = isc::data::SimpleParser::getInteger(parameters, "capacity");
+    } catch (const std::exception& ex) {
+        isc_throw(isc::dhcp::InvalidQueueParameter, "YourPacketQueue4:factory:"
+                  " 'capacity' parameter is missing/invalid: " << ex.what());
+    }
+
+    size_t threshold;
+    try {
+        threshold = isc::data::SimpleParser::getInteger(parameters, "threshold");
+    } catch (const std::exception& ex) {
+        isc_throw(isc::dhcp::InvalidQueueParameter, "YourPacketQueue4:factory:"
+                  " 'threshold' parameter is missing/invalid: " << ex.what());
+    }
+
+    // You should be all set to create your queue instance!
+    isc::dhcp::PacketQueue4Ptr queue(new YourPacketQueue4(queue_type, capacity, threshold));
+    return (queue);
+}
+
+@endcode
+
+Kea's configuration parser cannot know your parameter requirements and thus
+can only flag JSON syntax errors.  Thus it is important for your factory to
+validate your parameters according to your requirements and throw meaningful
+exceptions when they are not met. This allows users to know what to correct.
+
+@subsection packet-queue-registration Registering Your Implementation
+
+All hook libraries must provide a load() and unload() function.  Your hook
+library should register you queue factory during load() and un-register it
+during unload().  Picking up with the our example, those functions might
+look something like this:
+
+@code
+// This function is called when the library is loaded.
+//
+// param - handle library handle (we aren't using it)
+// return - 0 when initialization is successful, 1 otherwise
+int load(LibraryHandle& /* handle */) {
+    try {
+        // Here you register your DHCPv4 queue factory
+        isc::dhcp::IfaceMgr::instance().getPacketQueueMgr4()->
+            registerPacketQueueFactory(YourPacketQueue4::QUEUE_TYPE,
+                                       YourPacketQueue::factory);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(your_logger, YOUR_LOAD_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    LOG_INFO(your_logger, YOUR_LOAD_OK);
+    return (0);
+}
+
+// This function is called when the library is unloaded.
+//
+// return - 0 if deregistration was successful, 1 otherwise
+int unload() {
+
+    // You need to remove your queue factory. This must be done to make sure
+    // your queue instance is destroyed before your library is unloaded.
+    isc::dhcp::IfaceMgr::instance().getPacketQueueMgr4()->
+        unregisterPacketQueueFactory(YourPacketQueue4::QUEUE_TYPE);
+
+    LOG_INFO(your_logger, YOUR_UNLOAD_OK);
+    return (0);
+}
+@endcode
+
+@subsection packet-queue-factory Configuring Kea to use Your PacketQueue<>
+
+You're almost there.  You developed your implementation, you've unit tested it
+(You did unit test it right?).  Now you just have to tell Kea to load it and
+use it. Continuing with the example, your kea-dhcp4 configuration would need
+to look something like this:
+
+@code
+{
+"Dhcp4":
+{
+    ...
+
+    "hooks-libraries": [
+    {
+        # Loading your hook library!
+        "library": "/somepath/lib//libyour_packet_queue.so"
+    }
+
+    # any other hook libs
+    ],
+
+    ...
+
+    "dhcp-queue-control": {
+        "enable-queue": true,
+        "queue-type": "Your-Q4",
+        "capacity" : 100,
+        "threshold" : 75
+   },
+
+   ...
+}
+@endcode
+
+@subsection packet-queue-example-dhcpv6 DHCPv6 Example Snippets
+
+For completeness, this section includes the example from above
+implemented for DHCPv6.
+
+DHCPv6 Class declaration:
+
+@code
+class YourPacketQueue6 : public isc::dhcp::PacketQueue<isc::dhcp::Pkt6Ptr> {
+public:
+
+    // Logical name you will register your factory under.
+    static const std::string QUEUE_TYPE;
+
+    // Factory for instantiating queue instances.
+    static isc::dhcp::PacketQueue6Ptr factory(isc::data::ConstElementPtr params);
+
+    // Constructor
+    YourPacketQueue6(const std::string& queue_type, size_t capacity, size_t threshold)
+        : isc::dhcp::PacketQueue<isc::dhcp::Pkt6Ptr>(queue_type) {
+
+        // your constructor steps here
+    }
+
+    // Adds a packet to your queue using your secret formula based on threshold.
+    virtual void enqueuePacket(isc::dhcp::Pkt6Ptr packet, const dhcp::SocketInfo& source);
+
+    // Fetches the next packet to process from your queue using your other secret formula.
+    virtual isc::dhcp::Pkt6Ptr dequeuePacket();
+
+    :   // Imagine you prototyped the rest of the functions
+
+};
+@endcode
+
+DHCPv6 Factory implemenation:
+
+@code
+const std::string QUEUE_TYPE = "Your-Q6";
+
+isc::dhcp::PacketQueue6Ptr
+YourPacketQueue6::factory(isc::data::ConstElementPtr parameters) {
+
+    // You need queue-type to pass into the base class.
+    // It's guaranteed to be here.
+    std::string queue_type = isc::data::SimpleParser::getString(parameters, "queue-type");
+
+    // Now you need to fetch your required parameters.
+    size_t capacity;
+    try {
+        capacity = isc::data::SimpleParser::getInteger(parameters, "capacity");
+    } catch (const std::exception& ex) {
+        isc_throw(isc::dhcp::InvalidQueueParameter, "YourPacketQueue6:factory:"
+                  " 'capacity' parameter is missing/invalid: " << ex.what());
+    }
+
+    size_t threshold;
+    try {
+        threshold = isc::data::SimpleParser::getInteger(parameters, "threshold");
+    } catch (const std::exception& ex) {
+        isc_throw(isc::dhcp::InvalidQueueParameter, "YourPacketQueue6:factory:"
+                  " 'threshold' parameter is missing/invalid: " << ex.what());
+    }
+
+    // You should be all set to create your queue instance!
+    isc::dhcp::PacketQueue6Ptr queue(new YourPacketQueue6(queue_type, capacity, threshold));
+    return (queue);
+}
+@endcode
+
+DHCPv6 Hook load/unload functions
+
+@code
+// This function is called when the library is loaded.
+//
+// param - handle library handle (we aren't using it)
+// return - 0 when initialization is successful, 1 otherwise
+int load(LibraryHandle& /* handle */) {
+    try {
+        // Here you register your DHCPv6 queue factory
+        isc::dhcp::IfaceMgr::instance().getPacketQueueMgr6()->
+            registerPacketQueueFactory(YourPacketQueue6::QUEUE_TYPE,
+                                       YourPacketQueue::factory);
+    } catch (const std::exception& ex) {
+        LOG_ERROR(your_logger, YOUR_LOAD_FAILED)
+            .arg(ex.what());
+        return (1);
+    }
+
+    LOG_INFO(your_logger, YOUR_LOAD_OK);
+    return (0);
+}
+
+// This function is called when the library is unloaded.
+//
+// return - 0 if deregistration was successful, 1 otherwise
+int unload() {
+
+    // You need to remove your queue factory. This must be done to make sure
+    // your queue instance is destroyed before your library is unloaded.
+    isc::dhcp::IfaceMgr::instance().getPacketQueueMgr6()->
+        unregisterPacketQueueFactory(YourPacketQueue6::QUEUE_TYPE);
+
+    LOG_INFO(your_logger, YOUR_UNLOAD_OK);
+    return (0);
+}
+@endcode
+
+Server configuration for kea-dhcp6:
+
+@code
+{
+"Dhcp6":
+{
+    ...
+
+    "hooks-libraries": [
+    {
+        # Loading your hook library!
+        "library": "/somepath/lib//libyour_packet_queue.so"
+    }
+
+    # any other hook libs
+    ],
+
+    ...
+
+    "dhcp-queue-control": {
+        "enable-queue": true,
+        "queue-type": "Your-Q6",
+        "capacity" : 100,
+        "threshold" : 75
+   },
+
+   ...
+}
+@endcode
+
+*/
