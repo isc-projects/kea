@@ -1083,7 +1083,7 @@ public:
     ///
     /// @param family indicates which receiver to start,
     /// (AF_INET or AF_INET6)
-    /// @parm queue_control configuration containing "dhcp-queue-control"
+    /// @param queue_control configuration containing "dhcp-queue-control"
     /// content
     /// @return true if packet queueuing has been enabled, false otherwise
     /// @throw InvalidOperation if the receiver thread is currently running.

@@ -38,10 +38,10 @@ public:
 template<typename PacketQueueTypePtr>
 class PacketQueueMgr {
 public:
-    /// @brief Type of the backend factory function.
+    /// @brief Defines the type of the packet queue factory function.
     ///
-    /// Factory function returns a pointer to the instance of the configuration
-    /// backend created.
+    /// Factory function returns a pointer to the instance of the packet
+    /// queue created. 
     typedef std::function<PacketQueueTypePtr(data::ConstElementPtr)> Factory;
 
     /// @brief Constructor.

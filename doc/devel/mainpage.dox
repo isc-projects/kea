@@ -78,7 +78,7 @@
  *   - @subpage dhcpv6ConfigBackend
  *   - @subpage dhcpv6SignalBasedReconfiguration
  *   - @subpage dhcpv6Other
- *   - @subpage dhcpv4o6Dhcp6
+ * - @subpage congestionHandling
  * - @subpage d2
  *   - @subpage d2ProcessDerivation
  *   - @subpage d2ConfigMgt
