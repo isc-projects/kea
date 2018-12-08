@@ -16,12 +16,14 @@ using namespace boost::posix_time;
 
 RateControl::RateControl()
     : send_due_(currentTime()), last_sent_(currentTime()),
-      aggressivity_(1), rate_(0), late_sent_(false) {
+      aggressivity_(1), rate_(0), late_sent_(false),
+      start_time_(currentTime()), sent_(0) {
 }
 
 RateControl::RateControl(const int rate, const int aggressivity)
     : send_due_(currentTime()), last_sent_(currentTime()),
-      aggressivity_(aggressivity), rate_(rate), late_sent_(false) {
+      aggressivity_(aggressivity), rate_(rate), late_sent_(false),
+      start_time_(currentTime()), sent_(0) {
     if (aggressivity_ < 1) {
         isc_throw(isc::BadValue, "invalid value of aggressivity "
                   << aggressivity << ", expected value is greater than 0");
@@ -100,18 +102,18 @@ RateControl::updateSendDue() {
         isc_throw(isc::Unexpected, "timestamp of the last sent packet not"
                   " initialized");
     }
-    // If rate was not specified we will wait just one clock tick to
-    // send next packet. This simulates best effort conditions.
-    long duration = 1;
-    if (getRate() != 0) {
-        // We use number of ticks instead of nanoseconds because
-        // nanosecond resolution may not be available on some
-        // machines. Number of ticks guarantees the highest possible
-        // timer resolution.
-        duration = time_duration::ticks_per_second() / getRate();
+    if (getRate() == 0) {
+	// If rate was not specified we will wait just one clock tick to
+	// send next packet. This simulates best effort conditions.
+	long duration = 1;
+	send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
+    } else {
+	double offset = (double)(sent_ + 1) / (double)getRate();
+	boost::posix_time::time_duration duration =
+	    microseconds((long)(offset * 1000000.));
+	send_due_ = start_time_ + duration;
     }
-    // Calculate due time to initiate next chunk of exchanges.
-    send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
+
     if (send_due_ > currentTime()) {
         late_sent_ = true;
     } else {
@@ -147,6 +149,7 @@ RateControl::setRelativeDue(const int offset) {
 void
 RateControl::updateSendTime() {
     last_sent_ = currentTime();
+    ++sent_;
 }
 
 } // namespace perfdhcp

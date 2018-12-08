@@ -164,6 +164,10 @@ protected:
     /// past.
     bool late_sent_;
 
+    boost::posix_time::ptime start_time_;
+
+    uint64_t sent_;
+
 };
 
 }
