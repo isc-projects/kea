@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -266,9 +266,9 @@ TEST_F(StatsMgrTest, Constructor) {
     stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
     EXPECT_DOUBLE_EQ(
         std::numeric_limits<double>::max(),
-        stats_mgr->getMinDelay(StatsMgr4::XCHG_DO)
+        stats_mgr->getMinRecvDelay(StatsMgr4::XCHG_DO)
     );
-    EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO));
+    EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxRecvDelay(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
@@ -276,8 +276,8 @@ TEST_F(StatsMgrTest, Constructor) {
     EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO));
     EXPECT_EQ(0, stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
 
-    EXPECT_THROW(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), InvalidOperation);
-    EXPECT_THROW(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO),
+    EXPECT_THROW(stats_mgr->getAvgRecvDelay(StatsMgr4::XCHG_DO), InvalidOperation);
+    EXPECT_THROW(stats_mgr->getStdDevRecvDelay(StatsMgr4::XCHG_DO),
                  InvalidOperation);
     EXPECT_THROW(stats_mgr->getAvgUnorderedLookupSetSize(StatsMgr4::XCHG_DO),
                  InvalidOperation);
@@ -490,16 +490,16 @@ TEST_F(StatsMgrTest, Delays) {
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets
     // are passed, it is expected to set to actual value.
-    EXPECT_LT(stats_mgr->getMinDelay(StatsMgr4::XCHG_DO),
+    EXPECT_LT(stats_mgr->getMinRecvDelay(StatsMgr4::XCHG_DO),
               std::numeric_limits<double>::max());
-    EXPECT_GT(stats_mgr->getMinDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getMinRecvDelay(StatsMgr4::XCHG_DO), 1);
 
     // Max delay is supposed to the same value as minimum
     // or maximum delay.
-    EXPECT_GT(stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getMaxRecvDelay(StatsMgr4::XCHG_DO), 1);
 
     // Delay sums are now the same as minimum or maximum delay.
-    EXPECT_GT(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getAvgRecvDelay(StatsMgr4::XCHG_DO), 1);
 
     // Simulate another DISCOVER-OFFER exchange with delay between
     // sent and received packets. Delay is now shorter than earlier
@@ -507,7 +507,7 @@ TEST_F(StatsMgrTest, Delays) {
     const unsigned int delay2 = 1;
     passDOPacketsWithDelay(stats_mgr, delay2, common_transid + 1);
     // Standard deviation is expected to be non-zero.
-    EXPECT_GT(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO), 0);
+    EXPECT_GT(stats_mgr->getStdDevRecvDelay(StatsMgr4::XCHG_DO), 0);
 }
 
 TEST_F(StatsMgrTest, CustomCounters) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -276,10 +276,14 @@ public:
               archived_packets_(),
               archive_enabled_(archive_enabled),
               drop_time_(drop_time),
-              min_delay_(std::numeric_limits<double>::max()),
-              max_delay_(0.),
-              sum_delay_(0.),
-              sum_delay_squared_(0.),
+              min_sent_delay_(std::numeric_limits<double>::max()),
+              max_sent_delay_(0.),
+              sum_sent_delay_(0.),
+              sum_sent_delay_squared_(0.),
+              min_recv_delay_(std::numeric_limits<double>::max()),
+              max_recv_delay_(0.),
+              sum_recv_delay_(0.),
+              sum_recv_delay_squared_(0.),
               orphans_(0),
               collected_(0),
               unordered_lookup_size_sum_(0),
@@ -319,7 +323,48 @@ public:
             rcvd_packets_.push_back(packet);
         }
 
-        ///  \brief Update delay counters.
+        ///  \brief Update send delay counters.
+        ///
+        /// Method updates delay counters based on timestamps of
+        /// due and effective sending.
+        ///
+        /// \param due due time.
+        /// \param effective effective time.
+        /// \throw isc::Unexpected if failed to calculate timestamps
+        void updateSentDelays(const boost::posix_time::ptime due,
+                              const boost::posix_time::ptime effective) {
+            if (due.is_not_a_date_time() ||
+                effective.is_not_a_date_time()) {
+                isc_throw(Unexpected,
+                          "Bad values sent tp updateSentDelays");
+            }
+            boost::posix_time::time_period period(due, effective);
+            // We don't bother calculating deltas in nanoseconds. It is much
+            // more convenient to use seconds instead because we are going to
+            // sum them up.
+            double delta =
+                static_cast<double>(period.length().total_nanoseconds()) / 1e9;
+
+            if (delta < 0) {
+                // Should happen only in unit tests. Ignore it.
+                return;
+            }
+
+            // Record the minimum delay between due and effective send time.
+            if (delta < min_sent_delay_) {
+                min_sent_delay_ = delta;
+            }
+            // Record the maximum delay between due and effective send time.
+            if (delta > max_sent_delay_) {
+                max_sent_delay_ = delta;
+            }
+            // Update delay sum and square sum. That will be used to calculate
+            // mean delays.
+            sum_sent_delay_ += delta;
+            sum_sent_delay_squared_ += delta * delta;
+        }
+
+        ///  \brief Update receive delay counters.
         ///
         /// Method updates delay counters based on timestamps of
         /// sent and received packets.
@@ -328,8 +373,8 @@ public:
         /// \param rcvd_packet received packet
         /// \throw isc::BadValue if sent or received packet is null.
         /// \throw isc::Unexpected if failed to calculate timestamps
-        void updateDelays(const boost::shared_ptr<T>& sent_packet,
-                          const boost::shared_ptr<T>& rcvd_packet) {
+        void updateRecvDelays(const boost::shared_ptr<T>& sent_packet,
+                              const boost::shared_ptr<T>& rcvd_packet) {
             if (!sent_packet) {
                 isc_throw(BadValue, "Sent packet is null");
             }
@@ -359,17 +404,17 @@ public:
             }
 
             // Record the minimum delay between sent and received packets.
-            if (delta < min_delay_) {
-                min_delay_ = delta;
+            if (delta < min_recv_delay_) {
+                min_recv_delay_ = delta;
             }
             // Record the maximum delay between sent and received packets.
-            if (delta > max_delay_) {
-                max_delay_ = delta;
+            if (delta > max_recv_delay_) {
+                max_recv_delay_ = delta;
             }
             // Update delay sum and square sum. That will be used to calculate
             // mean delays.
-            sum_delay_ += delta;
-            sum_delay_squared_ += delta * delta;
+            sum_recv_delay_ += delta;
+            sum_recv_delay_squared_ += delta * delta;
         }
 
         /// \brief Match received packet with the corresponding sent packet.
@@ -534,19 +579,49 @@ public:
             return(sent_packet);
         }
 
+        /// \brief Return minimum delay between due and effective send.
+        ///
+        /// Method returns minimum delay between due and effective send.
+        ///
+        /// \return minimum delay in send.
+        double getMinSentDelay() const { return(min_sent_delay_); }
+
         /// \brief Return minimum delay between sent and received packet.
         ///
         /// Method returns minimum delay between sent and received packet.
         ///
         /// \return minimum delay between packets.
-        double getMinDelay() const { return(min_delay_); }
+        double getMinRecvDelay() const { return(min_recv_delay_); }
+
+        /// \brief Return maximum delay between due and effective send.
+        ///
+        /// Method returns maximum delay between due and effective send.
+        ///
+        /// \return maximum delay in send.
+        double getMaxSentDelay() const { return(max_sent_delay_); }
 
         /// \brief Return maximum delay between sent and received packet.
         ///
         /// Method returns maximum delay between sent and received packet.
         ///
         /// \return maximum delay between packets.
-        double getMaxDelay() const { return(max_delay_); }
+        double getMaxRecvDelay() const { return(max_recv_delay_); }
+
+        /// \brief Return average sending delay.
+        ///
+        /// Method returns average sending delay. If no packets have been
+        /// sent for this exchange avg delay can't be calculated and
+        /// thus method throws exception.
+        ///
+        /// \throw isc::InvalidOperation if no packets for this exchange
+        /// have been sent yet.
+        /// \return average sending delay.
+        double getAvgSentDelay() const {
+            if (sent_packets_num_  == 0) {
+                isc_throw(InvalidOperation, "no packets sent");
+            }
+            return(sum_sent_delay_ / sent_packets_num_);
+        }
 
         /// \brief Return average packet delay.
         ///
@@ -557,11 +632,29 @@ public:
         /// \throw isc::InvalidOperation if no packets for this exchange
         /// have been received yet.
         /// \return average packet delay.
-        double getAvgDelay() const {
+        double getAvgRecvDelay() const {
             if (rcvd_packets_num_  == 0) {
                 isc_throw(InvalidOperation, "no packets received");
             }
-            return(sum_delay_ / rcvd_packets_num_);
+            return(sum_recv_delay_ / rcvd_packets_num_);
+        }
+
+        /// \brief Return standard deviation of sending delay.
+        ///
+        /// Method returns standard deviation of sending delay. If no
+        /// packets have been sent for this exchange, the standard
+        /// deviation can't be calculated and thus method throws
+        /// exception.
+        ///
+        /// \throw isc::InvalidOperation if number of sent packets
+        /// for the exchange is equal to zero.
+        /// \return standard deviation of sending delay.
+        double getStdDevSentDelay() const {
+            if (sent_packets_num_ == 0) {
+                isc_throw(InvalidOperation, "no packets sent");
+            }
+            return(sqrt(sum_sent_delay_squared_ / sent_packets_num_ -
+                        getAvgSentDelay() * getAvgSentDelay()));
         }
 
         /// \brief Return standard deviation of packet delay.
@@ -574,12 +667,12 @@ public:
         /// \throw isc::InvalidOperation if number of received packets
         /// for the exchange is equal to zero.
         /// \return standard deviation of packet delay.
-        double getStdDevDelay() const {
+        double getStdDevRecvDelay() const {
             if (rcvd_packets_num_ == 0) {
                 isc_throw(InvalidOperation, "no packets received");
             }
-            return(sqrt(sum_delay_squared_ / rcvd_packets_num_ -
-                        getAvgDelay() * getAvgDelay()));
+            return(sqrt(sum_recv_delay_squared_ / rcvd_packets_num_ -
+                        getAvgRecvDelay() * getAvgRecvDelay()));
         }
 
         /// \brief Return number of orphan packets.
@@ -688,6 +781,31 @@ public:
             //                 << "orphans: " << getOrphans() << endl;
         }
 
+        /// \brief Print sending delay statistics.
+        ///
+        /// Method prints sending delay statistics. Statistics
+        /// includes minimum sending delay, maximum sending delay, average
+        /// sending delay and standard deviation of delays. Sending delay
+        /// is a duration between the due time and the effective time in
+        /// sending queries.
+        void printSentStats() const {
+            using namespace std;
+            try {
+                cout << fixed << setprecision(3)
+                     << "min sending delay: " << getMinSentDelay() * 1e3
+                     << " ms" << endl
+                     << "avg sending delay: " << getAvgSentDelay() * 1e3
+                     << " ms" << endl
+                     << "max sending delay: " << getMaxSentDelay() * 1e3
+                     << " ms" << endl
+                     << "std deviation: " << getStdDevSentDelay() * 1e3
+                     << " ms"  << endl;
+            } catch (const Exception&) {
+                cout << "Sending delay summary unavailable! No packets sent."
+                     << endl;
+            }
+        }
+
         /// \brief Print round trip time packets statistics.
         ///
         /// Method prints round trip time packets statistics. Statistics
@@ -699,11 +817,14 @@ public:
             using namespace std;
             try {
                 cout << fixed << setprecision(3)
-                     << "min delay: " << getMinDelay() * 1e3 << " ms" << endl
-                     << "avg delay: " << getAvgDelay() * 1e3 << " ms" << endl
-                     << "max delay: " << getMaxDelay() * 1e3 << " ms" << endl
-                     << "std deviation: " << getStdDevDelay() * 1e3 << " ms"
+                     << "min delay: " << getMinRecvDelay() * 1e3 << " ms"
                      << endl
+                     << "avg delay: " << getAvgRecvDelay() * 1e3 << " ms"
+                     << endl
+                     << "max delay: " << getMaxRecvDelay() * 1e3 << " ms"
+                     << endl
+                     << "std deviation: " << getStdDevRecvDelay() * 1e3
+                     << " ms" << endl
                      << "collected packets: " << getCollectedNum() << endl;
             } catch (const Exception&) {
                 cout << "Delay summary unavailable! No packets received." << endl;
@@ -790,7 +911,7 @@ public:
         /// \param it iterator pointing to packet to be erased.
         /// \return iterator pointing to packet following erased
         /// packet or sent_packets_.end() if packet not found.
-         PktListIterator eraseSent(const PktListIterator it) {
+        PktListIterator eraseSent(const PktListIterator it) {
              if (archive_enabled_) {
                  // We don't want to keep list of all sent packets
                  // because it will affect packet lookup performance.
@@ -837,14 +958,19 @@ public:
         /// before packet is assumed dropped.
         double drop_time_;
 
-        double min_delay_;             ///< Minimum delay between sent
-                                       ///< and received packets.
-        double max_delay_;             ///< Maximum delay between sent
-                                       ///< and received packets.
-        double sum_delay_;             ///< Sum of delays between sent
-                                       ///< and received packets.
-        double sum_delay_squared_;     ///< Squared sum of delays between
-                                       ///< sent and received packets.
+        double min_sent_delay_;         ///< Minimum delay in sending.
+        double max_sent_delay_;         ///< Maximum delay in sending.
+        double sum_sent_delay_;         ///< Sum of delays in sending.
+        double sum_sent_delay_squared_; ///< Squared sum of delays in sending.
+
+        double min_recv_delay_;         ///< Minimum delay between sent
+                                        ///< and received packets.
+        double max_recv_delay_;         ///< Maximum delay between sent
+                                        ///< and received packets.
+        double sum_recv_delay_;         ///< Sum of delays between sent
+                                        ///< and received packets.
+        double sum_recv_delay_squared_; ///< Squared sum of delays between
+                                        ///< sent and received packets.
 
         uint64_t orphans_;   ///< Number of orphan received packets.
 
@@ -1010,6 +1136,17 @@ public:
         xchg_stats->appendSent(packet);
     }
 
+    /// \brief Register sent times.
+    ///
+    /// \param due due time.
+    /// \param effective effective time.
+    void passSentTimes(const ExchangeType xchg_type,
+                       const boost::posix_time::ptime due,
+                       const boost::posix_time::ptime effective) {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        xchg_stats->updateSentDelays(due, effective);
+    }
+
     /// \brief Add new received packet and match with sent packet.
     ///
     /// Method adds new packet to the list of received packets. It
@@ -1031,12 +1168,25 @@ public:
             = xchg_stats->matchPackets(packet);
 
         if (sent_packet) {
-            xchg_stats->updateDelays(sent_packet, packet);
+            xchg_stats->updateRecvDelays(sent_packet, packet);
             if (archive_enabled_) {
                 xchg_stats->appendRcvd(packet);
             }
         }
         return(sent_packet);
+    }
+
+    /// \brief Return minimum delay between due and effective send.
+    ///
+    /// Method returns minimum delay between due and effective send
+    /// for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return minimum delay in send.
+    double getMinSentDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getMinSentDelay());
     }
 
     /// \brief Return minimum delay between sent and received packet.
@@ -1047,9 +1197,22 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return minimum delay between packets.
-    double getMinDelay(const ExchangeType xchg_type) const {
+    double getMinRecvDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return(xchg_stats->getMinDelay());
+        return(xchg_stats->getMinRecvDelay());
+    }
+
+    /// \brief Return maximum delay between due and effective send.
+    ///
+    /// Method returns maximum delay between due and effective send
+    /// for specified exchange type.
+    ///
+    /// \param xchg_type exchange type.
+    /// \throw isc::BadValue if invalid exchange type specified.
+    /// \return maximum delay in send.
+    double getMaxSentDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getMaxSentDelay());
     }
 
     /// \brief Return maximum delay between sent and received packet.
@@ -1060,9 +1223,20 @@ public:
     /// \param xchg_type exchange type.
     /// \throw isc::BadValue if invalid exchange type specified.
     /// \return maximum delay between packets.
-    double getMaxDelay(const ExchangeType xchg_type) const {
+    double getMaxRecvDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return(xchg_stats->getMaxDelay());
+        return(xchg_stats->getMaxRecvDelay());
+    }
+
+    /// \brief Return average sending delay.
+    ///
+    /// Method returns average sending delay for specified
+    /// exchange type.
+    ///
+    /// \return average sending delay.
+    double getAvgSentDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getAvgSentDelay());
     }
 
     /// \brief Return average packet delay.
@@ -1071,9 +1245,20 @@ public:
     /// exchange type.
     ///
     /// \return average packet delay.
-    double getAvgDelay(const ExchangeType xchg_type) const {
+    double getAvgRecvDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return(xchg_stats->getAvgDelay());
+        return(xchg_stats->getAvgRecvDelay());
+    }
+
+    /// \brief Return standard deviation of sending delay.
+    ///
+    /// Method returns standard deviation of sending delay
+    /// for specified exchange type.
+    ///
+    /// \return standard deviation of sending delay.
+    double getStdDevSentDelay(const ExchangeType xchg_type) const {
+        ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
+        return(xchg_stats->getStdDevSentDelay());
     }
 
     /// \brief Return standard deviation of packet delay.
@@ -1082,9 +1267,9 @@ public:
     /// for specified exchange type.
     ///
     /// \return standard deviation of packet delay.
-    double getStdDevDelay(const ExchangeType xchg_type) const {
+    double getStdDevRecvDelay(const ExchangeType xchg_type) const {
         ExchangeStatsPtr xchg_stats = getExchangeStats(xchg_type);
-        return(xchg_stats->getStdDevDelay());
+        return(xchg_stats->getStdDevRecvDelay());
     }
 
     /// \brief Return number of orphan packets.
@@ -1252,6 +1437,10 @@ public:
     /// - average packets delay,
     /// - maximum packets delay,
     /// - standard deviation of packets delay.
+    /// - minimum sending delay,
+    /// - average sending delay,
+    /// - maximum sending delay
+    /// - standard deviation of sending delay.
     ///
     /// \throw isc::InvalidOperation if no exchange type added to
     /// track statistics.
@@ -1269,6 +1458,8 @@ public:
             xchg_stats->printMainStats();
             std::cout << std::endl;
             xchg_stats->printRTTStats();
+            std::cout << std::endl;
+            xchg_stats->printSentStats();
             std::cout << std::endl;
         }
     }
