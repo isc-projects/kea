@@ -502,6 +502,19 @@ The default value for MySQL and Postgres is 0, which disables automatic recovery
 causes the server to exit immediately upon detecting the loss of connectivity.
 The default value for Cassandra is 2000 ms.
   </para>
+
+  <note>
+    <para>
+      Automatic reconnect to database backends is configured individually per backend.
+      This allows you to tailor the recovery parameters to the each backend you use.
+      We do suggest that you either enable it for all backends or no backends so you
+      have consistent behavior.  Losing connectivity to a backend for which reconnect
+      is disabled will result in the server shutting itself down. This includes the
+      cases when lease database backend and hosts database backend is connected to
+      the same database instance.
+    </para>
+  </note>
+
   <para>
     Note that host parameter is used by MySQL and PostgreSQL
     backends. Cassandra has a concept of contact points that could be
@@ -610,16 +623,17 @@ causes the server to exit immediately upon detecting the loss of connectivity.
 The default value for Cassandra is 2000 ms.
   </para>
 
-  <warning>
-    <para>
-      Current Kea release has a flaw whereby the values of <command>reconnect-wait-time</command>
-      and <command>max-reconnect-tries</command> specified in the <command>lease-database</command>
-      override the setting of those parameters in the <command>hosts-database</command>. The
-      parameters specified within the <command>hosts-database</command> are only effective
-      when <command>memfile</command> is used as a lease database backend. This behavior will
-      be corrected in the future releases of Kea.
-    </para>
-  </warning>
+    <note>
+      <para>
+        Automatic reconnect to database backends is configured individually per backend.
+        This allows you to tailor the recovery parameters to the each backend you use.
+        We do suggest that you either enable it for all backends or no backends so you
+        have consistent behavior.  Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes the
+        cases when lease database backend and hosts database backend is connected to
+        the same database instance.
+      </para>
+    </note>
 
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
