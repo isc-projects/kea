@@ -1,3 +1,8 @@
+1499.	[func]		tmark
+	For Kea 1.5.0, congestion handling has been disabled by
+	default.
+	(Gitlab #277,!164, git 8d87c46a3cc7b7be4dd5f751b48449e92ee62d84)
+
 1498.	[bug]		marcin
 	Corrected behavior of the DHCP servers with respect to the
 	"reconnect-wait-time" parameter setting. This parameter is
