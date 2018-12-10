@@ -1,3 +1,10 @@
+1498.	[bug]		marcin
+	Corrected behavior of the DHCP servers with respect to the
+	"reconnect-wait-time" parameter setting. This parameter is
+	specified in milliseconds, but the servers used to interpret
+	it as specified in seconds.
+	(Gitlab #173,!154, git 377f49e84ad6ebc91cbeac4116d24a15571c522d)
+
 1497.	[func]		fdupont
 	All YANG modules now have a revision specified. When starting,
 	kea-netconf daemon will now check if the required modules are
