@@ -108,12 +108,16 @@ RateControl::updateSendDue() {
         send_due_ = start_time_ +
             time_duration(0, 0, static_cast<long>(seconds),
                           static_cast<long>(fracts));
-    }
-
-    if (send_due_ > currentTime()) {
-        late_sent_ = true;
-    } else {
-        late_sent_ = false;
+        // Compute the time of the last due.
+        offset = 1. / getRate();
+        fracts = offset * time_duration::ticks_per_second();
+        boost::posix_time::ptime last_due =
+            send_due_ - time_duration(0, 0, 0, static_cast<long>(fracts));
+        if (last_due > currentTime()) {
+            late_sent_ = true;
+        } else {
+            late_sent_ = false;
+        }
     }
 }
 
