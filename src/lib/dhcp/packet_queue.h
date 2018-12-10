@@ -41,8 +41,11 @@ enum class QueueEnd {
 /// This class serves as the abstract interface for packet queue
 /// implementations which may be used by @c IfaceMgr to store
 /// inbound packets until they are a dequeued for processing.
-/// @note Derivations of this class MUST BE thread-safe.
 ///
+/// @tparam PacktTypePtr Type of packet the queue contains.
+/// This expected to be either isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr
+///
+/// @note Derivations of this class MUST BE thread-safe.
 template<typename PacketTypePtr>
 class PacketQueue {
 public:

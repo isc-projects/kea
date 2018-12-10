@@ -18,7 +18,10 @@ namespace isc {
 
 namespace dhcp {
 
-/// @brief Provides an abstract ring-buffer implementation of the PacketQueue interface.
+/// @brief Provides a ring-buffer implementation of the PacketQueue interface.
+///
+/// @tparam PacktTypePtr Type of packet the queue contains.
+/// This expected to be either isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr
 template<typename PacketTypePtr>
 class PacketQueueRing : public PacketQueue<PacketTypePtr> {
 public:
@@ -66,11 +69,11 @@ public:
     /// @brief Determines if a packet should be discarded.
     ///
     /// This function is called in @c enqueuePackets for each packet
-    /// in its packet list. It provides an opportunity to examine the 
+    /// in its packet list. It provides an opportunity to examine the
     /// packet and its source and decide whether it should be dropped
-    /// or added to the queue. Derivations are expected to provide 
-    /// implementations based on their own requirements.  Bear in mind 
-    /// that the packet has NOT been unpacked at this point. The default 
+    /// or added to the queue. Derivations are expected to provide
+    /// implementations based on their own requirements.  Bear in mind
+    /// that the packet has NOT been unpacked at this point. The default
     /// implementation simply returns false (i.e. keep the packet).
     ///
     /// @return true if the packet should be dropped, false if it should be
