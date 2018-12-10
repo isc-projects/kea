@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,7 +27,7 @@ namespace perfdhcp {
 /// The purpose of the RateControl class is to track the due time for
 /// sending next message (or bunch of messages) to keep outbound rate
 /// of particular messages at the desired level. The due time is calculated
-/// using the desired rate value and the timestamp when the last message of
+/// using the desired rate value and the number of messages of
 /// the particular type has been sent. That puts the responsibility on the
 /// \c TestControl class to invoke the \c RateControl::updateSendDue, every
 /// time the message is sent.
@@ -128,7 +128,8 @@ public:
     /// constitutes the new due time.
     void setRelativeDue(const int offset);
 
-    /// \brief Sets the timestamp of the last sent message to current time.
+    /// \brief Sets the timestamp of the last sent message to current time
+    /// and increment the sent counter.
     void updateSendTime();
 
 protected:
@@ -141,17 +142,23 @@ protected:
     /// \brief Calculates the send due.
     ///
     /// This function calculates the send due timestamp using the current time
-    /// and desired rate. The due timestamp is calculated as a sum of the
+    /// and desired rate. The due timestamp was calculated as a sum of the
     /// timestamp when the last message was sent and the reciprocal of the rate
     /// in micro or nanoseconds (depending on the timer resolution). If the rate
     /// is not specified, the duration between two consecutive sends is one
     /// timer tick.
+    /// The way the due timestamp is calculated was fixed to not accumulate
+    /// delays and to provide the derised rate when possible: now it uses
+    /// the start timestamp, the desired not zero rate and the number of
+    /// already sent packets.
     void updateSendDue();
 
     /// \brief Holds a timestamp when the next message should be sent.
     boost::posix_time::ptime send_due_;
 
     /// \brief Holds a timestamp when the last message was sent.
+    ///
+    /// Was used to compute send_due_ for rate != 0.
     boost::posix_time::ptime last_sent_;
 
     /// \brief Holds an aggressivity value.
@@ -164,10 +171,11 @@ protected:
     /// past.
     bool late_sent_;
 
+    /// \brief Holds the timestamp when it started.
     boost::posix_time::ptime start_time_;
 
+    /// \brief Holds the number of packets already sent.
     uint64_t sent_;
-
 };
 
 }
