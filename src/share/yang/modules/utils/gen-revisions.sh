@@ -5,7 +5,12 @@
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-# Build module / revision table:
+# Build module / revision table
+#
+# This developer script builds the module / revision table, i.e. fill
+# the content of the src/lib/yang/yang_revisions.h as explained in
+# src/lib/yang/yang_revisions.h.skel
+# The keatest-module entry is enabled only when KEATEST_MODULE is defined.
 
 test=keatest-module*.yang
 last=kea-dhcp-ddns*.yang

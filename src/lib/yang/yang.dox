@@ -115,7 +115,9 @@ For details, see Section 20 "YANG/NETCONF support" in the Kea User's Guide.
 You also need to install YANG schemas, so the unit-tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
 There are several production Kea models (src/share/yang/modules/kea*.yang)
-and one test specific model (src/share/yang/modules/keatest-module*.yang).
+and one test specific model (src/share/yang/modules/keatest-module*.yang)
+which is only required if you want to run Kea unit tests, i.e. it is not
+used in production.
 
 To install the test module, issue the following command:
 
