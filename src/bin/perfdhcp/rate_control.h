@@ -57,6 +57,11 @@ public:
         return (send_due_);
     }
 
+    /// \brief Returns time the last message was sent.
+    boost::posix_time::ptime getLast() const {
+        return (last_sent_);
+    }
+
     /// \brief Returns number of messages to be sent "now".
     ///
     /// This function calculates how many messages of the given type should
@@ -132,13 +137,6 @@ public:
     /// and increment the sent counter.
     void updateSendTime();
 
-protected:
-
-    /// \brief Convenience function returning current time.
-    ///
-    /// \return current time.
-    static boost::posix_time::ptime currentTime();
-
     /// \brief Calculates the send due.
     ///
     /// This function calculates the send due timestamp using the current time
@@ -152,6 +150,13 @@ protected:
     /// the start timestamp, the desired not zero rate and the number of
     /// already sent packets.
     void updateSendDue();
+
+protected:
+
+    /// \brief Convenience function returning current time.
+    ///
+    /// \return current time.
+    static boost::posix_time::ptime currentTime();
 
     /// \brief Holds a timestamp when the next message should be sent.
     boost::posix_time::ptime send_due_;

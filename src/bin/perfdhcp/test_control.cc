@@ -941,6 +941,10 @@ TestControl::sendPackets(const TestControlSocket& socket,
                          const bool preload /* = false */) {
     CommandOptions& options = CommandOptions::instance();
     for (uint64_t i = packets_num; i > 0; --i) {
+        // A packet was sent so get the next packet due time.
+        if (packets_num > i) {
+            basic_rate_control_.updateSendDue();
+        }
         if (options.getIpVersion() == 4) {
             // No template packets means that no -T option was specified.
             // We have to build packets ourselves.
@@ -1729,6 +1733,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
                       "hasn't been initialized");
         }
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+        stats_mgr4_->passSentTimes(StatsMgr4::XCHG_DO,
+                                   basic_rate_control_.getDue(),
+                                   basic_rate_control_.getLast());
     }
     saveFirstPacket(pkt4);
 }
@@ -1783,6 +1790,9 @@ TestControl::sendDiscover4(const TestControlSocket& socket,
         // Update packet stats.
         stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
                                     boost::static_pointer_cast<Pkt4>(pkt4));
+        stats_mgr4_->passSentTimes(StatsMgr4::XCHG_DO,
+                                   basic_rate_control_.getDue(),
+                                   basic_rate_control_.getLast());
     }
     saveFirstPacket(pkt4);
 }
@@ -2259,6 +2269,9 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
                       "hasn't been initialized");
         }
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        stats_mgr6_->passSentTimes(StatsMgr6::XCHG_SA,
+                                   basic_rate_control_.getDue(),
+                                   basic_rate_control_.getLast());
     }
 
     saveFirstPacket(pkt6);
@@ -2311,6 +2324,9 @@ TestControl::sendSolicit6(const TestControlSocket& socket,
         }
         // Update packet stats.
         stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        stats_mgr6_->passSentTimes(StatsMgr6::XCHG_SA,
+                                   basic_rate_control_.getDue(),
+                                   basic_rate_control_.getLast());
     }
     saveFirstPacket(pkt6);
 }
