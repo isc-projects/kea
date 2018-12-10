@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,8 @@ public:
     using RateControl::send_due_;
     using RateControl::last_sent_;
     using RateControl::late_sent_;
-
+    using RateControl::start_time_;
+    using RateControl::sent_;
 };
 
 // Test default constructor.
@@ -127,19 +128,14 @@ TEST(RateControl, getOutboundMessageCount) {
     // rate.  The aggressivity is set high enough so that it will not restrict
     // the calculated count.
     NakedRateControl rc1(1000, 1000000);
-    // Set the timestamp of the last sent message well to the past. The
-    // resulting due time will be in the past too.  A fractional number of
-    // seconds is used to check the floating point arithmetic performed inside
-    // the RateControl class.
-    rc1.last_sent_ =
+    // Set the start time well to the past.
+    rc1.start_time_ =
         NakedRateControl::currentTime() - boost::posix_time::seconds(5) -
         boost::posix_time::milliseconds(250);
     // The number of messages to be sent must be roughly equal to the time
-    // between the last sent message and the current time multiplied by the
-    // rate.  ("Roughly", as current time is advancing, so the actual interval
-    // when the measurement is made may be different from the interval set.) The
-    // margin in this test is reasonably generous, allowing for a timing error
-    // of around 10ms.
+    // since started multiplied by the rate.
+    // The margin in this test is reasonably generous, allowing for a timing
+    // error of around 10ms.
     uint64_t count = 0;
     ASSERT_NO_THROW(count = rc1.getOutboundMessageCount());
     EXPECT_TRUE((count >= 5240) && (count <= 5260)) <<
@@ -147,7 +143,7 @@ TEST(RateControl, getOutboundMessageCount) {
 
     // Check that the aggressivity limits the count of messages.
     NakedRateControl rc2(1000, 3500);
-    rc2.last_sent_ =
+    rc2.start_time_ =
         NakedRateControl::currentTime() - boost::posix_time::seconds(5) -
         boost::posix_time::milliseconds(250);
     ASSERT_NO_THROW(count = rc2.getOutboundMessageCount());
@@ -161,12 +157,12 @@ TEST(RateControl, getOutboundMessageCount) {
     ASSERT_NO_THROW(count = rc3.getOutboundMessageCount());
     EXPECT_EQ(3, count);
 
-    // Specify the rate and set the timestamp of the last sent message well
-    // to the future. If the resulting due time is well in the future too,
-    // the number of messages to be sent must be 0.
+    // Specify the rate and set the sent counter so next message is due well
+    // to the future: the number of messages to be sent must be 0.
     NakedRateControl rc4(10, 3);
     rc4.last_sent_ = NakedRateControl::currentTime() +
         boost::posix_time::seconds(5);
+    rc4.sent_ = 6000;
     ASSERT_NO_THROW(count = rc4.getOutboundMessageCount());
     EXPECT_EQ(0, count);
 
@@ -186,28 +182,6 @@ TEST(RateControl, setRate) {
     EXPECT_NO_THROW(rc.setRate(1));
     EXPECT_NO_THROW(rc.setRate(0));
     EXPECT_THROW(rc.setRate(-1), isc::BadValue);
-}
-
-// Test the function which calculates the due time to send next set of
-// messages.
-TEST(RateControl, updateSendDue) {
-    NakedRateControl rc;
-    // Set the send due timestamp to the value which is well in the future.
-    // If we don't hit the due time, the function should not modify the
-    // due time.
-    rc.send_due_ =
-        NakedRateControl::currentTime() + boost::posix_time::seconds(10);
-    boost::posix_time::ptime last_send_due = rc.send_due_;
-    ASSERT_NO_THROW(rc.updateSendDue());
-    EXPECT_TRUE(rc.send_due_ == last_send_due);
-    // Set the due time to the value which is already behind.
-    rc.send_due_ =
-        NakedRateControl::currentTime() - boost::posix_time::seconds(10);
-    last_send_due = rc.send_due_;
-    ASSERT_NO_THROW(rc.updateSendDue());
-    // The value should be modified to the new value.
-    EXPECT_TRUE(rc.send_due_ > last_send_due);
-
 }
 
 // Test that the message send time is updated to the current time.
