@@ -1,3 +1,10 @@
+1497.	[func]		fdupont
+	All YANG modules now have a revision specified. When starting,
+	kea-netconf daemon will now check if the required modules are
+	installed and have a proper revision. This should help spotting
+	issues when migrating from older YANG modules.
+	(Gitlab #204,!121, git 9e772e1472e073ee85924cfc706cb57a5e70a0b1)
+
 1496.	[doc]		marcin
 	Updated Kea documentation to reference RFC 8415, which is the
 	new DHCPv6 specification. It obsoletes a number of RFCs:
