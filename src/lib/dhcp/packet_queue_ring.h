@@ -20,7 +20,7 @@ namespace dhcp {
 
 /// @brief Provides a ring-buffer implementation of the PacketQueue interface.
 ///
-/// @tparam PacktTypePtr Type of packet the queue contains.
+/// @tparam PacketTypePtr Type of packet the queue contains.
 /// This expected to be either isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr
 template<typename PacketTypePtr>
 class PacketQueueRing : public PacketQueue<PacketTypePtr> {

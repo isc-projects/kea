@@ -42,7 +42,7 @@ enum class QueueEnd {
 /// implementations which may be used by @c IfaceMgr to store
 /// inbound packets until they are a dequeued for processing.
 ///
-/// @tparam PacktTypePtr Type of packet the queue contains.
+/// @tparam PacketTypePtr Type of packet the queue contains.
 /// This expected to be either isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr
 ///
 /// @note Derivations of this class MUST BE thread-safe.
