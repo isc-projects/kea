@@ -151,7 +151,7 @@ Those models depend on the following modules:
  - kea-logging
  - kea-dhcp-types
 
-Those models are extracted from the IETF DHCPv6 YNAG draft too:
+Those modules are extracted from the IETF DHCPv6 YANG draft too:
  - ietf-dhcpv6-client
  - ietf-dhcpv6-relay
 
