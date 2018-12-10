@@ -1,4 +1,10 @@
-1500	[func,doc]		tmark
+1501.	[func]		fdupont
+	keactrl now supports kea-netconf. The new daemon is disabled by
+	default. Please edit keactrl.conf (netconf=yes) if you want to
+	start using it.
+	(Gitlab #186,!163, git 8f7d556456891e7c675082f7e6cc88da71a92fee)
+
+1500	[func, doc]	tmark
 	Streamlined the isc::dhcp::PacketQueue interface and
 	added a section on Congestion Handling to the developer's guide.
 	(Gitlab #278,!162, git 0ce615f5da993ac90f675c5315ba7cb5c2ef3e1c)
