@@ -6,8 +6,10 @@
 // do. Comments in this configuration file sometimes refer to sections for more
 // details. These are section numbers in Kea User's Guide. The version matching
 // your software should come with your Kea package, but it is also available
-// in ISC's Knowledgebase (https://kb.isc.org/docs/kea-administrator-reference-manual; the direct link for
-// the stable version is https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
+// in ISC's Knowledgebase
+// (https://kb.isc.org/docs/kea-administrator-reference-manual;
+// the direct link for the stable version is
+// https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html).
 //
 // This configuration file contains only Netconf's configuration.
 // If configurations for other Kea services are also included in this file they
@@ -37,20 +39,20 @@
                 "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
             }
         }
-    },
+    }
 
     // Specify hooks libraries that are attached to the Netconf agent.
     // Note currently there is no defined hook points to attach to.
     // This is currently commented out because it has to point to the
-    // existing hooks library. Otherwise the Netconf agent will fail to start.
-    "hooks-libraries": [
+    // existing hooks library or the Netconf agent will fail to start.
+//  "hooks-libraries": [
 //  {
 //      "library": "/opt/local/netconf-commands.so",
 //      "parameters": {
 //          "param1": "foo"
 //      }
 //  }
-    ]
+//  ]
 },
 
 // Logging configuration starts here. Kea uses different loggers to log various
