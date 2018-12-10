@@ -1,3 +1,8 @@
+1500	[func,doc]		tmark
+	Streamlined the isc::dhcp::PacketQueue interface and
+	added a section on Congestion Handling to the developer's guide.
+	(Gitlab #278,!162, git 0ce615f5da993ac90f675c5315ba7cb5c2ef3e1c)
+
 1499.	[func]		tmark
 	For Kea 1.5.0, congestion handling has been disabled by
 	default.
