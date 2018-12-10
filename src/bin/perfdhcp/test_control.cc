@@ -1678,7 +1678,9 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
+    if (!preload) {
+        basic_rate_control_.updateSendTime();
+    }
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
@@ -1729,7 +1731,9 @@ void
 TestControl::sendDiscover4(const TestControlSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
-    basic_rate_control_.updateSendTime();
+    if (!preload) {
+        basic_rate_control_.updateSendTime();
+    }
     // Get the first argument if multiple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
     const uint8_t arg_idx = 0;
@@ -2203,7 +2207,9 @@ TestControl::sendRequest6(const TestControlSocket& socket,
 void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
+    if (!preload) {
+        basic_rate_control_.updateSendTime();
+    }
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
@@ -2256,7 +2262,9 @@ void
 TestControl::sendSolicit6(const TestControlSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
-    basic_rate_control_.updateSendTime();
+    if (!preload) {
+        basic_rate_control_.updateSendTime();
+    }
     const int arg_idx = 0;
     // Get transaction id offset.
     size_t transid_offset = getTransactionIdOffset(arg_idx);
