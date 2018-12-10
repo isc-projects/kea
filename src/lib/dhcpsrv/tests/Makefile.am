@@ -84,7 +84,6 @@ libdhcpsrv_unittests_SOURCES += csv_lease_file4_unittest.cc
 libdhcpsrv_unittests_SOURCES += csv_lease_file6_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
-libdhcpsrv_unittests_SOURCES += database_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_queue_control_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
