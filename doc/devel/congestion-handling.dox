@@ -6,7 +6,7 @@
 
 /**
 
-@page congestionHandling Congestion Handling in Kea DHCP4/DHCP6
+@page congestionHandling Congestion Handling in Kea DHCP Servers
 
 @section background What is Congestion?
 Congestion occurs when servers are subjected to client queries
@@ -27,12 +27,12 @@ simultaneously need leases such as recovery after a network outage.
 
 @section introduction Congestion Handling Overview
 
-Kea 1.5 introduces a new feature referred to as Congestion Handling. The
+Kea 1.5.0 introduces a new feature referred to as Congestion Handling. The
 goal of Congestion Handling is to help the servers mitigate the peak
 in traffic by fulfilling as many of the most relevant requests as possible
 until it subsides.
 
-Prior to Kea 1.5, kea-dhcp4 and kea-dhcp6 read inbound packets directly
+Prior to Kea 1.5.0, Kea DHCP servers read inbound packets directly
 from the interface sockets in the main application thread.  This meant that
 packets waiting to be processed were held in socket buffers themselves. Once
 these buffers fill any new packets are discarded. Under swamped conditions
@@ -43,12 +43,12 @@ the FIFO socket buffers become increasingly stale.
 Congestion Handling offers the ability to configure the server to use a
 separate thread to read packets from the interface socket buffers. As the
 thread reads packets from the buffers they are added to an internal "packet
-queue". The server's main application thread process packets from this queue
+queue". The server's main application thread processes packets from this queue
 rather than the socket buffers.  By structuring it this way, we've introduced
 a configurable layer which can make decisions on which packets to process,
 how to store them, and the order in which they are processed by the server.
 
-The default packet queue implementation for both kea-dhcp4 and kea-dhcp6
+The default packet queue implementation for both Kea DHCPv4 and DHCPv6 servers
 is a simple ring buffer.  Once it reaches capacity, new packets get added to
 the back of queue by discarding packets from the front of queue.  Rather than
 always discarding the newest packets, we now always discard the oldest
@@ -87,7 +87,7 @@ chapter for DHCPv6.
 The two primary functions of interest are:
 
 -# isc::dhcp::PacketQueue::enqueuePacket() - This function is invoked by
-the receiver thread each time a packet has been read from a interface
+the receiver thread each time a packet has been read from an interface
 socket buffer and should be added to the queue.  It is passed a pointer to
 the unpacked client packet (isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr), and
 a reference to the isc::dhcp::SocketInfo describing the interface socket
@@ -116,8 +116,8 @@ isc::util::thread::Mutex::Locker).
 
 -# Its efficiency (or lack thereof) will have a direct impact on server
 performance.  You will have to consider the dynamics of your deployment
-to determine where the trade-off between the volume of packets responded
-to versus preferring to respond to some subset of those packets lies.
+to determine where the trade-off lies between the volume of packets responded
+to and preferring to respond to some subset of those packets.
 
     @subsection packet-queue-derivation-factory Defining a Factory
 
@@ -160,7 +160,7 @@ to construct a queue instance.
 
     @subsection packet-queue-derivation-example An Example
 
-Let's suppose you wish develop a queue for DHCPv4 and your implementation
+Let's suppose you wish to develop a queue for DHCPv4 and your implementation
 requires two configurable parameters: capacity and threshold.  Your class
 declaration might look something like this:
 
@@ -293,7 +293,7 @@ to look something like this:
     "hooks-libraries": [
     {
         # Loading your hook library!
-        "library": "/somepath/lib//libyour_packet_queue.so"
+        "library": "/somepath/lib/libyour_packet_queue.so"
     }
 
     # any other hook libs
@@ -431,7 +431,7 @@ Server configuration for kea-dhcp6:
     "hooks-libraries": [
     {
         # Loading your hook library!
-        "library": "/somepath/lib//libyour_packet_queue.so"
+        "library": "/somepath/lib/libyour_packet_queue.so"
     }
 
     # any other hook libs
