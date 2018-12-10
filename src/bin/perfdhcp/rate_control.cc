@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -87,31 +87,27 @@ RateControl::currentTime() {
 
 void
 RateControl::updateSendDue() {
-    // There is no sense to update due time if the current due time is in the
-    // future. The due time is calculated as a duration between the moment
-    // when the last message of the given type was sent and the time when
-    // next one is supposed to be sent based on a given rate. The former value
-    // will not change until we send the next message, which we don't do
-    // until we reach the due time.
-    if (send_due_ > currentTime()) {
-        return;
-    }
-    // This is initialized in the class constructor, so if it is not initialized
-    // it is a programmatic error.
-    if (last_sent_.is_not_a_date_time()) {
-        isc_throw(isc::Unexpected, "timestamp of the last sent packet not"
-                  " initialized");
-    }
     if (getRate() == 0) {
-	// If rate was not specified we will wait just one clock tick to
-	// send next packet. This simulates best effort conditions.
-	long duration = 1;
-	send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
+        // This is initialized in the class constructor, so if it is
+        // not initialized it is a programmatic error.
+        if (last_sent_.is_not_a_date_time()) {
+            isc_throw(isc::Unexpected, "timestamp of the last sent packet not"
+                      " initialized");
+        }
+        // If rate was not specified we will wait just one clock tick to
+        // send next packet. This simulates best effort conditions.
+        long duration = 1;
+        send_due_ = last_sent_ + time_duration(0, 0, 0, duration);
     } else {
-	double offset = (double)(sent_ + 1) / (double)getRate();
-	boost::posix_time::time_duration duration =
-	    microseconds((long)(offset * 1000000.));
-	send_due_ = start_time_ + duration;
+        // New way to compute the due time from the start time,
+        // the number of sent packets and the wanted rate.
+        double offset = static_cast<double>(sent_ + 1) / getRate();
+        double seconds;
+        double fracts =
+            modf(offset, &seconds) * time_duration::ticks_per_second();
+        send_due_ = start_time_ +
+            time_duration(0, 0, static_cast<long>(seconds),
+                          static_cast<long>(fracts));
     }
 
     if (send_due_ > currentTime()) {
