@@ -1435,7 +1435,7 @@ $
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://oldkea.isc.org/wiki/ControlAPIRequirements">Control API
+<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands">Control API
 Requirements </link> document.</para>
 
         <para>
