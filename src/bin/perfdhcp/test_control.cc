@@ -1535,7 +1535,9 @@ TestControl::run() {
         // Calculate number of packets to be sent to stay
         // catch up with rate.
         uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
-        checkLateMessages(basic_rate_control_);
+        if (packets_due > 0) {
+            checkLateMessages(basic_rate_control_);
+        }
         if ((packets_due == 0) && testDiags('i')) {
             if (options.getIpVersion() == 4) {
                 stats_mgr4_->incrementCounter("shortwait");
@@ -1555,7 +1557,7 @@ TestControl::run() {
             break;
         }
 
-        if (!hasLateExitCommenced()) {
+        if ((packets_due > 0) && !hasLateExitCommenced()) {
             // Initiate new DHCP packet exchanges.
             sendPackets(socket, packets_due);
         }
@@ -1565,7 +1567,9 @@ TestControl::run() {
         if (options.getRenewRate() != 0) {
             uint64_t renew_packets_due =
                 renew_rate_control_.getOutboundMessageCount();
-            checkLateMessages(renew_rate_control_);
+            if (renew_packets_due > 0) {
+                checkLateMessages(renew_rate_control_);
+            }
 
             // Send multiple renews to satisfy the desired rate.
             if (options.getIpVersion() == 4) {
@@ -1580,7 +1584,9 @@ TestControl::run() {
         if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
             uint64_t release_packets_due =
                 release_rate_control_.getOutboundMessageCount();
-            checkLateMessages(release_rate_control_);
+            if (release_packets_due > 0) {
+                checkLateMessages(release_rate_control_);
+            }
             // Send Release messages.
             sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
         }
