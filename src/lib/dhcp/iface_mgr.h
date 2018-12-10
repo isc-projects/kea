@@ -1255,12 +1255,6 @@ protected:
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
 
-    /// Length of the control_buf_ array
-    size_t control_buf_len_;
-
-    /// Control-buffer, used in transmission and reception.
-    boost::scoped_array<char> control_buf_;
-
 private:
     /// @brief Identifies local network address to be used to
     /// connect to remote address.
