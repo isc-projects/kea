@@ -76,7 +76,7 @@ isc::dhcp::PacketQueue.  The class is almost entirely abstract and
 deliberately brief to provide developers wide latitude in the internals
 of their solutions.
 
-The template argument, PacketTypePtr, is expected to be either
+The template argument, @c PacketTypePtr, is expected to be either
 isc::dhcp::Pkt4Ptr or isc::dhcp::Pkt6Ptr, depending upon which
 protocol the implementation will handle.  Please note that the
 while following text and examples largely focus on DHCPv4 out
@@ -107,7 +107,7 @@ The remaining functions that you'll need to implement are self-explanatory.
 How your actual "queue" is implemented is entirely up to you.  Kea's default
 implementation using a ring buffer based on Boost's boost::circular_buffer
 (please refer to isc::dhcp::PacketQueueRing, isc::dhcp::PacketQueueRing4 and
-isc::dhcpPacketQueueRing6).  The most critical aspects to remember when
+isc::dhcp::PacketQueueRing6).  The most critical aspects to remember when
 developing your implementation are:
 
 -# It MUST be thread safe since queuing and dequeing packets are done by
@@ -277,7 +277,7 @@ int unload() {
 }
 @endcode
 
-@subsection packet-queue-factory Configuring Kea to use Your PacketQueue<>
+@subsection packet-queue-factory Configuring Kea to use YourPacketQueue4
 
 You're almost there.  You developed your implementation, you've unit tested it
 (You did unit test it right?).  Now you just have to tell Kea to load it and
