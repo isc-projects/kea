@@ -323,7 +323,7 @@ TEST_F(NetconfAgentTest, initSysrepo) {
     EXPECT_TRUE(agent_->running_sess_);
     EXPECT_EQ(1, agent_->subscriptions_.size());
     EXPECT_LE(16, agent_->modules_.size());
-    // No way to check the module_install callback (BTW is ther
+    // No way to check the module_install callback (BTW is there
     // an API to install modules? If none only system tests can
     // do something)...
 }
@@ -346,7 +346,7 @@ TEST_F(NetconfAgentLogTest, checkModule) {
     // Unknown module should emit a missing error.
     EXPECT_EQ(0, agent_->modules_.count("does-not-exist"));
     EXPECT_FALSE(agent_->checkModule("does-not-exist"));
-    addString("METCONF_MODULE_MISSING_ERR Missing essential module "
+    addString("NETCONF_MODULE_MISSING_ERR Missing essential module "
               "does-not-exist in sysrepo");
 
     // Patch the found revision to get a revision error.
@@ -360,7 +360,7 @@ TEST_F(NetconfAgentLogTest, checkModule) {
     agent_->modules_.insert(make_pair(module, bad_revision));
     EXPECT_FALSE(agent_->checkModule(module));
     ostringstream msg;
-    msg << "METCONF_MODULE_REVISION_ERR Essential module " << module
+    msg << "NETCONF_MODULE_REVISION_ERR Essential module " << module
         << " does have the right revision: expected "
         << YANG_REVISIONS.at(module) << ", got " << bad_revision;
     addString(msg.str());
@@ -393,7 +393,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
     }
     ASSERT_NO_THROW(agent_->checkModules());
     ostringstream mmsg;
-    mmsg << "METCONF_MODULE_MISSING_WARN Missing module " << module
+    mmsg << "NETCONF_MODULE_MISSING_WARN Missing module " << module
          << " in sysrepo";
     addString(mmsg.str());
 
@@ -402,7 +402,7 @@ TEST_F(NetconfAgentLogTest, checkModules) {
     agent_->modules_.insert(make_pair(module, bad_revision));
     ASSERT_NO_THROW(agent_->checkModules());
     ostringstream rmsg;
-    rmsg << "METCONF_MODULE_REVISION_WARN Module " << module
+    rmsg << "NETCONF_MODULE_REVISION_WARN Module " << module
          << " does have the right revision: expected "
          << YANG_REVISIONS.at(module) << ", got " << bad_revision;
     addString(rmsg.str());

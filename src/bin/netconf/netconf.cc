@@ -103,20 +103,20 @@ public:
     /// This callback is called by sysrepo when a module is (un)installed.
     ///
     /// @param module_name The module name.
-    /// @param revision The module revision.
+    /// @param revision The module revision (NULL for uninstallation).
     /// @param state The new state of the module (ignored).
     /// @param private_ctx The private context.
     void module_install(const char* module_name,
                         const char* revision,
                         sr_module_state_t /*state*/,
                         void* /*private_ctx*/) {
-        if (!module_name || !revision) {
+        if (!module_name) {
             // Not for us...
             return;
         }
         LOG_WARN(netconf_logger, NETCONF_MODULE_INSTALL)
             .arg(module_name)
-            .arg(revision);
+            .arg(revision ? revision : "unknown");
     }
 };
 
@@ -170,7 +170,7 @@ NetconfAgent::init(NetconfCfgMgrPtr cfg_mgr) {
         }
     }
     if (!can_start) {
-        cerr << "An essential YNAG module / revision is missing."
+        cerr << "An essential YANG module / revision is missing."
              << endl
              << "The environment is not suitable for running kea-netconf."
              << endl;
@@ -327,13 +327,16 @@ NetconfAgent::initSysrepo() {
         return;
     }
 
+    // Subscribe to the module (un)installation callback.
+    // When a module is (un)installed the callback is called.
+    // Note this requires a system test (vs. unit test).
     try {
         S_Subscribe subs(new Subscribe(startup_sess_));
         S_Callback cb(new NetconfAgentInstallCallback());
         subs->module_install_subscribe(cb);
         subscriptions_.insert(make_pair("__install__", subs));
     } catch (const sysrepo_exception& ex) {
-        isc_throw(Unexpected,  "Can't subscribe moduel install: "
+        isc_throw(Unexpected,  "Can't subscribe module install: "
                   << ex.what());
     }
 }
@@ -345,17 +348,19 @@ NetconfAgent::checkModule(const string& module_name) const {
     }
     auto module = modules_.find(module_name);
     if (module == modules_.end()) {
-        LOG_ERROR(netconf_logger, METCONF_MODULE_MISSING_ERR)
+        LOG_ERROR(netconf_logger, NETCONF_MODULE_MISSING_ERR)
             .arg(module_name);
         return (false);
     }
     auto modrev = YANG_REVISIONS.find(module_name);
     if (modrev == YANG_REVISIONS.end()) {
         // Can't check revision?!
+        // It can happen only with a module which is not in
+        // YANG_REVISIONS but installed so likely on purpose.
         return (true);
     }
     if (modrev->second != module->second) {
-        LOG_ERROR(netconf_logger, METCONF_MODULE_REVISION_ERR)
+        LOG_ERROR(netconf_logger, NETCONF_MODULE_REVISION_ERR)
             .arg(module_name)
             .arg(modrev->second)
             .arg(module->second);
@@ -372,12 +377,12 @@ NetconfAgent::checkModules() const {
         }
         auto module = modules_.find(modrev.first);
         if (module == modules_.end()) {
-            LOG_WARN(netconf_logger, METCONF_MODULE_MISSING_WARN)
+            LOG_WARN(netconf_logger, NETCONF_MODULE_MISSING_WARN)
                 .arg(modrev.first);
             continue;
         }
         if (modrev.second != module->second) {
-            LOG_WARN(netconf_logger, METCONF_MODULE_REVISION_WARN)
+            LOG_WARN(netconf_logger, NETCONF_MODULE_REVISION_WARN)
                 .arg(modrev.first)
                 .arg(modrev.second)
                 .arg(module->second);
