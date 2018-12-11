@@ -1,3 +1,7 @@
+1503.	[doc]		fdupont, marcin
+	Updated "JSON Configuration" section of the Kea User's Guide.
+	(Gitlab #198,!160, git 94c66b3c071d7bbf4b247bf57cd75ddcc343177e)
+
 1502.	[bug]		fdupont
 	Unicode parser for JSON structures has been improved. It now
 	handles escape sequences better.
