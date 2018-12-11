@@ -367,7 +367,7 @@ public:
     }
 
     /// @brief Sets information about the dhcp queue control
-    /// @param new dhcp queue control information
+    /// @param dhcp_queue_controlnew dhcp queue control information
     void setDHCPQueueControl(const isc::data::ConstElementPtr dhcp_queue_control) {
         dhcp_queue_control_ = dhcp_queue_control;
     }
