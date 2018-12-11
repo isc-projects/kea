@@ -193,12 +193,22 @@ the server; they do not impact its
 operation in any way.</para>
 
 <para>The configuration starts in the first line with the initial
-opening curly bracket (or brace). Each configuration consists of
-one or more objects. In this specific example, we have only one
-object, called Dhcp4. This is a simplified configuration, as usually
-there will be additional objects, like <command>Logging</command> or
-<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp4
-configuration starts with the <command>"Dhcp4": {</command> line
+opening curly bracket (or brace). Each configuration must contain an
+object specifying the configuration of the Kea module using it.
+In the example above this object is called <command>Dhcp4</command>.
+</para>
+
+<note>
+  <para>In the current Kea release it is possible to specify configurations
+  of multiple modules within a single configuration file, but this is not
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually is) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity.
+  </para>
+</note>
+
+<para>The Dhcp4 configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
