@@ -7,7 +7,6 @@
 /**
 
  @page unitTests Building Kea with Unit Tests
-@endcode
 
 Depending on how you compiled or installed \c gtest (e.g. from sources
 or using some package management system) one of those two switches will
