@@ -34,7 +34,8 @@
       format. Basic JSON is defined
       in <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link> and
-      <link xmlns:xlink="http://www.ecma-international.org/publications/standards/Ecma-404.htm">ECMA 404</link>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="http://www.ecma-international.org/publications/standards/Ecma-404.htm">ECMA 404</link>.
       Note that Kea 1.2.0 introduced a new parser which better adheres to
       the JSON specification.  In particular, the only values allowed
       for boolean are true or false (all lowercase). The capitalized
