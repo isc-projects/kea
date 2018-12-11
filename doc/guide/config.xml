@@ -47,53 +47,51 @@
       <itemizedlist>
         <listitem>
           <simpara>shell comments: any text after the hash (#)
-          character is ignored. Both Dhcp4 and Dhcp6 allow # in any column,
-          while Ddns requires hash to be in the first column.</simpara>
+          character is ignored.</simpara>
         </listitem>
         <listitem>
           <simpara>C comments: any text after the double slashes (//)
-          character is ignored. Both Dhcp4 and Dhcp6 supports this
-          feature.</simpara>
+          character is ignored.</simpara>
         </listitem>
         <listitem>
           <simpara>Multiline comments: any text between /* and */ is
-          ignored. This commenting can span multiple lines. Both Dhcp4 and
-          Dhcp6 supports this feature.</simpara>
+          ignored. This commenting can span multiple lines.</simpara>
         </listitem>
         <listitem>
           <simpara>File inclusion: JSON files can include other JSON
           files. This can be done by using &lt;?include
-          "file.json"?&gt;. This feature is supported by all Kea
-          modules.</simpara>
+          "file.json"?&gt;.</simpara>
         </listitem>
       </itemizedlist>
       </para>
 
       <para>The configuration file consists of a single object (often
       colloquially called a map) started with a curly bracket. It
-      comprises the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
-      "Netconf" and/or "Logging" objects. It is possible to define
+      comprises one of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
+      "Netconf" object and the "Logging" object. It is possible to define
       additional elements, but they will be ignored and rejected in the
-      future releases of Kea. For example, it is possible to define Dhcp4,
-      Dhcp6 and Logging elements in a single configuration file that
-      can be used to start both the DHCPv4 and DHCPv6 components.
-      Combining configurations of multiple modules within a single file
-      can be confusing and works badly with the commands that fetch and
-      write new configuration. Therefore, support for it will be removed
-      in the future releases of Kea.
+      future releases of Kea. It is also possible to include several
+      supported objects in a single configuration file. For example,
+      it is possible to include "Dhcp4", "Dhcp6" and "Logging" in a
+      single configuration file which can be used to start both the
+      DHCPv4 and DHCPv6 servers. Combining configurations of multiple
+      Kea modules within a single file can be confusing and works badly
+      with the commands that fetch and write new configuration. Therefore,
+      support for it will be removed in the future releases of Kea.
       </para>
 
       <note>
         <para>
-          The "Logging" object will be moved inside the configuration
-          objects (maps) for respective Kea modules in Kea 1.6.0 release.
-          For example: the "Dhcp4" map will contain the "Logging" object
+          The "loggers" object will be moved inside the configuration
+          objects (maps) for respective Kea modules in the Kea 1.6.0 release.
+          For example: the "Dhcp4" map will contain the "loggers" object
           specifying logging configuration for the DHCPv4 server. Backward
           compatibility will be maintained until at least Kea 1.7.0 release.
-          It will be possible to specify "Logging" configuration at both
-          top level and module configuration level. Ultimately, it
-          will only be allowed to specify logging configuration at the
-          module configuration level.
+          It will be possible to specify "Logging" object (comprising
+          "loggers") at the top configuration level and "loggers"
+          object at module configuration level. Ultimately, it
+          will only be allowed to specify "loggers" at the module
+          configuration level and "Logging" object will be removed.
         </para>
       </note>
 
