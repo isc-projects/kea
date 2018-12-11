@@ -6,8 +6,11 @@
 
 #include <perfdhcp/receiver.h>
 #include <perfdhcp/command_options.h>
+#include <util/threads/thread.h>
 
 #include <dhcp/iface_mgr.h>
+
+#include <boost/bind.hpp>
 
 using namespace std;
 using namespace isc::dhcp;
@@ -21,8 +24,11 @@ Receiver::start() {
     if (single_threaded_) {
         return;
     }
-    assert(run_flag_.test_and_set() == false);
-    recv_thread_.reset(new thread{&Receiver::run, this});
+    if (run_flag_.test_and_set()) {
+        run_flag_.clear();
+        isc_throw(isc::Unexpected, "run_flag_ should be false.");
+    }
+    recv_thread_.reset(new util::thread::Thread(boost::bind(&Receiver::run, this)));
 }
 
 void
@@ -30,12 +36,12 @@ Receiver::stop() {
     if (single_threaded_) {
         return;
     }
-    // Clear flags to order the thread to stop its main loop.
-    run_flag_.clear();
 
-    // To be sure first check if thread is running and ready to be joined.
-    if (recv_thread_->joinable()) {
-        recv_thread_->join();
+    // If thread is running then...
+    if (run_flag_.test_and_set()) {
+        // Clear flags to order the thread to stop its main loop.
+        run_flag_.clear();
+        recv_thread_->wait();
     }
 }
 
@@ -70,12 +76,17 @@ Receiver::getPkt() {
 
 void
 Receiver::run() {
-    assert(single_threaded_ == false);
+    if (single_threaded_) {
+        isc_throw(isc::Unexpected, "run should not be invoked in single-thread mode.");
+    }
     try {
         // If the flag is still true receive packets.
         while (run_flag_.test_and_set()) {
             receivePackets();
         }
+
+        // Clear run flag so that subsequent call to stop will not try to stop again.
+        run_flag_.clear();
     } catch (const exception& e) {
         cerr << "Something went wrong: " << e.what() << endl;
         usleep(1000);

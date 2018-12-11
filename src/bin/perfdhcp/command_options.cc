@@ -583,6 +583,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         std::cout << "Running: " << stream.str() << std::endl;
     }
 
+    if (!isSingleThreaded()) {
+        std::cout << "Multi-thread mode enabled." << std::endl;
+    }
+
     // Handle the local '-l' address/interface
     if (!localname_.empty()) {
         if (server_name_.empty()) {

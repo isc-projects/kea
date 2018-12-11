@@ -11,6 +11,7 @@
 
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <util/threads/thread.h>
 
 #include <queue>
 #include <thread>
@@ -43,7 +44,7 @@ private:
     boost::atomic_flag run_flag_;
 
     /// \brief Thread for receiving packets.
-    std::unique_ptr<std::thread> recv_thread_;
+    std::unique_ptr<util::thread::Thread> recv_thread_;
 
     /// \brief Queue for passing packets from receiver thread to main thread.
     std::queue<PktPtr> pkt_queue_;
