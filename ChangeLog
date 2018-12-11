@@ -1,3 +1,8 @@
+1502.	[bug]		fdupont
+	Unicode parser for JSON structures has been improved. It now
+	handles escape sequences better.
+	(Gitlab #45,!40, git ba9b18cf2af66f8fb80e3dbbe13da11c99764588)
+
 1501.	[func]		fdupont
 	keactrl now supports kea-netconf. The new daemon is disabled by
 	default. Please edit keactrl.conf (netconf=yes) if you want to
