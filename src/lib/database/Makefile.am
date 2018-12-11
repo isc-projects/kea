@@ -40,7 +40,7 @@ libkea_database_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_database_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_database_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 
-libkea_database_la_LDFLAGS = -no-undefined -version-info 0:0:0
+libkea_database_la_LDFLAGS = -no-undefined -version-info 1:0:0
 
 # Specify the headers for copying into the installation directory tree.
 libkea_database_includedir = $(pkgincludedir)/database
