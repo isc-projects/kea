@@ -67,62 +67,37 @@
 
       <para>The configuration file consists of a single object (often
       colloquially called a map) started with a curly bracket. It
-      comprises one of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
-      "Netconf" object and the "Logging" object. It is possible to define
-      additional elements, but they will be ignored and rejected in the
-      future releases of Kea. It is also possible to include several
-      supported objects in a single configuration file. For example,
-      it is possible to include "Dhcp4", "Dhcp6" and "Logging" in a
-      single configuration file which can be used to start both the
-      DHCPv4 and DHCPv6 servers. Combining configurations of multiple
-      Kea modules within a single file can be confusing and works badly
-      with the commands that fetch and write new configuration. Therefore,
-      support for it will be removed in the future releases of Kea.
-      </para>
+      comprises one or more of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
+      "Netconf", and "Logging" objects. It is possible to define
+      additional elements but they will be ignored.</para>
 
-      <note>
-        <para>
-          The "loggers" object will be moved inside the configuration
-          objects (maps) for respective Kea modules in the Kea 1.6.0 release.
-          For example: the "Dhcp4" map will contain the "loggers" object
-          specifying logging configuration for the DHCPv4 server. Backward
-          compatibility will be maintained until at least Kea 1.7.0 release.
-          It will be possible to specify "Logging" object (comprising
-          "loggers") at the top configuration level and "loggers"
-          object at module configuration level. Ultimately, it
-          will only be allowed to specify "loggers" at the module
-          configuration level and "Logging" object will be removed.
-        </para>
-      </note>
 
       <para>A very simple configuration for DHCPv4 could look like this:
 <screen>
 # The whole configuration starts here.
 {
-
-# DHCPv4 specific configuration starts here.
-"Dhcp4": {
-    "interfaces-config": {
-        "interfaces": [ "eth0" ],
-        "dhcp-socket-type": "raw"
+    # DHCPv4 specific configuration starts here.
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": [ "eth0" ],
+            "dhcp-socket-type": "raw"
+        },
+        "valid-lifetime": 4000,
+        "renew-timer": 1000,
+        "rebind-timer": 2000,
+        "subnet4": [{
+           "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
+           "subnet": "192.0.2.0/24"
+        }]
     },
-    "valid-lifetime": 4000,
-    "renew-timer": 1000,
-    "rebind-timer": 2000,
-    "subnet4": [{
-       "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
-       "subnet": "192.0.2.0/24"
-    }]
-},
-# DHCPv4 specific configuration ends here.
 
-# Logger parameters start here.
-"Logging": {
-   "loggers": [{
-        "name": "*",
-        "severity": "DEBUG"
-    }]
-}
+    # Logger configuration starts here.
+    "Logging": {
+       "loggers": [{
+            "name": "*",
+            "severity": "DEBUG"
+        }]
+    }
 
 # The whole configuration structure ends here.
 }
@@ -131,6 +106,27 @@
 
         <para>More examples are available in the installed
         <filename>share/doc/kea/examples</filename> directory.</para>
+
+      <note>
+        <para>
+          The "Logging" element will be removed in Kea 1.6.0 and its contents
+          (the "loggers" object) moved inside the configuration objects (maps) for
+          respective Kea modules.  For example: the "Dhcp4" map will contain the
+          "loggers" object specifying logging configuration for the DHCPv4
+          server. Backward compatibility will be maintained until at least Kea
+          1.7.0 release: it will be possible to specify "Logging" object
+          at the top configuration level and "loggers"
+          objects at module configuration level. Ultimately though, support for the
+          top-level "Logging" object will be removed.
+        </para>
+        <para>
+          The specification of several supported elements (e.g.  "Dhcp4",
+          "Dhcp6") in a single configuration file can be confusing and works
+          badly with the commands that fetch and write new configurations.
+          Support for it will be removed in a future release of Kea, after which
+          each component will require its own configuration file.
+        </para>
+      </note>
 
         <para>To avoid repetition of mostly similar structures,
         examples in the rest of this guide will showcase only the
