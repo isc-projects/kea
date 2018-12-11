@@ -516,7 +516,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
             }
 
             IOAddress out_address("0.0.0.0");
-            if (iface->getAddress4(out_address)) {
+            if (!iface->getAddress4(out_address)) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
                                << " has no usable IPv4 addresses configured");
