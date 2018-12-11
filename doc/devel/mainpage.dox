@@ -38,7 +38,6 @@
  *
  * @section buildingKeaWithUnitTests Building Kea with Unit tests
  * - @subpage unitTests
- *   - @subpage unitTestsIntroduction
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
  *   - @subpage unitTestsSysrepo
