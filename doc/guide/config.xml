@@ -33,10 +33,10 @@
       Agent and Netconf modules are defined in an extended JSON
       format. Basic JSON is defined
       in <link xmlns:xlink="http://www.w3.org/1999/xlink"
-      xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link> or
+      xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link> and
       <link xmlns:xlink="http://www.ecma-international.org/publications/standards/Ecma-404.htm">ECMA 404</link>.
-      Note that Kea 1.2 introduces a new parser that is better at
-      following the JSON spec.  In particular, the only values allowed
+      Note that Kea 1.2.0 introduced a new parser which better adheres to
+      the JSON specification.  In particular, the only values allowed
       for boolean are true or false (all lowercase). The capitalized
       versions (True or False) are not accepted.
       </para>
@@ -62,8 +62,8 @@
         <listitem>
           <simpara>File inclusion: JSON files can include other JSON
           files. This can be done by using &lt;?include
-          "file.json"?&gt;. All Kea server or agent configuration
-          parsers support this feature.</simpara>
+          "file.json"?&gt;. This feature is supported by all Kea
+          modules.</simpara>
         </listitem>
       </itemizedlist>
       </para>
@@ -72,19 +72,27 @@
       colloquially called a map) started with a curly bracket. It
       comprises the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
       "Netconf" and/or "Logging" objects. It is possible to define
-      additional elements, but they will be ignored and in a future
-      version rejected. For example, it is possible to define Dhcp4,
+      additional elements, but they will be ignored and rejected in the
+      future releases of Kea. For example, it is possible to define Dhcp4,
       Dhcp6 and Logging elements in a single configuration file that
       can be used to start both the DHCPv4 and DHCPv6 components.
-      This feature is both misleading and does not work when a
-      configuration is retreaved so its support will be removed in
-      a future release.</para>
+      Combining configurations of multiple modules within a single file
+      can be confusing and works badly with the commands that fetch and
+      write new configuration. Therefore, support for it will be removed
+      in the future releases of Kea.
+      </para>
 
       <note>
-        <para>The "Logging" object is planned to be merged in the 1.6
-        release, i.e. the "loggers" will have to be moved inside the
-        for instance "Dhcpv4" object/map. Backward compatibility, i.e.
-        "Logging" object/map, will be supported for at least one version,
+        <para>
+          The "Logging" object will be moved inside the configuration
+          objects (maps) for respective Kea modules in Kea 1.6.0 release.
+          For example: the "Dhcp4" map will contain the "Logging" object
+          specifying logging configuration for the DHCPv4 server. Backward
+          compatibility will be maintained until at least Kea 1.7.0 release.
+          It will be possible to specify "Logging" configuration at both
+          top level and module configuration level. Ultimately, it
+          will only be allowed to specify logging configuration at the
+          module configuration level.
         </para>
       </note>
 
@@ -131,7 +139,7 @@
         example, when discussing the IPv6 subnets configuration in
         DHCPv6, only subnet6 parameters will be mentioned. It is
         implied that the remaining elements (the global map that holds
-        Dhcp6, Logging) are present, but they are omitted for
+        Dhcp6 and Logging) are present, but they are omitted for
         clarity. Usually, locations where extra parameters may appear
         are denoted by an ellipsis.</para>
     </section>
@@ -144,12 +152,11 @@
         is separated by a slash.  If there is an array, a specific
         instance within that array is referenced by a number in square
         brackets (with numbering starting at zero). For example, in
-        the above configuration the valid-lifetime in the Dhcp6
-        component can be referred to as Dhcp6/valid-lifetime and the
-        pool in the first subnet defined in the DHCPv6 configuration
-        as Dhcp6/subnet6[0]/pool.</para>
+        the above configuration the valid-lifetime in the Dhcp4
+        component can be referred to as Dhcp4/valid-lifetime and the
+        pool in the first subnet defined in the DHCPv4 configuration
+        as Dhcp4/subnet4[0]/pool.</para>
 
-      <!-- @todo Add a reference here after #3422 is done -->
     </section>
 
   </section>
