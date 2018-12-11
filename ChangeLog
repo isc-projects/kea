@@ -1,3 +1,10 @@
+1505.	[bug]		marcin
+	Corrected an issue in the lease_cmds hooks library which caused
+	errors while adding leases with high lease expiration time value
+	to the database. Many thanks to Shawn Routhier from Infoblox for
+	finding and reporting the issue.
+	(Gitlab #337,!167, git 3fcdc28814310ac93b3903897e952b3b60cfa0bc)
+
 1504.	[bug]		fdupont
 	Created separate control buffers for reception and transmission
 	over UDP sockets.
