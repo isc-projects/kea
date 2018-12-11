@@ -1,3 +1,8 @@
+1504.	[bug]		fdupont
+	Created separate control buffers for reception and transmission
+	over UDP sockets.
+	(Gitlab #327,!166, git cbb573858d7b1a4d2ba2316db457aa55ab037fc3)
+
 1503.	[doc]		fdupont, marcin
 	Updated "JSON Configuration" section of the Kea User's Guide.
 	(Gitlab #198,!160, git 94c66b3c071d7bbf4b247bf57cd75ddcc343177e)
