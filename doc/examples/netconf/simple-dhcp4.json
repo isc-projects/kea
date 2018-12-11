@@ -53,7 +53,7 @@
                 // - "unix" which uses the local control channel supported by
                 //   "dhcp4" and "dhcp6" servers ("d2" support is coming in Kea 1.5)
                 // - "http" which uses the Control Agent (CA) to manage itself or
-                //   to forward commands to "dhcp4" or "dhcp6" (not yet supported).
+                //   to forward commands to "dhcp4" or "dhcp6".
                 "control-socket":
                 {
                     "socket-type": "unix",
