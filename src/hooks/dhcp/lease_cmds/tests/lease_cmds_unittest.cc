@@ -800,6 +800,35 @@ TEST_F(LeaseCmdsTest, Lease4AddNegativeExpireTime) {
     ASSERT_FALSE(l);
 }
 
+// Check that the lease with negative cltt is rejected.
+TEST_F(LeaseCmdsTest, Lease4AddNegativeCltt) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Add a lease with negative cltt (expiration time - valid lifetime)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"expire\": 123456,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    string exp_rsp = "expiration time must be greater than valid lifetime for "
+        "address 192.0.2.202";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease was not added.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_FALSE(l);
+}
+
 // Check that a well formed lease4 with tons of parameters can be added.
 TEST_F(LeaseCmdsTest, Lease4AddFull) {
 
@@ -1075,6 +1104,24 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
         "    }\n"
         "}";
     exp_rsp = "expiration time must be positive for address 2001:db8:1::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Negative cltt
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"expire\": 123456,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    exp_rsp = "expiration time must be greater than valid lifetime for address "
+        "2001:db8:1::1";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
 
 }
