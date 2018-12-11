@@ -400,7 +400,7 @@ public:
     /// @brief Sets the flag indicating if requests for unknown IP addresses
     /// should be rejected with DHCPNAK instead of ignored.
     ///
-    /// @param match If this value is true, the requests for unknown IP
+    /// @param authoritative If this value is true, the requests for unknown IP
     /// addresses will be rejected with DHCPNAK messages
     void setAuthoritative(const bool authoritative) {
         authoritative_ = authoritative;
