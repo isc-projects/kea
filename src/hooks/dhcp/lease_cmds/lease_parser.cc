@@ -99,6 +99,10 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
         if (expire_time <= 0) {
             isc_throw(BadValue , "expiration time must be positive for address "
                       << addr);
+
+        } else if (expire_time < valid_lft) {
+            isc_throw(BadValue, "expiration time must be greater than valid lifetime"
+                      " for address " << addr);
         }
         cltt = static_cast<time_t>(expire_time - valid_lft);
     } else {
@@ -290,7 +294,12 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
         if (expire_time <= 0) {
             isc_throw(BadValue , "expiration time must be positive for address "
                       << addr);
+
+        } else if (expire_time < valid_lft) {
+            isc_throw(BadValue, "expiration time must be greater than valid lifetime"
+                      " for address " << addr);
         }
+
         cltt = static_cast<time_t>(expire_time - valid_lft);
     } else {
         cltt = time(NULL);
