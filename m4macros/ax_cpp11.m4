@@ -177,6 +177,17 @@ for retry in "none" "--std=c++11" "--std=c++0x" "--std=c++1x" "fail"; do
 		 break],
 		[AC_MSG_RESULT([no])
 		 continue])
+
+	AC_MSG_CHECKING(boost atomic_flag support)
+	feature="boost atomic_flag"
+	AC_COMPILE_IFELSE(
+		[AC_LANG_PROGRAM(
+			[#include <boost/atomic.hpp>],
+			[boost::atomic_flag run_flag;])],
+		[AC_MSG_RESULT([yes])
+		 break],
+		[AC_MSG_RESULT([no])
+		 continue])
 done
 
 ])dnl AX_ISC_RPATH
