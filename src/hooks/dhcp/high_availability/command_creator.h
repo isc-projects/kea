@@ -118,7 +118,7 @@ public:
     /// @param limit Limit of leases on the page.
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
-    createLease6GetPage(const dhcp::Lease6Ptr& lease4,
+    createLease6GetPage(const dhcp::Lease6Ptr& lease6,
                         const uint32_t limit);
 
 private:
