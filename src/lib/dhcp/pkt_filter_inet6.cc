@@ -19,12 +19,8 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-PktFilterInet6::PktFilterInet6()
-: recv_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-  send_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-  recv_control_buf_(new char[recv_control_buf_len_]),
-  send_control_buf_(new char[send_control_buf_len_]) {
-}
+const size_t
+PktFilterInet6::CONTROL_BUF_LEN = CMSG_SPACE(sizeof(struct in6_pktinfo));
 
 SocketInfo
 PktFilterInet6::openSocket(const Iface& iface,
@@ -137,7 +133,8 @@ Pkt6Ptr
 PktFilterInet6::receive(const SocketInfo& socket_info) {
     // Now we have a socket, let's get some data from it!
     uint8_t buf[IfaceMgr::RCVBUFSIZE];
-    memset(&recv_control_buf_[0], 0, recv_control_buf_len_);
+    uint8_t control_buf[CONTROL_BUF_LEN];
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
     struct sockaddr_in6 from;
     memset(&from, 0, sizeof(from));
 
@@ -165,8 +162,8 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     // previously asked the kernel to give us packet
     // information (when we initialized the interface), so we
     // should get the destination address from that.
-    m.msg_control = &recv_control_buf_[0];
-    m.msg_controllen = recv_control_buf_len_;
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
 
     int result = recvmsg(socket_info.sockfd_, &m, 0);
 
@@ -247,7 +244,8 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
 int
 PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
 
-    memset(&send_control_buf_[0], 0, send_control_buf_len_);
+    uint8_t control_buf[CONTROL_BUF_LEN];
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
 
     // Set the target address we're sending to.
     sockaddr_in6 to;
@@ -289,8 +287,8 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // define the IPv6 packet information. We could set the
     // source address if we wanted, but we can safely let the
     // kernel decide what that should be.
-    m.msg_control = &send_control_buf_[0];
-    m.msg_controllen = send_control_buf_len_;
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&m);
 
     // FIXME: Code below assumes that cmsg is not NULL, but
