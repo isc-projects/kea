@@ -104,6 +104,24 @@
     in that Kea can be built without Cassandra support.
             </simpara>
         </listitem>
+
+        <listitem>
+          <simpara>
+    As of Kea 1.4.0 release, the integration with RADIUS is provided in Kea via the hooks
+    library available to our Support Customers. Use of this library requires
+    FreeRadius-client library to be present on the system where Kea is running.
+    This is an optional dependency in that Kea can be built without RADIUS support.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+    As of 1.5.0 release, Kea provides NETCONF interface with the kea-netconf agent.
+    This Kea module is built optionally and requires Sysrepo software when used.
+    Building Kea with NETCONF support requires many dependencies to be installed
+    which are described in more details in <xref linkend="netconf-install"/>.
+          </simpara>
+        </listitem>
       </itemizedlist>
     </section>
 
