@@ -1,3 +1,5 @@
+Kea 1.5.0 released on Dec 14, 2018
+
 1506.	[build]		marcin
 	Bumped up libraries version numbers for Kea 1.5.0 final release.
 	(Gitlab #338,!168, git 551c5d704804d0ab2ea276e95dbae66b9d0f5561)
