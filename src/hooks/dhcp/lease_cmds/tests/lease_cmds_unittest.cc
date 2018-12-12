@@ -425,7 +425,8 @@ public:
         // Assuming that these values were used to create the lease.
         // If we ever want to test different values they will need to
         // be added as parameters to this function.
-        EXPECT_EQ(HIGH_VALID_LIFETIME, l->get("valid-lft")->intValue());
+        EXPECT_EQ(HIGH_VALID_LIFETIME,
+                  static_cast<uint32_t>(l->get("valid-lft")->intValue()));
         EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
 
@@ -493,7 +494,8 @@ public:
         // Assuming that these values were used to create the lease.
         // If we ever want to test different values they will need to
         // be added as parameters to this function.
-        EXPECT_EQ(HIGH_VALID_LIFETIME, l->get("valid-lft")->intValue());
+        EXPECT_EQ(HIGH_VALID_LIFETIME,
+                  static_cast<uint32_t>(l->get("valid-lft")->intValue()));
         EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
 };
@@ -866,7 +868,8 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->client_id_);
     EXPECT_EQ("01:02:03:04:05:06:07:08", l->client_id_->toText());
-    EXPECT_EQ(6218189367 - 1000, l->cltt_); // expire (6218189367) - valid_lft(1000)
+    // expire (6218189367) - valid_lft(1000)
+    EXPECT_EQ(static_cast<time_t>(6218189367 - 1000), l->cltt_);
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
@@ -1289,7 +1292,8 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("01:02:03:04:05:06:07:08", l->duid_->toText());
-    EXPECT_EQ(6218189367 - 1000, l->cltt_); // expire (6218189367) - valid_lft(1000)
+    // expire (6218189367) - valid_lft(1000)
+    EXPECT_EQ(static_cast<time_t>(6218189367 - 1000), l->cltt_);
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
@@ -2815,7 +2819,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
 
     // Make sure the subnet-id is figured out correctly.
     EXPECT_EQ(44, l->subnet_id_);
-    
+
     // Make sure it contains expected values..
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
