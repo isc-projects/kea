@@ -105,6 +105,7 @@ public:
     /// @param to specifies the end of the queue to which the packet
     /// should be added.
     virtual void pushPacket(PacketTypePtr& packet, const QueueEnd& to=QueueEnd::BACK) {
+        isc::util::thread::Mutex::Locker lock(mutex_);
         if (to == QueueEnd::BACK) {
             queue_.push_back(packet);
         } else {
