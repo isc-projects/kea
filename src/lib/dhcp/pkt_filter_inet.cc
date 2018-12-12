@@ -17,13 +17,8 @@ using namespace isc::asiolink;
 namespace isc {
 namespace dhcp {
 
-PktFilterInet::PktFilterInet()
-    : recv_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-      send_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-      recv_control_buf_(new char[recv_control_buf_len_]),
-      send_control_buf_(new char[send_control_buf_len_])
-{
-}
+const size_t
+PktFilterInet::CONTROL_BUF_LEN = CMSG_SPACE(sizeof(struct in6_pktinfo));
 
 SocketInfo
 PktFilterInet::openSocket(Iface& iface,
@@ -31,7 +26,6 @@ PktFilterInet::openSocket(Iface& iface,
                           const uint16_t port,
                           const bool receive_bcast,
                           const bool send_bcast) {
-
     struct sockaddr_in addr4;
     memset(&addr4, 0, sizeof(sockaddr));
     addr4.sin_family = AF_INET;
@@ -113,8 +107,9 @@ Pkt4Ptr
 PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     struct sockaddr_in from_addr;
     uint8_t buf[IfaceMgr::RCVBUFSIZE];
+    uint8_t control_buf[CONTROL_BUF_LEN];
 
-    memset(&recv_control_buf_[0], 0, recv_control_buf_len_);
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
     memset(&from_addr, 0, sizeof(from_addr));
 
     // Initialize our message header structure.
@@ -137,8 +132,8 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     // previously asked the kernel to give us packet
     // information (when we initialized the interface), so we
     // should get the destination address from that.
-    m.msg_control = &recv_control_buf_[0];
-    m.msg_controllen = recv_control_buf_len_;
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
 
     int result = recvmsg(socket_info.sockfd_, &m, 0);
     if (result < 0) {
@@ -213,7 +208,8 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 int
 PktFilterInet::send(const Iface&, uint16_t sockfd,
                     const Pkt4Ptr& pkt) {
-    memset(&send_control_buf_[0], 0, send_control_buf_len_);
+    uint8_t control_buf[CONTROL_BUF_LEN];
+    memset(&control_buf[0], 0, CONTROL_BUF_LEN);
 
     // Set the target address we're sending to.
     sockaddr_in to;
@@ -249,8 +245,8 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     // We have to create a "control message", and set that to
     // define the IPv4 packet information. We set the source address
     // to handle correctly interfaces with multiple addresses.
-    m.msg_control = &send_control_buf_[0];
-    m.msg_controllen = send_control_buf_len_;
+    m.msg_control = &control_buf[0];
+    m.msg_controllen = CONTROL_BUF_LEN;
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
     cmsg->cmsg_level = IPPROTO_IP;
     cmsg->cmsg_type = IP_PKTINFO;
