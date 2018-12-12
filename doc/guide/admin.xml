@@ -746,36 +746,6 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
         </para>
       </section>
 
-      <section>
-        <title>Server Terminates when Database Connection is Lost</title>
-        <para>
-          If Kea is configured to use an external database it opens a connection
-          to the database and requires that this connection is not interrupted.
-          When the database connection breaks, e.g. as a result of SQL server
-          restart, DHCP servers will terminate indicating a fatal error. In such
-          a case, the system administrator is required to start the database and
-          then "manually" start Kea to resume the service.
-        </para>
-
-        <para>
-          Although the engineering team is planning to implement some form of
-          reconnect mechanism in the future, this will mostly be applicable in
-          cases when the database service is restarted and the connection
-          down time is relatively short. The DHCP server can't provide its
-          service as long as the database is down, because it can't store
-          leases being assigned to the clients. The server will have to
-          reject any DHCP messages as long as the connection is down and
-          terminate if the reconnection attempt fails multiple times.
-        </para>
-
-        <para>
-          Because the database connection is critical for the operation of the
-          DHCP service, the current behavior is to terminate when that
-          connection is unavailable to indicate that server is in inconsistent
-          state and can't serve clients.
-        </para>
-      </section>
-
     </section>
 
   </section> <!-- End of Database sections -->
