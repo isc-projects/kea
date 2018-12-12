@@ -199,6 +199,8 @@ Boost (http://www.boost.org/) library for almost everything, and can use Botan
 cryptographic operations. It can also optionally use PostgreSQL
 (http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) and/or
 Cassandra (http://cassandra.apache.org/) as a database.
+Sysrepo (http://www.sysrepo.org/) and libyang (https://github.com/CESNET/libyang)
+required when netconf is used as configuration backend.
 
 Kea can use googletest for unit-tests (https://github.com/google/googletest).
 
