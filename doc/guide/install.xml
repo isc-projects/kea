@@ -235,8 +235,8 @@ Debian and Ubuntu:
       <para>
         Kea is open source software written in C++.  It is freely available in
         source code form from ISC as a downloadable tar file.  A copy of the Kea
-        source code repository is accessible from Github (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). Kea may also be available
-        in pre-compiled ready-to-use packages from operating system vendors.
+        source code repository is accessible from Gitlab (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>).
+        Kea may also be available in pre-compiled ready-to-use packages from operating system vendors.
       </para>
 
       <section>
@@ -266,16 +266,16 @@ Debian and Ubuntu:
         </note>
 
         <para>
-          The latest development code is available on Github (see
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). The Kea source
+          The latest development code is available on Gitlab (see
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>). The Kea source
           is public and development is done in the <quote>master</quote>
           branch.
         </para>
         <para>
           The code can be checked out from
-          <filename>https://github.com/isc-projects/kea.git</filename>:
+          <filename>https://gitlab.isc.org/isc-projects/kea.git</filename>:
 
-        <screen>$ <userinput>git clone https://github.com/isc-projects/kea.git</userinput></screen>
+        <screen>$ <userinput>git clone https://gitlab.isc.org/isc-projects/kea.git</userinput></screen>
         </para>
 
         <para>
@@ -294,14 +294,10 @@ Debian and Ubuntu:
 
         <para>
           Write access to the Kea repository is only granted to ISC staff. If you
-          are a developer planning to contribute to Kea, please fork our Github
-          repository and use the "pull request" mechanism to request integration of
-          your code. Please consult
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
-          how to fork a Github repository.
-          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea
-          Developer's Guide</link> contains more information about the process, as
-          well as describing the requirements for contributed code to be accepted by ISC.
+          are a developer planning to contribute to Kea, please check our
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/contributor's-guide">Contributor's Guide</link>. The
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link> contains more information about the process, as
+          well as describes the requirements for contributed code to be accepted by ISC.
         </para>
 
       </section>
