@@ -38,11 +38,11 @@
         It is also likely to work on many other platforms. Kea-&keaversion; builds have been tested on:
         <itemizedlist>
           <listitem>CentOS Linux — 7.1804 (aka 7.5)</listitem>
-          <listitem>Fedora — 27, 28</listitem>
+          <listitem>Fedora — 28, 29</listitem>
           <listitem>Ubuntu — 16.04, 18.04</listitem>
-          <listitem>Debian GNU/Linux — 8, 9</listitem>
+          <listitem>Debian GNU/Linux — 7, 8, 9</listitem>
           <listitem>FreeBSD — 11.0</listitem>
-          <listitem>MAC OS X — 10.12</listitem>
+          <listitem>macOS — 10.13, 10.14</listitem>
         </itemizedlist>
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
