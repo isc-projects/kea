@@ -352,6 +352,9 @@ cql_unused_subnet_id_test() {
 
     # Wipe the database.
     cql_wipe
+
+    # Report test success.
+    test_finish 0
 }
 
 
