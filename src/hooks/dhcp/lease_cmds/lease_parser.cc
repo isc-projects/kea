@@ -95,8 +95,16 @@ Lease4Parser::parse(ConstSrvConfigPtr& cfg,
     /// any leases.
     time_t cltt;
     if (lease_info->contains("expire")) {
-        int64_t tmp = getUint32(lease_info, "expire");
-        cltt = static_cast<time_t>(tmp - valid_lft);
+        int64_t expire_time = getInteger(lease_info, "expire");
+        if (expire_time <= 0) {
+            isc_throw(BadValue , "expiration time must be positive for address "
+                      << addr);
+
+        } else if (expire_time < valid_lft) {
+            isc_throw(BadValue, "expiration time must be greater than valid lifetime"
+                      " for address " << addr);
+        }
+        cltt = static_cast<time_t>(expire_time - valid_lft);
     } else {
         cltt = time(NULL);
     }
@@ -282,8 +290,17 @@ Lease6Parser::parse(ConstSrvConfigPtr& cfg,
     /// discarding any leases.
     time_t cltt;
     if (lease_info->contains("expire")) {
-        int64_t tmp = getUint32(lease_info, "expire");
-        cltt = static_cast<time_t>(tmp - valid_lft);
+        int64_t expire_time = getInteger(lease_info, "expire");
+        if (expire_time <= 0) {
+            isc_throw(BadValue , "expiration time must be positive for address "
+                      << addr);
+
+        } else if (expire_time < valid_lft) {
+            isc_throw(BadValue, "expiration time must be greater than valid lifetime"
+                      " for address " << addr);
+        }
+
+        cltt = static_cast<time_t>(expire_time - valid_lft);
     } else {
         cltt = time(NULL);
     }

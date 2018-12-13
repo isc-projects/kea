@@ -230,7 +230,7 @@ public:
 TEST_F(NetconfGetCfgTest, simple) {
 
     // get the simple configuration
-    std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple.json";
+    std::string simple_file = string(CFG_EXAMPLES) + "/" + "simple-dhcp4.json";
     std::string config;
     ASSERT_NO_THROW(config = readFile(simple_file));
 

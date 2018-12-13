@@ -1143,37 +1143,37 @@ TEST(D2ClientMgr, sanitizeFqdnV4) {
         "full FQDN, name unchanged",
         "One.123.example.com.",
         Option4ClientFqdn::FULL,
-        "One.123.example.com."
+        "one.123.example.com."
         },
         {
         "partial FQDN, name unchanged, but qualified",
         "One.123",
         Option4ClientFqdn::PARTIAL,
-        "One.123.suffix.com."
+        "one.123.suffix.com."
         },
         {
         "full FQDN, scrubbed",
         "O#n^e.123.ex&a*mple.com.",
         Option4ClientFqdn::FULL,
-        "Oxnxe.123.exxaxmple.com."
+        "oxnxe.123.exxaxmple.com."
         },
         {
         "partial FQDN, scrubbed and qualified",
         "One.1+2|3",
         Option4ClientFqdn::PARTIAL,
-        "One.1x2x3.suffix.com."
+        "one.1x2x3.suffix.com."
         },
         {
         "full FQDN with characters that get escaped",
         "O n e.123.exa(m)ple.com.",
         Option4ClientFqdn::FULL,
-        "Oxnxe.123.exaxmxple.com."
+        "oxnxe.123.exaxmxple.com."
         },
         {
         "full FQDN with escape sequences",
         "O\032n\032e.123.example.com.",
         Option4ClientFqdn::FULL,
-        "Oxnxe.123.example.com."
+        "oxnxe.123.example.com."
         }
     };
 

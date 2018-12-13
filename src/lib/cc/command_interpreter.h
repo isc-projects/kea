@@ -14,7 +14,7 @@
 ///
 /// This file contains several functions and constants that are used for
 /// handling commands and responses sent over control channel. The design
-/// is described here: http://oldkea.isc.org/wiki/StatsDesign, but also
+/// is described here: https://gitlab.isc.org/isc-projects/kea/wikis/Stats-design, but also
 /// in @ref ctrlSocket section in the Developer's Guide.
 
 namespace isc {
@@ -31,6 +31,9 @@ extern const char *CONTROL_TEXT;
 
 /// @brief String used for arguments map ("arguments")
 extern const char *CONTROL_ARGUMENTS;
+
+/// @brief String used for service list ("service")
+extern const char *CONTROL_SERVICE;
 
 /// @brief Status code indicating a successful operation
 const int CONTROL_RESULT_SUCCESS = 0;

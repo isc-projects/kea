@@ -594,7 +594,7 @@ protected:
     /// with the other server.
     /// @param server_name name of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
-    /// @param lease Pointer to the last lease returned on the previous
+    /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
     /// parameter in the @c lease4-get-page and @c lease6-get-page commands. If this
     /// command is sent to fetch the first page, the @c last_lease parameter
@@ -627,7 +627,7 @@ protected:
     /// with the other server.
     /// @param server_name name of the server to fetch leases from.
     /// @param max_period maximum number of seconds to disable DHCP service
-    /// @param lease Pointer to the last lease returned on the previous
+    /// @param last_lease Pointer to the last lease returned on the previous
     /// page of leases. This lease is used to set the value of the "from"
     /// parameter in the lease4-get-page and lease6-get-page commands. If this
     /// command is sent to fetch the first page, the @c last_lease parameter

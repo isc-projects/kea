@@ -9,8 +9,8 @@
 <refentry>
   <info>
     <productname>ISC Kea</productname>
-    <date>Nov 30, 2018</date>
-    <edition>1.5.0-beta2</edition>
+    <date>Dec 14, 2018</date>
+    <edition>1.5.0</edition>
     <author>
       <personname/>
       <contrib>The Kea software has been written by a number of
@@ -55,10 +55,10 @@
     <para>
       keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
-      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
-      <command>kea-ctrl-agent</command>). It also provides the means for
-      checking the current status of the servers and determining the
-      configuration files in use.
+      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command>,
+      <command>kea-ctrl-agent</command> and <command>kea-netconf</command>).
+      It also provides the means for checking the current status of
+      the servers and determining the configuration files in use.
     </para>
   </refsect1>
 
@@ -104,7 +104,9 @@
             <varlistentry>
               <term>reload</term>
               <listitem>
-                <para>Instructs the servers to re-read the kea configuration file.</para>
+                <para>Instructs the servers to re-read the kea
+                configuration file. This command is not supported by
+                the Netconf agent.</para>
               </listitem>
             </varlistentry>
 
@@ -171,9 +173,17 @@
             </varlistentry>
 
             <varlistentry>
+              <term>netconf</term>
+              <listitem>
+                <para>Netconf agent (<command>kea-netconf</command>).</para>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term>all</term>
               <listitem>
-                <para>All servers (default).</para>
+                <para>All servers (default) including Netconf if
+                it was configured to be built.</para>
               </listitem>
             </varlistentry>
 
@@ -249,6 +259,11 @@
 
       <citerefentry>
         <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citerefentry>
+        <refentrytitle>kea-netconf</refentrytitle>
         <manvolnum>8</manvolnum>
       </citerefentry>,
 

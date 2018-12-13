@@ -114,13 +114,15 @@ For details, see Section 20 "YANG/NETCONF support" in the Kea User's Guide.
 
 You also need to install YANG schemas, so the unit-tests are able to
 retrieve, add, update and generally interact with the sysrepo information.
-There are several production Kea models (src/lib/yang/models) and one test
-specific model (src/lib/yang/tests/keatest-module.yang).
+There are several production Kea models (src/share/yang/modules/kea*.yang)
+and one test specific model (src/share/yang/modules/keatest-module*.yang)
+which is only required if you want to run Kea unit tests, i.e. it is not
+used in production.
 
 To install the test module, issue the following command:
 
 @verbatim
-sudo sysrepoctl --install --yang=src/lib/yang/tests/keatest-module.yang
+sudo sysrepoctl --install --yang=src/share/yang/modules/keatest-module*.yang
 @endverbatim
 
 To verify that you have the schemas installed, do this:
@@ -135,7 +137,7 @@ deinstall them before reinstalling a more recent version:
 sudo sysrepoctl --uninstall --module=<module-name>
 @endverbatim
 
-Tests use these modules you can find in src/lib/yang/models in addition
+Tests use these modules you can find in src/share/yang/modules in addition
 of keatest-module:
  - ietf-dhcpv6-server
  - kea-ctrl-agent
@@ -143,9 +145,27 @@ of keatest-module:
  - kea-dhcp4-server
  - kea-dhcp6-server
 
-Those models depend on the following models:
+Those models depend on the following modules:
  - ietf-inet-types
  - ietf-yang-types
+ - ietf-interfaces
+ - kea-types
+ - kea-logging
+ - kea-dhcp-types
+
+Those modules are extracted from the IETF DHCPv6 YANG draft too:
+ - ietf-dhcpv6-client
+ - ietf-dhcpv6-relay
+
+All are available in the src/share/yang/modules directory using the
+<module-name>[@<revision>].yang syntax for file names.
+src/share/yang/modules/utils provides a few utilities for developers:
+ - check-revisions.sh which verifies if the revision in the file name
+  and in the file content matches
+ - check-hashes.sh which detects updates in the file content without
+  a revision change using the SHA-256 hash of the to YIN translation.
+ - gen-revisions.sh which produces the module / revision table of
+  the yang_revisions.h header file.
 
 Finally, sysrepod daemon must run be running (as root):
 @verbatim

@@ -8,6 +8,7 @@ EXTRA_DIST += devel/mainpage.dox
 EXTRA_DIST += devel/terminology.dox
 EXTRA_DIST += devel/unit-tests.dox
 EXTRA_DIST += devel/doc.dox
+EXTRA_DIST += devel/congestion-handling.dox
 
 nobase_dist_doc_DATA  = examples/agent/comments.json
 nobase_dist_doc_DATA += examples/agent/simple.json
@@ -73,7 +74,7 @@ nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twopools.xml
 nobase_dist_doc_DATA += examples/netconf/kea-dhcp6-operations/twosubnets.xml
 nobase_dist_doc_DATA += examples/netconf/comments.json
 nobase_dist_doc_DATA += examples/netconf/simple-dhcp4.json
-nobase_dist_doc_DATA += examples/netconf/simple.json
+nobase_dist_doc_DATA += examples/netconf/simple-dhcp6.json
 
 # These are files that document our APIs. They're not really needed as the
 # content is included in the api.xml, but may be useful for people who
@@ -82,6 +83,9 @@ EXTRA_DIST += api/build-report.json
 EXTRA_DIST += api/cache-clear.json api/cache-get.json
 EXTRA_DIST += api/cache-insert.json api/cache-load.json
 EXTRA_DIST += api/cache-remove.json api/cache-write.json
+EXTRA_DIST += api/class-add.json api/class-del.json
+EXTRA_DIST += api/class-get.json api/class-list.json
+EXTRA_DIST += api/class-update.json
 EXTRA_DIST += api/config-get.json api/config-reload.json
 EXTRA_DIST += api/config-set.json api/config-test.json
 EXTRA_DIST += api/config-write.json api/dhcp-disable.json

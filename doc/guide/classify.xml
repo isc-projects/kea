@@ -660,12 +660,12 @@
       option in DHCPv4 (code 125, see
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-4">Section 4 of RFC 3925</link>) and
       Vendor-specific Information Option in DHCPv6 (code 17, defined in
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.17">Section 22.17 of
-      RFC 3315</link>). Vendor class option means Vendor-Identifying Vendor
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc8415#section-21.17">Section 21.17 of
+      RFC 8415</link>). Vendor class option means Vendor-Identifying Vendor
       Class Option in DHCPv4 (code 124, see
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925#section-3">Section 3 of RFC 3925</link>) in DHCPv4 and
       Class Option in DHCPv6 (code 16, see
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315#section-22.16">Section 22.16 of RFC 3315</link>).
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc8415#section-21.16">Section 21.16 of RFC 8415</link>).
       Vendor options may
       have sub-options that are referenced by their codes. Vendor class
       options do not have sub-options, but rather data chunks, which are
@@ -683,8 +683,8 @@
       accessed using option[60] expression.</para></listitem>
 
       <listitem><para>
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925">RFC3925</link> and
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC3315</link>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3925">RFC 3925</link> and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
       allow for multiple instances of vendor options
       to appear in a single message. The client classification code currently
       examines the first instance if more than one appear. For vendor.enterprise

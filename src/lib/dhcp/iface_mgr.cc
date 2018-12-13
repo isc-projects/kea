@@ -180,9 +180,7 @@ bool Iface::delSocket(const uint16_t sockfd) {
 }
 
 IfaceMgr::IfaceMgr()
-    :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-     control_buf_(new char[control_buf_len_]),
-     packet_filter_(new PktFilterInet()),
+    :packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6()),
      test_mode_(false),
      allow_loopback_(false) {
@@ -307,9 +305,6 @@ void IfaceMgr::stopDHCPReceiver() {
 }
 
 IfaceMgr::~IfaceMgr() {
-    // control_buf_ is deleted automatically (scoped_ptr)
-    control_buf_len_ = 0;
-
     closeSockets();
 }
 
@@ -506,13 +501,25 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
             }
 
-            IOAddress out_address("0.0.0.0");
-            if (!iface->flag_up_ || !iface->flag_running_ ||
-                !iface->getAddress4(out_address)) {
+            if (!iface->flag_up_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
-                               << " is down or has no usable IPv4"
-                               " addresses configured");
+                               << " is down");
+                continue;
+            }
+
+            if (!iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is not running");
+                continue;
+            }
+
+            IOAddress out_address("0.0.0.0");
+            if (!iface->getAddress4(out_address)) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " has no usable IPv4 addresses configured");
                 continue;
             }
         }
@@ -618,11 +625,15 @@ IfaceMgr::openSockets6(const uint16_t port,
                                " interface " << iface->getName());
                 continue;
 
-            } else if (!iface->flag_up_ || !iface->flag_running_) {
+            } else if (!iface->flag_up_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
-                               << " is down or has no usable IPv6"
-                               " addresses configured");
+                               << " is down");
+                continue;
+            } else if (!iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is not running");
                 continue;
             }
 

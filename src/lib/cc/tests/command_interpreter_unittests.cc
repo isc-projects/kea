@@ -165,12 +165,16 @@ TEST(CommandInterpreterTest, parseCommand) {
     EXPECT_THROW(parseCommand(arg, el("{ \"command\": 1 }")), CtrlChannelError);
     EXPECT_THROW(parseCommand(arg, el("{ \"command\": [] }")), CtrlChannelError);
     EXPECT_THROW(parseCommand(arg, el("{ \"command\": [ 1 ] }")), CtrlChannelError);
+    EXPECT_THROW(parseCommand(arg, el("{ \"command\": \"my_command\", "
+                                      "\"unknown\": \"xyz\" }")), CtrlChannelError);
 
     cmd = parseCommand(arg, el("{ \"command\": \"my_command\" }"));
     EXPECT_EQ("my_command", cmd);
     EXPECT_FALSE(arg);
 
-    cmd = parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": 1 }"));
+    // Include "service" to verify that it is not rejected.
+    cmd = parseCommand(arg, el("{ \"command\": \"my_command\", \"arguments\": 1, "
+                               "  \"service\": [ \"dhcp4\" ] }"));
     ASSERT_TRUE(arg);
     EXPECT_EQ("my_command", cmd);
     EXPECT_EQ("1", arg->str());
@@ -203,10 +207,17 @@ TEST(CommandInterpreterTest, parseCommandWithArgs) {
                                               "\"arguments\": { } }")),
                  CtrlChannelError);
 
+    // Command with unsupported parameter is rejected.
+    EXPECT_THROW(parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
+                                              "  \"arguments\": { \"arg1\": \"value1\" }, "
+                                              "  \"unsupported\": 1 }")),
+                 CtrlChannelError);
+
+
     // Specifying arguments in non empty map should be successful.
     EXPECT_NO_THROW(
         cmd = parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
-                                           "\"arguments\": { \"arg1\": \"value1\" } }"))
+                                           "  \"arguments\": { \"arg1\": \"value1\" } }"))
     );
     ASSERT_TRUE(arg);
     ASSERT_EQ(Element::map, arg->getType());
@@ -215,6 +226,13 @@ TEST(CommandInterpreterTest, parseCommandWithArgs) {
     ASSERT_EQ(Element::string, arg1->getType());
     EXPECT_EQ("value1", arg1->stringValue());
     EXPECT_EQ("my_command", cmd);
+
+    // The "service" parameter should be allowed.
+    EXPECT_NO_THROW(parseCommandWithArgs(arg, el("{ \"command\": \"my_command\", "
+                                                 "  \"service\": [ \"dhcp4\" ], "
+                                                 "  \"arguments\": { \"arg1\": \"value1\" } }"))
+    );
+
 }
 
 }

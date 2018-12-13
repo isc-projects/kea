@@ -494,7 +494,7 @@ public:
 
     /// @brief Packet reception buffer size
     ///
-    /// RFC3315 states that server responses may be
+    /// RFC 8415 states that server responses may be
     /// fragmented if they are over MTU. There is no
     /// text whether client's packets may be larger
     /// than 1500. For now, we can assume that
@@ -1083,7 +1083,7 @@ public:
     ///
     /// @param family indicates which receiver to start,
     /// (AF_INET or AF_INET6)
-    /// @parm queue_control configuration containing "dhcp-queue-control"
+    /// @param queue_control configuration containing "dhcp-queue-control"
     /// content
     /// @return true if packet queueuing has been enabled, false otherwise
     /// @throw InvalidOperation if the receiver thread is currently running.
@@ -1254,12 +1254,6 @@ protected:
     // We can't use the same socket, as receiving socket
     // is bound to multicast address. And we all know what happens
     // to people who try to use multicast as source address.
-
-    /// Length of the control_buf_ array
-    size_t control_buf_len_;
-
-    /// Control-buffer, used in transmission and reception.
-    boost::scoped_array<char> control_buf_;
 
 private:
     /// @brief Identifies local network address to be used to

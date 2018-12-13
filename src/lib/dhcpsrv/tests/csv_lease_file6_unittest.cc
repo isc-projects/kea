@@ -11,6 +11,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <gtest/gtest.h>
+#include <ctime>
 #include <sstream>
 
 using namespace isc;
@@ -538,6 +539,40 @@ TEST_F(CSVLeaseFile6Test, declinedLeaseTest) {
     }
 }
 
+
+// Verifies that it is possible to output a lease with very high valid
+// lifetime (infinite in RFC2131 terms) and current time, and then read
+// back this lease.
+TEST_F(CSVLeaseFile6Test, highLeaseLifetime) {
+    CSVLeaseFile6 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
+    ASSERT_TRUE(io_.exists());
+
+    // Write lease with very high lease lifetime and current time.
+    Lease6Ptr lease(new Lease6(Lease::TYPE_NA, IOAddress("2001:db8:1::1"),
+                               makeDUID(DUID0, sizeof(DUID0)),
+                               7, 100, 0xFFFFFFFF, 50, 80, 8, true, true,
+                               "host.example.com"));
+
+    // Write this lease out to the lease file.
+    ASSERT_NO_THROW(lf.append(*lease));
+
+    // Close the lease file.
+    lf.close();
+
+    Lease6Ptr lease_read;
+
+    // Re-open the file for reading.
+    ASSERT_NO_THROW(lf.open());
+
+    // Read the lease and make sure it is successful.
+    EXPECT_TRUE(lf.next(lease_read));
+    ASSERT_TRUE(lease_read);
+
+    // The valid lifetime and the cltt should match with the original lease.
+    EXPECT_EQ(lease->valid_lft_, lease_read->valid_lft_);
+    EXPECT_EQ(lease->cltt_, lease_read->cltt_);
+}
 
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6

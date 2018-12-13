@@ -47,6 +47,7 @@ libkea_dhcp___la_SOURCES += packet_queue.h
 libkea_dhcp___la_SOURCES += packet_queue_mgr.h 
 libkea_dhcp___la_SOURCES += packet_queue_mgr4.cc packet_queue_mgr4.h 
 libkea_dhcp___la_SOURCES += packet_queue_mgr6.cc packet_queue_mgr6.h 
+libkea_dhcp___la_SOURCES += packet_queue_ring.h
 libkea_dhcp___la_SOURCES += pkt.cc pkt.h
 libkea_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libkea_dhcp___la_SOURCES += pkt4o6.cc pkt4o6.h
@@ -83,7 +84,7 @@ libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp___la_LIBADD  += $(BOOST_LIBS)
 libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
-libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 10:0:0
+libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 11:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox
@@ -129,6 +130,7 @@ libkea_dhcp___include_HEADERS = \
 	packet_queue_mgr.h \
 	packet_queue_mgr4.h \
 	packet_queue_mgr6.h \
+	packet_queue_ring.h \
 	pkt.h \
 	pkt4.h \
 	pkt4o6.h \

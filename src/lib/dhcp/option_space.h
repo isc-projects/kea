@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,7 +129,7 @@ private:
 /// This class extends the base class with the support for enterprise numbers.
 /// The enterprise numbers are assigned by IANA to various organizations
 /// and they are carried as uint32_t integers in DHCPv6 Vendor Specific
-/// Information Options (VSIO). For more information refer to RFC3315.
+/// Information Options (VSIO). For more information refer to RFC 8415.
 /// All option spaces that group VSIO options must have enterprise number
 /// set. It can be set using a constructor or \ref setVendorSpace function.
 /// The extra functionality of this class (enterprise numbers) allows to

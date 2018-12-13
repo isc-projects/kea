@@ -67,7 +67,7 @@ TEST_F(DatabaseConnectionCallbackTest, NoDbLostCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
-    pmap[std::string("reconnect-wait-time")] = std::string("60");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
     DatabaseConnection datasrc(pmap);
 
     bool ret = false;
@@ -87,7 +87,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     DatabaseConnection::ParameterMap pmap;
     pmap[std::string("type")] = std::string("test");
     pmap[std::string("max-reconnect-tries")] = std::string("3");
-    pmap[std::string("reconnect-wait-time")] = std::string("60");
+    pmap[std::string("reconnect-wait-time")] = std::string("60000");
 
     /// Install the callback.
     DatabaseConnection::db_lost_callback =
@@ -104,7 +104,7 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     ASSERT_EQ("test", db_reconnect_ctl_->backendType());
     ASSERT_EQ(3, db_reconnect_ctl_->maxRetries());
     ASSERT_EQ(3, db_reconnect_ctl_->retriesLeft());
-    EXPECT_EQ(60, db_reconnect_ctl_->retryInterval());
+    EXPECT_EQ(60000, db_reconnect_ctl_->retryInterval());
 
     /// Verify that checkRetries() correctly decrements
     /// down to zero, and that retriesLeft() returns

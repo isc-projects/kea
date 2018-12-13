@@ -139,11 +139,9 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
 <section>
   <title>Introduction</title>
       <para>
-        This section explains how to configure the DHCPv4 server using the
-        Kea configuration backend. (Kea configuration using any other
-        backends is outside of scope of this document.) Before DHCPv4
-        is started, its configuration file has to be created. The
-        basic configuration is as follows:
+        This section explains how to configure the DHCPv4 server using a
+        configuration file. Before DHCPv4 is started, its configuration
+        file has to be created. The basic configuration is as follows:
 <screen>
 {
 # DHCPv4 configuration starts in this line
@@ -193,12 +191,22 @@ the server; they do not impact its
 operation in any way.</para>
 
 <para>The configuration starts in the first line with the initial
-opening curly bracket (or brace). Each configuration consists of
-one or more objects. In this specific example, we have only one
-object, called Dhcp4. This is a simplified configuration, as usually
-there will be additional objects, like <command>Logging</command> or
-<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp4
-configuration starts with the <command>"Dhcp4": {</command> line
+opening curly bracket (or brace). Each configuration must contain an
+object specifying the configuration of the Kea module using it.
+In the example above this object is called <command>Dhcp4</command>.
+</para>
+
+<note>
+  <para>In the current Kea release it is possible to specify configurations
+  of multiple modules within a single configuration file, but this is not
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually is) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity.
+  </para>
+</note>
+
+<para>The Dhcp4 configuration starts with the <command>"Dhcp4": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
@@ -300,9 +308,9 @@ In some cases in may be preferable to use more compact notation.
 
 <para>After all the parameters have been specified, we have two contexts open:
 global and Dhcp4, hence we need two closing curly brackets to close them.
-In a real life configuration file there most likely would be additional
-components defined such as Logging or DhcpDdns, so the closing brace would
-be followed by a comma and another object definition.</para>
+In a real life configuration file there most likely would be an additional
+component defined such as Logging, so the closing brace would be followed
+by a comma and another object definition.</para>
 </section>
 
 <section>
@@ -496,14 +504,28 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 lease database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp4": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
     </para>
+
+    <note>
+      <para>
+        Automatic reconnect to database backends is configured individually per backend.
+        This allows you to tailor the recovery parameters to the each backend you use.
+        We do suggest that you either enable it for all backends or no backends so you
+        have consistent behavior.  Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes the
+        cases when lease database backend and hosts database backend is connected to
+        the same database instance.
+      </para>
+    </note>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -662,15 +684,27 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 host database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp4": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp4": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
     </para>
 
+    <note>
+      <para>
+        Automatic reconnect to database backends is configured individually per backend.
+        This allows you to tailor the recovery parameters to the each backend you use.
+        We do suggest that you either enable it for all backends or no backends so you
+        have consistent behavior.  Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes the
+        cases when lease database backend and hosts database backend is connected to
+        the same database instance.
+      </para>
+    </note>
   </para>
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
@@ -3111,7 +3145,7 @@ It is merely echoed by the server
       the lease. Moreover,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc4361">RFC 4361</link> gives
       the recommendation to use a DUID
-      (see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc3315">RFC 3315</link>,
+      (see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc8415">RFC 8415</link>,
       the DHCPv6 specification)
       carried as "client identifier" when dual stack networks are in use
       to provide consistent identification information of the client, regardless
@@ -4429,11 +4463,11 @@ as long as it is valid IPv4 address.</para>
       the clients when client classification is in use, to assure that the
       desired subnet is selected for a given client type.</para>
 
-      <para>If a subnet is associated with some classes, only the clients
-      belonging to any of these classes can use this subnet. If there are no
+      <para>If a subnet is associated with a class, only the clients
+      belonging to this class can use this subnet. If there are no
       classes specified for a subnet, any client connected to a given shared
       network can use this subnet. A common mistake is to assume that the
-      subnet including client classes is preferred over subnets without
+      subnet including a client class is preferred over subnets without
       client classes. Consider the following example:
 
 <screen>
@@ -4479,7 +4513,7 @@ as long as it is valid IPv4 address.</para>
       where cable modems should use one subnet and other devices should use
       another subnet within the same shared network. In this case it is required
       to apply classification on all subnets. The following example defines two
-      classes of devices. The subnet selection is  made based on option 93 values.
+      classes of devices. The subnet selection is made based on option 93 values.
 <screen>
 {
     "client-classes": [

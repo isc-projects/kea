@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -42,7 +42,7 @@ public:
     /// @param domain_name A domain name carried by the option given in the
     /// textual format.
     /// @param name_type A value which indicates whether domain-name
-    /// is partial of fully qualified.
+    /// is partial or fully qualified.
     Option6ClientFqdnImpl(const uint8_t flags,
                           const std::string& domain_name,
                           const Option6ClientFqdn::DomainNameType name_type);

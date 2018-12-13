@@ -357,6 +357,7 @@ strFromStringstream(std::istream& in, const std::string& file,
     while (c != EOF && c != '"') {
         if (c == '\\') {
             // see the spec for allowed escape characters
+            int d;
             switch (in.peek()) {
             case '"':
                 c = '"';
@@ -381,6 +382,48 @@ strFromStringstream(std::istream& in, const std::string& file,
                 break;
             case 't':
                 c = '\t';
+                break;
+            case 'u':
+                // skip first 0
+                in.ignore();
+                ++pos;
+                c = in.peek();
+                if (c != '0') {
+                    throwJSONError("Unsupported unicode escape", file, line, pos);
+                }
+                // skip second 0
+                in.ignore();
+                ++pos;
+                c = in.peek();
+                if (c != '0') {
+                    throwJSONError("Unsupported unicode escape", file, line, pos - 2);
+                }
+                // get first digit
+                in.ignore();
+                ++pos;
+                d = in.peek();
+                if ((d >= '0') && (d <= '9')) {
+                    c = (d - '0') << 4;
+                } else if ((d >= 'A') && (d <= 'F')) {
+                    c = (d - 'A' + 10) << 4;
+                } else if ((d >= 'a') && (d <= 'f')) {
+                    c = (d - 'a' + 10) << 4;
+                } else {
+                    throwJSONError("Not hexadecimal in unicode escape", file, line, pos - 3);
+                }
+                // get second digit
+                in.ignore();
+                ++pos;
+                d = in.peek();
+                if ((d >= '0') && (d <= '9')) {
+                    c |= d - '0';
+                } else if ((d >= 'A') && (d <= 'F')) {
+                    c |= d - 'A' + 10;
+                } else if ((d >= 'a') && (d <= 'f')) {
+                    c |= d - 'a' + 10;
+                } else {
+                    throwJSONError("Not hexadecimal in unicode escape", file, line, pos - 4);
+                }
                 break;
             default:
                 throwJSONError("Bad escape", file, line, pos);
@@ -797,7 +840,7 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            if ((c >= 0) && (c < 0x20)) {
+            if (((c >= 0) && (c < 0x20)) || (c < 0) || (c >= 0x7f)) {
                 std::ostringstream esc;
                 esc << "\\u"
                     << hex

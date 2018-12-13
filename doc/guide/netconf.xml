@@ -114,31 +114,39 @@ ietf-ip                    | 2014-06-16 | Installed   |                     |   
     </para>
 
     <para>
-Installing Kea YANG modules. There are two major modules that Kea is able to
-support: kea-dhcp4-server and kea-dhcp6-server. Note that while there is an
-active effort at DHC working group at IETF to develop an DHCPv6 YANG model,
-similar initiative for DHCPv4 died long time ago. As such, Kea uses its own
-dedicated models for DHCPv4 and DHCPv6 but partially supports the IETF model
-for DHCPv6. Those three models have extra
-models as dependencies. The dependency models are also provided in
-src/lib/libyang/models. To install models, do the following:
+Installing Kea YANG modules. There are two major modules that Kea is
+able to support: kea-dhcp4-server and kea-dhcp6-server. Note that
+while there is an active effort at DHC working group at IETF to
+develop an DHCPv6 YANG model, similar initiative for DHCPv4 died long
+time ago. As such, Kea uses its own dedicated models for DHCPv4 and
+DHCPv6 but partially supports the IETF model for DHCPv6. Those three
+models have extra modules as dependencies. The dependency modules are
+also provided in <filename>src/share/yang/modules</filename> in sources
+and <filename>share/kea/yang/modules</filename> after installation.
+    </para>
+
+    <para>
+To install modules from sources, do the following:
 
 <screen>
-cd src/lib/yang/models
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server.yang
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp4-server.yang
-sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp6-server.yang
+cd src/share/yang/modules
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server*.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp4-server*.yang
+sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g kea-dhcp6-server*.yang
+...
 </screen>
 
 Note the first -s parameter specifies the location of your YANG schema
 repository. You can check it with sysrepoctl -l. This is a parameter that is
 configured during sysrepo compilation and is detected by Kea configure
 under the SYSREPO_REPO name.
+    </para>
 
+    <para>
 The installation should look similar to the following:
 <screen>
-$ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server.yang
-Installing a new module from file 'ietf-dhcpv6-server.yang'...
+$ sudo sysrepoctl -i -s /home/thomson/devel/sysrepo-0.7.6/build/repository/yang -s . -g ietf-dhcpv6-server*.yang
+Installing a new module from file 'ietf-dhcpv6-server@2018-11-20.yang'...
 Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-server@2018-07-14.yang'...
 Resolving dependency: 'ietf-dhcpv6-server' imports 'ietf-dhcpv6-options'...
 Installing the YANG file to '/home/thomson/devel/sysrepo-0.7.6/build/repository/yang/ietf-dhcpv6-options@2018-07-14.yang'...
@@ -180,10 +188,10 @@ turing-machine             | 2013-12-27 | Installed   | root:root           | 66
 iana-if-type               | 2014-05-08 | Installed   |                     |             |                               |
 ietf-interfaces            | 2014-05-08 | Installed   | root:root           | 666         |                               |
 ietf-ip                    | 2014-06-16 | Installed   |                     |             |                               |
-kea-dhcp4-server           | 2018-07-14 | Installed   | root:root           | 666         |                               |
-kea-dhcp6-server           | 2018-07-14 | Installed   | root:root           | 666         |                               |
-ietf-dhcpv6-server         | 2018-03-04 | Installed   | root:root           | 666         |                               |
-ietf-dhcpv6-options        | 2018-03-04 | Imported    |                     |             |                               |
+kea-dhcp4-server           | 2018-11-20 | Installed   | root:root           | 666         |                               |
+kea-dhcp6-server           | 2018-11-20 | Installed   | root:root           | 666         |                               |
+ietf-dhcpv6-server         | 2018-09-04 | Installed   | root:root           | 666         |                               |
+ietf-dhcpv6-options        | 2018-09-04 | Imported    |                     |             |                               |
 ietf-dhcpv6-types          | 2018-01-30 | Imported    |                     |             |                               |
 </screen>
     </para>
@@ -225,15 +233,26 @@ done in dependency order and reverse dependency order accordingly.
       <itemizedlist>
         <listitem>
           <simpara>
-            Open a connection with the sysrepo enviroment and establish
+            For each managed server get the initial configuration from
+            the server through the control scoket.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Open a connection with the sysrepo environment and establish
             two sessions with the startup and running datastores.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
-            For each managed server get the initial configuration from
-            the server through the control scoket.
+            Check that used (not essential) and required (essential)
+            modules are installed in the sysrepo repository at the
+            right revision.
+            If an essential module, i.e. a module where the configuration
+            schema for a managed server is defined, is not installed
+            then a fatal error is raised.
           </simpara>
         </listitem>
 

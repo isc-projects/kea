@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,7 +210,9 @@ setDomainName(const std::string& domain_name,
 
     } else {
         try {
-            domain_name_.reset(new isc::dns::Name(name));
+            // The second argument indicates that the name should be converted
+            // to lower case.
+            domain_name_.reset(new isc::dns::Name(name, true));
 
         } catch (const Exception&) {
             isc_throw(InvalidOption4FqdnDomainName,
@@ -291,7 +293,9 @@ Option4ClientFqdnImpl::parseCanonicalDomainName(OptionBufferConstIter first,
             buf.push_back(0);
             // Reset domain name.
             isc::util::InputBuffer name_buf(&buf[0], buf.size());
-            domain_name_.reset(new isc::dns::Name(name_buf));
+            // The second argument indicates that the name should be converted
+            // to lower case.
+            domain_name_.reset(new isc::dns::Name(name_buf, true));
             // Terminating zero was missing, so set the domain-name type
             // to partial.
             domain_name_type_ = Option4ClientFqdn::PARTIAL;
@@ -301,7 +305,9 @@ Option4ClientFqdnImpl::parseCanonicalDomainName(OptionBufferConstIter first,
             // Name object constructor.
             isc::util::InputBuffer name_buf(&(*first),
                                             std::distance(first, last));
-            domain_name_.reset(new isc::dns::Name(name_buf));
+            // The second argument indicates that the name should be converted
+            // to lower case.
+            domain_name_.reset(new isc::dns::Name(name_buf, true));
             // Set the domain-type to fully qualified domain name.
             domain_name_type_ = Option4ClientFqdn::FULL;
         }
@@ -313,7 +319,9 @@ Option4ClientFqdnImpl::parseASCIIDomainName(OptionBufferConstIter first,
                                             OptionBufferConstIter last) {
     if (std::distance(first, last) > 0) {
         std::string domain_name(first, last);
-        domain_name_.reset(new isc::dns::Name(domain_name));
+        // The second argument indicates that the name should be converted
+        // to lower case.
+        domain_name_.reset(new isc::dns::Name(domain_name, true));
         domain_name_type_ = domain_name[domain_name.length() - 1] == '.' ?
             Option4ClientFqdn::FULL : Option4ClientFqdn::PARTIAL;
     }

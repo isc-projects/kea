@@ -1,3 +1,85 @@
+Kea 1.5.0 released on Dec 14, 2018
+
+1506.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 final release.
+	(Gitlab #338,!168, git 551c5d704804d0ab2ea276e95dbae66b9d0f5561)
+
+1505.	[bug]		marcin
+	Corrected an issue in the lease_cmds hooks library which caused
+	errors while adding leases with high lease expiration time value
+	to the database. Many thanks to Shawn Routhier from Infoblox for
+	finding and reporting the issue.
+	(Gitlab #337,!167, git 3fcdc28814310ac93b3903897e952b3b60cfa0bc)
+
+1504.	[bug]		fdupont
+	Created separate control buffers for reception and transmission
+	over UDP sockets.
+	(Gitlab #327,!166, git cbb573858d7b1a4d2ba2316db457aa55ab037fc3)
+
+1503.	[doc]		fdupont, marcin
+	Updated "JSON Configuration" section of the Kea User's Guide.
+	(Gitlab #198,!160, git 94c66b3c071d7bbf4b247bf57cd75ddcc343177e)
+
+1502.	[bug]		fdupont
+	Unicode parser for JSON structures has been improved. It now
+	handles escape sequences better.
+	(Gitlab #45,!40, git ba9b18cf2af66f8fb80e3dbbe13da11c99764588)
+
+1501.	[func]		fdupont
+	keactrl now supports kea-netconf. The new daemon is disabled by
+	default. Please edit keactrl.conf (netconf=yes) if you want to
+	start using it.
+	(Gitlab #186,!163, git 8f7d556456891e7c675082f7e6cc88da71a92fee)
+
+1500	[func, doc]	tmark
+	Streamlined the isc::dhcp::PacketQueue interface and
+	added a section on Congestion Handling to the developer's guide.
+	(Gitlab #278,!162, git 0ce615f5da993ac90f675c5315ba7cb5c2ef3e1c)
+
+1499.	[func]		tmark
+	For Kea 1.5.0, congestion handling has been disabled by
+	default.
+	(Gitlab #277,!164, git 8d87c46a3cc7b7be4dd5f751b48449e92ee62d84)
+
+1498.	[bug]		marcin
+	Corrected behavior of the DHCP servers with respect to the
+	"reconnect-wait-time" parameter setting. This parameter is
+	specified in milliseconds, but the servers used to interpret
+	it as specified in seconds.
+	(Gitlab #173,!154, git 377f49e84ad6ebc91cbeac4116d24a15571c522d)
+
+1497.	[func]		fdupont
+	All YANG modules now have a revision specified. When starting,
+	kea-netconf daemon will now check if the required modules are
+	installed and have a proper revision. This should help spotting
+	issues when migrating from older YANG modules.
+	(Gitlab #204,!121, git 9e772e1472e073ee85924cfc706cb57a5e70a0b1)
+
+1496.	[doc]		marcin
+	Updated Kea documentation to reference RFC 8415, which is the
+	new DHCPv6 specification. It obsoletes a number of RFCs:
+	RFC 3315 (previous DHCPv6 specification), RFC 3633, RFC 3736,
+	RFC 4242, RFC 7083, RFC 7283 and RFC 7550. Kea documentation
+	now refers to RFC 8415 where appropriate instead of obsoleted
+	RFCs.
+	(Gitlab #288,!158, git 974b033a8de7a8e671156c33efeb13d4ac847c96)
+
+1495.	[bug]		marcin
+	Corrected an issue in the Memfile lease backend which caused
+	errors while reading leases with very long lifetimes. Many
+	thanks to Shawn Routhier from Infoblox for finding and reporting
+	the issue.
+	(Gitlab #303,!151, git ab92ab6fcd414f1efc7c5de6a641274da7c04e92)
+
+1494.	[bug]		marcin
+	Kea servers reject commands with unsupported parameters.
+	(Gitlab #253,!147, git 7fc55489887c0e8f32db5c1fe9f46fa1cc2a4407)
+
+1493.	[bug]		marcin
+	Names carried in DHCPv4 Client FQDN option, Hostname option and
+	stored in the lease database are case insensitive.
+	(Gitlab #86,!152, git d9e23e2a6a3114b1c87de9c881ef10cdb1e00c61)
+
 Kea 1.5.0-beta2 released on Nov 30, 2018
 
 1492.	[doc]		fdupont

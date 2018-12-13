@@ -139,11 +139,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
 <section>
   <title>Introduction</title>
       <para>
-        This section explains how to configure the DHCPv6 server using the
-        Kea configuration backend. (Kea configuration using any other
-        backends is outside of scope of this document.) Before DHCPv6
-        is started, its configuration file has to be created. The
-        basic configuration is as follows:
+        This section explains how to configure the DHCPv6 server using a
+        configuration file. Before DHCPv6 is started, its configuration
+        file has to be created. The basic configuration is as follows:
 <screen>
 {
 # DHCPv6 configuration starts on the next line
@@ -193,13 +191,24 @@ for these and other parameters.</para>
 the server; they do not impact its
 operation in any way.</para>
 
+
 <para>The configuration starts in the first line with the initial
-opening curly bracket (or brace). Each configuration consists of
-one or more objects. In this specific example, we have only one
-object, called Dhcp6. This is a simplified configuration, as usually
-there will be additional objects, like <command>Logging</command> or
-<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp6
-configuration starts with the <command>"Dhcp6": {</command> line
+opening curly bracket (or brace). Each configuration must contain an
+object specifying the configuration of the Kea module using it.
+In the example above this object is called <command>Dhcp6</command>.
+</para>
+
+<note>
+  <para>In the current Kea release it is possible to specify configurations
+  of multiple modules within a single configuration file, but this is not
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually is) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity.
+  </para>
+</note>
+
+<para>The Dhcp6 configuration starts with the <command>"Dhcp6": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp6 configuration.</para>
@@ -292,8 +301,8 @@ In some cases in may be preferable to use more compact notation.
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp6, hence we need two closing curly brackets to close them.
 In a real life configuration file there most likely would be additional
-components defined such as Logging or DhcpDdns, so the closing brace would
-be followed by a comma and another object definition.</para>
+components defined such as Logging, so the closing brace would be followed
+by a comma and another object definition.</para>
 </section>
 
 <section>
@@ -493,14 +502,28 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 lease database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
   </para>
+
+  <note>
+    <para>
+      Automatic reconnect to database backends is configured individually per backend.
+      This allows you to tailor the recovery parameters to the each backend you use.
+      We do suggest that you either enable it for all backends or no backends so you
+      have consistent behavior.  Losing connectivity to a backend for which reconnect
+      is disabled will result in the server shutting itself down. This includes the
+      cases when lease database backend and hosts database backend is connected to
+      the same database instance.
+    </para>
+  </note>
+
   <para>
     Note that host parameter is used by MySQL and PostgreSQL
     backends. Cassandra has a concept of contact points that could be
@@ -599,14 +622,28 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 host database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
   </para>
+
+    <note>
+      <para>
+        Automatic reconnect to database backends is configured individually per backend.
+        This allows you to tailor the recovery parameters to the each backend you use.
+        We do suggest that you either enable it for all backends or no backends so you
+        have consistent behavior.  Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes the
+        cases when lease database backend and hosts database backend is connected to
+        the same database instance.
+      </para>
+    </note>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -946,9 +983,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>.  A
-        subnet may have one or more prefix delegation pools.  Each pool has a
-        prefixed address, which is specified as a prefix
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
+        section 6.3.  A subnet may have one or more prefix delegation pools.
+        Each pool has a prefixed address, which is specified as a prefix
         (<command>prefix</command>) and a prefix length
         (<command>prefix-len</command>), as well as a delegated prefix length
         (<command>delegated-len</command>). The delegated length must not be
@@ -2060,7 +2097,7 @@ should include options from the isc option space:
       <section xml:id="dhcp6-rapid-commit">
         <title>Rapid Commit</title>
         <para>The Rapid Commit option, described in
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>, is supported
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>, is supported
         by the Kea DHCPv6 server. However, support is disabled by default for
         all subnets. It can be enabled for a particular subnet using the
         <command>rapid-commit</command> parameter as shown below:
@@ -4065,11 +4102,11 @@ as long as it is valid IPv6 address.</para>
       the clients when client classification is in use, to assure that the
       desired subnet is selected for a given client type.</para>
 
-      <para>If a subnet is associated with some classes, only the clients
-      belonging to any of these classes can use this subnet. If there are no
+      <para>If a subnet is associated with a class, only the clients
+      belonging to this class can use this subnet. If there are no
       classes specified for a subnet, any client connected to a given shared
       network can use this subnet. A common mistake is to assume that the
-      subnet including client classes is preferred over subnets without
+      subnet including a client class is preferred over subnets without
       client classes. Consider the following example:
 
 <screen>
@@ -4245,18 +4282,16 @@ autogenerated IDs are not stable across configuration changes.
       <para>The DHCPv6 protocol uses a "server identifier" (also known
       as a DUID) for clients to be able to discriminate between several
       servers present on the same link.
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
-      defines three DUID types: DUID-LLT, DUID-EN and DUID-LL.
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6355">RFC 6355</link>
-      also defines DUID-UUID. Future specifications may introduce new
-      DUID types.</para>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+      defines four DUID types: DUID-LLT, DUID-EN, DUID-LL and DUID-UUID.
+      Future specifications may introduce new DUID types.</para>
 
       <para>The Kea DHCPv6 server generates a server identifier once, upon
       the first startup, and stores it in a file. This identifier isn't
       modified across restarts of the server and so is a stable identifier.</para>
 
       <para>Kea follows recommendation from
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
       to use DUID-LLT as the default server identifier. However, we have
       received reports that some deployments require different DUID
       types, and there is a need to administratively select both DUID
@@ -4520,40 +4555,48 @@ autogenerated IDs are not stable across configuration changes.
     </section>
 
     <section xml:id="dhcp6-rfc7550">
-      <title>Support for RFC 7550</title>
+      <title>Support for RFC 7550 (being now part of RFC 8415)</title>
       <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>
-      introduced some changes to the DHCPv6 protocol to resolve a few issues
-      with the coexistence of multiple stateful options in the messages sent
-      between the clients and servers.</para>
-
-      <para>The typical example is when the client, such as a requesting
-      router, requests an allocation of both addresses and prefixes when
-      it performs the 4-way (SARR) exchange with the server. If the
-      server is not configured to allocate any prefixes but it can allocate
-      some addresses, it will respond with the IA_NA(s) containing allocated
-      addresses and the IA_PD(s) containing the NoPrefixAvail status code. If
-      the client can operate without prefixes it may transition to the
-      'bound' state when it sends Renew/Rebind messages to the server,
-      according to the T1 and T2 times, to extend the lifetimes of the
-      allocated addresses. If the client is still interested in obtaining
-      prefixes from the server it may also include an IA_PD in the Renew/Rebind
-      to request allocation of the prefixes. If the server still cannot
-      allocate the prefixes, it will respond with the IA_PD(s) containing
-      NoPrefixAvail status code. However, if the server can now allocate
-      the prefixes it will do so, and send them in the IA_PD(s) to the client.
-      Allocation of leases during the Renew/Rebind was not supported in the
+      introduced some changes to the previous DHCPv6 specifications,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
       and <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>,
-      and has been introduced in
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>.
-      Kea supports this new behavior and it doesn't provide any configuration
-      mechanisms to disable it.
+      to resolve a few issues with the coexistence of multiple stateful
+      options in the messages sent between the clients and servers. Those
+      changes were later included in the most recent DHCPv6 protocol specification,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
+      which obsoleted <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>.
+      Kea supports <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+      along with these protocol changes, which are briefly described below.
       </para>
 
+      <para>When a client, such as a requesting router, requests an allocation
+      of both addresses and prefixes during the 4-way (SARR) exchange with the
+      server, and the server is not configured to allocate any prefixes but it
+      can allocate some addresses, it will respond with the IA_NA(s) containing
+      allocated addresses and the IA_PD(s) containing the NoPrefixAvail status code.
+      According to the updated specifications, if the client can operate without
+      prefixes it should accept allocated addresses and transition to
+      the 'bound' state. When the client subsequently sends Renew/Rebind messages
+      to the server, according to the T1 and T2 times, to extend the lifetimes of
+      the allocated addresses, if the client is still interested in obtaining
+      prefixes from the server, it may also include an IA_PD in the Renew/Rebind
+      to request allocation of the prefixes. If the server still cannot
+      allocate the prefixes it will respond with the IA_PD(s) containing
+      NoPrefixAvail status code. However, if the server can allocate the
+      prefixes it will allocate and send them in the IA_PD(s) to the client.
+      Similar situation occurs when the server is unable to allocate addresses
+      for the client but can delegate prefixes. The client may request allocation
+      of the addresses while renewing the delegated prefixes. Allocating leases for
+      other IA types while renewing existing leases is by default supported by
+      the Kea DHCPv6 server, and the server provides no configuration mechanisms
+      to disable this behavior.</para>
+
       <para>
-        The following are the other behaviors specified in the
+        The following are the other behaviors first introduced in the
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>
-        supported by the Kea DHCPv6 server:
+        (now being part of the
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>)
+        and supported by the Kea DHCPv6 server:
         <itemizedlist>
           <listitem><simpara>Set T1/T2 timers to the same value for all
           stateful (IA_NA and IA_PD) options to facilitate renewal of all
@@ -4738,7 +4781,7 @@ autogenerated IDs are not stable across configuration changes.
         <simpara><command>duid</command> - DHCPv6 uses DUID identifiers instead of
         MAC addresses. There are currently four DUID types defined, with two of them
         (DUID-LLT, which is the default one and DUID-LL) convey MAC address information.
-        Although <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="" utl="http://tools.ietf.org/html/rfc3315">RFC 3315</link> forbids
+        Although <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="" utl="http://tools.ietf.org/html/rfc8415">RFC 8415</link> forbids
         it, it is possible to parse those DUIDs and extract
         necessary information from them. This method is not completely reliable, as
         clients may use other DUID types, namely DUID-EN or DUID-UUID.
@@ -5496,6 +5539,12 @@ autogenerated IDs are not stable across configuration changes.
             7598</ulink>: All options specified in this specification are
             supported by the DHCPv6 server.</simpara>
           </listitem>
+          <listitem>
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6 (DHCPv6)</emphasis>,
+            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>:
+            New DHCPv6 protocol specification which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083,
+            RFC 7283 and RFC 7550</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -5510,9 +5559,8 @@ autogenerated IDs are not stable across configuration changes.
           <simpara>
             The server will allocate, renew or rebind a maximum of one lease
             for a particular IA option (IA_NA or IA_PD) sent by a client.
-            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link> and
-            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link> allow
-            for multiple addresses or prefixes to be allocated for a single IA.
+            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+            allows for multiple addresses or prefixes to be allocated for a single IA.
           </simpara>
         </listitem>
 
