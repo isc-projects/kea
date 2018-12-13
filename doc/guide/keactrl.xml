@@ -114,7 +114,7 @@ kea_verbose=no
 
       <para>
         The <parameter>dhcp4</parameter>, <parameter>dhcp6</parameter>,
-        <parameter>dhcp_ddns</parameter> <parameter>ctrl_agent</parameter>,
+        <parameter>dhcp_ddns</parameter>, <parameter>ctrl_agent</parameter>
         and <parameter>netconf</parameter>
         parameters set to "yes" will configure <command>keactrl</command> to manage
         (start, reconfigure) all servers, i.e. <command>kea-dhcp4</command>,
@@ -133,7 +133,8 @@ kea_verbose=no
         location needs to be altered for any reason, the paths
         specified with the <parameter>dhcp4_srv</parameter>,
         <parameter>dhcp6_srv</parameter>, <parameter>dhcp_ddns_srv</parameter>
-        and <parameter>ctrl_agent_srv</parameter> parameters should be modified.
+        <parameter>ctrl_agent_srv</parameter> and <parameter>netconf_srv</parameter>
+        parameters should be modified.
       </para>
 
       <para>
