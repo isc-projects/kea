@@ -14,8 +14,9 @@
       <title>Overview</title>
       <para>keactrl is a shell script which controls the startup, shutdown
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
-      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
-      <command>kea-ctrl-agent</command>). It also provides the means for
+      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command>,
+      <command>kea-ctrl-agent</command> and
+      <command>kea-netconf</command>). It also provides the means for
       checking the current status of the servers and determining the
       configuration files in use.
       </para>
@@ -80,6 +81,7 @@ kea_dhcp4_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp4.conf
 kea_dhcp6_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp6.conf
 kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
 kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
+kea_netconf_config_file=@sysconfdir@/@PACKAGE@/kea-netconf.conf
 
 
 # Location of Kea binaries.
@@ -88,6 +90,7 @@ dhcp4_srv=@sbindir@/kea-dhcp4
 dhcp6_srv=@sbindir@/kea-dhcp6
 dhcp_ddns_srv=@sbindir@/kea-dhcp-ddns
 ctrl_agent_srv=@sbindir@/kea-ctrl-agent
+netconf_srv=@sbindir@/kea-netconf
 
 # Start DHCPv4 server?
 dhcp4=yes
@@ -101,6 +104,9 @@ dhcp_ddns=no
 # Start Control Agent?
 ctrl_agent=yes
 
+# Start Netconf?
+netconf=no
+
 # Be verbose?
 kea_verbose=no
 </screen>
@@ -108,13 +114,16 @@ kea_verbose=no
 
       <para>
         The <parameter>dhcp4</parameter>, <parameter>dhcp6</parameter>,
-        <parameter>dhcp_ddns</parameter> and <parameter>ctrl_agent</parameter>
-        parameters set to "yes" configure <command>keactrl</command> to manage
+        <parameter>dhcp_ddns</parameter> <parameter>ctrl_agent</parameter>,
+        and <parameter>netconf</parameter>
+        parameters set to "yes" will configure <command>keactrl</command> to manage
         (start, reconfigure) all servers, i.e. <command>kea-dhcp4</command>,
-        <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
-        <command>kea-ctrl-agent</command>. When any of these parameters is set
+        <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command>,
+        <command>kea-ctrl-agent</command> and <command>kea-netconf</command>.
+        When any of these parameters is set
         to "no" the <command>keactrl</command> will ignore
-        the corresponding server when starting or reconfiguring Kea.
+        the corresponding server when starting or reconfiguring Kea. Some
+        daemons (ddns and netconf) are disabled by default.
       </para>
 
       <para>
@@ -183,6 +192,7 @@ INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea-dhcp4.conf -d
 INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea-dhcp6.conf -d
 INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea-dhcp-ddns.conf -d
 INFO/keactrl: Starting kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf -d
+INFO/keactrl: Starting kea-netconf -c /usr/local/etc/kea/kea-netconf.conf -d
 </screen>
       </para>
 
@@ -196,6 +206,7 @@ INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/lo
 INFO/keactrl: kea-dhcp6 appears to be running, see: PID 10924, PID file: /usr/local/var/kea/kea.kea-dhcp6.pid.
 INFO/keactrl: kea-dhcp-ddns appears to be running, see: PID 10930, PID file: /usr/local/var/kea/kea.kea-dhcp-ddns.pid.
 INFO/keactrl: kea-ctrl-agent appears to be running, see: PID 10931, PID file: /usr/local/var/kea/kea.kea-ctrl-agent.pid.
+INFO/keactrl: kea-netconf appears to be running, see: PID 10123, PID file: /usr/local/var/kea/kea.kea-netconf.pid.
 </screen>
       During normal shutdowns these PID files are deleted. They may, however,
       be left over as remnants following a system crash.  It is possible,
@@ -213,6 +224,7 @@ INFO/keactrl: Stopping kea-dhcp4...
 INFO/keactrl: Stopping kea-dhcp6...
 INFO/keactrl: Stopping kea-dhcp-ddns...
 INFO/keactrl: Stopping kea-ctrl-agent...
+INFO/keactrl: Stopping kea-netconf...
 </screen>
       Note that the <command>stop</command> will attempt to stop all servers
       regardless of whether they are "enabled" in the <filename>keactrl.conf</filename>.
@@ -224,6 +236,7 @@ INFO/keactrl: kea-dhcp4 isn't running.
 INFO/keactrl: kea-dhcp6 isn't running.
 INFO/keactrl: kea-dhcp-ddns isn't running.
 INFO/keactrl: kea-ctrl-agent isn't running.
+INFO/keactrl: kea-netconf isn't running.
 </screen>
       </para>
 
@@ -244,14 +257,26 @@ INFO/keactrl: Reloading kea-ctrl-agent...
 </screen>
       If any of the servers are not running, an informational message
       is displayed as in the <command>reload</command> command output below.
+      Note that as of 1.5.0 kea-netconf does not support SIGHUP signal yet.
+      If its configuration has changed, please stop and start it.
+      This limitation will be removed in upcoming Kea releases.
 <screen>
 <userinput>$ keactrl stop</userinput>
 INFO/keactrl: kea-dhcp4 isn't running.
 INFO/keactrl: kea-dhcp6 isn't running.
 INFO/keactrl: kea-dhcp-ddns isn't running.
 INFO/keactrl: kea-ctrl-agent isn't running.
+INFO/keactrl: kea-netconf isn't running.
 </screen>
       </para>
+
+      <note>
+        NETCONF is an optional feature that is disabled by default and can be
+        enabled during compilation. If Kea was compiled without NETCONF support,
+        keactrl will do it's best to not bother the user with information about
+        it. The netconf entries will still be present in the keactrl.conf file,
+        but netconf status will not be shown and other commands will ignore it.
+      </note>
 
       <note>
         <para>
@@ -271,11 +296,13 @@ DHCPv4 server: active
 DHCPv6 server: inactive
 DHCP DDNS: active
 Control Agent: active
+Netconf agent: inactive
 Kea configuration file: /usr/local/etc/kea/kea.conf
 Kea DHCPv4 configuration file: /usr/local/etc/kea/kea-dhcp4.conf
 Kea DHCPv6 configuration file: /usr/local/etc/kea/kea-dhcp6.conf
 Kea DHCP DDNS configuration file: /usr/local/etc/kea/kea-dhcp-ddns.conf
 Kea Control Agent configuration file: /usr/local/etc/kea/kea-ctrl-agent.conf
+Kea Netconf configuration file: /usr/local/etc/kea/kea-netconf.conf
 keactrl configuration file: /usr/local/etc/kea/keactrl.conf
 </screen>
       </para>
@@ -333,6 +360,9 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
           </simpara></listitem>
           <listitem><simpara>
             <command>ctrl_agent</command> for <command>kea-ctrl-agent.</command>
+          </simpara></listitem>
+          <listitem><simpara>
+            <command>netconf</command> for <command>kea-netconf.</command>
           </simpara></listitem>
           <listitem><simpara>
             <command>all</command> for all servers (default).
