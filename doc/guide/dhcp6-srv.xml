@@ -139,11 +139,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
 <section>
   <title>Introduction</title>
       <para>
-        This section explains how to configure the DHCPv6 server using the
-        Kea configuration backend. (Kea configuration using any other
-        backends is outside of scope of this document.) Before DHCPv6
-        is started, its configuration file has to be created. The
-        basic configuration is as follows:
+        This section explains how to configure the DHCPv6 server using a
+        configuration file. Before DHCPv6 is started, its configuration
+        file has to be created. The basic configuration is as follows:
 <screen>
 {
 # DHCPv6 configuration starts on the next line
@@ -303,8 +301,8 @@ In some cases in may be preferable to use more compact notation.
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp6, hence we need two closing curly brackets to close them.
 In a real life configuration file there most likely would be additional
-components defined such as Logging or DhcpDdns, so the closing brace would
-be followed by a comma and another object definition.</para>
+components defined such as Logging, so the closing brace would be followed
+by a comma and another object definition.</para>
 </section>
 
 <section>

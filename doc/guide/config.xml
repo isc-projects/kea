@@ -10,21 +10,21 @@
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config">
   <title>Kea Configuration</title>
 
-  <para>Kea is using JSON structures to handle configuration. Previously
-  we there was a concept of other configuration backends, but that never was
-  implemented and the idea was abandoned.</para>
+  <para>Kea is using JSON structures to represent servers' configurations.
+  The following sections describe how the configuration structures are
+  organized.
+  </para>
 
   <section xml:id="json">
     <title>JSON Configuration</title>
     <para>JSON is notation used throughout the Kea project. The most obvious
-    usage is for configuration file, but it is also used for sending commands
+    usage is for the configuration file, but it is also used for sending commands
     over Management API (see <xref linkend="ctrl-channel"/>) and for
     communicating between DHCP servers and DDNS update daemon.</para>
 
     <para>Typical usage assumes that the servers are started from the command line
     (either directly or using a script, e.g. <filename>keactrl</filename>).
-    The JSON backend uses certain signals to influence Kea. The
-    configuration file is specified upon startup using the -c parameter.</para>
+    The configuration file is specified upon startup using the -c parameter.</para>
 
     <section xml:id="json-format">
       <title>JSON Syntax</title>

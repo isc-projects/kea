@@ -139,11 +139,9 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
 <section>
   <title>Introduction</title>
       <para>
-        This section explains how to configure the DHCPv4 server using the
-        Kea configuration backend. (Kea configuration using any other
-        backends is outside of scope of this document.) Before DHCPv4
-        is started, its configuration file has to be created. The
-        basic configuration is as follows:
+        This section explains how to configure the DHCPv4 server using a
+        configuration file. Before DHCPv4 is started, its configuration
+        file has to be created. The basic configuration is as follows:
 <screen>
 {
 # DHCPv4 configuration starts in this line
@@ -310,9 +308,9 @@ In some cases in may be preferable to use more compact notation.
 
 <para>After all the parameters have been specified, we have two contexts open:
 global and Dhcp4, hence we need two closing curly brackets to close them.
-In a real life configuration file there most likely would be additional
-components defined such as Logging or DhcpDdns, so the closing brace would
-be followed by a comma and another object definition.</para>
+In a real life configuration file there most likely would be an additional
+component defined such as Logging, so the closing brace would be followed
+by a comma and another object definition.</para>
 </section>
 
 <section>
