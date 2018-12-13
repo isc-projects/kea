@@ -596,7 +596,7 @@ Debian and Ubuntu:
           (and thus in the shell path) you do not need to supply its path.
           If it does not work (e.g. no pkg-config, package not available in
           pkg-config with the cassandra name), you can still use
-          the <command>cql_config</command> script in tools/ as describe below.
+          the <command>cql_config</command> script in tools/ as described below.
         </para>
         <para>
           Download and compile cpp-driver from DataStax. For details regarding
@@ -615,14 +615,16 @@ $ <userinput>make</userinput>
         <para>
           As of June 2016, cpp-driver does not include cql_config script
           yet. Work is in progress to contribute such a script to the cpp-driver
-          project but, until that is complete, intermediate steps that need to
+          project but, until that is complete, intermediate steps need to
           be conducted. A cql_config script is present in the tools/ directory
           of the Kea sources. Before using it, please create a
           cql_config_defines.sh in the same directory (there is an example in
           cql_config_define.sh.sample available, you may copy it over to
           cql_config_defines.sh and edit path specified in it) and change the
           environment variable CPP_DRIVER_PATH to point to the directory, where
-          cpp-driver sources are located.
+          cpp-driver sources are located. Make sure that appropriate access
+          rights are set on this file. It should be executable by the system
+          user building Kea.
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with
