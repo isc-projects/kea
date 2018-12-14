@@ -16,6 +16,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <util/random/random_number_generator.h>
+#include <util/threads/watched_thread.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -252,7 +253,7 @@ public:
     /// \return the only existing instance of test control
     static TestControl& instance();
 
-    /// brief\ Run performance test.
+    /// \brief Run performance test.
     ///
     /// Method runs whole performance test. Command line options must
     /// be parsed prior to running this function. Otherwise function will
@@ -263,6 +264,12 @@ public:
     /// \return error_code, 3 if number of received packets is not equal
     /// to number of sent packets, 0 if everything is ok.
     int run();
+
+    /// \brief Run sender thread.
+    ///
+    /// The sender thread runs this method which sends at the wanted rate
+    /// solicits or advertises.
+    void runSender();
 
     /// \brief Set new transaction id generator.
     ///
@@ -293,6 +300,11 @@ protected:
     /// Default constructor is protected as the object can be created
     /// only via \ref instance method.
     TestControl();
+
+    /// \brief Destructor.
+    ///
+    /// Call reset() for cleanup.
+    virtual ~TestControl();
 
     /// Generate uniformly distributed integers in range of [min, max]
     isc::util::random::UniformRandomIntegerGenerator number_generator_;
@@ -452,7 +464,7 @@ protected:
     /// \param type option-type (ignored).
     /// \param buf option-buffer (ignored).
     /// \return instance o the generic option.
-     static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
+    static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
 
@@ -593,12 +605,10 @@ protected:
     /// \warning this method does not check if provided socket is
     /// valid (specifically if v4 socket for received v4 packet).
     ///
-    /// \param [in] socket socket to be used.
     /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occurred.
-    void processReceivedPacket4(const TestControlSocket& socket,
-                                const dhcp::Pkt4Ptr& pkt4);
+    void processReceivedPacket4(const dhcp::Pkt4Ptr& pkt4);
 
     /// \brief Process received DHCPv6 packet.
     ///
@@ -610,12 +620,10 @@ protected:
     /// \warning this method does not check if provided socket is
     /// valid (specifically if v4 socket for received v4 packet).
     ///
-    /// \param [in] socket socket to be used.
     /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occurred.
-    void processReceivedPacket6(const TestControlSocket& socket,
-                                const dhcp::Pkt6Ptr& pkt6);
+    void processReceivedPacket6(const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
     ///
@@ -627,11 +635,10 @@ protected:
     /// \warning this method does not check if provided socket is
     /// valid. Ensure that it is valid prior to calling it.
     ///
-    /// \param socket socket to be used.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occurred.
     /// \return number of received packets.
-    uint64_t receivePackets(const TestControlSocket& socket);
+    uint64_t receivePackets();
 
     /// \brief Register option factory functions for DHCPv4
     ///
@@ -707,14 +714,12 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr4_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send the message.
     /// \param preload preload mode, packets not included in statistics.
     ///
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::BadValue if MAC address has invalid length.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendDiscover4(const TestControlSocket& socket,
-                       const bool preload = false);
+    void sendDiscover4(const bool preload = false);
 
     /// \brief Send DHCPv4 DISCOVER message from template.
     ///
@@ -725,14 +730,12 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr4_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send the message.
     /// \param template_buf buffer holding template packet.
     /// \param preload preload mode, packets not included in statistics.
     ///
     /// \throw isc::OutOfRange if randomization offset is out of bounds.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendDiscover4(const TestControlSocket& socket,
-                       const std::vector<uint8_t>& template_buf,
+    void sendDiscover4(const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
 
     /// \brief Send number of packets to initiate new exchanges.
@@ -750,44 +753,34 @@ protected:
     ///
     /// \todo do not count responses in preload mode as orphans.
     ///
-    /// \param socket socket to be used to send packets.
     /// \param packets_num number of packets to be sent.
     /// \param preload preload mode, packets not included in statistics.
     /// \throw isc::Unexpected if thrown by packet sending method.
     /// \throw isc::InvalidOperation if thrown by packet sending method.
     /// \throw isc::OutOfRange if thrown by packet sending method.
-    void sendPackets(const TestControlSocket &socket,
-                     const uint64_t packets_num,
-                     const bool preload = false);
+    void sendPackets(const uint64_t packets_num, const bool preload = false);
 
     /// \brief Send number of DHCPREQUEST (renew) messages to a server.
     ///
-    /// \param socket An object representing socket to be used to send packets.
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleRequests(const TestControlSocket& socket,
-                                  const uint64_t msg_num);
+    uint64_t sendMultipleRequests(const uint64_t msg_num);
 
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
     ///
-    /// \param socket An object representing socket to be used to send packets.
     /// \param msg_type A type of the messages to be sent (DHCPV6_RENEW or
     /// DHCPV6_RELEASE).
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleMessages6(const TestControlSocket& socket,
-                                   const uint32_t msg_type,
+    uint64_t sendMultipleMessages6(const uint32_t msg_type,
                                    const uint64_t msg_num);
 
     /// \brief Send DHCPv4 renew (DHCPREQUEST) using specified socket.
     ///
-    /// \param socket An object encapsulating socket to be used to send
-    /// a packet.
-    ///
     /// \return true if the message has been sent, false otherwise.
-    bool sendRequestFromAck(const TestControlSocket& socket);
+    bool sendRequestFromAck();
 
     /// \brief Send DHCPv6 Renew or Release message using specified socket.
     ///
@@ -797,12 +790,9 @@ protected:
     ///
     /// \param msg_type A type of the message to be sent (DHCPV6_RENEW or
     /// DHCPV6_RELEASE).
-    /// \param socket An object encapsulating socket to be used to send
-    /// a packet.
     ///
     /// \return true if the message has been sent, false otherwise.
-    bool sendMessageFromReply(const uint16_t msg_type,
-                              const TestControlSocket& socket);
+    bool sendMessageFromReply(const uint16_t msg_type);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///
@@ -810,7 +800,6 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr4_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send message.
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet object.
     ///
@@ -818,8 +807,7 @@ protected:
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest4(const TestControlSocket& socket,
-                      const dhcp::Pkt4Ptr& discover_pkt4,
+    void sendRequest4(const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
 
     /// \brief Send DHCPv4 REQUEST message from template.
@@ -828,14 +816,12 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr4_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send message.
     /// \param template_buf buffer holding template packet.
     /// \param discover_pkt4 DISCOVER packet sent.
     /// \param offer_pkt4 OFFER packet received.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest4(const TestControlSocket& socket,
-                      const std::vector<uint8_t>& template_buf,
+    void sendRequest4(const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
 
@@ -849,15 +835,13 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr6_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send message.
     /// \param advertise_pkt6 ADVERTISE packet object.
     /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest6(const TestControlSocket& socket,
-                      const dhcp::Pkt6Ptr& advertise_pkt6);
+    void sendRequest6(const dhcp::Pkt6Ptr& advertise_pkt6);
 
     /// \brief Send DHCPv6 REQUEST message from template.
     ///
@@ -865,13 +849,11 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr6_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send message.
     /// \param template_buf packet template buffer.
     /// \param advertise_pkt6 ADVERTISE packet object.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest6(const TestControlSocket& socket,
-                      const std::vector<uint8_t>& template_buf,
+    void sendRequest6(const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
     /// \brief Send DHCPv6 SOLICIT message.
@@ -886,13 +868,11 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr6_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send the message.
     /// \param preload mode, packets not included in statistics.
     ///
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendSolicit6(const TestControlSocket& socket,
-                      const bool preload = false);
+    void sendSolicit6(const bool preload = false);
 
     /// \brief Send DHCPv6 SOLICIT message from template.
     ///
@@ -900,13 +880,11 @@ protected:
     /// Copy of sent packet is stored in the stats_mgr6_ object to
     /// update statistics.
     ///
-    /// \param socket socket to be used to send the message.
     /// \param template_buf packet template buffer.
     /// \param preload mode, packets not included in statistics.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendSolicit6(const TestControlSocket& socket,
-                      const std::vector<uint8_t>& template_buf,
+    void sendSolicit6(const std::vector<uint8_t>& template_buf,
                       const bool preload = false);
 
     /// \brief Set default DHCPv4 packet parameters.
@@ -919,10 +897,8 @@ protected:
     /// - GIADDR = local address where socket is bound to,
     /// - hops = 1 (pretending that we are a relay)
     ///
-    /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
-    void setDefaults4(const TestControlSocket& socket,
-                      const dhcp::Pkt4Ptr& pkt);
+    void setDefaults4(const dhcp::Pkt4Ptr& pkt);
 
     /// \brief Set default DHCPv6 packet parameters.
     ///
@@ -934,10 +910,8 @@ protected:
     /// - local address,
     /// - remote address (server).
     ///
-    /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
-    void setDefaults6(const TestControlSocket& socket,
-                      const dhcp::Pkt6Ptr& pkt);
+    void setDefaults6(const dhcp::Pkt6Ptr& pkt);
 
     /// @brief Inserts extra options specified by user.
     ///
@@ -1166,6 +1140,10 @@ protected:
     std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
     static bool interrupted_;  ///< Is program interrupted.
+
+    boost::shared_ptr<TestControlSocket> socket_; ///< Socket object.
+
+    util::thread::WatchedThreadPtr sender_thread_; ///< Sender watched thread.
 };
 
 }  // namespace perfdhcp

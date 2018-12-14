@@ -343,6 +343,11 @@ public:
     /// @return container with options
     const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
+    /// \brief Check if single-threaded mode is enabled.
+    ///
+    /// \return true if single-threaded mode is enabled.
+    bool isSingleThreaded() const { return single_thread_mode_; }
+
     /// \brief Returns server name.
     ///
     /// \return server name.
@@ -646,6 +651,9 @@ private:
 
     /// @brief Extra options to be sent in each packet.
     isc::dhcp::OptionCollection extra_opts_;
+
+    /// @brief Option to switch modes between single and multi-threaded.
+    bool single_thread_mode_;
 };
 
 }  // namespace perfdhcp

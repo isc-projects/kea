@@ -57,6 +57,7 @@
             <arg choice="opt" rep="norepeat"><option>-E <replaceable class="parameter">time-offset</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-f <replaceable class="parameter">renew-rate</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-F <replaceable class="parameter">release-rate</replaceable></option></arg>
+            <arg choice="opt" rep="repeat"><option>-g</option></arg>
             <arg choice="opt" rep="norepeat"><option>-h</option></arg>
             <arg choice="opt" rep="norepeat"><option>-i</option></arg>
             <arg choice="opt" rep="norepeat"><option>-I <replaceable class="parameter">ip-offset</replaceable></option></arg>
@@ -345,6 +346,16 @@
               </listitem>
             </varlistentry>
 
+
+            <varlistentry>
+                <term><option>-g</option></term>
+                <listitem>
+                    <para>
+                        Toggle between single and multi-thread modes (default
+                        is single-thread mode).
+                    </para>
+                </listitem>
+            </varlistentry>
 
             <varlistentry>
                 <term><option>-h</option></term>
