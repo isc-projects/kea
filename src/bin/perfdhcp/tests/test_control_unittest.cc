@@ -143,6 +143,7 @@ public:
     using TestControl::template_packets_v6_;
     using TestControl::ack_storage_;
     using TestControl::sendRequestFromAck;
+    using TestControl::socket_;
 
     NakedTestControl() : TestControl() {
         uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
@@ -493,16 +494,17 @@ public:
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
+        ASSERT_NO_THROW(tc.socket_.reset());
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
         for (int i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
             // id wll be used by the TestControl class for DHCPDISCOVER.
             uint32_t transid = generator->getNext();
             if (use_templates) {
-                ASSERT_NO_THROW(tc.sendDiscover4(sock, tc.getTemplateBuffer(0)));
+                ASSERT_NO_THROW(tc.sendDiscover4(tc.getTemplateBuffer(0)));
             } else {
-                ASSERT_NO_THROW(tc.sendDiscover4(sock));
+                ASSERT_NO_THROW(tc.sendDiscover4());
             }
 
             // Do not simulate responses for packets later
@@ -510,7 +512,7 @@ public:
             // packet drops.
             if (i < receive_num) {
                 boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(transid));
-                ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer_pkt4));
+                ASSERT_NO_THROW(tc.processReceivedPacket4(offer_pkt4));
             }
             if (tc.checkExitConditions()) {
                 iterations_performed = i + 1;
@@ -558,25 +560,25 @@ public:
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
+        ASSERT_NO_THROW(tc.socket_.reset());
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
         uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
             if (use_templates) {
-                ASSERT_NO_THROW(tc.sendSolicit6(sock, tc.getTemplateBuffer(0)));
+                ASSERT_NO_THROW(tc.sendSolicit6(tc.getTemplateBuffer(0)));
             } else {
-                ASSERT_NO_THROW(tc.sendSolicit6(sock));
+                ASSERT_NO_THROW(tc.sendSolicit6());
             }
             ++transid;
             if (i < receive_num) {
                 boost::shared_ptr<Pkt6>
                     advertise_pkt6(createAdvertisePkt6(transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
-                                                          advertise_pkt6));
+                ASSERT_NO_THROW(tc.processReceivedPacket6(advertise_pkt6));
                 ++transid;
             }
             if (tc.checkExitConditions()) {
@@ -701,11 +703,11 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
 
         // Send a number of DHCPDISCOVER messages. Each generated message will
         // be assigned a different transaction id, starting from 1 to 10.
-        tc.sendPackets(sock, 10);
+        tc.sendPackets(10);
 
         // Simulate DHCPOFFER responses from the server. Each DHCPOFFER is
         // assigned a transaction id from the range of 1 to 10, so as they
@@ -717,7 +719,7 @@ public:
             // will trigger a corresponding DHCPREQUEST. They will be assigned
             // transaction ids from the range from 11 to 20 (the range of
             // 1 to 10 has been used by DHCPDISCOVER-DHCPOFFER).
-            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer));
+            ASSERT_NO_THROW(tc.processReceivedPacket4(offer));
     }
 
         // Requests have been sent, so now let's simulate responses from the
@@ -730,7 +732,7 @@ public:
             // -f<renew-rate> option has been specified, received Reply
             // messages are held so as renew messages can be sent for
             // existing leases.
-            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, ack));
+            ASSERT_NO_THROW(tc.processReceivedPacket4(ack));
         }
 
         uint64_t msg_num;
@@ -738,7 +740,7 @@ public:
         // DHCPREQUEST messages has been received. For each of them we
         // should be able to send renewal.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
+            msg_num = tc.sendMultipleRequests(5)
         );
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
@@ -746,7 +748,7 @@ public:
         // Try to do it again. We should still have 5 Reply packets for
         // which renews haven't been sent yet.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
+            msg_num = tc.sendMultipleRequests(5)
         );
         EXPECT_EQ(5, msg_num);
 
@@ -754,7 +756,7 @@ public:
         // them already). Therefore, no further renew messages should be sent
         // before we acquire new leases.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
+            msg_num = tc.sendMultipleRequests(5)
         );
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
@@ -908,11 +910,11 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
 
         // Send a number of Solicit messages. Each generated Solicit will be
         // assigned a different transaction id, starting from 1 to 10.
-        tc.sendPackets(sock, 10);
+        tc.sendPackets(10);
 
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 1 to 10, so as they
@@ -924,7 +926,7 @@ public:
             // trigger a corresponding Request. They will be assigned
             // transaction ids from the range from 11 to 20 (the range of
             // 1 to 10 has been used by Solicit-Advertise).
-            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise));
+            ASSERT_NO_THROW(tc.processReceivedPacket6(advertise));
     }
 
         // Requests have been sent, so now let's simulate responses from the
@@ -937,7 +939,7 @@ public:
             // -f<renew-rate> option has been specified, received Reply
             // messages are held so as Renew messages can be sent for
             // existing leases.
-            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, reply));
+            ASSERT_NO_THROW(tc.processReceivedPacket6(reply));
         }
 
         uint64_t msg_num;
@@ -945,7 +947,7 @@ public:
         // messages has been received. For each of them we should be able to
         // send Renew or Release.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+            msg_num = tc.sendMultipleMessages6(msg_type, 5)
         );
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
@@ -953,7 +955,7 @@ public:
         // Try to do it again. We should still have 5 Reply packets for
         // which Renews or Releases haven't been sent yet.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+            msg_num = tc.sendMultipleMessages6(msg_type, 5)
         );
         EXPECT_EQ(5, msg_num);
 
@@ -961,7 +963,7 @@ public:
         // them already). Therefore, no further Renew or Release messages should
         // be sent before we acquire new leases.
         ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
+            msg_num = tc.sendMultipleMessages6(msg_type, 5)
         );
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
@@ -1404,21 +1406,22 @@ TEST_F(TestControlTest, Packet4) {
         // We have to create the socket to setup some parameters of
         // outgoing packet.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
         uint32_t transid = 123;
         boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
         // Set parameters on outgoing packet.
-        ASSERT_NO_THROW(tc.setDefaults4(sock, pkt4));
+        ASSERT_NO_THROW(tc.setDefaults4(pkt4));
         // Validate that packet has been setup correctly.
         EXPECT_EQ(loopback_iface, pkt4->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt4->getIndex());
+        EXPECT_EQ(tc.socket_->ifindex_, pkt4->getIndex());
         EXPECT_EQ(DHCP4_CLIENT_PORT, pkt4->getLocalPort());
         EXPECT_EQ(DHCP4_SERVER_PORT, pkt4->getRemotePort());
         EXPECT_EQ(1, pkt4->getHops());
         EXPECT_EQ(asiolink::IOAddress("255.255.255.255"),
                   pkt4->getRemoteAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getLocalAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getGiaddr());
+        EXPECT_EQ(asiolink::IOAddress(tc.socket_->addr_),
+                  pkt4->getLocalAddr());
+        EXPECT_EQ(asiolink::IOAddress(tc.socket_->addr_), pkt4->getGiaddr());
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;
@@ -1437,17 +1440,17 @@ TEST_F(TestControlTest, Packet6) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
-        ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
+        ASSERT_NO_THROW(tc.setDefaults6(pkt6));
         // Validate if parameters have been set correctly.
         EXPECT_EQ(loopback_iface, pkt6->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
+        EXPECT_EQ(tc.socket_->ifindex_, pkt6->getIndex());
         EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
-        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
+        EXPECT_EQ(tc.socket_->addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
         // Packet must not be relayed.
         EXPECT_TRUE(pkt6->relay_info_.empty());
@@ -1470,24 +1473,24 @@ TEST_F(TestControlTest, Packet6Relayed) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        TestControl::TestControlSocket sock(sock_handle);
+        tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
-        ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
+        ASSERT_NO_THROW(tc.setDefaults6(pkt6));
         // Validate if parameters have been set correctly.
         EXPECT_EQ(loopback_iface, pkt6->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
+        EXPECT_EQ(tc.socket_->ifindex_, pkt6->getIndex());
         EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
         EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
-        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
+        EXPECT_EQ(tc.socket_->addr_, pkt6->getLocalAddr());
         EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
         // Packet should be relayed.
         EXPECT_EQ(pkt6->relay_info_.size(), 1);
         EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
         EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
-        EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, sock.addr_);
-        EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, sock.addr_);
+        EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_->addr_);
+        EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_->addr_);
     } else {
         std::cout << "Unable to find the loopback interface. Skip test. "
                   << std::endl;
@@ -1958,10 +1961,10 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
     // Socket is needed to send packets through the interface.
     int sock_handle = 0;
     ASSERT_NO_THROW(sock_handle = tc.openSocket());
-    TestControl::TestControlSocket sock(sock_handle);
+    tc.socket_.reset(new TestControl::TestControlSocket(sock_handle));
 
     // Make tc send the packet. The first packet of each type is saved in templates.
-    ASSERT_NO_THROW(tc.sendDiscover4(sock));
+    ASSERT_NO_THROW(tc.sendDiscover4());
 
     // Let's find the packet and see if it includes the right option.
     auto pkt_it = tc.template_packets_v4_.find(DHCPDISCOVER);

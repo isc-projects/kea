@@ -155,6 +155,7 @@ CommandOptions::reset() {
     v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
     extra_opts_.clear();
+    single_thread_mode_ = true;
 }
 
 bool
@@ -222,7 +223,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
     while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
-                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:")) != -1) {
+                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:g")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -520,6 +521,10 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                           " unexpected 3rd -X<value> occurrence");
             }
             xid_offset_.push_back(offset_arg);
+            break;
+
+        case 'g':
+            single_thread_mode_ = !single_thread_mode_;
             break;
 
         default:
@@ -1016,6 +1021,11 @@ CommandOptions::printCommandLine() const {
     if (!server_name_.empty()) {
         std::cout << "server=" << server_name_ << std::endl;
     }
+    if (single_thread_mode_) {
+        std::cout << "single-thread mode" << std::endl;
+    } else {
+        std::cout << "multi-thread mode" << std::endl;
+    }
 }
 
 void
@@ -1031,7 +1041,7 @@ CommandOptions::usage() const {
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
-        "         [-w<wrapped>] [server]\n"
+        "         [-w<wrapped>] [-g] [server]\n"
         "\n"
         "The [server] argument is the name/address of the DHCP server to\n"
         "contact.  For DHCPv4 operation, exchanges are initiated by\n"
@@ -1079,6 +1089,7 @@ CommandOptions::usage() const {
         "    with the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the release-rate (given by -F<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
+        "-g: Toggle between single and multi-thread modes (default is single).\n"
         "-h: Print this help.\n"
         "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
         "    whether -6 is given.\n"
