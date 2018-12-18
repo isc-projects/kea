@@ -3,42 +3,41 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config">
   <title>Kea Configuration</title>
 
-  <para>Kea is using JSON structures to represent servers' configurations.
+  <para>Kea uses JSON structures to represent servers' configurations.
   The following sections describe how the configuration structures are
   organized.
   </para>
 
   <section xml:id="json">
     <title>JSON Configuration</title>
-    <para>JSON is notation used throughout the Kea project. The most obvious
-    usage is for the configuration file, but it is also used for sending commands
-    over Management API (see <xref linkend="ctrl-channel"/>) and for
-    communicating between DHCP servers and DDNS update daemon.</para>
+    <para>JSON is the notation used throughout the Kea project. The most obvious
+    usage is for the configuration file, but JSON is also used for sending commands
+    over the Management API (see <xref linkend="ctrl-channel"/>) and for
+    communicating between DHCP servers and the DDNS update daemon.</para>
 
-    <para>Typical usage assumes that the servers are started from the command line
-    (either directly or using a script, e.g. <filename>keactrl</filename>).
+    <para>Typical usage assumes that the servers are started from the command line,
+    either directly or using a script, e.g. <filename>keactrl</filename>.
     The configuration file is specified upon startup using the -c parameter.</para>
 
     <section xml:id="json-format">
       <title>JSON Syntax</title>
 
-      <para>Configuration files for DHCPv4, DHCPv6, DDNS, Control
-      Agent and Netconf modules are defined in an extended JSON
+      <para>Configuration files for the DHCPv4, DHCPv6, DDNS, Control
+      Agent, and Netconf modules are defined in an extended JSON
       format. Basic JSON is defined
       in <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link> and
       <link xmlns:xlink="http://www.w3.org/1999/xlink"
             xlink:href="http://www.ecma-international.org/publications/standards/Ecma-404.htm">ECMA 404</link>.
-      Note that Kea 1.2.0 introduced a new parser which better adheres to
-      the JSON specification.  In particular, the only values allowed
-      for boolean are true or false (all lowercase). The capitalized
+      In particular, the only boolean values allowed
+      are true or false (all lowercase). The capitalized
       versions (True or False) are not accepted.
       </para>
 
@@ -70,7 +69,6 @@
       comprises one or more of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
       "Netconf", and "Logging" objects. It is possible to define
       additional elements but they will be ignored.</para>
-
 
       <para>A very simple configuration for DHCPv4 could look like this:
 <screen>
@@ -111,16 +109,16 @@
         <para>
           The "Logging" element will be removed in Kea 1.6.0 and its contents
           (the "loggers" object) moved inside the configuration objects (maps) for
-          respective Kea modules.  For example: the "Dhcp4" map will contain the
+          the respective Kea modules. For example, the "Dhcp4" map will contain the
           "loggers" object specifying logging configuration for the DHCPv4
-          server. Backward compatibility will be maintained until at least Kea
-          1.7.0 release: it will be possible to specify "Logging" object
+          server. Backward compatibility will be maintained until at least the Kea
+          1.7.0 release; it will be possible to specify the "Logging" object
           at the top configuration level and "loggers"
-          objects at module configuration level. Ultimately though, support for the
+          objects at the module configuration level. Ultimately, support for the
           top-level "Logging" object will be removed.
         </para>
         <para>
-          The specification of several supported elements (e.g.  "Dhcp4",
+          The specification of several supported elements (e.g. "Dhcp4",
           "Dhcp6") in a single configuration file can be confusing and works
           badly with the commands that fetch and write new configurations.
           Support for it will be removed in a future release of Kea, after which
@@ -136,7 +134,7 @@
         implied that the remaining elements (the global map that holds
         Dhcp6 and Logging) are present, but they are omitted for
         clarity. Usually, locations where extra parameters may appear
-        are denoted by an ellipsis.</para>
+        are denoted by an ellipsis (...).</para>
     </section>
 
     <section>
@@ -144,7 +142,7 @@
 
         <para>It is sometimes convenient to refer to a specific
         element in the configuration hierarchy. Each hierarchy level
-        is separated by a slash.  If there is an array, a specific
+        is separated by a slash. If there is an array, a specific
         instance within that array is referenced by a number in square
         brackets (with numbering starting at zero). For example, in
         the above configuration the valid-lifetime in the Dhcp4
