@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -104,7 +104,7 @@
         <note>
           <simpara>
             Some operating systems have split their distribution packages into
-            a run-time and a development package.  You will need to install
+            a run-time and a development package. You will need to install
             the development package versions, which include header files and
             libraries, to build Kea from the source code.
           </simpara>
@@ -118,7 +118,7 @@
                 <para>Boost C++ Libraries
           (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>).
           The oldest Boost version used for testing is 1.57 (it may work with
-          older versions). Boost system library is required.  Building boost
+          older versions). The Boost system library is required. Building the Boost
           header only is no longer recommended.
         </para>
         </listitem>
@@ -163,7 +163,7 @@ Debian and Ubuntu:
         <para>
           The MySQL client and the client development libraries, when using
           the --with-mysql configuration flag to build the Kea MySQL
-          database backend. In this case an instance of the MySQL server
+          database backend. In this case, an instance of the MySQL server
           running locally or on a machine reachable over a network
           is required. Note that
           running the unit tests requires a local MySQL server.
@@ -185,8 +185,8 @@ Debian and Ubuntu:
         <listitem>
         <para>
           Cpp-driver from DataStax is needed when using the --with-cql
-          configuration flag to build Kea with Cassandra database backend.
-          In this case an instance of the Cassandra server running locally
+          configuration flag to build Kea with the Cassandra database backend.
+          In this case, an instance of the Cassandra server running locally
           or on some other machine, reachable over the network from the
           machine running Kea, is required. Note that running the unit
           tests requires a local Cassandra server.
@@ -215,7 +215,7 @@ Debian and Ubuntu:
 
         <listitem>
           <para>
-            The documentation generation tools elinks, docbook-xsl, libxslt and Doxygen,
+            The documentation generation tools elinks, docbook-xsl, libxslt, and Doxygen,
             if using the --enable-generate-docs configuration option
             to create the documentation.
           </para>
@@ -233,8 +233,8 @@ Debian and Ubuntu:
     <section xml:id="install">
       <title>Installation from Source</title>
       <para>
-        Kea is open source software written in C++.  It is freely available in
-        source code form from ISC as a downloadable tar file.  A copy of the Kea
+        Kea is open source software written in C++. It is freely available in
+        source code form from ISC as a downloadable tar file. A copy of the Kea
         source code repository is accessible from Gitlab (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>).
         Kea may also be available in pre-compiled ready-to-use packages from operating system vendors.
       </para>
@@ -252,14 +252,14 @@ Debian and Ubuntu:
         <title>Retrieve from Git</title>
         <para>
           Downloading this "bleeding edge" code is recommended only for
-          developers or advanced users.  Using development code in a production
+          developers or advanced users. Using development code in a production
           environment is not recommended.
         </para>
 
         <note>
           <para>
             When building from source code retrieved via Git, additional
-            software will be required:  automake (v1.11 or later),
+            software will be required: automake (v1.11 or later),
             libtoolize, and autoconf (v2.69 or later).
             These may need to be installed.
           </para>
@@ -387,8 +387,7 @@ Debian and Ubuntu:
             <listitem>
               <simpara>Replace Botan by the OpenSSL the cryptographic library.
                 By default <command>configure</command> searches for a valid
-                Botan installation:
-                if one is not found, it searches for OpenSSL.
+                Botan installation. If one is not found, it searches for OpenSSL.
               </simpara>
             </listitem>
           </varlistentry>
@@ -435,7 +434,6 @@ Debian and Ubuntu:
                 Google Test framework. This option specifies the path to the
                 gtest source. (If the framework
                 is not installed on your system, it can be downloaded
-                from <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/google/googletest">https://github.com/google/googletest</uri>.)
                 from <ulink url="https://github.com/google/googletest"/>.)
                 </simpara>
               </listitem>
@@ -504,8 +502,8 @@ Debian and Ubuntu:
         </para>
 
         <para>
-          If you have some problems with building Kea using the header-only
-          Boost code or you'd like to use the Boost system library
+          If you have any problems with building Kea using the header-only
+          Boost code, or you'd like to use the Boost system library
           (assumed for the sake of this example to be located in /usr/pkg/lib):
 
           <screen>$ <userinput>./configure \
@@ -546,7 +544,7 @@ Debian and Ubuntu:
         <para>
           Do not use any form of parallel or job server options
           (such as GNU make's <command>-j</command> option) when
-          performing this step: doing so may cause errors.
+          performing this step; doing so may cause errors.
         </para>
         <note>
           <para>The install step may require superuser privileges.</para>
@@ -578,14 +576,14 @@ Debian and Ubuntu:
     <section xml:id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
-        Kea stores its leases in a lease database.  The software has been
+        Kea stores its leases in a lease database. The software has been
         written in a way that makes it possible to choose which database product
-        should be used to store the lease information.  At present, Kea supports
-        four database backends: MySQL, PostgreSQL, Cassandra and Memfile. To
-        limit external dependencies, MySQL, PostgreSQL and Cassandra support are
+        should be used to store the lease information. At present, Kea supports
+        four database backends: MySQL, PostgreSQL, Cassandra, and Memfile. To
+        limit external dependencies, MySQL, PostgreSQL, and Cassandra support are
         disabled by default and only Memfile is available. Support for the
         optional external database backend must be explicitly included when Kea
-        is built.  This section covers the building of Kea with one of the
+        is built. This section covers the building of Kea with one of the
         optional backends and the creation of the lease database.
       </para>
 
@@ -601,7 +599,7 @@ Debian and Ubuntu:
       <section>
         <title>Building with MySQL Support</title>
         <para>
-          Install MySQL according to the instructions for your system.  The client development
+          Install MySQL according to the instructions for your system. The client development
           libraries must be installed.
         </para>
         <para>
@@ -623,7 +621,7 @@ Debian and Ubuntu:
       <section>
         <title>Building with PostgreSQL support</title>
         <para>
-          Install PostgreSQL according to the instructions for your system.  The client development
+          Install PostgreSQL according to the instructions for your system. The client development
           libraries must be installed. Client development libraries are often packaged as "libpq".
         </para>
         <para>
@@ -643,15 +641,15 @@ Debian and Ubuntu:
       </section>
 
       <section>
-        <title>Building with CQL (Cassandra) support</title>
+        <title>Building with CQL (Cassandra) Support</title>
         <para>
           Install Cassandra according to the instructions for your system. The
           Cassandra project website contains useful pointers: <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cassandra.apache.org">http://cassandra.apache.org</uri>.
         </para>
         <para>
-          If you have a cpp-driver package available as binary or as source
+          If you have a cpp-driver package available as binary or as source,
           simply install or build and install the package. Then build
-          and install Kea as described in <xref linkend="installation"/>:
+          and install Kea as described in <xref linkend="installation"/>.
           To enable the Cassandra (CQL) database code, at the "configure"
           step (see <xref linkend="configure"/>), do:
           <screen><userinput>./configure [other-options] --with-cql=<replaceable>path-to-pkg-config</replaceable></userinput></screen>
@@ -682,9 +680,9 @@ $ <userinput>make</userinput>
           be conducted. A cql_config script is present in the tools/ directory
           of the Kea sources. Before using it, please create a
           cql_config_defines.sh in the same directory (there is an example in
-          cql_config_define.sh.sample available, you may copy it over to
-          cql_config_defines.sh and edit path specified in it) and change the
-          environment variable CPP_DRIVER_PATH to point to the directory, where
+          cql_config_define.sh.sample available; you may copy it over to
+          cql_config_defines.sh and edit the path specified in it) and change the
+          environment variable CPP_DRIVER_PATH to point to the directory where the
           cpp-driver sources are located. Make sure that appropriate access
           rights are set on this file. It should be executable by the system
           user building Kea.
