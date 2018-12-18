@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- need this include to make the &keaversion; macro work -->
@@ -22,7 +22,7 @@
     <para>
         This section describes the basic steps needed to get Kea up and running.
         For further details, full customizations, and troubleshooting, see the
-        respective chapters in the Kea guide.
+        respective chapters in the Kea Administrator Reference Manual (ARM).
     </para>
 
     <section xml:id="quick-start">
@@ -38,7 +38,7 @@
 
         <listitem>
           <para>
-            Download Kea source tarball from <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/">ISC.org downloads page</link> or <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">ISC ftp server</link>.
+            Download Kea source tarball from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/">ISC.org downloads page</link> or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">ISC FTP server</link>.
           </para>
         </listitem>
 
@@ -76,15 +76,15 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
           <filename>kea-dhcp4.conf</filename>, <filename>kea-dhcp6.conf</filename>,
           <filename>kea-dhcp-ddns.conf</filename> and
           <filename>kea-ctrl-agent.conf</filename>, for DHCPv4 server, DHCPv6 server,
-          D2 and Control Agent respectively.
+          D2, and Control Agent, respectively.
           </para>
         </listitem>
 
         <listitem>
-          <para>In order to start the DHCPv4 server in background, run the
+          <para>In order to start the DHCPv4 server in the background, run the
           following command (as root):
           <screen># <userinput>keactrl start -s dhcp4</userinput></screen>
-          Or run the following command to start DHCPv6 server instead:
+          Or run the following command to start the DHCPv6 server instead:
           <screen># <userinput>keactrl start -s dhcp6</userinput></screen>
           Note that it is also possible to start all servers simultaneously:
           <screen>$ <userinput>keactrl start</userinput></screen>
@@ -92,7 +92,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
         </listitem>
 
         <listitem>
-          <para>Verify that Kea server(s) are running:
+          <para>Verify that the Kea server(s) is/are running:
           <screen># <userinput>keactrl status</userinput></screen>
           A server status of "inactive" may indicate a configuration
           error. Please check the log file (by default named
@@ -122,7 +122,7 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
       </orderedlist>
       <para>
         For instructions specific to your system, please read the
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/installing-kea">system specific notes</link>,
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/installing-kea">system-specific notes</link>,
         available in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs">Kea section of ISC's Knowledgebase</link>.
       </para>
 
