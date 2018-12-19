@@ -16,6 +16,9 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
+#include <map>
+#include <string>
+
 namespace isc {
 namespace dhcp {
 namespace test {

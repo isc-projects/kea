@@ -15,6 +15,7 @@
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
@@ -810,6 +811,16 @@ typedef boost::multi_index_container<
                 OptionDefinition,
                 std::string,
                 &OptionDefinition::getName
+            >
+        >,
+        // Start definition of index #3
+        boost::multi_index::ordered_non_unique<
+            // Use option definition modification time as the index key.
+            // This value is returned by the StampedElement::getModificationTime
+            boost::multi_index::const_mem_fun<
+                data::StampedElement,
+                boost::posix_time::ptime,
+                &data::StampedElement::getModificationTime
             >
         >
     >
