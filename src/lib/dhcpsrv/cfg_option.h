@@ -420,11 +420,19 @@ public:
     /// it is also deleted from all option instances encapsulating this
     /// option space.
     ///
-    /// @param key Option space name or vendor identifier.
+    /// @param option_space Option space name.
     /// @param option_code Code of the option to be returned.
     ///
     /// @return Number of deleted options.
-    size_t del(const std::string& key, const uint16_t option_code);
+    size_t del(const std::string& option_space, const uint16_t option_code);
+
+    /// @brief Delets vendor option for the specified vendor id.
+    ///
+    /// @param vendor_id Vendor identifier.
+    /// @param option_code Option code.
+    ///
+    /// @return Number of deleted options.
+    size_t del(const uint32_t vendor_id, const uint16_t option_code);
 
     /// @brief Returns a list of configured option space names.
     ///
