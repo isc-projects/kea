@@ -52,7 +52,8 @@ public:
     /// @brief Returns backend type.
     ///
     /// @return string db_type name
-    virtual std::string getType() const { return (db_type_);
+    virtual std::string getType() const {
+        return (db_type_);
     }
 
     /// @brief Returns backend host.
