@@ -400,7 +400,7 @@ TEST_F(CfgOptionTest, encapsulate) {
 }
 
 // This test verifies that an option can be deleted from the configuration.
-TEST_F(CfgOptionTest, del) {
+TEST_F(CfgOptionTest, delFromOptionSpace) {
     CfgOption cfg;
 
     generateEncapsulatedOptions(cfg);
@@ -438,7 +438,34 @@ TEST_F(CfgOptionTest, del) {
         ASSERT_NO_THROW(top_level_option = cfg.get(DHCP6_OPTION_SPACE, code));
         ASSERT_TRUE(top_level_option.option_);
         EXPECT_FALSE(top_level_option.option_->getOption(5));
+        // Other options should remain.
+        EXPECT_TRUE(top_level_option.option_->getOption(1));
     }
+}
+
+// This test verifies that a vendor option can be deleted from the configuration.
+TEST_F(CfgOptionTest, delVendorOption) {
+    CfgOption cfg;
+
+    // Create multiple vendor options for vendor id 123.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg.add(option, false, "vendor-123"));
+    }
+
+    // Make sure that the option we're trying to delete is there.
+    ASSERT_TRUE(cfg.get(123, 105).option_);
+
+    // Delete the option.
+    uint64_t deleted_num;
+    ASSERT_NO_THROW(deleted_num = cfg.del(123, 105));
+    EXPECT_EQ(1, deleted_num);
+
+    // Make sure the option is gone.
+    EXPECT_FALSE(cfg.get(123, 105).option_);
+
+    // Other options, like 107, shouldn't be gone.
+    EXPECT_TRUE(cfg.get(123, 107).option_);
 }
 
 // This test verifies that single option can be retrieved from the configuration

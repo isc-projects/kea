@@ -226,6 +226,19 @@ CfgOption::del(const std::string& option_space, const uint16_t option_code) {
     return (idx.erase(option_code));
 }
 
+size_t
+CfgOption::del(const uint32_t vendor_id, const uint16_t option_code) {
+    // Check for presence of options.
+    OptionContainerPtr vendor_options = getAll(vendor_id);
+    if (!vendor_options || vendor_options->empty()) {
+        // There are no options, so there is nothing to do.
+        return (0);
+    }
+
+    auto& idx = vendor_options->get<1>();
+    return (idx.erase(option_code));
+}
+
 ElementPtr
 CfgOption::toElement() const {
     // option-data value is a list of maps
