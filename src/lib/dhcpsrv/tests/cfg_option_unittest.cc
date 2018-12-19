@@ -399,6 +399,48 @@ TEST_F(CfgOptionTest, encapsulate) {
     }
 }
 
+// This test verifies that an option can be deleted from the configuration.
+TEST_F(CfgOptionTest, del) {
+    CfgOption cfg;
+
+    generateEncapsulatedOptions(cfg);
+
+    // Append options from "foo" and "bar" space as sub-options and options
+    // from "foo-subs" and "bar-subs" as sub-options of "foo" and "bar"
+    // options.
+    ASSERT_NO_THROW(cfg.encapsulate());
+
+    // The option with the code 5 should exist in the option space "foo".
+    ASSERT_TRUE(cfg.get("foo", 5).option_);
+
+    // Because we called "encapsulate", this option should have been
+    // propagated to the options encapsulating option space "foo".
+    for (uint16_t code = 1000; code < 1020; ++code) {
+        OptionDescriptor top_level_option(false);
+        ASSERT_NO_THROW(top_level_option = cfg.get(DHCP6_OPTION_SPACE, code));
+        // Make sure that the option with code 5 is there.
+        ASSERT_TRUE(top_level_option.option_);
+        ASSERT_TRUE(top_level_option.option_->getOption(5));
+    }
+
+    // Delete option with the code 5 and belonging to option space "foo".
+    uint64_t deleted_num;
+    ASSERT_NO_THROW(deleted_num = cfg.del("foo", 5));
+    EXPECT_EQ(1, deleted_num);
+
+    // The option should now be gone from options config.
+    EXPECT_FALSE(cfg.get("foo", 5).option_);
+
+    // Iterate over the options encapsulating "foo" option space. Make sure
+    // that the option with code 5 is no longer encapsulated by these options.
+    for (uint16_t code = 1000; code < 1020; ++code) {
+        OptionDescriptor top_level_option(false);
+        ASSERT_NO_THROW(top_level_option = cfg.get(DHCP6_OPTION_SPACE, code));
+        ASSERT_TRUE(top_level_option.option_);
+        EXPECT_FALSE(top_level_option.option_->getOption(5));
+    }
+}
+
 // This test verifies that single option can be retrieved from the configuration
 // using option code and option space.
 TEST_F(CfgOptionTest, get) {

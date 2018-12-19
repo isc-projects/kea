@@ -189,6 +189,43 @@ CfgOption::getAll(const uint32_t vendor_id) const {
     return (vendor_options_.getItems(vendor_id));
 }
 
+size_t
+CfgOption::del(const std::string& option_space, const uint16_t option_code) {
+    // Check for presence of options.
+    OptionContainerPtr options = getAll(option_space);
+    if (!options || options->empty()) {
+        // There are no options, so there is nothing to do.
+        return (0);
+    }
+
+    // If this is not top level option we may also need to delete the
+    // option instance from options encapsulating the particular option
+    // space.
+    if ((option_space != DHCP4_OPTION_SPACE) &&
+        (option_space != DHCP6_OPTION_SPACE)) {
+        // For each option space name iterate over the existing options.
+        auto option_space_names = getOptionSpaceNames();
+        for (auto option_space_from_list : option_space_names) {
+            // Get all options within the particular option space.
+            auto options_in_space = getAll(option_space_from_list);
+            for (auto option_it = options_in_space->begin();
+                 option_it != options_in_space->end();
+                 ++option_it) {
+
+                // Check if the option encapsulates our option space and
+                // it does, try to delete our option.
+                if (option_it->option_ &&
+                    (option_it->option_->getEncapsulatedSpace() == option_space)) {
+                    option_it->option_->delOption(option_code);
+                }
+            }
+        }
+    }
+
+    auto& idx = options->get<1>();
+    return (idx.erase(option_code));
+}
+
 ElementPtr
 CfgOption::toElement() const {
     // option-data value is a list of maps

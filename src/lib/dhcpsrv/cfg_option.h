@@ -414,30 +414,17 @@ public:
         return (*od_itr);
     }
 
-    /// @brief Deletes option for the specified key and option code.
+    /// @brief Deletes option for the specified option space and option code.
     ///
-    /// The key should be a string, in which case it specifies an option space
-    /// name, or an uint32_t value, in which case it specifies a vendor
-    /// identifier.
+    /// If the option is encapsulated within some non top level option space,
+    /// it is also deleted from all option instances encapsulating this
+    /// option space.
     ///
     /// @param key Option space name or vendor identifier.
     /// @param option_code Code of the option to be returned.
-    /// @tparam Selector one of: @c std::string or @c uint32_t
     ///
     /// @return Number of deleted options.
-    template<typename Selector>
-    size_t del(const Selector& key, const uint16_t option_code) {
-        // Check for presence of options.
-        OptionContainerPtr options = getAll(key);
-        if (!options || options->empty()) {
-            // There are no options, so there is nothing to do.
-            return (0);
-        }
-
-        // Some options present, locate the one we are interested in.
-        auto& idx = options->get<1>();
-        return (idx.erase(option_code));
-    }
+    size_t del(const std::string& key, const uint16_t option_code);
 
     /// @brief Returns a list of configured option space names.
     ///
