@@ -26,7 +26,7 @@
       <title>Command Line Options</title>
       <para><command>keactrl</command> is run as follows:
 <screen>
-keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
+keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,...]]
 </screen>
       </para>
 
@@ -45,7 +45,7 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
       </para>
 
       <para>
-        The optional <command>-s server[,server ...]</command> switch selects
+        The optional <command>-s server[,server,...]</command> switch selects
         the servers to which the command is issued.
         (<command>--server</command> is a synonym for <command>-s</command>.)
         If absent, the command is sent to all servers enabled in the keactrl
