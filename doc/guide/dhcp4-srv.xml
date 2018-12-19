@@ -208,7 +208,7 @@ In the example above this object is called <command>Dhcp4</command>.
 <note>
   <para>In the current Kea release it is possible to specify configurations
   of multiple modules within a single configuration file, but this is not
-  recommended and support for it will be removed in future releases. The
+  recommended. The
   only object, besides the one specifying module configuration, which can be
   (and usually is) included in the same file is the <command>Logging</command>.
   However, we don't include this object in the example above for clarity.
@@ -1028,9 +1028,7 @@ temporarily override a list of interface names and listen on all interfaces.
     if there are four subnets and the third is removed, the last subnet will be assigned
     the identifier that the third subnet had before removal. As a result, the leases
     stored in the lease database for subnet 3 are now associated with
-    subnet 4, something that may have unexpected consequences. It is planned
-    to implement a mechanism to preserve auto-generated subnet ids in a
-    future version of Kea; however, the only remedy for this issue
+    subnet 4, something that may have unexpected consequences. The only remedy for this issue
     at present is to manually specify a unique identifier for each subnet.
   </para>
   <note>
@@ -1090,8 +1088,7 @@ temporarily override a list of interface names and listen on all interfaces.
     <para>Each <command>pool</command> is a structure that contains the
     parameters that describe a single pool. Currently there is only one
     parameter, <command>pool</command>, which gives the range of addresses
-    in the pool. Additional parameters will be added in future releases of
-    Kea.</para>
+    in the pool.</para>
 
     <para>It is possible to define more than one pool in a subnet; continuing
     the previous example, further assume that 192.0.2.64/26 should be also be
@@ -1420,9 +1417,7 @@ temporarily override a list of interface names and listen on all interfaces.
         specific option values override subnet-specific and global
         option values. The server's administrator must not try to
         prioritize assignment of pool-specific options by trying to
-        order pools declarations in the server configuration. Future
-        Kea releases may change the order in which options are
-        assigned from the pools.
+        order pools declarations in the server configuration.
       </para>
 
      <para>
@@ -1457,11 +1452,8 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
      <para>
        Options can also be specified in class of host reservation scope.
-       In Kea 1.4 options precedence order is (from most important):
+       The current Kea options precedence order is (from most important):
        host reservation, pool, subnet, shared network, class, global.
-       In Kea 1.5 order will be changed to:
-       host reservation, class, pool, subnet, shared network, global OR it will
-       be fully configurable.
      </para>
 
       <para>
@@ -1861,8 +1853,7 @@ It is merely echoed by the server
        <command>false</command>, without quotes. Some specific boolean parameters may
        accept also <command>"true"</command>, <command>"false"</command>,
        <command>0</command>, <command>1</command>, <command>"0"</command>, and
-       <command>"1"</command>. Future versions of Kea will accept all those values
-       for all boolean parameters.</para>
+       <command>"1"</command>.</para>
      </note>
      <note>
        <para>Numbers can be specified in decimal or hexadecimal format.
@@ -2197,13 +2188,13 @@ It is merely echoed by the server
 
       <title>Nested DHCPv4 Options (Custom Option Spaces)</title>
       <para>It is sometimes useful to define a completely new option
-      space. This is the case when user creates new option in the
+      space. This is the case when a user creates a new option in the
       standard option space ("dhcp4") and wants this option
       to convey sub-options. Since they are in a separate space,
       sub-option codes will have a separate numbering scheme and may
       overlap with the codes of standard options.
       </para>
-      <para>Note that creation of a new option space when defining
+      <para>Note that the creation of a new option space when defining
       sub-options for a standard option is not required, because it is
       created by default if the standard option is meant to convey any
       sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
@@ -2291,8 +2282,8 @@ It is merely echoed by the server
 </screen>
     </para>
     <para>Note that it is possible to create an option which carries some data
-    in addition to the sub-options defined in the encapsulated option space.  For example,
-    if the "container" option from the previous example was required to carry an uint16
+    in addition to the sub-options defined in the encapsulated option space. For example,
+    if the "container" option from the previous example were required to carry an uint16
     value as well as the sub-options, the <command>type</command> value would have to be set to "uint16" in
     the option definition. (Such an option would then have the following
     data structure: DHCP header, uint16 value, sub-options.) The value specified
@@ -2343,17 +2334,15 @@ It is merely echoed by the server
           defaults to an empty value. The empty value is mostly used for the
           options which have no payload (boolean options), but it is legal to specify
           empty values for some options which carry variable length data and which
-          the specification allows for the length of 0. For such options, the data parameter
+          the specification allows to have a length of 0. For such options, the data parameter
           may be omitted in the configuration.</simpara>
         </listitem>
 
         <listitem>
           <simpara><command>csv-format</command> - if this value is not
-          specified the server will assume that the option data is specified as
-          a list of comma separated values to be assigned to individual fields
-          of the DHCP option. This behavior has changed in Kea 1.2. Older
-          versions used additional logic to determine whether the csv-format
-          should be true or false. That is no longer the case.
+          specified, the server will assume that the option data is specified as
+          a list of comma-separated values to be assigned to individual fields
+          of the DHCP option.
           </simpara>
         </listitem>
       </itemizedlist>
@@ -2366,7 +2355,7 @@ It is merely echoed by the server
       <para>The DHCPv4 server supports the stateless client configuration whereby the
       client has an IP address configured (e.g. using manual configuration) and only
       contacts the server to obtain other configuration parameters, e.g. addresses of DNS servers.
-      In order to obtain the stateless configuration parameters the client sends the
+      In order to obtain the stateless configuration parameters, the client sends the
       DHCPINFORM message to the server with the "ciaddr" set to the address that the
       client is currently using. The server unicasts the DHCPACK message to the
       client that includes the stateless configuration ("yiaddr" not set).
@@ -2409,8 +2398,8 @@ It is merely echoed by the server
             matches the configured subnet.</simpara>
           </listitem>
           <listitem>
-            <simpara>The DHCPINFORM is unicast from the client, the ciaddr is
-            not set but the source address of the IP packet matches the
+            <simpara>The DHCPINFORM is unicast from the client and the ciaddr is
+            not set, but the source address of the IP packet matches the
             configured subnet.</simpara>
           </listitem>
           <listitem>
@@ -2425,7 +2414,7 @@ It is merely echoed by the server
     <section xml:id="dhcp4-client-classifier">
       <title>Client Classification in DHCPv4</title>
       <para>
-      The DHCPv4 server includes support for client classification.  For a deeper
+      The DHCPv4 server includes support for client classification. For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
@@ -2433,11 +2422,9 @@ It is merely echoed by the server
       In certain cases it is useful to differentiate between different types of
       clients and treat them accordingly. It is envisaged that client
       classification will be used for changing the behavior of almost any part of
-      the DHCP message processing. In the current release of the software however,
-      there are  only some mechanisms that take advantage of client classification:
+      the DHCP message processing. There are currently only some mechanisms that take advantage of client classification:
       private options and option 43 deferred unpacking, subnet selection,
-      pool selection, assignment of different options, and, for cable modems, there
-      are specific options for use with the TFTP server address and the boot file field.
+      pool selection, assignment of different options, and, for cable modems, specific options for use with the TFTP server address and the boot file field.
       </para>
 
       <para>
@@ -2446,7 +2433,7 @@ It is merely echoed by the server
       same link and are expected to be served from two different subnets. The
       primary use case for such a scenario is cable networks. Here, there are two
       classes of devices: the cable modem itself, which should be handed a lease
-      from subnet A and all other devices behind the modem that should get a lease
+      from subnet A, and all other devices behind the modem that should get a lease
       from subnet B. That segregation is essential to prevent overly curious
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
@@ -2457,19 +2444,19 @@ It is merely echoed by the server
       to subnet selection but not to pools, e.g., a pool in a subnet
       limited to a particular class can still be used by clients which do not
       belong to the class if the pool they are expected to use is exhausted.
-      So the limit access based on class information is also available
-      at the pool level, see <xref linkend="classification-pools"/>,
+      So the limit on access based on class information is also available
+      at the pool level; see <xref linkend="classification-pools"/>,
       within a subnet.
-      This is useful when to segregate clients belonging to the same subnet
+      This is useful when segregating clients belonging to the same subnet
       into different address ranges.
       </para>
 
       <para>
       In a similar way a pool can be constrained to serve only known
       clients, i.e. clients which have a reservation, using the
-      built-in "KNOWN" or "UNKNOWN" classes.  One can assign addresses
+      built-in "KNOWN" or "UNKNOWN" classes. One can assign addresses
       to registered clients without giving a different address per
-      reservations, for instance when there is not enough available
+      reservation, for instance when there are not enough available
       addresses. The determination whether there is a reservation
       for a given client is made after a subnet is selected. As such, it
       is not possible to use KNOWN/UNKNOWN classes to select a shared
@@ -2477,16 +2464,16 @@ It is merely echoed by the server
       </para>
 
       <para>
-      The process of doing classification is conducted in five steps.
+      The process of classification is conducted in five steps.
       The first step is to assess an incoming packet and assign it to
       zero or more classes.
       The second step is to choose a subnet, possibly based on the
       class information.
       The next step is to evaluate class expressions depending on the
       built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
-      using them for pool selection and to assign classes from host reservations.
-      After the list of required classes is built and each class of the list
-      has its expression evaluated: when it returns true the packet is added
+      using them for pool selection and assigning classes from host reservations.
+      The list of required classes is then built and each class of the list
+      has its expression evaluated; when it returns "true" the packet is added
       as a member of the class.
       The last step is to assign options, again possibly based on the class
       information.
@@ -2495,12 +2482,12 @@ It is merely echoed by the server
       </para>
 
       <para>
-      There are two main methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options or existence of a
+      There are two main methods of classification. The first is automatic and relies
+      on examining the values in the vendor class options or the existence of a
       host reservation. Information from these
-      options is extracted and a class name is constructed from it and added to
+      options is extracted, and a class name is constructed from it and added to
       the class list for the packet. The second allows for specifying an expression
-      that is evaluated for each packet. If the result is true the packet is
+      that is evaluated for each packet. If the result is "true" the packet is
       a member of the class.
       </para>
 
@@ -2515,19 +2502,19 @@ It is merely echoed by the server
           It is possible to specify that clients belonging to a particular class
           should receive packets with specific values in certain fixed fields.
           In particular, three fixed fields are supported:
-          <command>next-server</command> (that conveys an IPv4 address, which is
-          set in the siaddr field), <command>server-hostname</command> (that
-          conveys a server hostname, can be up to 64 bytes long and will be sent
-          in the sname field) and <command>boot-file-name</command> (that
-          conveys the configuration file, can be up to 128 bytes long and will
-          be sent using file field).
+          <command>next-server</command> (conveys an IPv4 address, which is
+          set in the siaddr field), <command>server-hostname</command> 
+          (conveys a server hostname, can be up to 64 bytes long, and is sent
+          in the sname field) and <command>boot-file-name</command> 
+          (conveys the configuration file, can be up to 128 bytes long, and is
+          sent using the file field).
         </para>
         <para>
           Obviously, there are many ways to assign clients to specific classes,
           but for the PXE clients the client architecture type option (code 93)
           seems to be particularly suited to
           make the distinction. The following example checks if the client
-          identifies itself as PXE device with architecture EFI x86-64, and
+          identifies itself as a PXE device with architecture EFI x86-64, and
           sets several fields if it does. See
           <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc4578#section-2.1">Section 2.1 of RFC 4578</link>)
           or the documentation of your client for specific values.
@@ -2553,8 +2540,7 @@ It is merely echoed by the server
           </para>
 
           <note><para>
-            In Kea versions prior to 1.4.0 the alphabetical order of class names was used.
-            Starting from Kea 1.4.0 the classes are ordered as specified in the configuration.
+            The classes are ordered as specified in the configuration.
           </para></note>
 
         </section>
@@ -2564,16 +2550,15 @@ It is merely echoed by the server
         <para>
         The server checks whether an incoming packet includes the vendor class identifier
         option (60). If it does, the content of that option is prepended with
-        "VENDOR_CLASS_", it is interpreted as a class. For example,
+        "VENDOR_CLASS_", and it is interpreted as a class. For example,
         modern cable modems will send this option with value "docsis3.0"
         and as a result the packet will belong to class "VENDOR_CLASS_docsis3.0".
         </para>
 
         <note>
         <para>
-          Kea 1.0 and earlier versions performed special actions for
-          clients that were in VENDOR_CLASS_docsis3.0. This is no longer the
-          case in Kea 1.1 and later. In these versions the old behavior
+          Certain special actions for
+          clients in VENDOR_CLASS_docsis3.0
           can be achieved by defining VENDOR_CLASS_docsis3.0 and setting
           its next-server and boot-file-name values appropriately.
         </para>
@@ -2607,7 +2592,7 @@ It is merely echoed by the server
         The following example shows how to configure a class using an expression
         and a subnet that makes use of the class. This configuration defines the
         class named "Client_foo".
-        It is comprised of all clients who's client ids (option 61) start with the
+        It is comprised of all clients whose client ids (option 61) start with the
         string "foo". Members of this class will be given addresses from
         192.0.2.10 to 192.0.2.20 and the addresses of their DNS servers
         set to 192.0.2.1 and 192.0.2.2.
@@ -2647,7 +2632,7 @@ It is merely echoed by the server
         <title>Required Classification</title>
         <para>
         In some cases it is useful to limit the scope of a class to
-        a shared-network, subnet or pool. There are two parameters
+        a shared-network, subnet, or pool. There are two parameters
         which are used to limit the scope of the class by instructing
         the server to perform evaluation of test expressions when
         required.
@@ -2657,21 +2642,21 @@ It is merely echoed by the server
         The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
         <command>true</command> the test expression of the class is not
-        evaluated at the reception of the incoming packet but later and
+        evaluated at the reception of the incoming packet but later, and
         only if the class evaluation is required.
         </para>
 
         <para>
-        The second is the <command>require-client-classes</command> which
+        The second is <command>require-client-classes</command>, which
         takes a list of class names and is valid in shared-network,
-        subnet and pool scope. Classes in these lists are marked as
+        subnet, and pool scope. Classes in these lists are marked as
         required and evaluated after selection of this specific
         shared-network/subnet/pool and before output option processing.
         </para>
 
         <para>
         In this example, a class is assigned to the incoming packet
-        when the specified subnet is used.
+        when the specified subnet is used:
 
         <screen>
 "Dhcp4": {
@@ -2699,7 +2684,7 @@ It is merely echoed by the server
          <para>
          Required evaluation can be used to express complex dependencies,
          for example, subnet membership. It can also be used to reverse the
-         precedence: if you set an option-data in a subnet it takes
+         precedence; if you set an option-data in a subnet, it takes
          precedence over an option-data in a class. When you move the
          option-data to a required class and require it in
          the subnet, a class evaluated earlier may take precedence.
@@ -2708,8 +2693,8 @@ It is merely echoed by the server
          <para>
          Required evaluation is also available at shared-network and
          pool levels. The order in which required classes are considered is:
-         shared-network, subnet and pool, i.e. the opposite order
-         option-data are processed.
+         shared-network, subnet, and pool, i.e. the opposite order
+         option-data is processed.
          </para>
 
        </section>
@@ -2719,15 +2704,15 @@ It is merely echoed by the server
       <title>DDNS for DHCPv4</title>
       <para>
       As mentioned earlier, kea-dhcp4 can be configured to generate requests to the
-      DHCP-DDNS server (referred to here as "D2" ) to update DNS entries.  These requests are known as
-      NameChangeRequests or NCRs.  Each NCR contains the following information:
+      DHCP-DDNS server (referred to here as "D2") to update DNS entries. These requests are known as
+      NameChangeRequests or NCRs. Each NCR contains the following information:
       <orderedlist>
       <listitem><para>
       Whether it is a request to add (update) or remove DNS entries
       </para></listitem>
       <listitem><para>
       Whether the change requests forward DNS updates (A records), reverse
-      DNS updates (PTR records), or both.
+      DNS updates (PTR records), or both
       </para></listitem>
       <listitem><para>
       The FQDN, lease address, and DHCID
@@ -2736,8 +2721,8 @@ It is merely echoed by the server
       The parameters for controlling the generation of NCRs for submission to D2
       are contained in the <command>dhcp-ddns</command> section of the kea-dhcp4 server
       configuration. The mandatory parameters for the DHCP DDNS configuration
-      are <command>enable-updates</command> which is unconditionally
-      required, and <command>qualifying-suffix</command> which has no
+      are <command>enable-updates</command>, which is unconditionally
+      required, and <command>qualifying-suffix</command>, which has no
       default value and is required when <command>enable-updates</command>
       is set to <command>true</command>.
 
@@ -2809,13 +2794,13 @@ It is merely echoed by the server
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
       In order for NCRs to reach the D2 server, kea-dhcp4 must be able
-      to communicate with it.  kea-dhcp4 uses the following configuration
+      to communicate with it. kea-dhcp4 uses the following configuration
       parameters to control this communication:
       <itemizedlist>
       <listitem><simpara>
-      <command>enable-updates</command> - determines whether or not kea-dhcp4 will
-      generate NCRs.  By default, this value is false hence DDNS updates are
-      disabled.  To enable DDNS updates set this value to true:
+      <command>enable-updates</command> - determines whether kea-dhcp4 will
+      generate NCRs. By default, this value is false, so DDNS updates are
+      disabled. To enable DDNS updates set this value to true.
       </simpara></listitem>
       <listitem><simpara>
       <command>server-ip</command> - IP address on which D2 listens for requests. The default is
@@ -2823,12 +2808,12 @@ It is merely echoed by the server
       either an IPv4 or IPv6 address.
       </simpara></listitem>
       <listitem><simpara>
-      <command>server-port</command> - port on which D2 listens for requests.  The default value
+      <command>server-port</command> - port on which D2 listens for requests. The default value
       is 53001.
       </simpara></listitem>
       <listitem><simpara>
       <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to D2.
-      The default value is blank which instructs kea-dhcp4 to select a suitable
+      The default value is blank, which instructs kea-dhcp4 to select a suitable
       address.
       </simpara></listitem>
       <listitem><simpara>
@@ -2839,20 +2824,19 @@ It is merely echoed by the server
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to D2. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
-      delivered.  If the number of requests queued for transmission reaches
+      delivered. If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intention is to allow the kea-dhcp4 server to
+      been sufficiently reduced. The intention is to allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
-      grows without limit.  The default value is 1024.
+      grows without limit. The default value is 1024.
       </simpara></listitem>
       <listitem><simpara>
-      <command>ncr-protocol</command> - socket protocol use when sending requests to D2.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
+      <command>ncr-protocol</command> - socket protocol use when sending requests to D2. Currently
+      only UDP is supported.
       </simpara></listitem>
       <listitem><simpara>
       <command>ncr-format</command> - packet format to use when sending requests to D2.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
+      Currently only JSON format is supported.
       </simpara></listitem>
       </itemizedlist>
       By default, kea-dhcp-ddns is assumed to be running on the same machine as kea-dhcp4, and
@@ -2877,7 +2861,7 @@ It is merely echoed by the server
       <title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title>
       <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4702">RFC 4702</link>.
-      It is important to keep in mind that kea-dhcp4 provides the initial decision
+      It is important to keep in mind that kea-dhcp4 provides the initial decision-
       making of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are within the purview of D2 itself (<xref linkend="dhcp-ddns-server"/>).
@@ -2899,14 +2883,14 @@ It is merely echoed by the server
       An existing lease is released in response to a DHCP RELEASE
       </para></listitem>
       </orderedlist>
-      In the second case, lease renewal, two  DDNS requests will be issued: one
-      request to remove entries for the previous FQDN and a second request to
-      add entries for the new FQDN.  In the last case, a lease release, a
+      In the second case, lease renewal, two DDNS requests will be issued: one
+      request to remove entries for the previous FQDN, and a second request to
+      add entries for the new FQDN. In the last case, a lease release, a
       single DDNS request to remove its entries will be made.
       </para>
       <para>
-      The decision making involved when granting a new lease (the first case) is more
-      involved.  When a new lease is granted, kea-dhcp4 will generate a DDNS
+      The decision-making involved when granting a new lease (the first case) is more
+      involved. When a new lease is granted, kea-dhcp4 will generate a DDNS
       update request if the DHCP REQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
       the server will use the FQDN option. By default kea-dhcp4
@@ -2953,15 +2937,15 @@ It is merely echoed by the server
           </tgroup>
         </table>
       <para>
-      The first row in the table above represents "client delegation". Here
+      The first row in the table above represents "client delegation." Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, kea-dhcp4 will honor
+      the server should do the reverse updates. By default, kea-dhcp4 will honor
       the client's wishes and generate a DDNS request to the D2 server to update only
-      reverse DNS data.  The parameter <command>override-client-update</command> can be used
-      to instruct the server to override client delegation requests.  When
+      reverse DNS data. The parameter <command>override-client-update</command> can be used
+      to instruct the server to override client delegation requests. When
       this parameter is true, kea-dhcp4 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
-      reverse DNS data.  In this case, the N-S-O flags in the server's
+      reverse DNS data. In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
       </para>
       <para>
@@ -2986,7 +2970,7 @@ It is merely echoed by the server
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
       this parameter is true, kea-dhcp4 will generate DDNS update requests to kea-dhcp-ddns
-      even if the client requests that no updates be done.  The N-S-O flags in the
+      even if the client requests that no updates be done. The N-S-O flags in the
       server's response to the client will be 0-1-1.
       </para>
       <para>
@@ -3003,7 +2987,7 @@ It is merely echoed by the server
 </screen>
       <para>
       kea-dhcp4 will always generate DDNS update requests if the client request
-      only contains the Host Name option. In addition it will include an FQDN
+      only contains the Host Name option. In addition, it will include an FQDN
       option in the response to the client with the FQDN N-S-O flags set to
       0-1-0 respectively. The domain name portion of the FQDN option will be
       the name submitted to D2 in the DDNS update request.
@@ -3013,7 +2997,7 @@ It is merely echoed by the server
       <section xml:id="dhcpv4-fqdn-name-generation">
       <title>kea-dhcp4 name generation for DDNS update requests</title>
       <para>Each NameChangeRequest must of course include the fully qualified domain
-      name whose DNS entries are to be affected.  kea-dhcp4 can be configured to
+      name whose DNS entries are to be affected. kea-dhcp4 can be configured to
       supply a portion or all of that name based upon what it receives from
       the client in the DHCP REQUEST.</para>
       <para>
@@ -3022,10 +3006,10 @@ It is merely echoed by the server
       <orderedlist>
       <listitem><para>
         If the DHCPREQUEST contains the client FQDN option, the candidate name
-        is taken from there, otherwise it is taken from the Host Name option.
+        is taken from there; otherwise it is taken from the Host Name option.
       </para></listitem>
       <listitem><para>
-        If the candidate name is a partial (i.e. unqualified) name then add a
+        If the candidate name is a partial (i.e. unqualified) name, then add a
         configurable suffix to the name and use the result as the FQDN.
       </para></listitem>
       <listitem><para>
@@ -3041,8 +3025,8 @@ It is merely echoed by the server
         following modes of behavior:
       <itemizedlist>
       <listitem><para>
-        <command>never</command> - Use the name the client sent.  If the client
-        sent no name, do not generate one.  This is the default mode.
+        <command>never</command> - Use the name the client sent. If the client
+        sent no name, do not generate one. This is the default mode.
       </para></listitem>
       <listitem><para>
         <command>always</command> - Replace the name the client sent. If the
@@ -3060,15 +3044,15 @@ It is merely echoed by the server
       <note>
         <para>
     Note that formerly, this parameter was a boolean and permitted only values
-    of <command>true</command> and <command>false</command>.  Boolean values
-    have been deprecated and are no longer accepted.  If you are currently using
+    of <command>true</command> and <command>false</command>. Boolean values
+    have been deprecated and are no longer accepted. If you are currently using
     booleans, you must replace them with the desired mode name. A value of
     <command>true</command> maps to <command>"when-present"</command>, while
     <command>false</command> maps to <command>"never"</command>.
         </para>
     </note>
 
-      For example, To instruct kea-dhcp4 to always generate the FQDN for a
+      For example, to instruct kea-dhcp4 to always generate the FQDN for a
       client, set the parameter <command>replace-client-name</command> to
       <command>always</command> as follows:
       </para>
@@ -3083,7 +3067,7 @@ It is merely echoed by the server
 </screen>
       <para>
       The prefix used in the generation of a FQDN is specified by the
-      <command>generated-prefix</command> parameter.  The default value is "myhost".  To alter
+      <command>generated-prefix</command> parameter. The default value is "myhost". To alter
       its value, simply set it to the desired string:
       </para>
 <screen>
@@ -3113,14 +3097,14 @@ It is merely echoed by the server
 }
 </screen>
       <para>
-      When generating a name, kea-dhcp4 will construct name of the format:
+      When generating a name, kea-dhcp4 will construct the name in the format:
       </para>
       <para>
         [generated-prefix]-[address-text].[qualifying-suffix].
       </para>
       <para>
       where address-text is simply the lease IP address converted to a
-      hyphenated string.  For example, if the lease address is 172.16.1.10,
+      hyphenated string. For example, if the lease address is 172.16.1.10,
       the qualifying suffix "example.com", and the default value is used for
       <command>generated-prefix</command>, the generated FQDN would be:
       </para>
@@ -3131,30 +3115,30 @@ It is merely echoed by the server
       <section xml:id="host-name-sanitization">
         <title>Sanitizing Client Host Name and FQDN Names</title>
         It may be that some of your DHCP clients provide values in the Host
-        Name option (Option code 12) or FQDN option (Option code 81), that
-        contain undesirable characters.  It is possible to configure kea-dhcp4
-        to sanitize these values.  The most typical use case would be ensuring
+        Name option (Option code 12) or FQDN option (Option code 81) that
+        contain undesirable characters. It is possible to configure kea-dhcp4
+        to sanitize these values. The most typical use case would be ensuring
         that only characters that are permitted by RFC 1035 be included:
-        A-Z,a-z,0-9, and '-'.
+        A-Z, a-z, 0-9, and '-'.
 
         This may be accomplished with following two parameters:
         <itemizedlist>
         <listitem><simpara>
         <command>hostname-char-set</command> - a regular expression describing
-        the invalid character set.  This can be any valid, regular expression
-        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
-        would replace any character other then the letters A through z, digits
-        0 through 9, and '-'.  An empty string, the default value, disables
+        the invalid character set. This can be any valid, regular expression
+        using POSIX extended expression syntax. For example, "[^A-Za-z0-9-]"
+        would replace any character other than the letters A through z, digits
+        0 through 9, and '-'. An empty string, the default value, disables
         sanitization.
         </simpara></listitem>
         <listitem><simpara>
         <command>hostname-char-replacement</command> - a string of zero or
         more characters with which to replace each invalid character in the
-        host name.  The default value is an empty string and will cause
+        host name. The default value is an empty string and will cause
         invalid characters to be OMITTED rather than replaced.
         </simpara></listitem>
         </itemizedlist>
-        The following configuration, will replace anything other than a
+        The following configuration will replace anything other than a
         letter, digit, hyphen, or dot with the letter 'x':
 <screen>
 "Dhcp4": {
@@ -3167,17 +3151,17 @@ It is merely echoed by the server
 }
 </screen>
         Thus, a client supplied value of "myhost-$[123.org" would become
-        "myhost-xx123.org".  Sanitizing is performed only on the portion of
+        "myhost-xx123.org". Sanitizing is performed only on the portion of
         the name supplied by the client and it is performed before applying
         a qualifying suffix (if one is defined and needed).
         <note>
         The following are some considerations to keep in mind:
         <para>
         Name sanitizing is meant to catch the more common cases of invalid
-        characters through a relatively simple character replacement scheme.
+        characters through a relatively simple character-replacement scheme.
         It is difficult to devise a scheme that works well in all cases,
-        for both Host Name and FQDN options.  If you find you have clients
-        that are using odd, corner cases of character combinations that cannot
+        for both Host Name and FQDN options. If you find you have clients
+        that are using odd corner cases of character combinations that cannot
         be readily handled with this mechanism, you should consider writing
         a hook that can carry out sufficiently complex logic to address your
         needs.
@@ -3187,15 +3171,15 @@ It is merely echoed by the server
         want these preserved, you will need to make sure that the dot, '.', is
         considered a valid character by the hostname-char-set expression, such
         as this: "[^A-Za-z0-9.-]". This will not affect dots in FQDN Option
-        values.  When scrubbing FQDNs, dots are treated as delimiters and used
-        to  separate the option value into individual domain labels that are
+        values. When scrubbing FQDNs, dots are treated as delimiters and used
+        to separate the option value into individual domain labels that are
         scrubbed and then re-assembled.
         </para>
         <para>
         If your clients are sending values that differ only by characters
         considered as invalid by your hostname-char-set, be aware that scrubbing
         them will yield identical values. In such cases, DDNS conflict rules
-        will permit only one of them from registering the name.
+        will permit only one of them to register the name.
         </para>
         <para>
         Finally, given the latitude clients have in the values they send, it is
@@ -3215,17 +3199,17 @@ It is merely echoed by the server
       <para>In some cases, clients want to obtain configuration from a TFTP server.
       Although there is a dedicated option for it, some devices may use the siaddr field
       in the DHCPv4 packet for that purpose. That specific field can be configured
-      using <command>next-server</command> directive. It is possible to define it in the global scope or
+      using the <command>next-server</command> directive. It is possible to define it in the global scope or
       for a given subnet only. If both are defined, the subnet value takes precedence.
       The value in subnet can be set to 0.0.0.0, which means that <command>next-server</command> should
       not be sent. It may also be set to an empty string, which means the same as if
-      it was not defined at all, i.e. use the global value.
+      it were not defined at all, i.e. use the global value.
       </para>
       <para>
-      The <command>server-hostname</command> (that conveys a server hostname,
-      can be up to 64 bytes long and will be sent in the sname field) and
-      <command>boot-file-name</command> (that conveys the configuration file,
-      can be up to 128 bytes long and will be sent using file field)
+      The <command>server-hostname</command> (which conveys a server hostname,
+      can be up to 64 bytes long, and will be sent in the sname field) and
+      <command>boot-file-name</command> (which conveys the configuration file,
+      can be up to 128 bytes long, and will be sent using the file field)
       directives are handled the same way as <command>next-server</command>.
       </para>
 
@@ -3253,17 +3237,17 @@ It is merely echoed by the server
       states that the DHCPv4
       server must not send back client-id options when responding to
       clients. However, in some cases that confused clients that did
-      not have MAC address or client-id; see
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>.
-      for details. That
-      behavior has changed with the publication of
+      not have a MAC address or client-id; see
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>
+      for details. That
+      behavior changed with the publication of
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>,
       which updated
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.
       That update states that the server must
       send client-id if the client sent it. That is Kea's default behavior.
       However, in some cases older devices that do not support
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>.
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>
       may refuse to accept responses that include the
       client-id option. To enable backward compatibility, an optional
       configuration parameter has been introduced. To configure it,
@@ -3279,9 +3263,9 @@ It is merely echoed by the server
 
     <section xml:id="dhcp4-match-client-id">
       <title>Using Client Identifier and Hardware Address</title>
-      <para>The DHCP server must be able to identify the client (and distinguish it from
-      other clients) from which it receives the message. There are many reasons
-      why this identification is required and the most important ones are:
+      <para>The DHCP server must be able to identify the client
+      from which it receives the message and distinguish it from other clients. There are many reasons
+      why this identification is required; the most important ones are:
       <itemizedlist>
         <listitem><simpara>When the client contacts the server to allocate a new
         lease, the server must store the client identification information in
@@ -3294,15 +3278,15 @@ It is merely echoed by the server
         addresses and other configuration information. The server's administrator
         uses client identification information to create these static assignments.
         </simpara></listitem>
-        <listitem><simpara>In the dual stack networks there is often a need to
-        correlate the lease information stored in DHCPv4 and DHCPv6 server for
+        <listitem><simpara>In dual-stack networks there is often a need to
+        correlate the lease information stored in DHCPv4 and DHCPv6 servers for
         a particular host. Using common identification information by the DHCPv4
-        and DHCPv6 client allows the network administrator to achieve this
+        and DHCPv6 clients allows the network administrator to achieve this
         correlation and better administer the network.</simpara></listitem>
       </itemizedlist>
       </para>
 
-      <para>DHCPv4 makes use of two distinct identifiers which are placed
+      <para>DHCPv4 uses two distinct identifiers which are placed
       by the client in the queries sent to the server and copied by the server
       to its responses to the client: "chaddr" and "client identifier". The
       former was introduced as a part of the BOOTP specification and it is also
@@ -3319,17 +3303,17 @@ It is merely echoed by the server
       is independent from the hardware used by the client to communicate with
       the server. For example, if the client obtained the lease using one
       network card and then the network card is moved to another host, the
-      server will wrongly identify this host is the one which has obtained
+      server will wrongly identify this host as the one which obtained
       the lease. Moreover,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc4361">RFC 4361</link> gives
       the recommendation to use a DUID
       (see <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://tools.ietf.org/html/rfc8415">RFC 8415</link>,
       the DHCPv6 specification)
-      carried as "client identifier" when dual stack networks are in use
-      to provide consistent identification information of the client, regardless
-      of the protocol type it is using. Kea adheres to these specifications and
+      carried as "client identifier" when dual-stack networks are in use
+      to provide consistent identification information for the client, regardless
+      of the protocol type it is using. Kea adheres to these specifications, and
       the "client identifier" by default takes precedence over the value carried
-      in "chaddr" field when the server searches, creates, updates or removes
+      in the "chaddr" field when the server searches, creates, updates, or removes
       the client's lease.
       </para>
 
@@ -3344,7 +3328,7 @@ It is merely echoed by the server
       the lease do not match. This facilitates the scenario when the network card
       on the client system has been replaced and thus the new MAC address
       appears in the messages sent by the DHCP client. If the server fails
-      to find the lease using the "client identifier" it will perform another lookup
+      to find the lease using the "client identifier", it will perform another lookup
       using the "chaddr". If this lookup returns no result, the client is
       considered as not having a lease and the new lease will be created.
       </para>
@@ -3352,17 +3336,17 @@ It is merely echoed by the server
       <para>A common problem reported by network operators is that poor
       client implementations do not use stable client identifiers, instead
       generating a new "client identifier" each time the client connects
-      to the network. Another well known case is when the client changes its
+      to the network. Another well-known case is when the client changes its
       "client identifier" during the multi-stage boot process (PXE). In such
-      cases, the MAC address of the client's interface remains stable and
-      using "chaddr" field to identify the client guarantees that the
+      cases, the MAC address of the client's interface remains stable, and
+      using the "chaddr" field to identify the client guarantees that the
       particular system is considered to be the same client, even though its
       "client identifier" changes.
       </para>
 
       <para>To address this problem, Kea includes a configuration option
       which enables client identification using "chaddr" only by instructing
-      the server to disregard server to "ignore" the "client identifier" during
+      the server to disregard the server to "ignore" the "client identifier" during
       lease lookups and allocations for a particular subnet. Consider the following
       simplified server configuration:</para>
 <screen>
@@ -3391,13 +3375,13 @@ It is merely echoed by the server
      <command>false</command> means that the server will only
      use the "chaddr" to search for client's lease. Whether the DHCID for
      DNS updates is generated from the "client identifier" or "chaddr" is
-     controlled through the same parameter accordingly.</para>
+     controlled through the same parameter.</para>
 
      <para>The <command>match-client-id</command> parameter may appear
      both in the global configuration scope and/or under any subnet
      declaration. In the example shown above, the effective value of the
      <command>match-client-id</command> will be <userinput>false</userinput>
-     for the subnet 192.0.10.0/24, because the subnet specific setting
+     for the subnet 192.0.10.0/24, because the subnet-specific setting
      of the parameter overrides the global value of the parameter. The
      effective value of the <command>match-client-id</command> for the subnet
      10.0.0.0/8 will be set to <userinput>true</userinput> because the
@@ -3409,23 +3393,23 @@ It is merely echoed by the server
 
      <para>It is important to explain what happens when the client obtains
      its lease for one setting of the <command>match-client-id</command>
-     and then renews when the setting has been changed. First consider
+     and then renews when the setting has been changed. First, consider
      the case when the client obtains the lease when the
      <command>match-client-id</command> is set to <userinput>true</userinput>.
-     The server will store the lease information including "client identifier"
-     (if supplied) and "chaddr" in the lease database. When the setting is
-     changed and the client renews the lease the server will determine that
+     The server will store the lease information, including "client identifier"
+     (if supplied) and "chaddr", in the lease database. When the setting is
+     changed and the client renews the lease, the server will determine that
      it should use the "chaddr" to search for the existing lease. If the
-     client hasn't changed its MAC address the server should successfully
+     client hasn't changed its MAC address, the server should successfully
      find the existing lease. The "client identifier" associated with the
      returned lease is ignored and the client is allowed to use this lease.
      When the lease is renewed only the "chaddr" is recorded for this
-     lease according to the new server setting.
+     lease, according to the new server setting.
      </para>
 
      <para>In the second case the client has the lease with only a "chaddr"
-     value recorded. When the setting is changed to
-     <command>match-client-id</command> set to <userinput>true</userinput>
+     value recorded. When the <command>match-client-id</command> setting is changed to
+     <userinput>true</userinput>,
      the server will first try to use the "client identifier" to find the
      existing client's lease. This will return no results because the
      "client identifier" was not recorded for this lease. The server will
@@ -3433,8 +3417,8 @@ It is merely echoed by the server
      to have no "client identifier" recorded, the server will assume that
      this lease belongs to the client and that it was created with the previous
      setting of the <command>match-client-id</command>.
-     However, if the lease contains "client identifier" which is different
-     from the "client identifier" used by the client the lease will be
+     However, if the lease contains a "client identifier" which is different
+     from the "client identifier" used by the client, the lease will be
      assumed to belong to another client and the new lease will be
      allocated.
      </para>
@@ -3446,16 +3430,16 @@ It is merely echoed by the server
       <para>The original DHCPv4 specification
       (<link xmlns:xlink="http://www.w3.org/1999/xlink"
              xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>)
-      states that if a clients requests an address in the INIT-REBOOT state of
-      which, the server has no knowledge of, the server must remain silent,
-      except if the server knows that the client requests an IP
+      states that if a client requests an address in the INIT-REBOOT state, of
+      which the server has no knowledge, the server must remain silent,
+      except if the server knows that the client has requested an IP
       address from the wrong network.
-      By default Kea follows the behavior of the ISC dhcpd instead of
+      By default, Kea follows the behavior of the ISC dhcpd instead of
       the specification and also remains silent, if the client
       requests an IP address from the wrong network, because
       configuration information about a given network segment is not
       known to be correct.
-      Kea only rejects a client's DHCPREQUEST with a DHCPNAK message, if it
+      Kea only rejects a client's DHCPREQUEST with a DHCPNAK message if it
       already has a lease for the client, but with a different IP address.
       Administrators can override this behavior through the
       boolean <command>authoritative</command> (<userinput>false</userinput>
@@ -3484,9 +3468,9 @@ It is merely echoed by the server
       </para>
       <note>
         <para>DHCPv4-over-DHCPv6 support is experimental and the
-        details of the inter-process communication can change: both
+        details of the inter-process communication can change; both
         the DHCPv4 and DHCPv6 sides should be running the same version
-        of Kea. For instance the support of port relay (RFC 8357) introduced
+        of Kea. For instance, the support of port relay (RFC 8357) introduced
         such incompatible change.</para>
       </note>
       <para>
@@ -3497,11 +3481,11 @@ It is merely echoed by the server
       and connected to ::1 on <command>port</command>).
       </para>
       <para>
-      With DHCPv4-over-DHCPv6 the DHCPv4 server does not have access
+      With DHCPv4-over-DHCPv6, the DHCPv4 server does not have access
       to several of the identifiers it would normally use to select a
-      subnet.  In order to address this issue three new configuration
-      entries have been added.  The presence of any of these allows the
-      subnet to be used with DHCPv4-over-DHCPv6.  These entries are:
+      subnet. To address this issue, three new configuration
+      entries have been added; the presence of any of these allows the
+      subnet to be used with DHCPv4-over-DHCPv6. These entries are:
       <itemizedlist>
         <listitem>
         <simpara><command>4o6-subnet</command>: Takes a prefix (i.e., an
@@ -3568,44 +3552,40 @@ It is merely echoed by the server
 
 
      <section xml:id="sanity-checks4">
-       <title>Sanity checks in DHCPv4</title>
+       <title>Sanity Checks in DHCPv4</title>
 
        <para>
-         An important aspect of a well running DHCP system is an assurance that
-         the data remains consisent. However, in some cases it may be convenient
+         An important aspect of a well-running DHCP system is an assurance that
+         the data remains consistent. However, in some cases it may be convenient
          to tolerate certain inconsistent data. For example, a network
          administrator that temporarily removed a subnet from a configuration
-         wouldn't want all the leases associated with it disappear from the
-         lease database. Kea 1.5 introduced a mechanism to better control sanity
-         checks such as this. While currently the scope of configurable sanity
-         checks is limited and their default value is set low, it is expected
-         that over time the default settings will be set to more aggressive
-         values and more parameters of similar nature will be added in the
-         future.
-       </para>
+         wouldn't want all the leases associated with it to disappear from the
+         lease database. Kea has a mechanism to better control sanity
+         checks such as this.
+         </para>
 
        <para>
          Kea now supports a new configuration scope called
          <command>sanity-checks</command>. It currently allows only a
          single parameter called <command>lease-checks</command>. It
          governs what sort of verification is done when a new lease is
-         being loaded from a lease file. With the introduction of
+         being loaded from a lease file. With the introduction of the
          sanity checks mechanism, it is now possible to tell Kea to
          try to correct inconsistent data.
        </para>
 
        <para>
-         Every subnet has a subnet-id value. This is how Kea internally
+         Every subnet has a subnet-id value; this is how Kea internally
          identifies subnets. Each lease has a subnet-id parameter as well, which
-         identifies which subnet it belongs to. However, if configuration has
-         changed, it is possible that a lease could exist with a subnet-id
-         without any subnet that matches it. Also, it may be possible that
-         subnets configuration has changed and the subnet-id now belongs to a
-         subnet that does not match the lease. Kea corrective algorithm first
-         checks if there is a subnet with subnet-id specified by the lease. If
-         there is, it checks whether the lease belongs to that subnet. If not,
+         identifies which subnet it belongs to. However, if the configuration has
+         changed, it is possible that a lease could exist with a subnet-id, but
+         without any subnet that matches it. Also, it may be possible that the
+         subnet's configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea's corrective algorithm first
+         checks to see if there is a subnet with the subnet-id specified by the lease. If
+         there is, it verifies whether the lease belongs to that subnet. If not,
          depending on the lease-checks setting, the lease is discarded, a
-         warning is printed or a new subnet is selected for the lease that
+         warning is displayed, or a new subnet is selected for the lease that
          matches it topologically.
        </para>
 
@@ -3615,24 +3595,24 @@ It is merely echoed by the server
 
        <itemizedlist>
          <listitem>
-           <simpara><command>none</command> - do no special checks, accept the
-           lease as is</simpara>
+           <simpara><command>none</command> - do no special checks; accept the
+           lease as is.</simpara>
          </listitem>
          <listitem>
            <simpara><command>warn</command> - if problems are detected, a
-           warning will be printed, but the lease data will be accepted
+           warning will be displayed, but the lease data will be accepted
            anyway. This is the default value. If not explicitly configured to
            some other value, this level will be used.</simpara>
          </listitem>
          <listitem>
-           <simpara><command>fix</command> - If data inconsistency is
+           <simpara><command>fix</command> - If a data inconsistency is
            discovered, Kea will try to correct it. If the correction is
            not successful, the data will be inserted anyway.</simpara>
          </listitem>
          <listitem>
-           <simpara><command>fix-del</command> - If data inconsistency is
+           <simpara><command>fix-del</command> - If a data inconsistency is
            discovered, Kea will try to correct it. If the correction is not
-           succesful, the lease will be rejected. This setting ensures the data
+           successful, the lease will be rejected. This setting ensures the data's
            correctness, but some incorrect data may be lost. Use with
            care.</simpara>
          </listitem>
@@ -3643,7 +3623,7 @@ It is merely echoed by the server
          </listitem>
        </itemizedlist>
 
-       <para>This feature is currently implemented for memfile backend.</para>
+       <para>This feature is currently implemented for the memfile backend.</para>
 
        <para>
          An example configuration that sets this parameter looks as follows:
@@ -3677,17 +3657,17 @@ It is merely echoed by the server
     <title>Host Reservation in DHCPv4</title>
 
     <para>There are many cases where it is useful to provide a configuration on
-    a per host basis. The most obvious one is to reserve a specific, static
-    address for exclusive use by a given client (host) ‐ the returning client will
+    a per-host basis. The most obvious one is to reserve a specific, static
+    address for exclusive use by a given client (host); the returning client will
     receive the same address from the server every time, and other clients will
     generally not receive that address.
-    Another example when the host reservations are applicable is when a host
+    Another example when host reservations are applicable is when a host
     has specific requirements, e.g. a printer that needs additional DHCP options.
     Yet another possible use case is to define unique names for hosts.</para>
 
-    <para>Note that there may be cases when the
-    new reservation has been made for the client for the address being currently
-    in use by another client. We call this situation a "conflict". The conflicts
+    <para>Note that there may be cases when a
+    new reservation has been made for a client for an address currently
+    in use by another client. We call this situation a "conflict." These conflicts
     get resolved automatically over time as described in subsequent sections.
     Once the conflict is resolved, the client will keep receiving the reserved
     configuration when it renews.</para>
@@ -3696,16 +3676,12 @@ It is merely echoed by the server
     has to be identified by an identifier, for example the hardware/MAC address. There is an optional
     <command>reservations</command> array in the <command>Subnet4</command>
     element. Each element in that array is a structure that holds information
-    about reservations for a single host. In particular, the structure has
-    to have an identifier that uniquely identifies a host.  In the DHCPv4 context, the
-    identifier is usually a hardware or MAC address.  In most cases an IP address
+    about reservations for a single host. In particular, the structure must
+    have an identifier that uniquely identifies a host. In the DHCPv4 context, the
+    identifier is usually a hardware or MAC address. In most cases an IP address
     will be specified. It is also possible to specify a hostname, host
-    specific options or fields carried within DHCPv4 message such as siaddr,
-    sname or file.</para>
-
-    <para>In Kea 1.0.0 it was only possible to create host reservations
-    using client's hardware address. Host reservations by client
-    identifier, DUID and circuit-id have been added in Kea 1.1.0.</para>
+    specific options, or fields carried within DHCPv4 message such as siaddr,
+    sname, or file.</para>
 
     <para>The following example shows how to reserve addresses for specific
     hosts in a subnet:
@@ -3743,7 +3719,7 @@ It is merely echoed by the server
     192.0.2.100 and the hostname of alice-laptop for the client using a DUID
     0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.) The third
-    example reserves address 192.0.3.203 to a client whose request
+    example reserves address 192.0.3.203 for a client whose request
     would be relayed by a relay agent that inserts a circuit-it option
     with the value 'charter950'. The fourth entry reserves address
     192.0.2.204 for a client that uses a client identifier with value
@@ -3756,7 +3732,7 @@ It is merely echoed by the server
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
     requires a separate host definition in each subnet it is expected to visit.
-    It is not allowed to define multiple host definitions with the same hardware
+    It is not possible to define multiple host definitions with the same hardware
     address in a single subnet. Multiple host definitions with the same hardware
     address are valid if each is in a different subnet.
     </para>
@@ -3765,35 +3741,31 @@ It is merely echoed by the server
     when a server that does not support host reservation responds to a query,
     it needs to check whether there is a lease for a given address being
     considered for allocation or renewal. The server that also supports host
-    reservation has to perform additional checks: not only if the address is
-    currently used (i.e. if there is a lease for it), but also whether the address
-    could be used by someone else (i.e. there is a reservation for it). That
-    additional check incurs additional overhead.</para>
+    reservation has to perform additional checks: not only whether the address is
+    currently used (i.e., if there is a lease for it), but also whether the address
+    could be used by someone else (i.e., there is a reservation for it). That
+    additional check incurs extra overhead.</para>
 
     <section xml:id="reservation4-types">
       <title>Address Reservation Types</title>
 
       <para>In a typical scenario there is an IPv4 subnet defined,
-      e.g. 192.0.2.0/24, with certain part of it dedicated for dynamic allocation
+      e.g. 192.0.2.0/24, with a certain part of it dedicated for dynamic allocation
       by the DHCPv4 server. That dynamic part is referred to as a dynamic pool or
       simply a pool. In principle, a host reservation can reserve any address
       that belongs to the subnet. The reservations that specify addresses that
-      belong to configured pools are called "in-pool reservations".
+      belong to configured pools are called "in-pool reservations."
       In contrast, those that do not belong to dynamic pools are called
-      "out-of-pool reservations". There is no formal difference
+      "out-of-pool reservations." There is no formal difference
       in the reservation syntax and both reservation types are
-      handled uniformly. However, upcoming releases may offer improved performance
-      if there are only out-of-pool reservations as the server will be able
-      to skip reservation checks when dealing with existing leases. Therefore,
-      system administrators are encouraged to use out-of-pool reservations if
-      possible.</para>
-      <para>Beginning with Kea 1.5.0, there is now support for global
-      host reservations.  These are reservations that are specified at the
+      handled uniformly.</para>
+      <para>Kea supports global
+      host reservations. These are reservations that are specified at the
       global level within the configuration and that do not belong to any
-      specific subnet.  Kea will still match inbound client packets to a
+      specific subnet. Kea will still match inbound client packets to a
       subnet as before, but when the subnet's reservation mode is set to
       <command>"global"</command>, Kea will look for host reservations only
-      among the global reservations defined. Typcially, such resrvations would
+      among the global reservations defined. Typically, such reservations would
       be used to reserve hostnames for clients which may move from one subnet
       to another.
       </para>
@@ -3806,7 +3778,7 @@ It is merely echoed by the server
     <section xml:id="reservation4-conflict">
       <title>Conflicts in DHCPv4 Reservations</title>
       <para>As the reservations and lease information are stored separately,
-      conflicts may arise. Consider the following series of events. The server
+      conflicts may arise. Consider the following series of events: the server
       has configured the dynamic pool of addresses from the range of 192.0.2.10 to
       192.0.2.20. Host A requests an address and gets 192.0.2.10. Now the system
       administrator decides to reserve address 192.0.2.10 for Host B.
@@ -3817,24 +3789,24 @@ It is merely echoed by the server
       <para>The server now has a conflict to resolve. Let's analyze the
       situation here. If Host B boots up and requests an address, the server is
       not able to assign the reserved address 192.0.2.10. A naive approach
-      would to be immediately remove the existing lease for the Host A
-      and create a new one for the Host B. That would not solve the problem,
-      though, because as soon as the Host B gets the address, it will detect
-      that the address is already in use by the Host A and would send
+      would to be immediately remove the existing lease for Host A
+      and create a new one for Host B. That would not solve the problem,
+      though, because as soon as Host B gets the address, it will detect
+      that the address is already in use by Host A and would send
       the DHCPDECLINE message. Therefore, in this situation, the server has
       to temporarily assign a different address (not matching what has been
-      reserved) to the Host B.</para>
+      reserved) to Host B.</para>
 
       <!-- let's keep this text around. It describes how that is working in v6
-      <para>When the Host A renews its address, the server will discover that
-      the address being renewed is now reserved for someone else (host
-      B). Therefore the server will remove the lease and will inform the Host A
-      that it is no longer allowed to use it by sending DHCPNAK message. Host A
+      <para>When Host A renews its address, the server will discover that
+      the address being renewed is now reserved for someone else (Host
+      B). Therefore, the server will remove the lease and will inform Host A
+      that it is no longer allowed to use it by sending a DHCPNAK message. Host A
       will then revert to server discovery and will eventually get a different
-      address.  The address 192.0.2.10 is now no longer used. When host B tries
-      to renew its temporarily assigned  address, the server will detect that
-      it has a valid lease, but there is a reservation for a different address.
-      The server will send DHCPNAK to inform host B that its address is no
+      address. The address 192.0.2.10 is then no longer used. When Host B tries
+      to renew its temporarily assigned address, the server will detect that
+      it has a valid lease, but will note that there is a reservation for a different address.
+      The server will send DHCPNAK to inform Host B that its address is no
       longer usable. The server will also remove its temporary lease. It will
       revert to the server discovery phase and will eventually send a
       DHCPREQUEST message. This time the server will find out that there is a
@@ -3843,47 +3815,47 @@ It is merely echoed by the server
 
       <para>When Host A renews its address, the server will discover that
       the address being renewed is now reserved for another host - Host
-      B. Therefore the server will inform the Host A that it is no longer
+      B. Therefore the server will inform Host A that it is no longer
       allowed to use it by sending a DHCPNAK message. The server will not remove the
-      lease, though, as there's small chance that the DHCPNAK may be lost if the
+      lease, though, as there's a small chance that the DHCPNAK may be lost if the
       network is lossy. If that happens, the client will not receive any
       responses, so it will retransmit its DHCPREQUEST packet. Once the
-      DHCPNAK is received by Host A, it will revert to the server
+      DHCPNAK is received by Host A, it will revert to server
       discovery and will eventually get a different address. Besides
       allocating a new lease, the server will also remove the old one. As
-      a result, address 192.0.2.10 will become free . When Host B
+      a result, address 192.0.2.10 will become free. When Host B
       tries to renew its temporarily assigned address, the server will detect
-      that it has a valid lease, but there is a reservation for a different
+      that it has a valid lease, but will note that there is a reservation for a different
       address. The server will send DHCPNAK to inform Host B that its address
       is no longer usable, but will keep its lease (again, the DHCPNAK may be
       lost, so the server will keep it, until the client returns for a new
       address). Host B will revert to the server discovery phase and will
       eventually send a DHCPREQUEST message. This time the server will find
-      out that there is a reservation for that host and the reserved address
+      that there is a reservation for that host and that the reserved address
       192.0.2.10 is not used, so it will be granted. It will also remove the
       lease for the temporarily assigned address that Host B previously
       obtained.</para>
 
-      <para>This recovery will succeed, even if other hosts will attempt to get
-      the reserved address. Had the Host C requested address 192.0.2.10 after
-      the reservation was made, the server will either offer a different
+      <para>This recovery will succeed, even if other hosts attempt to get
+      the reserved address. If Host C requested address 192.0.2.10 after
+      the reservation was made, the server would either offer a different
       address (when responding to DHCPDISCOVER) or would send DHCPNAK
       (when responding to DHCPREQUEST).</para>
 
       <para>This recovery mechanism allows the server to fully recover from a
       case where reservations conflict with the existing leases. This procedure
-      takes time and will roughly take as long as the value set for of renew-timer.
-      The best way to avoid such recovery is to not define new reservations that
+      takes time and will roughly take as long as the value set for renew-timer.
+      The best way to avoid such recovery is not to define new reservations that
       conflict with existing leases. Another recommendation is to use
       out-of-pool reservations. If the reserved address does not belong to a
       pool, there is no way that other clients could get this address.
       </para>
 
     <note>
-     <para>The conflict resolution mechanism does not work for global
-     reservations. As of Kea 1.5.0, it is generally recommended to not use
-     global reservations for addresses. If you want to use it anyway,
-     you have to manually ensure that the reserved addressed are not
+     <para>The conflict-resolution mechanism does not work for global
+     reservations. As of Kea 1.5.0, it is generally recommended not to use
+     global reservations for addresses. If you choose to use them anyway,
+     you must manually ensure that the reserved addresses are not
      in the dynamic pools.</para>
     </note>
 
@@ -3897,7 +3869,7 @@ It is merely echoed by the server
       FQDN option only if the client has included Client FQDN option in its
       message to the server. The server will respond with the Hostname option
       if the client included Hostname option in its message to the server
-      or when the client requested Hostname option using Parameter Request
+      or when the client requested Hostname option using the Parameter Request
       List option. The server will return the Hostname option even if it is not
       configured to perform DNS updates. The reserved hostname always takes
       precedence over the hostname supplied by the client or the autogenerated
@@ -3928,7 +3900,7 @@ It is merely echoed by the server
       client using the MAC address "aa:bb:cc:dd:ee:ff". If the <command>qualifying-suffix
       </command> is not specified, the default (empty) value will be used, and
       in this case the value specified as a <command>hostname</command> will
-      be treated as fully qualified name. Thus, by leaving the
+      be treated as a fully qualified name. Thus, by leaving the
       <command>qualifying-suffix</command> empty it is possible to qualify
       hostnames for the different clients with different domain names:
 <screen>
@@ -3959,9 +3931,9 @@ It is merely echoed by the server
 
     <section xml:id="reservation4-options">
       <title>Including Specific DHCPv4 Options in Reservations</title>
-      <para>Kea 1.1.0 introduced the ability to specify options on a
-      per host basis. The options follow the same rules as any other
-      options. These can be standard options (see <xref linkend="dhcp4-std-options"/>), custom options (see <xref linkend="dhcp4-custom-options"/>) or vendor specific options
+      <para>Kea offers the ability to specify options on a
+      per-host basis. The options follow the same rules as any other
+      options. These can be standard options (see <xref linkend="dhcp4-std-options"/>), custom options (see <xref linkend="dhcp4-custom-options"/>), or vendor-specific options
       (see <xref linkend="dhcp4-vendor-opts"/>). The following
       example demonstrates how standard options can be defined.</para>
 
@@ -3985,7 +3957,7 @@ It is merely echoed by the server
     } ]
 }</screen>
 
-    <para>Vendor specific options can be reserved in a similar manner:</para>
+    <para>Vendor-specific options can be reserved in a similar manner:</para>
 
     <screen>
 {
@@ -4010,18 +3982,18 @@ It is merely echoed by the server
 
 <para>
  Options defined at host level have the highest priority. In other words,
- if there are options defined with the same type on global, subnet, class and
- host level, the host specific values will be used.
+ if there are options defined with the same type on global, subnet, class, and
+ host level, the host-specific values will be used.
 </para>
 
     </section>
 
     <section xml:id="reservation4-message-fields">
-      <title>Reserving Next Server, Server Hostname and Boot File Name</title>
-      <para>BOOTP/DHCPv4 messages include "siaddr", "sname" and "file" fields.
-      Even though, DHCPv4 includes corresponding options, such as option 66 and
+      <title>Reserving Next Server, Server Hostname, and Boot File Name</title>
+      <para>BOOTP/DHCPv4 messages include "siaddr", "sname", and "file" fields.
+      Even though DHCPv4 includes corresponding options, such as option 66 and
       option 67, some clients may not support these options. For this reason, server
-      administrators often use the "siaddr", "sname" and "file" fields instead.</para>
+      administrators often use the "siaddr", "sname", and "file" fields instead.</para>
 
       <para>With Kea, it is possible to make static reservations for these DHCPv4
       message fields:</para>
@@ -4040,15 +4012,15 @@ It is merely echoed by the server
 }</screen>
 
     <para>Note that those parameters can be specified in combination with
-    other parameters for a reservation, e.g. reserved IPv4 address. These
-    parameters are optional, i.e. a subset of them can specified, or all of
+    other parameters for a reservation, e.g. a reserved IPv4 address. These
+    parameters are optional, i.e. a subset of them can be specified, or all of
     them can be omitted.</para>
     </section>
 
     <section xml:id="reservation4-client-classes">
       <title>Reserving Client Classes in DHCPv4</title>
       <para><xref linkend="classification-using-expressions"/> explains how
-      to configure the server to assign classes to a client based on the content
+      to configure the server to assign classes to a client, based on the content
       of the options that this client sends to the server. Host reservations
       mechanisms also allow for statically assigning classes to the clients.
       The definitions of these classes should exist in the Kea
@@ -4098,47 +4070,47 @@ It is merely echoed by the server
 
     <para>Static class assignments, as shown above, can be used in conjunction
     with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
-    class is added to the packet and any class depending on it directly or
-    indirectly and not only-if-required is evaluated.
+    class is added to the packet and any class depending on it (directly or
+    indirectly) and not only-if-required is evaluated.
     </para>
 
     <note>
      <para>If you want to force the evaluation of a class expression after
      the host reservation lookup, for instance because of a dependency on
      "reserved-class1" from the previous example, you should add a
-     "member('KNOWN')" in the expression.</para>
+     "member('KNOWN')" statement in the expression.</para>
     </note>
 
     </section>
 
     <section id="reservations4-mysql-pgsql-cql">
-      <title>Storing Host Reservations in MySQL, PostgreSQL or Cassandra</title>
+      <title>Storing Host Reservations in MySQL, PostgreSQL, or Cassandra</title>
 
       <para>
-        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
+        It is possible to store host reservations in MySQL, PostgreSQL, or Cassandra. See
         <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL, PostgreSQL or Cassandra. Kea provides dedicated hook for
-        managing reservations in a database, section <xref linkend="host-cmds" /> provide
+        reservations stored in MySQL, PostgreSQL, or Cassandra. Kea provides a dedicated hook for
+        managing reservations in a database; section <xref linkend="host-cmds" /> provides
         detailed information. <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
-        provides some examples how to conduct common host reservation operations.
+        provides some examples of how to conduct common host reservation operations.
       </para>
 
-      <note><simpara>In Kea maximum length of an option specified per host is
+      <note><simpara>In Kea, the maximum length of an option specified per host is
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
     <section xml:id="reservations4-tuning">
-      <title>Fine Tuning DHCPv4 Host Reservation</title>
+      <title>Fine-Tuning DHCPv4 Host Reservation</title>
 
       <para>The host reservation capability introduces additional restrictions for the
       allocation engine (the component of Kea that selects an address for a client)
       during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to not be used by another DHCP client. It
+      sufficient for a candidate lease to simply not be in use by another DHCP client; it
       also must not be reserved for another client. Second, when renewing a lease,
-      additional check must be performed whether the address being renewed is not
+      an additional check must be performed to see whether the address being renewed is not
       reserved for another client. Finally, when a host renews an address, the server
       has to check whether there is a reservation for this host, so the existing
       (dynamically allocated) address should be revoked and the reserved one be
@@ -4159,22 +4131,22 @@ It is merely echoed by the server
       it is also the slowest. This does not check against global reservations.
       </simpara></listitem>
 
-      <listitem><simpara> <command>out-of-pool</command> - allows only out of
-      pool host reservations.  With this setting in place, the server may assume
+      <listitem><simpara> <command>out-of-pool</command> - allows only out-of-
+      pool host reservations. With this setting in place, the server may assume
       that all host reservations are for addresses that do not belong to the
-      dynamic pool. Therefore it can skip the reservation checks when dealing
+      dynamic pool. Therefore, it can skip the reservation checks when dealing
       with in-pool addresses, thus improving performance. Do not use this mode
-      if any of your reservations use in-pool address. Caution is advised when
-      using this setting: Kea does not sanity check the reservations against
+      if any of your reservations use in-pool addresses. Caution is advised when
+      using this setting; Kea does not sanity-check the reservations against
       <command>reservation-mode</command> and misconfiguration may cause problems.
       </simpara></listitem>
 
       <listitem><simpara> <command>global</command> - allows only global
-      host reservations.  With this setting in place, the server searches for
+      host reservations. With this setting in place, the server searches for
       reservations for a client only among the defined global reservations.
       If an address is specified, the server will skip the reservation checks
       done when dealing in other modes, thus improving performance.
-      Caution is advised when using this setting: Kea does not sanity check
+      Caution is advised when using this setting; Kea does not sanity-check
       the reservations when <command>global</command> and
       misconfiguration may cause problems.
       </simpara></listitem>
@@ -4187,7 +4159,7 @@ It is merely echoed by the server
       </simpara></listitem>
 
       </itemizedlist>
-      The parameter can be specified at global, subnet and shared network
+      The parameter can be specified at global, subnet, and shared network
       levels.
       </para>
 
@@ -4239,9 +4211,8 @@ It is merely echoed by the server
 
 
       <para>Another aspect of the host reservations are the different types of
-      identifiers. Kea 1.1.0 supports four types of identifiers
-      (hw-address, duid, client-id and circuit-id), but more identifier types
-      are likely to be added in the future. This is beneficial from a
+      identifiers. Kea currently supports four types of identifiers
+      (hw-address, duid, client-id and circuit-id). This is beneficial from a
       usability perspective. However, there is a drawback. For each incoming
       packet Kea has to to extract each identifier type and then query the
       database to see if there is a reservation done by this particular
@@ -4418,11 +4389,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     <note>
     <para>It is strongly discouraged for the Kea deployments to assume that the
       server doesn't allocate addresses from other subnets until it uses all
-      the addresses from the first subnet in the shared network. Apart from the
-      fact that hints, host reservations and client classification affect subnet
-      selection, it is also foreseen that we will enhance allocation strategies
-      for shared networks in the future versions of Kea, so as the selection
-      of subnets within a shared network is equally probable (unpredictable).</para>
+      the addresses from the first subnet in the shared network.</para>
     </note>
 
     <para>In order to define a shared network an additional configuration scope
