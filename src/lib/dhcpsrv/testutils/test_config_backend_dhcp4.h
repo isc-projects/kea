@@ -14,7 +14,6 @@
 #include <dhcpsrv/testutils/test_config_backend.h>
 
 #include <boost/shared_ptr.hpp>
-#include <boost/lexical_cast.hpp>
 
 #include <map>
 #include <string>
@@ -23,19 +22,18 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-/// @brief Test backend that implements all of the DHCPv4 API calls
+/// @brief Test config backend that implements all of the DHCPv4 API calls
 ///
-/// Currently all API get calls which return a single entry, will return an
-/// empty pointer of appropriate type. API calls which return a collection of
-/// entires will return an empty collection of the appropriate type.
+/// This backend should be used for unit testing the DHCPv4 server and the
+/// commands which manpiluate the configuration information stored in the
+/// database.
 ///
-/// In addition provides static register and unregister methods so it may be
-/// registered with a configuration backend manager.
+/// This backend stores server configuration information in memory.
 class TestConfigBackendDHCPv4 : public TestConfigBackend<ConfigBackendDHCPv4> {
 public:
     /// @brief Constructor
     ///
-    ///
+    /// @param params Database connection parameters.
     TestConfigBackendDHCPv4(const db::DatabaseConnection::ParameterMap& params)
         : TestConfigBackend(params) {
     }
