@@ -8,6 +8,10 @@
 #define STAMPED_VALUE_H
 
 #include <cc/stamped_element.h>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/ordered_index.hpp>
+#include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <string>
@@ -19,9 +23,6 @@ class StampedValue;
 
 /// @brief Pointer to the stamped value.
 typedef boost::shared_ptr<StampedValue> StampedValuePtr;
-
-/// @brief Collection of pointers to values.
-typedef std::vector<StampedValuePtr> StampedValueCollection;
 
 /// @brief This class represents string or signed integer configuration
 /// element associated with the modification timestamp.
@@ -91,8 +92,43 @@ private:
     std::string value_;
 };
 
-/// @brief Pointer to the stamped value.
-typedef boost::shared_ptr<StampedValue> StampedValuePtr;
+/// @name Definition of the multi index container for @c StampedValue.
+///
+//@{
+
+/// @brief Tag for the index for access by value name.
+struct StampedValueNameIndexTag { };
+
+/// @brief Tag for the index for access by modification time.
+struct StampedValueModificationTimeIndexTag { };
+
+/// @brief Multi index container for @c StampedValue.
+typedef boost::multi_index_container<
+    StampedValuePtr,
+    boost::multi_index::indexed_by<
+        // Index used to access value by name.
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<StampedValueNameIndexTag>,
+            boost::multi_index::const_mem_fun<
+                StampedValue,
+                std::string,
+                &StampedValue::getName
+            >
+        >,
+
+        // Index used to access value by modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<StampedValueModificationTimeIndexTag>,
+            boost::multi_index::const_mem_fun<
+                StampedElement,
+                boost::posix_time::ptime,
+                &StampedElement::getModificationTime
+            >
+        >
+    >
+> StampedValueCollection;
+
+//@}
 
 } // end of namespace isc::data
 } // end of namespace isc

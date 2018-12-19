@@ -34,6 +34,10 @@ struct SharedNetworkNameIndexTag { };
 /// @brief A tag for accessing index by server identifier.
 struct SharedNetworkServerIdIndexTag { };
 
+/// @brief Tag for the index for searching by shared network modification
+/// time.
+struct SharedNetworkModificationTimeIndexTag { };
+
 /// @brief Shared network holding IPv4 subnets.
 ///
 /// Specialization of the @ref Network4 class for IPv4 shared networks.
@@ -188,8 +192,14 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<SharedNetworkServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>
+        >,
+        // Fourth index allows for searching using subnet modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement,
+                                              boost::posix_time::ptime,
+                                              &data::StampedElement::getModificationTime>
         >
-
     >
 > SharedNetwork4Collection;
 
@@ -340,6 +350,13 @@ typedef boost::multi_index_container<
             boost::multi_index::tag<SharedNetworkNameIndexTag>,
             boost::multi_index::const_mem_fun<SharedNetwork6, std::string,
                                               &SharedNetwork6::getName>
+        >,
+        // Third index allows for searching using subnet modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SharedNetworkModificationTimeIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement,
+                                              boost::posix_time::ptime,
+                                              &data::StampedElement::getModificationTime>
         >
     >
 > SharedNetwork6Collection;
