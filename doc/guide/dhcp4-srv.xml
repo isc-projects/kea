@@ -57,12 +57,12 @@
             <simpara>
             <command>-t <replaceable>file</replaceable></command> -
             specifies the configuration file to be tested. Kea-dhcp4
-            will attempt to load it, and will conduct sanity
+            will attempt to load it and will conduct sanity
             checks. Note that certain checks are possible only while
             running the actual server. The actual status is reported
-            with exit code (0 = configuration looks ok, 1 = error
+            with an exit code (0 = configuration looks ok, 1 = error
             encountered). Kea will print out log messages to standard
-            output and error to standard error when testing
+            output and errors to standard error when testing the
             configuration.</simpara>
           </listitem>
           <listitem>
@@ -82,7 +82,7 @@
               <command>-W</command> - prints out the Kea configuration report
               and exits. The report is a copy of the
               <filename>config.report</filename> file produced by
-              <userinput>./configure</userinput>: it is embedded in the
+              <userinput>./configure</userinput>; it is embedded in the
               executable binary.
             </simpara>
           </listitem>
@@ -90,7 +90,7 @@
 
       <para>
         The <filename>config.report</filename> may also be accessed more
-        directly. The following command may be used to extract this
+        directly; the following command may be used to extract this
         information. The binary <userinput>path</userinput> may be found
         in the install directory or in the <filename>.libs</filename>
         subdirectory in the source tree. For example:
@@ -110,8 +110,8 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-        During startup the server will attempt to create a PID file of the
-        form: localstatedir]/[conf name].kea-dhcp4.pid where:
+        During startup, the server will attempt to create a PID file of the
+        form: [localstatedir]/[conf name].kea-dhcp4.pid where:
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
@@ -122,7 +122,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
             </listitem>
             <listitem>
             <simpara><command>conf name</command>: The configuration file name
-            used to start the server, minus all preceding path and file extension.
+            used to start the server, minus all preceding path and file extensions.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
             </simpara>
@@ -210,7 +210,7 @@ In the example above this object is called <command>Dhcp4</command>.
   of multiple modules within a single configuration file, but this is not
   recommended. The
   only object, besides the one specifying module configuration, which can be
-  (and usually is) included in the same file is the <command>Logging</command>.
+  (and usually is) included in the same file, is the <command>Logging</command>.
   However, we don't include this object in the example above for clarity.
   </para>
 </note>
@@ -221,7 +221,7 @@ the brace after the last comment). Everything defined between those
 lines is considered to be the Dhcp4 configuration.</para>
 
 <para>In the general case, the order in which those parameters appear does not
-matter. There are two caveats here though. The first one is to remember that
+matter, but there are two caveats. The first one is to remember that
 the configuration file must be well-formed JSON. That means that the parameters
 for any given scope must be separated by a comma and there must not be a comma
 after the last parameter. When reordering a configuration file, keep in mind that
@@ -244,7 +244,7 @@ without any quotes around them.) <command>renew-timer</command> and
 define T1 and T2 timers that govern when the client will begin the renewal and
 rebind procedures. <note>Both <command>renew-timer</command> and
 <command>rebind-timer</command> are optional. The server will only send
-rebind-timer to the client, via DHPv4 option code 59, if it is less than
+rebind-timer to the client, via DHCPv4 option code 59, if it is less than
 valid-lifetime; and it will only send renew-timer, via DHCPv4 option code 58,
 if it is less than rebind-timer (or valid-lifetime if rebind-timer was not
 specified). In their absence, the client should select values for T1 and T2
@@ -268,15 +268,15 @@ by commas. To listen on two interfaces, the
 </para>
 
 <para>The next couple of lines define the lease database, the place where the server
-stores its lease information. This particular example tells the server to use the
+stores its lease information. This particular example tells the server to use
 <command>memfile</command>, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a CSV
-file. This is a very simple configuration. Usually the lease database configuration
+file. This is a very simple configuration; usually the lease database configuration
 is more extensive and contains additional parameters. Note that
 <command>lease-database</command>
 is an object and opens up a new scope, using an opening brace.
 Its parameters (just one in this example - <command>type</command>)
-follow. Had there been more than one, they would be separated by commas. This
+follow. If there were more than one, they would be separated by commas. This
 scope is closed with a closing brace. As more parameters for the Dhcp4 definition
 follow, a trailing comma is present.</para>
 
@@ -284,15 +284,15 @@ follow, a trailing comma is present.</para>
 most important DHCPv4 configuration structure, as the server uses that
 information to process clients' requests. It defines all subnets from
 which the server is expected to receive DHCP requests. The subnets are
-specified with the <command>subnet4</command> parameter.  It is a list,
+specified with the <command>subnet4</command> parameter. It is a list,
 so it starts and ends with square brackets. Each subnet definition in
 the list has several attributes associated with it, so it is a structure
 and is opened and closed with braces. At a minimum, a subnet definition
-has to have at least two parameters: <command>subnet</command> (that
+has to have at least two parameters: <command>subnet</command> (which
 defines the whole subnet) and <command>pools</command> (which is a list of
 dynamically allocated pools that are governed by the DHCP server).</para>
 
-<para>The example contains a single subnet. Had more than one been defined,
+<para>The example contains a single subnet. If more than one were defined,
 additional elements
 in the <command>subnet4</command> parameter would be specified and
 separated by commas. For example, to define three subnets, the following
@@ -318,7 +318,7 @@ In some cases it may be preferable to use more compact notation.
 </para>
 
 <para>After all the parameters have been specified, we have two contexts open:
-global and Dhcp4, hence we need two closing curly brackets to close them.
+global and Dhcp4, so we need two closing curly brackets to close them.
 In a real-life configuration file there most likely would be an additional
 component defined such as Logging, so the closing brace would be followed
 by a comma and another object definition.</para>
@@ -352,7 +352,7 @@ by a comma and another object definition.</para>
       updates to existing leases are written to the file. It is strongly
       recommended that the value of this parameter is set to
       <userinput>true</userinput> at all times during the server's normal
-      operation. Not writing leases to disk will mean that if a server is restarted
+      operation. Not writing leases to disk means that if a server is restarted
       (e.g. after a power failure), it will not know what addresses have been
       assigned. As a result, it may hand out addresses to new clients that are
       already in use. The value of <userinput>false</userinput> is mostly useful
@@ -371,7 +371,7 @@ by a comma and another object definition.</para>
     </listitem>
 
     <listitem>
-      <simpara><command>lfc-interval</command>: specifies the interval in seconds, at
+      <simpara><command>lfc-interval</command>: specifies the interval, in seconds, at
       which the server will perform a lease file cleanup (LFC). This
       removes redundant (historical) information from the lease file
       and effectively reduces the lease file size. The cleanup process is described
@@ -430,7 +430,7 @@ by a comma and another object definition.</para>
   this by skipping the new cleanup when it detects that the previous cleanup
   is still in progress. But it implies that the actual cleanups will be
   triggered more rarely than configured. Moreover, triggering a new cleanup
-  adds an overhead to the server which will not be able to respond to new
+  adds overhead to the server, which will not be able to respond to new
   requests for a short period of time when the new cleanup process is spawned.
   Therefore, it is recommended that the <command>lfc-interval</command> value
   is selected in a way that would allow for the LFC to complete the cleanup before a
@@ -438,7 +438,7 @@ by a comma and another object definition.</para>
   </para>
 
   <para>Lease file cleanup is performed by a separate process (in the background) to avoid
-  a performance impact on the server process. In order to avoid the conflicts
+  a performance impact on the server process. To avoid the conflicts
   between two processes both using the same lease files, the LFC process
   operates on the copy of the original lease file, rather than on the lease
   file used by the server to record lease updates. There are also other files
@@ -461,7 +461,7 @@ by a comma and another object definition.</para>
 
   <para>Lease database configuration is controlled through the Dhcp4/lease-database
   parameters. The type of the database must be set to "memfile", "mysql", "postgresql", or
-  "cql", e.g.
+  "cql", e.g.:
 <screen>
 "Dhcp4": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
