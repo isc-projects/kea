@@ -182,15 +182,15 @@ public:
     /// and the Relay Agent Information option and END options last. This
     /// function is initially called to pack the options for a packet in
     /// @ref Pkt4::pack(). That call leads to it being called recursively in
-    /// vai @ref Option::packOptions(). Thus the logic used to output the
+    /// @ref Option::packOptions(). Thus the logic used to output the
     /// message type should only be executed by the top-most. This is governed
     /// by the paramater top, below.
     ///
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
     /// @param top indicates if this is the first call to pack the options.
-    /// When true logic to emit the message type is executed. It defaults to
-    /// false.
+    /// When true logic to emit the message type first is executed. It
+    /// defaults to false.
     static void packOptions4(isc::util::OutputBuffer& buf,
                              const isc::dhcp::OptionCollection& options,
                              bool top = false);
