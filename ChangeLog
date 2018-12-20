@@ -1,3 +1,10 @@
+1507.	[func]		tmark
+	kea-dhcp4 now ensures that the message type option (53) is
+	the first option in outbound DHCPv4 packets.  This was done
+	to accommodate non-compliant clients that require the option
+	to be first.
+	(Gitlab #363,!177, git 34f40035bf7a7849083138cacee440a9f0991d67)
+
 Kea 1.5.0 released on Dec 14, 2018
 
 1506.	[build]		marcin
