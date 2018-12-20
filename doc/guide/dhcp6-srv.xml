@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="dhcp6">
@@ -15,7 +15,7 @@
       <para>
         It is recommended that the Kea DHCPv6 server be started and stopped
         using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-        However, it is also possible to run the server directly: it accepts
+        However, it is also possible to run the server directly; it accepts
         the following command-line switches:
       </para>
 
@@ -39,7 +39,7 @@
           <listitem>
             <simpara>
             <command>-p <replaceable>server-port</replaceable></command> -
-            specifies UDP local port on which the server will listen.
+            specifies the UDP local port on which the server will listen.
             This is only useful during testing, as a DHCPv6 server
             listening on ports other than the standard ones will not
             be able to handle regular DHCPv6 queries.</simpara>
@@ -47,11 +47,11 @@
           <listitem>
             <simpara>
             <command>-P <replaceable>client-port</replaceable></command> -
-            specifies UDP remote port to which the server will send
+            specifies the UDP remote port to which the server will send
             all responses. This is only useful during testing, as a
             DHCPv6 server sending responses to ports other than the
             standard ones will not be able to handle regular DHCPv6
-            clients.</simpara>
+            queries.</simpara>
           </listitem>
           <listitem>
             <simpara>
@@ -60,9 +60,9 @@
             will attempt to load it, and will conduct sanity
             checks. Note that certain checks are possible only while
             running the actual server. The actual status is reported
-            with exit code (0 = configuration looks ok, 1 = error
+            with an exit code (0 = configuration looks ok, 1 = error
             encountered). Kea will print out log messages to standard
-            output and error to standard error when testing
+            output and errors to standard error when testing the
             configuration.</simpara>
           </listitem>
           <listitem>
@@ -82,7 +82,7 @@
               <command>-W</command> - prints out the Kea configuration report
               and exits. The report is a copy of the
               <filename>config.report</filename> file produced by
-              <userinput>./configure</userinput>: it is embedded in the
+              <userinput>./configure</userinput>; it is embedded in the
               executable binary.
             </simpara>
           </listitem>
@@ -90,10 +90,10 @@
 
       <para>
         The <filename>config.report</filename> may also be accessed more
-        directly.  The following command may be used to extract this
-        information.  The binary <userinput>path</userinput> may be found
+        directly; the following command may be used to extract this
+        information. The binary <userinput>path</userinput> may be found
         in the install directory or in the <filename>.libs</filename>
-        subdirectory in the source tree. For example
+        subdirectory in the source tree. For example:
         <filename>kea/src/bin/dhcp6/.libs/kea-dhcp6</filename>.
 
 <screen>
@@ -110,19 +110,19 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-        During startup the server will attempt to create a PID file of the
+        During startup, the server will attempt to create a PID file of the
         form: localstatedir]/[conf name].kea-dhcp6.pid where:
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
             build configure script. It defaults to "/usr/local/var".  Note
             that this value may be overridden at run time by setting the environment
-            variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
+            variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
             <simpara><command>conf name</command>: The configuration file name
-            used to start the server, minus all preceding path and file extension.
+            used to start the server, minus all preceding path and file extensions.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
             </simpara>
@@ -131,13 +131,13 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
         If the file already exists and contains the PID of a live process,
         the server will issue a DHCP6_ALREADY_RUNNING log message and exit. It
         is possible, though unlikely, that the file is a remnant of a system crash
-        and the process to which the PID belongs is unrelated to Kea.  In such a
+        and the process to which the PID belongs is unrelated to Kea. In such a
         case it would be necessary to manually delete the PID file.
       </para>
 
       <para>
         The server can be stopped using the <command>kill</command> command.
-        When running in a console, the server can be shut down by
+        When running in a console, the server can also be shut down by
         pressing ctrl-c. It detects the key combination and shuts
         down gracefully.
       </para>
@@ -192,14 +192,13 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
 </para>
 
 <para>The following paragraphs provide a brief overview of the parameters in
-the above example together with
+the above example, along with
 their format. Subsequent sections of this chapter go into much greater detail
 for these and other parameters.</para>
 
 <para>The lines starting with a hash (#) are comments and are ignored by
 the server; they do not impact its
 operation in any way.</para>
-
 
 <para>The configuration starts in the first line with the initial
 opening curly bracket (or brace). Each configuration must contain an
@@ -210,35 +209,35 @@ In the example above this object is called <command>Dhcp6</command>.
 <note>
   <para>In the current Kea release it is possible to specify configurations
   of multiple modules within a single configuration file, but this is not
-  recommended and support for it will be removed in the future releases. The
-  only object, besides the one specifying module configuration, which can
-  (and usually is) included in the same file is <command>Logging</command>.
+  recommended. The
+  only object, besides the one specifying module configuration, which can be
+  (and usually is) included in the same file, is <command>Logging</command>.
   However, we don't include this object in the example above for clarity.
   </para>
 </note>
 
 <para>The Dhcp6 configuration starts with the <command>"Dhcp6": {</command> line
 and ends with the corresponding closing brace (in the above example,
-the brace after the last comment).  Everything defined between those
+the brace after the last comment). Everything defined between those
 lines is considered to be the Dhcp6 configuration.</para>
 
 <para>In the general case, the order in which those parameters appear does not
-matter. There are two caveats here though. The first one is to remember that
-the configuration file must be well formed JSON. That means that parameters
+matter, but there are two caveats. The first one is to remember that
+the configuration file must be well-formed JSON. That means that the parameters
 for any given scope must be separated by a comma and there must not be a comma
 after the last parameter. When reordering a configuration file, keep in mind that
 moving a parameter to or from the last position in a given scope may also require
 moving the comma. The second caveat is that it is uncommon — although
 legal JSON — to
 repeat the same parameter multiple times. If that happens, the last occurrence of a
-given parameter in a given scope is used while all previous instances are
-ignored. This is unlikely to cause any confusion as there are no real life
+given parameter in a given scope is used, while all previous instances are
+ignored. This is unlikely to cause any confusion as there are no real-life
 reasons to keep multiple copies of the same parameter in your configuration
 file.</para>
 
-<para>Moving onto the DHCPv6 configuration elements, the very first few elements
+<para>Moving onto the DHCPv6 configuration elements, the first few elements
 define some global parameters. <command>valid-lifetime</command>
-defines for how long the addresses (leases) given out by the server are valid. If
+defines how long the addresses (leases) given out by the server are valid. If
 nothing changes, a client that got an address is allowed to use it for 4000
 seconds. (Note that integer numbers are specified as is, without any quotes
 around them.) The address will become deprecated in 3000 seconds (clients are
@@ -252,8 +251,8 @@ configuration concerning the network interfaces, on which the server should
 listen to the DHCP messages. The <command>interfaces</command> parameter
 specifies a list of network interfaces on which the server should listen.
 Lists are opened and closed with square brackets, with elements separated
-by commas. Had we wanted to listen on two interfaces, the
-<command>interfaces-config</command> would look like this:
+by commas. To listen on two interfaces, the
+<command>interfaces-config</command> should look like this:
 <screen>
 "interfaces-config": {
     "interfaces": [ "eth0", "eth1" ]
@@ -265,12 +264,12 @@ by commas. Had we wanted to listen on two interfaces, the
 stores its lease information. This particular example tells the server to use
 <command>memfile</command>, which is the simplest (and fastest) database
 backend. It uses an in-memory database and stores leases on disk in a CSV
-file. This is a very simple configuration. Usually the lease database configuration
+file. This is a very simple configuration; usually the lease database configuration
 is more extensive and contains additional parameters.  Note that
 <command>lease-database</command>
 is an object and opens up a new scope, using an opening brace.
 Its parameters (just one in this example - <command>type</command>)
-follow. Had there been more than one, they would be separated by commas. This
+follow. If there were more than one, they would be separated by commas. This
 scope is closed with a closing brace. As more parameters for the Dhcp6 definition
 follow, a trailing comma is present.</para>
 
@@ -278,15 +277,15 @@ follow, a trailing comma is present.</para>
 most important DHCPv6 configuration structure as the server uses that
 information to process clients' requests. It defines all subnets from
 which the server is expected to receive DHCP requests. The subnets are
-specified with the <command>subnet6</command> parameter.  It is a list,
+specified with the <command>subnet6</command> parameter. It is a list,
 so it starts and ends with square brackets.  Each subnet definition in
 the list has several attributes associated with it, so it is a structure
-and is opened and closed with braces. At minimum, a subnet definition
-has to have at least two parameters: <command>subnet</command> (that
+and is opened and closed with braces. At a minimum, a subnet definition
+has to have at least two parameters: <command>subnet</command> (which
 defines the whole subnet) and <command>pools</command> (which is a list of
 dynamically allocated pools that are governed by the DHCP server).</para>
 
-<para>The example contains a single subnet. Had more than one been defined,
+<para>The example contains a single subnet. If more than one were defined,
 additional elements
 in the <command>subnet6</command> parameter would be specified and
 separated by commas. For example, to define two subnets, the following
@@ -308,8 +307,8 @@ In some cases in may be preferable to use more compact notation.
 </para>
 
 <para>After all parameters are specified, we have two contexts open:
-global and Dhcp6, hence we need two closing curly brackets to close them.
-In a real life configuration file there most likely would be additional
+global and Dhcp6, so we need two closing curly brackets to close them.
+In a real-life configuration file there most likely would be additional
 components defined such as Logging, so the closing brace would be followed
 by a comma and another object definition.</para>
 </section>
@@ -318,7 +317,7 @@ by a comma and another object definition.</para>
   <title>Lease Storage</title>
   <para>All leases issued by the server are stored in the lease database.
   Currently there are four database backends available:  memfile (which is the
-  default backend), MySQL, PostgreSQL and Cassandra.</para>
+  default backend), MySQL, PostgreSQL, and Cassandra.</para>
 <section>
   <title>Memfile - Basic Storage for Leases</title>
 
@@ -333,7 +332,7 @@ by a comma and another object definition.</para>
   the Dhcp6/lease-database parameters. The <command>type</command> parameter
   is mandatory and it specifies which storage for leases the server should use.
   The value of <userinput>"memfile"</userinput> indicates that the file should
-  be used as the storage. The following list gives additional, optional,
+  be used as the storage. The following list gives additional optional
   parameters that can be used to configure the Memfile backend.
 
   <itemizedlist>
@@ -342,11 +341,11 @@ by a comma and another object definition.</para>
       updates to existing leases are written to the file. It is strongly
       recommended that the value of this parameter is set to
       <userinput>true</userinput> at all times, during the server's normal
-      operation. Not writing leases to disk will mean that if a server is restarted
+      operation. Not writing leases to disk means that if a server is restarted
       (e.g. after a power failure), it will not know what addresses have been
-      assigned.  As a result, it may hand out addresses to new clients that are
+      assigned. As a result, it may hand out addresses to new clients that are
       already in use. The value of <userinput>false</userinput> is mostly useful
-      for performance testing purposes. The default value of the
+      for performance-testing purposes. The default value of the
       <command>persist</command> parameter is <userinput>true</userinput>,
       which enables writing lease updates
       to the lease file.
@@ -361,7 +360,7 @@ by a comma and another object definition.</para>
     </listitem>
 
     <listitem>
-      <simpara><command>lfc-interval</command>: specifies the interval in seconds, at
+      <simpara><command>lfc-interval</command>: specifies the interval, in seconds, at
       which the server will perform a lease file cleanup (LFC).  This
       removes redundant (historical) information from the lease file
       and effectively reduces the lease file size. The cleanup process is described
@@ -388,7 +387,7 @@ by a comma and another object definition.</para>
 
     This configuration selects the <filename>/tmp/kea-leases6.csv</filename> as
     the storage for lease information and enables persistence (writing lease updates
-    to this file). It also configures the backend perform the periodic cleanup
+    to this file). It also configures the backend to perform a periodic cleanup
     of the lease files, executed every 30 minutes.
   </para>
 
@@ -398,14 +397,14 @@ by a comma and another object definition.</para>
   lease information must be recorded in the lease file. For performance reasons,
   the server does not update the existing client's lease in the file, as it would
   potentially require rewriting the entire file. Instead, it simply appends the new lease
-  information to the end of the file: the previous lease entries for the
+  information to the end of the file; the previous lease entries for the
   client are not removed. When the server loads leases from the lease file, e.g.
   at the server startup, it assumes that the latest lease entry for the client
-  is the valid one. The previous entries are discarded. This means that the
+  is the valid one. The previous entries are discarded, meaning that the
   server can re-construct the accurate information about the leases even though
   there may be many lease entries for each client. However, storing many entries
-  for each client results in bloated lease file and impairs the performance of
-  the server's startup and reconfiguration as it needs to process a larger number
+  for each client results in a bloated lease file and impairs the performance of
+  the server's startup and reconfiguration, as it needs to process a larger number
   of lease entries.
   </para>
 
@@ -413,27 +412,27 @@ by a comma and another object definition.</para>
   leaves only the latest ones. The interval at which the cleanup is performed
   is configurable, and it should be selected according to the frequency of lease
   renewals initiated by the clients. The more frequent the renewals, the smaller
-  the value of <command>lfc-interval</command> should be. Note however, that the
-  LFC takes time and thus it is possible (although unlikely) that new cleanup
-  is started while the previous cleanup instance is still running, if the
+  the value of <command>lfc-interval</command> should be. Note, however, that the
+  LFC takes time and thus it is possible (although unlikely) that a new cleanup
+  may be started while the previous cleanup instance is still running, if the
   <command>lfc-interval</command> is too short. The server would recover from
   this by skipping the new cleanup when it detects that the previous cleanup
   is still in progress. But it implies that the actual cleanups will be
   triggered more rarely than configured. Moreover, triggering a new cleanup
-  adds an overhead to the server which will not be able to respond to new
+  adds overhead to the server, which will not be able to respond to new
   requests for a short period of time when the new cleanup process is spawned.
   Therefore, it is recommended that the <command>lfc-interval</command> value
   is selected in a way that would allow for the LFC to complete the cleanup before a
   new cleanup is triggered.
   </para>
 
-  <para>Lease file cleanup is performed by a separate process (in background) to avoid
-  a performance impact on the server process. In order to avoid the conflicts
+  <para>Lease file cleanup is performed by a separate process (in the background) to avoid
+  a performance impact on the server process. To avoid the conflicts
   between two processes both using the same lease files, the LFC process
   operates on the copy of the original lease file, rather than on the lease
   file used by the server to record lease updates. There are also other files
-  being created as a side effect of the lease file cleanup. The detailed
-  description of the LFC is located in the Kea Administrator's Reference Manual:
+  created as a side effect of the lease file cleanup. The detailed
+  description of the LFC is located later in this Kea Administrator's Reference Manual:
   <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc">https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc</uri>.
   </para>
 
@@ -444,21 +443,21 @@ by a comma and another object definition.</para>
 
   <note>
     <para>Lease database access information must be configured for the DHCPv6 server,
-    even if it has already been configured for the DHCPv4 server.  The servers
+    even if it has already been configured for the DHCPv4 server. The servers
     store their information independently, so each server can use a separate
     database or both servers can use the same database.</para>
   </note>
 
   <para>Lease database configuration is controlled through the
   Dhcp6/lease-database parameters. The type of the database must be set to
-  "memfile", "mysql", "postgresql" or "cql", e.g.
+  "memfile", "mysql", "postgresql", or "cql", e.g.:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database is to hold the leases must be set: this is the
+  Next, the name of the database to hold the leases must be set; this is the
   name used when the database was created
   (see <xref linkend="mysql-database-create"/>,
-  <xref linkend="pgsql-database-create"/>
+  <xref linkend="pgsql-database-create"/>,
   or <xref linkend="cql-database-create"/>).
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
@@ -467,7 +466,7 @@ by a comma and another object definition.</para>
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"keyspace": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
-  If the database is located on a different system to the DHCPv6 server, the
+  If the database is located on a different system from the DHCPv6 server, the
   database host name must also be specified. (It should be noted that this
   configuration may have a severe impact on server performance.):
 <screen>
@@ -477,8 +476,8 @@ by a comma and another object definition.</para>
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"contact-points": "<replaceable>remote-host-name[, ...]</replaceable>" </userinput>, ... }, ... }
 </screen>
-  The usual state of affairs will be to have the database on the same machine as
-  the DHCPv6 server.  In this case, set the value to the empty string:
+  Normally, the database will be on the same machine as
+  the DHCPv6 server. In this case, set the value to the empty string:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
@@ -486,7 +485,7 @@ by a comma and another object definition.</para>
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"contact-points": ""</userinput>, ... }, ... }
 </screen>
-  Should the database use a port different than default, it may be
+  Should the database use a port different than the default, it may be
   specified as well:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
@@ -497,7 +496,7 @@ by a comma and another object definition.</para>
 "Dhcp6": { "lease-database": { <userinput>"connect-timeout" : <replaceable>timeout-in-seconds</replaceable></userinput>, ... }, ... }
 </screen>
 The default value of five seconds should be more than adequate for local connections.
-If a timeout is given though, it should be an integer greater than zero.
+If a timeout is given, though, it should be an integer greater than zero.
   </para>
   <para>
 The maxiumum number of times the server will automatically attempt to reconnect to
