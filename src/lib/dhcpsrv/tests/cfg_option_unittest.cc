@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -421,6 +421,15 @@ TEST_F(CfgOptionTest, delFromOptionSpace) {
         // Make sure that the option with code 5 is there.
         ASSERT_TRUE(top_level_option.option_);
         ASSERT_TRUE(top_level_option.option_->getOption(5));
+
+        // Make sure that options belonging to space "foo-subs" should contain
+        // options with the code of 5.
+        for (uint16_t code_subs = 1; code_subs != 19; ++code_subs) {
+            OptionPtr sub_option;
+            ASSERT_NO_THROW(sub_option = top_level_option.option_->getOption(code_subs));
+            ASSERT_TRUE(sub_option);
+            ASSERT_TRUE(sub_option->getOption(5));
+        }
     }
 
     // Delete option with the code 5 and belonging to option space "foo".
@@ -430,6 +439,8 @@ TEST_F(CfgOptionTest, delFromOptionSpace) {
 
     // The option should now be gone from options config.
     EXPECT_FALSE(cfg.get("foo", 5).option_);
+    // Option with the code of 5 in other option spaces should remain.
+    EXPECT_TRUE(cfg.get("foo-subs", 5).option_);
 
     // Iterate over the options encapsulating "foo" option space. Make sure
     // that the option with code 5 is no longer encapsulated by these options.
@@ -440,6 +451,22 @@ TEST_F(CfgOptionTest, delFromOptionSpace) {
         EXPECT_FALSE(top_level_option.option_->getOption(5));
         // Other options should remain.
         EXPECT_TRUE(top_level_option.option_->getOption(1));
+
+        // Iterate over options within foo-subs option space and make sure
+        // that they still contain options with the code of 5.
+        for (uint16_t code_subs = 1; code_subs != 19; ++code_subs) {
+            // There shouldn't be option with the code of 5 in the "foo" space.
+            if (code_subs == 5) {
+                continue;
+            }
+
+            OptionPtr sub_option;
+            ASSERT_NO_THROW(sub_option = top_level_option.option_->getOption(code_subs));
+            // Options belonging to option space "foo-subs" should include option
+            // with the code of 5.
+            ASSERT_TRUE(sub_option);
+            ASSERT_TRUE(sub_option->getOption(5));
+        }
     }
 }
 
@@ -453,16 +480,26 @@ TEST_F(CfgOptionTest, delVendorOption) {
         ASSERT_NO_THROW(cfg.add(option, false, "vendor-123"));
     }
 
+    // Create multiple vendor options for vendor id 234.
+    for (uint16_t code = 100; code < 110; ++code) {
+        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
+        ASSERT_NO_THROW(cfg.add(option, false, "vendor-234"));
+    }
+
     // Make sure that the option we're trying to delete is there.
     ASSERT_TRUE(cfg.get(123, 105).option_);
+    // There should also be an option 105 for vendor id 234.
+    ASSERT_TRUE(cfg.get(234, 105).option_);
 
-    // Delete the option.
+    // Delete the option for vendor id 123.
     uint64_t deleted_num;
     ASSERT_NO_THROW(deleted_num = cfg.del(123, 105));
     EXPECT_EQ(1, deleted_num);
 
     // Make sure the option is gone.
     EXPECT_FALSE(cfg.get(123, 105).option_);
+    // Make sure that the option with code 105 is not affected for vendor id 234.
+    EXPECT_TRUE(cfg.get(234, 105).option_);
 
     // Other options, like 107, shouldn't be gone.
     EXPECT_TRUE(cfg.get(123, 107).option_);
