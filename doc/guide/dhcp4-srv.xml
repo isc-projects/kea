@@ -2441,7 +2441,7 @@ It is merely echoed by the server
 
       <para>
       When subnets belong to a shared network the classification applies
-      to subnet selection but not to pools, e.g., a pool in a subnet
+      to subnet selection but not to pools, e.g. a pool in a subnet
       limited to a particular class can still be used by clients which do not
       belong to the class if the pool they are expected to use is exhausted.
       So the limit on access based on class information is also available
@@ -4088,9 +4088,9 @@ It is merely echoed by the server
 
       <para>
         It is possible to store host reservations in MySQL, PostgreSQL, or Cassandra. See
-        <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
+        <xref linkend="hosts6-storage"/> for information on how to configure Kea to use
         reservations stored in MySQL, PostgreSQL, or Cassandra. Kea provides a dedicated hook for
-        managing reservations in a database; section <xref linkend="host-cmds" /> provides
+        managing reservations in a database; section <xref linkend="host-cmds"/> provides
         detailed information. <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
@@ -4210,15 +4210,15 @@ It is merely echoed by the server
       </para>
 
 
-      <para>Another aspect of the host reservations are the different types of
-      identifiers. Kea currently supports four types of identifiers
-      (hw-address, duid, client-id and circuit-id). This is beneficial from a
-      usability perspective. However, there is a drawback. For each incoming
-      packet Kea has to to extract each identifier type and then query the
+      <para>Another aspect of the host reservations is the different types of
+      identifiers. Kea currently supports four types of identifiers:
+      hw-address, duid, client-id, and circuit-id. This is beneficial from a
+      usability perspective; however, there is one drawback. For each incoming
+      packet, Kea has to extract each identifier type and then query the
       database to see if there is a reservation done by this particular
       identifier. If nothing is found, the next identifier is extracted and the next
       query is issued. This process continues until either a reservation is
-      found or all identifier types have been checked. Over time with an increasing
+      found or all identifier types have been checked. Over time, with an increasing
       number of supported identifier types, Kea would become slower and
       slower.</para>
 
@@ -4226,10 +4226,10 @@ It is merely echoed by the server
       <command>host-reservation-identifiers</command> has been introduced. It
       takes a list of identifier types as a parameter. Kea will check only those
       identifier types enumerated in host-reservation-identifiers. From a
-      performance perspective the number of identifier types should be kept to a
-      minimum, ideally limited to one. If your deployment uses several
-      reservation types, please enumerate them from most to least frequently
-      used as this increases the chances of Kea finding the reservation using the
+      performance perspective, the number of identifier types should be kept to a
+      minimum, ideally one. If your deployment uses several
+      reservation types, please enumerate them from most- to least-frequently
+      used, as this increases the chances of Kea finding the reservation using the
       fewest number of queries. An example of host reservation identifiers looks
       as follows:
 
@@ -4256,14 +4256,14 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 
   <section id="global-reservations4">
-    <title>Global reservations in DHCPv4</title>
+    <title>Global Reservations in DHCPv4</title>
 
     <para>In some deployments, such as mobile, clients can roam within the
-    network and there is a desire to specify certain parameters regardless of
+    network and certain parameters must be specified regardless of
     the client's current location. To facilitate such a need, a global
     reservation mechanism has been implemented. The idea behind it is that
-    regular host reservations are tied to specific subnets, by using specific
-    subnet-id. Kea 1.5.0 introduced a new capability to specify global
+    regular host reservations are tied to specific subnets, by using a specific
+    subnet-id. Kea can specify a global
     reservation that can be used in every subnet that has global reservations
     enabled.</para>
 
@@ -4271,13 +4271,13 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     hostname or other dedicated, host-specific options. It can also be used to
     assign addresses. However, global reservations that assign addresses bypass
     the whole topology determination provided by DHCP logic implemented in
-    Kea. It is very easy to misuse this feature and get configuration that is
+    Kea. It is very easy to misuse this feature and get a configuration that is
     inconsistent. To give a specific example, imagine a global reservation
     for address 192.0.2.100 and two subnets 192.0.2.0/24 and 192.0.5.0/24. If
     global reservations are used in both subnets and a device matching global
     host reservations visits part of the network that is serviced by
     192.0.5.0/24, it will get an IP address 192.0.2.100, a subnet 192.0.5.0 and
-    a default router 192.0.5.1. Obviously such a configuration is unusable, as
+    a default router 192.0.5.1. Obviously, such a configuration is unusable, as
     the client won't be able to reach its default gateway.</para>
 
     <para>
@@ -4338,36 +4338,36 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
   <!-- shared networks -->
 
   <section id="shared-network4">
-    <title>Shared networks in DHCPv4</title>
+    <title>Shared Networks in DHCPv4</title>
 
     <para>DHCP servers use subnet information in two ways. First, it is used
     to determine the point of attachment, or simply put, where the client is
     connected to the network. Second, the subnet information is used to group
-    information pertaining to specific location in the network. This approach
-    works well in general case, but the are scenarios where the boundaries are
+    information pertaining to a specific location in the network. This approach
+    works well in general cases, but there are scenarios where the boundaries are
     blurred. Sometimes it is useful to have more than one logical IP subnet
-    being deployed on the same physical link. The need to understand
+    deployed on the same physical link. The need to understand
     that two or more subnets are used on the same link requires additional logic
-    in the DHCP server. This capability has been added in Kea 1.3.0. It is
+    in the DHCP server. This capability is
     called "shared networks" in Kea and ISC DHCP projects. It is sometimes also
-    called "shared subnets". In Microsoft's nomenclature it is called "multinet".
+    called "shared subnets." In Microsoft's nomenclature it is called "multinet."
     </para>
 
-    <para>There are many use cases where the feature is useful. This paragraph
+    <para>There are many use cases where the feature is useful; this paragraph
     explains just a handful of the most common ones. The first and by far the most
     common use case is an existing network that has grown and is running out of
     available address space. Rather than migrating all devices to a new, larger
-    subnet, it is easier to simply configure additional subnet on top of the
+    subnet, it is easier to simply configure additional subnets on top of the
     existing one. Sometimes, due to address space fragmentation (e.g. only many
-    disjoint /24s are available) this is the only choice. Also, configuring
-    additional subnet has the advantage of not disrupting the operation of
+    disjointed /24s are available), this is the only choice. Also, configuring
+    additional subnets has the advantage of not disrupting the operation of
     existing devices.</para>
 
     <para>Another very frequent use case comes from cable networks. There are two types
-    of devices in cable networks: cable modems and the end user devices behind
-    them. It is a common practice to use different subnet for cable modems to
+    of devices in cable networks: cable modems and the end-user devices behind
+    them. It is a common practice to use different subnets for cable modems to
     prevent users from tinkering with their cable modems. In this case, the
-    distinction is based on the type of device, rather than address space
+    distinction is based on the type of device, rather than address-space
     exhaustion.</para>
 
     <para>A client connected to a shared network may be assigned an address from
@@ -4375,19 +4375,19 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     network. Internally, the server selects one of the subnets belonging to a
     shared network and tries to allocate an address from this subnet. If the
     server is unable to allocate an address from the selected subnet (e.g. due
-    to address pools exhaustion) it will use another subnet from the same shared
-    network and try to allocate an address from this subnet etc. Therefore, in the
+    to address pools exhaustion), it will use another subnet from the same shared
+    network and try to allocate an address from this subnet, etc. Therefore, in the
     typical case, the server will allocate all addresses available for a given
     subnet before it starts allocating addresses from other subnets belonging to
     the same shared network. However, in certain situations the client can be
     allocated an address from the other subnets before the address pools in the
     first subnet get exhausted, e.g. when the client provides a hint that
-    belongs to another subnet or the client has reservations in a different than
-    default subnet.
+    belongs to another subnet or the client has reservations in a
+    subnet other than the default.
     </para>
 
     <note>
-    <para>It is strongly discouraged for the Kea deployments to assume that the
+    <para>It is strongly discouraged for Kea deployments to assume that the
       server doesn't allocate addresses from other subnets until it uses all
       the addresses from the first subnet in the shared network.</para>
     </note>
@@ -4441,15 +4441,15 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     </para>
     <para>As you see in the example, it is possible to mix shared and regular
     ("plain") subnets. Each shared network must have a unique name. This is
-    similar to ID for subnets, but gives you more flexibility. This is used
+    similar to the ID for subnets, but gives administrators more flexibility. This is used
     for logging, but also internally for identifying shared networks.</para>
 
     <para>In principle it makes sense to define only shared networks that
     consist of two or more subnets. However, for testing purposes it is allowed
-    to define a shared network with just one subnet or even an empty one.  This
+    to define a shared network with just one subnet or even an empty one. This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers server's performance.
-    To avoid unnecessary performance degradation the shared subnets should only
+    logic requires additional processing and thus lowers the server's performance.
+    To avoid unnecessary performance degradation, the shared subnets should only
     be defined when required by the deployment.
     </para>
 
@@ -4511,22 +4511,22 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     set to 10 minutes (600s). However, the first subnet overrides some of the values
     (valid lifetime is 20 minutes, different IP address for log-servers), but
     also adds its own option (router address). Assuming a client asking for
-    router and log servers options is assigned a lease from this subnet, he will
-    get a lease for 20 minutes and log-servers and routers value of 10.0.0.254.
-    If the same client is assigned to the second subnet, he will get a 10
-    minutes long lease, log-servers value of 1.2.3.4 and routers set to 192.0.2.1.
+    router and log servers options is assigned a lease from this subnet, it will
+    get a lease for 20 minutes and a log-servers and routers value of 10.0.0.254.
+    If the same client is assigned to the second subnet, it will get a 10-
+    minute lease, a log-servers value of 1.2.3.4, and routers set to 192.0.2.1.
     </para>
 
     <section>
-      <title>Local and relayed traffic in shared networks</title>
+      <title>Local and Relayed Traffic in Shared Networks</title>
 
-    <para>It is possible to specify interface name in the shared network scope to
+    <para>It is possible to specify an interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
-    via relays) using local network interface. It is sufficient to specify
+    via relays) using a local network interface. It is sufficient to specify
     it once at the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
     to attempt to define a shared network using subnets that are reachable over
-    different interfaces. It is allowed to specify interface parameter on each
+    different interfaces. It is possible to specify the interface parameter on each
     subnet, although its value must be the same for each subnet. Thus it's
     usually more convenient to specify it once at the shared network level.
 <screen>
@@ -4557,7 +4557,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 </screen>
 </para>
 
-<para>Somewhat similar to interface names, also relay IP addresses can be
+<para>Somewhat similar to interface names, relay IP addresses can also be
 specified for the whole shared network. However, depending on your relay
 configuration, it may use different IP addresses depending on which subnet
 is being used. Thus there is no requirement to use the same IP relay address
@@ -4589,23 +4589,23 @@ for each subnet. Here's an example:
     }
 ]</screen>
 In this particular case the relay IP address specified at network level doesn't
-have much sense, as it is overridden in both subnets, but it was left there
+make much sense, as it is overridden in both subnets, but it was left there
 as an example of how one could be defined at network level. Note that the
 relay agent IP address typically belongs to the subnet it relays packets from,
-but this is not a strict requirement. Therefore Kea accepts any value here
-as long as it is valid IPv4 address.</para>
+but this is not a strict requirement. Kea accepts any value here
+as long as it is a valid IPv4 address.</para>
 
     </section>
     <section>
-      <title>Client classification in shared networks</title>
+      <title>Client Classification in Shared Networks</title>
 
-      <para>Sometimes it is desired to segregate clients into specific subnets
-      based on some properties. This mechanism is called client classification
+      <para>Sometimes it is desirable to segregate clients into specific subnets
+      based on certain properties. This mechanism is called client classification
       and is described in <xref linkend="classify"/>. Client classification
       can be applied to subnets belonging to shared networks in the same way
       as it is used for subnets specified outside of shared networks.
       It is important to understand how the server selects subnets for
-      the clients when client classification is in use, to assure that the
+      the clients when client classification is in use, to ensure that the
       desired subnet is selected for a given client type.</para>
 
       <para>If a subnet is associated with a class, only the clients
@@ -4643,11 +4643,11 @@ as long as it is valid IPv4 address.</para>
 }
 </screen>
 
-        If the client belongs to "b-devices" class (because it includes option
-        93 with a value of 0x0002) it doesn't guarantee that the subnet 10.0.0.0/24
-        will be used (or preferred) for this client. The server can use any of
+        If the client belongs to the "b-devices" class (because it includes option
+        93 with a value of 0x0002), that doesn't guarantee that the subnet 10.0.0.0/24
+        will be used (or preferred) for this client. The server can use either of
         the two subnets because the subnet 192.0.2.0/26 is also allowed for
-        this client. The client classification used in this case should be pereceived
+        this client. The client classification used in this case should be perceived
         as a way to restrict access to certain subnets, rather than a way to express
         subnet preference. For example, if the client doesn't belong to the
         "b-devices" class it may only use the subnet 192.0.2.0/26 and will
@@ -4656,9 +4656,9 @@ as long as it is valid IPv4 address.</para>
 
       <para>A typical use case for client classification is in the cable network,
       where cable modems should use one subnet and other devices should use
-      another subnet within the same shared network. In this case it is required
+      another subnet within the same shared network. In this case it is necessary
       to apply classification on all subnets. The following example defines two
-      classes of devices. The subnet selection is made based on option 93 values.
+      classes of devices, and the subnet selection is made based on option 93 values.
 <screen>
 {
     "client-classes": [
@@ -4695,29 +4695,29 @@ as long as it is valid IPv4 address.</para>
 In this example each class has its own restriction. Only clients that belong to
 class "a-devices" will be able to use subnet 192.0.2.0/26 and only clients
 belonging to b-devices will be able to use subnet 10.0.0.0/24. Care should be
-taken to not define too restrictive classification rules, as clients that are
-unable to use any subnets will be refused service. Although, this may be a
+taken not to define too-restrictive classification rules, as clients that are
+unable to use any subnets will be refused service. However, this may be a
 desired outcome if one desires to service only clients of known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
     <para>
-      Note that it is possible to achieve similar effect as presented in this
+      Note that it is possible to achieve an effect similar to the one presented in this
       section without the use of shared networks. If the subnets are placed in
       the global subnets scope, rather than in the shared network, the server
       will still use classification rules to pick the right subnet for a given
       class of devices. The major benefit of placing subnets within the
       shared network is that common parameters for the logically grouped
-      subnets can be specified once, in the shared network scope, e.g.
+      subnets can be specified once, in the shared network scope, e.g. the
       "interface" or "relay" parameter. All subnets belonging to this shared
       network will inherit those parameters.
     </para>
     </section>
 
     <section>
-      <title>Host reservations in shared networks</title>
+      <title>Host Reservations in Shared Networks</title>
 
 <para>
-  Subnets being part of a shared network allow host reservations, similar to
+  Subnets that are part of a shared network allow host reservations, similar to
   regular subnets:
   <screen>
 {
@@ -4756,7 +4756,7 @@ desired outcome if one desires to service only clients of known properties
 </para>
 <para>It is worth noting that Kea conducts additional checks when processing a
 packet if shared networks are defined. First, instead of simply checking if
-there's a reservation for a given client in his initially selected subnet, it
+there's a reservation for a given client in its initially selected subnet, Kea
 goes through all subnets in a shared network looking for a reservation. This is
 one of the reasons why defining a shared network may impact performance. If
 there is a reservation for a client in any subnet, that particular subnet will
@@ -4766,8 +4766,8 @@ subnets belonging to the same shared network.</para>
 
 <para>While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if you plan to use database storage for host
-reservations. If ID is not specified, the values for it be autogenerated,
-i.e. it will assign increasing integer values starting from 1. Thus, the
+reservations. If ID is not specified, the values for it are autogenerated,
+i.e. it assigns increasing integer values starting from 1. Thus, the
 autogenerated IDs are not stable across configuration changes.</para>
     </section>
 
@@ -4777,7 +4777,7 @@ autogenerated IDs are not stable across configuration changes.</para>
       <title>Server Identifier in DHCPv4</title>
       <para>
         The DHCPv4 protocol uses a "server identifier" to allow clients
-        to discriminate between several servers present on the same link: this
+        to discriminate between several servers present on the same link; this
         value is an IPv4 address of the server. The server chooses the IPv4 address
         of the interface on which the message from the client (or relay) has been
         received. A single server instance will use multiple server identifiers
@@ -4785,14 +4785,14 @@ autogenerated IDs are not stable across configuration changes.</para>
       </para>
 
       <para>
-        It is possible to override default server identifier values by specifying
+        It is possible to override the default server identifier values by specifying the
         "dhcp-server-identifier" option. This option is only supported at the
-        global, shared network and subnet level. It must not be specified
-        on client class and host reservation level.
+        global, shared network, and subnet levels. It must not be specified
+        on the client class and host reservation levels.
       </para>
 
       <para>
-        The following example demonstrates how to override server identifier for
+        The following example demonstrates how to override the server identifier for
         a subnet:
 <screen>
 "subnet4": [
@@ -4814,7 +4814,7 @@ autogenerated IDs are not stable across configuration changes.</para>
       <title>How the DHCPv4 Server Selects a Subnet for the Client</title>
       <para>
         The DHCPv4 server differentiates between the directly connected clients,
-        clients trying to renew leases and clients sending their messages through
+        clients trying to renew leases, and clients sending their messages through
         relays. For directly connected clients, the server will check the
         configuration for the interface on which the message has been received and,
         if the server configuration doesn't match any configured subnet, the
@@ -4823,13 +4823,13 @@ autogenerated IDs are not stable across configuration changes.</para>
         IPv4 address 192.0.2.3, the server will only process messages received through
         this interface from a directly connected client if there is a subnet
         configured to which this IPv4 address belongs, e.g. 192.0.2.0/24.
-        The server will use this subnet to assign IPv4 address for the client.
+        The server will use this subnet to assign an IPv4 address for the client.
       </para>
       <para>
         The rule above does not apply when the client unicasts its message, i.e.
         is trying to renew its lease. Such a message is accepted through any
         interface. The renewing client sets ciaddr to the currently used IPv4
-        address. The server uses this address to select the subnet for the client
+        address, and the server uses this address to select the subnet for the client
         (in particular, to extend the lease using this address).
       </para>
       <para>
@@ -4851,10 +4851,10 @@ autogenerated IDs are not stable across configuration changes.</para>
     <section xml:id="dhcp4-relay-override">
       <title>Using a Specific Relay Agent for a Subnet</title>
       <para>
-        A relay has to have an interface connected to the link on which
+        A relay must have an interface connected to the link on which
         the clients are being configured. Typically the relay has an IPv4
-        address configured on that interface that belongs to the subnet from which
-        the server will assign addresses. In the typical case, the
+        address configured on that interface, which belongs to the subnet from which
+        the server will assign addresses. Normally, the
         server is able to use the IPv4 address inserted by the relay (in the giaddr
         field of the DHCPv4 packet) to select the appropriate subnet.
       </para>
@@ -4862,9 +4862,9 @@ autogenerated IDs are not stable across configuration changes.</para>
         However, that is not always the case. In certain uncommon —
         but valid — deployments, the relay address may not match the subnet. This
         usually means that there is more than one subnet allocated for a given
-        link. The two most common examples where this is the case are long lasting
+        link. The two most common examples where this is the case are long-lasting
         network renumbering (where both old and new address space is still being
-        used) and a cable network. In a cable network both cable modems and the
+        used) and a cable network. In a cable network, both cable modems and the
         devices behind them are physically connected to the same link, yet
         they use distinct addressing. In such a case, the DHCPv4 server needs
         additional information (the IPv4 address of the relay) to properly select
@@ -4874,7 +4874,7 @@ autogenerated IDs are not stable across configuration changes.</para>
         The following example assumes that there is a subnet 192.0.2.0/24
         that is accessible via a relay that uses 10.0.0.1 as its IPv4 address.
         The server will be able to select this subnet for any incoming packets
-        that came from a relay that has an address in 192.0.2.0/24 subnet.
+        that came from a relay that has an address in the 192.0.2.0/24 subnet.
         It will also select that subnet for a relay with address 10.0.0.1.
 <screen>
 "Dhcp4": {
@@ -4898,10 +4898,8 @@ autogenerated IDs are not stable across configuration changes.</para>
 
       <note>
       <para>
-      As of Kea 1.4, the "ip-address" parameter has been deprecated in favor
-      of "ip-addresses" which supports specifying a list of addresses.
-      Configuration parsing, will honor the singular form for now but users are
-      encouraged to migrate.
+      The current version of Kea uses the
+      "ip-addresses" parameter, which supports specifying a list of addresses.
       </para>
       </note>
 
@@ -4913,15 +4911,15 @@ autogenerated IDs are not stable across configuration changes.</para>
           In certain cases, it is useful to mix relay address information,
           introduced in <xref linkend="dhcp4-relay-override"/> with client
           classification, explained in <xref linkend="classify"/>.
-          One specific example is cable network, where typically modems
-          get addresses from a different subnet than all devices connected
+          One specific example is in a cable network, where typically modems
+          get addresses from a different subnet than all the devices connected
           behind them.
         </para>
         <para>
           Let us assume that there is one CMTS (Cable Modem Termination System)
           with one CM MAC (a physical link that modems are connected to).
           We want the modems to get addresses from the 10.1.1.0/24 subnet, while
-          everything connected behind modems should get addresses from another
+          everything connected behind the modems should get addresses from another
           subnet (192.0.2.0/24). The CMTS that acts as a relay uses address
           10.1.1.1. The following configuration can serve that configuration:
 <screen>
@@ -4955,9 +4953,9 @@ autogenerated IDs are not stable across configuration changes.</para>
       <title>Duplicate Addresses (DHCPDECLINE Support)</title>
 
       <para>The DHCPv4 server is configured with a certain pool of addresses
-      that it is expected to hand out to the DHCPv4 clients.  It is
+      that it is expected to hand out to the DHCPv4 clients. It is
       assumed that the server is authoritative and has complete jurisdiction
-      over those addresses. However, due to various reasons, such as
+      over those addresses. However, for various reasons, such as
       misconfiguration or a faulty client implementation that retains its
       address beyond the valid lifetime, there may be devices connected that use
       those addresses without the server's approval or knowledge.</para>
@@ -4965,18 +4963,18 @@ autogenerated IDs are not stable across configuration changes.</para>
       <para>Such an
       unwelcome event can be detected by legitimate clients (using ARP or ICMP
       Echo Request mechanisms) and reported to the DHCPv4 server using a DHCPDECLINE
-      message. The server will do a sanity check (if the client declining an
-      address really was supposed to use it), and then will conduct a clean up
+      message. The server will do a sanity check (to see if the client declining an
+      address really was supposed to use it), and then will conduct a clean-up
       operation. Any DNS entries related to that address will be removed, the
-      fact will be logged and hooks will be triggered. After that is done, the
+      fact will be logged, and hooks will be triggered. After that is complete, the
       address will be marked as declined (which indicates that it is used by an
       unknown entity and thus not available for assignment to anyone) and a
       probation time will be set on it. Unless otherwise configured, the
       probation period lasts 24 hours. After that period, the server will
       recover the lease (i.e. put it back into the available state) and the address will
       be available for assignment again. It should be noted that if the
-      underlying issue of a misconfigured device is not resolved, the duplicate
-      address scenario will repeat. On the other hand, it provides an
+      underlying issue of a misconfigured device is not resolved, the duplicate-
+      address scenario will repeat. If reconfigured correctly, this mechanism provides an
       opportunity to recover from such an event automatically, without any
       sysadmin intervention.</para>
 
@@ -5001,13 +4999,13 @@ autogenerated IDs are not stable across configuration changes.</para>
       on DHCPv4 statistics and Kea hook points.)</para>
 
       <para>Once the probation time elapses, the declined lease is recovered
-      using the standard expired lease reclamation procedure, with several
+      using the standard expired-lease reclamation procedure, with several
       additional steps. In particular, both declined-addresses statistics
-      (global and subnet specific) are decreased. At the same time,
+      (global and subnet-specific) are decreased. At the same time,
       reclaimed-declined-addresses statistics (again in two variants, global and
-      subnet specific) are increased.</para>
+      subnet-specific) are increased.</para>
 
-      <para>Note about statistics: The server does not decrease the
+      <para>A note about statistics: The server does not decrease the
       assigned-addresses statistics when a DHCPDECLINE is received and processed
       successfully. While technically a declined address is no longer assigned,
       the primary usage of the assigned-addresses statistic is to monitor pool
@@ -5015,8 +5013,8 @@ autogenerated IDs are not stable across configuration changes.</para>
       calculation, and simply do assigned-addresses/total-addresses. This would
       have a bias towards under-representing pool utilization. As this has a
       potential for major issues, we decided not to decrease assigned addresses
-      immediately after receiving DHCPDECLINE, but to do it later when we
-      recover the address back to the available pool.</para>
+      immediately after receiving DHCPDECLINE, but to do it later when Kea
+      recovers the address back to the available pool.</para>
 
     </section>
 
@@ -5050,7 +5048,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>integer</entry>
             <entry>
             Number of DHCPv4 packets received. This includes all packets: valid,
-            bogus, corrupted, rejected etc.  This statistic is expected to grow
+            bogus, corrupted, rejected, etc. This statistic is expected to grow
             rapidly.
             </entry>
             </row>
@@ -5071,10 +5069,10 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPOFFER packets received. This statistic
             is expected to remain zero at all times, as DHCPOFFER packets are sent
-            by the server and the server is never expected to receive them. Non-zero
+            by the server and the server is never expected to receive them. A non-zero
             value indicates an error. One likely cause would be a misbehaving relay
             agent that incorrectly forwards DHCPOFFER messages towards the server,
-            rather back to the clients.
+            rather than back to the clients.
             </entry>
             </row>
 
@@ -5084,7 +5082,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPREQUEST packets received. This statistic
             is expected to grow. Its increase means that clients that just booted
-            received server's response (DHCPOFFER), accepted it and now requesting
+            received the server's response (DHCPOFFER) and accepted it, and they are now requesting
             an address (DHCPREQUEST).
             </entry>
             </row>
@@ -5095,10 +5093,10 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPACK packets received. This statistic
             is expected to remain zero at all times, as DHCPACK packets are sent
-            by the server and the server is never expected to receive them. Non-zero
+            by the server and the server is never expected to receive them. A non-zero
             value indicates an error. One likely cause would be a misbehaving relay
             agent that incorrectly forwards DHCPACK messages towards the server,
-            rather back to the clients.
+            rather than back to the clients.
             </entry>
             </row>
 
@@ -5108,10 +5106,10 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPNAK packets received. This statistic
             is expected to remain zero at all times, as DHCPNAK packets are sent
-            by the server and the server is never expected to receive them. Non-zero
+            by the server and the server is never expected to receive them. A non-zero
             value indicates an error. One likely cause would be a misbehaving relay
             agent that incorrectly forwards DHCPNAK messages towards the server,
-            rather back to the clients.
+            rather than back to the clients.
             </entry>
             </row>
 
@@ -5121,7 +5119,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPRELEASE packets received. This statistic
             is expected to grow. Its increase means that clients that had an address
-            are shutting down or stop using their addresses.
+            are shutting down or ceasing to use their addresses.
             </entry>
             </row>
 
@@ -5131,7 +5129,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPDECLINE packets received. This statistic
             is expected to remain close to zero. Its increase means that a client
-            that leased an address, but discovered that the address is currently
+            leased an address, but discovered that the address is currently
             used by an unknown device in your network.
             </entry>
             </row>
@@ -5151,9 +5149,9 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>pkt4-unknown-received</entry>
             <entry>integer</entry>
             <entry>
-            Number of packets received of an unknown type. Non-zero
+            Number of packets received of an unknown type. A non-zero
             value of this statistic indicates that the server received a packet
-            that it wasn't able to recognize: either with unsupported type
+            that it wasn't able to recognize, either with an unsupported type
             or possibly malformed (without message type option).
             </entry>
             </row>
@@ -5164,9 +5162,9 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPv4 packets sent. This statistic is expected to grow
             every time the server transmits a packet. In general, it should
-            roughly match pkt4-received, as most incoming packets cause
+            roughly match pkt4-received, as most incoming packets cause the
             server to respond. There are exceptions (e.g. DHCPRELEASE), so
-            do not worry, if it is lesser than pkt4-received.
+            do not worry if it is less than pkt4-received.
             </entry>
             </row>
 
@@ -5176,7 +5174,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>
             Number of DHCPOFFER packets sent. This statistic is expected to
             grow in most cases after a DHCPDISCOVER is processed. There are
-            certain uncommon, but valid cases where incoming DHCPDISCOVER is
+            certain uncommon, but valid, cases where incoming DHCPDISCOVER packets are
             dropped, but in general this statistic is expected to be close to
             pkt4-discover-received.
             </entry>
@@ -5199,7 +5197,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>integer</entry>
             <entry>
             Number of DHCPNAK packets sent. This statistic is expected
-            to grow when the server chooses to not honor the address
+            to grow when the server chooses not to honor the address
             requested by a client. In general, the sum of
             pkt4-ack-sent and pkt4-nak-sent should be close to
             pkt4-request-received.
@@ -5210,9 +5208,9 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>pkt4-parse-failed</entry>
             <entry>integer</entry>
             <entry>
-            Number of incoming packets that could not be parsed.  A non-zero value of
-            this statistic indicates that the server received malformed or truncated packet.
-            This may indicate problems in your network, faulty clients or a bug in the server.
+            Number of incoming packets that could not be parsed. A non-zero value of
+            this statistic indicates that the server received a malformed or truncated packet.
+            This may indicate problems in your network, faulty clients, or a bug in the server.
             </entry>
             </row>
 
@@ -5237,25 +5235,25 @@ autogenerated IDs are not stable across configuration changes.</para>
               configuration changes. Note it does not take into account any
               addresses that may be reserved due to host reservation. The
               <emphasis>id</emphasis> is the subnet-id of a given subnet. This
-              statistic is exposed for each subnet separately. This statistic is
-              reset during reconfiguration event.</entry>
+              statistic is exposed for each subnet separately, and is
+              reset during a reconfiguration event.</entry>
             </row>
             <row>
               <entry>subnet[id].assigned-addresses</entry>
               <entry>integer</entry>
-              <entry>This statistic shows the number of assigned addresses in a
+              <entry>The number of assigned addresses in a
               given subnet. It increases every time a new lease is
               allocated (as a result of receiving a DHCPREQUEST message) and is
               decreased every time a lease is released (a DHCPRELEASE message is
               received) or expires. The <emphasis>id</emphasis> is the subnet-id
               of the subnet. This statistic is exposed for each subnet
-              separately. This statistic is reset during reconfiguration event.
+              separately, and is reset during a reconfiguration event.
               </entry>
             </row>
             <row>
               <entry>reclaimed-leases</entry>
               <entry>integer</entry>
-              <entry>This statistic is the number of expired leases that have
+              <entry>The number of expired leases that have
               been reclaimed since server startup. It is incremented each time
               an expired lease is reclaimed and is reset when the server is
               reconfigured.
@@ -5264,7 +5262,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <row>
               <entry>subnet[id].reclaimed-leases</entry>
               <entry>integer</entry>
-              <entry>This statistic is the number of expired leases associated
+              <entry>The number of expired leases associated
               with a given subnet (<emphasis>id</emphasis> is the subnet-id)
               that have been reclaimed since server startup. It is incremented
               each time an expired lease is reclaimed and is reset when the
@@ -5275,13 +5273,13 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 addresses that are
-              currently declined, so counting the number of leases
+              The number of IPv4 addresses that are
+              currently declined; a count of the number of leases
               currently unavailable. Once a lease is recovered, this
-              statistic will be decreased. Ideally, this statistic should be
-              zero. If this statistic is non-zero (or worse increasing),
+              statistic will be decreased; ideally, this statistic should be
+              zero. If this statistic is non-zero (or increasing),
               a network administrator should investigate if there is
-              a misbehaving device in his network. This is a global statistic
+              a misbehaving device in the network. This is a global statistic
               that covers all subnets.
             </entry>
             </row>
@@ -5290,13 +5288,13 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>subnet[id].declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 addresses that are
-              currently declined in a given subnet, so is a count of the
+              The number of IPv4 addresses that are
+              currently declined in a given subnet; a count of the
               number of leases currently unavailable. Once a lease is
-              recovered, this statistic will be decreased. Ideally, this
+              recovered, this statistic will be decreased; ideally, this
               statistic should be zero. If this statistic is
-              non-zero (or worse increasing), a network administrator should
-              investigate if there is a misbehaving device in his network. The
+              non-zero (or increasing), a network administrator should
+              investigate if there is a misbehaving device in the network. The
               <emphasis>id</emphasis> is the subnet-id of a given subnet. This
               statistic is exposed for each subnet separately.
             </entry>
@@ -5306,10 +5304,10 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 addresses that were
+              The number of IPv4 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
-              as a long term indicator of how many actual valid Declines were
+              as a long-term indicator of how many actual valid Declines were
               processed and recovered from. This is a global statistic that
               covers all subnets.
             </entry>
@@ -5319,7 +5317,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             <entry>subnet[id].reclaimed-declined-addresses</entry>
             <entry>integer</entry>
             <entry>
-              This statistic shows the number of IPv4 addresses that were
+              The number of IPv4 addresses that were
               declined, but have now been recovered. Unlike
               declined-addresses, this statistic never decreases. It can be used
               as a long term indicator of how many actual valid Declines were
@@ -5338,10 +5336,10 @@ autogenerated IDs are not stable across configuration changes.</para>
       <title>Management API for the DHCPv4 Server</title>
       <para>
         The management API allows the issuing of specific
-        management commands, such as statistics retrieval, reconfiguration or shutdown.
-        For more details, see <xref linkend="ctrl-channel"/>. Currently the only
+        management commands, such as statistics retrieval, reconfiguration, or shutdown.
+        For more details, see <xref linkend="ctrl-channel"/>. Currently, the only
         supported communication channel type is UNIX stream socket. By default there
-        are no sockets open. To instruct Kea to open a socket, the following entry
+        are no sockets open; to instruct Kea to open a socket, the following entry
         in the configuration file can be used:
 <screen>
 "Dhcp4": {
@@ -5360,7 +5358,7 @@ autogenerated IDs are not stable across configuration changes.</para>
 
       <para>
         The length of the path specified by the <command>socket-name</command>
-        parameter is restricted by the maximum length for the unix socket name
+        parameter is restricted by the maximum length for the UNIX socket name
         on your operating system, i.e. the size of the <command>sun_path</command>
         field in the <command>sockaddr_un</command> structure, decreased by 1.
         This value varies on different operating systems between 91 and 107
@@ -5368,8 +5366,10 @@ autogenerated IDs are not stable across configuration changes.</para>
       </para>
 
       <para>
-        Communication over control channel is conducted using JSON structures.
-        See the Control Channel section in the Kea Developer's Guide for more
+        Communication over the control channel is conducted using JSON structures.
+        See the <uri
+        xmlns:xlink="http://www.w3.org/1999/xlink"
+        xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/d2/d96/ctrlSocket.html">Control Channel section in the Kea Developer's Guide</uri> for more
         details.
       </para>
 
@@ -5388,8 +5388,8 @@ autogenerated IDs are not stable across configuration changes.</para>
             <listitem>shutdown</listitem>
             <listitem>version-get</listitem>
         </itemizedlist>
-         as described in <xref linkend="commands-common"/>.  In addition,
-         it supports the following statistics related commands:
+         as described in <xref linkend="commands-common"/>. In addition,
+         it supports the following statistics-related commands:
         <itemizedlist>
             <listitem>statistic-get</listitem>
             <listitem>statistic-reset</listitem>
@@ -5445,7 +5445,7 @@ autogenerated IDs are not stable across configuration changes.</para>
     </section>
 
       <section id="dhcp4-user-contexts">
-        <title>User contexts in IPv4</title>
+        <title>User Contexts in IPv4</title>
         <para>
           Kea allows loading hook libraries that sometimes could benefit from
           additional parameters. If such a parameter is specific to the whole
@@ -5464,18 +5464,18 @@ autogenerated IDs are not stable across configuration changes.</para>
 
         <para>
           User contexts can be specified at either global scope,
-          shared network, subnet, pool, client class, option data or
+          shared network, subnet, pool, client class, option data, or
           definition level, and host reservation. One other useful
           usage is the ability to store comments or descriptions.
         </para>
 
         <para>
           Let's consider an imaginary case of devices that have color LED
-          lights. Depending on their location, they should glow red, blue or
+          lights. Depending on their location, they should glow red, blue, or
           green. It would be easy to write a hook library that would send
           specific values as maybe a vendor option. However, the server has to
           have some way to specify that value for each pool. This need is
-          addressed by user contexts. In essence, any user data can specified
+          addressed by user contexts. In essence, any user data can be specified
           in the user context as long as it is a valid JSON map. For example,
           the forementioned case of LED devices could be configured in the
           following way:
@@ -5511,9 +5511,9 @@ autogenerated IDs are not stable across configuration changes.</para>
         <para>
           It should be noted that Kea will not use that information, but will
           simply store and make it available to hook libraries. It is up to the
-          hook library to extract that information and make use of it.
+          hook library to extract that information and use it.
           The parser translates a "comment" entry into a user-context
-          with the entry, this allows to attach a comment inside the
+          with the entry, which allows a comment to be attached inside the
           configuration itself.
         </para>
         <para>
@@ -5539,31 +5539,30 @@ autogenerated IDs are not stable across configuration changes.</para>
           <listitem>
             <simpara>On Linux and BSD system families the DHCP messages are sent
             and received over the raw sockets (using LPF and BPF) and all packet
-            headers (including data link layer, IP and UDP headers) are created and
-            parsed by Kea, rather than the system kernel. Currently, Kea can
-            only parse the data link layer headers with a format adhering to
+            headers (including data link layer, IP, and UDP headers) are created and
+            parsed by Kea, rather than by the system kernel. Currently, Kea can
+            only parse the data link layer headers with a format adhering to the
             IEEE 802.3 standard and assumes this data link layer header format
             for all interfaces. Hence, Kea will fail to work on interfaces
             which use different data link layer header formats (e.g. Infiniband).
             </simpara>
           </listitem>
           <listitem>
-            <simpara>The DHCPv4 server does not  verify that
+            <simpara>The DHCPv4 server does not verify that an
             assigned address is unused. According to <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>, the
-            allocating server should verify that address is not used by
-            sending ICMP echo request.</simpara>
+            allocating server should verify that an address is not used by
+            sending an ICMP echo request.</simpara>
           </listitem>
       </itemizedlist>
     </section>
 
     <section id="dhcp4-srv-examples">
-      <title>Kea DHCPv4 server examples</title>
+      <title>Kea DHCPv4 Server Examples</title>
 
       <para>
-        A collection of simple to use examples for DHCPv4 component of Kea is
-        available with the sources. It is located in doc/examples/kea4
-        directory. At the time of writing this text there were 15 examples,
-        but the number is growing slowly with each release.
+        A collection of simple-to-use examples for the DHCPv4 component of Kea is
+        available with the source files, located in the doc/examples/kea4
+        directory.
       </para>
 
     </section>
