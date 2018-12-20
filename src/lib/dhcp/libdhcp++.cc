@@ -787,14 +787,29 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
 void
 LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
-                     const OptionCollection& options) {
+                     const OptionCollection& options,
+                     bool top /* = false */) {
     OptionPtr agent;
     OptionPtr end;
+
+    // We only look for type when we're the top level
+    // call that starts packing for options for a packet.
+    // This way we avoid doing type logic in all ensuing
+    // recursive calls.
+    if (top) {
+        auto x = options.find(DHO_DHCP_MESSAGE_TYPE);
+        if (x != options.end()) {
+            x->second->pack(buf);
+        }
+    }
+
     for (OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
 
-        // RAI and END options must be last.
+        // TYPE is already done, RAI and END options must be last.
         switch (it->first) {
+            case DHO_DHCP_MESSAGE_TYPE:
+                break;
             case DHO_DHCP_AGENT_OPTIONS:
                 agent = it->second;
                 break;
