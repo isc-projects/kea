@@ -727,20 +727,30 @@ if test "$MYSQL_CONFIG" != "" ; then
     LIBS="$MYSQL_LIBS $LIBS"
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <mysql.h>],
-                             [MYSQL mysql_handle;
-                              (void) mysql_init(&mysql_handle);
-                             ])],
-            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
-            [AC_MSG_RESULT([checking for MySQL headers and library... no])
-             AC_MSG_ERROR([Needs MySQL library])]
+        [AC_LANG_PROGRAM([#include <mysql.h>],
+                         [MYSQL mysql_handle;
+                          (void) mysql_init(&mysql_handle);
+                         ])],
+        [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+        [AC_MSG_RESULT([checking for MySQL headers and library... no])
+         AC_MSG_ERROR([Needs MySQL library])]
     )
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+
+    # Check is my_bool is defined.
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <mysql.h>
+                          const my_bool MLM_FALSE = 0;]
+                         [])],
+        [AC_MSG_RESULT([checking for MySQL my_bool... yes])
+         AC_DEFINE([HAVE_MYSQL_MY_BOOL], [1], [MySQL uses my_bool])],
+        [AC_MSG_RESULT([checking for MySQL my_bool... no])])
 
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
-    # Note that MYSQL is present in the config.h file
-    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 fi
 
 # Solaris puts FIONREAD in filio.h
