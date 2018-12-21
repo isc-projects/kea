@@ -1060,11 +1060,11 @@ temporarily override a list of interface names and listen on all interfaces.
 <section xml:id="dhcp4-address-config">
   <title>Configuration of IPv4 Address Pools</title>
   <para>
-    The main role of a DHCPv4 server is address assignment. For this, the server has to
-    be configured with at least one subnet and one pool of dynamic addresses for it to manage.
+    The main role of a DHCPv4 server is address assignment. For this, the server must
+    be configured with at least one subnet and one pool of dynamic addresses to be managed.
     For example, assume that the server is connected to a network
     segment that uses the 192.0.2.0/24 prefix. The administrator of that network
-    has decided that addresses from range 192.0.2.10 to 192.0.2.20 are going to
+    decides that addresses from range 192.0.2.10 to 192.0.2.20 are going to
     be managed by the Dhcp4 server. Such a configuration can be achieved in the
     following way:
     <screen>
@@ -1508,7 +1508,7 @@ temporarily override a list of interface names and listen on all interfaces.
         syntax to create custom option definitions (formats). It is generally not
         allowed to create custom definitions for standard options, even if the
         definition being created matches the actual option format defined in the
-        RFCs. There is an exception from this rule for standard options for which
+        RFCs. There is an exception to this rule for standard options for which
         Kea currently does not provide a definition. In order to use such options,
         a server administrator must create a definition as described in
         <xref linkend="dhcp4-custom-options"/> in the 'dhcp4' option space. This
@@ -1536,7 +1536,7 @@ temporarily override a list of interface names and listen on all interfaces.
             </row>
           </thead>
           <tbody>
-<!-- Subnet Mask option is not configured by the user
+<!-- Subnet Mask option is not configured by the user.
 <row><entry>subnet-mask</entry><entry>1</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
 -->
 <row><entry>time-offset</entry><entry>2</entry><entry>int32</entry><entry>false</entry><entry>false</entry></row>
@@ -1550,7 +1550,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>impress-servers</entry><entry>10</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>resource-location-servers</entry><entry>11</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <!-- Hostname option value is not explicitly configured by the user.
-This rather belong to the DDNS configuration
+This rather belongs to the DDNS configuration
 <row><entry>host-name</entry><entry>12</entry><entry>string</entry><entry>false</entry><entry>true</entry></row>
 -->
 <row><entry>boot-size</entry><entry>13</entry><entry>uint16</entry><entry>false</entry><entry>false</entry></row>
@@ -1595,7 +1595,7 @@ This rather belong to the DDNS configuration
 <row><entry>dhcp-lease-time</entry><entry>51</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
 <row><entry>dhcp-option-overload</entry><entry>52</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
-<!-- Message Type  should not be configured by a user.
+<!-- Message Type should not be configured by a user.
 <row><entry>dhcp-message-type</entry><entry>53</entry><entry>uint8</entry><entry>false</entry><entry>false</entry></row>
 -->
 <row><entry>dhcp-server-identifier</entry><entry>54</entry><entry>ipv4-address</entry><entry>false</entry><entry>true</entry></row>
@@ -1631,11 +1631,11 @@ This rather belong to the DDNS configuration
 <row><entry>slp-directory-agent</entry><entry>78</entry><entry>record (boolean, ipv4-address)</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>slp-service-scope</entry><entry>79</entry><entry>record (boolean, string)</entry><entry>false</entry><entry>false</entry></row>
 <!-- The Client FQDN option value is not explicitly configured.
-It is a part of the DDNS/D2 configuration
+It is a part of the DDNS/D2 configuration.
 <row><entry>fqdn</entry><entry>81</entry><entry>record</entry><entry>false</entry><entry>true</entry></row>
 -->
 <!-- Relay Agent Information is not configured by the user.
-It is merely echoed by the server
+It is merely echoed by the server.
 <row><entry>dhcp-agent-options</entry><entry>82</entry><entry>empty</entry><entry>false</entry><entry>false</entry></row>
 -->
 <row><entry>nds-server</entry><entry>85</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
@@ -1646,7 +1646,7 @@ It is merely echoed by the server
 <!-- Authentication option requires special processing
 <row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 -->
-<!-- Last transaction time and associated IP are dynamically calculated
+<!-- Last transaction time and associated IP are dynamically calculated.
 <row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>associated-ip</entry><entry>92</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 -->
@@ -1742,11 +1742,11 @@ It is merely echoed by the server
       left blank: <command>record-types</command> and
       <command>encapsulate</command>. The former specifies the comma-separated
       list of option data fields, if the option comprises a record of data
-      fields. This should be non-empty if <command>type</command> is set to
-      "record". Otherwise it must be left blank. The latter parameter specifies
+      fields. The <command>record-types</command> value should be non-empty if <command>type</command> is set to
+      "record"; otherwise it must be left blank. The latter parameter specifies
       the name of the option space being encapsulated by the particular
-      option. If the particular option does not encapsulate any option space it
-      should be left blank. Note that the above set of comments defines the
+      option. If the particular option does not encapsulate any option space, it
+      should be left blank. Note that the above set of comments only defines the
       format of the new option and does not set its values.
       </para>
 
@@ -1778,9 +1778,11 @@ It is merely echoed by the server
       </para>
 
       <para>New options can take more complex forms than simple use of
-      primitives (uint8, string, ipv4-address etc); it is possible to
+      primitives (uint8, string, ipv4-address, etc); it is possible to
       define an option comprising a number of existing primitives.
-      Assume we want to define a new option that will consist of
+      </para>
+      <para>
+      For example, assume we want to define a new option that will consist of
       an IPv4 address, followed by an unsigned 16-bit integer, followed by
       a boolean value, followed by a text string. Such an option could
       be defined in the following way:
@@ -1828,7 +1830,7 @@ It is merely echoed by the server
      <para>
        When <command>array</command> is set to <command>true</command>
        and <command>type</command> is set to "record", the last field
-       is an array, i.e., it can contain more than one value as in:
+       is an array, i.e. it can contain more than one value, as in:
 <screen>
 "Dhcp4": {
     "option-def": [
@@ -1849,7 +1851,7 @@ It is merely echoed by the server
       bit unsigned integers.
      </para>
      <note>
-       <para>In the general case, boolean values are specified as <command>true</command> or
+       <para>In general, boolean values are specified as <command>true</command> or
        <command>false</command>, without quotes. Some specific boolean parameters may
        accept also <command>"true"</command>, <command>"false"</command>,
        <command>0</command>, <command>1</command>, <command>"0"</command>, and
@@ -1892,7 +1894,7 @@ It is merely echoed by the server
 </screen>
       </para>
       <para>
-      As the Vendor Specific Information option (code 43) has vendor-
+      As the Vendor-Specific Information option (code 43) has vendor-
       specific format, i.e. can carry either raw binary value or
       sub-options, this mechanism is available for this option too.
       </para>
@@ -1980,14 +1982,14 @@ It is merely echoed by the server
       </para></listitem>
       <listitem><para>
       If none, the last-resort definition described in the next section
-      <xref linkend="dhcp4-vendor-opts"/> (backward compatible with
+      <xref linkend="dhcp4-vendor-opts"/> (backwards-compatible with
       previous Kea versions).
       </para></listitem>
       </orderedlist>
       </para>
       <note>
       <para>
-      This last-resort definition for the Vendor Specific Information
+      This last-resort definition for the Vendor-Specific Information
       option (code 43) is not compatible with a raw binary value.
       So when there are some known cases where a raw binary value
       will be used, a client class must be defined with a classification
@@ -2011,11 +2013,11 @@ It is merely echoed by the server
       "dhcp4" (for the top-level DHCPv4 options) and
       "vendor-encapsulated-options-space", which is empty by default but
       in which options can be defined. Such options will be carried in the
-      Vendor Specific Information option (code 43). The following examples
+      Vendor-Specific Information option (code 43). The following examples
       show how to define an option "foo" in that space that has a code 1,
       and comprises an
       IPv4 address, an unsigned 16-bit integer, and a string. The "foo"
-      option is conveyed in a Vendor Specific Information option.
+      option is conveyed in a Vendor-Specific Information option.
       </para>
       <para>
       The first step is to define the format of the option:
@@ -2050,7 +2052,7 @@ It is merely echoed by the server
     ],
     ...
 }</screen>
-    We also include the Vendor Specific Information option, the option
+    We also include the Vendor-Specific Information option, the option
     that conveys our sub-option "foo". This is required; otherwise the option
     will not be included in messages sent to the client.
 <screen>
@@ -2194,8 +2196,8 @@ It is merely echoed by the server
       sub-option codes will have a separate numbering scheme and may
       overlap with the codes of standard options.
       </para>
-      <para>Note that the creation of a new option space when defining
-      sub-options for a standard option is not required, because it is
+      <para>Note that the creation of a new option space is not required when defining
+      sub-options for a standard option, because it is
       created by default if the standard option is meant to convey any
       sub-options (see <xref linkend="dhcp4-vendor-opts"/>).
       </para>
@@ -2250,7 +2252,7 @@ It is merely echoed by the server
     ...
 }</screen>
     The name of the option space in which the sub-options are defined
-    is set in the <command>encapsulate</command> field. The <command>type</command> field is set to "empty"
+    is set in the <command>encapsulate</command> field. The <command>type</command> field is set to <command>empty</command>,
     to indicate that this option does not carry any data other than
     sub-options.
     </para>
@@ -2283,7 +2285,7 @@ It is merely echoed by the server
     </para>
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space. For example,
-    if the "container" option from the previous example were required to carry an uint16
+    if the "container" option from the previous example were required to carry a uint16
     value as well as the sub-options, the <command>type</command> value would have to be set to "uint16" in
     the option definition. (Such an option would then have the following
     data structure: DHCP header, uint16 value, sub-options.) The value specified
@@ -2295,8 +2297,8 @@ It is merely echoed by the server
     <section xml:id="dhcp4-option-data-defaults">
       <title>Unspecified Parameters for DHCPv4 Option Configuration</title>
       <para>In many cases it is not required to specify all parameters for
-      an option configuration and the default values may be used. However, it is
-      important to understand the implications of not specifying some of them
+      an option configuration and the default values can be used. However, it is
+      important to understand the implications of not specifying some of them,
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
       specified:
@@ -2324,7 +2326,7 @@ It is merely echoed by the server
 
         <listitem>
           <simpara><command>space</command> - if the option space is unspecified it
-          will default to 'dhcp4' which is an option space holding DHCPv4 standard
+          will default to 'dhcp4', which is an option space holding DHCPv4 standard
           options.
           </simpara>
         </listitem>
@@ -2333,7 +2335,7 @@ It is merely echoed by the server
           <simpara><command>data</command> - if the option data is unspecified it
           defaults to an empty value. The empty value is mostly used for the
           options which have no payload (boolean options), but it is legal to specify
-          empty values for some options which carry variable length data and which
+          empty values for some options which carry variable-length data and which
           the specification allows to have a length of 0. For such options, the data parameter
           may be omitted in the configuration.</simpara>
         </listitem>
