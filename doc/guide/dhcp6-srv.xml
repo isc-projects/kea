@@ -833,7 +833,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         When the DHCPv6 server starts, by default it listens to the DHCP traffic
         sent to multicast address ff02::1:2 on each interface that it is
-        configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
+        configured to listen on (see <xref linkend="dhcp6-interface-configuration"/>).
         In some cases it is useful to configure a server to handle incoming
         traffic sent to global unicast addresses as well. The most common
         reason for this is to have relays send their traffic to the server
