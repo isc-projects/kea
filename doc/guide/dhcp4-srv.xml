@@ -529,9 +529,9 @@ The default value for Cassandra is 2000 ms.
       <para>
         Automatic reconnect to database backends is configured individually per backend.
         This allows you to tailor the recovery parameters to each backend you use.
-        We do suggest that you either enable it for all backends or no backends so you
+        We do suggest that you enable it either for all backends or no backends so you
         have consistent behavior. Losing connectivity to a backend for which reconnect
-        is disabled will result in the server shutting itself down. This includes the
+        is disabled will result in the server shutting itself down. This includes
         cases when the lease database backend and the hosts database backend are connected to
         the same database instance.
       </para>
@@ -640,7 +640,7 @@ Similar parameters can be specified for the hosts database.
     <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file, and that is the recommended way
     if the number of reservations is small. However, when the number of
-    reservations grows it's more convenient to use host storage. Please note
+    reservations grows, it is more convenient to use host storage. Please note
     that both storage methods (configuration file and one of the supported databases)
     can be used together. If hosts are defined in both places, the definitions
     from the configuration file are checked first and external storage is checked
@@ -657,7 +657,7 @@ Similar parameters can be specified for the hosts database.
 
   <para>Hosts database configuration is controlled through the Dhcp4/hosts-database
   parameters. If enabled, the type of database must be set to "mysql" or
-  "postgresql". Other hosts backends may be added in later versions of Kea.
+  "postgresql".
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
@@ -669,7 +669,7 @@ Similar parameters can be specified for the hosts database.
 </screen>
   If the database is located on a different system than the DHCPv4 server, the
   database host name must also be specified. (Again it should be noted that this
-  configuration may have a severe impact on server performance.):
+  configuration may have a severe impact on server performance.)
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
 </screen>
@@ -684,7 +684,7 @@ Similar parameters can be specified for the hosts database.
 "Dhcp4": { "hosts-database": { <userinput>"port" : 12345</userinput>, ... }, ... }
 </screen>
   <para>
-The maxiumum number of times the server will automatically attempt to reconnect to
+The maximum number of times the server will automatically attempt to reconnect to
 the host database after connectivity has been lost may be specified:
 <screen>
 "Dhcp4": { "hosts-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
@@ -709,9 +709,9 @@ The default value for Cassandra is 2000 ms.
       <para>
         Automatic reconnect to database backends is configured individually per backend.
         This allows you to tailor the recovery parameters to each backend you use.
-        We do suggest that you either enable it for all backends or no backends so you
+        We do suggest that you enable it either for all backends or no backends so you
         have consistent behavior. Losing connectivity to a backend for which reconnect
-        is disabled will result in the server shutting itself down. This includes the
+        is disabled will result in the server shutting itself down. This includes
         cases when the lease database backend and the hosts database backend are connected to
         the same database instance.
       </para>
@@ -747,8 +747,8 @@ The default value for Cassandra is 2000 ms.
 In some deployments the database user whose name is specified in the database backend
 configuration may not have write privileges to the database. This is often
 required by the policy within a given network to secure the data from being
-unintentionally modified. In many cases administrators have inventory databases
-deployed, which contain substantially more information about the hosts than just the
+unintentionally modified. In many cases administrators have deployed inventory databases,
+which contain substantially more information about the hosts than just the
 static reservations assigned to them. The inventory database can be used to create
 a view of a Kea hosts database and such a view is often read-only.
 </para>
@@ -776,7 +776,7 @@ for MySQL and PostgreSQL databases.</para></note>
 
 <section xml:id="dhcp4-interface-configuration">
   <title>Interface Configuration</title>
-  <para>The DHCPv4 server has to be configured to listen on specific network
+  <para>The DHCPv4 server must be configured to listen on specific network
   interfaces. The simplest network interface configuration tells the server to
   listen on all available interfaces:
   <screen>
@@ -2005,7 +2005,7 @@ It is merely echoed by the server
     </section>
 
     <section xml:id="dhcp4-vendor-opts">
-      <title>DHCPv4 Vendor Specific Options</title>
+      <title>DHCPv4 Vendor-Specific Options</title>
       <para>
       Currently there are two option spaces defined for the DHCPv4 daemon:
       "dhcp4" (for the top-level DHCPv4 options) and
