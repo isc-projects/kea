@@ -888,7 +888,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Address Pool</title>
       <para>
         The main role of a DHCPv6 server is address assignment. For this,
-        the server has to be configured with at least one subnet and one pool of dynamic
+        the server must be configured with at least one subnet and one pool of dynamic
         addresses to be managed. For example, assume that the server
         is connected to a network segment that uses the 2001:db8:1::/64
         prefix. The administrator of that network decides that addresses from range
@@ -977,9 +977,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         When configuring a DHCPv6 server using prefix/length notation, please pay
         attention to the boundary values. When specifying that the server can use
-        a given pool, it will also be able to allocate the first (typically network)
-        address from that pool. For example, for pool 2001:db8:2::/64 the
-        2001:db8:2:: address may be assigned as well. If you want to avoid this,
+        a given pool, it will also be able to allocate the first (typically a network
+        address) address from that pool. For example, for pool 2001:db8:2::/64 the
+        2001:db8:2:: address may be assigned as well. To avoid this,
         use the "min-max" notation.
       </para>
     </section>
@@ -1025,8 +1025,8 @@ temporarily override a list of interface names and listen on all interfaces.
         <title>Prefix Exclude Option</title>
         <para>
           For each delegated prefix, the delegating router may choose to exclude
-          a single prefix out of the delegated prefix as specified in
-          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6603"> RFC 6603</link>.
+          a single prefix out of the delegated prefix as specified in 
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6603">RFC 6603</link>.
           The requesting router must not assign the excluded prefix to any
           of its downstream interfaces, and it is intended to be used on a
           link through which the delegating router exchanges DHCPv6 messages with
@@ -1089,12 +1089,12 @@ temporarily override a list of interface names and listen on all interfaces.
       information on all global options that the server is supposed to configure
       in all subnets. The <command>name</command> line specifies the option name.
       (For a complete list
-      of currently supported names, see <xref linkend="dhcp6-std-options-list"/>.)  The next line specifies the option code,
+      of currently supported names, see <xref linkend="dhcp6-std-options-list"/>.) The next line specifies the option code,
       which must match one of the values from that list. The line beginning with
       <command>space</command> specifies the option space, which must always be set
       to "dhcp6" as these are standard DHCPv6 options. For other name spaces,
       including custom option spaces, see <xref linkend="dhcp6-option-spaces"/>. The following line specifies the format in
-      which the data will be entered: use of CSV (comma-separated values) is
+      which the data will be entered; use of CSV (comma-separated values) is
       recommended. Finally, the <command>data</command> line gives the actual value to be sent to
       clients. Data is specified as normal text, with values separated by
       commas if more than one value is allowed.
@@ -1102,9 +1102,8 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>
       Options can also be configured as hexadecimal values. If "csv-format" is
-      set to false, the option data must be specified as a string of hexadecimal
-      numbers. The
-      following commands configure the DNS-SERVERS option for all
+      set to false, the option data must be specified as a hexadecimal string.
+      The following commands configure the DNS-SERVERS option for all
       subnets with the following addresses: 2001:db8:1::cafe and
       2001:db8:1::babe.
         <screen>
@@ -1125,7 +1124,7 @@ temporarily override a list of interface names and listen on all interfaces.
        </para>
        <note><para>
        The value for the setting of the "data" element is split across two
-       lines in this example for clarity: when entering the command, the
+       lines in this example for clarity; when entering the command, the
        whole string should be entered on the same line.
        </para></note>
        <para>
@@ -1137,11 +1136,11 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Most of the parameters in the "option-data" structure are
         optional and can be omitted in some circumstances as discussed
-        in the <xref linkend="dhcp6-option-data-defaults"/>. Only one
-        of name or code is required, so you don't need to specify
+        in <xref linkend="dhcp6-option-data-defaults"/>. Only one
+        of name or code is required; you don't need to specify
         both. Space has a default value of "dhcp6", so you can skip
         this as well if you define a regular (not encapsulated) DHCPv6
-        option.  Finally, csv-format defaults to true, so it too can
+        option. Finally, csv-format defaults to true, so it too can
         be skipped, unless you want to specify the option value as
         hexstring. Therefore the above example can be simplified to:
         <screen>
@@ -1155,7 +1154,7 @@ temporarily override a list of interface names and listen on all interfaces.
     ]
 }
         </screen>
-        Defined options are added to response when the client requests them
+        Defined options are added to the response when the client requests them,
         at a few exceptions which are always added. To enforce the addition
         of a particular option set the always-send flag to true as in:
         <screen>
@@ -1199,19 +1198,19 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
         </screen>
-        The DNS Servers option is always added to responses
+        The DNS servers option is always added to responses
         (the always-send is "sticky") but the value is the subnet one
         when the client is localized in the subnet.
       </para>
 
     <para>
-      It is possible to override options on a per-subnet basis.  If
+      It is possible to override options on a per-subnet basis. If
       clients connected to most of your subnets are expected to get the
-      same values of a given option, you should use global options: you
+      same values of a given option, you should use global options; you
       can then override specific values for a small number of subnets.
       On the other hand, if you use different values in each subnet,
       it does not make sense to specify global option values
-      (Dhcp6/option-data), rather you should set only subnet-specific values
+      (Dhcp6/option-data); instead, you should set only subnet-specific values
       (Dhcp6/subnet[X]/option-data[Y]).
      </para>
 
@@ -1244,17 +1243,16 @@ temporarily override a list of interface names and listen on all interfaces.
 
      <para>
        In some cases it is useful to associate some options with an
-       address or prefix pool from which a client is assigned a lease. Pool
-       specific option values override subnet specific and global option
+       address or prefix pool from which a client is assigned a lease. Pool-
+       specific option values override subnet-specific and global option
        values. If the client is assigned multiple leases from different
        pools, the server will assign options from all pools from which the
        leases have been obtained. However, if the particular option is specified
        in multiple pools from which the client obtains the leases, only one
        instance of this option will be handed out to the client. The server's
-       administrator must not try to prioritize assignment of pool specific
+       administrator must not try to prioritize assignment of pool-specific
        options by trying to order pools declarations in the server
-       configuration. Future Kea releases may change the order in which
-       options are assigned from the pools without any notice.
+       configuration.
      </para>
 
      <para>
@@ -1284,26 +1282,23 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
      </para>
     <para>
-      Options can be specified also in class of host reservation scope.
-      In Kea 1.4 options precedence order is (from most important):
+      Options can also be specified in class of host reservation scope.
+      The current Kea options precedence order is (from most important):
       host reservation, pool, subnet, shared network, class, global.
-      In Kea 1.5 order will be changed to:
-      host reservation, class, pool, subnet, shared network, global OR it will
-      be fully configurable.
     </para>
     <para>
       The currently supported standard DHCPv6 options are
       listed in <xref linkend="dhcp6-std-options-list"/>.
-      The "Name" and "Code"
+      "Name" and "Code"
       are the values that should be used as a name in the option-data
-      structures. "Type" designates the format of the data: the meanings of
+      structures. "Type" designates the format of the data; the meanings of
       the various types is given in <xref linkend="dhcp-types"/>.
     </para>
     <para>When a data field is a string, and that string contains
-    the comma (,; U+002C) character, the comma must be escaped with a
+    the comma (,; U+002C) character, the comma must be escaped with a double
     reverse solidus character (\; U+005C). This double escape is
     required, because both the routine splitting CSV data into fields
-    and JSON use the same escape character: a single escape (\,) would
+    and JSON use the same escape character; a single escape (\,) would
     make the JSON invalid. For example, the string
     "EST5EDT4,M3.2.0/02:00,M11.1.0/02:00" would be
     represented as:
@@ -1332,8 +1327,8 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
     <para>
       Some options are designated as arrays, which means that more than one
-      value is allowed in such an option. For example the option dns-servers
-      allows the specification of more than one IPv6 address, allowing
+      value is allowed in such an option. For example, the option dns-servers
+      allows the specification of more than one IPv6 address, so it allows
       clients to obtain the addresses of multiple DNS servers.
     </para>
 
@@ -1341,17 +1336,17 @@ temporarily override a list of interface names and listen on all interfaces.
 <!-- @todo: describe array in record types -->
 
       <para>
-        The <xref linkend="dhcp6-custom-options"/> describes the configuration
+        <xref linkend="dhcp6-custom-options"/> describes the configuration
         syntax to create custom option definitions (formats). It is generally not
         allowed to create custom definitions for standard options, even if the
         definition being created matches the actual option format defined in the
-        RFCs. There is an exception from this rule for standard options for which
-        Kea does not yes provide a definition. In order to use such options,
+        RFCs. There is an exception to this rule for standard options for which
+        Kea currently does not provide a definition. In order to use such options,
         a server administrator must create a definition as described in
         <xref linkend="dhcp6-custom-options"/> in the 'dhcp6' option space. This
         definition should match the option format described in the relevant
-        RFC but the configuration mechanism would allow any option format as it has
-        no means to validate the format at the moment.
+        RFC, but the configuration mechanism would allow any option format as it
+        currently has no means to validate it.
       </para>
 
     <para>
@@ -1366,7 +1361,7 @@ temporarily override a list of interface names and listen on all interfaces.
           <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
         </thead>
         <tbody>
-<!-- Our engine uses those options on its own, admin must not configure them on his own
+<!-- Our engine uses those options on its own, admins must not configure them on their own.
 <row><entry>clientid</entry><entry>1</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>serverid</entry><entry>2</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>ia-na</entry><entry>3</entry><entry>record</entry><entry>false</entry></row>
@@ -1375,7 +1370,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>oro</entry><entry>6</entry><entry>uint16</entry><entry>true</entry></row> -->
 <row><entry>preference</entry><entry>7</entry><entry>uint8</entry><entry>false</entry></row>
 
-<!-- Our engine uses those options on its own, admin must not configure them on his own
+<!-- Our engine uses those options on its own, admins must not configure them on their own.
 <row><entry>elapsed-time</entry><entry>8</entry><entry>uint16</entry><entry>false</entry></row>
 <row><entry>relay-msg</entry><entry>9</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>auth</entry><entry>11</entry><entry>binary</entry><entry>false</entry></row>
@@ -1387,7 +1382,7 @@ temporarily override a list of interface names and listen on all interfaces.
 <row><entry>user-class</entry><entry>15</entry><entry>binary</entry><entry>false</entry></row>
 <row><entry>vendor-class</entry><entry>16</entry><entry>record</entry><entry>false</entry></row>
 -->
-<!-- Vendor-specific Information is configurable by the administrator -->
+<!-- Vendor-specific information is configurable by the administrator. -->
 <row><entry>vendor-opts</entry><entry>17</entry><entry>uint32</entry><entry>false</entry></row>
 <!--
 <row><entry>interface-id</entry><entry>18</entry><entry>binary</entry><entry>false</entry></row>
@@ -1456,11 +1451,11 @@ temporarily override a list of interface names and listen on all interfaces.
       </table>
       Options marked with (1) have option definitions, but the logic
       behind them is not implemented. That means that technically Kea
-      knows how to parse them in incoming message or how to send them
+      knows how to parse them in incoming messages or how to send them
       if configured to do so, but not what to do with them. Since the
       related RFCs require certain processing, the support for those
       options is non-functional. However, it may be useful in some
-      limited lab testing, hence the definition formats are listed here.
+      limited lab testing; hence the definition formats are listed here.
     </para>
     </section>
 
@@ -1468,7 +1463,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Common Softwire46 Options</title>
       <para>
         Softwire46 options are involved in IPv4 over IPv6 provisioning by
-        means of tunneling or translation as specified in the
+        means of tunneling or translation as specified in
         <ulink url="http://tools.ietf.org/html/rfc7598">RFC 7598</ulink>.
         The following sections provide configuration examples of these
         options.
@@ -1479,14 +1474,14 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         S46 container options group rules and optional port parameters
         for a specified domain. There are three container options specified
-        in the "dhcp6" (top level) option space: MAP-E Container option,
-        MAP-T Container option and S46 Lightweight 4over6 Container option.
-        These options only contain encapsulated options specified below.
-        They do not include any data fields.
+        in the "dhcp6" (top-level) option space: MAP-E Container option,
+        MAP-T Container option, and S46 Lightweight 4over6 Container option.
+        These options only contain encapsulated options specified below;
+        they do not include any data fields.
       </para>
 
       <para>
-        In order to configure the server to send specific container option
+        To configure the server to send a specific container option
         along with all encapsulated options, the container option must be
         included in the server configuration as shown below:
 <screen>
@@ -1500,14 +1495,14 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
 
-        This configuration will cause the server to include MAP-E Container
+        This configuration will cause the server to include the MAP-E Container
         option to the client. Use "s46-cont-mapt" or "s46-cont-lw" for the
-        MAP-T Container and S46 Lightweight 4over6 Container options
+        MAP-T Container and S46 Lightweight 4over6 Container options,
         respectively.
       </para>
 
       <para>
-        All remaining softwire options described below are included in one
+        All remaining Softwire options described below are included in one
         of the container options. Thus, they have to be included in appropriate
         option spaces by selecting a "space" name, which specifies in which
         option they are supposed to be included.
@@ -1526,7 +1521,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "data": "128, 0, 24, 192.0.2.0, 2001:db8:1::/64"
 }
 </screen>
-         Other possible "space" value is "s46-cont-mapt-options".
+         Another possible "space" value is "s46-cont-mapt-options".
         </para>
 
         <para>
@@ -1534,34 +1529,34 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <itemizedlist>
         <listitem>
-          <simpara><command>flags</command>, an unsigned 8 bits integer, with
-          currently only the most significant bit specified. It denotes whether
+          <simpara><command>flags</command>, an unsigned 8-bit integer, with
+          currently only the most-significant bit specified. It denotes whether
           the rule can be used for forwarding (128) or not (0).
           </simpara>
         </listitem>
 
         <listitem>
-          <simpara><command>ea-len</command>, an 8 bits long Embedded Address length. Allowed values
+          <simpara><command>ea-len</command>, an 8-bit-long Embedded Address length. Allowed values
           range from 0 to 48.</simpara>
         </listitem>
 
         <listitem>
           <simpara><command>IPv4 prefix length</command>, 8 bits long; expresses the prefix length of the
-          Rule IPv4 prefix specified in the ipv4-prefix field.  Allowed
+          Rule IPv4 prefix specified in the ipv4-prefix field. Allowed
           values range from 0 to 32.</simpara>
         </listitem>
 
         <listitem>
           <simpara><command>IPv4 prefix</command>, a fixed-length 32-bit field that specifies the IPv4
-          prefix for the S46 rule.  The bits in the prefix after prefix4-len
-          number of bits are reserved and MUST be initialized to zero by the
+          prefix for the S46 rule. The bits in the prefix after prefix4-len
+          number of bits are reserved, and MUST be initialized to zero by the
           sender and ignored by the receiver.</simpara>
         </listitem>
 
         <listitem>
-          <simpara><command>IPv6 prefix</command> in prefix/length notation that specifies the IPv6 domain
-          prefix for the S46 rule.  The field is padded on the right with zero
-          bits up to the nearest octet boundary when prefix6-len is not evenly
+          <simpara><command>IPv6 prefix</command>, in prefix/length notation that specifies the IPv6 domain
+          prefix for the S46 rule. The field is padded on the right with zero
+          bits up to the nearest octet boundary, when prefix6-len is not evenly
           divisible by 8.</simpara>
         </listitem>
 
@@ -1573,7 +1568,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <para>
               The S46 BR option is used to convey the IPv6 address of the
               Border Relay. This option is mandatory in the MAP-E
-              Container option and not permitted in the MAP-T and
+              Container option and is not permitted in the MAP-T and
               S46 Lightweight 4over6 Container options.
 <screen>
 {
@@ -1582,7 +1577,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "data": "2001:db8:cafe::1",
 }
 </screen>
-           Other possible "space" value is "s46-cont-lw-options".
+           Another possible "space" value is "s46-cont-lw-options".
           </para>
         </section>
 
@@ -1591,7 +1586,7 @@ temporarily override a list of interface names and listen on all interfaces.
             <para>
               The S46 DMR option is used to convey values for the Default
               Mapping Rule (DMR). This option is mandatory in the MAP-T
-              container option and not permitted in the MAP-E and S46
+              container option and is not permitted in the MAP-E and S46
               Lightweight 4over6 Container options.
 <screen>
 {
@@ -1624,8 +1619,8 @@ temporarily override a list of interface names and listen on all interfaces.
         <section>
             <title>S46 Port Parameters</title>
             <para>
-              The S46 Port Parameters option specifies optional port set
-              information that MAY be provided to CEs
+              The S46 Port Parameters option specifies optional port-set
+              information that MAY be provided to CEs.
 <screen>
 {
     "space": "s46-rule-options",
@@ -1633,12 +1628,12 @@ temporarily override a list of interface names and listen on all interfaces.
     "data": "2, 3/4",
 }
 </screen>
-              Other possible "space" value is "s46-v4v6bind" to include
+              Another possible "space" value is "s46-v4v6bind", to include
               this option in the S46 IPv4/IPv6 Address Binding option.
             </para>
             <para>
               Note that the second value in the example above specifies the
-              PSID and PSID length fields in the format of PSID/PSID length.
+              PSID and PSID-length fields in the format of PSID/PSID length.
               This is equivalent to the values of PSID-len=4 and
               PSID=12288 conveyed in the S46 Port Parameters option.
             </para>
@@ -1649,7 +1644,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Custom DHCPv6 Options</title>
       <para>It is possible to define options in addition to the standard ones.
       Assume that we want to define a new DHCPv6 option called "foo" which will have
-      code 100 and which will convey a single unsigned 32 bit integer value. We can define
+      code 100 and which will convey a single, unsigned, 32-bit integer value. We can define
       such an option by using the following commands:
 <screen>
 "Dhcp6": {
@@ -1668,21 +1663,21 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       The "false" value of the <command>array</command> parameter determines that the option does
-      NOT comprise an array of "uint32" values but rather a single value.  Two
+      NOT comprise an array of "uint32" values but is, instead, a single value. Two
       other parameters have been left blank: <command>record-types</command> and
       <command>encapsulate</command>.
-      The former specifies the comma separated list of option data fields if the
+      The former specifies the comma-separated list of option data fields, if the
       option comprises a record of data fields. The <command>record-types</command> value should
-      be non-empty if the <command>type</command> is set to "record". Otherwise it must be left
+      be non-empty if <command>type</command> is set to "record"; otherwise it must be left
       blank. The latter parameter specifies the name of the option space being
       encapsulated by the particular option. If the particular option does not
-      encapsulate any option space it should be left blank.  Note that the above
-      example only defines the format of the new option, it does not set its
+      encapsulate any option space, it should be left blank.  Note that the above
+      example only defines the format of the new option and does not set its
       value(s).
       </para>
 
-      <para>The <command>name</command>, <command>code</command> and
-      <command>type</command> parameters are required, all others are
+      <para>The <command>name</command>, <command>code</command>, and
+      <command>type</command> parameters are required; all others are
       optional. The <command>array</command> default value is
       <command>false</command>. The <command>record-types</command>
       and <command>encapsulate</command> default values are blank
@@ -1690,7 +1685,7 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>Once the new option format is defined, its value is set
-      in the same way as for a standard option. For example the following
+      in the same way as for a standard option. For example, the following
       commands set a global value that applies to all subnets.
 <screen>
 "Dhcp6": {
@@ -1709,12 +1704,12 @@ temporarily override a list of interface names and listen on all interfaces.
       </para>
 
       <para>New options can take more complex forms than simple use of
-      primitives (uint8, string, ipv6-address etc): it is possible to
+      primitives (uint8, string, ipv6-address, etc); it is possible to
       define an option comprising a number of existing primitives.
       </para>
       <para>
       For example, assume we want to define a new option that will consist of an IPv6
-      address, followed by an unsigned 16 bit integer, followed by a
+      address, followed by an unsigned 16-bit integer, followed by a
       boolean value, followed by a text string. Such an option could
       be defined in the following way:
 <screen>
@@ -1734,8 +1729,8 @@ temporarily override a list of interface names and listen on all interfaces.
 }
 </screen>
       The "type" is set to "record" to indicate that the option contains
-      multiple values of different types.  These types are given as a comma-separated
-      list in the "record-types" field and should be those listed in <xref linkend="dhcp-types"/>.
+      multiple values of different types. These types are given as a comma-separated
+      list in the <command>record-types</command> field and should be ones from those listed in <xref linkend="dhcp-types"/>.
       </para>
       <para>
       The values of the option are set as follows:
@@ -1753,16 +1748,16 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
 
-      <command>csv-format</command> is set <command>true</command> to indicate
+      <command>csv-format</command> is set to <command>true</command> to indicate
       that the <command>data</command> field comprises a command-separated list
-      of values.  The values in the "data" must correspond to the types set in
-      the "record-types" field of the option definition.
+      of values. The values in <command>data</command> must correspond to the types set in
+      the <command>record-types</command> field of the option definition.
       </para>
 
       <para>
       When <command>array</command> is set to <command>true</command>
       and <command>type</command> is set to "record", the last field
-      is an array, i.e., it can contain more than one value as in:
+      is an array, i.e. it can contain more than one value, as in:
 <screen>
 "Dhcp6": {
     "option-def": [
@@ -1779,17 +1774,16 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }
 </screen>
-      The new option content is one IPv6 address followed by one or more 16
+      The new option content is one IPv6 address followed by one or more 16-
       bit unsigned integers.
       </para>
 
       <note>
-       <para>In the general case, boolean values are specified as <command>true</command> or
+       <para>In general, boolean values are specified as <command>true</command> or
        <command>false</command>, without quotes. Some specific boolean parameters may
        accept also <command>"true"</command>, <command>"false"</command>,
-       <command>0</command>, <command>1</command>, <command>"0"</command> and
-       <command>"1"</command>. Future versions of Kea will accept all those values
-       for all boolean parameters.</para>
+       <command>0</command>, <command>1</command>, <command>"0"</command>, and
+       <command>"1"</command>.</para>
       </note>
 
     </section>
@@ -1798,12 +1792,12 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>DHCPv6 Vendor-Specific Options</title>
       <para>
       Currently there are two option spaces defined for the DHCPv6
-      daemon: "dhcp6" (for top level DHCPv6 options) and "vendor-opts-space",
+      daemon: "dhcp6" (for top-level DHCPv6 options) and "vendor-opts-space",
       which is empty by default, but in which options can be defined.
-      Those options will be carried in the Vendor-Specific
+      Those options are carried in the Vendor-Specific
       Information option (code 17). The following examples show how to
       define an option "foo" with code 1 that consists of an IPv6 address,
-      an unsigned 16 bit integer and a string. The "foo" option is
+      an unsigned 16-bit integer, and a string. The "foo" option is
       conveyed in a Vendor-Specific Information option. This option
       comprises a single uint32 value that is set to "12345".
       The sub-option "foo" follows the data field holding this value.
@@ -1838,7 +1832,7 @@ temporarily override a list of interface names and listen on all interfaces.
     ...
 }</screen>
     We should also define a value (enterprise-number) for the
-    Vendor-specific Information option, that conveys our option "foo".
+    Vendor-Specific Information option, that conveys our option "foo".
 <screen>
 "Dhcp6": {
     "option-data": [
@@ -1868,14 +1862,14 @@ temporarily override a list of interface names and listen on all interfaces.
     <section xml:id="dhcp6-option-spaces">
       <title>Nested DHCPv6 Options (Custom Option Spaces)</title>
       <para>It is sometimes useful to define completely new option
-      spaces.  This is useful if the user wants their new option to
+      spaces. This is the case when a user wants their new option to
       convey sub-options that use a separate numbering scheme, for
       example sub-options with codes 1 and 2. Those option codes
       conflict with standard DHCPv6 options, so a separate option
       space must be defined.
       </para>
-      <para>Note that it is not required to create a new option space when
-      defining sub-options for a standard option because it is
+      <para>Note that the creation of a new option space is not required when
+      defining sub-options for a standard option, because it is
       created by default if the standard option is meant to convey
       any sub-options (see <xref linkend="dhcp6-vendor-opts"/>).
       </para>
@@ -1912,7 +1906,7 @@ temporarily override a list of interface names and listen on all interfaces.
     </para>
     <para>
 The next step is to define a regular DHCPv6 option and specify that it
-should include options from the isc option space:
+should include options from the new option space:
 <screen>
 "Dhcp6": {
     "option-def": [
@@ -1932,7 +1926,7 @@ should include options from the isc option space:
 
     The name of the option space in which the sub-options are defined is set in
     the <command>encapsulate</command> field. The <command>type</command> field
-    is set to <command>empty</command> which limits this option to only carrying
+    is set to <command>empty</command>, which limits this option to only carrying
     data in sub-options.
     </para>
     <para>
@@ -1965,11 +1959,11 @@ should include options from the isc option space:
 
     <para>Note that it is possible to create an option which carries some data
     in addition to the sub-options defined in the encapsulated option space.
-    For example, if the "container" option from the previous example was
-    required to carry an uint16 value as well as the sub-options, the "type"
+    For example, if the "container" option from the previous example were
+    required to carry a uint16 value as well as the sub-options, the <command>type</command>
     value would have to be set to "uint16" in the option definition. (Such an
     option would then have the following data structure: DHCP header, uint16
-    value, sub-options.) The value specified with the "data" parameter — which
+    value, sub-options.) The value specified with the <command>data</command> parameter — which
     should be a valid integer enclosed in quotes, e.g. "123" — would then be
     assigned to the uint16 field in the "container" option.
     </para>
@@ -1979,7 +1973,7 @@ should include options from the isc option space:
       <title>Unspecified Parameters for DHCPv6 Option Configuration</title>
       <para>In many cases it is not required to specify all parameters for
       an option configuration and the default values can be used. However, it is
-      important to understand the implications of not specifying some of them
+      important to understand the implications of not specifying some of them,
       as it may result in configuration errors. The list below explains
       the behavior of the server when a particular parameter is not explicitly
       specified:
@@ -2007,7 +2001,7 @@ should include options from the isc option space:
 
         <listitem>
           <simpara><command>space</command> - if the option space is unspecified it
-          will default to 'dhcp6' which is an option space holding DHCPv6 standard
+          will default to 'dhcp6', which is an option space holding DHCPv6 standard
           options.
           </simpara>
         </listitem>
@@ -2016,7 +2010,7 @@ should include options from the isc option space:
           <simpara><command>data</command> - if the option data is unspecified it
           defaults to an empty value. The empty value is mostly used for the
           options which have no payload (boolean options), but it is legal to specify
-          empty values for some options which carry variable length data and which
+          empty values for some options which carry variable-length data and which
           spec allows for the length of 0. For such options, the data parameter
           may be omitted in the configuration.</simpara>
         </listitem>
@@ -2024,10 +2018,8 @@ should include options from the isc option space:
         <listitem>
           <simpara><command>csv-format</command> - if this value is not
           specified the server will assume that the option data is specified as
-          a list of comma separated values to be assigned to individual fields
-          of the DHCP option. This behavior has changed in Kea 1.2. Older
-          versions used additional logic to determine whether the csv-format
-          should be true or false. That is no longer the case.
+          a list of comma-separated values to be assigned to individual fields
+          of the DHCP option.
           </simpara>
         </listitem>
       </itemizedlist>
