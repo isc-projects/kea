@@ -523,11 +523,11 @@ The default value for Cassandra is 2000 ms.
   <note>
     <para>
       Automatic reconnect to database backends is configured individually per backend.
-      This allows you to tailor the recovery parameters to the each backend you use.
-      We do suggest that you either enable it for all backends or no backends so you
+      This allows you to tailor the recovery parameters to each backend you use.
+      We do suggest that you enable it either for all backends or no backends so you
       have consistent behavior.  Losing connectivity to a backend for which reconnect
-      is disabled will result in the server shutting itself down. This includes the
-      cases when lease database backend and hosts database backend is connected to
+      is disabled will result in the server shutting itself down. This includes
+      cases when the lease database backend and the hosts database backend are connected to
       the same database instance.
     </para>
   </note>
@@ -536,7 +536,7 @@ The default value for Cassandra is 2000 ms.
     Note that host parameter is used by MySQL and PostgreSQL
     backends. Cassandra has a concept of contact points that could be
     used to contact the cluster, instead of a single IP or
-    hostname. It takes a list of comma separated IP addresses. This may be specified as:
+    hostname. It takes a list of comma-separated IP addresses, which may be specified as:
 <screen>
 "Dhcp6": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
 </screen>
@@ -555,7 +555,7 @@ The default value for Cassandra is 2000 ms.
 </section>
 
 <section xml:id="cassandra-database-configuration6">
-    <title>Cassandra specific parameters</title>
+    <title>Cassandra-Specific Parameters</title>
 <para>The parameters are the same for DHCPv4 and DHCPv6. See <xref
 linkend="cassandra-database-configuration4"/> for details.</para>
 </section>
@@ -568,23 +568,23 @@ linkend="cassandra-database-configuration4"/> for details.</para>
     database. The hosts database configuration uses the same syntax as the lease
     database. In fact, a Kea server opens independent connections for each
     purpose, be it lease or hosts information. This arrangement gives the most
-    flexibility. Kea can be used to keep leases and host reservations
+    flexibility. Kea can keep leases and host reservations
     separately, but can also point to the same database. Currently the
-    supported hosts database types are MySQL and PostgreSQL. The Cassandra
-    backend does not support host reservations yet.</para>
+    supported hosts database types are MySQL and PostgreSQL; the Cassandra
+    backend does not yet support host reservations.</para>
 
     <para>Please note that usage of hosts storage is optional. A user can define
-    all host reservations in the configuration file. That is the recommended way
+    all host reservations in the configuration file, and that is the recommended way
     if the number of reservations is small. However, when the number of
-    reservations grows it's more convenient to use host storage. Please note
+    reservations grows, it is more convenient to use host storage. Please note
     that both storage methods (configuration file and one of the supported databases)
     can be used together. If hosts are defined in both places, the definitions
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-    <para>Version 1.4 extends the host storage to multiple storages. Operations
+    <para>Kea extends the host storage to multiple storages. Operations
     are performed on host storages in the configuration order with a special
-    case for addition: read-only storages must be configured after a
+    case for addition; read-only storages must be configured after a
     required read-write storage, or host reservation addition will
     always fail.</para>
 
@@ -592,25 +592,25 @@ linkend="cassandra-database-configuration4"/> for details.</para>
   <title>DHCPv6 Hosts Database Configuration</title>
 
   <para>Hosts database configuration is controlled through the Dhcp6/hosts-database
-  parameters. If enabled, the type of the database must be set to "mysql" or
-  "postgresql". Other hosts backends may be added in later version of Kea.
+  parameters. If enabled, the type of database must be set to "mysql" or
+  "postgresql".
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"type": "mysql"</userinput>, ... }, ... }
 </screen>
-  Next, the name of the database to hold the reservations must be set: this is the
+  Next, the name of the database to hold the reservations must be set; this is the
   name used when the database was created  (see <xref linkend="supported-databases"/>
-  for instructions how to setup desired database type).
+  for instructions on how to set up the desired database type).
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"name": "<replaceable>database-name</replaceable>" </userinput>, ... }, ... }
 </screen>
   If the database is located on a different system than the DHCPv6 server, the
   database host name must also be specified. (Again it should be noted that this
-  configuration may have a severe impact on server performance):
+  configuration may have a severe impact on server performance.)
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"host": <replaceable>remote-host-name</replaceable></userinput>, ... }, ... }
 </screen>
-  The usual state of affairs will be to have the database on the same machine as
-  the DHCPv6 server.  In this case, set the value to the empty string:
+  Normally, the database will be on the same machine as
+  the DHCPv6 server. In this case, set the value to the empty string:
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"host" : ""</userinput>, ... }, ... }
 </screen>
@@ -619,7 +619,7 @@ linkend="cassandra-database-configuration4"/> for details.</para>
 </screen>
   </para>
   <para>
-The maxiumum number of times the server will automatically attempt to reconnect to
+The maximum number of times the server will automatically attempt to reconnect to
 the host database after connectivity has been lost may be specified:
 <screen>
 "Dhcp6": { "host-database": { <userinput>"max-reconnect-tries" : <replaceable>number-of-tries</replaceable></userinput>, ... }, ... }
@@ -630,7 +630,7 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of milliseconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait between attempts to reconnect to the
 host database after connectivity has been lost may also be specified:
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
@@ -643,11 +643,11 @@ The default value for Cassandra is 2000 ms.
     <note>
       <para>
         Automatic reconnect to database backends is configured individually per backend.
-        This allows you to tailor the recovery parameters to the each backend you use.
-        We do suggest that you either enable it for all backends or no backends so you
-        have consistent behavior.  Losing connectivity to a backend for which reconnect
-        is disabled will result in the server shutting itself down. This includes the
-        cases when lease database backend and hosts database backend is connected to
+        This allows you to tailor the recovery parameters to each backend you use.
+        We do suggest that you enable it either for all backends or no backends so you
+        have consistent behavior. Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes
+        cases when the lease database backend and the hosts database backend are connected to
         the same database instance.
       </para>
     </note>
@@ -663,7 +663,7 @@ The default value for Cassandra is 2000 ms.
   If there is no password to the account, set the password to the empty string
   "". (This is also the default.)</para>
 
-  <para>The multiple storage extension uses a similar syntax: a configuration
+  <para>The multiple storage extension uses a similar syntax; a configuration
   is placed into a "hosts-databases" list instead of into a "hosts-database"
   entry as in:
 <screen>
@@ -672,8 +672,8 @@ The default value for Cassandra is 2000 ms.
   </para>
 
   <para>
-    For additional Cassandra specific parameters, see <xref
-    linkend="cassandra-database-configuration4" />.</para>
+    For additional Cassandra-specific parameters, see <xref
+    linkend="cassandra-database-configuration4"/>.</para>
 
 </section>
 
@@ -683,25 +683,25 @@ The default value for Cassandra is 2000 ms.
 In some deployments the database user whose name is specified in the database backend
 configuration may not have write privileges to the database. This is often
 required by the policy within a given network to secure the data from being
-unintentionally modified. In many cases administrators have inventory databases
-deployed, which contain substantially more information about the hosts than
+unintentionally modified. In many cases administrators have deployed inventory databases,
+which contain substantially more information about the hosts than just the
 static reservations assigned to them. The inventory database can be used to create
-a view of a Kea hosts database and such view is often read only.
+a view of a Kea hosts database and such a view is often read-only.
 </para>
 <para>
 Kea host database backends operate with an implicit configuration to both
 read from and write to the database. If the database user does not have
 write access to the host database, the backend will fail to start and the
-server will refuse to start (or reconfigure). However, if access to a read
+server will refuse to start (or reconfigure). However, if access to a read-
 only host database is required for retrieving reservations for clients
-and/or assign specific addresses and options, it is possible to explicitly
+and/or assigning specific addresses and options, it is possible to explicitly
 configure Kea to start in "read-only" mode. This is controlled by the
 <command>readonly</command> boolean parameter as follows:
 <screen>
 "Dhcp6": { "hosts-database": { <userinput>"readonly": true</userinput>, ... }, ... }
 </screen>
-Setting this parameter to <userinput>false</userinput> would configure the
-database backend to operate in "read-write" mode, which is also a default
+Setting this parameter to <userinput>false</userinput> configures the
+database backend to operate in "read-write" mode, which is also the default
 configuration if the parameter is not specified.
 </para>
 <note><para>The <command>readonly</command> parameter is currently only supported
@@ -710,8 +710,8 @@ for MySQL and PostgreSQL databases.</para></note>
 
 </section>
 
-<section xml:id="dhcp6-interface-selection">
-  <title>Interface Selection</title>
+<section xml:id="dhcp6-interface-configuration">
+  <title>Interface Configuration</title>
   <para>The DHCPv6 server has to be configured to listen on specific network
   interfaces.  The simplest network interface configuration instructs the server to
   listen on all available interfaces:
@@ -723,7 +723,7 @@ for MySQL and PostgreSQL databases.</para></note>
     ...
 }
 </screen>
-  The asterisk plays the role of a wildcard and means "listen on all interfaces".
+  The asterisk plays the role of a wildcard and means "listen on all interfaces."
   However, it is usually a good idea to explicitly specify interface names:
   <screen>
 "Dhcp6": {
@@ -734,8 +734,8 @@ for MySQL and PostgreSQL databases.</para></note>
 }
   </screen>
 </para>
-  <para>It is possible to use wildcard interface name (asterisk) concurrently
-  with the actual interface names:
+  <para>It is possible to use a wildcard interface name (asterisk) concurrently
+  with explicit interface names:
   <screen>
 "Dhcp6": {
     "interfaces-config": {
@@ -744,11 +744,11 @@ for MySQL and PostgreSQL databases.</para></note>
     ...
 }
   </screen>
-It is anticipated that this will form of usage only be used where it is desired to
+It is anticipated that this form of usage will only be used when it is desired to
 temporarily override a list of interface names and listen on all interfaces.
   </para>
 
-  <para>As for the DHCPv4 server binding to specific addresses and
+  <para>For the DHCPv4 server, binding to specific addresses and
   disabling re-detection of interfaces are supported. But
   <command>dhcp-socket-type</command> is not because DHCPv6 uses
   UDP/IPv6 sockets only. The following example shows how to disable the
@@ -766,8 +766,8 @@ temporarily override a list of interface names and listen on all interfaces.
   </screen>
 
   <para>The loopback interfaces (i.e. the "lo" or "lo0" interface)
-  are not configured by default, unles explicitely mentioned in
-  the configration. Note Kea requires a link-local address which does
+  are not configured by default, unless explicitely mentioned in
+  the configuration. Note that Kea requires a link-local address which does
   not exist on all systems, or a specified unicast address as in:
   </para>
 
@@ -795,12 +795,10 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         If there are multiple subnets configured with auto-generated identifiers and
         one of them is removed, the subnet identifiers may be renumbered. For example:
-        if there are four subnets and the third is removed the last subnet will be assigned
+        if there are four subnets and the third is removed, the last subnet will be assigned
         the identifier that the third subnet had before removal. As a result, the leases
         stored in the lease database for subnet 3 are now associated with
-        subnet 4, something that may have unexpected consequences. It is planned
-        to implement a mechanism to preserve auto-generated subnet ids in a
-        future version of Kea.  However, the only remedy for this issue
+        subnet 4, something that may have unexpected consequences. The only remedy for this issue
         at present is to
         manually specify a unique identifier for each subnet.
       </para>
@@ -837,13 +835,13 @@ temporarily override a list of interface names and listen on all interfaces.
         sent to multicast address ff02::1:2 on each interface that it is
         configured to listen on (see <xref linkend="dhcp6-interface-selection"/>).
         In some cases it is useful to configure a server to handle incoming
-        traffic sent to the global unicast addresses as well. The most common
+        traffic sent to global unicast addresses as well. The most common
         reason for this is to have relays send their traffic to the server
         directly. To configure the server to listen on a specific unicast address,
         nn interface name can be
         optionally followed by a slash, followed by the global unicast address on which
         the server should listen. The server listens to this address in addition to normal
-        link-local binding and listening on ff02::1:2 address. The sample configuration
+        link-local binding and listening on the ff02::1:2 address. The sample configuration
         below shows how to listen on 2001:db8::1 (a global address)
         configured on the eth1 interface.
       </para>
@@ -864,7 +862,7 @@ temporarily override a list of interface names and listen on all interfaces.
  </screen>
 
         This configuration will cause the server to listen on
-        eth1 on the link-local address, the multicast group (ff02::1:2) and 2001:db8::1.
+        eth1 on the link-local address, the multicast group (ff02::1:2), and 2001:db8::1.
       </para>
       <para>
         Usually unicast support is associated with a server unicast option
@@ -874,14 +872,14 @@ temporarily override a list of interface names and listen on all interfaces.
         unicast address.
       </para>
       <para>
-        It is possible to mix interface names, wildcards and interface name/addresses
-        in the list of interfaces. It is not possible however to specify more than one
+        It is possible to mix interface names, wildcards, and interface names/addresses
+        in the list of interfaces. It is not possible, however, to specify more than one
         unicast address on a given interface.
       </para>
       <para>
         Care should be taken to specify proper unicast addresses. The server will
         attempt to bind to the addresses specified without any additional checks.
-        This approach has selected on purpose to allow the software to
+        This approach was selected on purpose to allow the software to
         communicate over uncommon addresses if so desired.
       </para>
     </section>
@@ -893,7 +891,7 @@ temporarily override a list of interface names and listen on all interfaces.
         the server has to be configured with at least one subnet and one pool of dynamic
         addresses to be managed. For example, assume that the server
         is connected to a network segment that uses the 2001:db8:1::/64
-        prefix. The Administrator of that network has decided that addresses from range
+        prefix. The administrator of that network decides that addresses from range
         2001:db8:1::1 to 2001:db8:1::ffff are going to be managed by the Dhcp6
         server. Such a configuration can be achieved in the following way:
         <screen>
@@ -912,18 +910,17 @@ temporarily override a list of interface names and listen on all interfaces.
 }</screen>
 
         Note that <command>subnet</command> is defined as a simple string, but
-        the <command>pools</command> parameter is actually a list of pools: for
+        the <command>pools</command> parameter is actually a list of pools; for
         this reason, the pool definition is enclosed in square brackets, even
         though only one range of addresses is specified.</para>
 
         <para>Each <command>pool</command> is a structure that contains the
         parameters that describe a single pool. Currently there is only one
         parameter, <command>pool</command>, which gives the range of addresses
-        in the pool. Additional parameters will be added in future releases of
-        Kea.</para>
+        in the pool.</para>
 
         <para>It is possible to define more than one pool in a
-        subnet: continuing the previous example, further assume that
+        subnet; continuing the previous example, further assume that
         2001:db8:1:0:5::/80 should also be managed by the server. It could be written as
         2001:db8:1:0:5:: to 2001:db8:1::5:ffff:ffff:ffff, but typing so many 'f's
         is cumbersome. It can be expressed more simply as 2001:db8:1:0:5::/80. Both
@@ -980,8 +977,8 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         When configuring a DHCPv6 server using prefix/length notation, please pay
         attention to the boundary values. When specifying that the server can use
-        a given pool, it will also be able to allocate the first (typically network
-        address) address from that pool. For example, for pool 2001:db8:2::/64 the
+        a given pool, it will also be able to allocate the first (typically network)
+        address from that pool. For example, for pool 2001:db8:2::/64 the
         2001:db8:2:: address may be assigned as well. If you want to avoid this,
         use the "min-max" notation.
       </para>
@@ -992,13 +989,13 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
-        section 6.3.  A subnet may have one or more prefix delegation pools.
+        section 6.3. A subnet may have one or more prefix delegation pools.
         Each pool has a prefixed address, which is specified as a prefix
         (<command>prefix</command>) and a prefix length
         (<command>prefix-len</command>), as well as a delegated prefix length
         (<command>delegated-len</command>). The delegated length must not be
-        shorter (that is it must be numerically greater or equal) than the
-        prefix length.  If both the delegated and prefix lengths are equal, the
+        shorter than (that is, it must be numerically greater or equal to) the
+        prefix length. If both the delegated and prefix lengths are equal, the
         server will be able to delegate only one prefix. The delegated prefix
         does not have to match the subnet prefix.
       </para>
@@ -1027,16 +1024,16 @@ temporarily override a list of interface names and listen on all interfaces.
     <section xml:id="pd-exclude-option">
         <title>Prefix Exclude Option</title>
         <para>
-          For each delegated prefix the delegating router may choose to exclude
-          a single prefix out of the delegated prefix as specified in the
+          For each delegated prefix, the delegating router may choose to exclude
+          a single prefix out of the delegated prefix as specified in
           <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6603"> RFC 6603</link>.
           The requesting router must not assign the excluded prefix to any
-          of its downstream interfaces and it is intended to be used on a
+          of its downstream interfaces, and it is intended to be used on a
           link through which the delegating router exchanges DHCPv6 messages with
           the requesting router. The configuration example below demonstrates how
           to specify an excluded prefix within a prefix pool definition. The
           excluded prefix "2001:db8:1:babe:cafe:80::/72" will be sent to a
-          requesting router which includes Prefix Exclude option in the ORO, and
+          requesting router which includes the Prefix Exclude option in the ORO, and
           which is delegated a prefix from this pool.
         </para>
 <screen>
@@ -1063,11 +1060,11 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Standard DHCPv6 Options</title>
       <para>
         One of the major features of a DHCPv6 server is to provide configuration
-        options to clients.  Although there are several options that require
+        options to clients. Although there are several options that require
         special behavior, most options are sent by the server only if the client
-        explicitly requests them.  The following example shows how to
+        explicitly requests them. The following example shows how to
         configure DNS servers, one of the most frequently used
-        options.  Options specified in this way are considered
+        options. Options specified in this way are considered
         global and apply to all configured subnets.
 
         <screen>
@@ -1088,25 +1085,25 @@ temporarily override a list of interface names and listen on all interfaces.
 
     <para>
       The <command>option-data</command> line creates a new entry in
-      the option-data table.  This table contains
+      the option-data table. This table contains
       information on all global options that the server is supposed to configure
-      in all subnets.  The <command>name</command> line specifies the option name.
+      in all subnets. The <command>name</command> line specifies the option name.
       (For a complete list
       of currently supported names, see <xref linkend="dhcp6-std-options-list"/>.)  The next line specifies the option code,
       which must match one of the values from that list. The line beginning with
       <command>space</command> specifies the option space, which must always be set
-      to "dhcp6" as these are standard DHCPv6 options.  For other name spaces,
+      to "dhcp6" as these are standard DHCPv6 options. For other name spaces,
       including custom option spaces, see <xref linkend="dhcp6-option-spaces"/>. The following line specifies the format in
-      which the data will be entered: use of CSV (comma separated values) is
+      which the data will be entered: use of CSV (comma-separated values) is
       recommended. Finally, the <command>data</command> line gives the actual value to be sent to
-      clients.  Data is specified as normal text, with values separated by
+      clients. Data is specified as normal text, with values separated by
       commas if more than one value is allowed.
     </para>
 
     <para>
-      Options can also be configured as hexadecimal values.  If "csv-format" is
+      Options can also be configured as hexadecimal values. If "csv-format" is
       set to false, the option data must be specified as a string of hexadecimal
-      numbers.  The
+      numbers. The
       following commands configure the DNS-SERVERS option for all
       subnets with the following addresses: 2001:db8:1::cafe and
       2001:db8:1::babe.
