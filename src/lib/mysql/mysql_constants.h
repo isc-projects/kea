@@ -16,11 +16,23 @@ namespace db {
 ///
 //@{
 
+#ifdef HAVE_MYSQL_MY_BOOL
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = 0;
 
 /// @brief MySQL true value.
 const my_bool MLM_TRUE = 1;
+
+#else
+/// @brief my_bool type for MySQL 8.x.
+typedef bool my_bool;
+
+/// @brief MySQL false value.
+const my_bool MLM_FALSE = false;
+
+/// @brief MySQL true value.
+const my_bool MLM_TRUE = true;
+#endif
 
 /// @brief MySQL fetch success code.
 const int MLM_MYSQL_FETCH_SUCCESS = 0;
