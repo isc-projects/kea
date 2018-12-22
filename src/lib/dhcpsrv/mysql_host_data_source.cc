@@ -220,10 +220,14 @@ public:
     ///        data associated with one of the "bind" elements, the
     ///        corresponding element in the error array is set to MLM_TRUE.
     static void setErrorIndicators(std::vector<MYSQL_BIND>& bind,
-                                   std::vector<my_bool>& error) {
+                                   std::vector<my_bools>& error) {
         for (size_t i = 0; i < error.size(); ++i) {
             error[i] = MLM_FALSE;
+#ifdef HAVE_MYSQL_MY_BOOL
             bind[i].error = reinterpret_cast<char*>(&error[i]);
+#else
+            bind[i].error = reinterpret_cast<bool*>(&error[i]);
+#endif
         }
     };
 
@@ -240,7 +244,7 @@ public:
     ///        the error.
     /// @param names Array of column names, the same size as the error array.
     /// @param count Size of each of the arrays.
-    static std::string getColumnsInError(std::vector<my_bool>& error,
+    static std::string getColumnsInError(std::vector<my_bools>& error,
                                          const std::vector<std::string>& names) {
         std::string result = "";
 
@@ -723,7 +727,7 @@ protected:
     std::vector<std::string> columns_;
 
     /// Error array.
-    std::vector<my_bool> error_;
+    std::vector<my_bools> error_;
 
     /// Pointer to Host object holding information to be inserted into
     /// Hosts table.

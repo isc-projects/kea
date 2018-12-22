@@ -17,6 +17,9 @@ namespace db {
 //@{
 
 #ifdef HAVE_MYSQL_MY_BOOL
+/// @brief my_bools type for vectors.
+typedef my_bool my_bools;
+
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = 0;
 
@@ -24,8 +27,12 @@ const my_bool MLM_FALSE = 0;
 const my_bool MLM_TRUE = 1;
 
 #else
-/// @brief my_bool type for MySQL 8.x.
+/// @brief my_bool type in MySQL 8.x.
 typedef bool my_bool;
+
+/// @brief my_bools type for vectors in MySQL 8.x.
+/// @note vector<my_bool> is specialized into a bitset.
+typedef char my_bools;
 
 /// @brief MySQL false value.
 const my_bool MLM_FALSE = false;

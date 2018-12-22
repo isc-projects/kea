@@ -101,6 +101,11 @@ The following environment variable can affect the unit tests:
   mysql> GRANT ALL ON keatest.* TO 'keatest'@'localhost';
   mysql> GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';
   mysql>@endverbatim\n
+  -# If you get <i>You do not have the SUPER privilege and binary logging is
+  enabled</i> error message, you need to add:
+  @verbatim
+  mysql> SET GLOBAL LOG_BIN_TRUST_FUNCTION_CREATORS = 1;
+  mysql>@endverbatim\n
   -# Exit MySQL:
   @verbatim
   mysql> quit
