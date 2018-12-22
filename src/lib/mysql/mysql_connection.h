@@ -92,10 +92,15 @@ public:
 
     /// @brief Constructor
     ///
+    /// Push a call to mysql_library_end() at exit time.
     /// Initialize MySql and store the associated context object.
     ///
     /// @throw DbOpenError Unable to initialize MySql handle.
     MySqlHolder() : mysql_(mysql_init(NULL)) {
+        if (!atexit_) {
+            atexit([]{ mysql_library_end(); });
+            atexit_ = true;
+        }
         if (mysql_ == NULL) {
             isc_throw(db::DbOpenError, "unable to initialize MySQL");
         }
@@ -108,8 +113,7 @@ public:
         if (mysql_ != NULL) {
             mysql_close(mysql_);
         }
-        // The library itself shouldn't be needed anymore
-        mysql_library_end();
+        // @note Moved the call to mysql_library_end() to atexit.
     }
 
     /// @brief Conversion Operator
@@ -121,7 +125,9 @@ public:
     }
 
 private:
-    MYSQL* mysql_;      ///< Initialization context
+    static bool atexit_; ///< Flag to call atexit once.
+
+    MYSQL* mysql_;       ///< Initialization context
 };
 
 /// @brief Forward declaration to @ref MySqlConnection.

@@ -336,7 +336,11 @@ public:
                                    size_t count) {
         for (size_t i = 0; i < count; ++i) {
             error[i] = MLM_FALSE;
+#ifdef HAVE_MYSQL_MY_BOOL
             bind[i].error = reinterpret_cast<char*>(&error[i]);
+#else
+            bind[i].error = &error[i];
+#endif
         }
     }
 
