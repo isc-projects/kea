@@ -2187,7 +2187,6 @@ It is merely echoed by the server.
     </section>
 
     <section xml:id="dhcp4-option-spaces">
-
       <title>Nested DHCPv4 Options (Custom Option Spaces)</title>
       <para>It is sometimes useful to define a completely new option
       space. This is the case when a user creates a new option in the
@@ -2422,9 +2421,9 @@ It is merely echoed by the server.
 
       <para>
       In certain cases it is useful to configure the server to differentiate between DHCP client types
-      and treat them accordingly. It is envisaged that client
-      classification will be used to modify the behavior of almost any part of
-      the DHCP message processing. Kea currently only takes advantage of client classification via
+      and treat them accordingly. Client
+      classification can be used to modify the behavior of almost any part of
+      the DHCP message processing. Kea currently offers client classification via:
       private options and option 43 deferred unpacking; subnet selection;
       pool selection; assignment of different options; and, for cable modems, specific options for use with the TFTP server address and the boot file field.
       </para>
@@ -2433,9 +2432,9 @@ It is merely echoed by the server.
       Kea can be instructed to limit access to given subnets based on class information.
       This is particularly useful for cases where two types of devices share the
       same link and are expected to be served from two different subnets. The
-      primary use case for such a scenario is cable networks. Here, there are two
+      primary use case for such a scenario is cable networks, where there are two
       classes of devices: the cable modem itself, which should be handed a lease
-      from subnet A, and all other devices behind the modem, which should get a lease
+      from subnet A; and all other devices behind the modem, which should get a lease
       from subnet B. That segregation is essential to prevent overly curious
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
@@ -2479,7 +2478,7 @@ It is merely echoed by the server.
       as a member of the class.
       The last step is to assign options, again possibly based on the class
       information.
-      A more-complete and detailed description is available in
+      More complete and detailed information is available in
       <xref linkend="classify"/>.
       </para>
 
@@ -2489,13 +2488,13 @@ It is merely echoed by the server.
       host reservation. Information from these
       options is extracted, and a class name is constructed from it and added to
       the class list for the packet. The second specifies an expression
-      that is evaluated for each packet. If the result is "true," the packet is
+      that is evaluated for each packet. If the result is "true", the packet is
       a member of the class.
       </para>
 
       <note><para>
         Care should be taken with client classification, as it is easy for
-        clients that do not meet class criteria to be denied any service altogether.
+        clients that do not meet class criteria to be denied all service.
       </para></note>
 
       <section>
@@ -2592,7 +2591,7 @@ It is merely echoed by the server.
         <title>Defining and Using Custom Classes</title>
         <para>
         The following example shows how to configure a class using an expression
-        and a subnet that makes use of the class. This configuration defines the
+        and a subnet using that class. This configuration defines the
         class named "Client_foo".
         It is comprised of all clients whose client ids (option 61) start with the
         string "foo". Members of this class will be given addresses from
@@ -2643,7 +2642,7 @@ It is merely echoed by the server.
         <para>
         The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
-        <command>true</command> the test expression of the class is not
+        <command>true</command>, the test expression of the class is not
         evaluated at the reception of the incoming packet but later, and
         only if the class evaluation is required.
         </para>
@@ -2695,7 +2694,7 @@ It is merely echoed by the server.
          <para>
          Required evaluation is also available at shared-network and
          pool levels. The order in which required classes are considered is:
-         shared-network, subnet, and pool, i.e. the opposite order
+         shared-network, subnet, and pool, i.e. the opposite order that
          option-data is processed.
          </para>
 
@@ -2795,7 +2794,7 @@ It is merely echoed by the server.
       <section xml:id="dhcpv4-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the D2 server, kea-dhcp4 must be able
+      For NCRs to reach the D2 server, kea-dhcp4 must be able
       to communicate with it. kea-dhcp4 uses the following configuration
       parameters to control this communication:
       <itemizedlist>
@@ -2814,12 +2813,12 @@ It is merely echoed by the server.
       is 53001.
       </simpara></listitem>
       <listitem><simpara>
-      <command>sender-ip</command> - IP address which kea-dhcp4 should use to send requests to D2.
+      <command>sender-ip</command> - IP address which kea-dhcp4 uses to send requests to D2.
       The default value is blank, which instructs kea-dhcp4 to select a suitable
       address.
       </simpara></listitem>
       <listitem><simpara>
-      <command>sender-port</command> - port which kea-dhcp4 should use to send requests to D2. The
+      <command>sender-port</command> - port which kea-dhcp4 uses to send requests to D2. The
       default value of 0 instructs kea-dhcp4 to select a suitable port.
       </simpara></listitem>
       <listitem><simpara>
@@ -2846,7 +2845,7 @@ It is merely echoed by the server.
       If, however, D2 has been configured to listen on a different address or
       port, these values must be altered accordingly. For example, if D2 has been
       configured to listen on 192.168.1.10 port 900, the following configuration
-      would be required:
+      is required:
 <screen>
 "Dhcp4": {
     "dhcp-ddns": {
@@ -2895,7 +2894,7 @@ It is merely echoed by the server.
       complex. When a new lease is granted, kea-dhcp4 will generate a DDNS
       update request if the DHCPREQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
-      the server will use the FQDN option. By default kea-dhcp4
+      the server will use the FQDN option. By default, kea-dhcp4
       will respect the FQDN N and S flags specified by the client as shown
       in the following table:
       </para>
@@ -2939,7 +2938,7 @@ It is merely echoed by the server.
           </tgroup>
         </table>
       <para>
-      The first row in the table above represents "client delegation." Here
+      The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
       the server should do the reverse updates. By default, kea-dhcp4 will honor
       the client's wishes and generate a DDNS request to the D2 server to update only
@@ -3007,22 +3006,22 @@ It is merely echoed by the server.
        entries are:
       <orderedlist>
       <listitem><para>
-        If the DHCPREQUEST contains the client FQDN option, the candidate name
-        is taken from there; otherwise it is taken from the Host Name option.
+        If the DHCPREQUEST contains the client FQDN option, take the candidate name
+        from there; otherwise, take it from the Host Name option.
       </para></listitem>
       <listitem><para>
         If the candidate name is a partial (i.e. unqualified) name, then add a
         configurable suffix to the name and use the result as the FQDN.
       </para></listitem>
       <listitem><para>
-        If the candidate name provided is empty, generate a FQDN using a
+        If the candidate name provided is empty, generate an FQDN using a
         configurable prefix and suffix.
       </para></listitem>
       <listitem><para>
         If the client provided neither option, then no DNS action will be taken.
       </para></listitem>
       </orderedlist>
-        These rules can amended by setting the
+        These rules can be amended by setting the
         <command>replace-client-name</command> parameter, which provides the
         following modes of behavior:
       <itemizedlist>
@@ -3082,8 +3081,8 @@ It is merely echoed by the server.
 }
 </screen>
       <para>
-      The suffix used when generating an FQDN or when qualifying a
-      partial name is specified by
+      The suffix used when generating an FQDN, or when qualifying a
+      partial name, is specified by
       the <command>qualifying-suffix</command> parameter. This
       parameter has no default value, thus it is mandatory when
       DDNS updates are enabled.
@@ -3119,7 +3118,7 @@ It is merely echoed by the server.
         It may be that some of your DHCP clients provide values in the Host
         Name option (Option code 12) or FQDN option (Option code 81) that
         contain undesirable characters. It is possible to configure kea-dhcp4
-        to sanitize these values. The most typical use case would be ensuring
+        to sanitize these values. The most typical use case is ensuring
         that only characters that are permitted by RFC 1035 be included:
         A-Z, a-z, 0-9, and '-'.
 
@@ -3154,7 +3153,7 @@ It is merely echoed by the server.
 </screen>
         Thus, a client-supplied value of "myhost-$[123.org" would become
         "myhost-xx123.org". Sanitizing is performed only on the portion of
-        the name supplied by the client and it is performed before applying
+        the name supplied by the client, and it is performed before applying
         a qualifying suffix (if one is defined and needed).
         <note>
         The following are some considerations to keep in mind:
@@ -3470,7 +3469,7 @@ It is merely echoed by the server.
       </para>
       <note>
         <para>DHCPv4-over-DHCPv6 support is experimental and the
-        details of the inter-process communication can change; both
+        details of the inter-process communication may change; both
         the DHCPv4 and DHCPv6 sides should be running the same version
         of Kea. For instance, the support of port relay (RFC 8357) introduced
         an incompatible change.</para>
@@ -3609,7 +3608,7 @@ It is merely echoed by the server.
          <listitem>
            <simpara><command>fix</command> - If a data inconsistency is
            discovered, Kea will try to correct it. If the correction is
-           not successful, the data will be inserted anyway.</simpara>
+           not successful, the incorrect data will be inserted anyway.</simpara>
          </listitem>
          <listitem>
            <simpara><command>fix-del</command> - If a data inconsistency is
@@ -3662,22 +3661,24 @@ It is merely echoed by the server.
     a per-host basis. The most obvious one is to reserve a specific, static
     address for exclusive use by a given client (host); the returning client will
     receive the same address from the server every time, and other clients will
-    generally not receive that address.
-    Another example when host reservations are applicable is when a host
-    has specific requirements, e.g. a printer that needs additional DHCP options.
-    Yet another possible use case is to define unique names for hosts.</para>
-
+    generally not receive that address.</para>
+    
     <para>Note that there may be cases when a
     new reservation has been made for a client for an address currently
     in use by another client. We call this situation a "conflict." These conflicts
     get resolved automatically over time as described in subsequent sections.
     Once the conflict is resolved, the client will keep receiving the reserved
     configuration when it renews.</para>
-
+    
+    <para>Another example when host reservations are applicable is when a host
+    has specific requirements, e.g. a printer that needs additional DHCP options.
+    Yet another possible use case is to define unique names for hosts.
+    </para>
+    
     <para>Host reservations are defined as parameters for each subnet. Each host
-    has to be identified by an identifier, for example the hardware/MAC address. There is an optional
-    <command>reservations</command> array in the <command>Subnet4</command>
-    element. Each element in that array is a structure that holds information
+    must be identified by an identifier, for example the hardware/MAC address. There is an optional
+    <command>reservations</command> array in the <command>subnet4</command>
+    structure. Each element in that array is a structure that holds information
     about reservations for a single host. In particular, the structure must
     have an identifier that uniquely identifies a host. In the DHCPv4 context, the
     identifier is usually a hardware or MAC address. In most cases an IP address
@@ -3745,7 +3746,7 @@ It is merely echoed by the server.
     considered for allocation or renewal. The server that also supports host
     reservation has to perform additional checks: not only whether the address is
     currently used (i.e., if there is a lease for it), but also whether the address
-    could be used by someone else (i.e., there is a reservation for it). That
+    could be used by someone else (i.e., if there is a reservation for it). That
     additional check incurs extra overhead.</para>
 
     <section xml:id="reservation4-types">
@@ -3761,6 +3762,7 @@ It is merely echoed by the server.
       "out-of-pool reservations." There is no formal difference
       in the reservation syntax and both reservation types are
       handled uniformly.</para>
+      
       <para>Kea supports global
       host reservations. These are reservations that are specified at the
       global level within the configuration and that do not belong to any
@@ -3779,7 +3781,7 @@ It is merely echoed by the server.
 
     <section xml:id="reservation4-conflict">
       <title>Conflicts in DHCPv4 Reservations</title>
-      <para>As the reservations and lease information are stored separately,
+      <para>As reservations and lease information are stored separately,
       conflicts may arise. Consider the following series of events: the server
       has configured the dynamic pool of addresses from the range of 192.0.2.10 to
       192.0.2.20. Host A requests an address and gets 192.0.2.10. Now the system
@@ -3788,15 +3790,15 @@ It is merely echoed by the server.
       is currently assigned to someone else is not recommended, but there are
       valid use cases where such an operation is warranted.</para>
 
-      <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If Host B boots up and requests an address, the server is
+      <para>The server now has a conflict to resolve.
+      If Host B boots up and requests an address, the server is
       not able to assign the reserved address 192.0.2.10. A naive approach
       would to be immediately remove the existing lease for Host A
       and create a new one for Host B. That would not solve the problem,
       though, because as soon as Host B gets the address, it will detect
-      that the address is already in use by Host A and would send
-      the DHCPDECLINE message. Therefore, in this situation, the server has
-      to temporarily assign a different address (not matching what has been
+      that the address is already in use by Host A and will send
+      a DHCPDECLINE message. Therefore, in this situation, the server has
+      to temporarily assign a different address from the dynamic pool (not matching what has been
       reserved) to Host B.</para>
 
       <!-- let's keep this text around. It describes how that is working in v6
@@ -3839,18 +3841,18 @@ It is merely echoed by the server.
       obtained.</para>
 
       <para>This recovery will succeed, even if other hosts attempt to get
-      the reserved address. If Host C requested address 192.0.2.10 after
-      the reservation was made, the server would either offer a different
-      address (when responding to DHCPDISCOVER) or would send DHCPNAK
+      the reserved address. If Host C requests the address 192.0.2.10 after
+      the reservation is made, the server will either offer a different
+      address (when responding to DHCPDISCOVER) or send DHCPNAK
       (when responding to DHCPREQUEST).</para>
 
       <para>This recovery mechanism allows the server to fully recover from a
-      case where reservations conflict with the existing leases. This procedure
+      case where reservations conflict with existing leases. This procedure
       takes time and will roughly take as long as the value set for renew-timer.
       The best way to avoid such recovery is not to define new reservations that
       conflict with existing leases. Another recommendation is to use
       out-of-pool reservations. If the reserved address does not belong to a
-      pool, there is no way that other clients could get this address.
+      pool, there is no way that other clients can get this address.
       </para>
 
     <note>
@@ -3904,7 +3906,7 @@ It is merely echoed by the server.
       in this case the value specified as a <command>hostname</command> will
       be treated as a fully qualified name. Thus, by leaving the
       <command>qualifying-suffix</command> empty it is possible to qualify
-      hostnames for the different clients with different domain names:
+      hostnames for different clients with different domain names:
 <screen>
     {
         "subnet4": [ {
@@ -3934,7 +3936,7 @@ It is merely echoed by the server.
     <section xml:id="reservation4-options">
       <title>Including Specific DHCPv4 Options in Reservations</title>
       <para>Kea offers the ability to specify options on a
-      per-host basis. The options follow the same rules as any other
+      per-host basis. These options follow the same rules as any other
       options. These can be standard options (see <xref linkend="dhcp4-std-options"/>), custom options (see <xref linkend="dhcp4-custom-options"/>), or vendor-specific options
       (see <xref linkend="dhcp4-vendor-opts"/>). The following
       example demonstrates how standard options can be defined.</para>
@@ -4024,8 +4026,8 @@ It is merely echoed by the server.
       <para><xref linkend="classification-using-expressions"/> explains how
       to configure the server to assign classes to a client, based on the content
       of the options that this client sends to the server. Host reservations
-      mechanisms also allow for statically assigning classes to the clients.
-      The definitions of these classes should exist in the Kea
+      mechanisms also allow for the static assignment of classes to clients.
+      The definitions of these classes are placed in the Kea
       configuration. The following configuration snippet shows how to specify
       that a client belongs to classes <command>reserved-class1</command>
       and <command>reserved-class2</command>. Those classes are associated with
@@ -4071,7 +4073,7 @@ It is merely echoed by the server.
 </screen>
 
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
+    with classification, using expressions. The "KNOWN" or "UNKNOWN" builtin
     class is added to the packet and any class depending on it (directly or
     indirectly) and not only-if-required is evaluated.
     </para>
@@ -4093,13 +4095,13 @@ It is merely echoed by the server.
         <xref linkend="hosts6-storage"/> for information on how to configure Kea to use
         reservations stored in MySQL, PostgreSQL, or Cassandra. Kea provides a dedicated hook for
         managing reservations in a database; section <xref linkend="host-cmds"/> provides
-        detailed information. <uri
+        detailed information. The Kea wiki <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
         provides some examples of how to conduct common host reservation operations.
       </para>
 
-      <note><simpara>In Kea, the maximum length of an option specified per host is
+      <note><simpara>In Kea, the maximum length of an option specified per-host is
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
@@ -4112,16 +4114,16 @@ It is merely echoed by the server.
       major checks are necessary. First, when selecting a new lease, it is not
       sufficient for a candidate lease to simply not be in use by another DHCP client; it
       also must not be reserved for another client. Second, when renewing a lease,
-      an additional check must be performed to see whether the address being renewed is not
+      an additional check must be performed to see whether the address being renewed is
       reserved for another client. Finally, when a host renews an address, the server
-      has to check whether there is a reservation for this host, so the existing
+      must check whether there is a reservation for this host, so the existing
       (dynamically allocated) address should be revoked and the reserved one be
       used instead.
       </para>
       <para>Some of those checks may be unnecessary in certain deployments and not
       performing them may improve performance. The Kea server provides the
       <command>reservation-mode</command> configuration parameter to select the
-      types of reservations allowed for the particular subnet. Each reservation
+      types of reservations allowed for a particular subnet. Each reservation
       type has different constraints for the checks to be performed by the
       server when allocating or renewing a lease for the client.
       Allowed values are:
@@ -4153,20 +4155,19 @@ It is merely echoed by the server.
       misconfiguration may cause problems.
       </simpara></listitem>
 
-      <listitem><simpara>
-      <command>disabled</command> - host reservation support is disabled. As there
+      <listitem><simpara> <command>disabled</command> - host reservation support is disabled. As there
       are no reservations, the server will skip all checks. Any reservations defined
       will be completely ignored. As the checks are skipped, the server may
       operate faster in this mode.
       </simpara></listitem>
 
       </itemizedlist>
-      The parameter can be specified at global, subnet, and shared network
+      The parameter can be specified at global, subnet, and shared-network
       levels.
       </para>
 
       <para>
-        An example configuration that disables reservation appears as follows:
+        An example configuration that disables reservation looks as follows:
 <screen>
 "Dhcp4": {
     "subnet4": [
@@ -4208,7 +4209,6 @@ It is merely echoed by the server.
 }
 </screen>
   For more details regarding global reservations, see <xref linkend="global-reservations4"/>.
-
       </para>
 
 
@@ -4217,7 +4217,7 @@ It is merely echoed by the server.
       hw-address, duid, client-id, and circuit-id. This is beneficial from a
       usability perspective; however, there is one drawback. For each incoming
       packet, Kea has to extract each identifier type and then query the
-      database to see if there is a reservation done by this particular
+      database to see if there is a reservation by this particular
       identifier. If nothing is found, the next identifier is extracted and the next
       query is issued. This process continues until either a reservation is
       found or all identifier types have been checked. Over time, with an increasing
@@ -4232,7 +4232,7 @@ It is merely echoed by the server.
       minimum, ideally one. If your deployment uses several
       reservation types, please enumerate them from most- to least-frequently
       used, as this increases the chances of Kea finding the reservation using the
-      fewest number of queries. An example of host reservation identifiers looks
+      fewest queries. An example of host reservation identifiers looks
       as follows:
 
 <screen>
@@ -4265,7 +4265,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     the client's current location. To facilitate such a need, a global
     reservation mechanism has been implemented. The idea behind it is that
     regular host reservations are tied to specific subnets, by using a specific
-    subnet-id. Kea can specify a global
+    subnet-id. Kea can now specify a global
     reservation that can be used in every subnet that has global reservations
     enabled.</para>
 
@@ -4283,7 +4283,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     the client won't be able to reach its default gateway.</para>
 
     <para>
-      To use global host reservations a configuration similar to the following
+      To use global host reservations, a configuration similar to the following
       can be used:
 
 <screen>
@@ -4368,18 +4368,18 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     <para>Another very frequent use case comes from cable networks. There are two types
     of devices in cable networks: cable modems and the end-user devices behind
     them. It is a common practice to use different subnets for cable modems to
-    prevent users from tinkering with their cable modems. In this case, the
+    prevent users from tinkering with them. In this case, the
     distinction is based on the type of device, rather than address-space
     exhaustion.</para>
 
     <para>A client connected to a shared network may be assigned an address from
-    any of the address pools defined within the subnets belonging to the shared
+    any of the pools defined within the subnets belonging to the shared
     network. Internally, the server selects one of the subnets belonging to a
     shared network and tries to allocate an address from this subnet. If the
-    server is unable to allocate an address from the selected subnet (e.g. due
+    server is unable to allocate an address from the selected subnet (e.g., due
     to address pools exhaustion), it will use another subnet from the same shared
     network and try to allocate an address from this subnet, etc. Therefore, in the
-    typical case, the server will allocate all addresses available for a given
+    typical case, the server will allocate all addresses available in a given
     subnet before it starts allocating addresses from other subnets belonging to
     the same shared network. However, in certain situations the client can be
     allocated an address from the other subnets before the address pools in the
@@ -4457,7 +4457,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
     <para>Shared networks provide an ability to specify many parameters in
     the shared network scope that will apply to all subnets within it. If
-    necessary, you can specify a parameter on the shared network scope and then
+    necessary, you can specify a parameter in the shared network scope and then
     override its value in the subnet scope. For example:
 <screen>
 "shared-networks": [
@@ -4529,7 +4529,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     expected to be used on the same physical link, it is a configuration error
     to attempt to define a shared network using subnets that are reachable over
     different interfaces. It is possible to specify the interface parameter on each
-    subnet, although its value must be the same for each subnet. Thus it's
+    subnet, although its value must be the same for each subnet. Thus it is
     usually more convenient to specify it once at the shared network level.
 <screen>
 "shared-networks": [
