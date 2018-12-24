@@ -2421,12 +2421,12 @@ It is merely echoed by the server.
       </para>
 
       <para>
-      In certain cases it is useful to differentiate between different types of
-      clients and treat them accordingly. It is envisaged that client
-      classification will be used for changing the behavior of almost any part of
-      the DHCP message processing. There are currently only some mechanisms that take advantage of client classification:
-      private options and option 43 deferred unpacking, subnet selection,
-      pool selection, assignment of different options, and, for cable modems, specific options for use with the TFTP server address and the boot file field.
+      In certain cases it is useful to configure the server to differentiate between DHCP client types
+      and treat them accordingly. It is envisaged that client
+      classification will be used to modify the behavior of almost any part of
+      the DHCP message processing. Kea currently only takes advantage of client classification via
+      private options and option 43 deferred unpacking; subnet selection;
+      pool selection; assignment of different options; and, for cable modems, specific options for use with the TFTP server address and the boot file field.
       </para>
 
       <para>
@@ -2435,17 +2435,17 @@ It is merely echoed by the server.
       same link and are expected to be served from two different subnets. The
       primary use case for such a scenario is cable networks. Here, there are two
       classes of devices: the cable modem itself, which should be handed a lease
-      from subnet A, and all other devices behind the modem that should get a lease
+      from subnet A, and all other devices behind the modem, which should get a lease
       from subnet B. That segregation is essential to prevent overly curious
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
       </para>
 
       <para>
-      When subnets belong to a shared network the classification applies
+      When subnets belong to a shared network, the classification applies
       to subnet selection but not to pools, e.g. a pool in a subnet
       limited to a particular class can still be used by clients which do not
-      belong to the class if the pool they are expected to use is exhausted.
+      belong to the class, if the pool they are expected to use is exhausted.
       So the limit on access based on class information is also available
       at the pool level; see <xref linkend="classification-pools"/>,
       within a subnet.
@@ -2454,13 +2454,13 @@ It is merely echoed by the server.
       </para>
 
       <para>
-      In a similar way a pool can be constrained to serve only known
+      In a similar way, a pool can be constrained to serve only known
       clients, i.e. clients which have a reservation, using the
       built-in "KNOWN" or "UNKNOWN" classes. One can assign addresses
       to registered clients without giving a different address per
       reservation, for instance when there are not enough available
       addresses. The determination whether there is a reservation
-      for a given client is made after a subnet is selected. As such, it
+      for a given client is made after a subnet is selected, so it
       is not possible to use KNOWN/UNKNOWN classes to select a shared
       network or a subnet.
       </para>
@@ -2479,7 +2479,7 @@ It is merely echoed by the server.
       as a member of the class.
       The last step is to assign options, again possibly based on the class
       information.
-      More complete and detailed description is available in
+      A more-complete and detailed description is available in
       <xref linkend="classify"/>.
       </para>
 
@@ -2488,13 +2488,13 @@ It is merely echoed by the server.
       on examining the values in the vendor class options or the existence of a
       host reservation. Information from these
       options is extracted, and a class name is constructed from it and added to
-      the class list for the packet. The second allows for specifying an expression
-      that is evaluated for each packet. If the result is "true" the packet is
+      the class list for the packet. The second specifies an expression
+      that is evaluated for each packet. If the result is "true," the packet is
       a member of the class.
       </para>
 
       <note><para>
-        Care should be taken with client classification as it is easy for
+        Care should be taken with client classification, as it is easy for
         clients that do not meet class criteria to be denied any service altogether.
       </para></note>
 
@@ -2828,12 +2828,12 @@ It is merely echoed by the server.
       uncontrollably if they are being generated faster than they can be
       delivered. If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced. The intention is to allow the kea-dhcp4 server to
+      been sufficiently reduced. The intent is to allow the kea-dhcp4 server to
       continue lease operations without running the risk that its memory usage
       grows without limit. The default value is 1024.
       </simpara></listitem>
       <listitem><simpara>
-      <command>ncr-protocol</command> - socket protocol use when sending requests to D2. Currently
+      <command>ncr-protocol</command> - socket protocol to use when sending requests to D2. Currently
       only UDP is supported.
       </simpara></listitem>
       <listitem><simpara>
@@ -2860,11 +2860,11 @@ It is merely echoed by the server.
       </para>
       </section>
       <section xml:id="dhcpv4-d2-rules-config">
-      <title>When Does the kea-dhcp4 Server Generate DDNS Requests?</title>
+      <title>When Does the kea-dhcp4 Server Generate a DDNS Request?</title>
       <para>kea-dhcp4 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4702">RFC 4702</link>.
-      It is important to keep in mind that kea-dhcp4 provides the initial decision-
-      making of when and what to update and forwards that information to D2 in
+      It is important to keep in mind that kea-dhcp4 makes the initial decision
+      of when and what to update and forwards that information to D2 in
       the form of NCRs. Carrying out the actual DNS updates and dealing with
       such things as conflict resolution are within the purview of D2 itself (<xref linkend="dhcp-ddns-server"/>).
       This section describes when kea-dhcp4 will generate NCRs and the
@@ -2875,14 +2875,14 @@ It is merely echoed by the server.
       In general, kea-dhcp4 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
-      A new lease is granted in response to a DHCP REQUEST
+      A new lease is granted in response to a DHCPREQUEST
       </para></listitem>
       <listitem><para>
       An existing lease is renewed but the FQDN associated with it has
-      changed.
+      changed
       </para></listitem>
       <listitem><para>
-      An existing lease is released in response to a DHCP RELEASE
+      An existing lease is released in response to a DHCPRELEASE
       </para></listitem>
       </orderedlist>
       In the second case, lease renewal, two DDNS requests will be issued: one
@@ -2891,9 +2891,9 @@ It is merely echoed by the server.
       single DDNS request to remove its entries will be made.
       </para>
       <para>
-      The decision-making involved when granting a new lease (the first case) is more
-      involved. When a new lease is granted, kea-dhcp4 will generate a DDNS
-      update request if the DHCP REQUEST contains either the FQDN option
+      The decisions involved when granting a new lease (the first case) are more
+      complex. When a new lease is granted, kea-dhcp4 will generate a DDNS
+      update request if the DHCPREQUEST contains either the FQDN option
       (code 81) or the Host Name option (code 12). If both are present,
       the server will use the FQDN option. By default kea-dhcp4
       will respect the FQDN N and S flags specified by the client as shown
@@ -2976,7 +2976,7 @@ It is merely echoed by the server.
       server's response to the client will be 0-1-1.
       </para>
       <para>
-      To override client delegation, the following values should be set in your configuration:
+      To override client delegation, issue the following commands:
       </para>
 <screen>
 "Dhcp4": {
@@ -2997,11 +2997,11 @@ It is merely echoed by the server.
       </section>
 
       <section xml:id="dhcpv4-fqdn-name-generation">
-      <title>kea-dhcp4 name generation for DDNS update requests</title>
+      <title>kea-dhcp4 Name Generation for DDNS Update Requests</title>
       <para>Each NameChangeRequest must of course include the fully qualified domain
       name whose DNS entries are to be affected. kea-dhcp4 can be configured to
-      supply a portion or all of that name based upon what it receives from
-      the client in the DHCP REQUEST.</para>
+      supply a portion or all of that name, based upon what it receives from
+      the client in the DHCPREQUEST.</para>
       <para>
        The default rules for constructing the FQDN that will be used for DNS
        entries are:
@@ -3023,7 +3023,7 @@ It is merely echoed by the server.
       </para></listitem>
       </orderedlist>
         These rules can amended by setting the
-        <command>replace-client-name</command> parameter which provides the
+        <command>replace-client-name</command> parameter, which provides the
         following modes of behavior:
       <itemizedlist>
       <listitem><para>
@@ -3068,7 +3068,7 @@ It is merely echoed by the server.
 }
 </screen>
       <para>
-      The prefix used in the generation of a FQDN is specified by the
+      The prefix used in the generation of an FQDN is specified by the
       <command>generated-prefix</command> parameter. The default value is "myhost". To alter
       its value, simply set it to the desired string:
       </para>
@@ -3082,7 +3082,7 @@ It is merely echoed by the server.
 }
 </screen>
       <para>
-      The suffix used when generating a FQDN or when qualifying a
+      The suffix used when generating an FQDN or when qualifying a
       partial name is specified by
       the <command>qualifying-suffix</command> parameter. This
       parameter has no default value, thus it is mandatory when
@@ -3123,7 +3123,7 @@ It is merely echoed by the server.
         that only characters that are permitted by RFC 1035 be included:
         A-Z, a-z, 0-9, and '-'.
 
-        This may be accomplished with following two parameters:
+        This may be accomplished with the following two parameters:
         <itemizedlist>
         <listitem><simpara>
         <command>hostname-char-set</command> - a regular expression describing
@@ -3152,7 +3152,7 @@ It is merely echoed by the server.
     ...
 }
 </screen>
-        Thus, a client supplied value of "myhost-$[123.org" would become
+        Thus, a client-supplied value of "myhost-$[123.org" would become
         "myhost-xx123.org". Sanitizing is performed only on the portion of
         the name supplied by the client and it is performed before applying
         a qualifying suffix (if one is defined and needed).
@@ -3187,7 +3187,7 @@ It is merely echoed by the server.
         Finally, given the latitude clients have in the values they send, it is
         virtually impossible to guarantee that a combination of these two
         parameters will always yield a name that is valid for use in DNS. For
-        example, using an empty value for hostname-char-replacment could yield
+        example, using an empty value for hostname-char-replacement could yield
         an empty domain label within a name, if that label consists only of
         invalid characters.
         </para>
@@ -3473,7 +3473,7 @@ It is merely echoed by the server.
         details of the inter-process communication can change; both
         the DHCPv4 and DHCPv6 sides should be running the same version
         of Kea. For instance, the support of port relay (RFC 8357) introduced
-        such incompatible change.</para>
+        an incompatible change.</para>
       </note>
       <para>
       The <command>dhcp4o6-port</command> global parameter specifies
@@ -3570,9 +3570,9 @@ It is merely echoed by the server.
          Kea now supports a new configuration scope called
          <command>sanity-checks</command>. It currently allows only a
          single parameter called <command>lease-checks</command>. It
-         governs what sort of verification is done when a new lease is
-         being loaded from a lease file. With the introduction of the
-         sanity checks mechanism, it is now possible to tell Kea to
+         governs the verification that is done when a new lease is
+         loaded from a lease file. With the introduction of the
+         sanity-checks mechanism, it is now possible to tell Kea to
          try to correct inconsistent data.
        </para>
 
