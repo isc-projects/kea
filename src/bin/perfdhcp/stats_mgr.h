@@ -9,7 +9,6 @@
 
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include <util/threads/sync.h>
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
@@ -307,7 +306,6 @@ public:
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
-            isc::util::thread::Mutex::Locker lock(mutex_);
             ++sent_packets_num_;
             sent_packets_.template get<0>().push_back(packet);
         }
@@ -322,7 +320,6 @@ public:
             if (!packet) {
                 isc_throw(BadValue, "Packet is null");
             }
-            isc::util::thread::Mutex::Locker lock(mutex_);
             rcvd_packets_.push_back(packet);
         }
 
@@ -470,7 +467,6 @@ public:
                 ++ordered_lookups_;
                 packet_found = true;
             } else {
-                isc::util::thread::Mutex::Locker lock(mutex_);
                 // If we are here, it means that we were unable to match the
                 // next incoming packet with next sent packet so we need to
                 // take a little more expensive approach to look packets using
@@ -579,7 +575,6 @@ public:
             // If packet was found, we assume it will be never searched
             // again. We want to delete this packet from the list to
             // improve performance of future searches.
-            isc::util::thread::Mutex::Locker lock(mutex_);
             next_sent_ = eraseSent(next_sent_);
             return(sent_packet);
         }
@@ -919,24 +914,23 @@ public:
         /// \brief Erase packet from the list of sent packets.
         ///
         /// Method erases packet from the list of sent packets.
-        /// Lock must be held by caller.
         ///
         /// \param it iterator pointing to packet to be erased.
         /// \return iterator pointing to packet following erased
         /// packet or sent_packets_.end() if packet not found.
         PktListIterator eraseSent(const PktListIterator it) {
-            if (archive_enabled_) {
-                // We don't want to keep list of all sent packets
-                // because it will affect packet lookup performance.
-                // If packet is matched with received packet we
-                // move it to list of archived packets. List of
-                // archived packets may be used for diagnostics
-                // when test is completed.
-                archived_packets_.push_back(*it);
-            }
-            // get<0>() template returns sequential index to
-            // container.
-            return(sent_packets_.template get<0>().erase(it));
+             if (archive_enabled_) {
+                 // We don't want to keep list of all sent packets
+                 // because it will affect packet lookup performance.
+                 // If packet is matched with received packet we
+                 // move it to list of archived packets. List of
+                 // archived packets may be used for diagnostics
+                 // when test is completed.
+                 archived_packets_.push_back(*it);
+             }
+             // get<0>() template returns sequential index to
+             // container.
+             return(sent_packets_.template get<0>().erase(it));
         }
 
         ExchangeType xchg_type_;             ///< Packet exchange type.
@@ -1004,7 +998,6 @@ public:
         uint64_t sent_packets_num_;    ///< Total number of sent packets.
         uint64_t rcvd_packets_num_;    ///< Total number of received packets.
         boost::posix_time::ptime boot_time_; ///< Time when test is started.
-        isc::util::thread::Mutex mutex_; ///< Mutex for concurrent access.
     };
 
     /// Pointer to ExchangeStats.

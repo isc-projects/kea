@@ -16,6 +16,7 @@
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
 #include <util/random/random_number_generator.h>
+#include <util/threads/sync.h>
 #include <util/threads/watched_thread.h>
 
 #include <boost/noncopyable.hpp>
@@ -23,6 +24,7 @@
 #include <boost/function.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 
+#include <queue>
 #include <string>
 #include <vector>
 
@@ -1144,6 +1146,83 @@ protected:
     boost::shared_ptr<TestControlSocket> socket_; ///< Socket object.
 
     util::thread::WatchedThreadPtr sender_thread_; ///< Sender watched thread.
+
+    /// \brief Sent Packet Queue.
+    /// \tparam T class representing DHCPv4 or DHCPv6 packet.
+    template <class T = dhcp::Pkt4>
+    struct SentQueue {
+        /// \brief Type of shared pointer to packets.
+        typedef boost::shared_ptr<T> TPtr;
+
+        /// \brief Push a packet.
+        void push(TPtr pkt) {
+            isc::util::thread::Mutex::Locker lock(mutex_);
+            pkt_queue_.push(pkt);
+        }
+
+        /// \brief Pop a packet.
+        TPtr pop() {
+            if (pkt_queue_.empty()) {
+                return (TPtr());
+            }
+            isc::util::thread::Mutex::Locker lock(mutex_);
+            auto pkt = pkt_queue_.front();
+            pkt_queue_.pop();
+            return pkt;
+        }
+
+        /// \brief Consume sent packets.
+        /// \param pass_sent_packet passSentPacket lambda,
+        void consumeSent(const boost::function<void(TPtr)>& pass_sent_packet) {
+            TPtr pkt;
+            while ((pkt = pop())) {
+                pass_sent_packet(pkt);
+            }
+        }
+
+        /// \brief Packet queue.
+        std::queue<TPtr> pkt_queue_;
+
+        /// \brief Mutex for concurrent access.
+        isc::util::thread::Mutex mutex_;
+    };
+
+    /// Type of sent Packet Queue for DHCPv4.
+    typedef SentQueue<dhcp::Pkt4> SentQueue4;
+
+    /// Type of sent Packet Queue for DHCPv6.
+    typedef SentQueue<dhcp::Pkt6> SentQueue6;
+
+    /// Sent Packet Queue for DHCPv4.
+    SentQueue4 sent_queue4_;
+
+    /// Sent Packet Queue for DHCPv6.
+    SentQueue6 sent_queue6_;
+
+    /// Consume sent packets for DHCPv4.
+    void consumeSent4() {
+        if (!stats_mgr4_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
+                      "hasn't been initialized");
+        }
+        sent_queue4_.consumeSent([this](dhcp::Pkt4Ptr pkt4) {
+                stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+            });
+    }
+    
+    /// Consume sent packets for DHCPv6.
+    void consumeSent6() {
+        if (!stats_mgr6_) {
+            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
+                      "hasn't been initialized");
+        }
+        sent_queue6_.consumeSent([this](dhcp::Pkt6Ptr pkt6) {
+                stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+            });
+    }
+
+    /// Consume sent packets.
+    void consumeSent();
 };
 
 }  // namespace perfdhcp

@@ -1237,6 +1237,9 @@ TestControl::readPacketTemplate(const std::string& file_name) {
 void
 TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
+        if (sender_thread_) {
+            consumeSent();
+        }
         Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
                                                           pkt4));
         CommandOptions::ExchangeMode xchg_mode =
@@ -1280,6 +1283,9 @@ void
 TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
     if (packet_type == DHCPV6_ADVERTISE) {
+        if (sender_thread_) {
+            consumeSent();
+        }
         Pkt6Ptr solicit_pkt6(stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_SA,
                                                          pkt6));
         CommandOptions::ExchangeMode xchg_mode =
@@ -1557,7 +1563,9 @@ TestControl::run() {
         // Calculate number of packets to be sent to stay
         // catch up with rate.
         uint64_t packets_due = 0;
-        if (!sender_thread_) {
+        if (sender_thread_) {
+            consumeSent();
+        } else {
             packets_due = basic_rate_control_.getOutboundMessageCount();
             if (packets_due > 0) {
                 checkLateMessages(basic_rate_control_);
@@ -1581,6 +1589,7 @@ TestControl::run() {
         if (checkExitConditions()) {
             if (sender_thread_ && sender_thread_->isRunning()) {
                 sender_thread_->stop();
+                consumeSent();
             }
             break;
         }
@@ -1622,6 +1631,9 @@ TestControl::run() {
         // Report delay means that user requested printing number
         // of sent/received/dropped packets repeatedly.
         if (options.getReportDelay() > 0) {
+            if (sender_thread_) {
+                consumeSent();
+            }
             printIntermediateStats();
         }
 
@@ -1697,6 +1709,15 @@ TestControl::runSender() {
                 cerr << "sendPackets failed with " << ex.what() << endl;
             }
             continue;
+        } else {
+            if (testDiags('i')) {
+                CommandOptions& options = CommandOptions::instance();
+                if (options.getIpVersion() == 4) {
+                    stats_mgr4_->incrementCounter("shortwait");
+                } else if (options.getIpVersion() == 6) {
+                    stats_mgr6_->incrementCounter("shortwait");
+                }
+            }
         }
 
         // Wait for next due or terminate.
@@ -1797,7 +1818,11 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
             isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
                       "hasn't been initialized");
         }
-        stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+        if (sender_thread_) {
+            sent_queue4_.push(pkt4);
+        } else {
+            stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+        }
         stats_mgr4_->passSentTimes(StatsMgr4::XCHG_DO,
                                    basic_rate_control_.getDue(),
                                    basic_rate_control_.getLast());
@@ -1834,31 +1859,35 @@ TestControl::sendDiscover4(const std::vector<uint8_t>& template_buf,
     if (rand_offset + HW_ETHER_LEN > in_buf.size()) {
         isc_throw(OutOfRange, "randomization offset is out of bounds");
     }
-    PerfPkt4Ptr pkt4(new PerfPkt4(&in_buf[0], in_buf.size(),
-                                  transid_offset,
-                                  transid));
+    PerfPkt4Ptr ppkt4(new PerfPkt4(&in_buf[0], in_buf.size(),
+                                   transid_offset,
+                                   transid));
 
     // Replace MAC address in the template with actual MAC address.
-    pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
+    ppkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
     // Create a packet from the temporary buffer.
-    setDefaults4(boost::static_pointer_cast<Pkt4>(pkt4));
+    setDefaults4(boost::static_pointer_cast<Pkt4>(ppkt4));
     // Pack the input packet buffer to output buffer so as it can
     // be sent to server.
-    pkt4->rawPack();
-    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
+    ppkt4->rawPack();
+    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(ppkt4));
     if (!preload) {
         if (!stats_mgr4_) {
             isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
                       "hasn't been initialized");
         }
         // Update packet stats.
-        stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
-                                    boost::static_pointer_cast<Pkt4>(pkt4));
+        Pkt4Ptr pkt4 = boost::static_pointer_cast<Pkt4>(pkt4);
+        if (sender_thread_) {
+            sent_queue4_.push(pkt4);
+        } else {
+            stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+        }
         stats_mgr4_->passSentTimes(StatsMgr4::XCHG_DO,
                                    basic_rate_control_.getDue(),
                                    basic_rate_control_.getLast());
     }
-    saveFirstPacket(pkt4);
+    saveFirstPacket(ppkt4);
 }
 
 bool
@@ -2341,7 +2370,11 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
             isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
                       "hasn't been initialized");
         }
-        stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        if (sender_thread_) {
+            sent_queue6_.push(pkt6);
+        } else {
+            stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        }
         stats_mgr6_->passSentTimes(StatsMgr6::XCHG_SA,
                                    basic_rate_control_.getDue(),
                                    basic_rate_control_.getLast());
@@ -2395,7 +2428,11 @@ TestControl::sendSolicit6(const std::vector<uint8_t>& template_buf,
                       "hasn't been initialized");
         }
         // Update packet stats.
-        stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        if (sender_thread_) {
+            sent_queue6_.push(pkt6);
+        } else {
+            stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        }
         stats_mgr6_->passSentTimes(StatsMgr6::XCHG_SA,
                                    basic_rate_control_.getDue(),
                                    basic_rate_control_.getLast());
@@ -2495,6 +2532,16 @@ TestControl::testDiags(const char diag) const {
         return (true);
     }
     return (false);
+}
+
+void
+TestControl::consumeSent() {
+    CommandOptions& options = CommandOptions::instance();
+    if (options.getIpVersion() == 4) {
+        consumeSent4();
+    } else {
+        consumeSent6();
+    }
 }
 
 }  // namespace perfdhcp
