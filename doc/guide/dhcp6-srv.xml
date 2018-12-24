@@ -2031,20 +2031,20 @@ should include options from the new option space:
       <title>IPv6 Subnet Selection</title>
       <para>
         The DHCPv6 server may receive requests from local (connected to the
-        same subnet as the server) and remote (connecting via relays) clients.
+        same subnet as the server) and remote (connected via relays) clients.
         As the server may have many subnet configurations defined, it must select
         an appropriate subnet for a given request.
       </para>
       <para>
-        The server can not assume which of the configured subnets are local. In IPv4
-        it is possible as there is a reasonable expectation that the
+        In IPv4, the server can determine which of the configured subnets are local, 
+        as there is a reasonable expectation that the
         server will have a (global) IPv4 address configured on the interface,
-        and can use that information to detect whether a subnet is local or
-        not. That assumption is not true in IPv6: the DHCPv6 server must be able
-        to operate while only using link-local addresses. Therefore an optional
+        and it can use that information to detect whether a subnet is local.
+        That assumption is not true in IPv6; the DHCPv6 server must be able
+        to operate while only using link-local addresses. Therefore, an optional
         <command>interface</command> parameter is available within a subnet definition
         to designate that a given subnet is local, i.e. reachable directly over
-        the specified interface. For example the server that is intended to serve
+        the specified interface. For example, the server that is intended to serve
         a local subnet over eth0 may be configured as follows:
         <screen>
 "Dhcp6": {
@@ -2103,14 +2103,14 @@ should include options from the new option space:
         <title>DHCPv6 Relays</title>
         <para>
           A DHCPv6 server with multiple subnets defined must select the
-          appropriate subnet when it receives a request from a client.  For clients
+          appropriate subnet when it receives a request from a client. For clients
           connected via relays, two mechanisms are used:
         </para>
         <para>
           The first uses the linkaddr field in the RELAY_FORW message. The name
           of this field is somewhat misleading in that it does not contain a link-layer
-          address: instead, it holds an address (typically a global address) that is
-          used to identify a link. The DHCPv6 server checks if the address belongs
+          address; instead, it holds an address (typically a global address) that is
+          used to identify a link. The DHCPv6 server checks to see whether the address belongs
           to a defined subnet and, if it does, that subnet is selected for the client's
           request.
         </para>
@@ -2119,17 +2119,17 @@ should include options from the new option space:
           message, relays may insert an interface-id option into the message that
           identifies the interface on the relay that received the message. (Some
           relays allow configuration of that parameter, but it is sometimes
-          hardcoded and may range from the very simple (e.g. "vlan100") to the very cryptic:
+          hardcoded and may range from the very simple (e.g. "vlan100") to the very cryptic;
           one example seen on real hardware was "ISAM144|299|ipv6|nt:vp:1:110"). The
           server can use this information to select the appropriate subnet.
-          The information is also returned to the relay which then knows the
-          interface to use to transmit the response to the client. In order for
+          The information is also returned to the relay, which then knows the
+          interface to use to transmit the response to the client. For
           this to work successfully, the relay interface IDs must be unique within
           the network and the server configuration must match those values.
         </para>
         <para>
           When configuring the DHCPv6 server, it should be noted that two
-          similarly-named parameters can be configured for a subnet:
+          similarly named parameters can be configured for a subnet:
           <itemizedlist>
             <listitem><simpara>
               <command>interface</command> defines which local network interface can be used
@@ -2141,14 +2141,14 @@ should include options from the new option space:
               the response packet is sent.
             </simpara></listitem>
           </itemizedlist>
-          The two are mutually exclusive: a subnet cannot be both reachable locally
+          The two are mutually exclusive; a subnet cannot be reachable both locally
           (direct traffic) and via relays (remote traffic). Specifying both is a
           configuration error and the DHCPv6 server will refuse such a configuration.
         </para>
 
         <para>
           The following example configuration shows how to specify an interface-id with
-          a value of "vlan123".
+          a value of "vlan123":
           <screen>
 "Dhcp6": {
     "subnet6": [
@@ -2172,19 +2172,19 @@ should include options from the new option space:
       <title>Relay-Supplied Options</title>
       <para><link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6422">RFC 6422</link>
       defines a mechanism called Relay-Supplied DHCP Options. In certain cases relay
-      agents are the only entities that may have specific information. They can
+      agents are the only entities that may have specific information, and they can
       insert options when relaying messages from the client to the server. The
       server will then do certain checks and copy those options to the response
-      that will be sent to the client.</para>
+      sent to the client.</para>
 
       <para>There are certain conditions that must be met for the option to be
-      included. First, the server must not provide the option itself. In
+      included. First, the server must not provide the option itself; in
       other words, if both relay and server provide an option, the server always
       takes precedence. Second, the option must be RSOO-enabled. IANA maintains a
       list of RSOO-enabled options <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.iana.org/assignments/dhcpv6-parameters/dhcpv6-parameters.xhtml#options-relay-supplied">here</link>.
       However, there may be cases when system administrators want to echo other
       options. Kea can be instructed to treat other options as RSOO-enabled.
-      For example, to mark options 110, 120 and 130 as RSOO-enabled, the following
+      For example, to mark options 110, 120, and 130 as RSOO-enabled, the following
       syntax should be used:
 <screen>
 "Dhcp6": {
@@ -2194,10 +2194,10 @@ should include options from the new option space:
 </screen>
       </para>
       <para>As of March 2015, only option 65 is RSOO-enabled by IANA. This
-      option will always be treated as such and there's no need to explicitly
+      option will always be treated as such, so there is no need to explicitly
       mark it. Also, when enabling standard options, it is possible to use their
-      names, rather than option code, e.g. (e.g. use
-      <command>dns-servers</command> instead of <command>23</command>). See
+      names, rather than option code, e.g. use
+      <command>dns-servers</command> instead of <command>23</command>. See
       <xref linkend="dhcp6-std-options-list"/> for the names. In certain cases
       it could also work for custom options, but due to the nature of the parser
       code this may be unreliable and should be avoided.
@@ -2207,104 +2207,95 @@ should include options from the new option space:
 
     <section xml:id="dhcp6-client-classifier">
       <title>Client Classification in DHCPv6</title>
-
       <para>
       The DHCPv6 server includes support for client classification.  For a deeper
       discussion of the classification process see <xref linkend="classify"/>.
       </para>
 
-      <para>In certain cases it is useful to configure the server to differentiate between
-      DHCP clients types and treat them accordingly. It is envisaged that client
-      classification will be used for modifying the behavior of almost any part of
-      the DHCP message processing. In the current release of Kea, there are three
-      mechanisms that take advantage of the client classification in DHCPv6: subnet
-      selection, address pool selection and DHCP options assignment.
-      </para>
-
       <para>
-      In certain cases it is useful to differentiate between different types
-      of clients and treat them accordingly. It is envisaged that client
-      classification will be used for changing the behavior of almost any part of
-      the DHCP message processing. In the current release of the software however,
-      there are only some mechanisms that take advantage of client classification:
-      subnet selection, pool selection, and assignment of different options.
+      In certain cases it is useful to configure the server to differentiate between
+      DHCP client types and treat them accordingly. Client
+      classification can be used to modify the behavior of almost any part of
+      the DHCP message processing. In the current release of Kea, there are three
+      mechanisms that take advantage of client classification in DHCPv6: subnet
+      selection, address pool selection, and DHCP options assignment.
       </para>
 
       <para>
       Kea can be instructed to limit access to given subnets based on class information.
       This is particularly useful for cases where two types of devices share the
       same link and are expected to be served from two different subnets. The
-      primary use case for such a scenario is cable networks. Here, there are two
+      primary use case for such a scenario is cable networks, where there are two
       classes of devices: the cable modem itself, which should be handed a lease
-      from subnet A and all other devices behind the modem that should get a lease
+      from subnet A; and all other devices behind the modem, which should get a lease
       from subnet B. That segregation is essential to prevent overly curious
       users from playing with their cable modems. For details on how to set up
       class restrictions on subnets, see <xref linkend="classification-subnets"/>.
       </para>
 
       <para>
-      When subnets belong to a shared network the classification applies
+      When subnets belong to a shared network, the classification applies
       to subnet selection but not to pools, e.g., a pool in a subnet
       limited to a particular class can still be used by clients which do not
-      belong to the class if the pool they are expected to use is exhausted.
-      So the limit access based on class information is also available
-      at the address/prefix pool level, see <xref
-      linkend="classification-pools"/> within a subnet.
-      This is useful when to segregate clients belonging to the same subnet
+      belong to the class, if the pool they are expected to use is exhausted.
+      So the limit on access based on class information is also available
+      at the address/prefix pool level; see <xref
+      linkend="classification-pools"/>, within a subnet.
+      This is useful when segregating clients belonging to the same subnet
       into different address ranges.
       </para>
 
       <para>
-      In a similar way a pool can be constrained to serve only known
+      In a similar way, a pool can be constrained to serve only known
       clients, i.e. clients which have a reservation, using the
-      built-in "KNOWN" or "UNKNOWN" classes.  One can assign addresses
+      built-in "KNOWN" or "UNKNOWN" classes. One can assign addresses
       to registered clients without giving a different address per
-      reservations, for instance when there is not enough available
+      reservation, for instance when there are not enough available
       addresses. The determination whether there is a reservation
-      for a given client is made after a subnet is selected. As such, it
+      for a given client is made after a subnet is selected, so it
       is not possible to use KNOWN/UNKNOWN classes to select a shared
       network or a subnet.
       </para>
 
       <para>
-      The process of doing classification is conducted in five steps.
+      The process of classification is conducted in five steps.
       The first step is to assess an incoming packet and assign it to
       zero or more classes.
       The second step is to choose a subnet, possibly based on the
       class information.
       The next step is to evaluate class expressions depending on the
       built-in "KNOWN"/"UNKNOWN" classes after host reservation lookup,
-      using them for pool/pd-pool selection and to assign classes from host
+      using them for pool/pd-pool selection and assigning classes from host
       reservations.
-      After the list of required classes is built and each class of the list
-      has its expression evaluated: when it returns true the packet is added
+      The list of required classes is then built and each class of the list
+      has its expression evaluated; when it returns "true" the packet is added
       as a member of the class.
-      The last step is to assign options again possibly based on the class
+      The last step is to assign options, again possibly based on the class
       information.
-      More complete and detailed description is available in
+      More complete and detailed information is available in
       <xref linkend="classify"/>.
       </para>
 
       <para>
-      There are two main methods of doing classification. The first is automatic and relies
-      on examining the values in the vendor class options or existence of a
+      There are two main methods of classification. The first is automatic and relies
+      on examining the values in the vendor class options or the existence of a
       host reservation. Information from these
-      options is extracted and a class name is constructed from it and added to
-      the class list for the packet. The second allows for specifying an expression
-      that is evaluated for each packet. If the result is true the packet is
+      options is extracted, and a class name is constructed from it and added to
+      the class list for the packet. The second specifies an expression
+      that is evaluated for each packet. If the result is "true", the packet is
       a member of the class.
       </para>
 
       <note><para>
-        Care should be taken with client classification as it is easy for
-        clients that do not meet class criteria to be denied any service altogether.
+        Care should be taken with client classification, as it is easy for
+        clients that do not meet class criteria to be denied all service.
       </para></note>
 
       <section>
         <title>Defining and Using Custom Classes</title>
         <para>
         The following example shows how to configure a class using an expression
-        and a subnet making use of that class. This configuration defines the
+        and a subnet using that class. This configuration defines the
         class named "Client_enterprise". It is comprised
         of all clients whose client identifiers start with the given hex string (which
         would indicate a DUID based on an enterprise id of 0xAABBCCDD).
@@ -2342,9 +2333,9 @@ should include options from the new option space:
 
       <para>
       This example shows a configuration using an automatically generated
-      "VENDOR_CLASS_" class. The Administrator of the network has
+      "VENDOR_CLASS_" class. The administrator of the network has
       decided that addresses from range 2001:db8:1::1 to 2001:db8:1::ffff are
-      going to be managed by the Dhcp6 server and only clients belonging to the
+      managed by the Dhcp6 server and only clients belonging to the
       eRouter1.0 client class are allowed to use that pool.
 
         <screen>
@@ -2367,10 +2358,10 @@ should include options from the new option space:
       </section>
 
       <section id="dhcp6-required-class">
-        <title>Required classification</title>
+        <title>Required Classification</title>
         <para>
         In some cases it is useful to limit the scope of a class to
-        a shared-network, subnet or pool. There are two parameters
+        a shared-network, subnet, or pool. There are two parameters
         which are used to limit the scope of the class by instructing
         the server to perform evaluation of test expressions when
         required.
@@ -2379,22 +2370,22 @@ should include options from the new option space:
         <para>
         The first one is the per-class <command>only-if-required</command>
         flag which is false by default. When it is set to
-        <command>true</command> the test expression of the class is not
-        evaluated at the reception of the incoming packet but later and
+        <command>true</command>, the test expression of the class is not
+        evaluated at the reception of the incoming packet but later, and
         only if the class evaluation is required.
         </para>
 
         <para>
-        The second is the <command>require-client-classes</command> which
+        The second is <command>require-client-classes</command>, which
         takes a list of class names and is valid in shared-network,
-        subnet and pool scope. Classes in these lists are marked as
+        subnet, and pool scope. Classes in these lists are marked as
         required and evaluated after selection of this specific
         shared-network/subnet/pool and before output option processing.
         </para>
 
         <para>
         In this example, a class is assigned to the incoming packet
-        when the specified subnet is used.
+        when the specified subnet is used:
 
         <screen>
 "Dhcp6": {
@@ -2426,7 +2417,7 @@ should include options from the new option space:
          <para>
          Required evaluation can be used to express complex dependencies,
          for example, subnet membership. It can also be used to reverse the
-         precedence: if you set an option-data in a subnet it takes
+         precedence; if you set an option-data in a subnet it takes
          precedence over an option-data in a class. When you move the
          option-data to a required class and require it in
          the subnet, a class evaluated earlier may take precedence.
@@ -2435,8 +2426,8 @@ should include options from the new option space:
          <para>
          Required evaluation is also available at shared-network and
          pool/pd-pool levels. The order in which required classes are
-         considered is: shared-network, subnet and (pd-)pool, i.e.
-         the opposite order option-data are processed.
+         considered is: shared-network, subnet, and (pd-)pool, i.e.
+         the opposite order that option-data is processed.
          </para>
 
        </section>
@@ -2455,17 +2446,17 @@ should include options from the new option space:
       </para></listitem>
       <listitem><para>
       Whether the change requests forward DNS updates (AAAA records), reverse
-      DNS updates (PTR records), or both.
+      DNS updates (PTR records), or both
       </para></listitem>
       <listitem><para>
       The FQDN, lease address, and DHCID
       </para></listitem>
       </orderedlist>
       The parameters controlling the generation of NCRs for submission to D2
-      are contained in the <command>dhcp-ddns</command> section of the kea-dhcp6
+      are contained in the <command>dhcp-ddns</command> section of the kea-dhcp6 server
       configuration. The mandatory parameters for the DHCP DDNS configuration
-      are <command>enable-updates</command> which is unconditionally
-      required, and <command>qualifying-suffix</command> which has no
+      are <command>enable-updates</command>, which is unconditionally
+      required, and <command>qualifying-suffix</command>, which has no
       default value and is required when <command>enable-updates</command>
       is set to <command>true</command>.
 
@@ -2536,14 +2527,14 @@ should include options from the new option space:
       <section xml:id="dhcpv6-d2-io-config">
       <title>DHCP-DDNS Server Connectivity</title>
       <para>
-      In order for NCRs to reach the D2 server, kea-dhcp6 must be able
-      to communicate with it.  kea-dhcp6 uses the following configuration
+      For NCRs to reach the D2 server, kea-dhcp6 must be able
+      to communicate with it. kea-dhcp6 uses the following configuration
       parameters to control this communication:
       <itemizedlist>
       <listitem><simpara>
-      <command>enable-updates</command> - determines whether or not kea-dhcp6 will
-      generate NCRs.  If missing, this value is assumed to be false hence DDNS updates
-      are disabled.  To enable DDNS updates set this value to true:
+      <command>enable-updates</command> - determines whether kea-dhcp6 will
+      generate NCRs. If missing, this value is assumed to be false, so DDNS updates
+      are disabled. To enable DDNS updates set this value to true.
       </simpara></listitem>
       <listitem><simpara>
       <command>server-ip</command> - IP address on which D2 listens for requests. The default is
@@ -2551,43 +2542,43 @@ should include options from the new option space:
       either an IPv4 or IPv6 address.
       </simpara></listitem>
       <listitem><simpara>
-      <command>server-port</command> - port on which D2 listens for requests.  The default value
+      <command>server-port</command> - port on which D2 listens for requests. The default value
       is 53001.
       </simpara></listitem>
       <listitem><simpara>
-      <command>sender-ip</command> - IP address which kea-dhcp6 should use to send requests to D2.
-      The default value is blank which instructs kea-dhcp6 to select a suitable
+      <command>sender-ip</command> - IP address which kea-dhcp6 uses to send requests to D2.
+      The default value is blank, which instructs kea-dhcp6 to select a suitable
       address.
       </simpara></listitem>
       <listitem><simpara>
-      <command>sender-port</command> - port which kea-dhcp6 should use to send requests to D2. The
+      <command>sender-port</command> - port which kea-dhcp6 uses to send requests to D2. The
       default value of 0 instructs kea-dhcp6 to select a suitable port.
       </simpara></listitem>
       <listitem><simpara>
       <command>max-queue-size</command> - maximum number of requests allowed to queue waiting to
       be sent to D2. This value guards against requests accumulating
       uncontrollably if they are being generated faster than they can be
-      delivered.  If the number of requests queued for transmission reaches
+      delivered. If the number of requests queued for transmission reaches
       this value, DDNS updating will be turned off until the queue backlog has
-      been sufficiently reduced.  The intent is to allow kea-dhcp6 to
-      continue lease operations.  The default value is 1024.
+      been sufficiently reduced. The intent is to allow kea-dhcp6 to
+      continue lease operations without running the risk that its memory usage
+      grows without limit. The default value is 1024.
       </simpara></listitem>
       <listitem><simpara>
-      <command>ncr-protocol</command> - socket protocol use when sending requests to D2.  Currently
-      only UDP is supported.  TCP may be available in an upcoming release.
+      <command>ncr-protocol</command> - socket protocol to use when sending requests to D2. Currently
+      only UDP is supported.
       </simpara></listitem>
       <listitem><simpara>
       <command>ncr-format</command> - packet format to use when sending requests to D2.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
+      Currently only JSON format is supported.
       </simpara></listitem>
       </itemizedlist>
-      By default, kea-dhcp-ddns is assumed to running on the same machine as kea-dhcp6, and
+      By default, kea-dhcp-ddns is assumed to be running on the same machine as kea-dhcp6, and
       all of the default values mentioned above should be sufficient.
       If, however, D2 has been configured to listen on a different address or
       port, these values must altered accordingly. For example, if D2 has been
       configured to listen on 2001:db8::5 port 900, the following configuration
-      would be required:
+      is required:
 <screen>
 "Dhcp6": {
     "dhcp-ddns": {
@@ -2601,11 +2592,11 @@ should include options from the new option space:
       </para>
       </section>
       <section xml:id="dhcpv6-d2-rules-config">
-      <title>When Does kea-dhcp6 Generate a DDNS Request?</title>
+      <title>When Does the kea-dhcp6 Server Generate a DDNS Request?</title>
       <para>kea-dhcp6 follows the behavior prescribed for DHCP servers in
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc4704">RFC 4704</link>.
-      It is important to keep in mind that kea-dhcp6 provides the initial
-      decision making of when and what to update and forwards that
+      It is important to keep in mind that kea-dhcp6 makes the initial
+      decision of when and what to update and forwards that
       information to D2 in the form of NCRs. Carrying out the actual
       DNS updates and dealing with such things as conflict resolution
       are within the purview of D2 itself (<xref linkend="dhcp-ddns-server"/>).
@@ -2616,36 +2607,35 @@ should include options from the new option space:
       <note>
         <para>
         Currently the interface between kea-dhcp6 and D2 only supports requests
-        which update DNS entries for a single IP address.  If a lease grants
+        which update DNS entries for a single IP address. If a lease grants
         more than one address, kea-dhcp6 will create the DDNS update request for
-        only the first of these addresses.  Support for multiple address
-        mappings may be provided in a future release.
+        only the first of these addresses.
         </para>
       </note>
       <para>
       In general, kea-dhcp6 will generate DDNS update requests when:
       <orderedlist>
       <listitem><para>
-      A new lease is granted in response to a REQUEST
+      A new lease is granted in response to a DHCPREQUEST
       </para></listitem>
       <listitem><para>
       An existing lease is renewed but the FQDN associated with it has
-      changed.
+      changed
       </para></listitem>
       <listitem><para>
-      An existing lease is released in response to a RELEASE
+      An existing lease is released in response to a DHCPRELEASE
       </para></listitem>
       </orderedlist>
-      In the second case, lease renewal, two  DDNS requests will be issued: one
-      request to remove entries for the previous FQDN and a second request to
-      add entries for the new FQDN.  In the last case, a lease release, a
+      In the second case, lease renewal, two DDNS requests will be issued: one
+      request to remove entries for the previous FQDN, and a second request to
+      add entries for the new FQDN. In the last case, a lease release, a
       single DDNS request to remove its entries will be made.
       </para>
       <para>
-      The decision making involved when granting a new lease the first case) is more
-      involved. When a new lease is granted, kea-dhcp6 will generate a DDNS
-      update request only if the REQUEST contains the FQDN option (code 39).
-      By default kea-dhcp6 will respect the FQDN N and S flags specified by the client
+      The decisions involved when granting a new lease the first case) are more
+      complex. When a new lease is granted, kea-dhcp6 will generate a DDNS
+      update request only if the DHCPREQUEST contains the FQDN option (code 39).
+      By default, kea-dhcp6 will respect the FQDN N and S flags specified by the client
       as shown in the following table:
       </para>
         <table xml:id="dhcp6-fqdn-flag-table">
@@ -2690,13 +2680,13 @@ should include options from the new option space:
       <para>
       The first row in the table above represents "client delegation". Here
       the DHCP client states that it intends to do the forward DNS updates and
-      the server should do the reverse updates.  By default, kea-dhcp6 will honor
+      the server should do the reverse updates. By default, kea-dhcp6 will honor
       the client's wishes and generate a DDNS request to D2 to update only
-      reverse DNS data.  The parameter, <command>override-client-update</command>, can be used
-      to instruct the server to override client delegation requests.  When
+      reverse DNS data. The parameter <command>override-client-update</command> can be used
+      to instruct the server to override client delegation requests. When
       this parameter is true, kea-dhcp6 will disregard requests for client
       delegation and generate a DDNS request to update both forward and
-      reverse DNS data.  In this case, the N-S-O flags in the server's
+      reverse DNS data. In this case, the N-S-O flags in the server's
       response to the client will be 0-1-1 respectively.
       </para>
       <para>
@@ -2705,7 +2695,7 @@ should include options from the new option space:
       combination is received from the client, the packet will be dropped by kea-dhcp6.)
       </para>
       <para>
-      To override client delegation, set the following values in the configuration:
+      To override client delegation, set the following values in the configuration file:
       </para>
 <screen>
 "Dhcp6": {
@@ -2721,7 +2711,7 @@ should include options from the new option space:
       requests that no DNS updates be done. The parameter, <command>override-no-update</command>,
       can be used to instruct the server to disregard the client's wishes. When
       this parameter is true, kea-dhcp6 will generate DDNS update requests to
-      kea-dhcp-ddns even if the client requests no updates be done.  The N-S-O
+      kea-dhcp-ddns even if the client requests no updates be done. The N-S-O
       flags in the server's response to the client will be 0-1-1.
       </para>
       <para>
@@ -2740,19 +2730,19 @@ should include options from the new option space:
       <section xml:id="dhcpv6-fqdn-name-generation">
       <title>kea-dhcp6 Name Generation for DDNS Update Requests</title>
       <para>Each NameChangeRequest must of course include the fully qualified
-      domain name whose DNS entries are to be affected.  kea-dhcp6 can be
-      configured to supply a portion or all of that name based upon what it
-      receives from the client.</para>
+      domain name whose DNS entries are to be affected. kea-dhcp6 can be
+      configured to supply a portion or all of that name, based upon what it
+      receives from the client in the DHCPREQUEST.</para>
       <para>
        The default rules for constructing the FQDN that will be used for DNS
        entries are:
       <orderedlist>
       <listitem><para>
-        If the DHCPREQUEST contains the client FQDN option, the candidate name
-        is taken from there.
+        If the DHCPREQUEST contains the client FQDN option, take the candidate name
+        from there.
       </para></listitem>
       <listitem><para>
-        If the candidate name is a partial (i.e. unqualified) name then add a
+        If the candidate name is a partial (i.e. unqualified) name, then add a
         configurable suffix to the name and use the result as the FQDN.
       </para></listitem>
       <listitem><para>
@@ -2763,13 +2753,13 @@ should include options from the new option space:
         If the client provided neither option, then no DNS action will be taken.
       </para></listitem>
       </orderedlist>
-        These rules can amended by setting the
-        <command>replace-client-name</command> parameter which provides the
+        These rules can be amended by setting the
+        <command>replace-client-name</command> parameter, which provides the
         following modes of behavior:
       <itemizedlist>
       <listitem><para>
-        <command>never</command> - Use the name the client sent.  If the client
-        sent no name, do not generate one.  This is the default mode.
+        <command>never</command> - Use the name the client sent. If the client
+        sent no name, do not generate one. This is the default mode.
       </para></listitem>
       <listitem><para>
         <command>always</command> - Replace the name the client sent. If the
@@ -2786,14 +2776,14 @@ should include options from the new option space:
       </itemizedlist>
     <note>
     Note that formerly, this parameter was a boolean and permitted only values
-    of <command>true</command> and <command>false</command>.  Boolean values
-    have been deprecated and are no longer accepted.  If you are currently using
+    of <command>true</command> and <command>false</command>. Boolean values
+    have been deprecated and are no longer accepted. If you are currently using
     booleans, you must replace them with the desired mode name. A value of
     <command>true</command> maps to <command>"when-present"</command>, while
     <command>false</command> maps to <command>"never"</command>.
     </note>
 
-      For example, To instruct kea-dhcp6 to always generate the FQDN for a
+      For example, to instruct kea-dhcp6 to always generate the FQDN for a
       client, set the parameter <command>replace-client-name</command> to
       <command>always</command> as follows:
       </para>
@@ -2808,7 +2798,7 @@ should include options from the new option space:
 </screen>
       <para>
       The prefix used in the generation of an FQDN is specified by the
-      <command>generated-prefix</command> parameter.  The default value is "myhost".  To alter
+      <command>generated-prefix</command> parameter. The default value is "myhost". To alter
       its value, simply set it to the desired string:
       </para>
 <screen>
@@ -2821,8 +2811,8 @@ should include options from the new option space:
 }
 </screen>
       <para>
-      The suffix used when generating an FQDN or when qualifying a
-      partial name is specified by
+      The suffix used when generating an FQDN, or when qualifying a
+      partial name, is specified by
       the <command>qualifying-suffix</command> parameter. This
       parameter has no default value, thus it is mandatory when
       DDNS updates are enabled.
@@ -2839,22 +2829,22 @@ should include options from the new option space:
 </screen>
       </section>
       <para>
-      When qualifying a partial name, kea-dhcp6 will construct a name with the
+      When qualifying a partial name, kea-dhcp6 will construct the name in the
       format:
       </para>
       <para>
         [candidate-name].[qualifying-suffix].
       </para>
       <para>
-      where candidate-name is the partial name supplied in the REQUEST.
-      For example, if FQDN domain name value was "some-computer" and
-      qualifying-suffix "example.com", the generated FQDN would be:
+      where candidate-name is the partial name supplied in the DHCPREQUEST.
+      For example, if the FQDN domain name value is "some-computer" and the
+      qualifying-suffix "example.com", the generated FQDN is:
       </para>
       <para>
         some-computer.example.com.
       </para>
       <para>
-      When generating the entire name, kea-dhcp6 will construct name of the
+      When generating the entire name, kea-dhcp6 will construct the name in the
       format:
       </para>
       <para>
@@ -2862,7 +2852,7 @@ should include options from the new option space:
       </para>
       <para>
       where address-text is simply the lease IP address converted to a
-      hyphenated string.  For example, if lease address is 3001:1::70E,
+      hyphenated string. For example, if the lease address is 3001:1::70E,
       the qualifying suffix "example.com", and the default value is used for
       <command>generated-prefix</command>, the generated FQDN would be:
       </para>
@@ -2872,29 +2862,30 @@ should include options from the new option space:
       <section xml:id="host-name-sanitization">
         <title>Sanitizing Client FQDN Names</title>
         It may be that some of your DHCP clients provide values in the name
-        component of the FQDN option (Option code 39), that contain undesirable
-        characters.  It is possible to configure kea-dhcp5 to sanitize these
-        values. The most typical use case would be ensuring that only
+        component of the FQDN option (Option code 39) that contain undesirable
+        characters. It is possible to configure kea-dhcp6 to sanitize these
+        values. The most typical use case is ensuring that only
         characters that are permitted by RFC 1035 be included:
-        A-Z,a-z,0-9, and '-'.  This may be accomplished with following two
-        parameters:
+        A-Z,a-z,0-9, and '-'.
+        
+        This may be accomplished with the following two parameters:
         <itemizedlist>
         <listitem><simpara>
         <command>hostname-char-set</command> - a regular expression describing
-        the invalid character set.  This can be any valid, regular expression
-        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
-        would replace any character other then the letters A through z, digits
-        0 through 9, and '-'.  An empty string, the default value, disables
+        the invalid character set. This can be any valid, regular expression
+        using POSIX extended expression syntax. For example, "[^A-Za-z0-9-]"
+        would replace any character other than the letters A through z, digits
+        0 through 9, and '-'. An empty string, the default value, disables
         sanitization.
         </simpara></listitem>
         <listitem><simpara>
         <command>hostname-char-replacement</command> - a string of zero or
         more characters with which to replace each invalid character in the
-        client value.  The default value is an empty string and will cause
+        client value. The default value is an empty string and will cause
         invalid characters to be OMITTED rather than replaced.
         </simpara></listitem>
         </itemizedlist>
-        The following configuration, will replace anything other than a
+        The following configuration will replace anything other than a
         letter, digit, hyphen, or dot with the letter 'x':
 <screen>
 "Dhcp4": {
@@ -2907,22 +2898,22 @@ should include options from the new option space:
 }
 </screen>
         Thus, a client supplied value of "myhost-$[123.org" would become
-        "myhost-xx123.org".  Sanitizing is performed only on the portion of
-        the name supplied by the client and it is performed before applying
+        "myhost-xx123.org". Sanitizing is performed only on the portion of
+        the name supplied by the client, and it is performed before applying
         a qualifying suffix (if one is defined and needed).
         <note>
         The following are some considerations to keep in mind:
         <para>
         Name sanitizing is meant to catch the more common cases of invalid
-        characters through a relatively simple character replacement scheme.
-        It is difficult to devise a scheme that works well in all cases and
-        should you find you have clients that are using odd, corner cases of
+        characters through a relatively simple character-replacement scheme.
+        It is difficult to devise a scheme that works well in all cases.
+        If you find you have clients that are using odd corner cases of
         character combinations that cannot be readily handled with this
         mechanism, you should consider writing a hook that can carry out
         sufficiently complex logic to address your needs.
         </para>
         <para>
-        You do not account for dots ins your hostname-char-set expression.
+        Do not include dots in your hostname-char-set expression.
         When scrubbing FQDNs, dots are treated as delimiters and used to
         separate the option value into individual domain labels that are
         scrubbed and then re-assembled.
@@ -2931,13 +2922,13 @@ should include options from the new option space:
         If your clients are sending values that differ only by characters
         considered as invalid by your hostname-char-set, be aware that scrubbing
         them will yield identical values. In such cases, DDNS conflict rules
-        will permit only one of them from registering the name.
+        will permit only one of them to register the name.
         </para>
         <para>
         Finally, given the latitude clients have in the values they send, it is
         virtually impossible to guarantee that a combination of these two
         parameters will always yield a name that is valid for use in DNS. For
-        example, using an empty value for hostname-char-replacment could yield
+        example, using an empty value for hostname-char-replacement could yield
         an empty domain label within a name, if that label consists only of
         invalid characters.
         </para>
@@ -2956,21 +2947,21 @@ should include options from the new option space:
       </para>
       <note>
       DHCPv4-over-DHCPv6 support is experimental and the details of
-      the inter-process communication can change: both the
+      the inter-process communication may change; both the
       DHCPv4 and DHCPv6 sides should be running the same version of Kea.
-      For instance the support of port relay (RFC 8357) introduced such
-      such incompatible change.
+      For instance, the support of port relay (RFC 8357) introduced
+      an incompatible change.
       </note>
       <para>
       There is only one specific parameter for the DHCPv6 side:
-      <command>dhcp4o6-port</command> which specifies the first of the
+      <command>dhcp4o6-port</command>, which specifies the first of the
       two consecutive ports of the UDP sockets used for the communication
       between the DHCPv6 and DHCPv4 servers (the DHCPv6 server is bound
       to ::1 on <command>port</command> and connected to ::1 on
       <command>port</command> + 1).
       </para>
       <para>
-      Two other configuration entries are in general required: unicast traffic
+      Two other configuration entries are generally required: unicast traffic
       support (see <xref linkend="dhcp6-unicast"/>) and DHCP 4o6 server
       address option (name "dhcp4o6-server-addr", code  88).
       </para>
@@ -3029,49 +3020,45 @@ should include options from the new option space:
 </screen>
       </para>
       <note>
-      Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
+      Relayed DHCPv4-QUERY DHCPv6 messages are not supported.
       </note>
     </section>
 
      <section xml:id="sanity-checks6">
-       <title>Sanity checks in DHCPv6</title>
+       <title>Sanity Checks in DHCPv6</title>
 
        <para>
-         An important aspect of a well running DHCP system is an assurance that
-         the data remains consisent. However, in some cases it may be convenient
+         An important aspect of a well-running DHCP system is an assurance that
+         the data remains consistent. However, in some cases it may be convenient
          to tolerate certain inconsistent data. For example, a network
          administrator that temporarily removed a subnet from a configuration
          wouldn't want all the leases associated with it disappear from the
-         lease database. Kea 1.5 introduced a mechanism to better control sanity
-         checks such as this. While currently the scope of configurable sanity
-         checks is limited and their default value is set low, it is expected
-         that over time the default settings will be set to more aggressive
-         values and more parameters of similar nature will be added in the
-         future.
+         lease database. Kea has a mechanism to better control sanity
+         checks such as this.
        </para>
 
        <para>
          Kea now supports a new configuration scope called
          <command>sanity-checks</command>. It currently allows only a
          single parameter called <command>lease-checks</command>. It
-         governs what sort of verification is done when a new lease is
-         being loaded from a lease file. With the introduction of
-         sanity checks mechanism, it is now possible to tell Kea to
+         governs the verification that is done when a new lease is
+         loaded from a lease file. With the introduction of the
+         sanity-checks mechanism, it is now possible to tell Kea to
          try to correct inconsistent data.
        </para>
 
        <para>
-         Every subnet has a subnet-id value. This is how Kea internally
+         Every subnet has a subnet-id value; this is how Kea internally
          identifies subnets. Each lease has a subnet-id parameter as well, which
-         identifies which subnet it belongs to. However, if configuration has
-         changed, it is possible that a lease could exist with a subnet-id
-         without any subnet that matches it. Also, it may be possible that
-         subnets configuration has changed and the subnet-id now belongs to a
-         subnet that does not match the lease. Kea corrective algorithm first
-         checks if there is a subnet with subnet-id specified by the lease. If
-         there is, it checks whether the lease belongs to that subnet. If not,
+         identifies which subnet it belongs to. However, if the configuration has
+         changed, it is possible that a lease could exist with a subnet-id, but
+         without any subnet that matches it. Also, it may be possible that the
+         subnet's configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea's corrective algorithm first
+         checks to see if there is a subnet with the subnet-id specified by the lease. If
+         there is, it verifies whether the lease belongs to that subnet. If not,
          depending on the lease-checks setting, the lease is discarded, a
-         warning is printed or a new subnet is selected for the lease that
+         warning is displayed, or a new subnet is selected for the lease that
          matches it topologically.
        </para>
 
@@ -3087,24 +3074,24 @@ should include options from the new option space:
 
        <itemizedlist>
          <listitem>
-           <simpara><command>none</command> - do no special checks, accept the
+           <simpara><command>none</command> - do no special checks; accept the
            lease as is</simpara>
          </listitem>
          <listitem>
            <simpara><command>warn</command> - if problems are detected, a
-           warning will be printed, but the lease data will be accepted
+           warning will be displayed, but the lease data will be accepted
            anyway. This is the default value. If not explicitly configured to
            some other value, this level will be used.</simpara>
          </listitem>
          <listitem>
            <simpara><command>fix</command> - If data inconsistency is
            discovered, Kea will try to correct it. If the correction is
-           not successful, the data will be inserted anyway.</simpara>
+           not successful, the incorrect data will be inserted anyway.</simpara>
          </listitem>
          <listitem>
-           <simpara><command>fix-del</command> - If data inconsistency is
+           <simpara><command>fix-del</command> - If a data inconsistency is
            discovered, Kea will try to correct it. If the correction is not
-           succesful, the lease will be rejected. This setting ensures the data
+           succesful, the lease will be rejected. This setting ensures the data's
            correctness, but some incorrect data may be lost. Use with
            care.</simpara>
          </listitem>
@@ -3115,7 +3102,7 @@ should include options from the new option space:
          </listitem>
        </itemizedlist>
 
-       <para>This feature is currently implemented for memfile backend.</para>
+       <para>This feature is currently implemented for the memfile backend.</para>
 
        <para>
          An example configuration that sets this parameter looks as follows:
@@ -3149,31 +3136,33 @@ should include options from the new option space:
     <title>Host Reservation in DHCPv6</title>
 
     <para>There are many cases where it is useful to provide a configuration on
-    a per host basis. The most obvious one is to reserve specific, static IPv6
-    address or/and prefix for exclusive use by a given client (host) ‐ returning
-    client will get the same address or/and prefix every time and other clients will
-    never get that address. Note that there may be cases when the
-    new reservation has been made for the client for the address or prefix being
-    currently in use by another client. We call this situation a "conflict". The
-    conflicts get resolved automatically over time as described in the subsequent
-    sections. Once conflict is resolved, the client will keep receiving the reserved
+    a per-host basis. The most obvious one is to reserve a specific, static IPv6
+    address or/and prefix for exclusive use by a given client (host); the returning
+    client will get the same address or/and prefix every time, and other clients will
+    never get that address.</para>
+    
+    <para>Note that there may be cases when a
+    new reservation has been made for a client for the address or prefix
+    currently in use by another client. We call this situation a "conflict." The
+    conflicts get resolved automatically over time as described in subsequent
+    sections. Once the conflict is resolved, the client will keep receiving the reserved
     configuration when it renews.</para>
 
-    <para>Another example when the host reservations are applicable is when a host
+    <para>Another example when host reservations are applicable is when a host
     has specific requirements, e.g. a printer that needs additional DHCP options
-    or a cable modem needs specific parameters. Yet another possible use case for
-    host reservation is to define unique names for hosts.</para>
+    or a cable modem that needs specific parameters. Yet another possible use case
+    is to define unique names for hosts.</para>
 
     <para>Hosts reservations are defined as parameters for each subnet. Each host
-    can be identified by either DUID or its hardware/MAC address. See
+    must be identified by either DUID or its hardware/MAC address. See
     <xref linkend="mac-in-dhcpv6"/> for details. There is an optional
     <command>reservations</command> array in the
     <command>subnet6</command> structure. Each element in that array
-    is a structure, that holds information about a single host. In
+    is a structure that holds information about a single host. In
     particular, the structure has an identifier that
-    uniquely identifies a host.  In the DHCPv6 context, such an identifier
-    is usually a DUID, but can also be a hardware or MAC address.  Also,
-    either one or more addresses or prefixes may be specified. It is
+    uniquely identifies a host. In the DHCPv6 context, such an identifier
+    is usually a DUID, but can also be a hardware or MAC address.
+    One or more addresses or prefixes may also be specified, and it is
     possible to specify a hostname and DHCPv6 options for a given host.</para>
 
     <para>The following example shows how to reserve addresses and prefixes
@@ -3212,78 +3201,73 @@ should include options from the new option space:
 </screen>
 
     This example includes reservations for three different clients. The first reservation
-    is made for the address 2001:db8:1::100 for a client using DUID
-    01:02:03:04:05:0A:0B:0C:0D:0E. The second reservation is made for two addresses
-    2001:db8:1::101 and 2001:db8:1::102 for a client using MAC address
+    is for the address 2001:db8:1::100 for a client using DUID
+    01:02:03:04:05:0A:0B:0C:0D:0E. The second reservation is for two addresses
+    2001:db8:1::101 and 2001:db8:1::102, for a client using MAC address
     00:01:02:03:04:05. Lastly, address 2001:db8:1::103 and prefix 2001:db8:2:abcd::/64
     are reserved for a client using DUID 01:02:03:04:05:06:07:08:09:0A. The
     last reservation also assigns a hostname to this client.
     </para>
 
-    <para>Note that DHCPv6 allows for a single client to lease multiple addresses
+    <para>Note that DHCPv6 allows a single client to lease multiple addresses
     and multiple prefixes at the same time. Therefore <command>ip-addresses</command>
     and <command>prefixes</command> are plural and are actually arrays.
     When the client sends multiple IA options (IA_NA or IA_PD), each reserved
     address or prefix is assigned to an individual IA of the appropriate type. If
-    the number of IAs of specific type is lower than the number of reservations
+    the number of IAs of a specific type is lower than the number of reservations
     of that type, the number of reserved addresses or prefixes assigned to the
-    client is equal to the number of IA_NAs or IA_PDs sent by the client, i.e.
+    client is equal to the number of IA_NAs or IA_PDs sent by the client; that is,
     some reserved addresses or prefixes are not assigned. However,
     they still remain reserved for this client and the server will not assign
-    them to any other client. If the number of IAs of specific type sent by the
+    them to any other client. If the number of IAs of a specific type sent by the
     client is greater than the number of reserved addresses or prefixes, the
     server will try to assign all reserved addresses or prefixes to the individual
-    IAs and dynamically allocate addresses or prefixes to remaining IAs. If the
+    IAs and dynamically allocate addresses or prefixes to the remaining IAs. If the
     server cannot assign a reserved address or prefix because it is in use,
     the server will select the next reserved address or prefix and try to assign it to
     the client. If the server subsequently finds that there are no more reservations
-    that can be assigned to the client at the moment, the server will try to
+    that can be assigned to the client at that moment, the server will try to
     assign leases dynamically.
     </para>
 
     <para>Making a reservation for a mobile host that may visit multiple subnets
     requires a separate host definition in each subnet it is expected to visit.
-    It is not allowed to define multiple host definitions with the same hardware
+    It is not possible to define multiple host definitions with the same hardware
     address in a single subnet. Multiple host definitions with the same hardware
-    address are valid if each is in a different subnet.  The reservation for a given host
+    address are valid if each is in a different subnet. The reservation for a given host
     should include only one identifier, either DUID or hardware address. Defining
-    both for the same host is considered a configuration error, but as of 1.1.0,
-    it is not rejected.
+    both for the same host is considered a configuration error.
     </para>
 
     <para>Adding host reservation incurs a performance penalty. In principle,
     when a server that does not support host reservation responds to a query,
     it needs to check whether there is a lease for a given address being
     considered for allocation or renewal. The server that also supports host
-    reservation, has to perform additional checks: not only if the address is
-    currently used (i.e. if there is a lease for it), but also whether the address
-    could be used by someone else (i.e. if there is a reservation for it). That
-    additional check incurs additional overhead.</para>
+    reservation has to perform additional checks: not only whether the address is
+    currently used (i.e., if there is a lease for it), but also whether the address
+    could be used by someone else (i.e., if there is a reservation for it). That
+    additional check incurs extra overhead.</para>
 
     <section xml:id="reservation6-types">
       <title>Address/Prefix Reservation Types</title>
 
-      <para>In a typical scenario there is an IPv6 subnet defined with a certain
+      <para>In a typical scenario there is an IPv6 subnet defined, with a certain
       part of it dedicated for dynamic address allocation by the DHCPv6
       server. There may be an additional address space defined for prefix
       delegation. Those dynamic parts are referred to as dynamic pools, address
-      and prefix pools or simply pools. In principle, the host reservation can
+      and prefix pools, or simply pools. In principle, a host reservation can
       reserve any address or prefix that belongs to the subnet. The reservations
-      that specify an address that belongs to configured pools are called
-      "in-pool reservations". In contrast, those that do not
+      that specify addresses that belongs to configured pools are called
+      "in-pool reservations." In contrast, those that do not
       belong to dynamic pools are called "out-of-pool
-      reservations". There is no formal difference in the reservation
+      reservations." There is no formal difference in the reservation
       syntax and both reservation types are handled
-      uniformly. However, upcoming releases may offer improved performance if
-      there are only out-of-pool reservations as the server will be able to skip
-      reservation checks when dealing with existing leases. Therefore, system
-      administrators are encouraged to use out-of-pool reservations if
-      possible.</para>
+      uniformly.</para>
 
-      <para>Beginning with Kea 1.5.0, there is now support for global
-      host reservations.  These are reservations that are specified at the
+      <para>Kea supports global
+      host reservations. These are reservations that are specified at the
       global level within the configuration and that do not belong to any
-      specific subnet.  Kea will still match inbound client packets to a
+      specific subnet. Kea will still match inbound client packets to a
       subnet as before, but when the subnet's reservation mode is set to
       <command>"global"</command>, Kea will look for host reservations only
       among the global reservations defined. Typcially, such reservations would
@@ -3302,7 +3286,7 @@ should include options from the new option space:
     <section xml:id="reservation6-conflict">
       <title>Conflicts in DHCPv6 Reservations</title>
       <para>As reservations and lease information are stored separately,
-      conflicts may arise. Consider the following series of events. The server
+      conflicts may arise. Consider the following series of events: the server
       has configured the dynamic pool of addresses from the range of 2001:db8::10
       to 2001:db8::20. Host A requests an address and gets 2001:db8::10. Now the
       system administrator decides to reserve address 2001:db8::10 for Host B.
@@ -3310,48 +3294,48 @@ should include options from the new option space:
       that is currently assigned to someone else is not recommended, but there
       are valid use cases where such an operation is warranted.</para>
 
-      <para>The server now has a conflict to resolve. Let's analyze the
-      situation here. If Host B boots up and request an address, the server is
+      <para>The server now has a conflict to resolve.
+      If Host B boots up and requests an address, the server is
       not able to assign the reserved address 2001:db8::10. A naive approach
       would to be immediately remove the lease for Host A and create a new one
       for Host B. That would not solve the problem, though, because as soon as
-      Host B get the address, it will detect that the address is already in use
-      by someone else (Host A) and would send a Decline message. Therefore in this
+      Host B gets the address, it will detect that the address is already in use
+      by someone else (Host A) and will send a DHCPDECLINE message. Therefore, in this
       situation, the server has to temporarily assign a different address from the
       dynamic pool (not matching what has been reserved) to Host B.</para>
 
       <para>When Host A renews its address, the server will discover that
       the address being renewed is now reserved for someone else (Host
-      B). Therefore the server will remove the lease for 2001:db8::10, select
-      a new address and create a new lease for it. It will send two
-      addresses in its response: the old address with lifetime set to 0 to
-      explicitly indicate that it is no longer valid and the new address with a
+      B). Therefore, the server will remove the lease for 2001:db8::10, select
+      a new address, and create a new lease for it. It will send two
+      addresses in its response: the old address, with lifetime set to 0 to
+      explicitly indicate that it is no longer valid; and the new address, with a
       non-zero lifetime. When Host B renews its temporarily assigned
-      address, the server will detect that the existing lease does not match
+      address, the server will detect that the existing lease does not match the
       reservation, so it will release the current address Host B has and will
-      create a new lease matching the reservation. Similar as before, the server
+      create a new lease matching the reservation. As before, the server
       will send two addresses: the temporarily assigned one with zeroed
-      lifetimes, and the new one that matches reservation with proper lifetimes
+      lifetimes, and the new one that matches the reservation with proper lifetimes
       set.</para>
 
-      <para>This recovery will succeed, even if other hosts will attempt to get
-      the reserved address. Had Host C requested address 2001:db8::10 after
-      the reservation was made, the server will propose a different address.</para>
+      <para>This recovery will succeed, even if other hosts attempt to get
+      the reserved address. If Host C requests the address 2001:db8::10 after
+      the reservation is made, the server will propose a different address.</para>
 
       <para>This recovery mechanism allows the server to fully recover from a
       case where reservations conflict with existing leases. This procedure
-      takes time and will roughly take as long as renew-timer value specified.
-      The best way to avoid such recovery is to not define new reservations that
+      takes time and will roughly take as long as the value set for renew-timer.
+      The best way to avoid such recovery is not to define new reservations that
       conflict with existing leases. Another recommendation is to use
       out-of-pool reservations. If the reserved address does not belong to a
-      pool, there is no way that other clients could get this address.
+      pool, there is no way that other clients can get this address.
       </para>
 
     <note>
-     <para>The conflict resolution mechanism does not work for global
-     reservations. As of Kea 1.5.0, it is generally recommended to not use
-     global reservations for addresses or prefixes. If you want to use it
-     anyway, you have to manually ensure that the reserved values are not
+     <para>The conflict-resolution mechanism does not work for global
+     reservations. As of Kea 1.5.0, it is generally recommended not to use
+     global reservations for addresses or prefixes. If you choose to use them
+     anyway, you must manually ensure that the reserved values are not
      in the dynamic pools.</para>
     </note>
 
@@ -3359,11 +3343,11 @@ should include options from the new option space:
 
     <section xml:id="reservation6-hostname">
       <title>Reserving a Hostname</title>
-      <para>When the reservation for the client includes the <command>hostname</command>,
+      <para>When the reservation for a client includes the <command>hostname</command>,
       the server will assign this hostname to the client and send
       it back in the Client FQDN, if the client sent the FQDN option to the
       server. The reserved hostname always takes precedence over the hostname
-       supplied by the client (via the FQDN option) or the autogenerated
+      supplied by the client (via the FQDN option) or the autogenerated
       (from the IPv6 address) hostname.</para>
 
       <para>The server qualifies the reserved hostname with the value
@@ -3392,9 +3376,9 @@ should include options from the new option space:
       client using the DUID "01:02:03:04:05:0A:0B:0C:0D:0E". If the <command>qualifying-suffix
       </command> is not specified, the default (empty) value will be used, and
       in this case the value specified as a <command>hostname</command> will
-      be treated as fully qualified name.  Thus, by leaving the
+      be treated as a fully qualified name. Thus, by leaving the
       <command>qualifying-suffix</command> empty it is possible to qualify
-      hostnames for the different clients with different domain names:
+      hostnames for different clients with different domain names:
 <screen>
 "subnet6": [
     {
@@ -3420,9 +3404,9 @@ should include options from the new option space:
 
     <section xml:id="reservation6-options">
       <title>Including Specific DHCPv6 Options in Reservations</title>
-      <para>Kea 1.1.0 introduced the ability to specify options on a
-      per host basis. The options follow the same rules as any other
-      options. These can be standard options (see <xref linkend="dhcp6-std-options"/>), custom options (see <xref linkend="dhcp6-custom-options"/>) or vendor specific options
+      <para>Kea offers the ability to specify options on a
+      per-host basis. These options follow the same rules as any other
+      options. These can be standard options (see <xref linkend="dhcp6-std-options"/>), custom options (see <xref linkend="dhcp6-custom-options"/>), or vendor-specific options
       (see <xref linkend="dhcp6-vendor-opts"/>). The following
       example demonstrates how standard options can be defined.</para>
 
@@ -3444,7 +3428,7 @@ should include options from the new option space:
     } ]</userinput>
 } ]</screen>
 
-    <para>Vendor specific options can be reserved in a similar manner:</para>
+    <para>Vendor-specific options can be reserved in a similar manner:</para>
 
     <screen>
 "reservations": [
@@ -3465,16 +3449,16 @@ should include options from the new option space:
 
 <para>
  Options defined at host level have the highest priority. In other words,
- if there are options defined with the same type on global, subnet, class and
- host level, the host specific values will be used.
+ if there are options defined with the same type on global, subnet, class, and
+ host level, the host-specific values will be used.
 </para>
 
     </section>
 
     <section xml:id="reservation6-client-classes">
       <title>Reserving Client Classes in DHCPv6</title>
-      <para>The <xref linkend="classification-using-expressions"/> explains how
-      to configure the server to assign classes to a client based on the content
+      <para><xref linkend="classification-using-expressions"/> explains how
+      to configure the server to assign classes to a client, based on the content
       of the options that this client sends to the server. Host reservations
       mechanisms also allow for the static assignment of classes to clients.
       The definitions of these classes are placed in the Kea
@@ -3520,36 +3504,35 @@ should include options from the new option space:
 
 </screen>
     <para>Static class assignments, as shown above, can be used in conjunction
-    with classification using expressions. The "KNOWN" or "UNKNOWN" builtin
-    class is added to the packet and any class depending on it directly or
-    indirectly and not only-if-required is evaluated.
+    with classification, using expressions. The "KNOWN" or "UNKNOWN" builtin
+    class is added to the packet and any class depending on it (directly or
+    indirectly) and not only-if-required is evaluated.
     </para>
 
     <note>
      <para>If you want to force the evaluation of a class expression after
      the host reservation lookup, for instance because of a dependency on
      "reserved-class1" from the previous example, you should add a
-     "member('KNOWN')" in the expression.</para>
+     "member('KNOWN')" statement in the expression.</para>
     </note>
 
     </section>
 
     <section id="reservations6-mysql-pgsql-cql">
-      <title>Storing Host Reservations in MySQL, PostgreSQL or Cassandra</title>
+      <title>Storing Host Reservations in MySQL, PostgreSQL, or Cassandra</title>
 
       <para>
-        It is possible to store host reservations in MySQL, PostgreSQL or Cassandra. See
-        <xref linkend="hosts6-storage" /> for information on how to configure Kea to use
-        reservations stored in MySQL, PostgreSQL or Cassandra. Kea provides dedicated hook for
-        managing reservations in a database, section <xref linkend="host-cmds" /> provide
+        It is possible to store host reservations in MySQL, PostgreSQL, or Cassandra. See
+        <xref linkend="hosts6-storage"/> for information on how to configure Kea to use
+        reservations stored in MySQL, PostgreSQL, or Cassandra. Kea provides a dedicated hook for
+        managing reservations in a database; section <xref linkend="host-cmds"/> provides
         detailed information. The Kea wiki <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
         xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
-        provides some examples how to conduct some common operations
-        on host reservations.
+        provides some examples of how to conduct common host reservations operations.
       </para>
 
-      <note><simpara>In Kea maximum length of an option specified per host is
+      <note><simpara>In Kea, the maximum length of an option specified per-host is
       arbitrarily set to 4096 bytes.</simpara></note>
     </section>
 
@@ -3560,17 +3543,18 @@ should include options from the new option space:
       allocation engine (the component of Kea that selects an address for a client)
       during lease selection and renewal. In particular, three
       major checks are necessary. First, when selecting a new lease, it is not
-      sufficient for a candidate lease to not be used by another DHCP client. It
+      sufficient for a candidate lease to simply not be in use by another DHCP client; it
       also must not be reserved for another client. Second, when renewing a lease,
-      additional check must be performed whether the address being renewed is not
+      an additional check must be performed to see whether the address being renewed is
       reserved for another client. Finally, when a host renews an address or a
-      prefix, the server has to check whether there is a reservation for this host,
+      prefix, the server must check whether there is a reservation for this host,
       so the existing (dynamically allocated) address should be revoked and the
-      reserved one be used instead.</para>
+      reserved one be used instead.
+      </para>
       <para>Some of those checks may be unnecessary in certain deployments and not
       performing them may improve performance. The Kea server provides the
       <command>reservation-mode</command> configuration parameter to select the
-      types of reservations allowed for the particular subnet. Each reservation
+      types of reservations allowed for a particular subnet. Each reservation
       type has different constraints for the checks to be performed by the
       server when allocating or renewing a lease for the client.
       Allowed values are:
@@ -3583,40 +3567,39 @@ should include options from the new option space:
       </simpara></listitem>
 
       <listitem><simpara> <command>out-of-pool</command> - allows only out of
-      pool host reservations.  With this setting in place, the server may assume
+      pool host reservations. With this setting in place, the server may assume
       that all host reservations are for addresses that do not belong to the
-      dynamic pool. Therefore it can skip the reservation checks when dealing
+      dynamic pool. Therefore, it can skip the reservation checks when dealing
       with in-pool addresses, thus improving performance. Do not use this mode
-      if any of your reservations use in-pool address. Caution is advised when
-      using this setting. Kea does not sanity check the reservations against
+      if any of your reservations use in-pool addresses. Caution is advised when
+      using this setting; Kea does not sanity-check the reservations against
       <command>reservation-mode</command> and misconfiguration may cause
       problems.
       </simpara></listitem>
 
       <listitem><simpara> <command>global</command> - allows only global
-      host reservations.  With this setting in place, the server searches for
+      host reservations. With this setting in place, the server searches for
       reservations for a client only among the defined global reservations.
       If an address is specified, the server will skip the reservation checks
       done when dealing in other modes, thus improving performance.
-      Caution is advised when using this setting: Kea does not sanity check
+      Caution is advised when using this setting; Kea does not sanity-check
       the reservations when <command>global</command> and
       misconfiguration may cause problems.
       </simpara></listitem>
 
-      <listitem><simpara>
-      <command>disabled</command> - host reservation support is disabled. As there
+      <listitem><simpara> <command>disabled</command> - host reservation support is disabled. As there
       are no reservations, the server will skip all checks. Any reservations defined
       will be completely ignored. As the checks are skipped, the server may
       operate faster in this mode.
       </simpara></listitem>
 
       </itemizedlist>
-      The parameter can be specified at global, subnet and shared network
+      The parameter can be specified at global, subnet, and shared-network
       levels.
       </para>
 
       <para>
-        An example configuration that disables reservation looks like follows:
+        An example configuration that disables reservation looks as follows:
         <screen>
 "Dhcp6": {
     "subnet6": [
@@ -3660,16 +3643,15 @@ should include options from the new option space:
     <xref linkend="global-reservations6"/>.
     </para>
 
-      <para>Another aspect of the host reservations are different types of
-      identifiers. Kea 1.1.0 supports two types of identifiers
-      in DHCPv6: hw-address and duid, but more identifier types
-      are likely to be added in the future. This is beneficial from a
-      usability perspective. However, there is a drawback. For each incoming
+      <para>Another aspect of the host reservations is the different types of
+      identifiers. Kea currently supports two types of identifiers
+      in DHCPv6: hw-address and duid. This is beneficial from a
+      usability perspective; however, there is one drawback. For each incoming
       packet Kea has to to extract each identifier type and then query the
-      database to see if there is a reservation done by this particular
-      identifier. If nothing is found, the next identifier is extracted and next
+      database to see if there is a reservation by this particular
+      identifier. If nothing is found, the next identifier is extracted and the next
       query is issued. This process continues until either a reservation is
-      found or all identifier types have been checked. Over time with an increasing
+      found or all identifier types have been checked. Over time, with an increasing
       number of supported identifier types, Kea would become slower and
       slower.</para>
 
@@ -3677,11 +3659,11 @@ should include options from the new option space:
       <command>host-reservation-identifiers</command> has been introduced. It
       takes a list of identifier types as a parameter. Kea will check only those
       identifier types enumerated in host-reservation-identifiers. From a
-      performance perspective the number of identifier types should be kept to
-      minimum, ideally limited to one. If your deployment uses several
-      reservation types, please enumerate them from most to least frequently
-      used as this increases the chances of Kea finding the reservation using the
-      fewest number of queries. An example of host reservation identifiers looks
+      performance perspective, the number of identifier types should be kept to a
+      minimum, ideally one. If your deployment uses several
+      reservation types, please enumerate them from most- to least-frequently
+      used, as this increases the chances of Kea finding the reservation using the
+      fewest queries. An example of host reservation identifiers looks
       as follows:
 
 <screen>
@@ -3704,14 +3686,14 @@ If not specified, the default value is:
 
 </section>
   <section id="global-reservations6">
-    <title>Global reservations in DHCPv6</title>
+    <title>Global Reservations in DHCPv6</title>
 
     <para>In some deployments, such as mobile, clients can roam within the
-    network and there is a desire to specify certain parameters regardless of
+    network and certain parameters must be specified regardless of
     the client's current location. To facilitate such a need, a global
     reservation mechanism has been implemented. The idea behind it is that
-    regular host reservations are tied to specific subnets, by using specific
-    subnet-id. Kea 1.5.0 introduced a new capability to specify global
+    regular host reservations are tied to specific subnets, by using a specific
+    subnet-id. Kea can now specify a global
     reservation that can be used in every subnet that has global reservations
     enabled.</para>
 
@@ -3719,19 +3701,19 @@ If not specified, the default value is:
     hostname or other dedicated, host-specific options. It can also be used to
     assign addresses or prefixes. However, global reservations that assign
     either of these bypass the whole topology determination provided by DHCP
-    logic implemented in Kea. It is very easy to misuse this feature and get
-    configuration that is inconsistent.  To give a specific example, imagine a
+    logic implemented in Kea. It is very easy to misuse this feature and get a
+    configuration that is inconsistent. To give a specific example, imagine a
     global reservation for an address 2001:db8:1111::1 and two subnets
     2001:db8:1111::/48 and 2001:db8:ffff::/48. If global reservations are used
     in both subnets and a device matching global host reservations visits part
     of the network that is covered by 2001:db8:ffff::/48, it will get an IP
     address 2001:db8:ffff::1, which will be outside of the prefix announced
-    by its local router using Router Advertisements.  Such a configuration
-    would be unsuable or at the very least ridden with issues, such as the
+    by its local router using Router Advertisements. Such a configuration
+    would be unusable or at the very least riddled with issues, such as
     downlink traffic not reaching the device.</para>
 
     <para>
-      To use global host reservations a configuration similar to the following
+      To use global host reservations, a configuration similar to the following
       can be used:
 
 <screen>
@@ -3783,64 +3765,60 @@ If not specified, the default value is:
 
   <!-- shared networks starts here -->
   <section id="shared-network6">
-    <title>Shared networks in DHCPv6</title>
+    <title>Shared Networks in DHCPv6</title>
 
     <para>DHCP servers use subnet information in two ways. First, it is used
     to determine the point of attachment, or simply put, where the client is
     connected to the network. Second, the subnet information is used to group
-    information pertaining to specific location in the network. This approach
-    works well in general case, but the are scenarios where the boundaries are
+    information pertaining to a specific location in the network. This approach
+    works well in general cases, but there are scenarios where the boundaries are
     blurred. Sometimes it is useful to have more than one logical IP subnet
     being deployed on the same physical link. The need to understand
     that two or more subnets are used on the same link requires additional logic
-    in the DHCP server. This capability has been added in Kea 1.3.0.  It is
+    in the DHCP server. This capability is
     called "shared networks" in Kea and ISC DHCP projects. It is sometimes also
-    called "shared subnets". In Microsoft's nomenclature it is called "multinet".
+    called "shared subnets." In Microsoft's nomenclature it is called "multinet."
     </para>
 
     <para>There are many use cases where the feature is useful. The most common
     example in the IPv4 case is when the server is running out of available
-    addresses in a subnet. This is less common in IPv6, but the shared networks
-    are still useful in IPv6. One of the use cases is an exhaustion of IPv6
-    delegated prefixes within a subnet. Another IPv6 specific example
-    is an experiment with addressing scheme. With the advent of IPv6 deployment
-    and vast address space, many organizations split the address space into
+    addresses in a subnet. This is less common in IPv6, but shared networks
+    are still useful in IPv6. One of the use cases is an exhaustion of IPv6-
+    delegated prefixes within a subnet. Another IPv6-specific example
+    is an experiment with an addressing scheme. With the advent of IPv6 deployment
+    and a vast address space, many organizations split the address space into
     subnets, then deploy it and after a while discover that they want to split it
-    differently. In the transition period they want both old and new addressing
+    differently. In the transition period, they want both old and new addressing
     to be available. Thus the need for more than one subnet on the same physical
     link.</para>
 
     <para>Finally, the case of cable networks is directly applicable in
     IPv6. There are two types of devices in cable networks: cable modems and the
-    end user devices behind them. It is a common practice to use different
-    subnet for cable modems to prevent users from tinkering with their cable
-    modems. In this case, the distinction is based on the type of device, rather
-    than coming out of running out address space.</para>
+    end-user devices behind them. It is a common practice to use different
+    subnets for cable modems to prevent users from tinkering with them.
+    In this case, the distinction is based on the type of device, rather
+    than address-space exhaustion.</para>
 
     <para>A client connected to a shared network may be assigned a lease (address
     or prefix) from any of the pools defined within the subnets belonging to the
-    shared network. Internally, the server selects one of the subnets belonging to the
+    shared network. Internally, the server selects one of the subnets belonging to a
     shared network and tries to allocate a lease from this subnet. If the
-    server is unable to allocate a lease from the selected subnet (e.g. due
-    to pools exhaustion) it will use another subnet from the same shared
-    network and try to allocate a lease from this subnet etc. Therefore, in the
+    server is unable to allocate a lease from the selected subnet (e.g., due
+    to pools exhaustion), it will use another subnet from the same shared
+    network and try to allocate a lease from this subnet, etc. Therefore, in the
     typical case, the server will allocate all leases available in a given
     subnet before it starts allocating leases from other subnets belonging to
     the same shared network. However, in certain situations the client can be
     allocated a lease from the other subnets before the pools in the first
     subnet get exhausted, e.g. when the client provides a hint that belongs
-    to another subnet or the client has reservations in a different than
-    default subnet.
+    to another subnet or the client has reservations in a subnet other than
+    the default.
     </para>
 
     <note>
-    <para>It is strongly discouraged for the Kea deployments to assume that the
+    <para>It is strongly discouraged for Kea deployments to assume that the
       server doesn't allocate leases from other subnets until it uses all
-      the leases from the first subnet in the shared network. Apart from the
-      fact that hints, host reservations and client classification affect subnet
-      selection, it is also foreseen that we will enhance allocation strategies
-      for shared networks in the future versions of Kea, so as the selection
-      of subnets within a shared network is equally probable (unpredictable).</para>
+      the leases from the first subnet in the shared network.</para>
     </note>
 
     <para>In order to define a shared network an additional configuration scope
@@ -3895,23 +3873,23 @@ If not specified, the default value is:
 </screen>
     </para>
     <para>As you see in the example, it is possible to mix shared and regular
-    ("plain") subnets. Each shared network must have a unique name. This is a
-    similar concept to ID for subnets, but it offers more flexibility. This is used
+    ("plain") subnets. Each shared network must have a unique name. This is
+    similar to the ID for subnets, but gives administrators more flexibility. This is used
     for logging, but also internally for identifying shared networks.</para>
 
     <para>In principle it makes sense to define only shared networks that
     consist of two or more subnets. However, for testing purposes it is allowed
-    to define a shared network with just one subnet or even an empty one.  This
+    to define a shared network with just one subnet or even an empty one. This
     is not a recommended practice in production networks, as the shared network
-    logic requires additional processing and thus lowers server's performance.
-    To avoid unnecessary performance degradation the shared subnets should only
+    logic requires additional processing and thus lowers the server's performance.
+    To avoid unnecessary performance degradation, the shared subnets should only
     be defined when required by the deployment.
     </para>
 
     <para>Shared networks provide an ability to specify many parameters in
     the shared network scope that will apply to all subnets within it. If
     necessary, you can specify a parameter in the shared network scope and then
-    override its value on the subnet scope. For example:
+    override its value in the subnet scope. For example:
 <screen>
 "shared-networks": [
     {
@@ -3969,30 +3947,30 @@ If not specified, the default value is:
     (valid lifetime is 20 minutes, different IP address for dns-servers), but
     also adds its own option (unicast address). Assuming a client asking for a
     server unicast and dns servers options is assigned a lease from this subnet,
-    he will get a lease for 20 minutes and dns-servers and be allowed to use
+    it will get a lease for 20 minutes and dns-servers, and be allowed to use
     server unicast at address 2001:abcd::1. If the same client is assigned to
-    the second subnet, he will get a 10 minutes long lease, dns-servers value of
-    2001:db8:cafe::1 and no server unicast.
+    the second subnet, it will get a 10-minute lease, a dns-servers value of
+    2001:db8:cafe::1, and no server unicast.
     </para>
 
     <para>Some parameters must be the same in all subnets in the same shared
-    network. This restriction applies to <command>interface</command> and
+    network. This restriction applies to the <command>interface</command> and
     <command>rapid-commit</command> settings. The most convenient way is to
-    define them on shared network scope, but you may specify them for each
+    define them on the shared network scope, but you may specify them for each
     subnet. However, care should be taken for each subnet to have the same
     value.</para>
 
     <section>
-      <title>Local and relayed traffic in shared networks</title>
+      <title>Local and Relayed Traffic in Shared Networks</title>
 
-    <para>It is possible to specify interface name in the shared network scope to
+    <para>It is possible to specify an interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
-    via relays) using local network interface. It is sufficient to specify
+    via relays) using a local network interface. It is sufficient to specify
     it once at the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
-    to attempt to make a shared network out of subnets that are reachable over
-    different interfaces. It is allowed to specify interface parameter on each
-    subnet, although its value must be the same for each subnet. Thus it's
+    to attempt to define a shared network using subnets that are reachable over
+    different interfaces. It is possible to specify the interface parameter on each
+    subnet, although its value must be the same for each subnet. Thus it is
     usually more convenient to specify it once at the shared network level.
 <screen>
 "shared-networks": [
