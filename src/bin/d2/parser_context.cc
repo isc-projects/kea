@@ -142,6 +142,8 @@ D2ParserContext::contextName()
         return("dns-server");
     case DNS_SERVERS:
         return("dns-servers");
+    case CONTROL_SOCKET:
+        return("control-socket");
     case LOGGING:
         return ("Logging");
     case LOGGERS:

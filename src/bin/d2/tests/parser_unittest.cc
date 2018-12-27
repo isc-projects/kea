@@ -128,9 +128,9 @@ TEST(ParserTest, keywordDhcpDdns) {
             " \"ip-address\": \"192.168.77.1\", \n"
             " \"port\": 777 , \n "
             " \"ncr-protocol\": \"UDP\", \n"
-            "\"tsig-keys\": [], \n"
-            "\"forward-ddns\" : {}, \n"
-            "\"reverse-ddns\" : {} \n"
+            " \"tsig-keys\": [], \n"
+            " \"forward-ddns\" : {}, \n"
+            " \"reverse-ddns\" : {} \n"
             "} \n"
          "} \n";
      testParser(txt, D2ParserContext::PARSER_DHCPDDNS);
