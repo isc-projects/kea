@@ -2190,7 +2190,11 @@ TestControl::setDefaults4(const PerfSocket& socket,
     // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
     // Server's port (67)
-    pkt->setRemotePort(DHCP4_SERVER_PORT);
+    if (options.getRemotePort()) {
+        pkt->setRemotePort(options.getRemotePort());
+    } else {
+        pkt->setRemotePort(DHCP4_SERVER_PORT);
+    }
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
     // Set local address.
@@ -2216,7 +2220,11 @@ TestControl::setDefaults6(const PerfSocket& socket,
     // Local client's port (547)
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
-    pkt->setRemotePort(DHCP6_SERVER_PORT);
+    if (options.getRemotePort()) {
+        pkt->setRemotePort(options.getRemotePort());
+    } else {
+        pkt->setRemotePort(DHCP6_SERVER_PORT);
+    }
     // Set local address.
     pkt->setLocalAddr(socket.addr_);
     // The remote server's name or IP.

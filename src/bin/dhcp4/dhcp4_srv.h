@@ -212,7 +212,8 @@ public:
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
-    /// port on which DHCPv4 server will listen on. That is mostly useful
+    /// port on which DHCPv4 server will listen on and alternate port
+    /// where DHCPv4 server sends all responses to. Those are mostly useful
     /// for testing purposes. The Last two arguments of the constructor
     /// should be left at default values for normal server operation.
     /// They should be set to 'false' when creating an instance of this
@@ -220,10 +221,12 @@ public:
     /// root privileges.
     ///
     /// @param server_port specifies port number to listen on
+    /// @param client_port specifies port number to send to
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
     Dhcpv4Srv(uint16_t server_port = DHCP4_SERVER_PORT,
+              uint16_t client_port = 0,
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
@@ -772,7 +775,8 @@ protected:
     /// address).
     ///
     /// The destination port is always DHCPv4 client (68) or relay (67) port,
-    /// depending if the response will be sent directly to a client.
+    /// depending if the response will be sent directly to a client, unless
+    /// a client port was enforced from the command line.
     ///
     /// The source port is always set to DHCPv4 server port (67).
     ///
@@ -789,7 +793,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void adjustIfaceData(Dhcpv4Exchange& ex);
+    void adjustIfaceData(Dhcpv4Exchange& ex);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -961,6 +965,9 @@ private:
     bool use_bcast_;
 
 protected:
+
+    /// UDP port number to which server sends responses.
+    uint16_t client_port_;
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.

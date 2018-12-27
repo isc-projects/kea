@@ -229,6 +229,7 @@ public:
     using Dhcpv4Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv4Srv::shutdown_;
     using Dhcpv4Srv::alloc_engine_;
+    using Dhcpv4Srv::client_port_;
 };
 
 // We need to pass one reference to the Dhcp4Client, which is defined in

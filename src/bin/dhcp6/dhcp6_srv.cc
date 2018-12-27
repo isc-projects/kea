@@ -179,14 +179,17 @@ namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port)
-    : io_service_(new IOService()), server_port_(server_port), serverid_(),
-      shutdown_(true), alloc_engine_(), name_change_reqs_(),
+Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port, uint16_t client_port)
+    : io_service_(new IOService()), server_port_(server_port),
+      client_port_(client_port), serverid_(), shutdown_(true),
+      alloc_engine_(), name_change_reqs_(),
       network_state_(new NetworkState(NetworkState::DHCPv6))
 {
 
     LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET)
         .arg(server_port);
+
+    Dhcp6to4Ipc::instance().client_port = client_port;
 
     // Initialize objects required for DHCP server operation.
     try {
@@ -775,7 +778,10 @@ Dhcpv6Srv::processPacket(Pkt6Ptr& query, Pkt6Ptr& rsp) {
     rsp->setRemoteAddr(query->getRemoteAddr());
     rsp->setLocalAddr(query->getLocalAddr());
 
-    if (rsp->relay_info_.empty()) {
+    if (client_port_) {
+        // A command line option enforces a specific client port
+        rsp->setRemotePort(client_port_);
+    } else if (rsp->relay_info_.empty()) {
         // Direct traffic, send back to the client directly
         rsp->setRemotePort(DHCP6_CLIENT_PORT);
     } else {
