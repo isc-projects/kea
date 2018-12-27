@@ -4000,7 +4000,7 @@ If not specified, the default value is:
 </screen>
 </para>
 
-<para>Somewhat similar to interface names, also relay IP addresses can be
+<para>Somewhat similar to interface names, relay IP addresses can also be
 specified for the whole shared network. However, depending on your relay
 configuration, it may use different IP addresses depending on which subnet
 is being used. Thus there is no requirement to use the same IP relay address
@@ -4031,24 +4031,24 @@ for each subnet. Here's an example:
         ]
     }
 ]</screen>
-In this particular case the relay IP address specified at network level doesn't
+In this particular case the relay IP address specified at the network level doesn't
 have much sense, as it is overridden in both subnets, but it was left there
-as an example of how one could be defined at network level. Note that the
+as an example of how one could be defined at the network level. Note that the
 relay agent IP address typically belongs to the subnet it relays packets from,
-but this is not a strict requirement. Therefore Kea accepts any value here
-as long as it is valid IPv6 address.</para>
+but this is not a strict requirement. Kea accepts any value here
+as long as it is a valid IPv6 address.</para>
 
     </section>
     <section>
-      <title>Client classification in shared networks</title>
+      <title>Client Classification in Shared Networks</title>
 
-      <para>Sometimes it is desired to segregate clients into specific subnets
-      based on some properties. This mechanism is called client classification
+      <para>Sometimes it is desirable to segregate clients into specific subnets
+      based on certain properties. This mechanism is called client classification
       and is described in <xref linkend="classify"/>. Client classification
       can be applied to subnets belonging to shared networks in the same way
       as it is used for subnets specified outside of shared networks.
       It is important to understand how the server selects subnets for
-      the clients when client classification is in use, to assure that the
+      clients when client classification is in use, to ensure that the
       desired subnet is selected for a given client type.</para>
 
       <para>If a subnet is associated with a class, only the clients
@@ -4088,22 +4088,22 @@ as long as it is valid IPv6 address.</para>
 }
 </screen>
 
-        If the client belongs to "b-devices" class (because it includes option
-        1234 with a value of 0x0002) it doesn't guarantee that the subnet 2001:db8:3::/64
-        will be used (or preferred) for this client. The server can use any of
+        If the client belongs to the "b-devices" class (because it includes option
+        1234 with a value of 0x0002), that doesn't guarantee that the subnet 2001:db8:3::/64
+        will be used (or preferred) for this client. The server can use either of
         the two subnets because the subnet 2001:db8:1::/64 is also allowed for
-        this client. The client classification used in this case should be pereceived
+        this client. The client classification used in this case should be perceived
         as a way to restrict access to certain subnets, rather than a way to express
         subnet preference. For example, if the client doesn't belong to the
         "b-devices" class it may only use the subnet 2001:db8:1::/64 and will
         never use the subnet 2001:db8:3::/64.
       </para>
 
-      <para>A typical use case for client classification is in the cable network,
+      <para>A typical use case for client classification is in a cable network,
       where cable modems should use one subnet and other devices should use
-      another subnet within the same shared network. In this case it is required
+      another subnet within the same shared network. In this case it is necessary
       to apply classification on all subnets. The following example defines two
-      classes of devices. The subnet selection is made based on option 1234 values.
+      classes of devices, and the subnet selection is made based on option 1234 values.
 <screen>
 {
     "client-classes": [
@@ -4140,11 +4140,11 @@ as long as it is valid IPv6 address.</para>
 }
 </screen>
 In this example each class has its own restriction. Only clients that belong to
-class a-devices will be able to use subnet 2001:db8:1::/64 and only clients
-belonging to b-devices will be able to use subnet 2001:db8:3::/64. Care should
-be taken to not define too restrictive classification rules, as clients that are
-unable to use any subnets will be refused service. Although, this may be
-desired outcome if one desires to service only clients of known properties
+class "a-devices" will be able to use subnet 2001:db8:1::/64 and only clients
+belonging to "b-devices" will be able to use subnet 2001:db8:3::/64. Care should
+be taken not to define too-restrictive classification rules, as clients that are
+unable to use any subnets will be refused service. However, this may be a
+desired outcome if one wishes to provide service only to clients with known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
     <para>
