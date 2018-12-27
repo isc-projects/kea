@@ -738,8 +738,10 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
     return (configureDhcp6Server(*srv, config, true));
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port)
-    : Dhcpv6Srv(server_port), io_service_(), timer_mgr_(TimerMgr::instance()) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port,
+                                         uint16_t client_port)
+    : Dhcpv6Srv(server_port, client_port), io_service_(),
+      timer_mgr_(TimerMgr::instance()) {
     if (server_) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");

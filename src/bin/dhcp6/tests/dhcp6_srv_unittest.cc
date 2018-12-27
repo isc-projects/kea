@@ -1610,6 +1610,35 @@ TEST_F(Dhcpv6SrvTest, selectSubnetRelayInterfaceId) {
 }
 
 // Checks if server responses are sent to the proper port.
+TEST_F(Dhcpv6SrvTest, portsClientPort) {
+
+    NakedDhcpv6Srv srv(0);
+
+    // Enforce a specific client port value.
+    EXPECT_EQ(0, srv.client_port_);
+    srv.client_port_ = 1234;
+
+    // Let's create a simple SOLICIT
+    Pkt6Ptr sol = PktCaptures::captureSimpleSolicit();
+
+    // Simulate that we have received that traffic
+    srv.fakeReceive(sol);
+
+    // Server will now process to run its normal loop, but instead of calling
+    // IfaceMgr::receive6(), it will read all packets from the list set by
+    // fakeReceive()
+    srv.run();
+
+    // Get Advertise...
+    ASSERT_FALSE(srv.fake_sent_.empty());
+    Pkt6Ptr adv = srv.fake_sent_.front();
+    ASSERT_TRUE(adv);
+
+    // This is sent back to client directly, should be port 546
+    EXPECT_EQ(srv.client_port_, adv->getRemotePort());
+}
+
+// Checks if server responses are sent to the proper port.
 TEST_F(Dhcpv6SrvTest, portsDirectTraffic) {
 
     NakedDhcpv6Srv srv(0);

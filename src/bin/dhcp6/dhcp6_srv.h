@@ -80,8 +80,10 @@ public:
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID.
     ///
-    /// @param server_port port on will all sockets will listen
-    Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT);
+    /// @param server_port port on which all sockets will listen
+    /// @param client_port port to which all responses will be sent
+    Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT,
+              uint16_t client_port = 0);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -942,6 +944,10 @@ private:
 
     /// UDP port number on which server listens.
     uint16_t server_port_;
+
+protected:
+    /// UDP port number to which server sends all responses.
+    uint16_t client_port_;
 
 public:
     /// @note used by DHCPv4-over-DHCPv6 so must be public and static

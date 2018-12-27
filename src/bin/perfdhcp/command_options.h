@@ -243,6 +243,11 @@ public:
     /// \return local port number.
     int getLocalPort() const { return local_port_; }
 
+    /// \brief Returns remote port number.
+    ///
+    /// \return remote port number.
+    int getRemotePort() const { return remote_port_; }
+
     /// @brief Returns the time in microseconds to delay the program by.
     ///
     /// @return the time in microseconds to delay the program by.
@@ -576,6 +581,9 @@ private:
 
     /// Local port number (host endian)
     int local_port_;
+
+    /// Remote port number (host endian)
+    int remote_port_;
 
     /// Randomization seed.
     uint32_t seed_;

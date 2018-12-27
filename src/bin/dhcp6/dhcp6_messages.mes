@@ -782,7 +782,7 @@ This informational message indicates that the IPv6 DHCP server has
 processed any command-line switches and is starting. The version
 is also printed.
 
-% DHCP6_START_INFO pid: %1, server port: %2, verbose: %3
+% DHCP6_START_INFO pid: %1, server port: %2, client port: %3, verbose: %4
 This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.

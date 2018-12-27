@@ -64,6 +64,7 @@
             <arg choice="opt" rep="norepeat"><option>-L <replaceable class="parameter">local-port</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-M <replaceable class="parameter">mac-list-file</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-n <replaceable class="parameter">num-request</replaceable></option></arg>
+            <arg choice="opt" rep="norepeat"><option>-N <replaceable class="parameter">remote-port</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-O <replaceable class="parameter">random-offset</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">code,hexstring</replaceable></option></arg>
             <arg choice="opt" rep="norepeat"><option>-p <replaceable class="parameter">test-period</replaceable></option></arg>
@@ -412,6 +413,18 @@
                       from this list for every new exchange. In the DHCPv6 case, MAC
                       addresses are used to generate DUID-LLs. This parameter must not be
                       used in conjunction with the -b parameter.
+                    </para>
+                </listitem>
+            </varlistentry>
+
+            <varlistentry>
+                <term><option>-N <replaceable class="parameter">remote-port</replaceable></option></term>
+                <listitem>
+                    <para>
+                        Specify the remote port to use.  This must be zero
+                        or a positive integer up to 65535.  A value of 0
+                        (the default) allows <command>perfdhcp</command>
+                        to choose the standard service port.
                     </para>
                 </listitem>
             </varlistentry>

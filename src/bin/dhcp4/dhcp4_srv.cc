@@ -441,10 +441,11 @@ Dhcpv4Exchange::setReservedMessageFields() {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, const bool use_bcast,
-                     const bool direct_response_desired)
+Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
+                     const bool use_bcast, const bool direct_response_desired)
     : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
       server_port_(server_port), use_bcast_(use_bcast),
+      client_port_(client_port),
       network_state_(new NetworkState(NetworkState::DHCPv4)) {
 
     LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
@@ -2296,11 +2297,15 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     // server has to reply via relay agent. For other messages we send back
     // through relay if message is relayed, and unicast to the client if the
     // message is not relayed.
+    // If client port was set from the command line enforce all responses
+    // to it. Of course it is only for testing purposes.
     // Note that the call to this function may throw if invalid combination
     // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
     // giaddr != 0). The exception will propagate down and eventually cause the
     // packet to be discarded.
-    if (((query->getType() == DHCPINFORM) &&
+    if (client_port_) {
+        response->setRemotePort(client_port_);
+    } else if (((query->getType() == DHCPINFORM) &&
          ((!query->getCiaddr().isV4Zero()) ||
           (!query->isRelayed() && !query->getRemoteAddr().isV4Zero()))) ||
         ((query->getType() != DHCPINFORM) && !query->isRelayed())) {

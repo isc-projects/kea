@@ -176,7 +176,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -202,10 +202,16 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelay) {
     // Clear remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    // Set the client port.
+    srv_.client_port_ = 1234;
+
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Response should be sent back to the relay address.
     EXPECT_EQ("192.0.1.50", resp->getRemoteAddr().toText());
+
+    // Remote port was enforced to the client port.
+    EXPECT_EQ(srv_.client_port_, resp->getRemotePort());
 }
 
 // This test verifies that the remote port is adjusted when
@@ -260,7 +266,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRelayPort) {
     resp->setRemotePort(67);
 
     // This function never throws.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -325,7 +331,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     resp->setHops(req->getHops());
 
     // This function never throws.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Now the destination address should be relay's address.
     EXPECT_EQ("192.0.1.1", resp->getRemoteAddr().toText());
@@ -354,7 +360,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataUseRouting) {
     cfg_iface->setOutboundIface(CfgIface::SAME_AS_INBOUND);
     CfgMgr::instance().commit();
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.2.5", resp->getLocalAddr().toText());
     EXPECT_EQ("eth1", resp->getIface());
@@ -409,7 +415,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataRenew) {
     // Copy hops value from the query.
     resp->setHops(req->getHops());
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Check that server responds to ciaddr
     EXPECT_EQ("192.0.1.15", resp->getRemoteAddr().toText());
@@ -482,7 +488,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
     // are zero and client has just got new lease, the assigned address is
     // carried in yiaddr. In order to send this address to the client,
     // server must broadcast its response.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Check that the response is sent to broadcast address as the
     // server doesn't have capability to respond directly.
@@ -511,7 +517,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataSelect) {
 
     // Now we expect that the server will send its response to the
     // address assigned for the client.
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     EXPECT_EQ("192.0.1.13", resp->getRemoteAddr().toText());
 }
@@ -553,7 +559,7 @@ TEST_F(Dhcpv4SrvTest, adjustIfaceDataBroadcast) {
     // Clear the remote address.
     resp->setRemoteAddr(IOAddress("0.0.0.0"));
 
-    ASSERT_NO_THROW(NakedDhcpv4Srv::adjustIfaceData(ex));
+    ASSERT_NO_THROW(srv_.adjustIfaceData(ex));
 
     // Server must respond to broadcast address when client desired that
     // by setting the broadcast flag in its request.

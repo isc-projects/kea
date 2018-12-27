@@ -44,7 +44,7 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
@@ -53,6 +53,8 @@ usage() {
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
     cerr << "  -p number: specify non-standard server port number 1-65535 "
          << "(useful for testing only)" << endl;
+    cerr << "  -P number: specify non-standard client port number 1-65535 "
+         << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
 } // end of anonymous namespace
@@ -60,15 +62,17 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    // The default. any other values are useful for testing only.
+    // The default. Any other values are useful for testing only.
     int server_port_number = DHCP4_SERVER_PORT;
+    // Not zero values are useful for testing only.
+    int client_port_number = 0;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:t:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -98,12 +102,27 @@ main(int argc, char* argv[]) {
             try {
                 server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
-                cerr << "Failed to parse port number: [" << optarg
+                cerr << "Failed to parse server port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
             if (server_port_number <= 0 || server_port_number > 65535) {
-                cerr << "Failed to parse port number: [" << optarg
+                cerr << "Failed to parse server port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            break;
+
+        case 'P':
+            try {
+                client_port_number = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
+                cerr << "Failed to parse client port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            if (client_port_number <= 0 || client_port_number > 65535) {
+                cerr << "Failed to parse client port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
@@ -187,13 +206,15 @@ main(int argc, char* argv[]) {
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
-            .arg(getpid()).arg(server_port_number)
+            .arg(getpid())
+            .arg(server_port_number)
+            .arg(client_port_number)
             .arg(verbose_mode ? "yes" : "no");
 
         LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv4Srv server(server_port_number);
+        ControlledDhcpv4Srv server(server_port_number, client_port_number);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);

@@ -138,6 +138,7 @@ CommandOptions::reset() {
     is_interface_ = false;
     preload_ = 0;
     local_port_ = 0;
+    remote_port_ = 0;
     seeded_ = false;
     seed_ = 0;
     broadcast_ = false;
@@ -226,7 +227,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:L:M:"
+    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:"
                         "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:g:")) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
@@ -373,8 +374,18 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                                               " negative integer");
              check(local_port_ >
                    static_cast<int>(std::numeric_limits<uint16_t>::max()),
-                  "local-port must be lower than " +
-                  boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+                   "local-port must be lower than " +
+                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+            break;
+
+        case 'N':
+             remote_port_ = nonNegativeInteger("value of remote port:"
+                                               " -L<value> must not be a"
+                                               " negative integer");
+             check(remote_port_ >
+                   static_cast<int>(std::numeric_limits<uint16_t>::max()),
+                   "remote-port must be lower than " +
+                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
             break;
 
         case 'M':
@@ -992,6 +1003,9 @@ CommandOptions::printCommandLine() const {
     if (getLocalPort() != 0) {
         std::cout << "local-port=" << local_port_ <<  std::endl;
     }
+    if (getRemotePort() != 0) {
+        std::cout << "remote-port=" << remote_port_ <<  std::endl;
+    }
     if (seeded_) {
         std::cout << "seed=" << seed_ << std::endl;
     }
@@ -1056,8 +1070,8 @@ CommandOptions::usage() const {
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
-        "         [-L<local-port>] [-s<seed>] [-i] [-B] [-g<single/multi>]\n"
-        "         [-W<late-exit-delay>]\n"
+        "         [-L<local-port>] [-N<remote-port>]\n"
+        "         [-s<seed>] [-i] [-B] [-W<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
@@ -1129,6 +1143,8 @@ CommandOptions::usage() const {
         "   from this list for every new exchange. In the DHCPv6 case, MAC\n"
         "   addresses are used to generate DUID-LLs. This parameter must not be\n"
         "   used in conjunction with the -b parameter.\n"
+        "-N<remote-port>: Specify the remote port to use\n"
+        "    (the value 0 means to use the default).\n"
         "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
         "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
         "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
