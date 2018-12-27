@@ -21,8 +21,8 @@
     "http-port": 8080,
 
     // Specify location of the files to which the Control Agent
-    // should connect to forward commands to the DHCPv4 and DHCPv6
-    // server via unix domain socket.
+    // should connect to forward commands to the DHCPv4, DHCPv6
+    // and D2 servers via unix domain sockets.
     "control-sockets": {
         "dhcp4": {
             "socket-type": "unix",
@@ -31,6 +31,10 @@
         "dhcp6": {
             "socket-type": "unix",
             "socket-name": "/tmp/kea-dhcp6-ctrl.sock"
+        },
+        "d2": {
+            "socket-type": "unix",
+            "socket-name": "/tmp/kea-dhcp-ddns-ctrl.sock"
         }
     },
 
