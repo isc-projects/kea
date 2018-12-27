@@ -421,7 +421,7 @@ This message is printed when the DHCPv4 server is attempting to open a
 configuration database.  The database access string with password redacted
 is logged.
 
-% DHCP4_OPEN_SOCKET opening sockets on port %1
+% DHCP4_OPEN_SOCKET opening service sockets on port %1
 A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
@@ -739,7 +739,7 @@ This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting. The version
 is also printed.
 
-% DHCP4_START_INFO pid: %1, port: %2, verbose: %3
+% DHCP4_START_INFO pid: %1, server port: %2, verbose: %3
 This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.

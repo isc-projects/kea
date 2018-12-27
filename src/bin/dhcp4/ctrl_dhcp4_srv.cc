@@ -657,7 +657,8 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
-        openSockets(AF_INET, srv->getPort(), getInstance()->useBroadcast());
+        openSockets(AF_INET, srv->getServerPort(),
+                    getInstance()->useBroadcast());
 
     // Install the timers for handling leases reclamation.
     try {
@@ -715,8 +716,8 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
     return (configureDhcp4Server(*srv, config, true));
 }
 
-ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
+ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_PORT*/)
+    : Dhcpv4Srv(server_port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");

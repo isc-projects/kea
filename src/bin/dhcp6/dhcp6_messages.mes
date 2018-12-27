@@ -472,7 +472,7 @@ This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
 
-% DHCP6_OPEN_SOCKET opening sockets on port %1
+% DHCP6_OPEN_SOCKET opening service sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP
 server is about to open sockets on the specified port.
 
@@ -782,7 +782,7 @@ This informational message indicates that the IPv6 DHCP server has
 processed any command-line switches and is starting. The version
 is also printed.
 
-% DHCP6_START_INFO pid: %1, port: %2, verbose: %3
+% DHCP6_START_INFO pid: %1, server port: %2, verbose: %3
 This is a debug message issued during the IPv6 DHCP server startup.
 It lists some information about the parameters with which the server
 is running.

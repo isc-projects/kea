@@ -676,7 +676,8 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // log warnings. Since we allow that this fails for some interfaces there
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
-    CfgMgr::instance().getStagingCfg()->getCfgIface()->openSockets(AF_INET6, srv->getPort());
+    CfgMgr::instance().getStagingCfg()->getCfgIface()->
+        openSockets(AF_INET6, srv->getServerPort());
 
     // Install the timers for handling leases reclamation.
     try {
@@ -737,8 +738,8 @@ ControlledDhcpv6Srv::checkConfig(isc::data::ConstElementPtr config) {
     return (configureDhcp6Server(*srv, config, true));
 }
 
-ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t port)
-    : Dhcpv6Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
+ControlledDhcpv6Srv::ControlledDhcpv6Srv(uint16_t server_port)
+    : Dhcpv6Srv(server_port), io_service_(), timer_mgr_(TimerMgr::instance()) {
     if (server_) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv6Srv instance already.");

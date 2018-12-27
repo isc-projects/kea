@@ -101,7 +101,7 @@ extern isc::log::Logger packet6_logger;
 /// @brief Logger for options parser.
 ///
 /// This logger is used to issue log messages related to processing of the
-/// DHCP options 
+/// DHCP options.
 extern isc::log::Logger options6_logger;
 
 /// @brief Logger for Hostname or FQDN processing.

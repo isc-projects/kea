@@ -441,17 +441,19 @@ Dhcpv4Exchange::setReservedMessageFields() {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
+Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, const bool use_bcast,
                      const bool direct_response_desired)
-    : io_service_(new IOService()), shutdown_(true), alloc_engine_(), port_(port),
-      use_bcast_(use_bcast), network_state_(new NetworkState(NetworkState::DHCPv4)) {
+    : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
+      server_port_(server_port), use_bcast_(use_bcast),
+      network_state_(new NetworkState(NetworkState::DHCPv4)) {
 
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
+        .arg(server_port);
     try {
         // Port 0 is used for testing purposes where we don't open broadcast
         // capable sockets. So, set the packet filter handling direct traffic
         // only if we are in non-test mode.
-        if (port) {
+        if (server_port) {
             // First call to instance() will create IfaceMgr (it's a singleton)
             // it may throw something if things go wrong.
             // The 'true' value of the call to setMatchingPacketFilter imposes

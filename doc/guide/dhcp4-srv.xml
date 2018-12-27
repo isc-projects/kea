@@ -38,7 +38,7 @@
           </listitem>
           <listitem>
             <simpara>
-            <command>-p <replaceable>port</replaceable></command> -
+            <command>-p <replaceable>server-port</replaceable></command> -
             specifies UDP port on which the server will listen. This is only
             useful during testing, as a DHCPv4 server listening on
             ports other than the standard ones will not be able to
