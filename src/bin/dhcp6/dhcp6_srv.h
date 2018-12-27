@@ -80,8 +80,8 @@ public:
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID.
     ///
-    /// @param port port on will all sockets will listen
-    Dhcpv6Srv(uint16_t port = DHCP6_SERVER_PORT);
+    /// @param server_port port on will all sockets will listen
+    Dhcpv6Srv(uint16_t server_port = DHCP6_SERVER_PORT);
 
     /// @brief Destructor. Used during DHCPv6 service shutdown.
     virtual ~Dhcpv6Srv();
@@ -138,8 +138,8 @@ public:
     /// used for testing purposes.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getPort() const {
-        return (port_);
+    uint16_t getServerPort() const {
+        return (server_port_);
     }
 
     /// @brief Starts DHCP_DDNS client IO if DDNS updates are enabled.
@@ -941,7 +941,7 @@ private:
     bool requestedInORO(const Pkt6Ptr& query, const uint16_t code) const;
 
     /// UDP port number on which server listens.
-    uint16_t port_;
+    uint16_t server_port_;
 
 public:
     /// @note used by DHCPv4-over-DHCPv6 so must be public and static

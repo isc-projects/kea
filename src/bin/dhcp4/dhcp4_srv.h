@@ -219,11 +219,11 @@ public:
     /// class for unit testing because features they enable require
     /// root privileges.
     ///
-    /// @param port specifies port number to listen on
+    /// @param server_port specifies port number to listen on
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
-    Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
+    Dhcpv4Srv(uint16_t server_port = DHCP4_SERVER_PORT,
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
@@ -285,8 +285,8 @@ public:
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getPort() const {
-        return (port_);
+    uint16_t getServerPort() const {
+        return (server_port_);
     }
 
     /// @brief Return bool value indicating that broadcast flags should be set
@@ -954,8 +954,11 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
-    uint16_t port_;  ///< UDP port number on which server listens.
-    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+    /// UDP port number on which server listens.
+    uint16_t server_port_;
+
+    /// Should broadcast be enabled on sockets (if true).
+    bool use_bcast_;
 
 protected:
 

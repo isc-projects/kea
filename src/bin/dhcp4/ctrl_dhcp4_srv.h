@@ -27,8 +27,8 @@ public:
 
     /// @brief Constructor
     ///
-    /// @param port UDP port to be opened for DHCP traffic
-    ControlledDhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT);
+    /// @param server_port UDP port to be opened for DHCP traffic
+    ControlledDhcpv4Srv(uint16_t server_port = DHCP4_SERVER_PORT);
 
     /// @brief Destructor.
     ~ControlledDhcpv4Srv();

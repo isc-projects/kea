@@ -49,14 +49,14 @@ usage() {
     cerr << "Kea DHCPv6 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP6_NAME
-         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p port_number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p server_port_number]" << endl;
     cerr << "  -v: print version number and exit." << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
-    cerr << "  -p number: specify non-standard port number 1-65535 "
+    cerr << "  -p number: specify non-standard server port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
@@ -65,8 +65,8 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port_number = DHCP6_SERVER_PORT; // The default. Any other values are
-                                         // useful for testing only.
+    // The default. Any other values are useful for testing only.
+    int server_port_number = DHCP6_SERVER_PORT;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
@@ -101,13 +101,13 @@ main(int argc, char* argv[]) {
 
         case 'p': // port number
             try {
-                port_number = boost::lexical_cast<int>(optarg);
+                server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            if (port_number <= 0 || port_number > 65535) {
+            if (server_port_number <= 0 || server_port_number > 65535) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
@@ -194,12 +194,13 @@ main(int argc, char* argv[]) {
         Daemon::loggerInit(DHCP6_LOGGER_NAME, verbose_mode);
 
         LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_START_INFO)
-            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
+            .arg(getpid()).arg(server_port_number)
+            .arg(verbose_mode ? "yes" : "no");
 
         LOG_INFO(dhcp6_logger, DHCP6_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv6Srv server(port_number);
+        ControlledDhcpv6Srv server(server_port_number);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);

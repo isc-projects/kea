@@ -51,7 +51,7 @@ usage() {
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
-    cerr << "  -p number: specify non-standard port number 1-65535 "
+    cerr << "  -p number: specify non-standard server port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
@@ -60,8 +60,8 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port_number = DHCP4_SERVER_PORT; // The default. any other values are
-                                         // useful for testing only.
+    // The default. any other values are useful for testing only.
+    int server_port_number = DHCP4_SERVER_PORT;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
@@ -96,13 +96,13 @@ main(int argc, char* argv[]) {
 
         case 'p':
             try {
-                port_number = boost::lexical_cast<int>(optarg);
+                server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            if (port_number <= 0 || port_number > 65535) {
+            if (server_port_number <= 0 || server_port_number > 65535) {
                 cerr << "Failed to parse port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
@@ -187,12 +187,13 @@ main(int argc, char* argv[]) {
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
-            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
+            .arg(getpid()).arg(server_port_number)
+            .arg(verbose_mode ? "yes" : "no");
 
         LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv4Srv server(port_number);
+        ControlledDhcpv4Srv server(server_port_number);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);

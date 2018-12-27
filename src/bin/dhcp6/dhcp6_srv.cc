@@ -179,20 +179,21 @@ namespace dhcp {
 
 const std::string Dhcpv6Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv6Srv::Dhcpv6Srv(uint16_t port)
-    : io_service_(new IOService()), port_(port), serverid_(), shutdown_(true),
-      alloc_engine_(), name_change_reqs_(),
+Dhcpv6Srv::Dhcpv6Srv(uint16_t server_port)
+    : io_service_(new IOService()), server_port_(server_port), serverid_(),
+      shutdown_(true), alloc_engine_(), name_change_reqs_(),
       network_state_(new NetworkState(NetworkState::DHCPv6))
 {
 
-    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET).arg(port);
+    LOG_DEBUG(dhcp6_logger, DBG_DHCP6_START, DHCP6_OPEN_SOCKET)
+        .arg(server_port);
 
     // Initialize objects required for DHCP server operation.
     try {
         // Port 0 is used for testing purposes where in most cases we don't
         // rely on the physical interfaces. Therefore, it should be possible
         // to create an object even when there are no usable interfaces.
-        if ((port > 0) && (IfaceMgr::instance().countIfaces() == 0)) {
+        if ((server_port > 0) && (IfaceMgr::instance().countIfaces() == 0)) {
             LOG_ERROR(dhcp6_logger, DHCP6_NO_INTERFACES);
             return;
         }
