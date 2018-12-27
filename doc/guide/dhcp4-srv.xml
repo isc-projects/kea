@@ -4590,9 +4590,9 @@ for each subnet. Here's an example:
         ]
     }
 ]</screen>
-In this particular case the relay IP address specified at network level doesn't
+In this particular case the relay IP address specified at the network level doesn't
 make much sense, as it is overridden in both subnets, but it was left there
-as an example of how one could be defined at network level. Note that the
+as an example of how one could be defined at the network level. Note that the
 relay agent IP address typically belongs to the subnet it relays packets from,
 but this is not a strict requirement. Kea accepts any value here
 as long as it is a valid IPv4 address.</para>
@@ -4607,7 +4607,7 @@ as long as it is a valid IPv4 address.</para>
       can be applied to subnets belonging to shared networks in the same way
       as it is used for subnets specified outside of shared networks.
       It is important to understand how the server selects subnets for
-      the clients when client classification is in use, to ensure that the
+      clients when client classification is in use, to ensure that the
       desired subnet is selected for a given client type.</para>
 
       <para>If a subnet is associated with a class, only the clients
@@ -4656,7 +4656,7 @@ as long as it is a valid IPv4 address.</para>
         never use the subnet 10.0.0.0/24.
       </para>
 
-      <para>A typical use case for client classification is in the cable network,
+      <para>A typical use case for client classification is in a cable network,
       where cable modems should use one subnet and other devices should use
       another subnet within the same shared network. In this case it is necessary
       to apply classification on all subnets. The following example defines two
@@ -4696,10 +4696,10 @@ as long as it is a valid IPv4 address.</para>
 </screen>
 In this example each class has its own restriction. Only clients that belong to
 class "a-devices" will be able to use subnet 192.0.2.0/26 and only clients
-belonging to b-devices will be able to use subnet 10.0.0.0/24. Care should be
+belonging to "b-devices" will be able to use subnet 10.0.0.0/24. Care should be
 taken not to define too-restrictive classification rules, as clients that are
 unable to use any subnets will be refused service. However, this may be a
-desired outcome if one desires to service only clients of known properties
+desired outcome if one wishes to provide service only to clients with known properties
 (e.g. only VoIP phones allowed on a given link).</para>
 
     <para>
