@@ -77,7 +77,11 @@
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v6",
                 "user-context": { "version": 3 }
-            }
+            },
+            "d2": {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-d2"
+            },
         },
 
         "hooks-libraries": [
@@ -130,9 +134,10 @@
       commands to it. Obviously, the DHCPv4 server must be configured to
       listen to connections via this same socket. In other words, the command
       socket configuration for the DHCPv4 server and CA (for this server)
-      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/> and the
-      <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
-      configuration is specified for the DHCPv4 and DHCPv6 services.
+      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/>, the
+      <xref linkend="dhcp6-ctrl-channel"/> and
+      <xref linkend="d2-ctrl-channel"/> to learn how the socket
+      configuration is specified for the DHCPv4, DHCPv6 and D2 services.
     </para>
 
     <warning>
