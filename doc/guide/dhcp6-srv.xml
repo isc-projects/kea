@@ -39,10 +39,19 @@
           <listitem>
             <simpara>
             <command>-p <replaceable>server-port</replaceable></command> -
-            specifies UDP port on which the server will listen. This is only
-            useful during testing, as a DHCPv6 server listening on
-            ports other than the standard ones will not be able to
-            handle regular DHCPv6 queries.</simpara>
+            specifies UDP local port on which the server will listen.
+            This is only useful during testing, as a DHCPv6 server
+            listening on ports other than the standard ones will not
+            be able to handle regular DHCPv6 queries.</simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+            <command>-P <replaceable>client-port</replaceable></command> -
+            specifies UDP remote port to which the server will send
+            all responses. This is only useful during testing, as a
+            DHCPv6 server sending responses to ports other than the
+            standard ones will not be able to handle regular DHCPv6
+            clients.</simpara>
           </listitem>
           <listitem>
             <simpara>
