@@ -367,6 +367,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           <itemizedlist>
               <listitem>build-report</listitem>
               <listitem>config-get</listitem>
+              <listitem>config-set</listitem>
               <listitem>config-test</listitem>
               <listitem>config-write</listitem>
               <listitem>list-commands</listitem>

@@ -625,6 +625,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
           <simpara>config-get</simpara>
         </listitem>
         <listitem>
+          <simpara>config-set</simpara>
+        </listitem>
+        <listitem>
           <simpara>config-test</simpara>
         </listitem>
         <listitem>
@@ -655,6 +658,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </listitem>
         <listitem>
           <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-set</simpara>
         </listitem>
         <listitem>
           <simpara>config-test</simpara>
