@@ -80,9 +80,9 @@ public:
             " \"dns-server-timeout\": " << dns_server_timeout << " , "
             " \"ncr-protocol\": \"" << ncr_protocol << "\" , "
             " \"ncr-format\": \"" << ncr_format << "\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
         return (config.str());
@@ -261,9 +261,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             " \"dns-server-timeout\": 333 , "
             " \"ncr-protocol\": \"UDP\" , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
     RUN_CONFIG_OK(config);
@@ -279,9 +279,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             " \"dns-server-timeout\": 333 , "
             " \"ncr-protocol\": \"UDP\" , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
     RUN_CONFIG_OK(config);
@@ -296,9 +296,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             " \"port\": 777 , "
             " \"ncr-protocol\": \"UDP\" , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
     RUN_CONFIG_OK(config);
@@ -313,9 +313,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             " \"port\": 777 , "
             " \"dns-server-timeout\": 333 , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
     RUN_CONFIG_OK(config);
@@ -331,9 +331,9 @@ TEST_F(D2CfgMgrTest, defaultValues) {
             " \"port\": 777 , "
             " \"dns-server-timeout\": 333 , "
             " \"ncr-protocol\": \"UDP\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {} "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {} "
             "}";
 
     RUN_CONFIG_OK(config);
@@ -353,13 +353,13 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
             " \"dns-server-timeout\": 333 , "
             " \"ncr-protocol\": \"UDP\" , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {}, "
-            "\"bogus-param\" : true "
+            " \"tsig-keys\": [], "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {}, "
+            " \"bogus-param\" : true "
             "}";
 
-    SYNTAX_ERROR(config, "<string>:1.181-193: got unexpected "
+    SYNTAX_ERROR(config, "<string>:1.185-197: got unexpected "
                          "keyword \"bogus-param\" in DhcpDdns map.");
 
     // Check that unsupported top level objects fails.  For
@@ -371,14 +371,14 @@ TEST_F(D2CfgMgrTest, unsupportedTopLevelItems) {
             " \"dns-server-timeout\": 333 , "
             " \"ncr-protocol\": \"UDP\" , "
             " \"ncr-format\": \"JSON\", "
-            "\"tsig-keys\": [], "
-            "\"bogus-object-one\" : {}, "
-            "\"forward-ddns\" : {}, "
-            "\"reverse-ddns\" : {}, "
-            "\"bogus-object-two\" : {} "
+            " \"tsig-keys\": [], "
+            " \"bogus-object-one\" : {}, "
+            " \"forward-ddns\" : {}, "
+            " \"reverse-ddns\" : {}, "
+            " \"bogus-object-two\" : {} "
             "}";
 
-    SYNTAX_ERROR(config, "<string>:1.139-156: got unexpected"
+    SYNTAX_ERROR(config, "<string>:1.141-158: got unexpected"
                          " keyword \"bogus-object-one\" in DhcpDdns map.");
 }
 
@@ -426,6 +426,8 @@ TEST_F(D2CfgMgrTest, invalidEntry) {
                          " unexpected constant string, expecting JSON");
 }
 
+// Control socket tests in d2_process_unittests.cc
+
 // DdnsDomainList and TSIGKey tests moved to d2_simple_parser_unittest.cc
 
 /// @brief Tests construction of D2CfgMgr
@@ -462,9 +464,13 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     std::string config = "{ "
                         "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
-                        " \"dns-server-timeout\": 333 , "
-                        " \"ncr-protocol\": \"UDP\" , "
-                        " \"ncr-format\": \"JSON\", "
+                        "\"dns-server-timeout\": 333 , "
+                        "\"ncr-protocol\": \"UDP\" , "
+                        "\"ncr-format\": \"JSON\", "
+                        "\"control-socket\" : {"
+                        " \"socket-type\" : \"unix\" ,"
+                        " \"socket-name\" : \"/tmp/d2-ctrl-channel\" "
+                        "},"
                         "\"tsig-keys\": ["
                         "{"
                         "  \"name\": \"d2_key.example.com\" , "
@@ -532,6 +538,16 @@ TEST_F(D2CfgMgrTest, fullConfig) {
     EXPECT_EQ(333, d2_params->getDnsServerTimeout());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_params->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_params->getNcrFormat());
+
+    // Verify that the control socket can be retrieved.
+    ConstElementPtr ctrl_sock = context->getControlSocketInfo();
+    ASSERT_TRUE(ctrl_sock);
+    ASSERT_EQ(Element::map, ctrl_sock->getType());
+    EXPECT_EQ(2, ctrl_sock->size());
+    ASSERT_TRUE(ctrl_sock->get("socket-type"));
+    EXPECT_EQ("\"unix\"", ctrl_sock->get("socket-type")->str());
+    ASSERT_TRUE(ctrl_sock->get("socket-name"));
+    EXPECT_EQ("\"/tmp/d2-ctrl-channel\"", ctrl_sock->get("socket-name")->str());
 
     // Verify that the forward manager can be retrieved.
     DdnsDomainListMgrPtr mgr = context->getForwardMgr();
@@ -941,6 +957,11 @@ TEST_F(D2CfgMgrTest, comments) {
                         "\"comment\": \"D2 config\" , "
                         "\"ip-address\" : \"192.168.1.33\" , "
                         "\"port\" : 88 , "
+                        "\"control-socket\": {"
+                        " \"comment\": \"Control channel\" , "
+                        " \"socket-type\": \"unix\" ,"
+                        " \"socket-name\": \"/tmp/d2-ctrl-channel\" "
+                        "},"
                         "\"tsig-keys\": ["
                         "{"
                         "  \"user-context\": { "
@@ -975,6 +996,13 @@ TEST_F(D2CfgMgrTest, comments) {
     ASSERT_EQ(1, ctx->size());
     ASSERT_TRUE(ctx->get("comment"));
     EXPECT_EQ("\"D2 config\"", ctx->get("comment")->str());
+
+    // Check control socket.
+    ConstElementPtr ctrl_sock = d2_context->getControlSocketInfo();
+    ASSERT_TRUE(ctrl_sock);
+    ASSERT_TRUE(ctrl_sock->get("user-context"));
+    EXPECT_EQ("{ \"comment\": \"Control channel\" }",
+              ctrl_sock->get("user-context")->str());
 
     // Check TSIG keys.
     TSIGKeyInfoMapPtr keys = d2_context->getKeys();

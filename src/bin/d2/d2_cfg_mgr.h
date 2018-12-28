@@ -90,6 +90,18 @@ public:
         keys_ = keys;
     }
 
+    /// @brief Returns information about control socket
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo() const {
+        return (control_socket_);
+    }
+
+    /// @brief Sets information about the control socket
+    /// @param control_socket Element that holds control-socket map
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        control_socket_ = control_socket;
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
@@ -112,8 +124,11 @@ private:
     /// @brief Reverse domain list manager.
     DdnsDomainListMgrPtr reverse_mgr_;
 
-    /// @brief Storage for the map of TSIGKeyInfos
+    /// @brief Storage for the map of TSIGKeyInfos.
     TSIGKeyInfoMapPtr keys_;
+
+    /// @brief Pointer to the control-socket information.
+    isc::data::ConstElementPtr control_socket_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.
@@ -253,6 +268,11 @@ public:
     /// @brief Convenience method fetches the D2Params from context
     /// @return reference to const D2ParamsPtr
     const D2ParamsPtr& getD2Params();
+
+    /// @brief Convenience method fetches information about control socket
+    /// from context
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo();
 
     /// @brief Returns configuration summary in the textual format.
     ///

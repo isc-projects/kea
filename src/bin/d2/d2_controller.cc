@@ -46,7 +46,7 @@ D2Controller::D2Controller()
     : DControllerBase(d2_app_name_, d2_bin_name_) {
 }
 
-isc::data::ConstElementPtr 
+isc::data::ConstElementPtr
 D2Controller::parseFile(const std::string& file_name) {
     isc::data::ConstElementPtr elements;
 

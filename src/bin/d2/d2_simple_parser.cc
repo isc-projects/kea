@@ -265,6 +265,15 @@ void D2SimpleParser::parse(const D2CfgContextPtr& ctx,
         ctx->setContext(user);
     }
 
+    ConstElementPtr socket = config->get("control-socket");
+    if (socket) {
+        if (socket->getType() != Element::map) {
+            isc_throw(D2CfgError, "Specified control-socket is expected to be a map"
+                      ", i.e. a structure defined within { }");
+        }
+        ctx->setControlSocketInfo(socket);
+    }
+
     // Attempt to create the new client config. This ought to fly as
     // we already validated everything.
     D2ParamsPtr params(new D2Params(ip_address, port, dns_server_timeout,
