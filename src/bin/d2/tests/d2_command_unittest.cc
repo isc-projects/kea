@@ -51,7 +51,7 @@ public:
         return (getController());
     }
 
-    virtual ~NakedD2Controller() { }
+    virtual ~NakedD2Controller() { deregisterCommands(); }
 
     using DControllerBase::getIOService;
     using DControllerBase::initProcess;
@@ -129,7 +129,7 @@ public:
 
     /// @brief Destructor.
     ~CtrlChannelD2Test() {
-        // Include deregister & co.
+        // Deregister & co.
         server_.reset();
 
         // Remove files.
@@ -202,6 +202,7 @@ public:
         ASSERT_TRUE(proc);
         ConstElementPtr answer = proc->configure(config, false);
         ASSERT_TRUE(answer);
+        ASSERT_NO_THROW(d2Controller()->registerCommands());
 
         int status = 0;
         ConstElementPtr txt = parseAnswer(status, answer);
@@ -686,6 +687,7 @@ TEST_F(CtrlChannelD2Test, configTest) {
     ASSERT_TRUE(answer);
     EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
               answer->str());
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
 
     // Check that the config was indeed applied.
     D2CfgMgrPtr cfg_mgr = proc->getD2CfgMgr();

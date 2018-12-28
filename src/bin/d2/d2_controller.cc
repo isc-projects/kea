@@ -50,9 +50,6 @@ D2Controller::D2Controller()
 
 void
 D2Controller::registerCommands() {
-    // CommandMgr uses IO service to run asynchronous socket operations.
-    CommandMgr::instance().setIOService(getIOService());
-
     // These are the commands always supported by the D2 server.
     // Please keep the list in alphabetic order.
     CommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
