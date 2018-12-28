@@ -3,21 +3,21 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
     <section xml:id="class-cmds-library">
       <title>class_cmds: Class Commands</title>
       <para>
         This section describes the Class Commands hooks library, which exposes
-        several control commands for manipulating client classes, being a part of
-        the Kea DHCP servers' configurations, without the need to restart those
-        servers. Using these commands it is possible to add, update, delete and
+        several control commands for manipulating client classes (part of
+        the Kea DHCP servers' configurations) without the need to restart those
+        servers. Using these commands it is possible to add, update, delete, and
         list client classes configured for a given server.
 
         <note>
-          <para>This library may only be loaded by <command>kea-dhcp4</command>
-          or <command>kea-dhcp6</command> process.
+          <para>This library may only be loaded by the <command>kea-dhcp4</command>
+          or the <command>kea-dhcp6</command> process.
           </para>
         </note>
 
@@ -26,10 +26,10 @@
       </para>
 
       <section xml:id="command-class-add">
-        <title>class-add command</title>
-        <para>The <command>class-add</command> command is used to add a new client
+        <title>class-add Command</title>
+        <para>The <command>class-add</command> command adds a new client
         class to the DHCP server configuration. This class is appended at the
-        end of the list of classes used by the server, i.e. this class may depend
+        end of the list of classes used by the server and may depend
         on any of the already configured client classes.</para>
         <para>The following example demonstrates how to add a new client class
         to the DHCPv4 server configuration:
@@ -52,14 +52,12 @@
         </para>
         <para>
           Note that the <command>client-classes</command> parameter is a JSON list,
-          but it allows only a single client class to be present. In the future this
-          hooks library may be extended to support specification of multiple client
-          classes within a single <command>class-add</command> command.
+          but it allows only a single client class to be present.
         </para>
 
         <para>
-          The following is the example response to the <command>class-add</command>
-          command:
+          Here is the response to the <command>class-add</command>
+          command in our example:
 <screen>
 {
     "result": 0,
@@ -70,18 +68,18 @@
       </section>
 
       <section xml:id="command-class-update">
-        <title>class-update command</title>
+        <title>class-update Command</title>
         <para>
-          The <command>class-update</command> command is used to update an existing
+          The <command>class-update</command> command updates an existing
           client class in the DHCP server configuration. If the client class with the
-          given name doesn't exist, the server returns result code of 3. In such case,
-          the server configuration is not modified (client class is not created). The
+          given name doesn't exist, the server returns the result code of 3, which means that
+          the server configuration is not modified and the client class does not exist. The
           <command>class-add</command> command must be used instead to create the new
           client class.
         </para>
         <para>
-          The <command>class-update</command> command has the same arguments structure
-          as <command>class-add</command> command:
+          The <command>class-update</command> command has the same argument structure
+          as the <command>class-add</command> command:
 <screen>
 {
     "command": "class-update",
@@ -100,7 +98,7 @@
 </screen>
         </para>
         <para>
-          The following is the example response:
+          Here is the response for our example:
 <screen>
 {
     "result": 0,
@@ -112,21 +110,21 @@
           Any parameter of the client class can be modified with this command, except
           <command>name</command>. There is currently no way to rename the class,
           because the class name is used as a key for searching the class to be updated.
-          In order to achieve similar effect to renaming the class, an existing class
-          should be removed with <command>class-del</command> command and then added
-          again with a different name using <command>class-add</command>. Note however,
+          To achieve a similar effect to renaming the class, an existing class
+          can be removed with the <command>class-del</command> command and then added
+          again with a different name using <command>class-add</command>. Note, however,
           that the class with the new name will be added at the end of the list of
           configured classes.
         </para>
       </section>
 
       <section xml:id="command-class-del">
-        <title>class-del command</title>
+        <title>class-del Command</title>
         <para>The <command>class-del</command> is used to remove a particular class
         from the server configuration. The class to be removed is identified by name.
-        The class won't be removed if there are other classes dependening on it.
-        In order to remove such class, the dependent classes must be removed first.</para>
-        <para>The following is the example command removing
+        The class is not removed if there are other classes depending on it;
+        to remove such a class, the dependent classes must be removed first.</para>
+        <para>The following is a sample command removing the
         <command>ipxe_efi_x64</command> class:
 <screen>
 {
@@ -139,8 +137,8 @@
 }
 </screen>
         </para>
-        <para>The following is the sample response to the <command>class-del</command>
-        command when the specified client class has been found:
+        <para>Here is the response to the <command>class-del</command>
+        command in our example, when the specified client class has been found:
 <screen>
 {
     "result": 0,
@@ -152,8 +150,8 @@
       </section>
 
       <section xml:id="command-class-list">
-        <title>class-list command</title>
-        <para>The <command>class-list</command> is used to retrieve a list of all
+        <title>class-list Command</title>
+        <para><command>class-list</command> is used to retrieve a list of all
         client classes. This command includes no arguments:
 <screen>
 {
@@ -162,7 +160,7 @@
 </screen>
         </para>
         <para>
-          The following is the example response of the server including the list
+          Here is the response of the server in our example, including the list
           of client classes:
 <screen>
 {
@@ -183,15 +181,15 @@
         </para>
         <para>
           Note that the returned list does not contain full class definitions, but
-          merely class names. In order to retrieve full class information, the
+          merely class names. To retrieve full class information, the
           <command>class-get</command> command should be used.
         </para>
       </section>
 
       <section xml:id="command-class-get">
-        <title>class-get command</title>
-        <para>The <command>class-get</command> is used to retrieve detail information
-        about specified class. The command structure is very simple:
+        <title>class-get Command</title>
+        <para><command>class-get</command> is used to retrieve detailed information
+        about a specified class. The command structure is very simple:
 <screen>
 {
     "command": "class-get",
@@ -202,7 +200,7 @@
 </screen>
         </para>
         <para>
-          If the class with the specified name doesn't exist, the status code of 3
+          If the class with the specified name does not exist, the status code of 3
           is returned. If the specified client class exists, the class details are
           returned in the following format:
 <screen>
@@ -233,11 +231,11 @@
 </screen>
         </para>
         <para>
-          Note that the example above is DHCPv4 specific. The last three parameters
-          are only returned by the DHCPv4 server and never returned by the DHCPv6
+          Note that the example above is DHCPv4-specific; the last three parameters
+          are only returned by the DHCPv4 server and are never returned by the DHCPv6
           server. Also, some of the parameters provided in this example may not be
           returned if they are not specified for the class. Specifically,
-          <command>only-if-required</command>, <command>test</command> and the
+          <command>only-if-required</command>, <command>test</command>, and
           <command>option-def</command> are not returned if they are not specified
           for the class.
         </para>
