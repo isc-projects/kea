@@ -39,7 +39,7 @@ public:
 
     /// @brief Defines currently supported scopes
     ///
-    /// D2Parser may eventually support multiple levels of parsing scope. 
+    /// D2Parser may eventually support multiple levels of parsing scope.
     /// Currently it supports only the D2 module scope which expects the data
     /// to be parsed to be a map containing the DhcpDdns element and its
     /// constituents.
