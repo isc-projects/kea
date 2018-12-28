@@ -84,6 +84,16 @@
 .</para>
 <para xml:id="commands-kea-ctrl-agent">Commands supported by kea-ctrl-agent daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-config-get">config-get</link></command>
+, <command><link linkend="ref-config-set">config-set</link></command>
+, <command><link linkend="ref-config-test">config-test</link></command>
+, <command><link linkend="ref-config-write">config-write</link></command>
+, <command><link linkend="ref-list-commands">list-commands</link></command>
+, <command><link linkend="ref-shutdown">shutdown</link></command>
+, <command><link linkend="ref-version-get">version-get</link></command>
+.</para>
+<para xml:id="commands-kea-dhcp-ddns">Commands supported by kea-dhcp-ddns daemon: <command><link linkend="ref-build-report">build-report</link></command>
+, <command><link linkend="ref-config-get">config-get</link></command>
+, <command><link linkend="ref-config-set">config-set</link></command>
 , <command><link linkend="ref-config-test">config-test</link></command>
 , <command><link linkend="ref-config-write">config-write</link></command>
 , <command><link linkend="ref-list-commands">list-commands</link></command>
@@ -264,7 +274,7 @@
 <title>build-report reference</title>
 <para xml:id="ref-build-report"><command>build-report</command> - Returns a list of compilation options that this particular binary was built with</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
@@ -769,7 +779,7 @@ The command will return the result of 3 (empty) if the client
               is roughtly equal to the configuration file, but includes additional
               changes made by other commands and due to parameters inheritance.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
@@ -840,7 +850,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>config-set reference</title>
 <para xml:id="ref-config-set"><command>config-set</command> - The config-set command instructs the server to replace its current configuration with the new configuration supplied in the command's arguments.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
@@ -881,7 +891,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>config-test reference</title>
 <para xml:id="ref-config-test"><command>config-test</command> - The config-test command instructs the server to check whether the new configuration supplied in the command's arguments can be loaded.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
@@ -923,7 +933,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <para xml:id="ref-config-write"><command>config-write</command> - The config-write command instructs the Kea server to write its
               current configuration to a file on disk.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
@@ -1751,7 +1761,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>list-commands reference</title>
 <para xml:id="ref-list-commands"><command>list-commands</command> - The list-commands command retrieves a list of all commands supported by the server.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.0.0 (built-in)</para>
 
@@ -2504,7 +2514,7 @@ object appear only if specific field is set.</para>
 <title>shutdown reference</title>
 <para xml:id="ref-shutdown"><command>shutdown</command> - The shutdown command instructs the server to initiate its shutdown procedure.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.0.0 (built-in)</para>
 
@@ -3221,7 +3231,7 @@ If no IPv6 subnets are found, an error code is returned along with the error des
               Kea version. The returned string is the same as if Kea would
               be run with -V command line option.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 
