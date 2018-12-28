@@ -14,8 +14,8 @@
 
       <para>
         It is recommended that the Kea DHCPv4 server be started and stopped
-        using <command>keactrl</command> (described in <xref linkend="keactrl"/>).
-        However, it is also possible to run the server directly: it accepts
+        using <command>keactrl</command> (described in <xref linkend="keactrl"/>);
+        however, it is also possible to run the server directly. It accepts
         the following command-line switches:
       </para>
 
@@ -32,14 +32,14 @@
             logging should be switched to debug/verbose mode. In verbose mode,
             the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
-            (99) are assumed. The flag is convenient, for temporarily
+            (99) are assumed. The flag is convenient for temporarily
             switching the server into maximum verbosity, e.g. when
             debugging.</simpara>
           </listitem>
           <listitem>
             <simpara>
             <command>-p <replaceable>server-port</replaceable></command> -
-            specifies UDP local port on which the server will listen.
+            specifies the UDP local port on which the server will listen.
             This is only useful during testing, as a DHCPv4 server
             listening on ports other than the standard ones will not
             be able to handle regular DHCPv4 queries.</simpara>
@@ -47,11 +47,11 @@
           <listitem>
             <simpara>
             <command>-P <replaceable>client-port</replaceable></command> -
-            specifies UDP remote port to which the server will send
+            specifies the UDP remote port to which the server will send
             all responses. This is only useful during testing, as a
             DHCPv4 server sending responses to ports other than the
             standard ones will not be able to handle regular DHCPv4
-            clients.</simpara>
+            queries.</simpara>
           </listitem>
           <listitem>
             <simpara>
@@ -61,25 +61,25 @@
             checks. Note that certain checks are possible only while
             running the actual server. The actual status is reported
             with an exit code (0 = configuration looks ok, 1 = error
-            encountered). Kea will print out log messages to standard
+            encountered). Kea prints out log messages to standard
             output and errors to standard error when testing the
             configuration.</simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-v</command> - prints out the Kea version and exits.
+              <command>-v</command> - displays the Kea version and exits.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-V</command> - prints out the Kea extended version with
+              <command>-V</command> - displays the Kea extended version with
               additional parameters and exits. The listing includes the versions
               of the libraries dynamically linked to Kea.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-W</command> - prints out the Kea configuration report
+              <command>-W</command> - displays the Kea configuration report
               and exits. The report is a copy of the
               <filename>config.report</filename> file produced by
               <userinput>./configure</userinput>; it is embedded in the
@@ -90,8 +90,7 @@
 
       <para>
         The <filename>config.report</filename> may also be accessed more
-        directly; the following command may be used to extract this
-        information. The binary <userinput>path</userinput> may be found
+        directly, via the following command. The binary <userinput>path</userinput> may be found
         in the install directory or in the <filename>.libs</filename>
         subdirectory in the source tree. For example:
         <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
@@ -115,14 +114,14 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults to "/usr/local/var". (Note
+            build configure script; it defaults to "/usr/local/var". Note
             that this value may be overridden at runtime by setting the environment
-            variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.)
+            variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
             <simpara><command>conf name</command>: The configuration file name
-            used to start the server, minus all preceding path and file extensions.
+            used to start the server, minus all preceding paths and the file extension.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
             </simpara>
