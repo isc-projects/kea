@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,6 +41,12 @@ public:
     /// @brief Defines the executable name. This is passed into the base class
     /// by convention this should match the executable name.
     static const char* d2_bin_name_;
+
+    /// @brief Register commands.
+    void registerCommands();
+
+    /// @brief Deregister commands.
+    void deregisterCommands();
 
 protected:
     /// @brief Returns version info specific to D2
