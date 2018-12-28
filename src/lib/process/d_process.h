@@ -40,6 +40,9 @@ static const std::string CONFIG_WRITE_COMMAND("config-write");
 /// @brief String value for the config-test command.
 static const std::string CONFIG_TEST_COMMAND("config-test");
 
+/// @brief String value for the config-set command.
+static const std::string CONFIG_SET_COMMAND("config-set");
+
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 

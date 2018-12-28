@@ -297,6 +297,18 @@ public:
     configTestHandler(const std::string& command,
                       isc::data::ConstElementPtr args);
 
+    /// @brief handler for config-set command
+    ///
+    /// This method handles the config-set command, which checks
+    /// configuration specified in args parameter.
+    ///
+    /// @param command (ignored)
+    /// @param args configuration to be checked.
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configSetHandler(const std::string& command,
+                     isc::data::ConstElementPtr args);
+
     /// @brief handler for 'shutdown' command
     ///
     /// This method handles shutdown command. It initiates the shutdown procedure

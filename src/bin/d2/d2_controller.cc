@@ -58,6 +58,9 @@ D2Controller::registerCommands() {
     CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         boost::bind(&D2Controller::configGetHandler, this, _1, _2));
 
+    CommandMgr::instance().registerCommand(CONFIG_SET_COMMAND,
+        boost::bind(&D2Controller::configSetHandler, this, _1, _2));
+
     CommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
         boost::bind(&D2Controller::configTestHandler, this, _1, _2));
 
@@ -80,6 +83,7 @@ D2Controller::deregisterCommands() {
         // Deregister any registered commands (please keep in alphabetic order)
         CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_SET_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
         CommandMgr::instance().deregisterCommand(CONFIG_WRITE_COMMAND);
         CommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);

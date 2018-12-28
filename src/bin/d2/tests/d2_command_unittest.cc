@@ -722,7 +722,8 @@ TEST_F(CtrlChannelD2Test, configTest) {
     EXPECT_EQ("{ \"result\": 1, \"text\": \"missing parameter 'name' (<wire>:9:14)\" }",
               response);
 
-    // Check that the config was not lost.
+    // Check that the config was not lost (fix: reacquire the context).
+    d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
@@ -754,9 +755,143 @@ TEST_F(CtrlChannelD2Test, configTest) {
               response);
 
     // Check that the config was not applied.
+    d2_context = cfg_mgr->getD2CfgContext();
     keys = d2_context->getKeys();
     ASSERT_TRUE(keys);
     EXPECT_EQ(1, keys->size());
+}
+
+// Verify that the "config-set" command will do what we expect.
+TEST_F(CtrlChannelD2Test, configSet) {
+
+    // Define strings to permutate the config arguments.
+    // (Note the line feeds makes errors easy to find)
+    string config_set_txt = "{ \"command\": \"config-set\" \n";
+    string args_txt = " \"arguments\": { \n";
+    string d2_header =
+        "    \"DhcpDdns\": \n";
+    string d2_cfg_txt =
+        "    { \n"
+        "        \"ip-address\": \"192.168.77.1\", \n"
+        "        \"port\": 777, \n"
+        "        \"forward-ddns\" : {}, \n"
+        "        \"reverse-ddns\" : {}, \n"
+        "        \"tsig-keys\": [ \n";
+    string key1 =
+        "            {\"name\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
+    string key2 =
+        "           {\"name\": \"d2_key.billcat.net\", \n"
+        "            \"algorithm\": \"hmac-md5\", \n"
+        "            \"digest-bits\": 120, \n"
+        "            \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
+    string bad_key =
+        "            {\"BOGUS\": \"d2_key.example.com\", \n"
+        "             \"algorithm\": \"hmac-md5\", \n"
+        "             \"secret\": \"LSWXnfkKZjdPJI5QxlpnfQ==\"} \n";
+    string key_footer =
+        "          ] \n";
+    string control_socket_header =
+        "       ,\"control-socket\": { \n"
+        "           \"socket-type\": \"unix\", \n"
+        "           \"socket-name\": \"";
+    string control_socket_footer =
+        "\"   \n} \n";
+
+    ostringstream os;
+    // Create a valid config with all the parts should parse.
+    os << d2_cfg_txt
+       << key1
+       << key_footer
+       << control_socket_header
+       << socket_path_
+       << control_socket_footer
+       << "}\n";
+
+    ASSERT_TRUE(server_);
+
+    ConstElementPtr config;
+    ASSERT_NO_THROW(config = parseDHCPDDNS(os.str(), true));
+    ASSERT_NO_THROW(d2Controller()->initProcess());
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    ConstElementPtr answer = proc->configure(config, false);
+    ASSERT_TRUE(answer);
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              answer->str());
+    ASSERT_NO_THROW(d2Controller()->registerCommands());
+
+    // Check that the config was indeed applied.
+    D2CfgMgrPtr cfg_mgr = proc->getD2CfgMgr();
+    ASSERT_TRUE(cfg_mgr);
+    D2CfgContextPtr d2_context = cfg_mgr->getD2CfgContext();
+    ASSERT_TRUE(d2_context);
+    TSIGKeyInfoMapPtr keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1, keys->size());
+
+    ASSERT_GT(CommandMgr::instance().getControlSocketFD(), -1);
+
+    // Create a config with malformed subnet that should fail to parse.
+    os.str("");
+    os << config_set_txt << ","
+       << args_txt
+       << d2_header
+       << d2_cfg_txt
+       << bad_key
+       << key_footer
+       << control_socket_header
+       << socket_path_
+       << control_socket_footer
+       << "}\n"                        // close DhcpDdns.
+       << "}}";
+
+    // Send the config-set command.
+    string response;
+    sendUnixCommand(os.str(), response);
+
+    // Should fail with a syntax error.
+    EXPECT_EQ("{ \"result\": 1, \"text\": \"missing parameter 'name' (<wire>:9:14)\" }",
+              response);
+
+    // Check that the config was not lost (fix: reacquire the context).
+    d2_context = cfg_mgr->getD2CfgContext();
+    keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(1, keys->size());
+
+    // Create a valid config with two keys and no command channel.
+    os.str("");
+    os << config_set_txt << ","
+       << args_txt
+       << d2_header
+       << d2_cfg_txt
+       << key1
+       << ",\n"
+       << key2
+       << key_footer
+       << "}\n"                        // close DhcpDdns.
+       << "}}";
+
+    // Verify the control channel socket exists.
+    ASSERT_TRUE(test::fileExists(socket_path_));
+
+    // Send the config-set command.
+    sendUnixCommand(os.str(), response);
+
+    // Verify the control channel socket no longer exists.
+    EXPECT_FALSE(test::fileExists(socket_path_));
+
+    // Verify the configuration was successful.
+    EXPECT_EQ("{ \"result\": 0, \"text\": \"Configuration applied successfully.\" }",
+              response);
+
+    // Check that the config was applied.
+    d2_context = cfg_mgr->getD2CfgContext();
+    keys = d2_context->getKeys();
+    ASSERT_TRUE(keys);
+    EXPECT_EQ(2, keys->size());
 }
 
 // Tests if config-write can be called without any parameters.
