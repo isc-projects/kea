@@ -102,7 +102,7 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
       </para>
 
       <para>
-        On start-up, the server will detect available network interfaces
+        On startup, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces
         mentioned in the configuration file.
         Since the DHCPv6 server opens privileged ports, it requires root
