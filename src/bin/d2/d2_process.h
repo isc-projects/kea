@@ -67,10 +67,8 @@ public:
     /// PRIOR to configuration reception.  The base class provides this method
     /// as a place to perform any derivation-specific initialization steps
     /// that are inappropriate for the constructor but necessary prior to
-    /// launch.  So far, no such steps have been identified for D2, so its
-    /// implementation is empty but required.
-    ///
-    /// @throw DProcessBaseError if the initialization fails.
+    /// configure.
+    /// For D2 it is used to initialize the command manager.
     virtual void init();
 
     /// @brief Implements the process's event loop.
@@ -284,11 +282,6 @@ public:
         return (reconf_queue_flag_);
     }
 
-    /// @brief Returns true if the control socket should be reconfigured.
-    bool getReconfControlSocketFlag() const {
-        return (reconf_control_socket_flag_);
-    }
-
     /// @brief Returns the type of shutdown requested.
     ///
     /// Note, this value is meaningless unless shouldShutdown() returns true.
@@ -314,11 +307,12 @@ private:
     /// @brief Indicates if the queue manager should be reconfigured.
     bool reconf_queue_flag_;
 
-    /// @brief Indicates if the control socket should be reconfigured.
-    bool reconf_control_socket_flag_;
-
     /// @brief Indicates the type of shutdown requested.
     ShutdownType shutdown_type_;
+
+    /// @brief Current socket control configuration.
+    isc::data::ConstElementPtr current_control_socket_;
+
 };
 
 /// @brief Defines a shared pointer to D2Process.

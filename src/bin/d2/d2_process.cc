@@ -24,8 +24,7 @@ const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
-      reconf_queue_flag_(false), reconf_control_socket_flag_(false),
-      shutdown_type_(SD_NORMAL) {
+      reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
 
     // Instantiate queue manager.  Note that queue manager does not start
     // listening at this point.  That can only occur after configuration has
@@ -43,6 +42,8 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 
 void
 D2Process::init() {
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    isc::config::CommandMgr::instance().setIOService(getIoService());
 };
 
 void
@@ -56,11 +57,6 @@ D2Process::run() {
 
         // Loop forever until we are allowed to shutdown.
         while (!canShutdown()) {
-            // Check if the command channel should be (re-)configured.
-            if (getReconfControlSocketFlag()) {
-                reconfigureCommandChannel();
-            }
-
             // Check on the state of the request queue. Take any
             // actions necessary regarding it.
             checkQueueStatus();
@@ -215,7 +211,8 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         .arg(config_set->str());
 
     isc::data::ConstElementPtr answer;
-    answer = getCfgMgr()->simpleParseConfig(config_set, check_only);
+    answer = getCfgMgr()->simpleParseConfig(config_set, check_only,
+                boost::bind(&D2Process::reconfigureCommandChannel, this));
     if (check_only) {
         return (answer);
     }
@@ -229,7 +226,6 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         // action. In integrated mode, this will send a failed response back
         // to the configuration backend.
         reconf_queue_flag_ = false;
-        reconf_control_socket_flag_ = false;
         return (answer);
     }
 
@@ -245,7 +241,6 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // things that need reconfiguration.  It might also be useful if we
     // did some analysis to decide what if anything we need to do.)
     reconf_queue_flag_ = true;
-    reconf_control_socket_flag_ = true;
 
     // If we are here, configuration was valid, at least it parsed correctly
     // and therefore contained no invalid values.
@@ -413,36 +408,35 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
 
 void
 D2Process::reconfigureCommandChannel() {
-    reconf_control_socket_flag_ = false;
-
-    // Current socket configuration.
-    static isc::data::ConstElementPtr current_sock_cfg;
-
     // Get new socket configuration.
     isc::data::ConstElementPtr sock_cfg = getD2CfgMgr()->getControlSocketInfo();
 
     // Determine if the socket configuration has changed. It has if
     // both old and new configuration is specified but respective
     // data elements aren't equal.
-    bool sock_changed = (sock_cfg && current_sock_cfg &&
-                         !sock_cfg->equals(*current_sock_cfg));
+    bool sock_changed = (sock_cfg && current_control_socket_ &&
+                         !sock_cfg->equals(*current_control_socket_));
 
     // If the previous or new socket configuration doesn't exist or
     // the new configuration differs from the old configuration we
     // close the existing socket and open a new socket as appropriate.
     // Note that closing an existing socket means the client will not
     // receive the configuration result.
-    if (!sock_cfg || !current_sock_cfg || sock_changed) {
-        // Close the existing socket (if any).
-        isc::config::CommandMgr::instance().closeCommandSocket();
+    if (!sock_cfg || !current_control_socket_ || sock_changed) {
+        // Close the existing socket.
+        if (current_control_socket_) {
+            isc::config::CommandMgr::instance().closeCommandSocket();
+            current_control_socket_.reset();
+        }
 
+        // Open the new socket.
         if (sock_cfg) {
             isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
         }
     }
 
     // Commit the new socket configuration.
-    current_sock_cfg = sock_cfg;
+    current_control_socket_ = sock_cfg;
 }
 
 }; // namespace isc::d2
