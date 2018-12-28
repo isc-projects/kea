@@ -9,6 +9,7 @@
 #include <cc/command_interpreter.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 
 using namespace isc::process;
@@ -45,9 +46,12 @@ D2Process::init() {
 void
 D2Process::run() {
     LOG_INFO(d2_logger, DHCP_DDNS_STARTED).arg(VERSION);
-    // Loop forever until we are allowed to shutdown.
-    while (!canShutdown()) {
-        try {
+    try {
+        // Now logging was initialized so commands can be registered.
+        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->registerCommands();
+
+        // Loop forever until we are allowed to shutdown.
+        while (!canShutdown()) {
             // Check on the state of the request queue. Take any
             // actions necessary regarding it.
             checkQueueStatus();
@@ -69,16 +73,19 @@ D2Process::run() {
                 isc_throw(DProcessBaseError,
                           "Primary IO service stopped unexpectedly");
             }
-        } catch (const std::exception& ex) {
-            LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
-            isc_throw (DProcessBaseError,
-                       "Process run method failed: " << ex.what());
         }
+    } catch (const std::exception& ex) {
+        LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
+        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->deregisterCommands();
+        isc_throw (DProcessBaseError,
+                   "Process run method failed: " << ex.what());
     }
 
     // @todo - if queue isn't empty, we may need to persist its contents
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
+
+    boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->deregisterCommands();
 
     LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
