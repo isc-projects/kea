@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -14,46 +14,46 @@
       <title>Overview</title>
       <para>
       The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts
-      the client side of the DDNS protocol (defined in  <link
+      the client side of the DDNS protocol (defined in <link
       xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2136">RFC 2136</link>)
       on behalf of the DHCPv4 and DHCPv6 servers (kea-dhcp4 and kea-dhcp6
       respectively). The DHCP servers construct DDNS update requests, known
-      as NameChangeRequests (NCRs), based upon DHCP lease change events and
-      then post these to D2. D2 attempts to match each such request to the
-      appropriate DNS server(s) and carry out the necessary conversation with
+      as NameChangeRequests (NCRs), based on DHCP lease change events and
+      then post them to D2. D2 attempts to match each request to the
+      appropriate DNS server(s) and carries out the necessary conversation with
       those servers to update the DNS data.
     </para>
     <section id="dhcp-ddns-dns-server-selection">
-      <title>DNS Server selection</title>
+      <title>DNS Server Selection</title>
       <para>
       In order to match a request to the appropriate DNS servers, D2 must have a
       catalog of servers from which to select. In fact, D2 has two such catalogs,
       one for forward DNS and one for reverse DNS; these catalogs are referred
-      to as DDNS Domain Lists.  Each list consists of one or more named DDNS
+      to as DDNS Domain Lists. Each list consists of one or more named DDNS
       Domains. Further, each DDNS Domain has a list of one or more DNS
       servers that publish the DNS data for that domain.
       </para>
       <para>
       When conducting forward domain matching, D2 will compare the FQDN in
-      the request against the name of each forward DDNS Domain. The domain
+      the request against the name of each forward DDNS Domain in its catalog. The domain
       whose name matches the longest portion of the FQDN is considered the
-      best match.  For example, if the FQDN is "myhost.sample.example.com.",
-      and there are two forward domains in the catalog: "sample.example.com."
-      and "example.com.", the former is regarded as the best match.  In some
+      best match. For example, if the FQDN is "myhost.sample.example.com.",
+      and there are two forward domains in the catalog, "sample.example.com."
+      and "example.com.", the former is regarded as the best match. In some
       cases, it may not be possible to find a suitable match. Given the same two
       forward domains there would be no match for the FQDN, "bogus.net", so the
-      request would be rejected.   Finally, if there are no forward DDNS Domains
+      request would be rejected. Finally, if there are no forward DDNS Domains
       defined, D2 will simply disregard the forward update portion of requests.
       </para>
       <para>
       When conducting reverse domain matching, D2 constructs a reverse
-      FQDN from the lease address in the request and compare that against
+      FQDN from the lease address in the request and compares that against
       the name of each reverse DDNS Domain. Again, the domain whose name matches
       the longest portion of the FQDN is considered the best match. For instance,
       if the lease address is "172.16.1.40" and there are two reverse domains in
-      the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
-      former is the best match.  As with forward matching, it is possible to not
-      find a suitable match.  Given the same two domains, there would be no
+      the catalog, "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
+      former is the best match. As with forward matching, it may not
+      find a suitable match. Given the same two domains, there would be no
       match for the lease address, "192.168.1.50", and the request would be
       rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
       simply disregard the reverse update portion of requests.
@@ -65,38 +65,35 @@
         D2 implements the conflict resolution strategy prescribed by
         <ulink url="http://tools.ietf.org/html/rfc4703">RFC 4703</ulink>.
         Conflict resolution is intended to prevent different clients from
-        mapping to the same FQDN at the same time.  To make this possible, the
+        mapping to the same FQDN at the same time. To make this possible, the
         RFC requires that forward DNS entries for a given FQDN must be
-        accompanied by a DHCID resource record (RR).  This record contains a
+        accompanied by a DHCID resource record (RR). This record contains a
         client identifier that uniquely identifies the client to whom the name
-        belongs. Furthermore, any DNS updater who wishes to update or remove
+        belongs. Furthermore, any DNS updater that wishes to update or remove
         existing forward entries for an FQDN may only do so if their client
         matches that of the DHCID RR.
         </para>
         <para>
         In other words, the DHCID RR maps an FQDN to the client to whom it
-        belongs and thereafter only changes to that mapping should only be
+        belongs, and thereafter changes to that mapping should only be
         done by or at the behest of that client.
         </para>
         <para>
-        Currently, conflict detection is always performed.  Future releases may
-        offer alternative behavior.
+        Currently, conflict detection is always performed.
         </para>
     </section>
     <section id="dhcp-ddns-dual-stack">
-      <title>Dual Stack Environments</title>
+      <title>Dual-Stack Environments</title>
       <para>
         <ulink url="http://tools.ietf.org/html/rfc4703#section-5.2">RFC 4703,
-        sec. 5.2,</ulink> describes issues that may arise with dual stack
+        sec. 5.2,</ulink> describes issues that may arise with dual-stack
         clients. These are clients that wish to have have both IPv4 and IPv6
-        mappings for the same FQDN.  In order for this work properly, such
+        mappings for the same FQDN. For this to work properly, these
         clients are required to embed ther IPv6 DUID within their IPv4 client
         identifier option as described in
         <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
         In this way, DNS updates for both IPv4 and IPv6 can be managed under
-        the same DHCID RR. Support for this does not yet exist in Kea but is
-        called for in the ticket, http://oldkea.isc.org/ticket/4519, which we
-        hope to include in a future release.
+        the same DHCID RR. Support for this does not yet exist in Kea.
       </para>
     </section>
     </section>
@@ -106,11 +103,11 @@
       <para>
       <command>kea-dhcp-ddns</command> is the Kea DHCP-DDNS server
       and, due to the nature of DDNS, it is run alongside either the
-      DHCPv4 or DHCPv6 components (or both).  Like other parts of
+      DHCPv4 or DHCPv6 component (or both). Like other parts of
       Kea, it is a separate binary that can be run on its own or through
       <command>keactrl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
-      with <command>keactrl</command> is recommended. However, it is also
+      with <command>keactrl</command> is recommended; however, it is also
       possible to run the DHCP-DDNS server directly. It accepts the
       following command-line switches:
       </para>
@@ -128,21 +125,21 @@
             logging should be switched to debug/verbose mode. In verbose mode,
             the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
-            (99) are assumed. The flag is convenient, for temporarily
+            (99) are assumed. The flag is convenient for temporarily
             switching the server into maximum verbosity, e.g. when
             debugging.</simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-v</command> - prints out Kea version and exits.
+              <command>-v</command> - displays the Kea version and exits.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-W</command> - prints out the Kea configuration report
+              <command>-W</command> - displays the Kea configuration report
               and exits. The report is a copy of the
               <filename>config.report</filename> file produced by
-              <userinput>./configure</userinput>: it is embedded in the
+              <userinput>./configure</userinput>; it is embedded in the
               executable binary.
             </simpara>
           </listitem>
@@ -154,17 +151,16 @@
             Note that certain checks are possible only while running
             the actual server. The actual status is reported with exit
             code (0 = configuration looks ok, 1 = error encountered).
-            Kea will print out log messages to standard output and error
+            Kea prints out log messages to standard output and error
             to standard error when testing configuration.</simpara>
           </listitem>
       </itemizedlist>
 
       <para>
             The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
+            directly, via the following command. The binary <userinput>path</userinput> may be found
             in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
+            subdirectory in the source tree. For example:
             <filename>kea/src/bin/d2/.libs/kea-dhcp-ddns</filename>.
 <screen>
 strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
@@ -172,7 +168,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       </para>
 
       <para>
-      Upon start up the module will load its configuration and begin listening
+      Upon startup the module will load its configuration and begin listening
       for NCRs based on that configuration.
       </para>
 
