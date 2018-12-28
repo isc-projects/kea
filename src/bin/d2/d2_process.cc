@@ -7,6 +7,7 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
 #include <d2/d2_controller.h>
@@ -23,7 +24,8 @@ const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
-     reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
+      reconf_queue_flag_(false), reconf_control_socket_flag_(false),
+      shutdown_type_(SD_NORMAL) {
 
     // Instantiate queue manager.  Note that queue manager does not start
     // listening at this point.  That can only occur after configuration has
@@ -46,12 +48,19 @@ D2Process::init() {
 void
 D2Process::run() {
     LOG_INFO(d2_logger, DHCP_DDNS_STARTED).arg(VERSION);
+    D2ControllerPtr controller =
+        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
     try {
         // Now logging was initialized so commands can be registered.
-        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->registerCommands();
+        controller->registerCommands();
 
         // Loop forever until we are allowed to shutdown.
         while (!canShutdown()) {
+            // Check if the command channel should be (re-)configured.
+            if (getReconfControlSocketFlag()) {
+                reconfigureCommandChannel();
+            }
+
             // Check on the state of the request queue. Take any
             // actions necessary regarding it.
             checkQueueStatus();
@@ -65,7 +74,8 @@ D2Process::run() {
             //   a. NCR message has been received
             //   b. Transaction IO has completed
             //   c. Interval timer expired
-            //   d. Something stopped IO service (runIO returns 0)
+            //   d. Control channel event
+            //   e. Something stopped IO service (runIO returns 0)
             if (runIO() == 0) {
                 // Pretty sure this amounts to an unexpected stop and we
                 // should bail out now.  Normal shutdowns do not utilize
@@ -76,7 +86,7 @@ D2Process::run() {
         }
     } catch (const std::exception& ex) {
         LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
-        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->deregisterCommands();
+        controller->deregisterCommands();
         isc_throw (DProcessBaseError,
                    "Process run method failed: " << ex.what());
     }
@@ -85,7 +95,7 @@ D2Process::run() {
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
 
-    boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance())->deregisterCommands();
+    controller->deregisterCommands();
 
     LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
@@ -219,6 +229,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         // action. In integrated mode, this will send a failed response back
         // to the configuration backend.
         reconf_queue_flag_ = false;
+        reconf_control_socket_flag_ = false;
         return (answer);
     }
 
@@ -234,6 +245,7 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
     // things that need reconfiguration.  It might also be useful if we
     // did some analysis to decide what if anything we need to do.)
     reconf_queue_flag_ = true;
+    reconf_control_socket_flag_ = true;
 
     // If we are here, configuration was valid, at least it parsed correctly
     // and therefore contained no invalid values.
@@ -397,6 +409,40 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
     }
 
     return (str);
+}
+
+void
+D2Process::reconfigureCommandChannel() {
+    reconf_control_socket_flag_ = false;
+
+    // Current socket configuration.
+    static isc::data::ConstElementPtr current_sock_cfg;
+
+    // Get new socket configuration.
+    isc::data::ConstElementPtr sock_cfg = getD2CfgMgr()->getControlSocketInfo();
+
+    // Determine if the socket configuration has changed. It has if
+    // both old and new configuration is specified but respective
+    // data elements aren't equal.
+    bool sock_changed = (sock_cfg && current_sock_cfg &&
+                         !sock_cfg->equals(*current_sock_cfg));
+
+    // If the previous or new socket configuration doesn't exist or
+    // the new configuration differs from the old configuration we
+    // close the existing socket and open a new socket as appropriate.
+    // Note that closing an existing socket means the client will not
+    // receive the configuration result.
+    if (!sock_cfg || !current_sock_cfg || sock_changed) {
+        // Close the existing socket (if any).
+        isc::config::CommandMgr::instance().closeCommandSocket();
+
+        if (sock_cfg) {
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
+    }
+
+    // Commit the new socket configuration.
+    current_sock_cfg = sock_cfg;
 }
 
 }; // namespace isc::d2

@@ -55,22 +55,22 @@ D2Controller::registerCommands() {
 
     // These are the commands always supported by the D2 server.
     // Please keep the list in alphabetic order.
-    CommandMgr::instance().registerCommand("build-report",
+    CommandMgr::instance().registerCommand(BUILD_REPORT_COMMAND,
         boost::bind(&D2Controller::buildReportHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("config-get",
+    CommandMgr::instance().registerCommand(CONFIG_GET_COMMAND,
         boost::bind(&D2Controller::configGetHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("config-test",
+    CommandMgr::instance().registerCommand(CONFIG_TEST_COMMAND,
         boost::bind(&D2Controller::configTestHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("config-write",
+    CommandMgr::instance().registerCommand(CONFIG_WRITE_COMMAND,
         boost::bind(&D2Controller::configWriteHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("shutdown",
+    CommandMgr::instance().registerCommand(SHUT_DOWN_COMMAND,
         boost::bind(&D2Controller::shutdownHandler, this, _1, _2));
 
-    CommandMgr::instance().registerCommand("version-get",
+    CommandMgr::instance().registerCommand(VERSION_GET_COMMAND,
         boost::bind(&D2Controller::versionGetHandler, this, _1, _2));
 }
 
@@ -81,12 +81,12 @@ D2Controller::deregisterCommands() {
         CommandMgr::instance().closeCommandSocket();
 
         // Deregister any registered commands (please keep in alphabetic order)
-        CommandMgr::instance().deregisterCommand("build-report");
-        CommandMgr::instance().deregisterCommand("config-get");
-        CommandMgr::instance().deregisterCommand("config-test");
-        CommandMgr::instance().deregisterCommand("config-write");
-        CommandMgr::instance().deregisterCommand("shutdown");
-        CommandMgr::instance().deregisterCommand("version-get");
+        CommandMgr::instance().deregisterCommand(BUILD_REPORT_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_GET_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_TEST_COMMAND);
+        CommandMgr::instance().deregisterCommand(CONFIG_WRITE_COMMAND);
+        CommandMgr::instance().deregisterCommand(SHUT_DOWN_COMMAND);
+        CommandMgr::instance().deregisterCommand(VERSION_GET_COMMAND);
 
     } catch (...) {
         // What to do? Simply ignore...
@@ -110,7 +110,6 @@ D2Controller::parseFile(const std::string& file_name) {
 }
 
 D2Controller::~D2Controller() {
-    deregisterCommands();
 }
 
 std::string

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,6 +254,15 @@ protected:
         shutdown_type_ = value;
     }
 
+    /// @brief (Re-)Configure the command channel.
+    ///
+    /// Only close the current channel, if the new channel configuration is
+    /// different.  This avoids disconnecting a client and hence not sending
+    /// them a command result, unless they specifically alter the channel
+    /// configuration. In that case the user simply has to accept they'll
+    /// be disconnected.
+    void reconfigureCommandChannel();
+
 public:
     /// @brief Returns a pointer to the configuration manager.
     /// Note, this method cannot return a reference as it uses dynamic
@@ -273,6 +282,11 @@ public:
     /// @brief Returns true if the queue manager should be reconfigured.
     bool getReconfQueueFlag() const {
         return (reconf_queue_flag_);
+    }
+
+    /// @brief Returns true if the control socket should be reconfigured.
+    bool getReconfControlSocketFlag() const {
+        return (reconf_control_socket_flag_);
     }
 
     /// @brief Returns the type of shutdown requested.
@@ -299,6 +313,9 @@ private:
 
     /// @brief Indicates if the queue manager should be reconfigured.
     bool reconf_queue_flag_;
+
+    /// @brief Indicates if the control socket should be reconfigured.
+    bool reconf_control_socket_flag_;
 
     /// @brief Indicates the type of shutdown requested.
     ShutdownType shutdown_type_;
