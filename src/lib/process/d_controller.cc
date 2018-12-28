@@ -541,6 +541,61 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
 }
 
 ConstElementPtr
+DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
+    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    ConstElementPtr module_config;
+    std::string app_name = getAppName();
+    std::string message;
+
+    // Command arguments are expected to be:
+    // { "Module": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+      module_config = args->get(app_name);
+        if (!module_config) {
+            message = "Missing mandatory '" + app_name + "' parameter.";
+        } else if (module_config->getType() != Element::map) {
+            message = "'" + app_name + "' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    // We're not using cfgmgr to store logging information anymore.
+    // isc::dhcp::CfgMgr::instance().rollback();
+
+    // Temporary storage for logging configuration
+    ConfigPtr storage = process_->getCfgMgr()->getContext();
+
+    // Get 'Logging' element from the config and use it to set up
+    // logging. If there's no such element, we'll just pass NULL.
+    Daemon::configureLogger(args->get("Logging"), storage);
+
+    // Now we check the server proper.
+    ConstElementPtr answer = updateConfig(module_config);
+    int rcode = 0;
+    parseAnswer(rcode, answer);
+    if (!rcode) {
+        // Configuration successful, so apply the logging configuration
+        // to log4cplus.
+        storage->applyLoggingCfg();
+    }
+
+    return (answer);
+}
+
+ConstElementPtr
 DControllerBase::versionGetHandler(const std::string&, ConstElementPtr) {
     ConstElementPtr answer;
 

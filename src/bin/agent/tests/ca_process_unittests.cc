@@ -63,7 +63,7 @@ TEST(CtrlAgentProcess, construction) {
 }
 
 // Verifies that en external call to shutdown causes the run method to
-// exit gracefully. 
+// exit gracefully.
 TEST_F(CtrlAgentProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
