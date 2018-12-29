@@ -985,11 +985,14 @@ else
         do
                 if test -f $d/include/log4cplus/logger.h; then
                         LOG4CPLUS_INCLUDES="-I$d/include"
-                        LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
+                        LOG4CPLUS_LIBS="-L$d/lib"
+                        if test -d $d/lib64; then
+                                LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -L$d/lib64"
+                        fi
                         break
                 fi
         done
-	DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
+        DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
 fi
 
 LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
