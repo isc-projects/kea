@@ -750,6 +750,7 @@ if test "${deprec_msg}" = "yes" ; then
 fi
 
 if test "${pg_config}" = "yes" ; then
+    PG_CONFIG="/usr/bin/pg_config"
     for d in $defaultdirs
     do
         if test -f $d/bin/pg_config; then
