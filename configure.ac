@@ -835,6 +835,11 @@ if test "$CQL_CONFIG" != "" ; then
         AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
     fi
 
+    $CQL_CONFIG --print-errors $cql_lib
+    if test $? -ne 0; then
+        AC_MSG_ERROR([$CQL_CONFIG $cql_lib failed])
+    fi
+
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
     CQL_CPPFLAGS="$CQL_INCLUDEDIR `$CQL_CONFIG --cflags-only-other $cql_lib`"
     CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
