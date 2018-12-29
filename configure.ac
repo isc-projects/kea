@@ -681,6 +681,7 @@ if test "${deprec_msg}" = "yes" ; then
 fi
 
 if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
     for d in $defaultdirs
     do
         if test -f $d/bin/mysql_config; then
