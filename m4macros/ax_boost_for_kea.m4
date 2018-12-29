@@ -206,8 +206,19 @@ if test "x${BOOST_LIBS}" != "x"; then
      [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
                       [boost::system::error_code ec;])],
      [AC_MSG_RESULT([checking for Boost system library... yes])],
-     [AC_MSG_RESULT([checking for Boost system library... no])
-      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed; Check config.log for details, you may be missing other libraries.])])
+     [if test "x${BOOST_LIB_DIR}" = "x"; then
+         BOOST_LIB_DIR="$boost_lib_path"
+      fi
+      if test "x${BOOST_LIB_DIR}" != "x"; then
+         BOOST_LIBS="-L$BOOST_LIB_DIR $BOOST_LIBS"
+      fi
+      LIBS="$BOOST_LIBS $LIBS_SAVED"
+      AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
+                         [boost::system::error_code ec;])],
+        [AC_MSG_RESULT([checking for Boost system library... yes])],
+        [AC_MSG_RESULT([checking for Boost system library... no])
+         AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed in an expected location; Check config.log for details, you may be missing other libraries.])])])
 
    LIBS="$LIBS_SAVED"
 fi
