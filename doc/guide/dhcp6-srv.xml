@@ -995,7 +995,7 @@ temporarily override a list of interface names and listen on all interfaces.
         does not have to match the subnet prefix.
       </para>
       <para> Below is a sample subnet configuration which enables prefix
-      delegation for the subnet:
+      delegation (in chunks of /56) for the subnet:
       <screen>
 "Dhcp6": {
     "subnet6": [
@@ -1003,9 +1003,9 @@ temporarily override a list of interface names and listen on all interfaces.
             "subnet": "2001:d8b:1::/64",
             <userinput>"pd-pools": [
                 {
-                    "prefix": "3000:1::",
-                    "prefix-len": 64,
-                    "delegated-len": 96
+                    "prefix": "2001:db8:3000::",
+                    "prefix-len": 48,
+                    "delegated-len": 56
                 }
             ]</userinput>
         }
