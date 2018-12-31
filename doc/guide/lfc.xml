@@ -3,34 +3,32 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-lfc">
-    <title>The LFC process</title>
+    <title>The LFC Process</title>
 
     <section xml:id="kea-lfc-overview">
       <title>Overview</title>
       <para><command>kea-lfc</command> is a service process that removes
       redundant information from the files used to provide persistent storage
-      for the memfile data base backend. This service is written to run as a
-      stand alone process.  
+      for the memfile database backend. This service is written to run as a
+      standalone process.  
       </para>
       <para>While <command>kea-lfc</command> can be started externally, there is
-      usually no need to do this.  <command>kea-lfc</command> is run on a periodic
+      usually no need to do this. <command>kea-lfc</command> is run on a periodic
       basis by the Kea DHCP servers.
       </para>
-      <para>The process operates on a set of files, using them for input and output
-      of the lease entries and to indicate where it is in the process in case of an
-      interruption.  Currently the caller must supply names for all of the files, in
-      the future this requirement may be relaxed with the process getting the names
-      from either the configuration file or from defaults.
+      <para>The process operates on a set of files, using them to receive input and output
+      of the lease entries and to indicate what stage the process is in, in the event of an
+      interruption. Currently the caller must supply names for all of the files.
       </para>
     </section>
 
     <section xml:id="kea-lfc-usage">
-      <title>Command Line Options</title>
+      <title>Command-Line Options</title>
       <para><command>kea-lfc</command> is run as follows:
 <screen>
 kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o output-file -f finish-file
@@ -41,51 +39,51 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
       version of the lease files.
       </para>
 
-      <para>The <command>-c</command> argument specifies the configuration file.  This is
-      required, but not currently used by the process.
+      <para>The <command>-c</command> argument specifies the configuration file. This is
+      required, but is not currently used by the process.
       </para>
 
       <para>The <command>-p</command> argument specifies the PID file. When the
-      <command>kea-lfc</command> process starts it attempts to determine if another
-      instance of the process is already running by examining the pid file.  If one
-      is already running the new process is terminated.  If one isn't running it writes
+      <command>kea-lfc</command> process starts, it attempts to determine whether another
+      instance of the process is already running by examining the pid file. If one
+      is already running, the new process is terminated; if one is not running, Kea writes
       its pid into the pid file.
       </para>
 
       <para>The other filenames specify where the <command>kea-lfc</command> process
-      should look for input, write its output and use for bookkeeping.
+      should look for input, write its output, and perform its bookkeeping:
 
         <itemizedlist>
           <listitem><simpara>
             <command>previous</command> —
-            When <command>kea-lfc</command> starts this
+            When <command>kea-lfc</command> starts, this
             is the result of any previous run of <command>kea-lfc</command>.
-            When <command>kea-lfc</command> finishes it is the result of this run.
+            When <command>kea-lfc</command> finishes, it is the result of this run.
             If <command>kea-lfc</command> is interrupted before completing,
             this file may not exist.
           </simpara></listitem>
 
           <listitem><simpara>
             <command>input</command> —
-            Before the DHCP server invokes <command>kea-lfc</command> it will
+            Before the DHCP server invokes <command>kea-lfc</command>, it will
             move the current lease file here and then call <command>kea-lfc</command>
             with this file.
           </simpara></listitem>
 
           <listitem><simpara>
             <command>output</command> —
-            The temporary file <command>kea-lfc</command> should use to write the leases.
+            This is the temporary file where <command>kea-lfc</command> writes the leases.
             Upon completion of writing this file, it will be moved to the finish file
            (see below).
           </simpara></listitem>
 
           <listitem><simpara>
             <command>finish</command> —
-            Another temporary file <command>kea-lfc</command> uses for bookkeeping.  When
-            <command>kea-lfc</command> completes writing the outputfile it moves it to this
-            file name.  After <command>kea-lfc</command> finishes deleting the other files
-            (previous and input) it moves this file to previous lease file.  By moving the
-            files in this fashion the <command>kea-lfc</command> and the DHCP server
+            This is another temporary file <command>kea-lfc</command> uses for bookkeeping. When
+            <command>kea-lfc</command> completes writing the outputfile, it moves it to this
+            file name. After <command>kea-lfc</command> finishes deleting the other files
+            (previous and input), it moves this file to the previous lease file. By moving the
+            files in this fashion, the <command>kea-lfc</command> and the DHCP server
             processes can determine the correct file to use even if one of the
             processes was interrupted before completing its task.
           </simpara></listitem>
@@ -93,10 +91,10 @@ kea-lfc [-4 | -6] -c config-file -p pid-file -x previous-file -i copy-file -o ou
         </itemizedlist>
       </para>
 
-      <para>There are several additional arguments mostly for debugging purposes.
-      <command>-d</command> Sets the logging level to debug. <command>-v</command> and
-      <command>-V</command> print out version stamps with <command>-V</command> providing
-      a longer form.  <command>-h</command> prints out the usage string.
+      <para>There are several additional arguments, mostly for debugging purposes.
+      <command>-d</command> sets the logging level to debug. <command>-v</command> and
+      <command>-V</command> print out version stamps, with <command>-V</command> providing
+      a longer form. <command>-h</command> prints out the usage string.
       </para>
 
     </section>
