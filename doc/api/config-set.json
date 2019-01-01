@@ -2,7 +2,7 @@
     "name": "config-set",
     "brief": "The config-set command instructs the server to replace its current configuration with the new configuration supplied in the command's arguments.",
     "description": "See <xref linkend=\"command-config-set\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6" ],
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
     "cmd-syntax": "{
     \"command\": \"config-set\",

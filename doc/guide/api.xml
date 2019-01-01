@@ -795,7 +795,7 @@ This command takes no parameters.</para>
   <screen>{
     "result": &lt;integer&gt;,
     "arguments": {
-        &lt;JSON configuration here, starting with Dhcp4, Dhcp6, or Control-agent object&gt;
+        &lt;JSON configuration here, starting with Dhcp4, Dhcp6, Dhcp-ddns, or Control-agent object&gt;
     }
 }</screen>
 Result is an integer representation of the status. Currently supported statuses are:
