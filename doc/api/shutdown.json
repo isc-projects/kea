@@ -2,7 +2,7 @@
     "name": "shutdown",
     "brief": "The shutdown command instructs the server to initiate its shutdown procedure.",
     "description": "See <xref linkend=\"command-shutdown\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.0.0",
     "cmd-syntax": "{
     \"command\": \"shutdown\"

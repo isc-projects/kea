@@ -2,7 +2,7 @@
     "name": "config-test",
     "brief": "The config-test command instructs the server to check whether the new configuration supplied in the command's arguments can be loaded.",
     "description": "See <xref linkend=\"command-config-test\"/>",
-    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-ctrl-agent" ],
+    "support": [ "kea-dhcp4", "kea-dhcp6", "kea-dhcp-ddns", "kea-ctrl-agent" ],
     "avail": "1.2.0",
     "cmd-syntax": "{
     \"command\": \"config-test\",
