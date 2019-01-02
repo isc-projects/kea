@@ -79,6 +79,14 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
 
 AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
+# Verify that the path does not capture standard headers.
+AC_TRY_COMPILE([
+#include <regex.h>
+#ifdef BOOST_RE_REGEX_H
+#error "boost/regex.h"
+#endif],,,
+[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: please remove the extra boost at the end of the include path.])])
+
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
 AC_CHECK_DECL([__clang__], [CLANG_CXXFLAGS="-Qunused-arguments"], [])
