@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-shell">
@@ -11,14 +11,14 @@
 
   <section xml:id="shell-overview">
     <title>Overview</title>
-    <para>Kea 1.2.0 introduced the Control Agent (CA, see <xref linkend="kea-ctrl-agent"/>) that
+    <para>Kea 1.2.0 introduced the Control Agent (CA, see <xref linkend="kea-ctrl-agent"/>), which
     provides a RESTful control interface over HTTP. That API is typically expected to be used by
-    various IPAMs and similar management systems. Nevertheless, there may be cases when you want
-    to send a command to the CA directly.  The Kea Shell provides a way to do this.  It is a simple
-    command-line, scripting-friendly text client that is able connect to the CA, send it commands
-    with parameters, retrieve the responses and display them.</para>
+    various IPAMs and similar management systems. Nevertheless, there may be cases when an administrator wants
+    to send a command to the CA directly. The Kea shell provides a way to do this. It is a simple
+    command-line, scripting-friendly, text client that is able to connect to the CA, send it commands
+    with parameters, retrieve the responses, and display them.</para>
 
-    <para>As the primary purpose of the Kea Shell is as a tool in scripting environment,
+    <para>As the primary purpose of the Kea shell is as a tool in a scripting environment,
     it is not interactive. However, with simple tricks it can be run manually.
     </para>
   </section>
@@ -49,8 +49,8 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
       <listitem>
         <simpara>
           <command>--path <replaceable>path</replaceable></command> specifies
-          the path in the URL to connect to. If not specified,
-          empty path is used. As CA listens at the empty path
+          the path in the URL to connect to. If not specified, an
+          empty path is used. As CA listens at the empty path,
           this parameter is useful only with a reverse proxy.
         </simpara>
       </listitem>
@@ -65,7 +65,7 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
       <listitem>
         <simpara>
           <command>--service <replaceable>service-name</replaceable></command> specifies the
-          target of a command. If not given, CA will be used as target.  May be used more
+          target of a command. If not given, CA will be used as the target. May be used more
           than once to specify multiple targets.
         </simpara>
       </listitem>
@@ -74,7 +74,7 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
       <listitem>
         <simpara>
           <command>command</command> specifies the command to be sent. If not specified,
-          <command>list-commands</command> command is used.
+          the <command>list-commands</command> command is used.
         </simpara>
       </listitem>
     </itemizedlist>
@@ -96,13 +96,13 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
     <para>
       Once started, the shell reads parameters for the command from standard input, which are
       expected to be in JSON format. When all have been read, the shell establishes a connection
-      with the CA using HTTP, sends the command and awaits a response. Once that is received,
-      it is printed on standard output.
+      with the CA using HTTP, sends the command, and awaits a response. Once that is received,
+      it is displayed on standard output.
     </para>
 
     <para>
-      For a list of available commands, see <xref linkend="ctrl-channel"/>. Additional commands
-      may be provided by hook libraries. If unsure which commands are supported, use the
+      For a list of available commands, see <xref linkend="ctrl-channel"/>; additional commands
+      may be provided by hook libraries. If you are unsure which commands are supported, use the
       <command>list-commands</command> command. It will instruct the CA to return a list of
       all supported commands.
     </para>
@@ -114,14 +114,14 @@ $ <userinput>kea-shell --host 192.0.2.1 --port 8001 --service dhcp4 list-command
 </screen>
     After the command line is entered, the program waits for command parameters to be entered.
     Since <command>list-commands</command> does not take any
-    arguments, CTRL-D (represented in the above example by "^D") is pressed to indicate end
-    of file (and so terminate the parameter input). The Shell will then contact
-    the CA and print out the list of available commands returned for the service named <command>dhcp4</command>.
+    arguments, CTRL-D (represented in the above example by "^D") is pressed to indicate
+    end-of-file and terminate the parameter input. The shell then contacts
+    the CA and prints out the list of available commands returned for the service named <command>dhcp4</command>.
     </para>
 
-    <para>It is envisaged that Kea Shell will be most frequently used in scripts. The next example
+    <para>It is envisaged that the Kea shell will be most frequently used in scripts; the next example
     shows a simple scripted execution. It sends the command "config-write" to the CA
-    (<command> --service </command> parameter hasn't been used), along
+    (the <command> --service </command> parameter hasn't been used), along
     with the parameters specified in param.json. The result will be stored in result.json.
 <screen>
 $ cat param.json
@@ -131,24 +131,24 @@ $ <userinput>cat param.json | kea-shell --host 192.0.2.1 config-write &gt; resul
     </para>
 
     <para>When a reverse proxy is used to de-multiplex requests to different
-    servers the default empty path in the URL is not enough so the
-    <command> --path </command> parameter should be used. For instance
+    servers, the default empty path in the URL is not enough, so the
+    <command> --path </command> parameter should be used. For instance,
     if requests to the "/kea" path are forwarded to the CA this can be used:
 <screen>
 $ <userinput>kea-shell --host 192.0.2.1 --port 8001 --path kea ...</userinput>
 </screen>
     </para>
 
-    <para>Kea Shell requires Python to to be installed on the system. It was tested with
+    <para>Kea shell requires Python to to be installed on the system. It has been tested with
     Python 2.7 and various versions
     of Python 3, up to 3.5. Since not every Kea deployment uses this feature and there are
-    deployments that do not have Python, the Kea Shell is not enabled by default. To use it,
-    you must specify <command>--enable-shell</command> to when running "configure" during the
+    deployments that do not have Python, the Kea shell is not enabled by default. To use it,
+    specify <command>--enable-shell</command> when running "configure" during the
     installation of Kea.</para>
 
-    <para>The Kea Shell is intended to serve more as a demonstration of the RESTful interface
+    <para>The Kea shell is intended to serve more as a demonstration of the RESTful interface's
     capabilities (and, perhaps, an illustration for people interested in integrating their
-    management evironments with Kea) than as a serious management client. Do not expect it
+    management environments with Kea) than as a serious management client. Do not expect it
     to be significantly expanded in the future. It is, and will remain, a simple tool.</para>
     </section>
 </chapter>
