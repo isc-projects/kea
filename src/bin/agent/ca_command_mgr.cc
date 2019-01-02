@@ -118,8 +118,8 @@ CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
                 s << text->stringValue();
                 s << " You did not include \"service\" parameter in the command,"
                     " which indicates that Kea Control Agent should process this"
-                    " command rather than forward it to one or more DHCP servers. If you"
-                    " aimed to send this command to one of the DHCP servers you"
+                    " command rather than forward it to one or more Kea servers. If you"
+                    " aimed to send this command to one of the Kea servers you"
                     " should include the \"service\" parameter in your request, e.g."
                     " \"service\": [ \"dhcp4\" ] to forward the command to the DHCPv4"
                     " server, or \"service\": [ \"dhcp4\", \"dhcp6\", \"d2\" ] to forward it to"
