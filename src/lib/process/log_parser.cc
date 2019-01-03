@@ -68,7 +68,7 @@ void LogConfigParser::parseConfigEntry(isc::data::ConstElementPtr entry) {
 
     // Get severity
     isc::data::ConstElementPtr severity_ptr = entry->get("severity");
-    if (!name_ptr) {
+    if (!severity_ptr) {
         isc_throw(BadValue, "loggers entry does not have a mandatory "
                   "'severity' element (" << entry->getPosition() << ")");
     }
