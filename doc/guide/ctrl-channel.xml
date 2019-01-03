@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -625,6 +625,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
           <simpara>config-get</simpara>
         </listitem>
         <listitem>
+          <simpara>config-reload</simpara>
+        </listitem>
+        <listitem>
           <simpara>config-set</simpara>
         </listitem>
         <listitem>
@@ -658,6 +661,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </listitem>
         <listitem>
           <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-reload</simpara>
         </listitem>
         <listitem>
           <simpara>config-set</simpara>

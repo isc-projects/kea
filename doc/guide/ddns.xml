@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -367,6 +367,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           <itemizedlist>
               <listitem>build-report</listitem>
               <listitem>config-get</listitem>
+              <listitem>config-reload</listitem>
               <listitem>config-set</listitem>
               <listitem>config-test</listitem>
               <listitem>config-write</listitem>

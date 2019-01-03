@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -530,6 +530,9 @@ TEST_F(CtrlChannelD2Test, commandsRegistration) {
     EXPECT_TRUE(command_list.find("\"list-commands\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"build-report\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-get\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-reload\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-set\"") != string::npos);
+    EXPECT_TRUE(command_list.find("\"config-test\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"config-write\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"shutdown\"") != string::npos);
     EXPECT_TRUE(command_list.find("\"version-get\"") != string::npos);
@@ -598,6 +601,9 @@ TEST_F(CtrlChannelD2Test, listCommands) {
     // We expect the server to report at least the following commands:
     checkListCommands(rsp, "build-report");
     checkListCommands(rsp, "config-get");
+    checkListCommands(rsp, "config-reload");
+    checkListCommands(rsp, "config-set");
+    checkListCommands(rsp, "config-test");
     checkListCommands(rsp, "config-write");
     checkListCommands(rsp, "list-commands");
     checkListCommands(rsp, "shutdown");
@@ -920,6 +926,107 @@ TEST_F(CtrlChannelD2Test, writeConfigFilename) {
                     response);
     checkConfigWrite(response, CONTROL_RESULT_SUCCESS, "test2.json");
     ::remove("test2.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlChannelD2Test, configReloadMissingFile) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+    string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("does-not-exist.json");
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // does-not-exist.json (and fail, because the file is not there).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload was rejected.
+    string expected = "{ \"result\": 1, \"text\": "
+        "\"Configuration parsing failed: "
+        "Unable to open file does-not-exist.json\" }";
+    EXPECT_EQ(expected, response);
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is not a valid JSON.
+TEST_F(CtrlChannelD2Test, configReloadBrokenFile) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+    string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("testbad.json");
+
+    // Although Kea is smart, its AI routines are not smart enough to handle
+    // this one... at least not yet.
+    ofstream f("testbad.json", ios::trunc);
+    f << "bla bla bla...";
+    f.close();
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // testbad.json (and fail, because the file is not valid JSON).
+    // does-not-exist.json (and fail, because the file is not there).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload was rejected.
+    string expected = "{ \"result\": 1, \"text\": "
+        "\"Configuration parsing failed: "
+        "testbad.json:1.1: Invalid character: b\" }";
+    EXPECT_EQ(expected, response);
+
+    // Remove the file.
+    ::remove("testbad.json");
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlChannelD2Test, configReloadFileValid) {
+    EXPECT_NO_THROW(createUnixChannelServer());
+    string response;
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    server_->setConfigFile("testvalid.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    ofstream f("testvalid.json", ios::trunc);
+    f << "{ \"DhcpDdns\": "
+      << "{"
+      << " \"ip-address\": \"192.168.77.1\" , "
+      << " \"port\": 777 , "
+      << "\"tsig-keys\": [], "
+      << "\"forward-ddns\" : {}, "
+      << "\"reverse-ddns\" : {} "
+      << "}"
+      << " }" << endl;
+    f.close();
+
+    // Tell the server to reload its configuration. It should attempt to load
+    // testvalid.json (and succeed).
+    sendUnixCommand("{ \"command\": \"config-reload\" }", response);
+
+    // Verify the reload was successful.
+    string expected = "{ \"result\": 0, \"text\": "
+        "\"Configuration applied successfully.\" }";
+    EXPECT_EQ(expected, response);
+
+    // Check that the config was indeed applied.
+    D2ProcessPtr proc = d2Controller()->getProcess();
+    ASSERT_TRUE(proc);
+    D2CfgMgrPtr d2_cfg_mgr = proc->getD2CfgMgr();
+    ASSERT_TRUE(d2_cfg_mgr);
+    D2ParamsPtr d2_params = d2_cfg_mgr->getD2Params();
+    ASSERT_TRUE(d2_params);
+
+    EXPECT_EQ("192.168.77.1", d2_params->getIpAddress().toText());
+    EXPECT_EQ(777, d2_params->getPort());
+    EXPECT_FALSE(d2_cfg_mgr->forwardUpdatesEnabled());
+    EXPECT_FALSE(d2_cfg_mgr->reverseUpdatesEnabled());
+
+    // Remove the file.
+    ::remove("testvalid.json");
 }
 
 /// Verify that concurrent connections over the control channel can be

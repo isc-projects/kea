@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,6 +39,9 @@ static const std::string CONFIG_WRITE_COMMAND("config-write");
 
 /// @brief String value for the config-test command.
 static const std::string CONFIG_TEST_COMMAND("config-test");
+
+/// @brief String value for the config-reload command.
+static const std::string CONFIG_RELOAD_COMMAND("config-reload");
 
 /// @brief String value for the config-set command.
 static const std::string CONFIG_SET_COMMAND("config-set");

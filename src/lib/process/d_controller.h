@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -296,6 +296,18 @@ public:
     isc::data::ConstElementPtr
     configTestHandler(const std::string& command,
                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-reload command
+    ///
+    /// This method handles the config-reload command, which reloads
+    /// the configuration file.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configReloadHandler(const std::string& command,
+                        isc::data::ConstElementPtr args);
 
     /// @brief handler for config-set command
     ///
