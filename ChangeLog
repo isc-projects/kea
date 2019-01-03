@@ -1,3 +1,11 @@
+1508.	[func]		fdupont
+	Implemented the management API using a control socket for the
+        DHCP DDNS (D2) server. D2 now supports the following commands:
+        build-report, config-get, config-set, config-test, config-write,
+        list-commands, shutdown and version-get. Also, extended Control
+        Agent (CA) to support one additional command: config-set.
+	(Gitlab #30,!183, git ab27550cec365f42289eb5fa1bc39f33f01b19c2)
+
 1507.	[func]		tmark
 	kea-dhcp4 now ensures that the message type option (53) is
 	the first option in outbound DHCPv4 packets.  This was done
