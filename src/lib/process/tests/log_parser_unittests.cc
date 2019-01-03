@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -128,6 +128,37 @@ TEST_F(LoggingTest, parsingConsoleOutput) {
     ASSERT_EQ(1, storage->getLoggingInfo()[0].destinations_.size());
     EXPECT_EQ("stdout" , storage->getLoggingInfo()[0].destinations_[0].output_);
     EXPECT_TRUE(storage->getLoggingInfo()[0].destinations_[0].flush_);
+}
+
+// Checks if the LogConfigParser class fails when the configuration
+// lacks a severity entry.
+TEST_F(LoggingTest, parsingNoSeverity) {
+
+    const char* config_txt =
+    "{ \"loggers\": ["
+    "    {"
+    "        \"name\": \"kea\","
+    "        \"output_options\": ["
+    "            {"
+    "                \"output\": \"stdout\","
+    "                \"flush\": true"
+    "            }"
+    "        ],"
+    "        \"debuglevel\": 99"
+    "    }"
+    "]}";
+
+    ConfigPtr storage(new ConfigBase());
+
+    LogConfigParser parser(storage);
+
+    // We need to parse properly formed JSON and then extract
+    // "loggers" element from it. For some reason fromJSON is
+    // throwing at opening square bracket
+    ConstElementPtr config = Element::fromJSON(config_txt);
+    config = config->get("loggers");
+
+    EXPECT_THROW(parser.parseConfiguration(config), BadValue);
 }
 
 // Checks if the LogConfigParser class is able to transform JSON structures
