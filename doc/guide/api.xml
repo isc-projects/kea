@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -84,6 +84,7 @@
 .</para>
 <para xml:id="commands-kea-ctrl-agent">Commands supported by kea-ctrl-agent daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-config-get">config-get</link></command>
+, <command><link linkend="ref-config-reload">config-reload</link></command>
 , <command><link linkend="ref-config-set">config-set</link></command>
 , <command><link linkend="ref-config-test">config-test</link></command>
 , <command><link linkend="ref-config-write">config-write</link></command>
@@ -93,6 +94,7 @@
 .</para>
 <para xml:id="commands-kea-dhcp-ddns">Commands supported by kea-dhcp-ddns daemon: <command><link linkend="ref-build-report">build-report</link></command>
 , <command><link linkend="ref-config-get">config-get</link></command>
+, <command><link linkend="ref-config-reload">config-reload</link></command>
 , <command><link linkend="ref-config-set">config-set</link></command>
 , <command><link linkend="ref-config-test">config-test</link></command>
 , <command><link linkend="ref-config-write">config-write</link></command>
@@ -815,7 +817,7 @@ Result is an integer representation of the status. Currently supported statuses 
 <title>config-reload reference</title>
 <para xml:id="ref-config-reload"><command>config-reload</command> - The config-reload command instructs Kea to load again the configuration file that was used previously.</para>
 
-<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command>, <command><link linkend="commands-kea-dhcp-ddns">kea-dhcp-ddns</link></command>, <command><link linkend="commands-kea-ctrl-agent">kea-ctrl-agent</link></command></para>
 
 <para>Availability: 1.2.0 (built-in)</para>
 

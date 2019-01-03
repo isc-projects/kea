@@ -178,7 +178,7 @@ version_test() {
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
 "[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported. You did not include \\\"service\\\" parameter in the command, which indicates that Kea Control Agent should process this command rather than forward it to one or more Kea servers. If you aimed to send this command to one of the Kea servers you should include the \\\"service\\\" parameter in your request, e.g. \\\"service\\\": [ \\\"dhcp4\\\" ] to forward the command to the DHCPv4 server, or \\\"service\\\": [ \\\"dhcp4\\\", \\\"dhcp6\\\", \\\"d2\\\" ] to forward it to DHCPv4, DHCPv6 and D2 servers etc.\" } ]" ""
 shell_command_test "shell.empty-config-test" "config-test" \
