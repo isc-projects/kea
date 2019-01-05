@@ -120,6 +120,7 @@ endif
 dhcp4_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 dhcp4_unittests_LDADD = $(top_builddir)/src/bin/dhcp4/libdhcp4.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/bin/dhcp4/libparser4.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la

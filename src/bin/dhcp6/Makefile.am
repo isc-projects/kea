@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests tools
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
@@ -51,9 +51,9 @@ s-messages: dhcp6_messages.mes
 
 BUILT_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 
-# convenience archive
+# convenience archives
 
-noinst_LTLIBRARIES = libdhcp6.la
+noinst_LTLIBRARIES = libdhcp6.la libparser6.la
 
 libdhcp6_la_SOURCES  =
 libdhcp6_la_SOURCES += dhcp6_log.cc dhcp6_log.h
@@ -61,17 +61,20 @@ libdhcp6_la_SOURCES += dhcp6_srv.cc dhcp6_srv.h
 libdhcp6_la_SOURCES += ctrl_dhcp6_srv.cc ctrl_dhcp6_srv.h
 libdhcp6_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp6_la_SOURCES += dhcp6to4_ipc.cc dhcp6to4_ipc.h
-libdhcp6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
-libdhcp6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
-libdhcp6_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 nodist_libdhcp6_la_SOURCES = dhcp6_messages.h dhcp6_messages.cc
 EXTRA_DIST += dhcp6_messages.mes
+
+libparser6_la_SOURCES  =
+libparser6_la_SOURCES += dhcp6_lexer.ll location.hh position.hh stack.hh
+libparser6_la_SOURCES += dhcp6_parser.cc dhcp6_parser.h
+libparser6_la_SOURCES += parser_context.cc parser_context.h
+libparser6_la_SOURCES += parser_context_decl.h
 
 sbin_PROGRAMS = kea-dhcp6
 
 kea_dhcp6_SOURCES  = main.cc
 
-kea_dhcp6_LDADD  = libdhcp6.la
+kea_dhcp6_LDADD  = libdhcp6.la libparser6.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la

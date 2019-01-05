@@ -74,6 +74,7 @@ endif
 d2_unittests_LDFLAGS += $(GTEST_LDFLAGS)
 
 d2_unittests_LDADD = $(top_builddir)/src/bin/d2/libd2.la
+d2_unittests_LDADD += $(top_builddir)/src/bin/d2/libparser2.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/process/testutils/libprocesstest.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 d2_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la

@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests tools
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
@@ -50,9 +50,9 @@ s-messages: dhcp4_messages.mes
 
 BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 
-# convenience archive
+# convenience archives
 
-noinst_LTLIBRARIES = libdhcp4.la
+noinst_LTLIBRARIES = libdhcp4.la libparser4.la
 
 libdhcp4_la_SOURCES  =
 libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
@@ -60,18 +60,21 @@ libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
 libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
-libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
-libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
-libdhcp4_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
 
 nodist_libdhcp4_la_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 EXTRA_DIST += dhcp4_messages.mes
+
+libparser4_la_SOURCES  =
+libparser4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
+libparser4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
+libparser4_la_SOURCES += parser_context.cc parser_context.h
+libparser4_la_SOURCES += parser_context_decl.h
 
 sbin_PROGRAMS = kea-dhcp4
 
 kea_dhcp4_SOURCES  = main.cc
 
-kea_dhcp4_LDADD  = libdhcp4.la
+kea_dhcp4_LDADD  = libdhcp4.la libparser4.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la

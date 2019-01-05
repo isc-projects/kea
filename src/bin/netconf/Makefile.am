@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests tools
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
@@ -40,9 +40,9 @@ s-messages: netconf_messages.mes
 
 BUILT_SOURCES = netconf_messages.h netconf_messages.cc
 
-# convenience archive
+# convenience archives
 
-noinst_LTLIBRARIES = libnetconf.la
+noinst_LTLIBRARIES = libnetconf.la libparser-nc.la
 
 libnetconf_la_SOURCES  = control_socket.cc control_socket.h
 libnetconf_la_SOURCES += http_control_socket.cc http_control_socket.h
@@ -53,13 +53,8 @@ libnetconf_la_SOURCES += netconf_cfg_mgr.cc netconf_cfg_mgr.h
 libnetconf_la_SOURCES += netconf_config.cc netconf_config.h
 libnetconf_la_SOURCES += netconf_controller.cc netconf_controller.h
 libnetconf_la_SOURCES += netconf_log.cc netconf_log.h
-libnetconf_la_SOURCES += netconf_parser.cc netconf_parser.h
 libnetconf_la_SOURCES += netconf_process.cc netconf_process.h
-libnetconf_la_SOURCES += parser_context.cc parser_context.h
-libnetconf_la_SOURCES += parser_context_decl.h
 libnetconf_la_SOURCES += simple_parser.cc simple_parser.h
-libnetconf_la_SOURCES += location.hh position.hh stack.hh
-libnetconf_la_SOURCES += netconf_lexer.ll netconf_parser.yy
 
 nodist_libnetconf_la_SOURCES = netconf_messages.h netconf_messages.cc
 
@@ -67,11 +62,18 @@ EXTRA_DIST += netconf_messages.mes
 EXTRA_DIST += netconf_lexer.ll
 EXTRA_DIST += netconf_parser.yy
 
+libparser_nc_la_SOURCES  = netconf_parser.cc netconf_parser.h
+libparser_nc_la_SOURCES += parser_context.cc parser_context.h
+libparser_nc_la_SOURCES += parser_context_decl.h
+libparser_nc_la_SOURCES += location.hh position.hh stack.hh
+libparser_nc_la_SOURCES += netconf_lexer.ll netconf_parser.yy
+
+
 sbin_PROGRAMS = kea-netconf
 
 kea_netconf_SOURCES  = main.cc
 
-kea_netconf_LDADD  = libnetconf.la
+kea_netconf_LDADD  = libnetconf.la libparser-nc.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/http/libkea-http.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_netconf_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la

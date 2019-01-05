@@ -1501,22 +1501,26 @@ AC_CONFIG_FILES([Makefile
                  src/bin/agent/tests/ca_process_tests.sh
                  src/bin/agent/tests/test_data_files_config.h
                  src/bin/agent/tests/test_libraries.h
+                 src/bin/agent/tools/Makefile
                  src/bin/d2/Makefile
                  src/bin/d2/tests/Makefile
                  src/bin/d2/tests/d2_process_tests.sh
                  src/bin/d2/tests/test_data_files_config.h
+                 src/bin/d2/tools/Makefile
                  src/bin/dhcp4/Makefile
                  src/bin/dhcp4/tests/Makefile
                  src/bin/dhcp4/tests/dhcp4_process_tests.sh
                  src/bin/dhcp4/tests/marker_file.h
                  src/bin/dhcp4/tests/test_data_files_config.h
                  src/bin/dhcp4/tests/test_libraries.h
+                 src/bin/dhcp4/tools/Makefile
                  src/bin/dhcp6/Makefile
                  src/bin/dhcp6/tests/Makefile
                  src/bin/dhcp6/tests/dhcp6_process_tests.sh
                  src/bin/dhcp6/tests/marker_file.h
                  src/bin/dhcp6/tests/test_data_files_config.h
                  src/bin/dhcp6/tests/test_libraries.h
+                 src/bin/dhcp6/tools/Makefile
                  src/bin/keactrl/Makefile
                  src/bin/keactrl/keactrl
                  src/bin/keactrl/keactrl.conf
@@ -1530,6 +1534,7 @@ AC_CONFIG_FILES([Makefile
                  src/bin/netconf/tests/shtests/netconf_tests.sh
                  src/bin/netconf/tests/test_data_files_config.h
                  src/bin/netconf/tests/test_libraries.h
+                 src/bin/netconf/tools/Makefile
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile

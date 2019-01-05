@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests tools
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
@@ -47,17 +47,15 @@ s-messages: d2_messages.mes
 
 BUILT_SOURCES = d2_messages.h d2_messages.cc
 
-# convenience archive
+# convenience archives
 
-noinst_LTLIBRARIES = libd2.la
+noinst_LTLIBRARIES = libd2.la libparser2.la
 
 libd2_la_SOURCES  =
 libd2_la_SOURCES += d2_log.cc d2_log.h
 libd2_la_SOURCES += d2_process.cc d2_process.h
 libd2_la_SOURCES += d2_config.cc d2_config.h
 libd2_la_SOURCES += d2_cfg_mgr.cc d2_cfg_mgr.h
-libd2_la_SOURCES += d2_lexer.ll location.hh position.hh stack.hh
-libd2_la_SOURCES += d2_parser.cc d2_parser.h
 libd2_la_SOURCES += d2_queue_mgr.cc d2_queue_mgr.h
 libd2_la_SOURCES += d2_simple_parser.cc d2_simple_parser.h
 libd2_la_SOURCES += d2_update_message.cc d2_update_message.h
@@ -68,16 +66,22 @@ libd2_la_SOURCES += nc_add.cc nc_add.h
 libd2_la_SOURCES += nc_remove.cc nc_remove.h
 libd2_la_SOURCES += nc_trans.cc nc_trans.h
 libd2_la_SOURCES += d2_controller.cc d2_controller.h
-libd2_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
+
 
 nodist_libd2_la_SOURCES = d2_messages.h d2_messages.cc
 EXTRA_DIST += d2_messages.mes
+
+libparser2_la_SOURCES  =
+libparser2_la_SOURCES += d2_lexer.ll location.hh position.hh stack.hh
+libparser2_la_SOURCES += d2_parser.cc d2_parser.h
+libparser2_la_SOURCES += parser_context.cc parser_context.h
+libparser2_la_SOURCES += parser_context_decl.h
 
 sbin_PROGRAMS = kea-dhcp-ddns
 
 kea_dhcp_ddns_SOURCES  = main.cc
 
-kea_dhcp_ddns_LDADD  = libd2.la
+kea_dhcp_ddns_LDADD  = libd2.la libparser2.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la

@@ -1,4 +1,4 @@
-SUBDIRS = . tests
+SUBDIRS = . tests tools
 
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
@@ -39,13 +39,11 @@ s-messages: ca_messages.mes
 BUILT_SOURCES = ca_messages.h ca_messages.cc
 
 
-# convenience archive
+# convenience archives
 
-noinst_LTLIBRARIES = libagent.la
+noinst_LTLIBRARIES = libagent.la libparser-ca.la
 
-libagent_la_SOURCES  = agent_parser.cc agent_parser.h
-libagent_la_SOURCES += agent_lexer.cc
-libagent_la_SOURCES += ca_cfg_mgr.cc ca_cfg_mgr.h
+libagent_la_SOURCES  = ca_cfg_mgr.cc ca_cfg_mgr.h
 libagent_la_SOURCES += ca_controller.cc ca_controller.h
 libagent_la_SOURCES += ca_command_mgr.cc ca_command_mgr.h
 libagent_la_SOURCES += ca_log.cc ca_log.h
@@ -53,19 +51,22 @@ libagent_la_SOURCES += ca_process.cc ca_process.h
 libagent_la_SOURCES += ca_response_creator.cc ca_response_creator.h
 libagent_la_SOURCES += ca_response_creator_factory.h
 libagent_la_SOURCES += simple_parser.cc simple_parser.h
-libagent_la_SOURCES += parser_context.cc parser_context.h parser_context_decl.h
-libagent_la_SOURCES += agent_lexer.ll location.hh position.hh stack.hh
-
 nodist_libagent_la_SOURCES = ca_messages.h ca_messages.cc
 EXTRA_DIST += ca_messages.mes
 EXTRA_DIST += agent_lexer.ll
 EXTRA_DIST += agent_parser.yy
 
+libparser_ca_la_SOURCES  = agent_lexer.ll agent_lexer.cc
+libparser_ca_la_SOURCES += location.hh position.hh stack.hh
+libparser_ca_la_SOURCES += agent_parser.cc agent_parser.h 
+libparser_ca_la_SOURCES += parser_context.cc parser_context.h
+libparser_ca_la_SOURCES += parser_context_decl.h
+
 sbin_PROGRAMS = kea-ctrl-agent
 
 kea_ctrl_agent_SOURCES = main.cc
 
-kea_ctrl_agent_LDADD  = libagent.la
+kea_ctrl_agent_LDADD  = libagent.la libparser-ca.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
