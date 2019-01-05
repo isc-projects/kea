@@ -1,0 +1,150 @@
+<!--
+ - Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+<!-- Converted by db4-upgrade version 1.1 -->
+<refentry>
+
+  <info>
+    <productname>ISC Kea</productname>
+    <date>Jan 5, 2019</date>
+    <edition>1.6.0</edition>
+    <author>
+      <contrib>The Kea software has been written by a number of
+        engineers working for ISC: Tomek Mrugalski, Stephen Morris, Marcin
+        Siodelski, Thomas Markwalder, Francis Dupont, Jeremy C. Reed,
+        Wlodek Wencel and Shawn Routhier.  That list is roughly in the
+        chronological order in which the authors made their first
+        contribution. For a complete list of authors and
+        contributors, see AUTHORS file.</contrib><orgname>Internet Systems Consortium, Inc.</orgname></author>
+  </info>
+
+  <refmeta>
+    <refentrytitle>tools-ca</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class="manual">Kea</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>tools-ca</refname>
+    <refpurpose>Control-agent configuration tools</refpurpose>
+  </refnamediv>
+
+  <docinfo>
+    <copyright>
+      <year>2019</year>
+      <holder>Internet Systems Consortium, Inc. ("ISC")</holder>
+    </copyright>
+  </docinfo>
+
+  <refsynopsisdiv>
+    <cmdsynopsis sepchar=" ">
+      <command>parser-ca</command>
+      <arg choice="opt" rep="norepeat"><option>-v</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="req" rep="norepeat"><option>-i <replaceable class="parameter">input-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-o <replaceable class="parameter">output-file</replaceable></option></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1>
+    <title>DESCRIPTION</title>
+    <para>
+      The <command>parser-ca</command> tool reads a configuration file
+      for <command>kea-ctrl-agent</command> and pretty prints the result of
+       the flex/bison AGENT parser.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>ARGUMENTS</title>
+
+    <para>The arguments are as follows:</para>
+
+    <variablelist>
+
+      <varlistentry>
+        <term><option>-v</option></term>
+        <listitem><para>
+          Display the version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-V</option></term>
+        <listitem><para>
+          Display the extended version.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-i</option></term>
+        <listitem><para>
+          The input configuration file.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-o</option></term>
+        <listitem><para>
+          The output configuration file. When it is not given the
+          parsed configuration is written on the standard output.
+        </para></listitem>
+      </varlistentry>
+
+    </variablelist>
+  </refsect1>
+
+  <refsect1>
+    <title>DOCUMENTATION</title>
+    <para>Kea comes with an extensive Kea User's Guide documentation
+      that covers all aspects of running the Kea software -
+      compilation, installation, configuration, configuration examples
+      and many more. Kea also features a Kea Messages Manual, which
+      lists all possible messages Kea can print with a brief
+      description for each of them. Both documents are typically
+      available in various formats (txt, html, pdf) with your Kea
+      distribution. The Kea documentation is available at
+      https://kb.isc.org/docs/kea-administrator-reference-manual .</para>
+    <para>
+      Kea source code is documented in the Kea Developer's Guide. Its
+      on-line version is available at https://jenkins.isc.org/job/Kea_doc/doxygen/.
+    </para>
+    <para>
+      Kea project website is available at: https://kea.isc.org.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>MAILING LISTS AND SUPPORT</title>
+    <para>
+      There are two mailing lists available for Kea project. kea-users
+      (kea-users at lists.isc.org) is intended for Kea users, while kea-dev
+      (kea-dev at lists.isc.org) is intended for Kea developers, prospective
+      contributors and other advanced users.  Both lists are available at
+      http://lists.isc.org. The community provides best effort type of support
+      on both of those lists.
+    </para>
+    <para>
+      ISC provides professional support for Kea services. See
+      https://www.isc.org/kea/ for details.
+    </para>
+  </refsect1>
+
+  <refsect1>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry>
+        <refentrytitle>kea-ctrl-agent</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
+      <citetitle>Kea Administrator's Guide</citetitle>.
+
+    </para>
+  </refsect1>
+
+</refentry>

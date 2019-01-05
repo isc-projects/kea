@@ -4,7 +4,29 @@ AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
 #AM_CPPFLAGS += $(SYSREPO_CPPFLAGS)
 
+if USE_STATIC_LINK
+AM_LDFLAGS = -static
+endif
+
 CLEANFILES = *.gcno *.gcda
+
+man_MANS = tools2.8
+DISTCLEANFILES = $(man_MANS)
+EXTRA_DIST = $(man_MANS) tools2.xml
+
+if GENERATE_DOCS
+tools2.8: tools2.xml
+	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	$(srcdir)/tools2.xml
+
+else
+
+$(man_MANS):
+	@echo Man generation disabled.  Creating dummy $@.  Configure with --enable-generate-docs to enable it.
+	@echo Man generation disabled.  Remove this file, configure with --enable-generate-docs, and rebuild Kea > $@
+
+endif
 
 sbin_PROGRAMS = parser2
 #sbin_PROGRAMS += to-yang from-yang
