@@ -22,7 +22,7 @@
       </para></listitem>
       <listitem><para>
       The clients have different behavior, e.g. a smart phone behaves
-      differently than a laptop.
+      differently from a laptop.
       </para></listitem>
       <listitem><para>
       The clients require different values for some options, e.g. a docsis3.0
@@ -216,7 +216,7 @@
   <section xml:id="classification-using-expressions">
     <title>Using Expressions in Classification</title>
       <para>
-      The expression portion of classification contains operators and
+      The expression portion of a classification definition contains operators and
       values. All values are currently strings; operators take a
       string or strings and return another string. When all the
       operations have completed, the result should be a value of
@@ -568,8 +568,8 @@
       0x0000007b. All expressions that return numeric values use 32-bit
       unsigned integers, even if the field in the packet is smaller. In general,
       it is easier to use decimal notation to represent integers, but it is also
-      possible to use hex notation. When using hex notation to represent an
-      integer, care should be taken to make sure the value is represented as 32
+      possible to use hexadecimal notation. When writing an integer in hexadecimal,
+      care should be taken to make sure the value is represented as 32
       bits, e.g. use 0x00000001 instead of 0x1 or 0x01. Also, make
       sure the value is specified in network order, e.g. 1 is
       represented as 0x00000001.
