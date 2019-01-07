@@ -1455,10 +1455,10 @@ static const flex_int16_t yy_rule_linenum[62] =
       133,  135,  137,  142,  143,  148,  149,  150,  162,  165,
       170,  177,  186,  198,  210,  220,  230,  240,  249,  258,
       267,  276,  285,  294,  303,  312,  321,  330,  339,  348,
-      357,  366,  375,  384,  393,  402,  411,  420,  429,  438,
-      447,  456,  465,  474,  573,  578,  583,  588,  589,  590,
-      591,  592,  593,  595,  613,  626,  631,  635,  637,  639,
-      641
+      357,  366,  375,  384,  393,  403,  412,  421,  430,  439,
+      448,  457,  466,  475,  574,  579,  584,  589,  590,  591,
+      592,  593,  594,  596,  614,  627,  632,  636,  638,  640,
+      642
     } ;
 
 /* The intent behind this definition is that it'll catch
@@ -1470,7 +1470,7 @@ static const flex_int16_t yy_rule_linenum[62] =
 #define YY_RESTORE_YY_MORE_OFFSET
 char *yytext;
 #line 1 "netconf_lexer.ll"
-/* Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2308,6 +2308,7 @@ YY_RULE_SETUP
 #line 393 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
+    case ParserContext::NETCONF:
     case ParserContext::LOGGING:
         return NetconfParser::make_LOGGERS(driver.loc_);
     default:
@@ -2317,7 +2318,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 36:
 YY_RULE_SETUP
-#line 402 "netconf_lexer.ll"
+#line 403 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2329,7 +2330,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 37:
 YY_RULE_SETUP
-#line 411 "netconf_lexer.ll"
+#line 412 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2341,7 +2342,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 38:
 YY_RULE_SETUP
-#line 420 "netconf_lexer.ll"
+#line 421 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2353,7 +2354,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 39:
 YY_RULE_SETUP
-#line 429 "netconf_lexer.ll"
+#line 430 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2365,7 +2366,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 40:
 YY_RULE_SETUP
-#line 438 "netconf_lexer.ll"
+#line 439 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2377,7 +2378,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 41:
 YY_RULE_SETUP
-#line 447 "netconf_lexer.ll"
+#line 448 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::OUTPUT_OPTIONS:
@@ -2389,7 +2390,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 42:
 YY_RULE_SETUP
-#line 456 "netconf_lexer.ll"
+#line 457 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2401,7 +2402,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 43:
 YY_RULE_SETUP
-#line 465 "netconf_lexer.ll"
+#line 466 "netconf_lexer.ll"
 {
     switch(driver.ctx_) {
     case ParserContext::LOGGERS:
@@ -2413,7 +2414,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 44:
 YY_RULE_SETUP
-#line 474 "netconf_lexer.ll"
+#line 475 "netconf_lexer.ll"
 {
     /* A string has been matched. It contains the actual string and single quotes.
        We need to get those quotes out of the way and just use its content, e.g.
@@ -2516,7 +2517,7 @@ YY_RULE_SETUP
 case 45:
 /* rule 45 can match eol */
 YY_RULE_SETUP
-#line 573 "netconf_lexer.ll"
+#line 574 "netconf_lexer.ll"
 {
     /* Bad string with a forbidden control character inside */
     driver.error(driver.loc_, "Invalid control in " + std::string(yytext));
@@ -2525,7 +2526,7 @@ YY_RULE_SETUP
 case 46:
 /* rule 46 can match eol */
 YY_RULE_SETUP
-#line 578 "netconf_lexer.ll"
+#line 579 "netconf_lexer.ll"
 {
     /* Bad string with a bad escape inside */
     driver.error(driver.loc_, "Bad escape in " + std::string(yytext));
@@ -2533,7 +2534,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 47:
 YY_RULE_SETUP
-#line 583 "netconf_lexer.ll"
+#line 584 "netconf_lexer.ll"
 {
     /* Bad string with an open escape at the end */
     driver.error(driver.loc_, "Overflow escape in " + std::string(yytext));
@@ -2541,37 +2542,37 @@ YY_RULE_SETUP
 	YY_BREAK
 case 48:
 YY_RULE_SETUP
-#line 588 "netconf_lexer.ll"
+#line 589 "netconf_lexer.ll"
 { return NetconfParser::make_LSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 49:
 YY_RULE_SETUP
-#line 589 "netconf_lexer.ll"
+#line 590 "netconf_lexer.ll"
 { return NetconfParser::make_RSQUARE_BRACKET(driver.loc_); }
 	YY_BREAK
 case 50:
 YY_RULE_SETUP
-#line 590 "netconf_lexer.ll"
+#line 591 "netconf_lexer.ll"
 { return NetconfParser::make_LCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 51:
 YY_RULE_SETUP
-#line 591 "netconf_lexer.ll"
+#line 592 "netconf_lexer.ll"
 { return NetconfParser::make_RCURLY_BRACKET(driver.loc_); }
 	YY_BREAK
 case 52:
 YY_RULE_SETUP
-#line 592 "netconf_lexer.ll"
+#line 593 "netconf_lexer.ll"
 { return NetconfParser::make_COMMA(driver.loc_); }
 	YY_BREAK
 case 53:
 YY_RULE_SETUP
-#line 593 "netconf_lexer.ll"
+#line 594 "netconf_lexer.ll"
 { return NetconfParser::make_COLON(driver.loc_); }
 	YY_BREAK
 case 54:
 YY_RULE_SETUP
-#line 595 "netconf_lexer.ll"
+#line 596 "netconf_lexer.ll"
 {
     /* An integer was found. */
     std::string tmp(yytext);
@@ -2592,7 +2593,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 55:
 YY_RULE_SETUP
-#line 613 "netconf_lexer.ll"
+#line 614 "netconf_lexer.ll"
 {
     /* A floating point was found. */
     std::string tmp(yytext);
@@ -2608,7 +2609,7 @@ YY_RULE_SETUP
 	YY_BREAK
 case 56:
 YY_RULE_SETUP
-#line 626 "netconf_lexer.ll"
+#line 627 "netconf_lexer.ll"
 {
     string tmp(yytext);
     return NetconfParser::make_BOOLEAN(tmp == "true", driver.loc_);
@@ -2616,33 +2617,33 @@ YY_RULE_SETUP
 	YY_BREAK
 case 57:
 YY_RULE_SETUP
-#line 631 "netconf_lexer.ll"
+#line 632 "netconf_lexer.ll"
 {
    return NetconfParser::make_NULL_TYPE(driver.loc_);
 }
 	YY_BREAK
 case 58:
 YY_RULE_SETUP
-#line 635 "netconf_lexer.ll"
+#line 636 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON true reserved keyword is lower case only");
 	YY_BREAK
 case 59:
 YY_RULE_SETUP
-#line 637 "netconf_lexer.ll"
+#line 638 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON false reserved keyword is lower case only");
 	YY_BREAK
 case 60:
 YY_RULE_SETUP
-#line 639 "netconf_lexer.ll"
+#line 640 "netconf_lexer.ll"
 driver.error (driver.loc_, "JSON null reserved keyword is lower case only");
 	YY_BREAK
 case 61:
 YY_RULE_SETUP
-#line 641 "netconf_lexer.ll"
+#line 642 "netconf_lexer.ll"
 driver.error (driver.loc_, "Invalid character: " + std::string(yytext));
 	YY_BREAK
 case YY_STATE_EOF(INITIAL):
-#line 643 "netconf_lexer.ll"
+#line 644 "netconf_lexer.ll"
 {
     if (driver.states_.empty()) {
         return NetconfParser::make_END(driver.loc_);
@@ -2668,10 +2669,10 @@ case YY_STATE_EOF(INITIAL):
 	YY_BREAK
 case 62:
 YY_RULE_SETUP
-#line 666 "netconf_lexer.ll"
+#line 667 "netconf_lexer.ll"
 ECHO;
 	YY_BREAK
-#line 2674 "netconf_lexer.cc"
+#line 2675 "netconf_lexer.cc"
 
 	case YY_END_OF_BUFFER:
 		{
@@ -3776,7 +3777,7 @@ void yyfree (void * ptr )
 
 /* %ok-for-header */
 
-#line 666 "netconf_lexer.ll"
+#line 667 "netconf_lexer.ll"
 
 
 using namespace isc::dhcp;
