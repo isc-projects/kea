@@ -8,11 +8,11 @@
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-ctrl-agent">
-  <title>Kea Control Agent</title>
+  <title>The Kea Control Agent</title>
 
   <section xml:id="agent-overview">
     <title>Overview</title>
-    <para>Kea Control Agent (CA) is a daemon which
+    <para>The Kea Control Agent (CA) is a daemon which
     exposes a RESTful control interface for managing Kea servers. The daemon
     can receive control commands over HTTP and either forward these commands
     to the respective Kea servers or handle these commands on its own. The
@@ -22,7 +22,7 @@
     supported commands, as well as their structures, are provided in
     <xref linkend="ctrl-channel"/>.</para>
     
-    <para>Hook libraries can be loaded by the CA to provide support for
+    <para>The CA can use hook libraries to provide support for
     additional commands or custom behavior of existing commands. Such hook
     libraries must implement callouts for the "control_command_receive" hook point.
     Details about creating new hook libraries and supported hook points can be
@@ -104,7 +104,7 @@
     </para>
 
     <para>
-      The <command>http-host</command> and <command>http-port</command> commands
+      The <command>http-host</command> and <command>http-port</command> parameters
       specify an IP address and port to which HTTP service will be bound.
       In the example configuration provided above, the RESTful
       service will be available under the URL of
@@ -114,13 +114,13 @@
 
     <para>
       As mentioned in <xref linkend="agent-overview"/>, the
-      CA can forward received commands to the specific Kea servers for
+      CA can forward received commands to the Kea servers for
       processing. For example, <command>config-get</command> is sent to
-      retrieve configuration of one of the Kea services. When the CA receives
+      retrieve the configuration of one of the Kea services. When the CA receives
       this command, including a <command>service</command> parameter
       indicating that the client desires to retrieve the configuration of
-      the DHCPv4 server, the CA will forward this command to that server
-      and then pass the received response back to the client. More about
+      the DHCPv4 server, the CA forwards this command to that server
+      and passes the received response back to the client. More about
       the <command>service</command> parameter and the general structure of
       commands can be found in <xref linkend="ctrl-channel"/>.
     </para>
@@ -145,7 +145,7 @@
       <simpara>
         "dhcp4-server", "dhcp6-server" and "d2-server" were renamed
         to "dhcp4", "dhcp6" and "d2" respectively in Kea 1.2.
-        If you are migrating from Kea 1.2, you must tweak your CA config
+        If you are migrating from Kea 1.2, you must modify your CA configuration
         to use this new naming convention.
       </simpara>
     </warning>
@@ -154,7 +154,7 @@
       User contexts can store arbitrary data as long as they are in valid JSON
       syntax and their top-level element is a map (i.e. the data must be
       enclosed in curly brackets). Some hook libraries may expect specific
-      formatting; please consult specific hook library
+      formatting; please consult the relevant hook library
       documentation for details.
     </para>
 
@@ -167,7 +167,7 @@
     </para>
 
     <para>
-      Hooks libraries can be loaded by the Control Agent just as with
+      Hooks libraries can be loaded by the Control Agent in the same way as they are loaded by the
       DHCPv4 and DHCPv6 servers. The CA currently supports one hook point -
       'control_command_receive' - which makes it possible to delegate
       processing of some commands to the hooks library. The
@@ -212,7 +212,7 @@
     authenticates the client by checking whether the presented certificate is
     signed by the certificate authority used by the server.</para>
 
-    <para>To illustrate this, we provide a sample configuration for the
+    <para>To illustrate this, the following is a sample configuration for the
     nginx server running as a reverse proxy to the Kea Control Agent.
     The server enables authentication of the clients using
     certificates.</para>
@@ -284,8 +284,7 @@ http {
 
   <note>
     <simpara>Note that the configuration snippet provided above is for testing
-    purposes only. Please refer to the security policies and best practices of your
-    organization which apply to this setup for your own configuration.</simpara>
+    purposes only. It should be modified according to the security policies and best practices of your organization.</simpara>
   </note>
 
     <para>When you use an HTTP client without TLS support as <command>
@@ -296,7 +295,7 @@ http {
   </section>
 
   <section xml:id="agent-launch">
-    <title>Starting Control Agent</title>
+    <title>Starting the Control Agent</title>
     <para>
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
