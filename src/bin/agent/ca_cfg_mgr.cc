@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -145,7 +145,7 @@ CtrlAgentCfgContext::getControlSocketInfoSummary() const {
 
 ElementPtr
 CtrlAgentCfgContext::toElement() const {
-    ElementPtr ca = Element::createMap();
+    ElementPtr ca = ConfigBase::toElement();
     // Set user-context
     contextToElement(ca);
     // Set http-host
@@ -164,8 +164,6 @@ CtrlAgentCfgContext::toElement() const {
     // Set Control-agent
     ElementPtr result = Element::createMap();
     result->set("Control-agent", ca);
-
-    // Set Logging (not yet)
 
     return (result);
 }

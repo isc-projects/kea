@@ -306,9 +306,8 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     string message;
 
     // Command arguments are expected to be:
-    // { "Dhcp6": { ... }, "Logging": { ... } }
-    // The Logging component is technically optional. If it's not supplied
-    // logging will revert to default logging.
+    // { "Dhcp6": { ... } }
+    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
@@ -332,18 +331,26 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     // configuration attempts.
     CfgMgr::instance().rollback();
 
-    // Logging is a sibling element and must be parsed explicitly.
-    // The call to configureLogger parses the given Logging element if
-    // not null, into the staging config.  Note this does not alter the
-    // current loggers, they remain in effect until we apply the
-    // logging config below.  If no logging is supplied logging will
-    // revert to default logging.
-    Daemon::configureLogger(args->get("Logging"),
-                            CfgMgr::instance().getStagingCfg());
+    // Check obsolete objects.
+
+    // Check deprecated objects.
+
+    // Relocate Logging.
+    Daemon::relocateLogging(args, "Dhcp6");
+
+    // Parse the logger configuration explicitly into the staging config.
+    // Note this does not alter the current loggers, they remain in
+    // effect until we apply the logging config below.  If no logging
+    // is supplied logging will revert to default logging.
+    Daemon::configureLogger(dhcp6, CfgMgr::instance().getStagingCfg());
 
     // Let's apply the new logging. We do it early, so we'll be able to print
     // out what exactly is wrong with the new socnfig in case of problems.
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
+
+    // Log deprecated objects.
+
+    // Log obsolete objects and return an error.
 
     // Now we configure the server proper.
     ConstElementPtr result = processConfig(dhcp6);
@@ -376,9 +383,8 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
     string message;
 
     // Command arguments are expected to be:
-    // { "Dhcp6": { ... }, "Logging": { ... } }
-    // The Logging component is technically optional. If it's not supplied
-    // logging will revert to default logging.
+    // { "Dhcp6": { ... } }
+    // The Logging component is supported by backward compatiblity.
     if (!args) {
         message = "Missing mandatory 'arguments' parameter.";
     } else {
@@ -401,6 +407,13 @@ ControlledDhcpv6Srv::commandConfigTestHandler(const string&,
     // staging configuration that has been created during previous
     // configuration attempts.
     CfgMgr::instance().rollback();
+
+    // Check obsolete objects.
+
+    // Relocate Logging. Note this allows to check the loggers configuration.
+    Daemon::relocateLogging(args, "Dhcp4");
+
+    // Log obsolete objects and return an error.
 
     // Now we check the server proper.
     return (checkConfig(dhcp6));

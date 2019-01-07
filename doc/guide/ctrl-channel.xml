@@ -340,8 +340,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "config-test",
     "arguments":  {
         "&lt;server&gt;": {
-        },
-        "Logging": {
         }
      }
 }
@@ -355,9 +353,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "config-test",
     "arguments":  {
         "Dhcp6": {
-            :
-        },
-        "Logging": {
             :
         }
      }
@@ -487,8 +482,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "config-set",
     "arguments":  {
         "&lt;server&gt;": {
-        },
-        "Logging": {
         }
      }
 }
@@ -502,9 +495,6 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     "command": "config-set",
     "arguments":  {
         "Dhcp6": {
-            :
-        },
-        "Logging": {
             :
         }
      }

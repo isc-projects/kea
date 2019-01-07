@@ -58,12 +58,10 @@
       "subnet": "2001:db8:1::/64",
       "interface": "ethX"
     }
-  ]
-},
+  ],
 
 // The following configures logging. It assumes that messages with at least
 // informational level (info, warn, error) will will be logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp6",

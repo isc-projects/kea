@@ -58,14 +58,12 @@
         "qualifying-suffix" : "test.suffix.",
         "hostname-char-set": "[^A-Za-z0-9.-]",
         "hostname-char-replacement": "x"
-  }
+  },
 
-},
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
 // logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp6",

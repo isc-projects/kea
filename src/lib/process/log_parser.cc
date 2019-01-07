@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -32,7 +32,7 @@ void LogConfigParser::parseConfiguration(const isc::data::ConstElementPtr& logge
                                          bool verbose) {
     verbose_ = verbose;
 
-    // Iterate over all entries in "Logging/loggers" list
+    // Iterate over all entries in "Server/loggers" list
     BOOST_FOREACH(ConstElementPtr logger, loggers->listValue()) {
         parseConfigEntry(logger);
     }

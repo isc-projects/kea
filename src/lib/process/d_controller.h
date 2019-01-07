@@ -186,9 +186,6 @@ public:
     ///
     /// @code
     ///  { "<module-name>": {<module-config>}
-    ///
-    ///   # Logging element is optional
-    ///   ,"Logging": {<logger config}
     ///  }
     ///
     ///  where:
@@ -204,12 +201,11 @@ public:
     /// file content using an alternate parser.  If it returns an empty pointer
     /// than the JSON parsing providing by Element::fromJSONFile() is called.
     ///
-    /// Once parsed, the method looks for the Element "Logging" and, if present
-    /// uses it to configure logging.
-    ///
-    /// It then extracts the set of configuration elements for the
-    /// module-name that matches the controller's app_name_ and passes that
-    /// set into @c updateConfig() (or @c checkConfig()).
+    /// Once parsed, the method extracts the set of configuration
+    /// elements for the module-name that matches the controller's app_name_,
+    /// looks for the loggers entry and, if present uses it to configure
+    /// logging. It then passes that set into @c updateConfig() (or
+    /// @c checkConfig()).
     ///
     /// The file may contain an arbitrary number of other modules.
     ///

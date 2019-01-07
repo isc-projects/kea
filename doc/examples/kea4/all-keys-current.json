@@ -790,12 +790,7 @@
         "t1-percent": .5,
 
         // T2 = valid lifetime * .75.
-        "t2-percent": .75
-
-    },
-
-    // Logging configuration begins here.
-    "Logging": {
+        "t2-percent": .75,
 
         // List of loggers used by the servers using this configuration file.
         "loggers": [

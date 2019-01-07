@@ -62,13 +62,11 @@
   {
       "pools": [ { "pool": "192.0.4.1 - 192.0.4.254" } ],
       "subnet": "192.0.4.0/24"
-  } ]
-},
+  } ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
 // logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp4",

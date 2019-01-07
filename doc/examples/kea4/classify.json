@@ -121,13 +121,11 @@
         "subnet": "192.0.4.0/23",
         "interface": "ethY"
     }
-  ]
-},
+  ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
 // logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp4",

@@ -186,6 +186,17 @@ DControllerBase::checkConfigOnly() {
             isc_throw(InvalidUsage, "Config file " << config_file <<
                       " does not include '" << getAppName() << "' entry");
         }
+        if (module_config->getType() != Element::map) {
+            isc_throw(InvalidUsage, "Config file " << config_file <<
+                      " include not map '" << getAppName() << "' entry");
+        }
+
+        // Check obsolete objects.
+
+        // Relocate Logging.
+        Daemon::relocateLogging(whole_config, getAppName());
+
+        // Log obsolete objects and return an error.
 
         // Get an application process object.
         initProcess();
@@ -345,6 +356,25 @@ DControllerBase::configFromFile() {
             whole_config = Element::fromJSONFile(config_file, true);
         }
 
+        // Extract derivation-specific portion of the configuration.
+        module_config = whole_config->get(getAppName());
+        if (!module_config) {
+            isc_throw(BadValue, "Config file " << config_file <<
+                                " does not include '" <<
+                                 getAppName() << "' entry.");
+        }
+        if (module_config->getType() != Element::map) {
+            isc_throw(InvalidUsage, "Config file " << config_file <<
+                      " include not map '" << getAppName() << "' entry");
+        }
+
+        // Check obsolete objects.
+
+        // Check deprecated objects.
+
+        // Relocate Logging.
+        Daemon::relocateLogging(whole_config, getAppName());
+
         // Let's configure logging before applying the configuration,
         // so we can log things during configuration process.
 
@@ -353,15 +383,11 @@ DControllerBase::configFromFile() {
 
         // Get 'Logging' element from the config and use it to set up
         // logging. If there's no such element, we'll just pass NULL.
-        Daemon::configureLogger(whole_config->get("Logging"), storage);
+        Daemon::configureLogger(module_config, storage);
 
-        // Extract derivation-specific portion of the configuration.
-        module_config = whole_config->get(getAppName());
-        if (!module_config) {
-            isc_throw(BadValue, "Config file " << config_file <<
-                                " does not include '" <<
-                                 getAppName() << "' entry.");
-        }
+        // Log deprecated objects.
+
+        // Log obsolete objects and return an error.
 
         answer = updateConfig(module_config);
         int rcode = 0;

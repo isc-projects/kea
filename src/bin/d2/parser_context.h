@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -210,10 +210,10 @@ public:
         ///< Used while parsing content of Logging
         LOGGING,
 
-        /// Used while parsing Logging/loggers structures.
+        /// Used while parsing DhcpDdns/loggers structures.
         LOGGERS,
 
-        /// Used while parsing Logging/loggers/output_options structures.
+        /// Used while parsing DhcpDdns/loggers/output_options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing DhcpDdns/ncr-protocol

@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,8 +65,8 @@
 
       <para>The configuration file consists of a single object (often
       colloquially called a map) started with a curly bracket. It
-      comprises one or more of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
-      "Netconf", and "Logging" objects. It is possible to define
+      comprises one or more of the "Dhcp4", "Dhcp6", "DhcpDdns",
+      "Control-agent" and "Netconf" objects. It is possible to define
       additional elements but they will be ignored.</para>
 
       <para>A very simple configuration for DHCPv4 could look like this:
@@ -85,11 +85,9 @@
         "subnet4": [{
            "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
            "subnet": "192.0.2.0/24"
-        }]
-    },
+        }],
 
-    # Logger configuration starts here.
-    "Logging": {
+       # Now loggers are inside the DHCPv4 object.
        "loggers": [{
             "name": "*",
             "severity": "DEBUG"
@@ -106,12 +104,12 @@
 
       <note>
         <para>
-          The "Logging" element will be removed in Kea 1.6.0 and its contents
+          The "Logging" element is removed in Kea 1.6.0 and its contents
           (the "loggers" object) moved inside the configuration objects (maps) for
-          the respective Kea modules. For example, the "Dhcp4" map will contain the
+          respective Kea modules.  For example: the "Dhcp4" map contains the
           "loggers" object specifying logging configuration for the DHCPv4
-          server. Backward compatibility will be maintained until at least Kea
-          1.7.0; it will be possible to specify the "Logging" object
+          server. Backward compatibility is maintained until at least Kea
+          1.7.0 release: it will be possible to specify "Logging" object
           at the top configuration level and "loggers"
           objects at the module configuration level. Ultimately, support for the
           top-level "Logging" object will be removed.

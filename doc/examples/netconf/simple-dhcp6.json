@@ -65,7 +65,7 @@
                 "comment": "Kea DHCP6 server serving network on floor 13"
             }
 
-        }
+        },
 
         // Netconf is able to load hook libraries that augment its operation.
         // The primary functionality is the ability to add new commands.
@@ -87,11 +87,7 @@
         //    }
         //]
 
-    },
-
-    // Similar to other Kea components, Netconf also uses logging.
-    "Logging":
-    {
+        // Similar to other Kea components, Netconf also uses logging.
         "loggers": [
             {
                 "name": "kea-netconf",

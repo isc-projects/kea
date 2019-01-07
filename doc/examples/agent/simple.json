@@ -66,13 +66,9 @@
                     "param1": "foo"
                 }
             }
-        ]
+        ],
 
-    },
-
-    // Similar to other Kea components, CA also uses logging.
-    "Logging":
-    {
+        // Similar to other Kea components, CA also uses logging.
         "loggers": [
             {
                 "name": "kea-ctrl-agent",

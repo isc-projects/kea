@@ -193,10 +193,12 @@ In the example above this object is called <command>Dhcp4</command>.
 <note>
   <para>In the current Kea release it is possible to specify configurations
   of multiple modules within a single configuration file, but this is not
-  recommended. The
-  only object, besides the one specifying module configuration, which can be
-  (and usually is) included in the same file, is the <command>Logging</command> object.
-  However, we don't include this one in the example above for clarity.
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually was) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity
+  and its content, the list of loggers, should now be inside the
+  <command>Dhcp4</command> object instead of the deprecated object.
   </para>
 </note>
 
@@ -303,10 +305,8 @@ In some cases it may be preferable to use more compact notation.
 </para>
 
 <para>After all the parameters have been specified, we have two contexts open:
-global and Dhcp4, so we need two closing curly brackets to close them.
-In a real-life configuration file there most likely would be an additional
-component defined such as Logging, so the first closing brace would be followed
-by a comma and another object definition.</para>
+global and Dhcp4, hence we need two closing curly brackets to close them.
+</para>
 </section>
 
 <section>
@@ -3559,11 +3559,8 @@ It is merely echoed by the server.
         "pools": [ { "pool": "10.10.10.100 - 10.10.10.199" } ]
     } ],
 
-    <userinput>"dhcp4o6-port": 6767</userinput>
+    <userinput>"dhcp4o6-port": 6767,</userinput>
 
-},
-
-"Logging": {
     "loggers": [ {
         "name": "kea-dhcp4",
         "output_options": [ {

@@ -50,14 +50,11 @@
 //          "param1": "foo"
 //      }
 //  }
-    ]
-},
+    ],
 
 // Logging configuration starts here. Kea uses different loggers to log various
 // activities. For details (e.g. names of loggers), see Chapter 18.
-"Logging":
-{
-  "loggers": [
+    "loggers": [
     {
         // This specifies the logging for Control Agent daemon.
         "name": "kea-ctrl-agent",

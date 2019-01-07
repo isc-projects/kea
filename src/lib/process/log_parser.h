@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,7 +39,7 @@ namespace process {
 /// The data structures don't have to originate from JSON. JSON is just a
 /// convenient presentation syntax.
 ///
-/// This class uses @c SrvConfig object to store logging configuration.
+/// This class uses @c ConfigBase object to store logging configuration.
 class LogConfigParser {
 public:
 
@@ -60,10 +60,10 @@ public:
 
 private:
 
-    /// @brief Parses one JSON structure in Logging/loggers" array
+    /// @brief Parses one JSON structure in Server/loggers" array
     ///
     /// @param entry JSON structure to be parsed
-    /// @brief parses one structure in Logging/loggers.
+    /// @brief parses one structure in Server/loggers.
     void parseConfigEntry(isc::data::ConstElementPtr entry);
 
     /// @brief Parses output_options structure

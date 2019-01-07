@@ -194,10 +194,12 @@ In the example above this object is called <command>Dhcp6</command>.
 <note>
   <para>In the current Kea release it is possible to specify configurations
   of multiple modules within a single configuration file, but this is not
-  recommended. The
-  only object, besides the one specifying module configuration, which can be
-  (and usually is) included in the same file, is the <command>Logging</command> object.
-  However, we don't include this object in the example above for clarity.
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually was) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity
+  and its content, the list of loggers, should now be inside the
+  <command>Dhcp4</command> object instead of this deprecated object.
   </para>
 </note>
 
@@ -292,10 +294,8 @@ In some cases in may be preferable to use more compact notation.
 </para>
 
 <para>After all parameters are specified, we have two contexts open:
-global and Dhcp6, so we need two closing curly brackets to close them.
-In a real-life configuration file there most likely would be additional
-components defined such as Logging, so the first closing brace would be followed
-by a comma and another object definition.</para>
+global and Dhcp6, hence we need two closing curly brackets to close them.
+</para>
 </section>
 
 <section>
@@ -3107,11 +3107,9 @@ should include options from the new option space:
         "space": "dhcp6",
         "csv-format": true,
         "data": "2001:db8:1:1::1"
-    } ]
+    } ],
 </userinput>
-},
 
-"Logging": {
     "loggers": [ {
         "name": "kea-dhcp6",
         "output_options": [ {

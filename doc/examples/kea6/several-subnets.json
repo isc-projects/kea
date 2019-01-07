@@ -39,14 +39,12 @@
   {    "pools": [ { "pool": "2001:db8:3::/80" } ],
        "subnet": "2001:db8:3::/64"  },
   {    "pools": [ { "pool": "2001:db8:4::/80" } ],
-       "subnet": "2001:db8:4::/64"  } ]
-},
+       "subnet": "2001:db8:4::/64"  } ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
 // logged to stdout.
-"Logging": {
-    "loggers": [
+  "loggers": [
         {
             "name": "kea-dhcp6",
             "output_options": [

@@ -647,11 +647,7 @@
 
             // Queue type was mandatory.
             "queue-type": "kea-ring6"
-        }
-    },
-
-    // Logging configuration begins here.
-    "Logging": {
+        },
 
         // List of loggers used by the servers using this configuration file.
         "loggers": [

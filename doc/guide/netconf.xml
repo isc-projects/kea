@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -619,13 +619,9 @@ done in dependency order and reverse dependency order accordingly.
                     "param1": "foo"
                 }
             }
-        ]
+        ],
 
-    },
-
-    // Similar to other Kea components, kea-netconf also uses logging.
-    "Logging":
-    {
+        // Similar to other Kea components, Netconf also uses logging.
         "loggers": [
             {
                 "name": "kea-netconf",
@@ -794,10 +790,8 @@ done in dependency order and reverse dependency order accordingly.
                     "socket-name": "/tmp/kea6-sock"
                 }
             }
-        }
-    },
-    "Logging":
-    {
+        },
+
         "loggers":
         [
             {
@@ -1077,7 +1071,7 @@ done in dependency order and reverse dependency order accordingly.
     <section xml:id="operation-example-logging">
       <title>NETCONF Operation Example with Logging</title>
       <para>
-        This example adds a Logging section to the initial (i.e. startup)
+        This example adds a logger entry to the initial (i.e. startup)
         configuration in the <filename>logging.xml</filename> file:
 <screen>
 &lt;config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server"&gt;
@@ -1131,9 +1125,7 @@ done in dependency order and reverse dependency order accordingly.
         ],
         "subnet": "2001:db8::/64"
       }
-    ]
-  },
-  "Logging": {
+    ],
     "loggers": [
       {
         "name": "kea-dhcp6",

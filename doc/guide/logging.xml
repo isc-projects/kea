@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,12 +23,10 @@
     </para>
 
     <para>
-      The logging system in Kea is configured through the
-      Logging section in your configuration
-      file. All daemons (e.g. DHCPv4 and DHCPv6 servers) will use the
-      configuration in the Logging section to see
-      what should be logged and to where. This allows for sharing identical
-      logging configuration between daemons.
+      The logging system in Kea is configured through the loggers entry
+      in the server section of your configuration file. In previous
+      Kea releases this entry was in an independent Logging section,
+      this is still supported for backward compatibility.
     </para>
 
     <section>
@@ -61,7 +59,7 @@
       </para>
 
       <para>
-        In the Logging section of a configuration file you can specify the
+        In the server section of a configuration file you can specify the
         configuration for zero or more loggers (including loggers used by the
         proprietary hooks libraries). If there are no loggers specified, the
         code will use default values; these cause Kea to log messages of INFO
@@ -146,17 +144,6 @@
           configuration.
         </para>
 
-        <!-- we don't support asterisk anymore.
-        <para>
-          One special case is that of a component name of <quote>*</quote>
-          (asterisks), which is interpreted as <emphasis>any</emphasis>
-          component. You can set global logging options by using this,
-          including setting the logging configuration for a library
-          that is used by multiple daemons (e.g. <quote>*.config</quote>
-          specifies the configuration library code in whatever
-          daemon is using it).
-        </para> -->
-
         <para>
           If there are multiple logger specifications in the configuration
           that might match a particular logger, the specification with the
@@ -225,6 +212,7 @@
                 <row><entry><command>kea-dhcp-ddns.dhcpddns</command></entry><entry>core</entry><entry>The logger used by the kea-dhcp-ddns daemon for logging events related to DDNS operations.</entry></row>
                 <row><entry><command>kea-dhcp-ddns.dhcp-to-d2</command></entry><entry>core</entry><entry>Used by the kea-dhcp-ddns daemon for logging information about events dealing with receiving messages from the DHCP servers and adding them to the queue for processing.</entry></row>
                 <row><entry><command>kea-dhcp-ddns.d2-to-dns</command></entry><entry>core</entry><entry>Used by the kea-dhcp-ddns daemon for logging information about events dealing with sending and receiving messages with the DNS servers.</entry></row>
+                <row><entry><command>kea-netconf</command></entry><entry>core</entry><entry>The root logger for the Netconf agent. All components used by Netconf inherit the settings from this logger if there is no specialized logger provided.</entry></row>
               </tbody>
             </tgroup>
           </table>
@@ -406,11 +394,11 @@
       <section>
         <title>Example Logger Configurations</title>
         <para>
-          In this example we want to set the global logging to write to the
+          In this example we want to set the Server logging to write to the
           console using standard output.
         </para>
 
-<screen><userinput>"Logging": {
+<screen><userinput>"Server": {
     "loggers": [
         {
             "name": "kea-dhcp4",
@@ -431,7 +419,7 @@
           created.
         </para>
 
-<screen><userinput>"Logging": {
+<screen><userinput>"Server": {
     "loggers": [
         {
             "name": "kea-dhcp6",

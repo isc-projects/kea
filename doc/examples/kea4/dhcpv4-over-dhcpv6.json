@@ -27,12 +27,8 @@
   ],
 
 // This enables DHCPv4-over-DHCPv6 support
-  "dhcp4o6-port": 6767
+  "dhcp4o6-port": 6767,
 
-},
-
-"Logging":
-{
   "loggers": [
     {
       "name": "kea-dhcp4",

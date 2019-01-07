@@ -192,13 +192,10 @@
             // IP address.
             "relay": { "ip-address": "192.168.56.1" }
         }
-    ]
-},
+    ],
 
-// Logging configuration starts here.
-"Logging":
-{
-  "loggers": [
+    // Logging configuration starts here.
+    "loggers": [
     {
         // This section affects kea-dhcp4, which is the base logger for DHCPv4
         // component. It tells DHCPv4 server to write all log messages (on

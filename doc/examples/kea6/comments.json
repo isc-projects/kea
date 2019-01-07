@@ -111,10 +111,8 @@
    "dhcp-ddns": {
        "comment": "No dynamic DNS",
        "enable-updates": false
-   }
-},
+   },
 
-"Logging": {
    // In loggers
    "loggers": [ {
        "comment": "A logger",

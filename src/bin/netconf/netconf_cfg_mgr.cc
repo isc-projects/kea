@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,7 +144,7 @@ NetconfCfgMgr::parse(isc::data::ConstElementPtr config_set,
 
 ElementPtr
 NetconfConfig::toElement() const {
-    ElementPtr netconf = Element::createMap();
+    ElementPtr netconf = ConfigBase::toElement();
     // Set user-context
     contextToElement(netconf);
     // Add in explicitly configured globals.
@@ -161,9 +161,6 @@ NetconfConfig::toElement() const {
     // Set Netconf
     ElementPtr result = Element::createMap();
     result->set("Netconf", netconf);
-
-    // Set Logging (not yet)
-
     return (result);
 }
 

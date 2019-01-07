@@ -124,13 +124,11 @@
         ]
     }
 
-  ]
-},
+  ],
 
 // The following configures logging. It assumes that messages with at
 // least informational level (info, warn, error and fatal) should be
 // logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp6",

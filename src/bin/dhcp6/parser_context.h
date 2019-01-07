@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -289,10 +289,10 @@ public:
         /// Used while parsing Dhcp6/subnet6/relay structures.
         RELAY,
 
-        /// Used while parsing Logging/loggers structures.
+        /// Used while parsing Dhcp6/loggers structures.
         LOGGERS,
 
-        /// Used while parsing Logging/loggers/output_options structures.
+        /// Used while parsing Dhcp6/loggers/output_options structures.
         OUTPUT_OPTIONS,
 
         /// Used while parsing Dhcp6/dhcp-ddns.

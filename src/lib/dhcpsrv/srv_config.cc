@@ -295,12 +295,12 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
 ElementPtr
 SrvConfig::toElement() const {
     // Toplevel map
-    ElementPtr result = ConfigBase::toElement();
+    ElementPtr result = Element::createMap();
 
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
     // DhcpX global map
-    ElementPtr dhcp = Element::createMap();
+    ElementPtr dhcp = ConfigBase::toElement();
 
     // Add in explicitly configured globals.
     dhcp->setValue(configured_globals_->mapValue());

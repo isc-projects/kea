@@ -27,13 +27,10 @@
   },
   "tsig-keys": [],
   "forward-ddns" : {},
-  "reverse-ddns" : {}
-},
+  "reverse-ddns" : {},
 
 // Logging configuration starts here. Kea uses different loggers to log various
 // activities. For details (e.g. names of loggers), see Chapter 18.
-"Logging":
-{
   "loggers": [
     {
         // This specifies the logging for D2 (DHCP-DDNS) daemon.

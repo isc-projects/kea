@@ -20,12 +20,8 @@
                 "socket-type": "unix",
                 "socket-name": "/path/to/the/unix/socket-v4"
             }
-        }
+        },
 
-    },
-
-    "Logging":
-    {
         // In loggers
         "loggers": [
             {

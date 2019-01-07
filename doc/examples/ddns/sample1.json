@@ -132,12 +132,10 @@
             "digest-bits": 256,
             "secret": "/4wklkm04jeH4anx2MKGJLcya+ZLHldL5d6mK+4q6UXQP7KJ9mS2QG29hh0SJR4LA0ikxNJTUMvir42gLx6fGQ=="
         }
-    ]
-},
+    ],
 
 // The following configures logging. It assumes that messages with at least
 // informational level (info, warn, error and fatal) should be logged to stdout.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp-ddns",

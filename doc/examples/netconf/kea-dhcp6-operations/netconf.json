@@ -11,10 +11,8 @@
                     "socket-name": "/tmp/kea6-sock"
                 }
             }
-        }
-    },
-    "Logging":
-    {
+        },
+
         "loggers":
         [
             {

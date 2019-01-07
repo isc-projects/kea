@@ -68,12 +68,10 @@
         }
       ]
     }
-  ]
-},
+  ],
 
 // The following configures logging. Kea will log all debug messages
 // to /var/log/kea-debug.log file.
-"Logging": {
     "loggers": [
         {
             "name": "kea-dhcp6",

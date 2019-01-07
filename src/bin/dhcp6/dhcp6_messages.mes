@@ -98,11 +98,19 @@ new configuration. it is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
+% DHCP6_CONFIG_DEPRECATED DHCPv6 server configuration includes a deprecated object: %1
+This warning message is issued when the configuration includes a deprecated
+object (i.e. a top level element) which will be ignored.
+
 % DHCP6_CONFIG_LOAD_FAIL configuration error using file: %1, reason: %2
 This error message indicates that the DHCPv6 configuration has failed.
 If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
+
+% DHCP6_CONFIG_OBSOLETE DHCPv6 server configuration includes an obsolete object: %1
+This error message is issued when the configuration includes an obsolete
+object (i.e. a top level element).
 
 % DHCP6_CONFIG_PACKET_QUEUE DHCPv6 packet queue info after configuration: %1
 This informational message is emitted during DHCPv6 server configuration,

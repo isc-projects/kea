@@ -172,14 +172,12 @@
             "subnet": "192.0.5.0/24",
             "authoritative": true
         }
-    ]
-},
+    ],
 
-  // The following configures logging. It assumes that messages with
-  // at least informational level (info, warn, error and fatal) should
-  // be logged to stdout.
-  "Logging": {
-      "loggers": [
+    // The following configures logging. It assumes that messages with
+    // at least informational level (info, warn, error and fatal) should
+    // be logged to stdout.
+    "loggers": [
           {
             "name": "kea-dhcp4",
               "output_options": [

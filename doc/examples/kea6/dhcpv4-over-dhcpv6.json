@@ -38,12 +38,9 @@
       "csv-format": true,
 // Put the server address here
       "data": "2001:db8:1:1::1" }
-   ]
-},
+   ],
 
-"Logging":
-{
-  "loggers": [
+   "loggers": [
     {
       "name": "kea-dhcp6",
       "output_options": [

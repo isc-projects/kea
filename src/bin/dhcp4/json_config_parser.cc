@@ -556,7 +556,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "reservation-mode") ||
                  (config_pair.first == "calculate-tee-times") ||
                  (config_pair.first == "t1-percent") ||
-                 (config_pair.first == "t2-percent")) {
+                 (config_pair.first == "t2-percent") ||
+                 (config_pair.first == "loggers")) {
 
                 CfgMgr::instance().getStagingCfg()->addConfiguredGlobal(config_pair.first,
                                                                         config_pair.second);

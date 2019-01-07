@@ -49,10 +49,8 @@
             "algorithm": "HMAC-MD5",
             "secret": "LSWXnfkKZjdPJI5QxlpnfQ=="
         }
-    ]
-},
+    ],
 
-"Logging": {
     // In loggers
     "loggers": [
         {

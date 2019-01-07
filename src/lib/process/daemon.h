@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,9 +85,21 @@ public:
     /// @param verbose verbose mode (true usually enables DEBUG messages)
     static void loggerInit(const char* log_name, bool verbose);
 
+    /// @brief Relocate Logging configuration
+    ///
+    /// Moves the loggers entry from Logging to the server top element.
+    /// This method assumes the configuration is sane, e.g. the server
+    /// top element exists and is a map.
+    /// Top elements other than the server one are removed.
+    ///
+    /// @param config JSON top level configuration
+    /// @param server_name name of the server top element
+    static void relocateLogging(isc::data::ConstElementPtr config,
+                                const std::string server_name);
+
     /// @brief Configures logger
     ///
-    /// Applies configuration stored in "Logging" structure in the
+    /// Applies configuration stored in a top-level structure in the
     /// configuration file. This structure has a "loggers" array that
     /// contains 0 or more entries, each configuring one logging source
     /// (name, severity, debuglevel), each with zero or more outputs (file,

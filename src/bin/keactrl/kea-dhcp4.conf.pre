@@ -410,13 +410,10 @@
     // There are many, many more parameters that DHCPv4 server is able to use.
     // They were not added here to not overwhelm people with too much
     // information at once.
-},
 
 // Logging configuration starts here. Kea uses different loggers to log various
 // activities. For details (e.g. names of loggers), see Chapter 18.
-"Logging":
-{
-  "loggers": [
+    "loggers": [
     {
         // This section affects kea-dhcp4, which is the base logger for DHCPv4
         // component. It tells DHCPv4 server to write all log messages (on
