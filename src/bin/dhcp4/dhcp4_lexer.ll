@@ -917,6 +917,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"loggers\" {
     switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
     case isc::dhcp::Parser4Context::LOGGING:
         return isc::dhcp::Dhcp4Parser::make_LOGGERS(driver.loc_);
     default:

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -431,6 +431,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
 
 \"loggers\" {
     switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
     case isc::d2::D2ParserContext::LOGGING:
         return isc::d2::D2Parser::make_LOGGERS(driver.loc_);
     default:

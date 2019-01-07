@@ -476,6 +476,7 @@ global_param: valid_lifetime
             | calculate_tee_times
             | t1_percent
             | t2_percent
+            | loggers
             | unknown_map_entry
             ;
 

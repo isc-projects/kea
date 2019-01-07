@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -273,6 +273,7 @@ global_param: http_host
             | http_port
             | control_sockets
             | hooks_libraries
+            | loggers
             | user_context
             | comment
             | unknown_map_entry
