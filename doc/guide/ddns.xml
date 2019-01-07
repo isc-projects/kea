@@ -14,7 +14,7 @@
       <title>Overview</title>
       <para>
       The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts
-      the client side of the DDNS protocol (defined in <link
+      the client side of the Dynamic DNS protocol (DDNS, defined in <link
       xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2136">RFC 2136</link>)
       on behalf of the DHCPv4 and DHCPv6 servers (kea-dhcp4 and kea-dhcp6
       respectively). The DHCP servers construct DDNS update requests, known
@@ -34,7 +34,7 @@
       servers that publish the DNS data for that domain.
       </para>
       <para>
-      When conducting forward domain matching, D2 will compare the FQDN in
+      When conducting forward domain matching, D2 compares the fully-qualified domain name (FQDN) in
       the request against the name of each Forward DDNS Domain in its catalog. The domain
       whose name matches the longest portion of the FQDN is considered the
       best match. For example, if the FQDN is "myhost.sample.example.com.",
@@ -43,7 +43,7 @@
       cases, it may not be possible to find a suitable match. Given the same two
       forward domains there would be no match for the FQDN, "bogus.net", so the
       request would be rejected. Finally, if there are no Forward DDNS Domains
-      defined, D2 will simply disregard the forward update portion of requests.
+      defined, D2 simply disregards the forward update portion of requests.
       </para>
       <para>
       When conducting reverse domain matching, D2 constructs a reverse
@@ -86,10 +86,10 @@
       <title>Dual-Stack Environments</title>
       <para>
         <ulink url="http://tools.ietf.org/html/rfc4703#section-5.2">RFC 4703,
-        sec. 5.2,</ulink> describes issues that may arise with dual-stack
+        section 5.2,</ulink> describes issues that may arise with dual-stack
         clients. These are clients that wish to have have both IPv4 and IPv6
-        mappings for the same FQDN. For this to work properly, these
-        clients are required to embed ther IPv6 DUID within their IPv4 client
+        mappings for the same FQDN. For this to work properly, the
+        clients are required to embed their IPv6 DUID within their IPv4 client
         identifier option as described in
         <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
         In this way, DNS updates for both IPv4 and IPv6 can be managed under
@@ -196,7 +196,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         the server will issue a DHCP_DDNS_ALREADY_RUNNING log message and exit. It
         is possible, though unlikely, that the file is a remnant of a system crash
         and the process to which the PID belongs is unrelated to Kea. In such a
-        case it would be necessary to manually delete the PID file.
+        case it is necessary to manually delete the PID file.
       </para>
 
 
@@ -231,7 +231,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         <itemizedlist>
           <listitem>
             <simpara>
-        <emphasis>Global Server Parameters</emphasis> - values which control connectivity and global server behavior
+        <emphasis>Global Server Parameters</emphasis> - values which control connectivity and global server behavior.
             </simpara>
           </listitem>
           <listitem>
@@ -241,17 +241,17 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers
+              <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>Forward DDNS</emphasis> - defines the catalog of Forward DDNS Domains
+              <emphasis>Forward DDNS</emphasis> - defines the catalog of Forward DDNS Domains.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>Reverse DDNS</emphasis> - defines the catalog of Forward DDNS Domains
+              <emphasis>Reverse DDNS</emphasis> - defines the catalog of Forward DDNS Domains.
             </simpara>
           </listitem>
         </itemizedlist>
@@ -602,7 +602,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section must
             <listitem>
               <simpara>
               <command>hostname</command> -
-              the resolvable host name of the DNS server; this value is not
+              the resolvable host name of the DNS server; this parameter is not
               yet implemented.
               </simpara>
             </listitem>
@@ -750,7 +750,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section must
 
         It is possible to add a domain without any servers; however, if that domain
         matches a request, the request will fail.
-        To make the domain useful, we must add at least one DNS
+        To make the domain useful, you must add at least one DNS
         server to it.
         </para>
 
