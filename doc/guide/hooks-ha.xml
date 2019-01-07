@@ -10,7 +10,7 @@
       <title>ha: High Availability</title>
       <para>
         This section describes the High Availability hooks library, which can be
-        loaded on a pair of DHCPv4 or DHCPv6 servers to increase reliability of
+        loaded on a pair of DHCPv4 or DHCPv6 servers to increase the reliability of
         the DHCP service in the event of an outage of one of the servers. This library
         was previously only available to ISC's paid subscribers, but is now part of
         the open source Kea, available to all users.
@@ -31,7 +31,7 @@
         significant features are communication between the servers, partner
         failure detection, and lease synchronization between the servers.
         However, the DHCPv4 failover standardization process was never completed
-        at IETF. The DHCPv6 failover standard (RFC 8156) was published, but it
+        by the IETF. The DHCPv6 failover standard (RFC 8156) was published, but it
         is complex, difficult to use, has significant operational constraints,
         and is different than its v4 counterpart.
         Although it may be useful for some users to use a "standard" failover
@@ -55,7 +55,7 @@
         <para>The Kea HA hook library supports two configurations, also known as HA
         modes: load balancing and hot standby. In the load-balancing mode,
         two servers respond to DHCP requests. The load-balancing function
-        is implemented as described in RFC3074, with each server responding to
+        is implemented as described in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3074">RFC 3074</link>, with each server responding to
         half the received DHCP queries. When one of the servers allocates a lease
         for a client, it notifies the partner server over the control channel
         (RESTful API), so the partner can save the lease information in its
@@ -570,7 +570,7 @@
           into account the specifics of the network in which the DHCP servers are
           operating. Note that the server in question may not respond to some
           DHCP clients because these clients are not to be serviced
-          by this server per administrative policy. The server may also
+          by this server according to administrative policy. The server may also
           drop malformed queries from clients. Therefore, selecting too
           low a value for the <command>max-unacked-clients</command> parameter may
           result in a transition to the <command>partner-down</command>
@@ -897,7 +897,7 @@
         and/or database synchronization between the active servers, if the
         exchange of information about the allocated leases is performed
         using some other mechanism. Kea supports various database types
-        to be used as storage for leases, including MySQL, Postgres, and Cassandra.
+        that can be used to store leases, including MySQL, Postgres, and Cassandra.
         Those databases include built-in solutions for data replication which
         are often used by Kea administrators to provide redundancy.</para>
 
@@ -979,14 +979,14 @@
         Increasing the page size decreases the number of lease queries sent to
         the partner server, but it causes the partner server to generate
         larger responses, which lengthens transmission time as well as
-        memory and CPU utilization on both servers. Decreasing the
+        increases memory and CPU utilization on both servers. Decreasing the
         page size helps to decrease resource utilization, but requires
         more lease queries to be issued to fetch the entire lease
         database.</para>
         <para>The default value of the <command>sync-page-limit</command> command
         controlling the page size is 10000. This means that the entire
         lease database can be fetched with a single command if the
-        size of the database is equal to or lower than 10000 lines.
+        size of the database is equal to or less than 10000 lines.
         </para>
       </section>
 
@@ -1059,7 +1059,7 @@
         <para>
           It is important to note that extending this <command>sync-timeout</command> value may sometimes
           be insufficient to prevent issues with timeouts during
-          lease-database synchronization. The control commands travel via
+          lease-database synchronization. The control commands travel via the
           Control Agent, which also monitors incoming (with a synchronizing
           server) and outgoing (with a DHCP server) connections for timeouts.
           The DHCP server also monitors the connection from the Control
@@ -1347,7 +1347,7 @@
           </para>
 
           <para>
-            When the server receives this command, it first disables the
+            When the server receives this command it first disables the
             DHCP service of the server from which it will be fetching leases, by
             sending the <command>dhcp-disable</command> command to that server.
             The <command>max-period</command> parameter specifies the maximum
