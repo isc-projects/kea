@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -102,7 +102,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
 
       <para>
         During startup the server will attempt to create a PID file of the
-        form: localstatedir]/[conf name].kea-dhcp6.pid where:
+        form: localstatedir]/[conf name].kea-dhcp4.pid where:
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
