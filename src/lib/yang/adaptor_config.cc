@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -622,6 +622,9 @@ AdaptorConfig::preProcess4(ConstElementPtr config) {
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "preProcess4: not map: " << config->str());
     }
+    if (config->contains("Logging")) {
+        isc_throw(BadValue, "preProcess4: got Logging object");
+    }
     ConstElementPtr dhcp = config->get("Dhcp4");
     if (!dhcp) {
         return;
@@ -637,6 +640,9 @@ AdaptorConfig::preProcess6(ConstElementPtr config) {
     }
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "preProcess6: not map: " << config->str());
+    }
+    if (config->contains("Logging")) {
+        isc_throw(BadValue, "preProcess6: got Logging object");
     }
     ConstElementPtr dhcp = config->get("Dhcp6");
     if (!dhcp) {

@@ -32,6 +32,21 @@
             ]
         },
         "ip-address": "172.16.1.10",
+        "loggers": [
+            {
+                "debuglevel": 0,
+                "name": "kea-dhcp-ddns",
+                "output_options": [
+                    {
+                        "flush": true,
+                        "maxsize": 204800,
+                        "maxver": 4,
+                        "output": "stdout"
+                    }
+                ],
+                "severity": "INFO"
+            }
+        ],
         "ncr-format": "JSON",
         "ncr-protocol": "UDP",
         "port": 53001,

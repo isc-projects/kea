@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <dhcp/libdhcp++.h>
 #include <process/d_log.h>
 #include <process/d_cfg_mgr.h>
+#include <process/daemon.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -80,6 +81,9 @@ DCfgMgrBase::simpleParseConfig(isc::data::ConstElementPtr config_set,
     ConstElementPtr answer;
 
     try {
+        // Logging is common so factor it.
+        Daemon::configureLogger(config_set, context_);
+
         // Let's call the actual implementation
         answer = parse(config_set, check_only);
 

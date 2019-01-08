@@ -379,29 +379,27 @@ DControllerBase::configFromFile() {
         // so we can log things during configuration process.
 
         // Temporary storage for logging configuration
-        ConfigPtr storage = process_->getCfgMgr()->getContext();
+        ConfigPtr storage(new ConfigBase());
 
         // Get 'Logging' element from the config and use it to set up
         // logging. If there's no such element, we'll just pass NULL.
         Daemon::configureLogger(module_config, storage);
 
+        // Let's apply the new logging. We do it early, so we'll be able
+        // to print out what exactly is wrong with the new config in
+        // case of problems.
+        storage->applyLoggingCfg();
+
         // Log deprecated objects.
 
-        // Log obsolete objects and return an error.
+        // Log obsolete objects and raise an error.
 
         answer = updateConfig(module_config);
-        int rcode = 0;
-        parseAnswer(rcode, answer);
-        if (!rcode) {
-            // Configuration successful, so apply the logging configuration
-            // to log4cplus.
-            storage->applyLoggingCfg();
-        }
-
+        // In all cases the right logging configuration is in the context.
+        process_->getCfgMgr()->getContext()->applyLoggingCfg();
     } catch (const std::exception& ex) {
         // Rollback logging configuration.
-        // We don't use CfgMgr to store logging information anymore.
-        // isc::dhcp::CfgMgr::instance().rollback();
+        process_->getCfgMgr()->getContext()->applyLoggingCfg();
 
         // build an error result
         ConstElementPtr error = createAnswer(COMMAND_ERROR,

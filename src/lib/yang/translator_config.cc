@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -85,14 +85,6 @@ TranslatorConfig::getConfigKea4() {
     ElementPtr result = Element::createMap();
     ElementPtr dhcp = getServerKeaDhcp4();
     result->set("Dhcp4", dhcp);
-    ConstElementPtr loggers = dhcp->get("loggers");
-    if (loggers) {
-        dhcp->remove("loggers");
-
-        ElementPtr logging = Element::createMap();
-        logging->set("loggers", loggers);
-        result->set("Logging", logging);
-    }
     return (result);
 }
 
@@ -101,14 +93,6 @@ TranslatorConfig::getConfigKea6() {
     ElementPtr result = Element::createMap();
     ElementPtr dhcp = getServerKeaDhcp6();
     result->set("Dhcp6", dhcp);
-    ConstElementPtr loggers = dhcp->get("loggers");
-    if (loggers) {
-        dhcp->remove("loggers");
-
-        ElementPtr logging = Element::createMap();
-        logging->set("loggers", loggers);
-        result->set("Logging", logging);
-    }
     return (result);
 }
 
@@ -467,10 +451,6 @@ TranslatorConfig::setConfigKea4(ConstElementPtr elem) {
     if (dhcp) {
         setServerKeaDhcp4(dhcp);
     }
-    ConstElementPtr logging = elem->get("Logging");
-    if (logging) {
-        setServerKeaLogging(logging);
-    }
 }
 
 void
@@ -478,10 +458,6 @@ TranslatorConfig::setConfigKea6(ConstElementPtr elem) {
     ConstElementPtr dhcp = elem->get("Dhcp6");
     if (dhcp) {
         setServerKeaDhcp6(dhcp);
-    }
-    ConstElementPtr logging = elem->get("Logging");
-    if (logging) {
-        setServerKeaLogging(logging);
     }
 }
 
@@ -717,6 +693,10 @@ TranslatorConfig::setServerKeaDhcpCommon(const string& xpath,
         ConstElementPtr repr = Element::create(queue_ctrl->str());
         setItem(xpath + "/dhcp-queue-control", repr, SR_STRING_T);
     }
+    ConstElementPtr loggers = elem->get("loggers");
+    if (loggers) {
+        setLoggers(xpath, loggers);
+    }
 }
 
 void
@@ -859,15 +839,6 @@ TranslatorConfig::setServerKeaDhcp6(ConstElementPtr elem) {
             ConstElementPtr repr = Element::create(context->str());
             setItem(xpath + "/server-id/user-context", repr, SR_STRING_T);
         }
-    }
-}
-
-void
-TranslatorConfig::setServerKeaLogging(ConstElementPtr elem) {
-    string xpath = "/" + model_ + ":config";
-    ConstElementPtr loggers = elem->get("loggers");
-    if (loggers) {
-        setLoggers(xpath, loggers);
     }
 }
 

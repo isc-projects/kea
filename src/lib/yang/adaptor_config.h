@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,7 +40,7 @@ public:
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
-    /// @throw BadValue when null or not a map
+    /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp4" is not present in the map.
     static void preProcess4(isc::data::ConstElementPtr config);
 
@@ -52,7 +52,7 @@ public:
     ///
     /// @param config The configuration.
     /// @throw MissingKey when a required key is missing.
-    /// @throw BadValue when null or not a map
+    /// @throw BadValue when null or not a map or deprecated Logging present.
     /// @note Does nothing if "Dhcp6" is not present in the map.
     static void preProcess6(isc::data::ConstElementPtr config);
 

@@ -53,6 +53,10 @@ may be provided.
 This is an informational message emitted when the Kea server is about to begin
 retrieving configuration data from one or more configuration backends.
 
+% DCTL_CONFIG_DEPRECATED server configuration includes a deprecated object: %1
+This warning message is issued when the configuration includes a deprecated
+object (i.e. a top level element) which will be ignored.
+
 % DCTL_CONFIG_FILE_LOAD_FAIL %1 reason: %2
 This fatal error message indicates that the application attempted to load its
 initial configuration from file and has failed. The service will exit.
@@ -61,6 +65,10 @@ initial configuration from file and has failed. The service will exit.
 This critical error message indicates that the initial application
 configuration has failed. The service will start, but will not
 process requests until the configuration has been corrected.
+
+% DCTL_CONFIG_OBSOLETE server configuration includes an obsolete object: %1
+This error message is issued when the configuration includes an obsolete
+object (i.e. a top level element).
 
 % DCTL_CONFIG_START parsing new configuration: %1
 A debug message indicating that the application process has received an

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -59,9 +59,9 @@ namespace yang {
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
-///     "dhcp-queue-control": { <DHCP queue control> }
+///     "dhcp-queue-control": { <DHCP queue control> },
+///     "loggers": [ <list of loggers> ]
 /// },
-/// "Logging": <logging>
 /// @endcode
 ///
 /// YANG syntax for kea-dhcp4-server:config is:
@@ -195,9 +195,9 @@ namespace yang {
 ///     "reservations": [ <list of host reservations> ],
 ///     <config-control>,
 ///     "server-tag": <server tag>,
-///     "dhcp-queue-control": { <DHCP queue control> }
+///     "dhcp-queue-control": { <DHCP queue control> },
+///     "loggers": [ <list of loggers> ]
 /// },
-/// "Logging": <logging>
 /// @endcode
 ///
 /// YANG syntax for kea-dhcp6-server:config is:
@@ -290,55 +290,6 @@ namespace yang {
 ///     <socket-name>/tmp/kea6-sock</socket-name>
 ///     <socket-type>unix</socket-type>
 ///   </control-socket>
-/// </config>
-/// @endcode
-
-/// JSON syntax for the logging part of kea servers is:
-/// @code
-/// "Logging": {
-///     "loggers": [ <list of loggers> '
-/// }
-/// @endcode
-///
-/// Example of Logging simple configuration:
-/// @code
-/// {
-///     ...
-///     "Logging":
-///     {
-///         "loggers":
-///         [
-///             {
-///                 "name": "kea-dhcp6",
-///                 "output_options":
-///                 [
-///                     {
-///                         "output": "stderr"
-///                     }
-///                 ],
-///                 "severity": "DEBUG",
-///                 "debuglevel": 99
-///             }
-///         ]
-///     }
-/// }
-/// @endcode
-///
-/// The same configuration wrote into YANG datastore using @c setConfig()
-/// with a kea server model and exported to XML format:
-/// @code
-/// <config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp4-server">
-///   ...
-///   <logger>
-///     <name>kea-dhcp6</name>
-///     <output-options>
-///       <option>
-///         <output>stderr</output>
-///       </option>
-///     </output-options>
-///     <debuglevel>99</debuglevel>
-///     <severity>DEBUG</severity>
-///   </logger>
 /// </config>
 /// @endcode
 
@@ -530,11 +481,6 @@ protected:
     ///
     /// @param elem The JSON element.
     void setServerKeaDhcp6(isc::data::ConstElementPtr elem);
-
-    /// @brief set Logging part for kea-*:config.
-    ///
-    /// @param elem The JSON element.
-    void setServerKeaLogging(isc::data::ConstElementPtr elem);
 
     /// @brief Retrieves an item and stores in the specified storage.
     ///

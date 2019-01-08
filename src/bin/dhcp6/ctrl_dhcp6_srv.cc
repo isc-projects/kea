@@ -345,7 +345,7 @@ ControlledDhcpv6Srv::commandConfigSetHandler(const string&,
     Daemon::configureLogger(dhcp6, CfgMgr::instance().getStagingCfg());
 
     // Let's apply the new logging. We do it early, so we'll be able to print
-    // out what exactly is wrong with the new socnfig in case of problems.
+    // out what exactly is wrong with the new config in case of problems.
     CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
 
     // Log deprecated objects.
