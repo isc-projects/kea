@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,17 +18,27 @@ keactrl=@abs_top_builddir@/src/bin/keactrl/keactrl
 
 # Name of the configuration file without its extension.
 CFG_FILE_NAME="test_config"
-# A name of the configuration file to be used by Kea.
-CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${CFG_FILE_NAME}.json
-# Names for Netconf ("Netconf" object is not recognized)
-NETCONF_CFG_FILE_NAME="netconf_test_config"
-NETCONF_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${NETCONF_CFG_FILE_NAME}.json
+# Names for DHCPv4
+DHCP4_CFG_FILE_NAME="dhcp4_test_config"
+DHCP4_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP4_CFG_FILE_NAME}.json
+# Names for DHCPv6
+DHCP6_CFG_FILE_NAME="dhcp6_test_config"
+DHCP6_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${DHCP6_CFG_FILE_NAME}.json
+# Names for D2
+D2_CFG_FILE_NAME="d2_test_config"
+D2_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${D2_CFG_FILE_NAME}.json
+# Names for CA
+CA_CFG_FILE_NAME="ca_test_config"
+CA_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${CA_CFG_FILE_NAME}.json
+# Names for Netconf
+NC_CFG_FILE_NAME="nc_test_config"
+NC_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/${NC_CFG_FILE_NAME}.json
 # Configuration files for all deamons.
-CFG_FILES="kea_dhcp4_config_file=${CFG_FILE}\n\
-kea_dhcp6_config_file=${CFG_FILE}\n\
-kea_dhcp_ddns_config_file=${CFG_FILE}\n\
-kea_ctrl_agent_config_file=${CFG_FILE}\n\
-kea_netconf_config_file=${NETCONF_CFG_FILE}"
+CFG_FILES="kea_dhcp4_config_file=${DHCP4_CFG_FILE}\n\
+kea_dhcp6_config_file=${DHCP6_CFG_FILE}\n\
+kea_dhcp_ddns_config_file=${D2_CFG_FILE}\n\
+kea_ctrl_agent_config_file=${CA_CFG_FILE}\n\
+kea_netconf_config_file=${NC_CFG_FILE}"
 # A name of the keactrl config file
 KEACTRL_CFG_FILE=@abs_top_builddir@/src/bin/keactrl/tests/keactrl_test.conf
 # Path to the Kea log file.
@@ -40,8 +50,9 @@ kea6_name="${wildcard_name}dhcp6"
 d2_name="${wildcard_name}dhcp-ddns"
 agent_name="${wildcard_name}ctrl-agent"
 netconf_name="${wildcard_name}netconf"
-# Kea configuration
-config="{
+
+# DHCPv4 configuration
+dhcp4_config="{
     \"Dhcp4\":
     {
         \"interfaces-config\": {
@@ -59,8 +70,23 @@ config="{
         {
             \"subnet\": \"10.0.0.0/24\",
             \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ]
-        } ]
-    },
+        } ],
+        \"loggers\": [
+        {
+            \"name\": \"kea-dhcp4\",
+            \"output_options\": [
+                {
+                    \"output\": \"$LOG_FILE\"
+                }
+            ],
+            \"severity\": \"INFO\"
+        }
+        ]
+    }
+}"
+
+# DHCPv6 configuration
+dhcp6_config="{
     \"Dhcp6\":
     {
         \"interfaces-config\": {
@@ -83,32 +109,8 @@ config="{
         {
             \"subnet\": \"2001:db8:1::/64\",
             \"pools\": [ { \"pool\": \"2001:db8:1::10-2001:db8:1::100\" } ]
-        } ]
-    },
-    \"DhcpDdns\":
-    {
-        \"ip-address\": \"127.0.0.1\",
-        \"port\": 53001,
-        \"tsig-keys\": [],
-        \"forward-ddns\" : {},
-        \"reverse-ddns\" : {}
-    },
-    \"Control-agent\": {
-        \"http-host\": \"127.0.0.1\",
-        \"http-port\": 18080
-    },
-    \"Logging\":
-    {
+        } ],
         \"loggers\": [
-        {
-            \"name\": \"kea-dhcp4\",
-            \"output_options\": [
-                {
-                    \"output\": \"$LOG_FILE\"
-                }
-            ],
-            \"severity\": \"INFO\"
-        },
         {
             \"name\": \"kea-dhcp6\",
             \"output_options\": [
@@ -117,7 +119,21 @@ config="{
                 }
             ],
             \"severity\": \"INFO\"
-        },
+        }
+        ]
+    }
+}"
+
+# DHCP-DDNS configuration
+dhcp_ddns_config="{
+    \"DhcpDdns\":
+    {
+        \"ip-address\": \"127.0.0.1\",
+        \"port\": 53001,
+        \"tsig-keys\": [],
+        \"forward-ddns\" : {},
+        \"reverse-ddns\" : {},
+        \"loggers\": [
         {
             \"name\": \"kea-dhcp-ddns\",
             \"output_options\": [
@@ -126,7 +142,17 @@ config="{
                 }
             ],
             \"severity\": \"INFO\"
-        },
+        }
+        ]
+    }
+}"
+
+# Control-agent configuration
+control_agent_config="{
+    \"Control-agent\": {
+        \"http-host\": \"127.0.0.1\",
+        \"http-port\": 18080,
+        \"loggers\": [
         {
             \"name\": \"kea-ctrl-agent\",
             \"output_options\": [
@@ -143,9 +169,6 @@ config="{
 # Netconf configuration
 netconf_config="{
     \"Netconf\": {
-    },
-    \"Logging\":
-    {
         \"loggers\": [
         {
             \"name\": \"kea-netconf\",
@@ -179,8 +202,11 @@ kea_verbose=no\n${keactrl_fixed_config}"
     test_start "keactrl.start_all_servers_no_verbose_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -254,24 +280,24 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that all servers are running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -330,8 +356,11 @@ kea_verbose=yes\n${keactrl_fixed_config}"
     test_start "keactrl.start_all_servers_verbose_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -401,24 +430,24 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that all servers are running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -478,8 +507,11 @@ kea_verbose=no\n${keactrl_fixed_config}"
     test_start "keactrl.start_v4_server_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -502,28 +534,28 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv4 server is running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 0 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -584,8 +616,11 @@ kea_verbose=no\n${keactrl_fixed_config}"
     test_start "keactrl.start_v6_server_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -608,28 +643,28 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv6 server is running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 0 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -690,8 +725,11 @@ kea_verbose=no\n${keactrl_fixed_config}"
     test_start "keactrl.late_start_v4_server_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -714,28 +752,28 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv6 server is running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is not running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 0 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -781,28 +819,28 @@ Expected wait_for_message return %d, returned %d."
 Expected wait_for_message return %d, returned %d."
 
     # Make sure that DHCPv6 server is running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is running.
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -885,8 +923,11 @@ kea_verbose=yes\n${keactrl_fixed_config}"
     test_start "keactrl.late_start_v6_server_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -909,28 +950,28 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that DHCPv4 server is running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that DHCPv6 server is not running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that D2 server is not running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is not running.
-    get_pid ${d2_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 0 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is not running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 0 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -977,28 +1018,28 @@ Expected wait_for_message return %d, returned %d."
 
 
     # Make sure that DHCPv6 server is running.
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure that DHCPv4 server is running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
     # Make sure that D2 server is running.
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure that CA is running.
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure that Netconf agent is running.
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -1074,8 +1115,11 @@ kea_verbose=no\n${keactrl_fixed_config}"
     test_start "keactrl.stop_selected_server_test"
 
     # Create configuration file for Kea and for keactrl.
-    create_config "${config}"
-    create_netconf_config "${netconf_config}"
+    create_dhcp4_config "${dhcp4_config}"
+    create_dhcp6_config "${dhcp6_config}"
+    create_d2_config "${dhcp_ddns_config}"
+    create_ca_config "${control_agent_config}"
+    create_nc_config "${netconf_config}"
     create_keactrl_config "${keactrl_config}"
 
     # Set logging to a file.
@@ -1128,24 +1172,24 @@ Expected wait_for_message return %d, returned %d."
     sleep 3
 
     # Make sure that all servers are running.
-    get_pid ${kea4_name}
+    get_pid ${kea4_name} ${DHCP4_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea4_name} process running, found %d processes running"
 
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -1173,23 +1217,23 @@ Expected wait_for_message return %d, returned %d."
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure DHCPv6 server is still running
-    get_pid ${kea6_name}
+    get_pid ${kea6_name} ${DHCP6_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${kea6_name} process running, found %d processes running"
 
     # Make sure D2 server is still running
-    get_pid ${kea6_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure CA is still running
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure Netconf agent is still running
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -1217,12 +1261,12 @@ Expected wait_for_message return %d, returned %d."
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure D2 server is still running
-    get_pid ${d2_name}
+    get_pid ${d2_name} ${D2_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${d2_name} process running, found %d processes running"
 
     # Make sure CA is still running
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
@@ -1249,13 +1293,13 @@ Expected wait_for_message return %d, returned %d."
         "Expected wait_for_server_down return %d, returned %d"
 
     # Make sure CA is still running
-    get_pid ${agent_name}
+    get_pid ${agent_name} ${CA_CFG_FILE_NAME}
     assert_eq 1 ${_GET_PIDS_NUM} \
         "Expected %d ${agent_name} process running, found %d processes running"
 
     # Make sure Netconf agent is still running
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi
@@ -1284,7 +1328,7 @@ Expected wait_for_message return %d, returned %d."
 
     # Make sure Netconf agent is still running
     if [ ${have_netconf} -eq 1 ]; then
-        get_pid ${netconf_name} ${NETCONF_CFG_FILE_NAME}
+        get_pid ${netconf_name} ${NC_CFG_FILE_NAME}
         assert_eq 1 ${_GET_PIDS_NUM} \
             "Expected %d ${netconf_name} process running, found %d processes running"
     fi

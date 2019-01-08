@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -132,23 +132,99 @@ create_config() {
     printf "%b" ${cfg} > ${CFG_FILE}
 }
 
-# Stores the netconf configuration specified as a parameter in the
-# configuration file which name has been set in the ${NETCONF_CFG_FILE}
+# Stores the DHCP4 configuration specified as a parameter in the
+# configuration file which name has been set in the ${DHCP4_CFG_FILE}
 # variable.
-create_netconf_config() {
+create_dhcp4_config() {
     local cfg="${1}"  # Configuration string.
-    if [ -z ${NETCONF_CFG_FILE} ]; then
-        test_lib_error "create_netconf_config requires NETCONF_CFG_FILE \
+    if [ -z ${DHCP4_CFG_FILE} ]; then
+        test_lib_error "create_dhcp4_config requires DHCP4_CFG_FILE \
 variable be set"
         clean_exit 1
 
     elif [ -z "${cfg}" ]; then
-        test_lib_error "create_netconf_config requires argument holding a \
+        test_lib_error "create_dhcp4_config requires argument holding a \
 configuration"
         clean_exit 1
     fi
-    printf "Creating Netconf configuration file: %s.\n" ${NETCONF_CFG_FILE}
-    printf "%b" ${cfg} > ${NETCONF_CFG_FILE}
+    printf "Creating Dhcp4 configuration file: %s.\n" ${DHCP4_CFG_FILE}
+    printf "%b" ${cfg} > ${DHCP4_CFG_FILE}
+}
+
+# Stores the DHCP6 configuration specified as a parameter in the
+# configuration file which name has been set in the ${DHCP6_CFG_FILE}
+# variable.
+create_dhcp6_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${DHCP6_CFG_FILE} ]; then
+        test_lib_error "create_dhcp6_config requires DHCP6_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_dhcp6_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating Dhcp6 configuration file: %s.\n" ${DHCP6_CFG_FILE}
+    printf "%b" ${cfg} > ${DHCP6_CFG_FILE}
+}
+
+# Stores the D2 configuration specified as a parameter in the
+# configuration file which name has been set in the ${D2_CFG_FILE}
+# variable.
+create_d2_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${D2_CFG_FILE} ]; then
+        test_lib_error "create_d2_config requires D2_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_d2_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating D2 configuration file: %s.\n" ${D2_CFG_FILE}
+    printf "%b" ${cfg} > ${D2_CFG_FILE}
+}
+
+# Stores the CA configuration specified as a parameter in the
+# configuration file which name has been set in the ${CA_CFG_FILE}
+# variable.
+create_ca_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${CA_CFG_FILE} ]; then
+        test_lib_error "create_ca_config requires CA_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_ca_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating Ca configuration file: %s.\n" ${CA_CFG_FILE}
+    printf "%b" ${cfg} > ${CA_CFG_FILE}
+}
+
+# Stores the NC configuration specified as a parameter in the
+# configuration file which name has been set in the ${NC_CFG_FILE}
+# variable.
+create_nc_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${NC_CFG_FILE} ]; then
+        test_lib_error "create_nc_config requires NC_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_nc_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating Nc configuration file: %s.\n" ${NC_CFG_FILE}
+    printf "%b" ${cfg} > ${NC_CFG_FILE}
 }
 
 # Stores the keactrl configuration specified as a parameter in the
@@ -334,6 +410,11 @@ cleanup() {
         rm -rf ${LEASE_FILE}*
     fi
     rm -rf ${CFG_FILE}
+    rm -rf ${DHCP4_CFG_FILE}
+    rm -rf ${DHCP6_CFG_FILE}
+    rm -rf ${D2_CFG_FILE}
+    rm -rf ${CA_CFG_FILE}
+    rm -rf ${NC_CFG_FILE}
     rm -rf ${KEACTRL_CFG_FILE}
 }
 
