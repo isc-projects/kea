@@ -98,7 +98,7 @@ new configuration. it is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
-% DHCP6_CONFIG_DEPRECATED DHCPv6 server configuration includes a deprecated object: %1
+% DHCP6_CONFIG_DEPRECATED_OBJECT DHCPv6 server configuration includes a deprecated object: %1
 This warning message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
 
@@ -108,7 +108,7 @@ If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
 
-% DHCP6_CONFIG_OBSOLETE DHCPv6 server configuration includes an obsolete object: %1
+% DHCP6_CONFIG_OBSOLETE_OBJECT DHCPv6 server configuration includes an obsolete object: %1
 This error message is issued when the configuration includes an obsolete
 object (i.e. a top level element).
 
@@ -125,6 +125,10 @@ The source of that configuration depends on used configuration backend.
 This is a debug message that is issued every time the server receives a
 configuration. That happens start up and also when a server configuration
 change is committed by the administrator.
+
+% DHCP6_CONFIG_UNKNOWN_OBJECT DHCPv6 server configuration includes an unknown object: %1
+This error message is issued when the configuration includes an unknown
+object (i.e. a top level element).
 
 % DHCP6_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the IPv6 DHCP server has received an

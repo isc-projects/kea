@@ -191,12 +191,37 @@ DControllerBase::checkConfigOnly() {
                       " include not map '" << getAppName() << "' entry");
         }
 
-        // Check obsolete objects.
+        // Check obsolete or unknown objects.
+        std::set<std::string> unsupported;
+        for (auto obj : whole_config->mapValue()) {
+            const std::string& app_name = getAppName();
+            const std::string& obj_name = obj.first;
+            if ((obj_name == app_name) || (obj_name == "Logging")) {
+                continue;
+            }
+            if ((obj_name == "Dhcp4") || (obj_name == "Dhcp6") ||
+                (obj_name == "Control-agent") || (obj_name == "Netconf")) {
+                if ((app_name == "DhcpDdns") ||
+                    (app_name == "Control-agent")) {
+                    continue;
+                }
+                if (app_name == "Netconf") {
+                    unsupported.insert(obj_name);
+                    continue;
+                }
+            }
+            unsupported.insert(obj_name);
+        }
+        if (unsupported.size() == 1) {
+            isc_throw(InvalidUsage, "Unsupported object '"
+                      << *unsupported.begin() << "' in config");
+        } else if (unsupported.size() > 1) {
+            isc_throw(InvalidUsage, "Unsupported objects '"
+                      << *unsupported.begin() << "', ... in config");
+        }
 
         // Relocate Logging.
         Daemon::relocateLogging(whole_config, getAppName());
-
-        // Log obsolete objects and return an error.
 
         // Get an application process object.
         initProcess();

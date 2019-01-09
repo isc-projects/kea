@@ -134,7 +134,7 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
-% DHCP4_CONFIG_DEPRECATED DHCPv4 server configuration includes a deprecated object: %1
+% DHCP4_CONFIG_DEPRECATED_OBJECT DHCPv4 server configuration includes a deprecated object: %1
 This warning message is issued when the configuration includes a deprecated
 object (i.e. a top level element) which will be ignored.
 
@@ -152,7 +152,7 @@ server will continue to use an old configuration.
 This is an informational message reporting that the configuration has
 been extended to include the specified IPv4 subnet.
 
-% DHCP4_CONFIG_OBSOLETE DHCPv4 server configuration includes an obsolete object: %1
+% DHCP4_CONFIG_OBSOLETE_OBJECT DHCPv4 server configuration includes an obsolete object: %1
 This error message is issued when the configuration includes an obsolete
 object (i.e. a top level element).
 
@@ -174,6 +174,10 @@ The source of that configuration depends on used configuration backend.
 This is a debug message that is issued every time the server receives a
 configuration. That happens at start up and also when a server configuration
 change is committed by the administrator.
+
+% DHCP4_CONFIG_UNKNOWN_OBJECT DHCPv4 server configuration includes an unknown object: %1
+This error message is issued when the configuration includes an unknown
+object (i.e. a top level element).
 
 % DHCP4_CONFIG_UPDATE updated configuration received: %1
 A debug message indicating that the DHCPv4 server has received an
