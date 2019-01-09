@@ -90,6 +90,13 @@ ConfigControlInfo::clear() {
     db_infos_.clear();
 }
 
+void
+ConfigControlInfo::merge(const ConfigControlInfo& other) {
+    if (!other.db_infos_.empty()) {
+        db_infos_ = other.db_infos_;
+    }
+}
+
 ElementPtr
 ConfigControlInfo::toElement() const {
     ElementPtr result = Element::createMap();

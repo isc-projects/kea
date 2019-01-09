@@ -57,6 +57,19 @@ public:
     /// @param other the other configuration to compare to
     bool equals(const ConfigBase& other) const;
 
+    /// @brief Merges specified configuration into this configuration.
+    ///
+    /// This method merges logging and config control configuration into
+    /// this configuration. The new logging configuration replaces the
+    /// existing configuration if the new logging configuration is
+    /// non-empty. The new config control configuration replaces the
+    /// existing configuration if the new logging configuration is
+    /// non-null and non-empty.
+    ///
+    /// @param other the other configuration to be merged into this
+    /// configuration.
+    virtual void merge(const ConfigBase& other);
+
     /// @brief Converts to Element representation
     ///
     /// This creates a Map element with the following content (expressed
