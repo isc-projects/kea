@@ -82,6 +82,23 @@ ConfigBase::copy(ConfigBase& other) const {
     }
 }
 
+void
+ConfigBase::merge(const ConfigBase& other) {
+    // Merge logging info.
+    if (!other.logging_info_.empty()) {
+        logging_info_ = other.logging_info_;
+    }
+
+    // Merge the config control info
+    if (other.config_ctl_info_) {
+        if (config_ctl_info_) {
+            config_ctl_info_->merge(*other.config_ctl_info_);
+        } else {
+            config_ctl_info_ = other.config_ctl_info_;
+        }
+    }
+}
+
 ElementPtr
 ConfigBase::toElement() const {
     ElementPtr result = Element::createMap();

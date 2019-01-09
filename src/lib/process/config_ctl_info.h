@@ -172,6 +172,15 @@ public:
     /// @brief Empties the contents of the class, including the database list
     void clear();
 
+    /// @brief Merges specified configuration into this configuration.
+    ///
+    /// If the other configuration is non-empty it completely replaces
+    /// this configuration.
+    ///
+    /// @param other the other configuration to be merged into this
+    /// configuration.
+    void merge(const ConfigControlInfo& other);
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
