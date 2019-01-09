@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -164,9 +164,9 @@ TEST(Element, from_and_to_json) {
     // some json specific format tests, here the str() output is
     // different from the string input
     EXPECT_EQ("100", Element::fromJSON("+100")->str());
-    EXPECT_EQ("100", Element::fromJSON("1e2")->str());
-    EXPECT_EQ("100", Element::fromJSON("+1e2")->str());
-    EXPECT_EQ("-100", Element::fromJSON("-1e2")->str());
+    EXPECT_EQ("100.0", Element::fromJSON("1e2")->str());
+    EXPECT_EQ("100.0", Element::fromJSON("+1e2")->str());
+    EXPECT_EQ("-100.0", Element::fromJSON("-1e2")->str());
 
     EXPECT_NO_THROW({
        EXPECT_EQ("9223372036854775807", Element::fromJSON("9223372036854775807")->str());
@@ -182,10 +182,10 @@ TEST(Element, from_and_to_json) {
     EXPECT_EQ("0.01", Element::fromJSON(".01")->str());
     EXPECT_EQ("-0.01", Element::fromJSON("-1e-2")->str());
     EXPECT_EQ("1.2", Element::fromJSON("1.2")->str());
-    EXPECT_EQ("1", Element::fromJSON("1.0")->str());
-    EXPECT_EQ("120", Element::fromJSON("1.2e2")->str());
-    EXPECT_EQ("100", Element::fromJSON("1.0e2")->str());
-    EXPECT_EQ("100", Element::fromJSON("1.0E2")->str());
+    EXPECT_EQ("1.0", Element::fromJSON("1.0")->str());
+    EXPECT_EQ("120.0", Element::fromJSON("1.2e2")->str());
+    EXPECT_EQ("100.0", Element::fromJSON("1.0e2")->str());
+    EXPECT_EQ("100.0", Element::fromJSON("1.0E2")->str());
     EXPECT_EQ("0.01", Element::fromJSON("1.0e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2e-2")->str());
     EXPECT_EQ("0.012", Element::fromJSON("1.2E-2")->str());
@@ -776,7 +776,6 @@ TEST(Element, equals) {
     EXPECT_NE(*efs("1"), *efs("[]"));
     EXPECT_NE(*efs("1"), *efs("true"));
     EXPECT_NE(*efs("1"), *efs("{}"));
-
     EXPECT_EQ(*efs("1.1"), *efs("1.1"));
     EXPECT_NE(*efs("1.0"), *efs("1"));
     EXPECT_NE(*efs("1.1"), *efs("\"1\""));

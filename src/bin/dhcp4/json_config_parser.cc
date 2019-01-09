@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -546,7 +546,10 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "server-hostname") ||
                  (config_pair.first == "boot-file-name") ||
                  (config_pair.first == "server-tag") ||
-                 (config_pair.first == "reservation-mode")) {
+                 (config_pair.first == "reservation-mode") ||
+                 (config_pair.first == "calculate-tee-times") || 
+                 (config_pair.first == "t1-percent") || 
+                 (config_pair.first == "t2-percent")) {
                 continue;
             }
 
