@@ -16,7 +16,7 @@ using namespace isc::util;
 
 namespace {
 
-// Excerises isc::util::areDoublesEquivalent().
+// Exercises isc::util::areDoublesEquivalent().
 TEST(Doubles, areDoublesEquivalent) {
     std::vector<uint8_t> data;
 
