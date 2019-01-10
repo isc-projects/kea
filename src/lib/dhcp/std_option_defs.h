@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -450,14 +450,6 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
       NO_RECORD_DEF, "" },
     { "relay-source-port", D6O_RELAY_SOURCE_PORT, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, OPT_IPV6_ADDRESS_TYPE, true,
-      NO_RECORD_DEF, "" },
-    { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" },
-    { "certificate", D6O_CERTIFICATE, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" },
-    { "signature", D6O_SIGNATURE, OPT_RECORD_TYPE, false,
-      RECORD_DEF(SIGNATURE_RECORDS), "" },
-    { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
       NO_RECORD_DEF, "" },
     { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
         MAPE_V6_OPTION_SPACE },
