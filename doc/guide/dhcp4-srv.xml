@@ -1194,13 +1194,15 @@ temporarily override a list of interface names and listen on all interfaces.
         </itemizedlist>
       </para>
       <note>
-      In the event that both explicit values are specified and calculate-tee-times
-      is true, the server will use the explicit values.  If you plan on having a
-      mixture where some subnets or share-networks will use explicit values and some
-      will use calculated values you must not define the explicit values at any level
-      higher than where they will be used.  Inheriting them from too high of a scope,
-      such as global, will cause them to have values at every level underneath (shared-
-      networks and subnets), effectively disabling calculated values.
+      In the event that both explicit values are specified and
+      calculate-tee-times is true, the server will use the explicit
+      values.  If you plan on having a mixture where some subnets or
+      share-networks will use explicit values and some will use
+      calculated values you must not define the explicit values at any
+      level higher than where they will be used.  Inheriting them from
+      too high of a scope, such as global, will cause them to have
+      values at every level underneath (shared-networks and subnets),
+      effectively disabling calculated values.
       </note>
     </section>
     <section xml:id="dhcp4-std-options">
