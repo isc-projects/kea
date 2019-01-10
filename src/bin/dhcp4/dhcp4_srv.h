@@ -544,7 +544,7 @@ protected:
     /// This method determines if either of the timers T1 (option 58) and T2
     /// (option 59) should be sent to the client.  It is influenced by the
     /// lease's subnet's values for renew-timer, rebind-timer,
-    /// calculate-tee-times, t1-perecnt, and t2-percent as follows:
+    /// calculate-tee-times, t1-percent, and t2-percent as follows:
     ///
     /// By default neither T1 nor T2 will be sent.
     ///
