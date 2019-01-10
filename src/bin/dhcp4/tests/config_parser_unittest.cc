@@ -255,8 +255,7 @@ const char* PARSER_CONFIGS[] = {
     "           } \n"
     "       ] \n"
     "   } \n"
-    "} \n",
-
+    "} \n"
 };
 
 class Dhcp4ParserTest : public ::testing::Test {
