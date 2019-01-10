@@ -242,7 +242,7 @@ TEST_F(SimpleParserTest, getIOAddress) {
 TEST_F(SimpleParserTest, getDouble) {
 
     SimpleParserClassTest parser;
-    std::string  json = 
+    std::string json =
     "{\n"
     "  \"string\" : \"12.3\",\n"
     "  \"bool\" : true, \n"

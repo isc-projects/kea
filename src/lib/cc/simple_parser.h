@@ -172,9 +172,9 @@ class SimpleParser {
     /// @param scope specified parameter will be extracted from this scope
     /// @param name name of the parameter
     /// @return a double value of the parameter
-    /// @throw DhcpConfigError if the parameter is not there or is not 
+    /// @throw DhcpConfigError if the parameter is not there or is not
     /// an Element::real
-    static double getDouble(const ConstElementPtr& scope, 
+    static double getDouble(const ConstElementPtr& scope,
                             const std::string& name);
 
 protected:
