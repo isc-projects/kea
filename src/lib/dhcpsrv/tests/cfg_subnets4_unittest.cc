@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,12 +11,15 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <testutils/test_to_element.h>
+#include <util/doubles.h>
+
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -735,12 +738,21 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+
     subnet1->allowClientClass("foo");
+    // These two should not appear, as calculateTeeTimes should be false.
+    subnet1->setT1Percent(0.45);
+    subnet1->setT2Percent(0.70);
+
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("10.0.0.1"));
+
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
+    subnet3->setCalculateTeeTimes(true);
+    subnet3->setT1Percent(0.50);
+    subnet3->setT2Percent(0.65);
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -812,7 +824,10 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"calculate-tee-times\": true,\n"
+        "    \"t1-percent\": 0.50,\n"
+        "    \"t2-percent\": 0.65\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -912,6 +927,112 @@ TEST(CfgSubnets4Test, hasSubnetWithServerId) {
 
     EXPECT_TRUE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
     EXPECT_FALSE(cfg.hasSubnetWithServerId(IOAddress("2.3.4.5")));
+}
+
+// This test verifies the Subnet4 parser's validation logic for
+// t1-percent and t2-percent parameters.
+TEST(CfgSubnets4Test, teeTimePercentValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        bool calculate_tee_times;  // value of calculate-tee-times parameter
+        double t1_percent;         // value of t1-percent parameter
+        double t2_percent;         // value of t2-percent parameter
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"off and valid", false, .5, .95, ""},
+        {"on and valid", true, .5, .95, ""},
+        {"t2_negative", true, .5, -.95,
+         "subnet configuration failed: t2-percent:"
+         "  -0.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t2_too_big", true, .5, 1.95,
+         "subnet configuration failed: t2-percent:"
+         "  1.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_negative", true, -.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  -0.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_too_big", true, 1.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  1.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_bigger_than_t2", true, .85, .45,
+         "subnet configuration failed: t1-percent:"
+         "  0.85 is invalid, it must be less than t2-percent: 0.45"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet4.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"match-client-id\": false, \n"
+        "            \"authoritative\": false, \n"
+        "            \"next-server\": \"\", \n"
+        "            \"server-hostname\": \"\", \n"
+        "            \"boot-file-name\": \"\", \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\", \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\", \n"
+        "            \"dhcp4o6-port\": 0, \n"
+        "            \"decline-probation-period\": 86400 \n"
+        "        }";
+
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE("test: " + (*test).label);
+
+            // Set this scenario's configuration parameters
+            elems->set("calculate-tee-times", data::Element::create((*test).calculate_tee_times));
+            elems->set("t1-percent", data::Element::create((*test).t1_percent));
+            elems->set("t2-percent", data::Element::create((*test).t2_percent));
+
+            Subnet4Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet4ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!(*test).error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ((*test).error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_EQ((*test).calculate_tee_times, subnet->getCalculateTeeTimes());
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()));
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()));
+        }
+    }
 }
 
 } // end of anonymous namespace

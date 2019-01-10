@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 #include <process/config_ctl_info.h>
 #include <hooks/hooks_manager.h>
+#include <util/doubles.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -6632,5 +6633,70 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
         }
     }
 }
+
+// Checks inheritence of calculate-tee-times, t1-perecent, t2-percent
+TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
+    // Configure the server. This should succeed.
+    string config =
+        "{ \n"
+        "    \"interfaces-config\": { \n"
+        "        \"interfaces\": [\"*\" ] \n"
+        "    }, \n"
+        "    \"valid-lifetime\": 4000, \n"
+        "    \"shared-networks\": [ { \n"
+        "        \"name\": \"foo\", \n"
+        "       \"calculate-tee-times\": true, \n"
+        "       \"t1-percent\": .4, \n"
+        "       \"t2-percent\": .75,\n"
+        "        \"subnet4\": ["
+        "        { "
+        "            \"id\": 100,"
+        "            \"subnet\": \"192.0.1.0/24\", \n"
+        "            \"pools\": [ { \"pool\": \"192.0.1.1-192.0.1.10\" } ], \n"
+        "            \"calculate-tee-times\": false,\n"
+        "            \"t1-percent\": .45, \n"
+        "            \"t2-percent\": .65 \n"
+        "        }, \n"
+        "        {  \n"
+        "            \"id\": 200, \n"
+        "            \"subnet\": \"192.0.2.0/24\", \n"
+        "            \"pools\": [ { \"pool\": \"192.0.2.1-192.0.2.10\"} ] \n"
+        "        } \n"
+        "        ] \n"
+        "     } ], \n"
+        "    \"subnet4\": [ { \n"
+        "        \"id\": 300, \n"
+        "        \"subnet\": \"192.0.3.0/24\", \n"
+        "        \"pools\": [ { \"pool\":  \"192.0.3.0 - 192.0.3.15\" } ]\n"
+        "     } ] \n"
+        "} \n";
+
+    extractConfig(config);
+    configure(config, CONTROL_RESULT_SUCCESS, "");
+
+    CfgSubnets4Ptr subnets4 = CfgMgr::instance().getStagingCfg()->getCfgSubnets4();
+
+    // Subnet 100 should use it's own explicit values.
+    ConstSubnet4Ptr subnet4 = subnets4->getBySubnetId(100);
+    ASSERT_TRUE(subnet4);
+    EXPECT_EQ(false, subnet4->getCalculateTeeTimes());
+    EXPECT_TRUE(util::areDoublesEquivalent(0.45, subnet4->getT1Percent()));
+    EXPECT_TRUE(util::areDoublesEquivalent(0.65, subnet4->getT2Percent()));
+
+    // Subnet 200 should use the shared-network values.
+    subnet4 = subnets4->getBySubnetId(200);
+    ASSERT_TRUE(subnet4);
+    EXPECT_EQ(true, subnet4->getCalculateTeeTimes());
+    EXPECT_TRUE(util::areDoublesEquivalent(0.4, subnet4->getT1Percent()));
+    EXPECT_TRUE(util::areDoublesEquivalent(0.75, subnet4->getT2Percent()));
+
+    // Subnet 300 should use the global values.
+    subnet4 = subnets4->getBySubnetId(300);
+    ASSERT_TRUE(subnet4);
+    EXPECT_EQ(false, subnet4->getCalculateTeeTimes());
+    EXPECT_TRUE(util::areDoublesEquivalent(0.5, subnet4->getT1Percent()));
+    EXPECT_TRUE(util::areDoublesEquivalent(0.875, subnet4->getT2Percent()));
+}
+
 
 }

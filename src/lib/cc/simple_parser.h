@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -164,6 +164,18 @@ class SimpleParser {
     /// being a proper address).
     static isc::asiolink::IOAddress
     getAddress(const ConstElementPtr& scope, const std::string& name);
+
+    /// @brief Returns a floating point parameter from a scope
+    ///
+    /// Unconditionally returns a parameter.
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return a double value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not
+    /// an Element::real
+    static double getDouble(const ConstElementPtr& scope,
+                            const std::string& name);
 
 protected:
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -2190,32 +2190,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Subnet mask (type 1)
         resp->addOption(getNetmaskOption(subnet));
 
-        // rebind timer (type 59) - if specified then send it only it if
-        // it is less than lease lifetime.  Note we "sanity" check T1
-        // and T2 against lease lifetime here in event the lifetime has
-        // been altered somewhere along the line.
-        uint32_t timer_ceiling = lease->valid_lft_;
-        if ((!subnet->getT2().unspecified()) &&
-            (subnet->getT2() <  timer_ceiling)) {
-            OptionUint32Ptr t2(new OptionUint32(Option::V4,
-                                                DHO_DHCP_REBINDING_TIME,
-                                                subnet->getT2()));
-            resp->addOption(t2);
-
-            // If T2 is specified, then it becomes the ceiling for T1
-            timer_ceiling = subnet->getT2();
-        }
-
-        // renewal-timer (type 58) - if specified then send it only if
-        // it is less than the ceiling (T2 if given, lease life time if not)
-        if ((!subnet->getT1().unspecified()) &&
-            (subnet->getT1() <  timer_ceiling)) {
-            OptionUint32Ptr t1(new OptionUint32(Option::V4,
-                                                DHO_DHCP_RENEWAL_TIME,
-                                                subnet->getT1()));
-            resp->addOption(t1);
-        }
-
+        // Set T1 and T2 per configuration.
+        setTeeTimes(lease, subnet, resp);
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
@@ -2249,6 +2225,46 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         resp->delOption(DHO_HOST_NAME);
     }
 }
+
+void
+Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp) {
+
+    uint32_t t2_time = 0;
+    // If T2 is explicitly configured we'll use try value.
+    if (!subnet->getT2().unspecified()) {
+        t2_time = subnet->getT2();
+    } else if (subnet->getCalculateTeeTimes()) {
+        // Calculating tee times is enabled, so calculated it.
+        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * (lease->valid_lft_));
+    }
+
+    // Send the T2 candidate value only if it's sane: to be sane it must be less than
+    // the valid life time.
+    uint32_t timer_ceiling = lease->valid_lft_;
+    if (t2_time > 0 && t2_time < timer_ceiling) {
+        OptionUint32Ptr t2(new OptionUint32(Option::V4, DHO_DHCP_REBINDING_TIME, t2_time));
+        resp->addOption(t2);
+        // When we send T2, timer ceiling for T1 becomes T2.
+        timer_ceiling = t2_time;
+    }
+
+    uint32_t t1_time = 0;
+    // If T1 is explicitly configured we'll use try value.
+    if (!subnet->getT1().unspecified()) {
+        t1_time = subnet->getT1();
+    } else if (subnet->getCalculateTeeTimes()) {
+        // Calculating tee times is enabled, so calculate it.
+        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * (lease->valid_lft_));
+    }
+
+    // Send T1 if it's sane: If we sent T2, T1 must be less than that.  If not it must be
+    // less than the valid life time.
+    if (t1_time > 0 && t1_time < timer_ceiling) {
+        OptionUint32Ptr t1(new OptionUint32(Option::V4, DHO_DHCP_RENEWAL_TIME, t1_time));
+        resp->addOption(t1);
+    }
+}
+
 
 uint16_t
 Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {

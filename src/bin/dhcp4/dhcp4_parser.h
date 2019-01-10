@@ -1,4 +1,4 @@
-// A Bison parser, made by GNU Bison 3.2.1.
+// A Bison parser, made by GNU Bison 3.2.4.
 
 // Skeleton interface for Bison LALR(1) parsers in C++
 
@@ -596,119 +596,122 @@ namespace isc { namespace dhcp {
         TOKEN_VALID_LIFETIME = 308,
         TOKEN_RENEW_TIMER = 309,
         TOKEN_REBIND_TIMER = 310,
-        TOKEN_DECLINE_PROBATION_PERIOD = 311,
-        TOKEN_SERVER_TAG = 312,
-        TOKEN_SUBNET4 = 313,
-        TOKEN_SUBNET_4O6_INTERFACE = 314,
-        TOKEN_SUBNET_4O6_INTERFACE_ID = 315,
-        TOKEN_SUBNET_4O6_SUBNET = 316,
-        TOKEN_OPTION_DEF = 317,
-        TOKEN_OPTION_DATA = 318,
-        TOKEN_NAME = 319,
-        TOKEN_DATA = 320,
-        TOKEN_CODE = 321,
-        TOKEN_SPACE = 322,
-        TOKEN_CSV_FORMAT = 323,
-        TOKEN_ALWAYS_SEND = 324,
-        TOKEN_RECORD_TYPES = 325,
-        TOKEN_ENCAPSULATE = 326,
-        TOKEN_ARRAY = 327,
-        TOKEN_SHARED_NETWORKS = 328,
-        TOKEN_POOLS = 329,
-        TOKEN_POOL = 330,
-        TOKEN_USER_CONTEXT = 331,
-        TOKEN_COMMENT = 332,
-        TOKEN_SUBNET = 333,
-        TOKEN_INTERFACE = 334,
-        TOKEN_ID = 335,
-        TOKEN_RESERVATION_MODE = 336,
-        TOKEN_DISABLED = 337,
-        TOKEN_OUT_OF_POOL = 338,
-        TOKEN_GLOBAL = 339,
-        TOKEN_ALL = 340,
-        TOKEN_HOST_RESERVATION_IDENTIFIERS = 341,
-        TOKEN_CLIENT_CLASSES = 342,
-        TOKEN_REQUIRE_CLIENT_CLASSES = 343,
-        TOKEN_TEST = 344,
-        TOKEN_ONLY_IF_REQUIRED = 345,
-        TOKEN_CLIENT_CLASS = 346,
-        TOKEN_RESERVATIONS = 347,
-        TOKEN_DUID = 348,
-        TOKEN_HW_ADDRESS = 349,
-        TOKEN_CIRCUIT_ID = 350,
-        TOKEN_CLIENT_ID = 351,
-        TOKEN_HOSTNAME = 352,
-        TOKEN_FLEX_ID = 353,
-        TOKEN_RELAY = 354,
-        TOKEN_IP_ADDRESS = 355,
-        TOKEN_IP_ADDRESSES = 356,
-        TOKEN_HOOKS_LIBRARIES = 357,
-        TOKEN_LIBRARY = 358,
-        TOKEN_PARAMETERS = 359,
-        TOKEN_EXPIRED_LEASES_PROCESSING = 360,
-        TOKEN_RECLAIM_TIMER_WAIT_TIME = 361,
-        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 362,
-        TOKEN_HOLD_RECLAIMED_TIME = 363,
-        TOKEN_MAX_RECLAIM_LEASES = 364,
-        TOKEN_MAX_RECLAIM_TIME = 365,
-        TOKEN_UNWARNED_RECLAIM_CYCLES = 366,
-        TOKEN_DHCP4O6_PORT = 367,
-        TOKEN_CONTROL_SOCKET = 368,
-        TOKEN_SOCKET_TYPE = 369,
-        TOKEN_SOCKET_NAME = 370,
-        TOKEN_DHCP_QUEUE_CONTROL = 371,
-        TOKEN_DHCP_DDNS = 372,
-        TOKEN_ENABLE_UPDATES = 373,
-        TOKEN_QUALIFYING_SUFFIX = 374,
-        TOKEN_SERVER_IP = 375,
-        TOKEN_SERVER_PORT = 376,
-        TOKEN_SENDER_IP = 377,
-        TOKEN_SENDER_PORT = 378,
-        TOKEN_MAX_QUEUE_SIZE = 379,
-        TOKEN_NCR_PROTOCOL = 380,
-        TOKEN_NCR_FORMAT = 381,
-        TOKEN_OVERRIDE_NO_UPDATE = 382,
-        TOKEN_OVERRIDE_CLIENT_UPDATE = 383,
-        TOKEN_REPLACE_CLIENT_NAME = 384,
-        TOKEN_GENERATED_PREFIX = 385,
-        TOKEN_TCP = 386,
-        TOKEN_JSON = 387,
-        TOKEN_WHEN_PRESENT = 388,
-        TOKEN_NEVER = 389,
-        TOKEN_ALWAYS = 390,
-        TOKEN_WHEN_NOT_PRESENT = 391,
-        TOKEN_HOSTNAME_CHAR_SET = 392,
-        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 393,
-        TOKEN_LOGGING = 394,
-        TOKEN_LOGGERS = 395,
-        TOKEN_OUTPUT_OPTIONS = 396,
-        TOKEN_OUTPUT = 397,
-        TOKEN_DEBUGLEVEL = 398,
-        TOKEN_SEVERITY = 399,
-        TOKEN_FLUSH = 400,
-        TOKEN_MAXSIZE = 401,
-        TOKEN_MAXVER = 402,
-        TOKEN_DHCP6 = 403,
-        TOKEN_DHCPDDNS = 404,
-        TOKEN_CONTROL_AGENT = 405,
-        TOKEN_TOPLEVEL_JSON = 406,
-        TOKEN_TOPLEVEL_DHCP4 = 407,
-        TOKEN_SUB_DHCP4 = 408,
-        TOKEN_SUB_INTERFACES4 = 409,
-        TOKEN_SUB_SUBNET4 = 410,
-        TOKEN_SUB_POOL4 = 411,
-        TOKEN_SUB_RESERVATION = 412,
-        TOKEN_SUB_OPTION_DEFS = 413,
-        TOKEN_SUB_OPTION_DEF = 414,
-        TOKEN_SUB_OPTION_DATA = 415,
-        TOKEN_SUB_HOOKS_LIBRARY = 416,
-        TOKEN_SUB_DHCP_DDNS = 417,
-        TOKEN_SUB_LOGGING = 418,
-        TOKEN_SUB_CONFIG_CONTROL = 419,
-        TOKEN_STRING = 420,
-        TOKEN_INTEGER = 421,
-        TOKEN_FLOAT = 422,
-        TOKEN_BOOLEAN = 423
+        TOKEN_CALCULATE_TEE_TIMES = 311,
+        TOKEN_T1_PERCENT = 312,
+        TOKEN_T2_PERCENT = 313,
+        TOKEN_DECLINE_PROBATION_PERIOD = 314,
+        TOKEN_SERVER_TAG = 315,
+        TOKEN_SUBNET4 = 316,
+        TOKEN_SUBNET_4O6_INTERFACE = 317,
+        TOKEN_SUBNET_4O6_INTERFACE_ID = 318,
+        TOKEN_SUBNET_4O6_SUBNET = 319,
+        TOKEN_OPTION_DEF = 320,
+        TOKEN_OPTION_DATA = 321,
+        TOKEN_NAME = 322,
+        TOKEN_DATA = 323,
+        TOKEN_CODE = 324,
+        TOKEN_SPACE = 325,
+        TOKEN_CSV_FORMAT = 326,
+        TOKEN_ALWAYS_SEND = 327,
+        TOKEN_RECORD_TYPES = 328,
+        TOKEN_ENCAPSULATE = 329,
+        TOKEN_ARRAY = 330,
+        TOKEN_SHARED_NETWORKS = 331,
+        TOKEN_POOLS = 332,
+        TOKEN_POOL = 333,
+        TOKEN_USER_CONTEXT = 334,
+        TOKEN_COMMENT = 335,
+        TOKEN_SUBNET = 336,
+        TOKEN_INTERFACE = 337,
+        TOKEN_ID = 338,
+        TOKEN_RESERVATION_MODE = 339,
+        TOKEN_DISABLED = 340,
+        TOKEN_OUT_OF_POOL = 341,
+        TOKEN_GLOBAL = 342,
+        TOKEN_ALL = 343,
+        TOKEN_HOST_RESERVATION_IDENTIFIERS = 344,
+        TOKEN_CLIENT_CLASSES = 345,
+        TOKEN_REQUIRE_CLIENT_CLASSES = 346,
+        TOKEN_TEST = 347,
+        TOKEN_ONLY_IF_REQUIRED = 348,
+        TOKEN_CLIENT_CLASS = 349,
+        TOKEN_RESERVATIONS = 350,
+        TOKEN_DUID = 351,
+        TOKEN_HW_ADDRESS = 352,
+        TOKEN_CIRCUIT_ID = 353,
+        TOKEN_CLIENT_ID = 354,
+        TOKEN_HOSTNAME = 355,
+        TOKEN_FLEX_ID = 356,
+        TOKEN_RELAY = 357,
+        TOKEN_IP_ADDRESS = 358,
+        TOKEN_IP_ADDRESSES = 359,
+        TOKEN_HOOKS_LIBRARIES = 360,
+        TOKEN_LIBRARY = 361,
+        TOKEN_PARAMETERS = 362,
+        TOKEN_EXPIRED_LEASES_PROCESSING = 363,
+        TOKEN_RECLAIM_TIMER_WAIT_TIME = 364,
+        TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME = 365,
+        TOKEN_HOLD_RECLAIMED_TIME = 366,
+        TOKEN_MAX_RECLAIM_LEASES = 367,
+        TOKEN_MAX_RECLAIM_TIME = 368,
+        TOKEN_UNWARNED_RECLAIM_CYCLES = 369,
+        TOKEN_DHCP4O6_PORT = 370,
+        TOKEN_CONTROL_SOCKET = 371,
+        TOKEN_SOCKET_TYPE = 372,
+        TOKEN_SOCKET_NAME = 373,
+        TOKEN_DHCP_QUEUE_CONTROL = 374,
+        TOKEN_DHCP_DDNS = 375,
+        TOKEN_ENABLE_UPDATES = 376,
+        TOKEN_QUALIFYING_SUFFIX = 377,
+        TOKEN_SERVER_IP = 378,
+        TOKEN_SERVER_PORT = 379,
+        TOKEN_SENDER_IP = 380,
+        TOKEN_SENDER_PORT = 381,
+        TOKEN_MAX_QUEUE_SIZE = 382,
+        TOKEN_NCR_PROTOCOL = 383,
+        TOKEN_NCR_FORMAT = 384,
+        TOKEN_OVERRIDE_NO_UPDATE = 385,
+        TOKEN_OVERRIDE_CLIENT_UPDATE = 386,
+        TOKEN_REPLACE_CLIENT_NAME = 387,
+        TOKEN_GENERATED_PREFIX = 388,
+        TOKEN_TCP = 389,
+        TOKEN_JSON = 390,
+        TOKEN_WHEN_PRESENT = 391,
+        TOKEN_NEVER = 392,
+        TOKEN_ALWAYS = 393,
+        TOKEN_WHEN_NOT_PRESENT = 394,
+        TOKEN_HOSTNAME_CHAR_SET = 395,
+        TOKEN_HOSTNAME_CHAR_REPLACEMENT = 396,
+        TOKEN_LOGGING = 397,
+        TOKEN_LOGGERS = 398,
+        TOKEN_OUTPUT_OPTIONS = 399,
+        TOKEN_OUTPUT = 400,
+        TOKEN_DEBUGLEVEL = 401,
+        TOKEN_SEVERITY = 402,
+        TOKEN_FLUSH = 403,
+        TOKEN_MAXSIZE = 404,
+        TOKEN_MAXVER = 405,
+        TOKEN_DHCP6 = 406,
+        TOKEN_DHCPDDNS = 407,
+        TOKEN_CONTROL_AGENT = 408,
+        TOKEN_TOPLEVEL_JSON = 409,
+        TOKEN_TOPLEVEL_DHCP4 = 410,
+        TOKEN_SUB_DHCP4 = 411,
+        TOKEN_SUB_INTERFACES4 = 412,
+        TOKEN_SUB_SUBNET4 = 413,
+        TOKEN_SUB_POOL4 = 414,
+        TOKEN_SUB_RESERVATION = 415,
+        TOKEN_SUB_OPTION_DEFS = 416,
+        TOKEN_SUB_OPTION_DEF = 417,
+        TOKEN_SUB_OPTION_DATA = 418,
+        TOKEN_SUB_HOOKS_LIBRARY = 419,
+        TOKEN_SUB_DHCP_DDNS = 420,
+        TOKEN_SUB_LOGGING = 421,
+        TOKEN_SUB_CONFIG_CONTROL = 422,
+        TOKEN_STRING = 423,
+        TOKEN_INTEGER = 424,
+        TOKEN_FLOAT = 425,
+        TOKEN_BOOLEAN = 426
       };
     };
 
@@ -739,8 +742,13 @@ namespace isc { namespace dhcp {
       /// Default constructor.
       basic_symbol ();
 
-      /// Move or copy constructor.
-      basic_symbol (YY_RVREF (basic_symbol) other);
+#if 201103L <= YY_CPLUSPLUS
+      /// Move constructor.
+      basic_symbol (basic_symbol&& that);
+#endif
+
+      /// Copy constructor.
+      basic_symbol (const basic_symbol& that);
 
 
       /// Constructor for valueless symbols, and symbols from each type.
@@ -797,7 +805,7 @@ namespace isc { namespace dhcp {
     private:
 #if YY_CPLUSPLUS < 201103L
       /// Assignment operator.
-      basic_symbol& operator= (const basic_symbol& other);
+      basic_symbol& operator= (const basic_symbol& that);
 #endif
     };
 
@@ -807,8 +815,13 @@ namespace isc { namespace dhcp {
       /// Default constructor.
       by_type ();
 
+#if 201103L <= YY_CPLUSPLUS
+      /// Move constructor.
+      by_type (by_type&& that);
+#endif
+
       /// Copy constructor.
-      by_type (const by_type& other);
+      by_type (const by_type& that);
 
       /// The symbol type as needed by the constructor.
       typedef token_type kind_type;
@@ -873,674 +886,1536 @@ namespace isc { namespace dhcp {
     void error (const syntax_error& err);
 
     // Symbol constructors declarations.
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_END (YY_COPY (location_type) l);
-
+    make_END (location_type l);
+#else
     static
     symbol_type
-    make_COMMA (YY_COPY (location_type) l);
-
+    make_END (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_COLON (YY_COPY (location_type) l);
-
+    make_COMMA (location_type l);
+#else
     static
     symbol_type
-    make_LSQUARE_BRACKET (YY_COPY (location_type) l);
-
+    make_COMMA (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RSQUARE_BRACKET (YY_COPY (location_type) l);
-
+    make_COLON (location_type l);
+#else
     static
     symbol_type
-    make_LCURLY_BRACKET (YY_COPY (location_type) l);
-
+    make_COLON (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RCURLY_BRACKET (YY_COPY (location_type) l);
-
+    make_LSQUARE_BRACKET (location_type l);
+#else
     static
     symbol_type
-    make_NULL_TYPE (YY_COPY (location_type) l);
-
+    make_LSQUARE_BRACKET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DHCP4 (YY_COPY (location_type) l);
-
+    make_RSQUARE_BRACKET (location_type l);
+#else
     static
     symbol_type
-    make_CONFIG_CONTROL (YY_COPY (location_type) l);
-
+    make_RSQUARE_BRACKET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CONFIG_DATABASES (YY_COPY (location_type) l);
-
+    make_LCURLY_BRACKET (location_type l);
+#else
     static
     symbol_type
-    make_INTERFACES_CONFIG (YY_COPY (location_type) l);
-
+    make_LCURLY_BRACKET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_INTERFACES (YY_COPY (location_type) l);
-
+    make_RCURLY_BRACKET (location_type l);
+#else
     static
     symbol_type
-    make_DHCP_SOCKET_TYPE (YY_COPY (location_type) l);
-
+    make_RCURLY_BRACKET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RAW (YY_COPY (location_type) l);
-
+    make_NULL_TYPE (location_type l);
+#else
     static
     symbol_type
-    make_UDP (YY_COPY (location_type) l);
-
+    make_NULL_TYPE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_OUTBOUND_INTERFACE (YY_COPY (location_type) l);
-
+    make_DHCP4 (location_type l);
+#else
     static
     symbol_type
-    make_SAME_AS_INBOUND (YY_COPY (location_type) l);
-
+    make_DHCP4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_USE_ROUTING (YY_COPY (location_type) l);
-
+    make_CONFIG_CONTROL (location_type l);
+#else
     static
     symbol_type
-    make_RE_DETECT (YY_COPY (location_type) l);
-
+    make_CONFIG_CONTROL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SANITY_CHECKS (YY_COPY (location_type) l);
-
+    make_CONFIG_DATABASES (location_type l);
+#else
     static
     symbol_type
-    make_LEASE_CHECKS (YY_COPY (location_type) l);
-
+    make_CONFIG_DATABASES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_ECHO_CLIENT_ID (YY_COPY (location_type) l);
-
+    make_INTERFACES_CONFIG (location_type l);
+#else
     static
     symbol_type
-    make_MATCH_CLIENT_ID (YY_COPY (location_type) l);
-
+    make_INTERFACES_CONFIG (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_AUTHORITATIVE (YY_COPY (location_type) l);
-
+    make_INTERFACES (location_type l);
+#else
     static
     symbol_type
-    make_NEXT_SERVER (YY_COPY (location_type) l);
-
+    make_INTERFACES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SERVER_HOSTNAME (YY_COPY (location_type) l);
-
+    make_DHCP_SOCKET_TYPE (location_type l);
+#else
     static
     symbol_type
-    make_BOOT_FILE_NAME (YY_COPY (location_type) l);
-
+    make_DHCP_SOCKET_TYPE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_LEASE_DATABASE (YY_COPY (location_type) l);
-
+    make_RAW (location_type l);
+#else
     static
     symbol_type
-    make_HOSTS_DATABASE (YY_COPY (location_type) l);
-
+    make_RAW (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOSTS_DATABASES (YY_COPY (location_type) l);
-
+    make_UDP (location_type l);
+#else
     static
     symbol_type
-    make_TYPE (YY_COPY (location_type) l);
-
+    make_UDP (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_MEMFILE (YY_COPY (location_type) l);
-
+    make_OUTBOUND_INTERFACE (location_type l);
+#else
     static
     symbol_type
-    make_MYSQL (YY_COPY (location_type) l);
-
+    make_OUTBOUND_INTERFACE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_POSTGRESQL (YY_COPY (location_type) l);
-
+    make_SAME_AS_INBOUND (location_type l);
+#else
     static
     symbol_type
-    make_CQL (YY_COPY (location_type) l);
-
+    make_SAME_AS_INBOUND (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_USER (YY_COPY (location_type) l);
-
+    make_USE_ROUTING (location_type l);
+#else
     static
     symbol_type
-    make_PASSWORD (YY_COPY (location_type) l);
-
+    make_USE_ROUTING (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOST (YY_COPY (location_type) l);
-
+    make_RE_DETECT (location_type l);
+#else
     static
     symbol_type
-    make_PORT (YY_COPY (location_type) l);
-
+    make_RE_DETECT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_PERSIST (YY_COPY (location_type) l);
-
+    make_SANITY_CHECKS (location_type l);
+#else
     static
     symbol_type
-    make_LFC_INTERVAL (YY_COPY (location_type) l);
-
+    make_SANITY_CHECKS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_READONLY (YY_COPY (location_type) l);
-
+    make_LEASE_CHECKS (location_type l);
+#else
     static
     symbol_type
-    make_CONNECT_TIMEOUT (YY_COPY (location_type) l);
-
+    make_LEASE_CHECKS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CONTACT_POINTS (YY_COPY (location_type) l);
-
+    make_ECHO_CLIENT_ID (location_type l);
+#else
     static
     symbol_type
-    make_KEYSPACE (YY_COPY (location_type) l);
-
+    make_ECHO_CLIENT_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_MAX_RECONNECT_TRIES (YY_COPY (location_type) l);
-
+    make_MATCH_CLIENT_ID (location_type l);
+#else
     static
     symbol_type
-    make_RECONNECT_WAIT_TIME (YY_COPY (location_type) l);
-
+    make_MATCH_CLIENT_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_REQUEST_TIMEOUT (YY_COPY (location_type) l);
-
+    make_AUTHORITATIVE (location_type l);
+#else
     static
     symbol_type
-    make_TCP_KEEPALIVE (YY_COPY (location_type) l);
-
+    make_AUTHORITATIVE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_TCP_NODELAY (YY_COPY (location_type) l);
-
+    make_NEXT_SERVER (location_type l);
+#else
     static
     symbol_type
-    make_VALID_LIFETIME (YY_COPY (location_type) l);
-
+    make_NEXT_SERVER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RENEW_TIMER (YY_COPY (location_type) l);
-
+    make_SERVER_HOSTNAME (location_type l);
+#else
     static
     symbol_type
-    make_REBIND_TIMER (YY_COPY (location_type) l);
-
+    make_SERVER_HOSTNAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DECLINE_PROBATION_PERIOD (YY_COPY (location_type) l);
-
+    make_BOOT_FILE_NAME (location_type l);
+#else
     static
     symbol_type
-    make_SERVER_TAG (YY_COPY (location_type) l);
-
+    make_BOOT_FILE_NAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUBNET4 (YY_COPY (location_type) l);
-
+    make_LEASE_DATABASE (location_type l);
+#else
     static
     symbol_type
-    make_SUBNET_4O6_INTERFACE (YY_COPY (location_type) l);
-
+    make_LEASE_DATABASE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUBNET_4O6_INTERFACE_ID (YY_COPY (location_type) l);
-
+    make_HOSTS_DATABASE (location_type l);
+#else
     static
     symbol_type
-    make_SUBNET_4O6_SUBNET (YY_COPY (location_type) l);
-
+    make_HOSTS_DATABASE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_OPTION_DEF (YY_COPY (location_type) l);
-
+    make_HOSTS_DATABASES (location_type l);
+#else
     static
     symbol_type
-    make_OPTION_DATA (YY_COPY (location_type) l);
-
+    make_HOSTS_DATABASES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_NAME (YY_COPY (location_type) l);
-
+    make_TYPE (location_type l);
+#else
     static
     symbol_type
-    make_DATA (YY_COPY (location_type) l);
-
+    make_TYPE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CODE (YY_COPY (location_type) l);
-
+    make_MEMFILE (location_type l);
+#else
     static
     symbol_type
-    make_SPACE (YY_COPY (location_type) l);
-
+    make_MEMFILE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CSV_FORMAT (YY_COPY (location_type) l);
-
+    make_MYSQL (location_type l);
+#else
     static
     symbol_type
-    make_ALWAYS_SEND (YY_COPY (location_type) l);
-
+    make_MYSQL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RECORD_TYPES (YY_COPY (location_type) l);
-
+    make_POSTGRESQL (location_type l);
+#else
     static
     symbol_type
-    make_ENCAPSULATE (YY_COPY (location_type) l);
-
+    make_POSTGRESQL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_ARRAY (YY_COPY (location_type) l);
-
+    make_CQL (location_type l);
+#else
     static
     symbol_type
-    make_SHARED_NETWORKS (YY_COPY (location_type) l);
-
+    make_CQL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_POOLS (YY_COPY (location_type) l);
-
+    make_USER (location_type l);
+#else
     static
     symbol_type
-    make_POOL (YY_COPY (location_type) l);
-
+    make_USER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_USER_CONTEXT (YY_COPY (location_type) l);
-
+    make_PASSWORD (location_type l);
+#else
     static
     symbol_type
-    make_COMMENT (YY_COPY (location_type) l);
-
+    make_PASSWORD (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUBNET (YY_COPY (location_type) l);
-
+    make_HOST (location_type l);
+#else
     static
     symbol_type
-    make_INTERFACE (YY_COPY (location_type) l);
-
+    make_HOST (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_ID (YY_COPY (location_type) l);
-
+    make_PORT (location_type l);
+#else
     static
     symbol_type
-    make_RESERVATION_MODE (YY_COPY (location_type) l);
-
+    make_PORT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DISABLED (YY_COPY (location_type) l);
-
+    make_PERSIST (location_type l);
+#else
     static
     symbol_type
-    make_OUT_OF_POOL (YY_COPY (location_type) l);
-
+    make_PERSIST (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_GLOBAL (YY_COPY (location_type) l);
-
+    make_LFC_INTERVAL (location_type l);
+#else
     static
     symbol_type
-    make_ALL (YY_COPY (location_type) l);
-
+    make_LFC_INTERVAL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOST_RESERVATION_IDENTIFIERS (YY_COPY (location_type) l);
-
+    make_READONLY (location_type l);
+#else
     static
     symbol_type
-    make_CLIENT_CLASSES (YY_COPY (location_type) l);
-
+    make_READONLY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_REQUIRE_CLIENT_CLASSES (YY_COPY (location_type) l);
-
+    make_CONNECT_TIMEOUT (location_type l);
+#else
     static
     symbol_type
-    make_TEST (YY_COPY (location_type) l);
-
+    make_CONNECT_TIMEOUT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_ONLY_IF_REQUIRED (YY_COPY (location_type) l);
-
+    make_CONTACT_POINTS (location_type l);
+#else
     static
     symbol_type
-    make_CLIENT_CLASS (YY_COPY (location_type) l);
-
+    make_CONTACT_POINTS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RESERVATIONS (YY_COPY (location_type) l);
-
+    make_KEYSPACE (location_type l);
+#else
     static
     symbol_type
-    make_DUID (YY_COPY (location_type) l);
-
+    make_KEYSPACE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HW_ADDRESS (YY_COPY (location_type) l);
-
+    make_MAX_RECONNECT_TRIES (location_type l);
+#else
     static
     symbol_type
-    make_CIRCUIT_ID (YY_COPY (location_type) l);
-
+    make_MAX_RECONNECT_TRIES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CLIENT_ID (YY_COPY (location_type) l);
-
+    make_RECONNECT_WAIT_TIME (location_type l);
+#else
     static
     symbol_type
-    make_HOSTNAME (YY_COPY (location_type) l);
-
+    make_RECONNECT_WAIT_TIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_FLEX_ID (YY_COPY (location_type) l);
-
+    make_REQUEST_TIMEOUT (location_type l);
+#else
     static
     symbol_type
-    make_RELAY (YY_COPY (location_type) l);
-
+    make_REQUEST_TIMEOUT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_IP_ADDRESS (YY_COPY (location_type) l);
-
+    make_TCP_KEEPALIVE (location_type l);
+#else
     static
     symbol_type
-    make_IP_ADDRESSES (YY_COPY (location_type) l);
-
+    make_TCP_KEEPALIVE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOOKS_LIBRARIES (YY_COPY (location_type) l);
-
+    make_TCP_NODELAY (location_type l);
+#else
     static
     symbol_type
-    make_LIBRARY (YY_COPY (location_type) l);
-
+    make_TCP_NODELAY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_PARAMETERS (YY_COPY (location_type) l);
-
+    make_VALID_LIFETIME (location_type l);
+#else
     static
     symbol_type
-    make_EXPIRED_LEASES_PROCESSING (YY_COPY (location_type) l);
-
+    make_VALID_LIFETIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_RECLAIM_TIMER_WAIT_TIME (YY_COPY (location_type) l);
-
+    make_RENEW_TIMER (location_type l);
+#else
     static
     symbol_type
-    make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (YY_COPY (location_type) l);
-
+    make_RENEW_TIMER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOLD_RECLAIMED_TIME (YY_COPY (location_type) l);
-
+    make_REBIND_TIMER (location_type l);
+#else
     static
     symbol_type
-    make_MAX_RECLAIM_LEASES (YY_COPY (location_type) l);
-
+    make_REBIND_TIMER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_MAX_RECLAIM_TIME (YY_COPY (location_type) l);
-
+    make_CALCULATE_TEE_TIMES (location_type l);
+#else
     static
     symbol_type
-    make_UNWARNED_RECLAIM_CYCLES (YY_COPY (location_type) l);
-
+    make_CALCULATE_TEE_TIMES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DHCP4O6_PORT (YY_COPY (location_type) l);
-
+    make_T1_PERCENT (location_type l);
+#else
     static
     symbol_type
-    make_CONTROL_SOCKET (YY_COPY (location_type) l);
-
+    make_T1_PERCENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SOCKET_TYPE (YY_COPY (location_type) l);
-
+    make_T2_PERCENT (location_type l);
+#else
     static
     symbol_type
-    make_SOCKET_NAME (YY_COPY (location_type) l);
-
+    make_T2_PERCENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l);
-
+    make_DECLINE_PROBATION_PERIOD (location_type l);
+#else
     static
     symbol_type
-    make_DHCP_DDNS (YY_COPY (location_type) l);
-
+    make_DECLINE_PROBATION_PERIOD (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_ENABLE_UPDATES (YY_COPY (location_type) l);
-
+    make_SERVER_TAG (location_type l);
+#else
     static
     symbol_type
-    make_QUALIFYING_SUFFIX (YY_COPY (location_type) l);
-
+    make_SERVER_TAG (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SERVER_IP (YY_COPY (location_type) l);
-
+    make_SUBNET4 (location_type l);
+#else
     static
     symbol_type
-    make_SERVER_PORT (YY_COPY (location_type) l);
-
+    make_SUBNET4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SENDER_IP (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_INTERFACE (location_type l);
+#else
     static
     symbol_type
-    make_SENDER_PORT (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_INTERFACE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_MAX_QUEUE_SIZE (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_INTERFACE_ID (location_type l);
+#else
     static
     symbol_type
-    make_NCR_PROTOCOL (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_INTERFACE_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_NCR_FORMAT (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_SUBNET (location_type l);
+#else
     static
     symbol_type
-    make_OVERRIDE_NO_UPDATE (YY_COPY (location_type) l);
-
+    make_SUBNET_4O6_SUBNET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_OVERRIDE_CLIENT_UPDATE (YY_COPY (location_type) l);
-
+    make_OPTION_DEF (location_type l);
+#else
     static
     symbol_type
-    make_REPLACE_CLIENT_NAME (YY_COPY (location_type) l);
-
+    make_OPTION_DEF (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_GENERATED_PREFIX (YY_COPY (location_type) l);
-
+    make_OPTION_DATA (location_type l);
+#else
     static
     symbol_type
-    make_TCP (YY_COPY (location_type) l);
-
+    make_OPTION_DATA (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_JSON (YY_COPY (location_type) l);
-
+    make_NAME (location_type l);
+#else
     static
     symbol_type
-    make_WHEN_PRESENT (YY_COPY (location_type) l);
-
+    make_NAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_NEVER (YY_COPY (location_type) l);
-
+    make_DATA (location_type l);
+#else
     static
     symbol_type
-    make_ALWAYS (YY_COPY (location_type) l);
-
+    make_DATA (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_WHEN_NOT_PRESENT (YY_COPY (location_type) l);
-
+    make_CODE (location_type l);
+#else
     static
     symbol_type
-    make_HOSTNAME_CHAR_SET (YY_COPY (location_type) l);
-
+    make_CODE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_HOSTNAME_CHAR_REPLACEMENT (YY_COPY (location_type) l);
-
+    make_SPACE (location_type l);
+#else
     static
     symbol_type
-    make_LOGGING (YY_COPY (location_type) l);
-
+    make_SPACE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_LOGGERS (YY_COPY (location_type) l);
-
+    make_CSV_FORMAT (location_type l);
+#else
     static
     symbol_type
-    make_OUTPUT_OPTIONS (YY_COPY (location_type) l);
-
+    make_CSV_FORMAT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_OUTPUT (YY_COPY (location_type) l);
-
+    make_ALWAYS_SEND (location_type l);
+#else
     static
     symbol_type
-    make_DEBUGLEVEL (YY_COPY (location_type) l);
-
+    make_ALWAYS_SEND (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SEVERITY (YY_COPY (location_type) l);
-
+    make_RECORD_TYPES (location_type l);
+#else
     static
     symbol_type
-    make_FLUSH (YY_COPY (location_type) l);
-
+    make_RECORD_TYPES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_MAXSIZE (YY_COPY (location_type) l);
-
+    make_ENCAPSULATE (location_type l);
+#else
     static
     symbol_type
-    make_MAXVER (YY_COPY (location_type) l);
-
+    make_ENCAPSULATE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_DHCP6 (YY_COPY (location_type) l);
-
+    make_ARRAY (location_type l);
+#else
     static
     symbol_type
-    make_DHCPDDNS (YY_COPY (location_type) l);
-
+    make_ARRAY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_CONTROL_AGENT (YY_COPY (location_type) l);
-
+    make_SHARED_NETWORKS (location_type l);
+#else
     static
     symbol_type
-    make_TOPLEVEL_JSON (YY_COPY (location_type) l);
-
+    make_SHARED_NETWORKS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_TOPLEVEL_DHCP4 (YY_COPY (location_type) l);
-
+    make_POOLS (location_type l);
+#else
     static
     symbol_type
-    make_SUB_DHCP4 (YY_COPY (location_type) l);
-
+    make_POOLS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_INTERFACES4 (YY_COPY (location_type) l);
-
+    make_POOL (location_type l);
+#else
     static
     symbol_type
-    make_SUB_SUBNET4 (YY_COPY (location_type) l);
-
+    make_POOL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_POOL4 (YY_COPY (location_type) l);
-
+    make_USER_CONTEXT (location_type l);
+#else
     static
     symbol_type
-    make_SUB_RESERVATION (YY_COPY (location_type) l);
-
+    make_USER_CONTEXT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_OPTION_DEFS (YY_COPY (location_type) l);
-
+    make_COMMENT (location_type l);
+#else
     static
     symbol_type
-    make_SUB_OPTION_DEF (YY_COPY (location_type) l);
-
+    make_COMMENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_OPTION_DATA (YY_COPY (location_type) l);
-
+    make_SUBNET (location_type l);
+#else
     static
     symbol_type
-    make_SUB_HOOKS_LIBRARY (YY_COPY (location_type) l);
-
+    make_SUBNET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_DHCP_DDNS (YY_COPY (location_type) l);
-
+    make_INTERFACE (location_type l);
+#else
     static
     symbol_type
-    make_SUB_LOGGING (YY_COPY (location_type) l);
-
+    make_INTERFACE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_SUB_CONFIG_CONTROL (YY_COPY (location_type) l);
-
+    make_ID (location_type l);
+#else
     static
     symbol_type
-    make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l);
-
+    make_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l);
-
+    make_RESERVATION_MODE (location_type l);
+#else
     static
     symbol_type
-    make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l);
-
+    make_RESERVATION_MODE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
     static
     symbol_type
-    make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l);
-
+    make_DISABLED (location_type l);
+#else
+    static
+    symbol_type
+    make_DISABLED (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_OUT_OF_POOL (location_type l);
+#else
+    static
+    symbol_type
+    make_OUT_OF_POOL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_GLOBAL (location_type l);
+#else
+    static
+    symbol_type
+    make_GLOBAL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_ALL (location_type l);
+#else
+    static
+    symbol_type
+    make_ALL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOST_RESERVATION_IDENTIFIERS (location_type l);
+#else
+    static
+    symbol_type
+    make_HOST_RESERVATION_IDENTIFIERS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CLIENT_CLASSES (location_type l);
+#else
+    static
+    symbol_type
+    make_CLIENT_CLASSES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_REQUIRE_CLIENT_CLASSES (location_type l);
+#else
+    static
+    symbol_type
+    make_REQUIRE_CLIENT_CLASSES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_TEST (location_type l);
+#else
+    static
+    symbol_type
+    make_TEST (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_ONLY_IF_REQUIRED (location_type l);
+#else
+    static
+    symbol_type
+    make_ONLY_IF_REQUIRED (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CLIENT_CLASS (location_type l);
+#else
+    static
+    symbol_type
+    make_CLIENT_CLASS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_RESERVATIONS (location_type l);
+#else
+    static
+    symbol_type
+    make_RESERVATIONS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DUID (location_type l);
+#else
+    static
+    symbol_type
+    make_DUID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HW_ADDRESS (location_type l);
+#else
+    static
+    symbol_type
+    make_HW_ADDRESS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CIRCUIT_ID (location_type l);
+#else
+    static
+    symbol_type
+    make_CIRCUIT_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CLIENT_ID (location_type l);
+#else
+    static
+    symbol_type
+    make_CLIENT_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOSTNAME (location_type l);
+#else
+    static
+    symbol_type
+    make_HOSTNAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_FLEX_ID (location_type l);
+#else
+    static
+    symbol_type
+    make_FLEX_ID (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_RELAY (location_type l);
+#else
+    static
+    symbol_type
+    make_RELAY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_IP_ADDRESS (location_type l);
+#else
+    static
+    symbol_type
+    make_IP_ADDRESS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_IP_ADDRESSES (location_type l);
+#else
+    static
+    symbol_type
+    make_IP_ADDRESSES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOOKS_LIBRARIES (location_type l);
+#else
+    static
+    symbol_type
+    make_HOOKS_LIBRARIES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_LIBRARY (location_type l);
+#else
+    static
+    symbol_type
+    make_LIBRARY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_PARAMETERS (location_type l);
+#else
+    static
+    symbol_type
+    make_PARAMETERS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_EXPIRED_LEASES_PROCESSING (location_type l);
+#else
+    static
+    symbol_type
+    make_EXPIRED_LEASES_PROCESSING (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_RECLAIM_TIMER_WAIT_TIME (location_type l);
+#else
+    static
+    symbol_type
+    make_RECLAIM_TIMER_WAIT_TIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (location_type l);
+#else
+    static
+    symbol_type
+    make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOLD_RECLAIMED_TIME (location_type l);
+#else
+    static
+    symbol_type
+    make_HOLD_RECLAIMED_TIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_MAX_RECLAIM_LEASES (location_type l);
+#else
+    static
+    symbol_type
+    make_MAX_RECLAIM_LEASES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_MAX_RECLAIM_TIME (location_type l);
+#else
+    static
+    symbol_type
+    make_MAX_RECLAIM_TIME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_UNWARNED_RECLAIM_CYCLES (location_type l);
+#else
+    static
+    symbol_type
+    make_UNWARNED_RECLAIM_CYCLES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DHCP4O6_PORT (location_type l);
+#else
+    static
+    symbol_type
+    make_DHCP4O6_PORT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CONTROL_SOCKET (location_type l);
+#else
+    static
+    symbol_type
+    make_CONTROL_SOCKET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SOCKET_TYPE (location_type l);
+#else
+    static
+    symbol_type
+    make_SOCKET_TYPE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SOCKET_NAME (location_type l);
+#else
+    static
+    symbol_type
+    make_SOCKET_NAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DHCP_QUEUE_CONTROL (location_type l);
+#else
+    static
+    symbol_type
+    make_DHCP_QUEUE_CONTROL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DHCP_DDNS (location_type l);
+#else
+    static
+    symbol_type
+    make_DHCP_DDNS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_ENABLE_UPDATES (location_type l);
+#else
+    static
+    symbol_type
+    make_ENABLE_UPDATES (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_QUALIFYING_SUFFIX (location_type l);
+#else
+    static
+    symbol_type
+    make_QUALIFYING_SUFFIX (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SERVER_IP (location_type l);
+#else
+    static
+    symbol_type
+    make_SERVER_IP (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SERVER_PORT (location_type l);
+#else
+    static
+    symbol_type
+    make_SERVER_PORT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SENDER_IP (location_type l);
+#else
+    static
+    symbol_type
+    make_SENDER_IP (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SENDER_PORT (location_type l);
+#else
+    static
+    symbol_type
+    make_SENDER_PORT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_MAX_QUEUE_SIZE (location_type l);
+#else
+    static
+    symbol_type
+    make_MAX_QUEUE_SIZE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_NCR_PROTOCOL (location_type l);
+#else
+    static
+    symbol_type
+    make_NCR_PROTOCOL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_NCR_FORMAT (location_type l);
+#else
+    static
+    symbol_type
+    make_NCR_FORMAT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_OVERRIDE_NO_UPDATE (location_type l);
+#else
+    static
+    symbol_type
+    make_OVERRIDE_NO_UPDATE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_OVERRIDE_CLIENT_UPDATE (location_type l);
+#else
+    static
+    symbol_type
+    make_OVERRIDE_CLIENT_UPDATE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_REPLACE_CLIENT_NAME (location_type l);
+#else
+    static
+    symbol_type
+    make_REPLACE_CLIENT_NAME (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_GENERATED_PREFIX (location_type l);
+#else
+    static
+    symbol_type
+    make_GENERATED_PREFIX (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_TCP (location_type l);
+#else
+    static
+    symbol_type
+    make_TCP (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_JSON (location_type l);
+#else
+    static
+    symbol_type
+    make_JSON (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_WHEN_PRESENT (location_type l);
+#else
+    static
+    symbol_type
+    make_WHEN_PRESENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_NEVER (location_type l);
+#else
+    static
+    symbol_type
+    make_NEVER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_ALWAYS (location_type l);
+#else
+    static
+    symbol_type
+    make_ALWAYS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_WHEN_NOT_PRESENT (location_type l);
+#else
+    static
+    symbol_type
+    make_WHEN_NOT_PRESENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_SET (location_type l);
+#else
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_SET (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_REPLACEMENT (location_type l);
+#else
+    static
+    symbol_type
+    make_HOSTNAME_CHAR_REPLACEMENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_LOGGING (location_type l);
+#else
+    static
+    symbol_type
+    make_LOGGING (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_LOGGERS (location_type l);
+#else
+    static
+    symbol_type
+    make_LOGGERS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_OUTPUT_OPTIONS (location_type l);
+#else
+    static
+    symbol_type
+    make_OUTPUT_OPTIONS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_OUTPUT (location_type l);
+#else
+    static
+    symbol_type
+    make_OUTPUT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DEBUGLEVEL (location_type l);
+#else
+    static
+    symbol_type
+    make_DEBUGLEVEL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SEVERITY (location_type l);
+#else
+    static
+    symbol_type
+    make_SEVERITY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_FLUSH (location_type l);
+#else
+    static
+    symbol_type
+    make_FLUSH (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_MAXSIZE (location_type l);
+#else
+    static
+    symbol_type
+    make_MAXSIZE (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_MAXVER (location_type l);
+#else
+    static
+    symbol_type
+    make_MAXVER (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DHCP6 (location_type l);
+#else
+    static
+    symbol_type
+    make_DHCP6 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_DHCPDDNS (location_type l);
+#else
+    static
+    symbol_type
+    make_DHCPDDNS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_CONTROL_AGENT (location_type l);
+#else
+    static
+    symbol_type
+    make_CONTROL_AGENT (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_TOPLEVEL_JSON (location_type l);
+#else
+    static
+    symbol_type
+    make_TOPLEVEL_JSON (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_TOPLEVEL_DHCP4 (location_type l);
+#else
+    static
+    symbol_type
+    make_TOPLEVEL_DHCP4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_DHCP4 (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_DHCP4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_INTERFACES4 (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_INTERFACES4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_SUBNET4 (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_SUBNET4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_POOL4 (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_POOL4 (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_RESERVATION (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_RESERVATION (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_OPTION_DEFS (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_OPTION_DEFS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_OPTION_DEF (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_OPTION_DEF (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_OPTION_DATA (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_OPTION_DATA (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_HOOKS_LIBRARY (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_HOOKS_LIBRARY (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_DHCP_DDNS (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_DHCP_DDNS (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_LOGGING (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_LOGGING (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_SUB_CONFIG_CONTROL (location_type l);
+#else
+    static
+    symbol_type
+    make_SUB_CONFIG_CONTROL (const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_STRING (std::string v, location_type l);
+#else
+    static
+    symbol_type
+    make_STRING (const std::string& v, const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_INTEGER (int64_t v, location_type l);
+#else
+    static
+    symbol_type
+    make_INTEGER (const int64_t& v, const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_FLOAT (double v, location_type l);
+#else
+    static
+    symbol_type
+    make_FLOAT (const double& v, const location_type& l);
+#endif
+#if 201103L <= YY_CPLUSPLUS
+    static
+    symbol_type
+    make_BOOLEAN (bool v, location_type l);
+#else
+    static
+    symbol_type
+    make_BOOLEAN (const bool& v, const location_type& l);
+#endif
 
 
   private:
@@ -1723,12 +2598,12 @@ namespace isc { namespace dhcp {
     enum
     {
       yyeof_ = 0,
-      yylast_ = 1000,     ///< Last index in yytable_.
-      yynnts_ = 373,  ///< Number of nonterminal symbols.
+      yylast_ = 1026,     ///< Last index in yytable_.
+      yynnts_ = 376,  ///< Number of nonterminal symbols.
       yyfinal_ = 30, ///< Termination state number.
       yyterror_ = 1,
       yyerrcode_ = 256,
-      yyntokens_ = 169  ///< Number of tokens.
+      yyntokens_ = 172  ///< Number of tokens.
     };
 
 
@@ -1787,9 +2662,9 @@ namespace isc { namespace dhcp {
      135,   136,   137,   138,   139,   140,   141,   142,   143,   144,
      145,   146,   147,   148,   149,   150,   151,   152,   153,   154,
      155,   156,   157,   158,   159,   160,   161,   162,   163,   164,
-     165,   166,   167,   168
+     165,   166,   167,   168,   169,   170,   171
     };
-    const unsigned user_token_number_max_ = 423;
+    const unsigned user_token_number_max_ = 426;
     const token_number_type undef_token_ = 2;
 
     if (static_cast<int> (t) <= yyeof_)
@@ -1813,39 +2688,82 @@ namespace isc { namespace dhcp {
     , location ()
   {}
 
+#if 201103L <= YY_CPLUSPLUS
   template <typename Base>
-  Dhcp4Parser::basic_symbol<Base>::basic_symbol (YY_RVREF (basic_symbol) other)
-    : Base (YY_MOVE (other))
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (basic_symbol&& that)
+    : Base (std::move (that))
     , value ()
-    , location (YY_MOVE (other.location))
+    , location (std::move (that.location))
   {
-    switch (other.type_get ())
+    switch (this->type_get ())
     {
-      case 185: // value
-      case 189: // map_value
-      case 230: // socket_type
-      case 233: // outbound_interface_value
-      case 255: // db_type
-      case 337: // hr_mode
-      case 486: // ncr_protocol_value
-      case 493: // replace_client_name_value
-        value.YY_MOVE_OR_COPY< ElementPtr > (YY_MOVE (other.value));
+      case 188: // value
+      case 192: // map_value
+      case 236: // socket_type
+      case 239: // outbound_interface_value
+      case 261: // db_type
+      case 343: // hr_mode
+      case 492: // ncr_protocol_value
+      case 499: // replace_client_name_value
+        value.move< ElementPtr > (std::move (that.value));
         break;
 
-      case 168: // "boolean"
-        value.YY_MOVE_OR_COPY< bool > (YY_MOVE (other.value));
+      case 171: // "boolean"
+        value.move< bool > (std::move (that.value));
         break;
 
-      case 167: // "floating point"
-        value.YY_MOVE_OR_COPY< double > (YY_MOVE (other.value));
+      case 170: // "floating point"
+        value.move< double > (std::move (that.value));
         break;
 
-      case 166: // "integer"
-        value.YY_MOVE_OR_COPY< int64_t > (YY_MOVE (other.value));
+      case 169: // "integer"
+        value.move< int64_t > (std::move (that.value));
         break;
 
-      case 165: // "constant string"
-        value.YY_MOVE_OR_COPY< std::string > (YY_MOVE (other.value));
+      case 168: // "constant string"
+        value.move< std::string > (std::move (that.value));
+        break;
+
+      default:
+        break;
+    }
+
+  }
+#endif
+
+  template <typename Base>
+  Dhcp4Parser::basic_symbol<Base>::basic_symbol (const basic_symbol& that)
+    : Base (that)
+    , value ()
+    , location (that.location)
+  {
+    switch (this->type_get ())
+    {
+      case 188: // value
+      case 192: // map_value
+      case 236: // socket_type
+      case 239: // outbound_interface_value
+      case 261: // db_type
+      case 343: // hr_mode
+      case 492: // ncr_protocol_value
+      case 499: // replace_client_name_value
+        value.copy< ElementPtr > (that.value);
+        break;
+
+      case 171: // "boolean"
+        value.copy< bool > (that.value);
+        break;
+
+      case 170: // "floating point"
+        value.copy< double > (that.value);
+        break;
+
+      case 169: // "integer"
+        value.copy< int64_t > (that.value);
+        break;
+
+      case 168: // "constant string"
+        value.copy< std::string > (that.value);
         break;
 
       default:
@@ -1969,30 +2887,30 @@ namespace isc { namespace dhcp {
     // Type destructor.
   switch (yytype)
     {
-      case 185: // value
-      case 189: // map_value
-      case 230: // socket_type
-      case 233: // outbound_interface_value
-      case 255: // db_type
-      case 337: // hr_mode
-      case 486: // ncr_protocol_value
-      case 493: // replace_client_name_value
+      case 188: // value
+      case 192: // map_value
+      case 236: // socket_type
+      case 239: // outbound_interface_value
+      case 261: // db_type
+      case 343: // hr_mode
+      case 492: // ncr_protocol_value
+      case 499: // replace_client_name_value
         value.template destroy< ElementPtr > ();
         break;
 
-      case 168: // "boolean"
+      case 171: // "boolean"
         value.template destroy< bool > ();
         break;
 
-      case 167: // "floating point"
+      case 170: // "floating point"
         value.template destroy< double > ();
         break;
 
-      case 166: // "integer"
+      case 169: // "integer"
         value.template destroy< int64_t > ();
         break;
 
-      case 165: // "constant string"
+      case 168: // "constant string"
         value.template destroy< std::string > ();
         break;
 
@@ -2017,30 +2935,30 @@ namespace isc { namespace dhcp {
     super_type::move (s);
     switch (this->type_get ())
     {
-      case 185: // value
-      case 189: // map_value
-      case 230: // socket_type
-      case 233: // outbound_interface_value
-      case 255: // db_type
-      case 337: // hr_mode
-      case 486: // ncr_protocol_value
-      case 493: // replace_client_name_value
+      case 188: // value
+      case 192: // map_value
+      case 236: // socket_type
+      case 239: // outbound_interface_value
+      case 261: // db_type
+      case 343: // hr_mode
+      case 492: // ncr_protocol_value
+      case 499: // replace_client_name_value
         value.move< ElementPtr > (YY_MOVE (s.value));
         break;
 
-      case 168: // "boolean"
+      case 171: // "boolean"
         value.move< bool > (YY_MOVE (s.value));
         break;
 
-      case 167: // "floating point"
+      case 170: // "floating point"
         value.move< double > (YY_MOVE (s.value));
         break;
 
-      case 166: // "integer"
+      case 169: // "integer"
         value.move< int64_t > (YY_MOVE (s.value));
         break;
 
-      case 165: // "constant string"
+      case 168: // "constant string"
         value.move< std::string > (YY_MOVE (s.value));
         break;
 
@@ -2057,9 +2975,18 @@ namespace isc { namespace dhcp {
     : type (empty_symbol)
   {}
 
+#if 201103L <= YY_CPLUSPLUS
   inline
-  Dhcp4Parser::by_type::by_type (const by_type& other)
-    : type (other.type)
+  Dhcp4Parser::by_type::by_type (by_type&& that)
+    : type (that.type)
+  {
+    that.clear ();
+  }
+#endif
+
+  inline
+  Dhcp4Parser::by_type::by_type (const by_type& that)
+    : type (that.type)
   {}
 
   inline
@@ -2115,1185 +3042,2567 @@ namespace isc { namespace dhcp {
      385,   386,   387,   388,   389,   390,   391,   392,   393,   394,
      395,   396,   397,   398,   399,   400,   401,   402,   403,   404,
      405,   406,   407,   408,   409,   410,   411,   412,   413,   414,
-     415,   416,   417,   418,   419,   420,   421,   422,   423
+     415,   416,   417,   418,   419,   420,   421,   422,   423,   424,
+     425,   426
     };
     return static_cast<token_type> (yytoken_number_[type]);
   }
 
   // Implementation of make_symbol for each symbol type.
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_END (YY_COPY (location_type) l)
+  Dhcp4Parser::make_END (location_type l)
   {
-    return symbol_type (token::TOKEN_END, YY_MOVE (l));
+    return symbol_type (token::TOKEN_END, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_COMMA (YY_COPY (location_type) l)
+  Dhcp4Parser::make_END (const location_type& l)
   {
-    return symbol_type (token::TOKEN_COMMA, YY_MOVE (l));
+    return symbol_type (token::TOKEN_END, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_COLON (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COMMA (location_type l)
   {
-    return symbol_type (token::TOKEN_COLON, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COMMA, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LSQUARE_BRACKET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COMMA (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LSQUARE_BRACKET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COMMA, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RSQUARE_BRACKET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COLON (location_type l)
   {
-    return symbol_type (token::TOKEN_RSQUARE_BRACKET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COLON, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LCURLY_BRACKET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COLON (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LCURLY_BRACKET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COLON, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RCURLY_BRACKET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LSQUARE_BRACKET (location_type l)
   {
-    return symbol_type (token::TOKEN_RCURLY_BRACKET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LSQUARE_BRACKET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NULL_TYPE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LSQUARE_BRACKET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_NULL_TYPE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LSQUARE_BRACKET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RSQUARE_BRACKET (location_type l)
   {
-    return symbol_type (token::TOKEN_DHCP4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RSQUARE_BRACKET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONFIG_CONTROL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RSQUARE_BRACKET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CONFIG_CONTROL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RSQUARE_BRACKET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONFIG_DATABASES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LCURLY_BRACKET (location_type l)
   {
-    return symbol_type (token::TOKEN_CONFIG_DATABASES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LCURLY_BRACKET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_INTERFACES_CONFIG (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LCURLY_BRACKET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_INTERFACES_CONFIG, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LCURLY_BRACKET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_INTERFACES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RCURLY_BRACKET (location_type l)
   {
-    return symbol_type (token::TOKEN_INTERFACES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RCURLY_BRACKET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_SOCKET_TYPE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RCURLY_BRACKET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RCURLY_BRACKET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RAW (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NULL_TYPE (location_type l)
   {
-    return symbol_type (token::TOKEN_RAW, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NULL_TYPE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_UDP (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NULL_TYPE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_UDP, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NULL_TYPE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OUTBOUND_INTERFACE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DHCP4 (location_type l)
   {
-    return symbol_type (token::TOKEN_OUTBOUND_INTERFACE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DHCP4, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SAME_AS_INBOUND (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DHCP4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SAME_AS_INBOUND, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DHCP4, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_USE_ROUTING (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONFIG_CONTROL (location_type l)
   {
-    return symbol_type (token::TOKEN_USE_ROUTING, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONFIG_CONTROL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RE_DETECT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONFIG_CONTROL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_RE_DETECT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONFIG_CONTROL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SANITY_CHECKS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONFIG_DATABASES (location_type l)
   {
-    return symbol_type (token::TOKEN_SANITY_CHECKS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONFIG_DATABASES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LEASE_CHECKS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONFIG_DATABASES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LEASE_CHECKS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONFIG_DATABASES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ECHO_CLIENT_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACES_CONFIG (location_type l)
   {
-    return symbol_type (token::TOKEN_ECHO_CLIENT_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACES_CONFIG, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MATCH_CLIENT_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACES_CONFIG (const location_type& l)
   {
-    return symbol_type (token::TOKEN_MATCH_CLIENT_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACES_CONFIG, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_AUTHORITATIVE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACES (location_type l)
   {
-    return symbol_type (token::TOKEN_AUTHORITATIVE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NEXT_SERVER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_NEXT_SERVER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SERVER_HOSTNAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DHCP_SOCKET_TYPE (location_type l)
   {
-    return symbol_type (token::TOKEN_SERVER_HOSTNAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_BOOT_FILE_NAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DHCP_SOCKET_TYPE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_BOOT_FILE_NAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DHCP_SOCKET_TYPE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LEASE_DATABASE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RAW (location_type l)
   {
-    return symbol_type (token::TOKEN_LEASE_DATABASE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RAW, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOSTS_DATABASE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RAW (const location_type& l)
   {
-    return symbol_type (token::TOKEN_HOSTS_DATABASE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RAW, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOSTS_DATABASES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_UDP (location_type l)
   {
-    return symbol_type (token::TOKEN_HOSTS_DATABASES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_UDP, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TYPE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_UDP (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TYPE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_UDP, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MEMFILE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OUTBOUND_INTERFACE (location_type l)
   {
-    return symbol_type (token::TOKEN_MEMFILE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OUTBOUND_INTERFACE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MYSQL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OUTBOUND_INTERFACE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_MYSQL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OUTBOUND_INTERFACE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_POSTGRESQL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SAME_AS_INBOUND (location_type l)
   {
-    return symbol_type (token::TOKEN_POSTGRESQL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SAME_AS_INBOUND, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CQL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SAME_AS_INBOUND (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CQL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SAME_AS_INBOUND, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_USER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USE_ROUTING (location_type l)
   {
-    return symbol_type (token::TOKEN_USER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USE_ROUTING, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_PASSWORD (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USE_ROUTING (const location_type& l)
   {
-    return symbol_type (token::TOKEN_PASSWORD, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USE_ROUTING, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOST (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RE_DETECT (location_type l)
   {
-    return symbol_type (token::TOKEN_HOST, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RE_DETECT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_PORT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RE_DETECT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_PORT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RE_DETECT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_PERSIST (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SANITY_CHECKS (location_type l)
   {
-    return symbol_type (token::TOKEN_PERSIST, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SANITY_CHECKS, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LFC_INTERVAL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SANITY_CHECKS (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LFC_INTERVAL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SANITY_CHECKS, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_READONLY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LEASE_CHECKS (location_type l)
   {
-    return symbol_type (token::TOKEN_READONLY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LEASE_CHECKS, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONNECT_TIMEOUT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LEASE_CHECKS (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CONNECT_TIMEOUT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LEASE_CHECKS, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONTACT_POINTS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ECHO_CLIENT_ID (location_type l)
   {
-    return symbol_type (token::TOKEN_CONTACT_POINTS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ECHO_CLIENT_ID, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_KEYSPACE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ECHO_CLIENT_ID (const location_type& l)
   {
-    return symbol_type (token::TOKEN_KEYSPACE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ECHO_CLIENT_ID, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAX_RECONNECT_TRIES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MATCH_CLIENT_ID (location_type l)
   {
-    return symbol_type (token::TOKEN_MAX_RECONNECT_TRIES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MATCH_CLIENT_ID, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RECONNECT_WAIT_TIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MATCH_CLIENT_ID (const location_type& l)
   {
-    return symbol_type (token::TOKEN_RECONNECT_WAIT_TIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MATCH_CLIENT_ID, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_REQUEST_TIMEOUT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_AUTHORITATIVE (location_type l)
   {
-    return symbol_type (token::TOKEN_REQUEST_TIMEOUT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_AUTHORITATIVE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TCP_KEEPALIVE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_AUTHORITATIVE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TCP_KEEPALIVE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_AUTHORITATIVE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TCP_NODELAY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NEXT_SERVER (location_type l)
   {
-    return symbol_type (token::TOKEN_TCP_NODELAY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NEXT_SERVER, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_VALID_LIFETIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NEXT_SERVER (const location_type& l)
   {
-    return symbol_type (token::TOKEN_VALID_LIFETIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NEXT_SERVER, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RENEW_TIMER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SERVER_HOSTNAME (location_type l)
   {
-    return symbol_type (token::TOKEN_RENEW_TIMER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SERVER_HOSTNAME, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_REBIND_TIMER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SERVER_HOSTNAME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_REBIND_TIMER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SERVER_HOSTNAME, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DECLINE_PROBATION_PERIOD (YY_COPY (location_type) l)
+  Dhcp4Parser::make_BOOT_FILE_NAME (location_type l)
   {
-    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, YY_MOVE (l));
+    return symbol_type (token::TOKEN_BOOT_FILE_NAME, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SERVER_TAG (YY_COPY (location_type) l)
+  Dhcp4Parser::make_BOOT_FILE_NAME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SERVER_TAG, YY_MOVE (l));
+    return symbol_type (token::TOKEN_BOOT_FILE_NAME, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUBNET4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LEASE_DATABASE (location_type l)
   {
-    return symbol_type (token::TOKEN_SUBNET4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LEASE_DATABASE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUBNET_4O6_INTERFACE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LEASE_DATABASE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LEASE_DATABASE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOSTS_DATABASE (location_type l)
   {
-    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOSTS_DATABASE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUBNET_4O6_SUBNET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOSTS_DATABASE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUBNET_4O6_SUBNET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOSTS_DATABASE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OPTION_DEF (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOSTS_DATABASES (location_type l)
   {
-    return symbol_type (token::TOKEN_OPTION_DEF, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOSTS_DATABASES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OPTION_DATA (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOSTS_DATABASES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_OPTION_DATA, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOSTS_DATABASES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TYPE (location_type l)
   {
-    return symbol_type (token::TOKEN_NAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TYPE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DATA (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TYPE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DATA, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TYPE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CODE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MEMFILE (location_type l)
   {
-    return symbol_type (token::TOKEN_CODE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MEMFILE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SPACE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MEMFILE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SPACE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MEMFILE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CSV_FORMAT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MYSQL (location_type l)
   {
-    return symbol_type (token::TOKEN_CSV_FORMAT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MYSQL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ALWAYS_SEND (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MYSQL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_ALWAYS_SEND, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MYSQL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RECORD_TYPES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POSTGRESQL (location_type l)
   {
-    return symbol_type (token::TOKEN_RECORD_TYPES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POSTGRESQL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ENCAPSULATE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POSTGRESQL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_ENCAPSULATE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POSTGRESQL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ARRAY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CQL (location_type l)
   {
-    return symbol_type (token::TOKEN_ARRAY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CQL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SHARED_NETWORKS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CQL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SHARED_NETWORKS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CQL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_POOLS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USER (location_type l)
   {
-    return symbol_type (token::TOKEN_POOLS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USER, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_POOL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USER (const location_type& l)
   {
-    return symbol_type (token::TOKEN_POOL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USER, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_USER_CONTEXT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PASSWORD (location_type l)
   {
-    return symbol_type (token::TOKEN_USER_CONTEXT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PASSWORD, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_COMMENT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PASSWORD (const location_type& l)
   {
-    return symbol_type (token::TOKEN_COMMENT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PASSWORD, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUBNET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOST (location_type l)
   {
-    return symbol_type (token::TOKEN_SUBNET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOST, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_INTERFACE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_HOST (const location_type& l)
   {
-    return symbol_type (token::TOKEN_INTERFACE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_HOST, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PORT (location_type l)
   {
-    return symbol_type (token::TOKEN_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PORT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RESERVATION_MODE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PORT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_RESERVATION_MODE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PORT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DISABLED (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PERSIST (location_type l)
   {
-    return symbol_type (token::TOKEN_DISABLED, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PERSIST, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OUT_OF_POOL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_PERSIST (const location_type& l)
   {
-    return symbol_type (token::TOKEN_OUT_OF_POOL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_PERSIST, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_GLOBAL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LFC_INTERVAL (location_type l)
   {
-    return symbol_type (token::TOKEN_GLOBAL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LFC_INTERVAL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ALL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_LFC_INTERVAL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_ALL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_LFC_INTERVAL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOST_RESERVATION_IDENTIFIERS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_READONLY (location_type l)
   {
-    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_READONLY, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CLIENT_CLASSES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_READONLY (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CLIENT_CLASSES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_READONLY, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONNECT_TIMEOUT (location_type l)
   {
-    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONNECT_TIMEOUT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TEST (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONNECT_TIMEOUT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TEST, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONNECT_TIMEOUT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ONLY_IF_REQUIRED (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONTACT_POINTS (location_type l)
   {
-    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONTACT_POINTS, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CLIENT_CLASS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CONTACT_POINTS (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CLIENT_CLASS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CONTACT_POINTS, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RESERVATIONS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_KEYSPACE (location_type l)
   {
-    return symbol_type (token::TOKEN_RESERVATIONS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_KEYSPACE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DUID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_KEYSPACE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DUID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_KEYSPACE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HW_ADDRESS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MAX_RECONNECT_TRIES (location_type l)
   {
-    return symbol_type (token::TOKEN_HW_ADDRESS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MAX_RECONNECT_TRIES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CIRCUIT_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_MAX_RECONNECT_TRIES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CIRCUIT_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_MAX_RECONNECT_TRIES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CLIENT_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RECONNECT_WAIT_TIME (location_type l)
   {
-    return symbol_type (token::TOKEN_CLIENT_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RECONNECT_WAIT_TIME, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOSTNAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RECONNECT_WAIT_TIME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_HOSTNAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RECONNECT_WAIT_TIME, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_FLEX_ID (YY_COPY (location_type) l)
+  Dhcp4Parser::make_REQUEST_TIMEOUT (location_type l)
   {
-    return symbol_type (token::TOKEN_FLEX_ID, YY_MOVE (l));
+    return symbol_type (token::TOKEN_REQUEST_TIMEOUT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RELAY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_REQUEST_TIMEOUT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_RELAY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_REQUEST_TIMEOUT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_IP_ADDRESS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TCP_KEEPALIVE (location_type l)
   {
-    return symbol_type (token::TOKEN_IP_ADDRESS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TCP_KEEPALIVE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_IP_ADDRESSES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TCP_KEEPALIVE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_IP_ADDRESSES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TCP_KEEPALIVE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOOKS_LIBRARIES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TCP_NODELAY (location_type l)
   {
-    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TCP_NODELAY, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LIBRARY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_TCP_NODELAY (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LIBRARY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_TCP_NODELAY, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_PARAMETERS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_VALID_LIFETIME (location_type l)
   {
-    return symbol_type (token::TOKEN_PARAMETERS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_VALID_LIFETIME, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (YY_COPY (location_type) l)
+  Dhcp4Parser::make_VALID_LIFETIME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, YY_MOVE (l));
+    return symbol_type (token::TOKEN_VALID_LIFETIME, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_RECLAIM_TIMER_WAIT_TIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RENEW_TIMER (location_type l)
   {
-    return symbol_type (token::TOKEN_RECLAIM_TIMER_WAIT_TIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RENEW_TIMER, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RENEW_TIMER (const location_type& l)
   {
-    return symbol_type (token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RENEW_TIMER, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOLD_RECLAIMED_TIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_REBIND_TIMER (location_type l)
   {
-    return symbol_type (token::TOKEN_HOLD_RECLAIMED_TIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_REBIND_TIMER, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAX_RECLAIM_LEASES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_REBIND_TIMER (const location_type& l)
   {
-    return symbol_type (token::TOKEN_MAX_RECLAIM_LEASES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_REBIND_TIMER, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAX_RECLAIM_TIME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CALCULATE_TEE_TIMES (location_type l)
   {
-    return symbol_type (token::TOKEN_MAX_RECLAIM_TIME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CALCULATE_TEE_TIMES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CALCULATE_TEE_TIMES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_UNWARNED_RECLAIM_CYCLES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CALCULATE_TEE_TIMES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP4O6_PORT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_T1_PERCENT (location_type l)
   {
-    return symbol_type (token::TOKEN_DHCP4O6_PORT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_T1_PERCENT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONTROL_SOCKET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_T1_PERCENT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_CONTROL_SOCKET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_T1_PERCENT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SOCKET_TYPE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_T2_PERCENT (location_type l)
   {
-    return symbol_type (token::TOKEN_SOCKET_TYPE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_T2_PERCENT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SOCKET_NAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_T2_PERCENT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SOCKET_NAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_T2_PERCENT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DECLINE_PROBATION_PERIOD (location_type l)
   {
-    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP_DDNS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DECLINE_PROBATION_PERIOD (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DHCP_DDNS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DECLINE_PROBATION_PERIOD, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ENABLE_UPDATES (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SERVER_TAG (location_type l)
   {
-    return symbol_type (token::TOKEN_ENABLE_UPDATES, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SERVER_TAG, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_QUALIFYING_SUFFIX (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SERVER_TAG (const location_type& l)
   {
-    return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SERVER_TAG, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SERVER_IP (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET4 (location_type l)
   {
-    return symbol_type (token::TOKEN_SERVER_IP, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET4, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SERVER_PORT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET4 (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SERVER_PORT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET4, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SENDER_IP (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE (location_type l)
   {
-    return symbol_type (token::TOKEN_SENDER_IP, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SENDER_PORT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SENDER_PORT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAX_QUEUE_SIZE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID (location_type l)
   {
-    return symbol_type (token::TOKEN_MAX_QUEUE_SIZE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE_ID, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NCR_PROTOCOL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_INTERFACE_ID (const location_type& l)
   {
-    return symbol_type (token::TOKEN_NCR_PROTOCOL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_INTERFACE_ID, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NCR_FORMAT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_SUBNET (location_type l)
   {
-    return symbol_type (token::TOKEN_NCR_FORMAT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_SUBNET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OVERRIDE_NO_UPDATE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET_4O6_SUBNET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_OVERRIDE_NO_UPDATE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET_4O6_SUBNET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OPTION_DEF (location_type l)
   {
-    return symbol_type (token::TOKEN_OVERRIDE_CLIENT_UPDATE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OPTION_DEF, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_REPLACE_CLIENT_NAME (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OPTION_DEF (const location_type& l)
   {
-    return symbol_type (token::TOKEN_REPLACE_CLIENT_NAME, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OPTION_DEF, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_GENERATED_PREFIX (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OPTION_DATA (location_type l)
   {
-    return symbol_type (token::TOKEN_GENERATED_PREFIX, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OPTION_DATA, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TCP (YY_COPY (location_type) l)
+  Dhcp4Parser::make_OPTION_DATA (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TCP, YY_MOVE (l));
+    return symbol_type (token::TOKEN_OPTION_DATA, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_JSON (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NAME (location_type l)
   {
-    return symbol_type (token::TOKEN_JSON, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NAME, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_WHEN_PRESENT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_NAME (const location_type& l)
   {
-    return symbol_type (token::TOKEN_WHEN_PRESENT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_NAME, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_NEVER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DATA (location_type l)
   {
-    return symbol_type (token::TOKEN_NEVER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DATA, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_ALWAYS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_DATA (const location_type& l)
   {
-    return symbol_type (token::TOKEN_ALWAYS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_DATA, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_WHEN_NOT_PRESENT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CODE (location_type l)
   {
-    return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CODE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOSTNAME_CHAR_SET (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CODE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_HOSTNAME_CHAR_SET, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CODE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SPACE (location_type l)
   {
-    return symbol_type (token::TOKEN_HOSTNAME_CHAR_REPLACEMENT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SPACE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LOGGING (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SPACE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_LOGGING, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SPACE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_LOGGERS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CSV_FORMAT (location_type l)
   {
-    return symbol_type (token::TOKEN_LOGGERS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CSV_FORMAT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OUTPUT_OPTIONS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_CSV_FORMAT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_CSV_FORMAT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_OUTPUT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ALWAYS_SEND (location_type l)
   {
-    return symbol_type (token::TOKEN_OUTPUT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ALWAYS_SEND, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DEBUGLEVEL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ALWAYS_SEND (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DEBUGLEVEL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ALWAYS_SEND, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SEVERITY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RECORD_TYPES (location_type l)
   {
-    return symbol_type (token::TOKEN_SEVERITY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RECORD_TYPES, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_FLUSH (YY_COPY (location_type) l)
+  Dhcp4Parser::make_RECORD_TYPES (const location_type& l)
   {
-    return symbol_type (token::TOKEN_FLUSH, YY_MOVE (l));
+    return symbol_type (token::TOKEN_RECORD_TYPES, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAXSIZE (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ENCAPSULATE (location_type l)
   {
-    return symbol_type (token::TOKEN_MAXSIZE, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ENCAPSULATE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_MAXVER (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ENCAPSULATE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_MAXVER, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ENCAPSULATE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCP6 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ARRAY (location_type l)
   {
-    return symbol_type (token::TOKEN_DHCP6, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ARRAY, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_DHCPDDNS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ARRAY (const location_type& l)
   {
-    return symbol_type (token::TOKEN_DHCPDDNS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ARRAY, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_CONTROL_AGENT (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SHARED_NETWORKS (location_type l)
   {
-    return symbol_type (token::TOKEN_CONTROL_AGENT, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SHARED_NETWORKS, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TOPLEVEL_JSON (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SHARED_NETWORKS (const location_type& l)
   {
-    return symbol_type (token::TOKEN_TOPLEVEL_JSON, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SHARED_NETWORKS, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_TOPLEVEL_DHCP4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POOLS (location_type l)
   {
-    return symbol_type (token::TOKEN_TOPLEVEL_DHCP4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POOLS, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_DHCP4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POOLS (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_DHCP4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POOLS, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_INTERFACES4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POOL (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_INTERFACES4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POOL, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_SUBNET4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_POOL (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_SUBNET4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_POOL, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_POOL4 (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USER_CONTEXT (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_POOL4, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USER_CONTEXT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_RESERVATION (YY_COPY (location_type) l)
+  Dhcp4Parser::make_USER_CONTEXT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_RESERVATION, YY_MOVE (l));
+    return symbol_type (token::TOKEN_USER_CONTEXT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_OPTION_DEFS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COMMENT (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_OPTION_DEFS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COMMENT, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_OPTION_DEF (YY_COPY (location_type) l)
+  Dhcp4Parser::make_COMMENT (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_OPTION_DEF, YY_MOVE (l));
+    return symbol_type (token::TOKEN_COMMENT, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_OPTION_DATA (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_OPTION_DATA, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_HOOKS_LIBRARY (YY_COPY (location_type) l)
+  Dhcp4Parser::make_SUBNET (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, YY_MOVE (l));
+    return symbol_type (token::TOKEN_SUBNET, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_DHCP_DDNS (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACE (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_DHCP_DDNS, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_LOGGING (YY_COPY (location_type) l)
+  Dhcp4Parser::make_INTERFACE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_SUB_LOGGING, YY_MOVE (l));
+    return symbol_type (token::TOKEN_INTERFACE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_SUB_CONFIG_CONTROL (YY_COPY (location_type) l)
+  Dhcp4Parser::make_ID (location_type l)
   {
-    return symbol_type (token::TOKEN_SUB_CONFIG_CONTROL, YY_MOVE (l));
+    return symbol_type (token::TOKEN_ID, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_STRING (YY_COPY (std::string) v, YY_COPY (location_type) l)
+  Dhcp4Parser::make_ID (const location_type& l)
   {
-    return symbol_type (token::TOKEN_STRING, YY_MOVE (v), YY_MOVE (l));
+    return symbol_type (token::TOKEN_ID, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_INTEGER (YY_COPY (int64_t) v, YY_COPY (location_type) l)
+  Dhcp4Parser::make_RESERVATION_MODE (location_type l)
   {
-    return symbol_type (token::TOKEN_INTEGER, YY_MOVE (v), YY_MOVE (l));
+    return symbol_type (token::TOKEN_RESERVATION_MODE, std::move (l));
   }
-
+#else
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_FLOAT (YY_COPY (double) v, YY_COPY (location_type) l)
+  Dhcp4Parser::make_RESERVATION_MODE (const location_type& l)
   {
-    return symbol_type (token::TOKEN_FLOAT, YY_MOVE (v), YY_MOVE (l));
+    return symbol_type (token::TOKEN_RESERVATION_MODE, l);
   }
-
+#endif
+# if 201103L <= YY_CPLUSPLUS
   inline
   Dhcp4Parser::symbol_type
-  Dhcp4Parser::make_BOOLEAN (YY_COPY (bool) v, YY_COPY (location_type) l)
+  Dhcp4Parser::make_DISABLED (location_type l)
   {
-    return symbol_type (token::TOKEN_BOOLEAN, YY_MOVE (v), YY_MOVE (l));
+    return symbol_type (token::TOKEN_DISABLED, std::move (l));
   }
-
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DISABLED (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DISABLED, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUT_OF_POOL (location_type l)
+  {
+    return symbol_type (token::TOKEN_OUT_OF_POOL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUT_OF_POOL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OUT_OF_POOL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GLOBAL (location_type l)
+  {
+    return symbol_type (token::TOKEN_GLOBAL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GLOBAL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_GLOBAL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALL (location_type l)
+  {
+    return symbol_type (token::TOKEN_ALL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ALL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST_RESERVATION_IDENTIFIERS (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOST_RESERVATION_IDENTIFIERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOST_RESERVATION_IDENTIFIERS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASSES (location_type l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASSES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASSES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASSES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES (location_type l)
+  {
+    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REQUIRE_CLIENT_CLASSES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REQUIRE_CLIENT_CLASSES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TEST (location_type l)
+  {
+    return symbol_type (token::TOKEN_TEST, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TEST (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TEST, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ONLY_IF_REQUIRED (location_type l)
+  {
+    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ONLY_IF_REQUIRED (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ONLY_IF_REQUIRED, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASS (location_type l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_CLASS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_CLASS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATIONS (location_type l)
+  {
+    return symbol_type (token::TOKEN_RESERVATIONS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RESERVATIONS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RESERVATIONS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DUID (location_type l)
+  {
+    return symbol_type (token::TOKEN_DUID, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DUID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DUID, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HW_ADDRESS (location_type l)
+  {
+    return symbol_type (token::TOKEN_HW_ADDRESS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HW_ADDRESS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HW_ADDRESS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CIRCUIT_ID (location_type l)
+  {
+    return symbol_type (token::TOKEN_CIRCUIT_ID, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CIRCUIT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CIRCUIT_ID, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_ID (location_type l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_ID, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CLIENT_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CLIENT_ID, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLEX_ID (location_type l)
+  {
+    return symbol_type (token::TOKEN_FLEX_ID, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLEX_ID (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLEX_ID, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RELAY (location_type l)
+  {
+    return symbol_type (token::TOKEN_RELAY, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RELAY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RELAY, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESS (location_type l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESSES (location_type l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESSES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_IP_ADDRESSES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_IP_ADDRESSES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOOKS_LIBRARIES (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOOKS_LIBRARIES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOOKS_LIBRARIES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LIBRARY (location_type l)
+  {
+    return symbol_type (token::TOKEN_LIBRARY, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LIBRARY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LIBRARY, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PARAMETERS (location_type l)
+  {
+    return symbol_type (token::TOKEN_PARAMETERS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_PARAMETERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_PARAMETERS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (location_type l)
+  {
+    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_EXPIRED_LEASES_PROCESSING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_EXPIRED_LEASES_PROCESSING, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RECLAIM_TIMER_WAIT_TIME (location_type l)
+  {
+    return symbol_type (token::TOKEN_RECLAIM_TIMER_WAIT_TIME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_RECLAIM_TIMER_WAIT_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_RECLAIM_TIMER_WAIT_TIME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (location_type l)
+  {
+    return symbol_type (token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLUSH_RECLAIMED_TIMER_WAIT_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLUSH_RECLAIMED_TIMER_WAIT_TIME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOLD_RECLAIMED_TIME (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOLD_RECLAIMED_TIME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOLD_RECLAIMED_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOLD_RECLAIMED_TIME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_RECLAIM_LEASES (location_type l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_LEASES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_RECLAIM_LEASES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_LEASES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_RECLAIM_TIME (location_type l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_TIME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_RECLAIM_TIME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAX_RECLAIM_TIME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES (location_type l)
+  {
+    return symbol_type (token::TOKEN_UNWARNED_RECLAIM_CYCLES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_UNWARNED_RECLAIM_CYCLES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_UNWARNED_RECLAIM_CYCLES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP4O6_PORT (location_type l)
+  {
+    return symbol_type (token::TOKEN_DHCP4O6_PORT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP4O6_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP4O6_PORT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTROL_SOCKET (location_type l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_SOCKET, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTROL_SOCKET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_SOCKET, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_TYPE (location_type l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_TYPE, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_TYPE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_TYPE, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_NAME (location_type l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_NAME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SOCKET_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SOCKET_NAME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (location_type l)
+  {
+    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_QUEUE_CONTROL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP_QUEUE_CONTROL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_DDNS (location_type l)
+  {
+    return symbol_type (token::TOKEN_DHCP_DDNS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP_DDNS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENABLE_UPDATES (location_type l)
+  {
+    return symbol_type (token::TOKEN_ENABLE_UPDATES, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ENABLE_UPDATES (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ENABLE_UPDATES, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_QUALIFYING_SUFFIX (location_type l)
+  {
+    return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_QUALIFYING_SUFFIX (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_QUALIFYING_SUFFIX, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_IP (location_type l)
+  {
+    return symbol_type (token::TOKEN_SERVER_IP, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_IP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_IP, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_PORT (location_type l)
+  {
+    return symbol_type (token::TOKEN_SERVER_PORT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SERVER_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SERVER_PORT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_IP (location_type l)
+  {
+    return symbol_type (token::TOKEN_SENDER_IP, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_IP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SENDER_IP, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_PORT (location_type l)
+  {
+    return symbol_type (token::TOKEN_SENDER_PORT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SENDER_PORT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SENDER_PORT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_QUEUE_SIZE (location_type l)
+  {
+    return symbol_type (token::TOKEN_MAX_QUEUE_SIZE, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAX_QUEUE_SIZE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAX_QUEUE_SIZE, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_PROTOCOL (location_type l)
+  {
+    return symbol_type (token::TOKEN_NCR_PROTOCOL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_PROTOCOL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NCR_PROTOCOL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_FORMAT (location_type l)
+  {
+    return symbol_type (token::TOKEN_NCR_FORMAT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NCR_FORMAT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NCR_FORMAT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_NO_UPDATE (location_type l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_NO_UPDATE, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_NO_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_NO_UPDATE, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE (location_type l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_CLIENT_UPDATE, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OVERRIDE_CLIENT_UPDATE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OVERRIDE_CLIENT_UPDATE, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REPLACE_CLIENT_NAME (location_type l)
+  {
+    return symbol_type (token::TOKEN_REPLACE_CLIENT_NAME, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_REPLACE_CLIENT_NAME (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_REPLACE_CLIENT_NAME, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GENERATED_PREFIX (location_type l)
+  {
+    return symbol_type (token::TOKEN_GENERATED_PREFIX, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_GENERATED_PREFIX (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_GENERATED_PREFIX, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TCP (location_type l)
+  {
+    return symbol_type (token::TOKEN_TCP, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TCP (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TCP, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_JSON (location_type l)
+  {
+    return symbol_type (token::TOKEN_JSON, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_JSON (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_JSON, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_PRESENT (location_type l)
+  {
+    return symbol_type (token::TOKEN_WHEN_PRESENT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_PRESENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_WHEN_PRESENT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NEVER (location_type l)
+  {
+    return symbol_type (token::TOKEN_NEVER, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_NEVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_NEVER, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALWAYS (location_type l)
+  {
+    return symbol_type (token::TOKEN_ALWAYS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_ALWAYS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_ALWAYS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_NOT_PRESENT (location_type l)
+  {
+    return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_WHEN_NOT_PRESENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_WHEN_NOT_PRESENT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME_CHAR_SET (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_SET, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME_CHAR_SET (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_SET, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT (location_type l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_REPLACEMENT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_HOSTNAME_CHAR_REPLACEMENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_HOSTNAME_CHAR_REPLACEMENT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGING (location_type l)
+  {
+    return symbol_type (token::TOKEN_LOGGING, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LOGGING, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGERS (location_type l)
+  {
+    return symbol_type (token::TOKEN_LOGGERS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_LOGGERS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_LOGGERS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT_OPTIONS (location_type l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT_OPTIONS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT_OPTIONS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT (location_type l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_OUTPUT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_OUTPUT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DEBUGLEVEL (location_type l)
+  {
+    return symbol_type (token::TOKEN_DEBUGLEVEL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DEBUGLEVEL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DEBUGLEVEL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SEVERITY (location_type l)
+  {
+    return symbol_type (token::TOKEN_SEVERITY, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SEVERITY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SEVERITY, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLUSH (location_type l)
+  {
+    return symbol_type (token::TOKEN_FLUSH, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLUSH (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLUSH, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAXSIZE (location_type l)
+  {
+    return symbol_type (token::TOKEN_MAXSIZE, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAXSIZE (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXSIZE, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAXVER (location_type l)
+  {
+    return symbol_type (token::TOKEN_MAXVER, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_MAXVER (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_MAXVER, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP6 (location_type l)
+  {
+    return symbol_type (token::TOKEN_DHCP6, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCP6 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCP6, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCPDDNS (location_type l)
+  {
+    return symbol_type (token::TOKEN_DHCPDDNS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_DHCPDDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_DHCPDDNS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTROL_AGENT (location_type l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_AGENT, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_CONTROL_AGENT (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_CONTROL_AGENT, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_JSON (location_type l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_JSON, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_JSON (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_JSON, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_DHCP4 (location_type l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_DHCP4, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_TOPLEVEL_DHCP4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_TOPLEVEL_DHCP4, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP4 (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP4, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP4, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_INTERFACES4 (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_INTERFACES4, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_INTERFACES4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_INTERFACES4, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_SUBNET4 (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_SUBNET4, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_SUBNET4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_SUBNET4, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_POOL4 (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_POOL4, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_POOL4 (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_POOL4, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_RESERVATION (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_RESERVATION, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_RESERVATION (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_RESERVATION, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DEFS (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEFS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DEFS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEFS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DEF (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEF, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DEF (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DEF, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DATA (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DATA, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_OPTION_DATA (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_OPTION_DATA, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_HOOKS_LIBRARY (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_HOOKS_LIBRARY (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_HOOKS_LIBRARY, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP_DDNS (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP_DDNS, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_DHCP_DDNS (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_DHCP_DDNS, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_LOGGING (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_LOGGING, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_LOGGING (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_LOGGING, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_CONFIG_CONTROL (location_type l)
+  {
+    return symbol_type (token::TOKEN_SUB_CONFIG_CONTROL, std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_SUB_CONFIG_CONTROL (const location_type& l)
+  {
+    return symbol_type (token::TOKEN_SUB_CONFIG_CONTROL, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_STRING (std::string v, location_type l)
+  {
+    return symbol_type (token::TOKEN_STRING, std::move (v), std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_STRING (const std::string& v, const location_type& l)
+  {
+    return symbol_type (token::TOKEN_STRING, v, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTEGER (int64_t v, location_type l)
+  {
+    return symbol_type (token::TOKEN_INTEGER, std::move (v), std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_INTEGER (const int64_t& v, const location_type& l)
+  {
+    return symbol_type (token::TOKEN_INTEGER, v, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLOAT (double v, location_type l)
+  {
+    return symbol_type (token::TOKEN_FLOAT, std::move (v), std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_FLOAT (const double& v, const location_type& l)
+  {
+    return symbol_type (token::TOKEN_FLOAT, v, l);
+  }
+#endif
+# if 201103L <= YY_CPLUSPLUS
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_BOOLEAN (bool v, location_type l)
+  {
+    return symbol_type (token::TOKEN_BOOLEAN, std::move (v), std::move (l));
+  }
+#else
+  inline
+  Dhcp4Parser::symbol_type
+  Dhcp4Parser::make_BOOLEAN (const bool& v, const location_type& l)
+  {
+    return symbol_type (token::TOKEN_BOOLEAN, v, l);
+  }
+#endif
 
 #line 14 "dhcp4_parser.yy" // lalr1.cc:404
 } } // isc::dhcp
-#line 3297 "dhcp4_parser.h" // lalr1.cc:404
+#line 5606 "dhcp4_parser.h" // lalr1.cc:404
 
 
 

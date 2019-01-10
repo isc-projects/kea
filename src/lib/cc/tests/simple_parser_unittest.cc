@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -236,4 +236,51 @@ TEST_F(SimpleParserTest, getIOAddress) {
     ElementPtr v6 = Element::fromJSON("{ \"foo\": \"2001:db8::1\" }");
     EXPECT_NO_THROW(val = parser.getAddress(v6, "foo"));
     EXPECT_EQ("2001:db8::1" , val.toText());
+}
+
+// This test exercises getDouble()
+TEST_F(SimpleParserTest, getDouble) {
+
+    SimpleParserClassTest parser;
+    std::string json =
+    "{\n"
+    "  \"string\" : \"12.3\",\n"
+    "  \"bool\" : true, \n"
+    "  \"int\" : 777, \n"
+    "  \"map\" : {}, \n"
+    "  \"list\" : [], \n"
+    "  \"zero\" : 0.0, \n"
+    "  \"fraction\" : .75, \n"
+    "  \"negative\" : -1.45, \n"
+    "  \"positive\" : 346.7 \n"
+    "}\n";
+
+    // Create our test set of parameters.
+    ElementPtr elems;
+    ASSERT_NO_THROW(elems = Element::fromJSON(json)) << " invalid JSON, test is broken";
+
+    // Verify that a non-existant element is caught.
+    EXPECT_THROW(parser.getDouble(elems, "not-there"), DhcpConfigError);
+
+    // Verify that wrong element types are caught.
+    EXPECT_THROW(parser.getDouble(elems, "string"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "int"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "bool"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "map"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "list"), DhcpConfigError);
+
+    // Verify valid values are correct.
+    double value;
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "zero"));
+    EXPECT_EQ(0.0, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "fraction"));
+    EXPECT_EQ(.75, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "negative"));
+    EXPECT_EQ(-1.45, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "positive"));
+    EXPECT_EQ(346.7, value);
 }

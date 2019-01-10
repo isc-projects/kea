@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -791,7 +791,18 @@ IntElement::toJSON(std::ostream& ss) const {
 
 void
 DoubleElement::toJSON(std::ostream& ss) const {
-    ss << doubleValue();
+    // The default output for doubles nicely drops off trailing
+    // zeros, however this produces strings without decimal points
+    // for whole number values.  When reparsed this will create
+    // IntElements not DoubleElements.  Rather than used a fixed
+    // precision, we'll just tack on an ".0" when the decimal point
+    // is missing.
+    ostringstream val_ss;
+    val_ss << doubleValue();
+    ss << val_ss.str();
+    if (val_ss.str().find_first_of('.') == string::npos) {
+        ss << ".0";
+    }
 }
 
 void
