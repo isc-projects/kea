@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,43 @@ public:
     ///
     /// @throw isc::BadValue if such subnet doesn't exist.
     void del(const ConstSubnet4Ptr& subnet);
+
+    /// @brief Merges specified subnet configuration into this configuration.
+    ///
+    /// This method merges subnets from the @c other configuration into this
+    /// configuration. The general rule is that existing subnets are replaced
+    /// by the subnets from @c other. If there is no corresponding subnet in
+    /// this configuration the subnet from @c other configuration is inserted.
+    ///
+    /// The complexity of the merge process stems from the associations between
+    /// the subnets and shared networks. Although, the subnets in this
+    /// configuration are replaced by the subnets from @c other, the existing
+    /// shared networks should not be affected. The new subnets must be
+    /// inserted into the exsiting shared networks. The @c CfgSharedNetworks4
+    /// is responsible for merging the shared networks and this merge must
+    /// be triggered before the merge of the subnets. Therefore, this method
+    /// assumes that existing shared networks have been already merged.
+    ///
+    /// These are the rules concerning the shared network associations that
+    /// this method follows:
+    /// - If there is a subnet in this configuration and it is associated with
+    ///   a shared network, the shared network is preserved and the new subnet
+    ///   instance (replacing existing one) is associated with it. The old
+    ///   subnet instance is removed from the shared network.
+    /// - If there is a subnet in this configuration and it is not associated
+    ///   with any shared network, the new subnet instance replaces the existing
+    ///   subnet instance and its association with a shared network is discarded.
+    ///   As a result, the configuration will contain new subnet instance but
+    ///   not associated with any shared network.
+    /// - If there is no subnet with the given ID, the new subnet instance is
+    ///   inserted into the configuration and the association with a shared
+    ///   network (if present) will be preserved. As a result, the configuration
+    ///   will hold the instance of the new subnet with the shared network
+    ///   it originally belonged to.
+    ///
+    /// @param other the subnet configuration to be merged into this
+    /// configuration.
+    void merge(const CfgSubnets4& other);
 
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///

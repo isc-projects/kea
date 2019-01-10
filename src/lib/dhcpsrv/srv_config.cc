@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,6 +154,17 @@ SrvConfig::equals(const SrvConfig& other) const {
     }
     // Pass through all configured hooks libraries.
     return (hooks_config_.equal(other.hooks_config_));
+}
+
+void
+SrvConfig::merge(const ConfigBase& other) {
+    ConfigBase::merge(other);
+
+    try {
+        const SrvConfig& other_srv_config = dynamic_cast<const SrvConfig&>(other);
+
+    } catch (const std::bad_cast&) {
+    }
 }
 
 void
