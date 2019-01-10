@@ -99,6 +99,9 @@ using namespace std;
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
+  CALCULATE_TEE_TIMES "calculate-tee-times"
+  T1_PERCENT "t1-percent"
+  T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
   SERVER_TAG "server-tag"
   SUBNET4 "subnet4"
@@ -116,9 +119,6 @@ using namespace std;
   RECORD_TYPES "record-types"
   ENCAPSULATE "encapsulate"
   ARRAY "array"
-  CALCULATE_TEE_TIMES "calculate-tee-times"
-  T1_PERCENT "t1-percent"
-  T2_PERCENT "t2-percent"
 
   SHARED_NETWORKS "shared-networks"
 
