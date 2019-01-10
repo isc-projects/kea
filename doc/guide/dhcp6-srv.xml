@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1461,27 +1461,6 @@ temporarily override a list of interface names and listen on all interfaces.
       related RFCs require certain processing, the support for those
       options is non-functional. However, it may be useful in some
       limited lab testing, hence the definition formats are listed here.
-    </para>
-
-    <para>
-      <table frame="all" xml:id="dhcp6-exp-options-list">
-        <title>List of Experimental DHCPv6 Options</title>
-        <tgroup cols="4">
-        <colspec colname="name"/>
-        <colspec colname="code" align="center"/>
-        <colspec colname="type" align="center"/>
-        <colspec colname="array" align="center"/>
-        <thead>
-          <row><entry>Name</entry><entry>Code</entry><entry>Type</entry><entry>Array?</entry></row>
-        </thead>
-        <tbody>
-<row><entry>public-key</entry><entry>701</entry><entry>hex</entry><entry>false</entry></row>
-<row><entry>certificate</entry><entry>702</entry><entry>hex</entry><entry>false</entry></row>
-<row><entry>signature</entry><entry>703</entry><entry>record (uint8, uint8, hex)</entry><entry>false</entry></row>
-<row><entry>timestamp</entry><entry>704</entry><entry>hex</entry><entry>false</entry></row>
-        </tbody>
-        </tgroup>
-      </table>
     </para>
     </section>
 

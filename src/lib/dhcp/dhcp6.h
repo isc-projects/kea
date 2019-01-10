@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -154,16 +154,7 @@ enum DHCPv6OptionType {
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
    // 136-142 unassigned
-   D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
-
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-/* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
-/* temporary values for hackathon 93 */
-   D6O_PUBLIC_KEY                         = 701,
-   D6O_CERTIFICATE                        = 702,
-   D6O_SIGNATURE                          = 703,
-   D6O_TIMESTAMP                          = 704
+   D6O_IPV6_ADDRESS_ANDSF                 = 143 /* RFC6153 */
 };
 
 /*

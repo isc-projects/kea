@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1741,18 +1741,6 @@ TEST_F(LibDhcpTest, stdOptionDefs6) {
 
     LibDhcpTest::testStdOptionDefs6(D6O_IPV6_ADDRESS_ANDSF, begin, end,
                                     typeid(Option6AddrLst));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_PUBLIC_KEY, begin, end,
-                                    typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_CERTIFICATE, begin, end,
-                                    typeid(Option));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_SIGNATURE, begin, end,
-                                    typeid(OptionCustom));
-
-    LibDhcpTest::testStdOptionDefs6(D6O_TIMESTAMP, begin, begin + 8,
-                                    typeid(Option));
 
     // RFC7598 options
     LibDhcpTest::testOptionDefs6(MAPE_V6_OPTION_SPACE, D6O_S46_RULE, begin, end,
