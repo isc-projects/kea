@@ -318,7 +318,7 @@ public:
 
     /// @brief Sets whether or not T1/T2 calculation is enabled.
     ///
-    /// @param calculate_tee_times new value of enabled/disabled 
+    /// @param calculate_tee_times new value of enabled/disabled.
     void setCalculateTeeTimes(const bool& calculate_tee_times) {
         calculate_tee_times_ = calculate_tee_times;
     }
@@ -342,7 +342,7 @@ public:
 
     /// @brief Sets new precentage for calculating T2 (rebind timer).
     ///
-    /// @param t2_percent New percentage to use. 
+    /// @param t2_percent New percentage to use.
     void setT2Percent(const double& t2_percent) {
         t2_percent_ = t2_percent;
     }
