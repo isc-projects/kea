@@ -448,8 +448,6 @@ public:
         return (!equals(other));
     }
 
-    virtual void merge(const ConfigBase& other);
-
     /// @brief Equality operator.
     ///
     /// It ignores the configuration sequence number when checking for
@@ -475,6 +473,47 @@ public:
     }
 
     //@}
+
+    /// @brief Merges the configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// This method is used when two or more configurations held in the
+    /// @c SrvConfig objects need to be combined into a single configuration.
+    /// Specifically, when the configuration backend is used, the part of
+    /// the server configuration comes from the configuration file and
+    /// stored in the staging configuration. The other part of the
+    /// configuration comes from the database. The configuration fetched
+    /// from the database is stored in a separate @c SrvConfig instance
+    /// and then merged into the staging configuration prior to commiting
+    /// it.
+    ///
+    /// The merging strategy depends on the underlying data being merged.
+    /// For example: subnets are merged using the algorithm implemented
+    /// in the @c CfgSubnets4. Other data structures are merged using the
+    /// algorithms implemented in their respective configuration
+    /// containers.
+    ///
+    /// The general rule is that the configuration data from the @c other
+    /// object replaces configuration data held in this object instance.
+    /// The data that do not overlap between the two objects is simply
+    /// inserted into this configuration.
+    ///
+    /// @note The call to @c merge may modify the data in the @c other
+    /// object. Therefore, the caller must not rely on the data held
+    /// in the @c other object after the call to @c merge. Also, the
+    /// data held in @c other must not be modified after the call to
+    /// @c merge because it may affect the merged configuration.
+    ///
+    /// The @c other parameter must be a @c SrvConfig or its derivation.
+    ///
+    /// Currently, the following parts of the configuration are merged:
+    /// - IPv4 subnets
+    ///
+    /// @todo Add support for merging other configuration elements.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    virtual void merge(const ConfigBase& other);
 
     /// @brief Updates statistics.
     ///

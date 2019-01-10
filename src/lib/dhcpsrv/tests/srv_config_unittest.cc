@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,13 @@ using namespace isc::process;
 // parameters from CfgMgr storage to SrvConfig storage.
 
 namespace {
+
+/// @brief Derivation of the @c ConfigBase not being @c SrvConfig.
+///
+/// This is used to verify that the appropriate error is returned
+/// when other derivation of the @c ConfigBase than @c SrvConfig
+/// is used.
+class NonSrvConfig : public ConfigBase { };
 
 /// @brief Number of IPv4 and IPv6 subnets to be created for a test.
 const int TEST_SUBNETS_NUM = 3;
@@ -972,6 +979,15 @@ TEST_F(SrvConfigTest, unparseConfigControlInfo6) {
     // that in unparsed config.  They should be equal.
     ElementPtr info_elem = info->toElement();
     EXPECT_TRUE(info_elem->equals(*check));
+}
+
+// Verifies that exception is thrown when instead of SrvConfig
+// another derivation of ConfigBase is used in the call to
+// merge.
+TEST_F(SrvConfigTest, mergeBadCast) {
+    SrvConfig srv_config;
+    NonSrvConfig non_srv_config;
+    ASSERT_THROW(srv_config.merge(non_srv_config), isc::InvalidOperation);
 }
 
 } // end of anonymous namespace

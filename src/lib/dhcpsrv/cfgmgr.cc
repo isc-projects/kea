@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,6 +80,7 @@ CfgMgr::clear() {
         configuration_->removeStatistics();
     }
     configs_.clear();
+    external_configs_.clear();
     ensureCurrentAllocated();
 }
 
@@ -164,6 +165,42 @@ CfgMgr::getStagingCfg() {
         configs_.push_back(SrvConfigPtr(new SrvConfig(++sequence)));
     }
     return (configs_.back());
+}
+
+SrvConfigPtr
+CfgMgr::createExternalCfg() {
+    uint32_t seq = 0;
+
+    if (!external_configs_.empty()) {
+        seq = external_configs_.rbegin()->second->getSequence() + 1;
+    }
+
+    SrvConfigPtr srv_config(new SrvConfig(seq));
+    external_configs_[seq] = srv_config;
+    return (srv_config);
+}
+
+void
+CfgMgr::mergeIntoStagingCfg(const uint32_t seq) {
+    mergeIntoCfg(getStagingCfg(), seq);
+}
+
+void
+CfgMgr::mergeIntoCurrentCfg(const uint32_t seq) {
+    mergeIntoCfg(getCurrentCfg(), seq);
+}
+
+void
+CfgMgr::mergeIntoCfg(const SrvConfigPtr& target_config, const uint32_t seq) {
+    auto source_config = external_configs_.find(seq);
+    if (source_config != external_configs_.end()) {
+        target_config->merge(*source_config->second);
+        external_configs_.erase(source_config);
+
+    } else {
+        isc_throw(BadValue, "the external configuration with the sequence number "
+                  "of " << seq << " was not found");
+    }
 }
 
 CfgMgr::CfgMgr()
