@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -538,6 +538,33 @@ protected:
     ///
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void assignLease(Dhcpv4Exchange& ex);
+
+    /// @brief Adds the T1 and T2 timers to the outbound response as appropriate
+    ///
+    /// This method determines if either of the timers T1 (option 58) and T2
+    /// (option 59) should be sent to the client.  It is influenced by the
+    /// lease's subnet's values for renew-timer, rebind-timer,
+    /// calculate-tee-times, t1-percent, and t2-percent as follows:
+    ///
+    /// By default neither T1 nor T2 will be sent.
+    ///
+    /// T2:
+    ///
+    /// If rebind-timer is set use its value, otherwise if calculate-tee-times
+    /// is true use the value given by valid lease time * t2-percent.  Either
+    /// way the value will only be sent if it is less than the valid lease time.
+    ///
+    /// T1:
+    ///
+    /// If renew-timer is set use its value, otherwise if calculate-tee-times
+    /// is true use the value given by valid lease time * t1-percent.  Either
+    /// way the value will only be sent if it is less than T2 when T2 is being
+    /// sent, or less than the valid lease time if T2 is not being sent.
+    ///
+    /// @param lease lease being assigned to the client
+    /// @param subnet the subnet to which the lease belongs
+    /// @param resp outbound response for the client to which timers are added.
+    void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
 
     /// @brief Append basic options if they are not present.
     ///

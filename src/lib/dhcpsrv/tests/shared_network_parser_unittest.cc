@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,7 +143,10 @@ public:
                 "            \"4o6-subnet\": \"\","
                 "            \"dhcp4o6-port\": 0,"
                 "            \"decline-probation-period\": 86400,"
-                "            \"reservation-mode\": \"all\""
+                "            \"reservation-mode\": \"all\","
+                "            \"calculate-tee-times\": true,"
+                "            \"t1-percent\": .45,"
+                "            \"t2-percent\": .65"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -165,7 +168,10 @@ public:
                 "            \"4o6-subnet\": \"\","
                 "            \"dhcp4o6-port\": 0,"
                 "            \"decline-probation-period\": 86400,"
-                "            \"reservation-mode\": \"all\""
+                "            \"reservation-mode\": \"all\","
+                "            \"calculate-tee-times\": false,"
+                "            \"t1-percent\": .40,"
+                "            \"t2-percent\": .80"
                 "        }"
                 "    ]"
                 "}";
@@ -196,6 +202,13 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     // Parse configuration specified above.
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
+
+    try { 
+        network = parser.parse(config_element);
+    } catch (const std::exception& ex) {
+        std::cout << "kabook: " << ex.what() << std::endl;
+    }
+
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
 

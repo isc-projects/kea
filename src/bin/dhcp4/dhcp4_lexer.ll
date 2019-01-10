@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -840,6 +840,40 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp4Parser::make_STRING("host-reservation-identifiers", driver.loc_);
     }
 }
+
+\"calculate-tee-times\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_CALCULATE_TEE_TIMES(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("calculate-tee-times", driver.loc_);
+    }
+}
+
+\"t1-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_T1_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("t1-percent", driver.loc_);
+    }
+}
+
+\"t2-percent\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::DHCP4:
+    case isc::dhcp::Parser4Context::SUBNET4:
+    case isc::dhcp::Parser4Context::SHARED_NETWORK:
+        return isc::dhcp::Dhcp4Parser::make_T2_PERCENT(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("t2-percent", driver.loc_);
+    }
+}
+
 
 \"Logging\" {
     switch(driver.ctx_) {

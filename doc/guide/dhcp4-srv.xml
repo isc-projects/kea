@@ -231,16 +231,11 @@ defines how long the addresses (leases) given out by the
 server are valid. If nothing changes, a client that got an address is allowed to
 use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
-<command>rebind-timer</command> are values (also in seconds) that
-define T1 and T2 timers that govern when the client will begin the renewal and
-rebind procedures. <note> Both <command>renew-timer</command> and
-<command>rebind-timer</command> are optional.  The server will only send
-rebind-timer to the client, via DHPv4 option code 59, if it is less than
-valid-lifetime; and it will only send renew-timer, via DHCPv4 option code 58,
-if it is less than rebind-timer (or valid-lifetime if rebind-timer was not
-specified).  In their absence, the client should select values for T1 and T2
-timers according to the <link xmlns:xlink="http://www.w3.org/1999/xlink"
-xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.</note></para>
+<command>rebind-timer</command> are values (also in seconds) that may be
+used to define T1 and T2 timers that govern when the client will begin the renewal
+and rebind procedures. Please see this section:<xref linkend="dhcp4-t1-t2-times"/>
+for more details on generating T1 and T2.
+</para>
 
 <para>The <command>interfaces-config</command> map specifies the server
 configuration concerning the network interfaces, on which the server should
@@ -1141,10 +1136,75 @@ temporarily override a list of interface names and listen on all interfaces.
     address) and the last (typically broadcast address) address from that pool.
     In the aforementioned example of pool 192.0.3.0/24, both 192.0.3.0 and
     192.0.3.255 addresses may be assigned as well. This may be invalid in some
-    network configurations. If you want to avoid this, please use the "min-max" notation.
+    network configurations. If you want to avoid this, please use the "min-max" 
+    notation.
   </para>
 </section>
-
+    <section xml:id="dhcp4-t1-t2-times">
+      <title>Sending T1 (Option 58) and T2 (Option 59)</title>
+      According to <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>,
+      servers should send values for T1 and T2 that are 50% and 87.5%
+      of the lease life time, repsectively.   By default, kea-dhcp4 does
+      not send either value.  It can be configured to send values that
+      are specified explicitly or that are calculated as percentages of
+      the lease time.  The server's behavior is governed by combination of
+      configuration parameters, two of which have already been mentioned.
+      <para>
+      To send specific, fixed values use the following two parameters:
+      <itemizedlist>
+        <listitem>
+          <simpara><command>renew-timer</command> - specifies the value of T1 in
+          seconds.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara><command>rebind-timer</command> - specifies the value of T2 in
+          seconds.
+          </simpara>
+        </listitem>
+      </itemizedlist>
+      The server will only send T2 if it is less than valid lease time.  T1 will
+      only be sent if a: T2 is being sent and T1 is less than T2 or b: T2 is not being
+      sent and T1 is less than the valid lease time.
+      </para>
+      <para>
+      Calculating the values is controlled by the following three parameters.
+      <itemizedlist>
+        <listitem>
+          <simpara>
+            <command>calculate-tee-times</command> - when true, T1 and T2 will be
+            calculated as percentages of the valid lease time. It defaults to false.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            <command>t1-percent</command> - the percentage of the valid lease time to
+            use for T1. It is expressed as a real number between 0.0 and 1.0 and must
+            be less than t2-percent. The default value is 0.50 per RFC 2131.
+          </simpara>
+        </listitem>
+        <listitem>
+          <simpara>
+            <command>t2-percent</command> - the percentage of the valid lease time to
+            use for T2. It is expressed as a real number between 0.0 and 1.0 and must
+            be greater than t1-percent. The default value is .875 per RFC 2131.
+          </simpara>
+        </listitem>
+        </itemizedlist>
+      </para>
+      <note>
+      In the event that both explicit values are specified and
+      calculate-tee-times is true, the server will use the explicit
+      values.  If you plan on having a mixture where some subnets or
+      share-networks will use explicit values and some will use
+      calculated values you must not define the explicit values at any
+      level higher than where they will be used.  Inheriting them from
+      too high of a scope, such as global, will cause them to have
+      values at every level underneath (shared-networks and subnets),
+      effectively disabling calculated values.
+      </note>
+    </section>
     <section xml:id="dhcp4-std-options">
       <title>Standard DHCPv4 Options</title>
       <para>

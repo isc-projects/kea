@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -761,7 +761,8 @@ TEST_F(Dhcpv4SrvTest, DiscoverBasic) {
 }
 
 // Check that option 58 and 59 are only included if they were specified
-// and T2 is less than valid lft;  T1 is less than T2 (if given) or valid
+// (and calculate-tee-times = false) and the values are sane:
+//  T2 is less than valid lft;  T1 is less than T2 (if given) or valid
 // lft if T2 is not given.
 TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
     IfaceMgrTestConfig test_config(true);
@@ -907,6 +908,144 @@ TEST_F(Dhcpv4SrvTest, DiscoverTimers) {
         }
     }
 
+}
+
+// Check that option 58 and 59 are included when calculate-tee-times
+// is enabled, but only when they are not explicitly specified via
+// renew-timer and rebinding-timer.  This test does not check whether
+// the subnet's for t1-percent and t2-percent are valid, as this is
+// enforced by parsing and tested elsewhere.
+TEST_F(Dhcpv4SrvTest, calculateTeeTimers) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+
+    boost::scoped_ptr<NakedDhcpv4Srv> srv;
+    ASSERT_NO_THROW(srv.reset(new NakedDhcpv4Srv(0)));
+
+    // Recreate subnet
+    Triplet<uint32_t> unspecified;
+    Triplet<uint32_t> valid_lft(1000);
+    subnet_.reset(new Subnet4(IOAddress("192.0.2.0"), 24,
+                              unspecified,
+                              unspecified,
+                              valid_lft));
+
+    pool_ = Pool4Ptr(new Pool4(IOAddress("192.0.2.100"),
+                               IOAddress("192.0.2.110")));
+    subnet_->addPool(pool_);
+    CfgMgr::instance().clear();
+    CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet_);
+    CfgMgr::instance().commit();
+
+    // Struct for describing an individual timer test scenario
+    struct TimerTest {
+        // logged test description
+        std::string description_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t1_;
+        // configured value for subnet's T1
+        Triplet<uint32_t> cfg_t2_;
+        // configured value for sunbet's t1_percent.
+        double t1_percent_;
+        // configured value for sunbet's t2_percent.
+        double t2_percent_;
+        // expected value for T1 in server response.
+        // A value of 0 means server should not have sent T1.
+        uint32_t t1_exp_value_;
+        // expected value for T2 in server response.
+        // A value of 0 means server should not have sent T2.
+        uint32_t t2_exp_value_;
+    };
+
+    // Convenience constant
+    uint32_t not_expected = 0;
+
+    // Test scenarios
+    std::vector<TimerTest> tests = {
+    {
+        "T1 and T2 calculated",
+        unspecified, unspecified,
+        0.4, 0.8,
+        400, 800
+    },
+    {
+        "T1 and T2 specified insane",
+        valid_lft + 1,  valid_lft + 2,
+        0.4, 0.8,
+        not_expected, not_expected
+    },
+    {
+        "T1 should be calculated, T2 specified",
+        unspecified, valid_lft - 1,
+        0.4, 0.8,
+        400, valid_lft - 1
+    },
+    {
+        "T1 specified, T2 should be calculated",
+        299, unspecified,
+        0.4, 0.8,
+        299, 800
+    },
+    {
+        "T1 specified > T2, T2 should be calculated",
+        valid_lft - 1, unspecified,
+        0.4, 0.8,
+        not_expected, 800
+    }
+    };
+
+    // Calculation is enabled for all the scenarios.
+    subnet_->setCalculateTeeTimes(true);
+
+    // Create a discover packet to use
+    Pkt4Ptr dis = Pkt4Ptr(new Pkt4(DHCPDISCOVER, 1234));
+    dis->setRemoteAddr(IOAddress("192.0.2.1"));
+    OptionPtr clientid = generateClientId();
+    dis->addOption(clientid);
+    dis->setIface("eth1");
+
+    // Iterate over the test scenarios.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE((*test).description_);
+            // Configure sunbet's timer values
+            subnet_->setT1((*test).cfg_t1_);
+            subnet_->setT2((*test).cfg_t2_);
+
+            subnet_->setT1Percent((*test).t1_percent_);
+            subnet_->setT2Percent((*test).t2_percent_);
+
+            // Discover/Offer exchange with the server
+            Pkt4Ptr offer = srv->processDiscover(dis);
+
+            // Verify we have an offer
+            checkResponse(offer, DHCPOFFER, 1234);
+
+            // Check T1 timer
+            OptionUint32Ptr opt = boost::dynamic_pointer_cast
+                                  <OptionUint32> (offer->getOption(DHO_DHCP_RENEWAL_TIME));
+
+            if ((*test).t1_exp_value_ == not_expected) {
+                EXPECT_FALSE(opt) << "T1 present and shouldn't be";
+            } else {
+                ASSERT_TRUE(opt) << "Required T1 option missing or it has"
+                                    " an unexpected type";
+                EXPECT_EQ(opt->getValue(), (*test).t1_exp_value_);
+            }
+
+            // Check T2 timer
+             opt = boost::dynamic_pointer_cast
+                   <OptionUint32>(offer->getOption(DHO_DHCP_REBINDING_TIME));
+
+            if ((*test).t2_exp_value_ == not_expected) {
+                EXPECT_FALSE(opt) << "T2 present and shouldn't be";
+            } else {
+                ASSERT_TRUE(opt) << "Required T2 option missing or it has"
+                                    " an unexpected type";
+                EXPECT_EQ(opt->getValue(), (*test).t2_exp_value_);
+            }
+        }
+    }
 }
 
 

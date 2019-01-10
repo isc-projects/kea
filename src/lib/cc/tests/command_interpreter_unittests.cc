@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -70,7 +70,7 @@ TEST(CommandInterpreterTest, parseAnswer) {
     EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 0 ] }")), CtrlChannelError);
     EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1 ] }")), CtrlChannelError);
     EXPECT_THROW(parseAnswer(rcode, el("{ \"result\": [ 1, 1 ] }")), CtrlChannelError);
-    
+
     answer = el("{ \"result\": 0 }");
     arg = parseAnswer(rcode, answer);
     EXPECT_EQ(0, rcode);

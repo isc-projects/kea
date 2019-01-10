@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -83,6 +83,26 @@ SimpleParser::getAddress(const ConstElementPtr& scope,
                   << getPosition(name, scope) << ")");
     }
 }
+
+double
+SimpleParser::getDouble(const isc::data::ConstElementPtr& scope,
+                        const std::string& name) {
+    ConstElementPtr x = scope->get(name);
+    if (!x) {
+        isc_throw(DhcpConfigError,
+                  "missing parameter '" << name << "' ("
+                  << scope->getPosition() << ")");
+    }
+
+    if (x->getType() != Element::real) {
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter '" << name
+                  << "' (" << x->getPosition() << ")");
+    }
+
+    return (x->doubleValue());
+}
+
 
 const data::Element::Position&
 SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr parent) {

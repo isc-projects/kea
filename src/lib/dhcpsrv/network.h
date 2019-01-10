@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,7 +118,8 @@ public:
     /// @brief Constructor.
     Network()
         : iface_name_(), client_class_(""), t1_(), t2_(), valid_(),
-          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
+          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()),
+          calculate_tee_times_(false), t1_percent_(0.0), t2_percent_(0.0) {
     }
 
     /// @brief Virtual destructor.
@@ -299,15 +300,51 @@ public:
         host_reservation_mode_ = mode;
     }
 
-    /// @brief Returns pointer to the option data configuration for this subnet.
+    /// @brief Returns pointer to the option data configuration for this network.
     CfgOptionPtr getCfgOption() {
         return (cfg_option_);
     }
 
     /// @brief Returns const pointer to the option data configuration for this
-    /// subnet.
+    /// network.
     ConstCfgOptionPtr getCfgOption() const {
         return (cfg_option_);
+    }
+
+    /// @brief Returns whether or not T1/T2 calculation is enabled.
+    bool getCalculateTeeTimes() const {
+        return (calculate_tee_times_);
+    }
+
+    /// @brief Sets whether or not T1/T2 calculation is enabled.
+    ///
+    /// @param calculate_tee_times new value of enabled/disabled.
+    void setCalculateTeeTimes(const bool& calculate_tee_times) {
+        calculate_tee_times_ = calculate_tee_times;
+    }
+
+    /// @brief Returns percentage to use when calculating the T1 (renew timer).
+    double getT1Percent() const {
+        return (t1_percent_);
+    }
+
+    /// @brief Sets new precentage for calculating T1 (renew timer).
+    ///
+    /// @param t1_percent New percentage to use.
+    void setT1Percent(const double& t1_percent) {
+        t1_percent_ = t1_percent;
+    }
+
+    /// @brief Returns percentage to use when calculating the T2 (rebind timer).
+    double getT2Percent() const {
+        return (t2_percent_);
+    }
+
+    /// @brief Sets new precentage for calculating T2 (rebind timer).
+    ///
+    /// @param t2_percent New percentage to use.
+    void setT2Percent(const double& t2_percent) {
+        t2_percent_ = t2_percent;
     }
 
     /// @brief Unparses network object.
@@ -354,6 +391,15 @@ protected:
 
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Enables calculation of T1 and T2 timers
+    bool calculate_tee_times_;
+
+    /// @brief Percentage of the lease lifetime to use when calculating T1 timer
+    double t1_percent_;
+
+    /// @brief Percentage of the lease lifetime to use when calculating T2 timer
+    double t2_percent_;
 };
 
 /// @brief Pointer to the @ref Network object.
