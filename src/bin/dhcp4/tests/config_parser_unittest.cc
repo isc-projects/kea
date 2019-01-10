@@ -6635,7 +6635,7 @@ TEST_F(Dhcp4ParserTest, dhcpQueueControlInvalid) {
 }
 
 // Checks inheritence of calculate-tee-times, t1-perecent, t2-percent
-TEST_F(Dhcp4ParserTest, calculatTeeTimesInheritence) {
+TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
     // Configure the server. This should succeed.
     string config =
         "{ \n"
