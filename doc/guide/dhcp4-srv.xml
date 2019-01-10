@@ -233,7 +233,7 @@ use it for 4000 seconds. (Note that integer numbers are specified as is,
 without any quotes around them.) <command>renew-timer</command> and
 <command>rebind-timer</command> are values (also in seconds) that may be
 used to define T1 and T2 timers that govern when the client will begin the renewal
-and rebind procedures. Please see this section:<xref linkend="dhcp4-std-options-list"/>
+and rebind procedures. Please see this section:<xref linkend="dhcp4-t1-t2-times"/>
 for more details on generating T1 and T2.
 </para>
 
