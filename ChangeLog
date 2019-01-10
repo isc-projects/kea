@@ -1,9 +1,16 @@
+1509.	[func]		tmark
+	kea-dhcp4 can now be configured to calculate values to
+	send to clients for for T1 and T2 (options 58 and 59 
+	repsectively).  Prior to this it was only possibly to
+	specify explicit values.
+	(Gitlab #365,!194, git 67944844a40436cd69e0e5b4962f5c9cba89ef6f)
+
 1508.	[func]		fdupont
 	Implemented the management API using a control socket for the
-        DHCP DDNS (D2) server. D2 now supports the following commands:
-        build-report, config-get, config-set, config-test, config-write,
-        list-commands, shutdown and version-get. Also, extended Control
-        Agent (CA) to support one additional command: config-set.
+	DHCP DDNS (D2) server. D2 now supports the following commands:
+	build-report, config-get, config-set, config-test, config-write,
+	list-commands, shutdown and version-get. Also, extended Control
+	Agent (CA) to support one additional command: config-set.
 	(Gitlab #30,!183, git ab27550cec365f42289eb5fa1bc39f33f01b19c2)
 
 1507.	[func]		tmark
