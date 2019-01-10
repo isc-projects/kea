@@ -1294,11 +1294,6 @@ temporarily override a list of interface names and listen on all interfaces.
       structures. "Type" designates the format of the data: the meanings of
       the various types is given in <xref linkend="dhcp-types"/>.
     </para>
-    <para>
-      Experimental options (like standard options but with a code
-      which was not assigned by IANA) are listed in
-      <xref linkend="dhcp6-exp-options-list"/>.
-    </para>
     <para>When a data field is a string, and that string contains
     the comma (,; U+002C) character, the comma must be escaped with a
     reverse solidus character (\; U+005C). This double escape is
