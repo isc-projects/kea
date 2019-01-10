@@ -996,7 +996,7 @@ TEST(CfgSubnets4Test, teeTimePercentValidation) {
 
     data::ElementPtr elems;
     ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
-                    << "invalid JSON:" << json << "\n est is broken";
+                    << "invalid JSON:" << json << "\n is broken";
 
     // Iterate over the test scenarios, verifying each prescribed
     // outcome.
