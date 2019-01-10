@@ -4,8 +4,8 @@
   slow and may take a long time to respond. Since Kea in general is
   synchronous, the backend performance directly affects the DHCP
   performance. To minimize the impact and improve performance, the
-  Host Cache library provides a way to cache responses from other
-  hosts. This includes negative caching, i.e. the ability to remember
+  Host Cache library provides a way to cache information from the database locally.
+  This includes negative caching, i.e. the ability to remember
   that there is no client information in the database.</para>
 
 
@@ -111,7 +111,7 @@ certain number of cached hosts, please use cache-flush instead.
     "command": "cache-write",
     "arguments": "/tmp/kea-host-cache.json"
 }</screen>
-This command will store the contents to the /tmp/kea-host-cache.json file.
+This causes the contents to be stored in the /tmp/kea-host-cache.json file.
 That file can then be loaded with the cache-load command or processed by
 any other tool that is able to understand JSON format.
     </para>
