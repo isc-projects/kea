@@ -1,7 +1,7 @@
 <section xml:id="hooks-stat-cmds">
   <title>stat_cmds: Supplemental Statistics Commands</title>
   <para>
-    This library provides additional statistics commands for
+    This library provides additional commands for
     retrieving lease statistics from Kea DHCP servers. These commands
     were added to address an issue with obtaining accurate lease
     statistics in deployments running multiple Kea servers that use a
@@ -9,7 +9,7 @@
     servers only track lease changes made by that server; thus, in a
     deployment with multiple servers (e.g. two kea-dhcp6 servers using the
     same PostgreSQL database for lease storage), these statistics are incomplete.
-    The MySQL and PostgreSQL backends were modified in Kea to track
+    The MySQL and PostgreSQL backends in Kea track
     lease allocation changes as they occur via database triggers. Additionally,
     all four lease backends were extended to support retrieving lease
     statistics for all subnets, a single subnet, or a range of subnets.
