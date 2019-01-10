@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -53,6 +53,75 @@ CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET4)
         .arg(subnet->toText());
+}
+
+void
+CfgSubnets4::merge(const CfgSubnets4& other) {
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+
+    // Iterate over the subnets to be merged. They will replace the existing
+    // subnets with the same id. All new subnets will be inserted into the
+    // configuration into which we're merging.
+    auto other_subnets = other.getAll();
+    for (auto other_subnet = other_subnets->begin();
+         other_subnet != other_subnets->end();
+         ++other_subnet) {
+
+        // Check if there is a subnet with the same ID.
+        auto subnet_it = index.find((*other_subnet)->getID());
+        if (subnet_it != index.end()) {
+
+            // Subnet found.
+            auto subnet = *subnet_it;
+
+            // Continue if the merged and existing subnets are the same instance.
+            if (subnet == *other_subnet) {
+                continue;
+            }
+
+            // If the merged subnet belongs to a shared network we need to
+            // discard this shared network so as it is merged into the existing
+            // shared network or left not unassigned if the existing subnet
+            // is unassigned.
+            SharedNetwork4Ptr other_network;
+            (*other_subnet)->getSharedNetwork(other_network);
+            if (other_network) {
+                other_network->del((*other_subnet)->getID());
+            }
+
+            // Check if the subnet belongs to a shared network.
+            SharedNetwork4Ptr network;
+            subnet->getSharedNetwork(network);
+            if (network) {
+                // The subnet belongs to a shared network. The shared network
+                // instance holds a pointer to the subnet so we need to remove
+                // the existing subnet from the shared network it belongs to.
+                network->del(subnet->getID());
+
+                // The new subnet instance must be added to the existing shared
+                // network.
+                network->add(*other_subnet);
+            }
+
+            // The existing subnet may now be removed.
+            index.erase(subnet_it);
+        }
+    }
+
+    // Make another pass over the merged subnets to add them. Any existing
+    // instances with the same IDs have been removed.
+    for (auto other_subnet = other_subnets->begin();
+         other_subnet != other_subnets->end();
+         ++other_subnet) {
+
+        // Continue if the merged and existing subnets are the same instance.
+        auto subnet_it = index.find((*other_subnet)->getID());
+        if ((subnet_it != index.end()) && ((*subnet_it) == (*other_subnet))) {
+            continue;
+        }
+
+        subnets_.push_back(*other_subnet);
+    }
 }
 
 ConstSubnet4Ptr
