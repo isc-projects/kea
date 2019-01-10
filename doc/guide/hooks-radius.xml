@@ -38,7 +38,7 @@
   <para>
     The major feature of the hook library is the ability to use RADIUS
     authorization. When a DHCP packet is received, the Kea server
-    sends an Access-Request to the RADIUS server and awaits
+    sends an Access-Request to the RADIUS server and waits for
     a response. The server then sends back either an Access-Accept
     with specific client attributes, or an Access-Reject. There are two
     cases supported here: first, the Access-Accept includes a
@@ -95,7 +95,7 @@ $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
       effective accounting implementation. Both of these issues
       were addressed by ISC engineers, and the changes have been
       reported to the FreeRADIUS client project. Acceptance of those
-      changes is outside of ISC responsibilities, so until those
+      changes is outside of ISC's control, so until those
       are processed, it is strongly recommended to use the FreeRADIUS
       client with ISC's patches. To download and compile this version, please use
       the following steps:
@@ -108,7 +108,7 @@ $ make
 $ sudo make install
 </screen>
 
-      You may enter additional parameters to the configure script, if you need
+      You may pass additional parameters to the configure script, if you need
       to. Once installed, the FreeRADIUS client will be installed in
       /usr/local. This is the default path where Kea will be looking for
       it. You may install it in a different directory; if you choose to do
@@ -315,7 +315,8 @@ Please make sure that your compilation has the following:
 </para>
 
 <para>
-  Once your configuration is complete, compile Kea using make. If your system has more than one core, it is recommended to use the -j N option.
+  Once your configuration is complete, compile Kea using make. If your system has
+  more than one core, it is recommended that you use the "-j N" option to speed up the build.
   <screen>
     $ make -j5
     $ sudo make install</screen>
@@ -389,7 +390,7 @@ Please make sure that your compilation has the following:
       client-id-printable.</simpara></listitem>
 
       <listitem><simpara><command>client-id-printable</command> (default false)
-      checks whether the client-id / duid content is printable and uses it as is
+      checks whether the client-id/duid content is printable and uses it as is
       instead of in hexadecimal. Implies client-id-pop0 and extract-duid as 0
       and 255 are not printable.</simpara></listitem>
 
@@ -397,8 +398,7 @@ Please make sure that your compilation has the following:
       to try unresponsive servers after responsive servers. Its value
       specifies the number of seconds after which a server is considered not to have answered,
       so 0 disables the mechanism. As the asynchronous communication does not
-      use locks or atomics, it is not recommended to use this feature with this
-      mode.</simpara></listitem>
+      use locks or atomics, it is recommended that you do not use this feature when running in this mode.</simpara></listitem>
 
       <listitem><simpara><command>dictionary</command> (default set by configure
       at build time) is the attribute and value dictionary. Note that it is a
@@ -424,12 +424,12 @@ Please make sure that your compilation has the following:
       realm.</simpara></listitem>
 
       <listitem><simpara><command>reselect-subnet-address</command> (default
-      false) uses the Kea reserved address / RADIUS Framed-IP-Address or
+      false) uses the Kea reserved address/RADIUS Framed-IP-Address or
       Framed-IPv6-Address to reselect subnets where the address is not in
       the subnet range.</simpara></listitem>
 
       <listitem><simpara><command>reselect-subnet-pool</command> (default
-      false) uses the Kea client-class / RADIUS Frame-Pool to reselect
+      false) uses the Kea client-class/RADIUS Frame-Pool to reselect
       subnets where no available pool can be found.</simpara></listitem>
 
       <listitem><simpara><command>retries</command> (default 3) is the number of
@@ -476,20 +476,20 @@ Please make sure that your compilation has the following:
             <listitem><simpara><command>port</command> (default RADIUS
             authentication or accounting service), which specifies the UDP port
             of the server. Note that the FreeRADIUS client library by default
-            uses ports 1812 (auth) and 1813 (acct). Some server implementations
-            use 1645 (auth) and 1646 (acct). You may use the "port" parameter to
+            uses ports 1812 (authorization) and 1813 (accounting). Some server implementations
+            use 1645 (authorization) and 1646 (accounting). You may use the "port" parameter to
             adjust as needed.</simpara></listitem>
 
             <listitem><simpara><command>secret</command>, which authenticates
             messages.</simpara></listitem>
 
           </itemizedlist>
-          <simpara>There may be up to 8 servers. Note that when no server is
+          <simpara>There may be up to eight servers. Note that when no server is
           specified, the service is disabled.</simpara>
         </listitem>
 
         <listitem>
-          <simpara>attributes which define additional attributes that
+          <simpara>attributes which define additional information that
           the Kea server will send to a RADIUS server. The parameter
           must be identified either by a name or type. Its value can
           be specified in one of three possible ways: data (which
@@ -501,9 +501,8 @@ Please make sure that your compilation has the following:
             <listitem><simpara><command>name</command> of the
             attribute.</simpara></listitem>
             
-            <listitem><simpara><command>type</command> of the attribute. Type or
-            name is required, and the attribute must be defined in the
-            dictionary.</simpara></listitem>
+            <listitem><simpara><command>type</command> of the attribute. Either the type
+            or the name must be provided, and the attribute must be defined in the dictionary.</simpara></listitem>
 
             <listitem><simpara><command>data</command> is the first of three
             ways to specify the attribute content. The data entry is parsed by
@@ -528,7 +527,7 @@ Please make sure that your compilation has the following:
     </para>
 <para>
   For example, to specify a single access server available on localhost that
-  uses "secret" as a secret, and tell Kea to send three additional attributes
+  uses "xyz123" as a secret, and tell Kea to send three additional attributes
   (Password, Connect-Info, and Configuration-Token), the following snippet could
   be used:
   <screen>
@@ -544,7 +543,7 @@ Please make sure that your compilation has the following:
             // These are parameters for the first (and only) access server
             "name": "127.0.0.1",
             "port": 1812,
-            "secret": "sekret"
+            "secret": "xyz123"
         }
         // Additional access servers could be specified here
         ],
