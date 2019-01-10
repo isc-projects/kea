@@ -468,9 +468,9 @@ global_param: valid_lifetime
             | config_control
             | server_tag
             | reservation_mode
-            | calculate_tee_times 
-            | t1_percent 
-            | t2_percent 
+            | calculate_tee_times
+            | t1_percent
+            | t2_percent
             | unknown_map_entry
             ;
 
@@ -1081,9 +1081,9 @@ subnet4_param: valid_lifetime
              | subnet_4o6_subnet
              | user_context
              | comment
-             | calculate_tee_times 
-             | t1_percent 
-             | t2_percent 
+             | calculate_tee_times
+             | t1_percent
+             | t2_percent
              | unknown_map_entry
              ;
 
@@ -1215,9 +1215,9 @@ shared_network_param: name
                     | valid_lifetime
                     | user_context
                     | comment
-                    | calculate_tee_times 
-                    | t1_percent 
-                    | t2_percent 
+                    | calculate_tee_times
+                    | t1_percent
+                    | t2_percent
                     | unknown_map_entry
                     ;
 
