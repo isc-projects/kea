@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,6 +110,27 @@ HostMgr::getAll(const Host::IdentifierType& identifier_type,
     return (hosts);
 }
 
+ConstHostCollection
+HostMgr::getAll4(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll4(subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAll4(subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+
+ConstHostCollection
+HostMgr::getAll6(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll6(subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAll6(subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
 
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
@@ -186,7 +207,7 @@ HostMgr::get4(const SubnetID& subnet_id,
     }
     return (host);
 }
-    
+
 ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id,
               const asiolink::IOAddress& address) const {

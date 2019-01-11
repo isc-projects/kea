@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,16 @@ ConstHostCollection
 MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
                           const uint8_t* /*identifier_begin*/,
                           const size_t /*identifier_len*/) const {
+    return (ConstHostCollection());
+}
+
+ConstHostCollection
+MemHostDataSource::getAll4(const SubnetID& /*subnet_id*/) const {
+    return (ConstHostCollection());
+}
+
+ConstHostCollection
+MemHostDataSource::getAll6(const SubnetID& /*subnet_id*/) const {
     return (ConstHostCollection());
 }
 

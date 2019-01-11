@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,6 +124,42 @@ public:
            const uint8_t* identifier_begin,
            const size_t identifier_len) const;
 
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects representing reservations
+    /// in a specified subnet as documented in the
+    /// @c BaseHostDataSource::getAll4
+    ///
+    /// It retrieves reservations from both primary and alternate host data
+    /// source as a single collection of @c Host objects, i.e. if matching
+    /// reservations are in both sources, all of them are returned. The
+    /// reservations from the primary data source are placed before the
+    /// reservations from the alternate source.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects representing reservations
+    /// in a specified subnet as documented in the
+    /// @c BaseHostDataSource::getAll6
+    ///
+    /// It retrieves reservations from both primary and alternate host data
+    /// source as a single collection of @c Host objects, i.e. if matching
+    /// reservations are in both sources, all of them are returned. The
+    /// reservations from the primary data source are placed before the
+    /// reservations from the alternate source.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const;
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected to
@@ -195,7 +231,7 @@ public:
     /// @brief Returns any host connected to the IPv6 subnet.
     ///
     /// This method returns a host connected to the IPv6 subnet as described
-    /// in the @c BaseHostDataSource::get6 even when the             
+    /// in the @c BaseHostDataSource::get6 even when the
     /// reservation is marked as from negative caching. This allows to
     /// monitor negative caching.
     ///
