@@ -1,3 +1,8 @@
+1510.	[bug]		fdupont
+	DHCPv4 and DHCPv6 no longer crash if badly broken configuration
+	is received.
+	(Gitlab #381,!193, git f45fe7b7e3916d36d017b4ec5b50588fbf517d86)
+
 1509.	[func]		tmark
 	kea-dhcp4 can now be configured to calculate values to
 	send to clients for for T1 and T2 (options 58 and 59 
