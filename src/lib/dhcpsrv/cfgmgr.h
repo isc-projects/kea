@@ -231,7 +231,7 @@ public:
     /// @return non-null pointer to the staging configuration.
     SrvConfigPtr getStagingCfg();
 
-    /// @brief Creates external configuration and returns pointer to it.
+    /// @brief Creates an external configuration and returns pointer to it.
     ///
     /// External configurations are those that come from other sources than
     /// from the configuration file, e.g. a database or a command. They

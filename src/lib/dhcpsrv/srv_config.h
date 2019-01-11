@@ -479,7 +479,7 @@ public:
     ///
     /// This method is used when two or more configurations held in the
     /// @c SrvConfig objects need to be combined into a single configuration.
-    /// Specifically, when the configuration backend is used, the part of
+    /// Specifically, when the configuration backend is used, then part of
     /// the server configuration comes from the configuration file and
     /// stored in the staging configuration. The other part of the
     /// configuration comes from the database. The configuration fetched
@@ -498,7 +498,7 @@ public:
     /// The data that do not overlap between the two objects is simply
     /// inserted into this configuration.
     ///
-    /// @note The call to @c merge may modify the data in the @c other
+    /// @warning The call to @c merge may modify the data in the @c other
     /// object. Therefore, the caller must not rely on the data held
     /// in the @c other object after the call to @c merge. Also, the
     /// data held in @c other must not be modified after the call to
