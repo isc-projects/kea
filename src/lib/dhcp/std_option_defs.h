@@ -12,6 +12,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 
+// NOTE:
+// When adding a new space, make sure you also update
+// src/lib/yang/adaptor_option.cc
+
 namespace isc {
 namespace dhcp {
 
@@ -482,7 +486,7 @@ const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
-/// http://kea.isc.org/wiki/Dhcp4o6Design
+/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design
 ///
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h

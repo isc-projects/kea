@@ -11,7 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp6/dhcp6_srv.h>
 
@@ -63,7 +63,7 @@ public:
     /// @brief Initiates shutdown procedure for the whole DHCPv6 server.
     void shutdown();
 
-    /// @brief command processor
+    /// @brief Command processor
     ///
     /// This method is uniform for all config backends. It processes received
     /// command (as a string + JSON arguments). Internally, it's just a
@@ -73,9 +73,9 @@ public:
     /// Currently supported commands are:
     /// - config-reload
     /// - config-test
-    /// - leases-reclaim
-    /// - libreload
     /// - shutdown
+    /// - libreload
+    /// - leases-reclaim
     /// ...
     ///
     /// @note It never throws.
@@ -87,7 +87,7 @@ public:
     static isc::data::ConstElementPtr
     processCommand(const std::string& command, isc::data::ConstElementPtr args);
 
-    /// @brief configuration processor
+    /// @brief Configuration processor
     ///
     /// This is a method for handling incoming configuration updates.
     /// This method should be called by all configuration backends when the
@@ -112,7 +112,7 @@ public:
     isc::data::ConstElementPtr
     checkConfig(isc::data::ConstElementPtr new_config);
 
-    /// @brief returns pointer to the sole instance of Dhcpv6Srv
+    /// @brief Returns pointer to the sole instance of Dhcpv6Srv
     ///
     /// @return server instance (may return NULL, if called before server is spawned)
     static ControlledDhcpv6Srv* getInstance() {
@@ -129,7 +129,7 @@ private:
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
 
-    /// @brief handler for processing 'shutdown' command
+    /// @brief Handler for processing 'shutdown' command
     ///
     /// This handler processes shutdown command, which initializes shutdown
     /// procedure.
@@ -141,7 +141,7 @@ private:
     commandShutdownHandler(const std::string& command,
                            isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'libreload' command
+    /// @brief Handler for processing 'libreload' command
     ///
     /// This handler processes libreload command, which unloads all hook
     /// libraries and reloads them.
@@ -154,7 +154,7 @@ private:
     commandLibReloadHandler(const std::string& command,
                             isc::data::ConstElementPtr args);
 
-    /// @brief handler for processing 'config-reload' command
+    /// @brief Handler for processing 'config-reload' command
     ///
     /// This handler processes config-reload command, which processes
     /// configuration specified in args parameter.
@@ -307,7 +307,6 @@ private:
                               const bool remove_lease,
                               const uint16_t max_unwarned_cycles);
 
-
     /// @brief Deletes reclaimed leases and reschedules the timer.
     ///
     /// This is a wrapper method for @c AllocEngine::deleteExpiredReclaimed6.
@@ -332,10 +331,11 @@ private:
     ///
     /// If the maximum number of retries has been exhausted an error is logged
     /// and the server shuts down.
+    ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
     ///
-    void dbReconnect(ReconnectCtlPtr db_reconnect_ctl);
+    void dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback DB backends should invoke upon loss of connectivity
     ///
@@ -353,7 +353,9 @@ private:
     ///
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
-    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
+    ///
+    /// @return false if reconnect is not configured, true otherwise
+    bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,8 +21,8 @@ namespace dhcp {
 /// @brief This class encapsulates DHCPv6 Vendor Class and DHCPv4 V-I Vendor
 /// Class options.
 ///
-/// The format of DHCPv6 Vendor Class option (16) is described in section 22.16
-/// of RFC3315 and the format of the DHCPv4 V-I Vendor Class option (124) is
+/// The format of DHCPv6 Vendor Class option (16) is described in section 21.16
+/// of RFC 8415 and the format of the DHCPv4 V-I Vendor Class option (124) is
 /// described in section 3 of RFC3925. Each of these options carries enterprise
 /// id followed by the collection of tuples carrying opaque data. A single tuple
 /// consists of the field holding opaque data length and the actual data.
@@ -178,7 +178,7 @@ private:
     ///
     /// For DHCPv6, The Vendor Class option mandates a 2-byte
     /// OPTION_VENDOR_CLASS followed by a 2-byte option-len with a 4-byte
-    /// enterprise-number.  While section 22.16 of RFC3315 specifies that the
+    /// enterprise-number.  While section 21.16 of RFC 8415 specifies that the
     /// information contained within the data area can contain one or more
     /// opaque fields, the inclusion of the vendor-class-data is not mandatory
     /// and therefore not factored into the overall possible minimum length.

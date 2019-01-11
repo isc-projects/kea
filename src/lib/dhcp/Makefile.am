@@ -24,6 +24,7 @@ libkea_dhcp___la_SOURCES += opaque_data_tuple.cc opaque_data_tuple.h
 libkea_dhcp___la_SOURCES += option4_addrlst.cc option4_addrlst.h
 libkea_dhcp___la_SOURCES += option4_client_fqdn.cc option4_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_addrlst.cc option6_addrlst.h
+libkea_dhcp___la_SOURCES += option6_auth.cc option6_auth.h
 libkea_dhcp___la_SOURCES += option6_client_fqdn.cc option6_client_fqdn.h
 libkea_dhcp___la_SOURCES += option6_ia.cc option6_ia.h
 libkea_dhcp___la_SOURCES += option6_iaaddr.cc option6_iaaddr.h
@@ -42,6 +43,11 @@ libkea_dhcp___la_SOURCES += option_space_container.h
 libkea_dhcp___la_SOURCES += option_string.cc option_string.h
 libkea_dhcp___la_SOURCES += option_vendor.cc option_vendor.h
 libkea_dhcp___la_SOURCES += option_vendor_class.cc option_vendor_class.h
+libkea_dhcp___la_SOURCES += packet_queue.h 
+libkea_dhcp___la_SOURCES += packet_queue_mgr.h 
+libkea_dhcp___la_SOURCES += packet_queue_mgr4.cc packet_queue_mgr4.h 
+libkea_dhcp___la_SOURCES += packet_queue_mgr6.cc packet_queue_mgr6.h 
+libkea_dhcp___la_SOURCES += packet_queue_ring.h
 libkea_dhcp___la_SOURCES += pkt.cc pkt.h
 libkea_dhcp___la_SOURCES += pkt4.cc pkt4.h
 libkea_dhcp___la_SOURCES += pkt4o6.cc pkt4o6.h
@@ -50,6 +56,7 @@ libkea_dhcp___la_SOURCES += pkt_filter.h pkt_filter.cc
 libkea_dhcp___la_SOURCES += pkt_filter6.h pkt_filter6.cc
 libkea_dhcp___la_SOURCES += pkt_filter_inet.cc pkt_filter_inet.h
 libkea_dhcp___la_SOURCES += pkt_filter_inet6.cc pkt_filter_inet6.h
+libkea_dhcp___la_SOURCES += socket_info.h 
 
 # Utilize Linux Packet Filtering on Linux.
 if OS_LINUX
@@ -77,7 +84,7 @@ libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_dhcp___la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_dhcp___la_LIBADD  += $(BOOST_LIBS)
 libkea_dhcp___la_LIBADD  += $(CRYPTO_LIBS)
-libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 8:0:0
+libkea_dhcp___la_LDFLAGS  = -no-undefined -version-info 11:0:0
 libkea_dhcp___la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = README libdhcp++.dox
@@ -101,6 +108,7 @@ libkea_dhcp___include_HEADERS = \
 	option4_addrlst.h \
 	option4_client_fqdn.h \
 	option6_addrlst.h \
+	option6_auth.h \
 	option6_client_fqdn.h \
 	option6_ia.h \
 	option6_iaaddr.h \
@@ -118,6 +126,11 @@ libkea_dhcp___include_HEADERS = \
 	option_string.h \
 	option_vendor.h \
 	option_vendor_class.h \
+	packet_queue.h \
+	packet_queue_mgr.h \
+	packet_queue_mgr4.h \
+	packet_queue_mgr6.h \
+	packet_queue_ring.h \
 	pkt.h \
 	pkt4.h \
 	pkt4o6.h \
@@ -127,6 +140,7 @@ libkea_dhcp___include_HEADERS = \
 	pkt_filter_inet.h \
 	pkt_filter_inet6.h \
 	protocol_util.h \
+	socket_info.h \
 	std_option_defs.h
 
 if OS_LINUX

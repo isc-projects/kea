@@ -6,15 +6,14 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <util/buffer.h>
 #include <util/optional_value.h>
 
@@ -29,6 +28,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -66,11 +66,12 @@ const size_t DHCP_IDENTIFIER_MAX_LEN = 128;
 /// listed below:
 /// - zero or null IPv4 address indicates that there is no reservation for the
 ///   IPv4 address for the host,
-/// - zero or null subnet identifier (either IPv4 or IPv6) indicates that
+/// - null subnet identifier (either IPv4 or IPv6) indicates that
 ///   this subnet identifier must be ignored. Specifically, this is the case
 ///   when host reservation is created for the DHCPv4 server, the IPv6 subnet id
 ///   should be ignored. Conversely, when host reservation is created for the
 ///   DHCPv6 server, the IPv4 subnet id should be ignored.
+///   NOTE! Zero is a the "global" subnet id as Kea 1.5.0
 ///
 /// To exclude those special case values, the Postgres backend uses partial
 /// indexes, i.e. the only values that are included in the index are those that
@@ -95,8 +96,9 @@ private:
     static const int DHCP4_NEXT_SERVER_COL = 10;
     static const int DHCP4_SERVER_HOSTNAME_COL = 11;
     static const int DHCP4_BOOT_FILE_NAME_COL = 12;
+    static const int AUTH_KEY_COL = 13;
     /// @brief Number of columns returned for SELECT queries send by this class.
-    static const size_t HOST_COLUMNS = 13;
+    static const size_t HOST_COLUMNS = 14;
 
 public:
 
@@ -125,6 +127,7 @@ public:
         columns_[DHCP4_NEXT_SERVER_COL] = "dhcp4_next_server";
         columns_[DHCP4_SERVER_HOSTNAME_COL] = "dhcp4_server_hostname";
         columns_[DHCP4_BOOT_FILE_NAME_COL] = "dhcp4_boot_file_name";
+        columns_[AUTH_KEY_COL] = "auth_key";
 
         BOOST_STATIC_ASSERT(12 < HOST_COLUMNS);
     };
@@ -206,10 +209,20 @@ public:
             bind_array->add(host->getIdentifierType());
 
             // dhcp4_subnet_id : INT NULL
-            bind_array->add(host->getIPv4SubnetID());
+            if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED) {
+                bind_array->addNull();
+            }
+            else {
+                bind_array->add(host->getIPv4SubnetID());
+            }
 
             // dhcp6_subnet_id : INT NULL
-            bind_array->add(host->getIPv6SubnetID());
+            if (host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
+                bind_array->addNull();
+            }
+            else {
+                bind_array->add(host->getIPv6SubnetID());
+            }
 
             // ipv4_address : BIGINT NULL
             bind_array->add((host->getIPv4Reservation()));
@@ -242,6 +255,14 @@ public:
             // dhcp4_boot_file_name : VARCHAR(128)
             bind_array->add(host->getBootFileName());
 
+            // add auth keys
+            std::string key = host->getKey().ToText();
+            if (key.empty()) { 
+                bind_array->addNull();
+            } else {
+                bind_array->add(key);
+            }
+        
         } catch (const std::exception& ex) {
             host_.reset();
             isc_throw(DbOperationError,
@@ -316,14 +337,14 @@ public:
             static_cast<Host::IdentifierType>(type);
 
         // dhcp4_subnet_id : INT NULL
-        uint32_t subnet_id(0);
+        uint32_t subnet_id(SUBNET_ID_UNUSED);
         if (!isColumnNull(r, row, DHCP4_SUBNET_ID_COL)) {
             getColumnValue(r, row, DHCP4_SUBNET_ID_COL, subnet_id);
         }
         SubnetID dhcp4_subnet_id = static_cast<SubnetID>(subnet_id);
 
         // dhcp6_subnet_id : INT NULL
-        subnet_id = 0;
+        subnet_id = SUBNET_ID_UNUSED;
         if (!isColumnNull(r, row, DHCP6_SUBNET_ID_COL)) {
             getColumnValue(r, row, DHCP6_SUBNET_ID_COL, subnet_id);
         }
@@ -379,6 +400,12 @@ public:
             getColumnValue(r, row, DHCP4_BOOT_FILE_NAME_COL, dhcp4_boot_file_name);
         }
 
+        // auth_key : VARCHAR(16)
+        std::string auth_key;
+        if (!isColumnNull(r, row, AUTH_KEY_COL)) {
+            getColumnValue(r, row, AUTH_KEY_COL, auth_key);
+        }
+
         // Finally, attempt to create the new host.
         HostPtr host;
         try {
@@ -387,7 +414,7 @@ public:
                                 dhcp6_subnet_id, ipv4_reservation, hostname,
                                 dhcp4_client_classes, dhcp6_client_classes,
                                 dhcp4_next_server, dhcp4_server_hostname,
-                                dhcp4_boot_file_name));
+                                dhcp4_boot_file_name, AuthKey(auth_key)));
 
             // Set the user context if there is one.
             if (!user_context.empty()) {
@@ -1299,7 +1326,7 @@ public:
     /// @return 0 if return_last_id is false, otherwise it returns the
     /// the value in the result set in the first col of the first row.
     ///
-    /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    /// @throw isc::db::DuplicateEntry Database throws duplicate entry error
     uint64_t addStatement(PgSqlHostDataSourceImpl::StatementIndex stindex,
                           PsqlBindArrayPtr& bind,
                           const bool return_last_id = false);
@@ -1402,7 +1429,7 @@ public:
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
 
@@ -1456,7 +1483,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, "
      "  h.hostname, h.dhcp4_client_classes, h.dhcp6_client_classes, "
      "  h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o4.option_id, o4.code, o4.value, o4.formatted_value, o4.space, "
      "  o4.persistent, o4.user_context, "
      "  o6.option_id, o6.code, o6.value, o6.formatted_value, o6.space, "
@@ -1479,7 +1507,8 @@ TaggedStatementArray tagged_statements = { {
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context "
      "FROM hosts AS h "
@@ -1498,7 +1527,8 @@ TaggedStatementArray tagged_statements = { {
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context "
      "FROM hosts AS h "
@@ -1519,7 +1549,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
      "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context, "
      "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
@@ -1542,7 +1573,8 @@ TaggedStatementArray tagged_statements = { {
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
      "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context "
      "FROM hosts AS h "
@@ -1565,7 +1597,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
      "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context, "
      "  r.reservation_id, r.address, r.prefix_len, r.type, "
@@ -1593,7 +1626,8 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
      "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
      "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
-     "  h.dhcp4_next_server, h.dhcp4_server_hostname, h.dhcp4_boot_file_name, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context, "
      "  r.reservation_id, r.address, r.prefix_len, r.type, "
@@ -1607,7 +1641,7 @@ TaggedStatementArray tagged_statements = { {
 
     // PgSqlHostDataSourceImpl::INSERT_HOST
     // Inserts a host into the 'hosts' table. Returns the inserted host id.
-    {12,
+    {13,
      { OID_BYTEA, OID_INT2,
        OID_INT8, OID_INT8, OID_INT8, OID_VARCHAR,
        OID_VARCHAR, OID_VARCHAR, OID_TEXT },
@@ -1615,8 +1649,8 @@ TaggedStatementArray tagged_statements = { {
      "INSERT INTO hosts(dhcp_identifier, dhcp_identifier_type, "
      "  dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, "
      "  dhcp4_client_classes, dhcp6_client_classes, user_context, "
-     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name) "
-     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) "
+     "  dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key) "
+     "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13) "
      "RETURNING host_id"
     },
 

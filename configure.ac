@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.4.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.5.0-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -43,7 +43,12 @@ else
 fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
-AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+# We do not want to put this in a config.h, because it messes up ccache
+# horribly. When building different branches, the commit-id is different
+# and since the config.h is included in most files *and* has a different
+# content, ccache can't use cached content and thus has to do full compilation.
+# Now it is in kea_version.h and config.status substitutes it.
+AC_SUBST(KEA_SRCID)
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
@@ -73,6 +78,9 @@ if test "$cross_compiling" = "yes"; then
     fi
 fi
 AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
+
+# pkg-config can be required.
+AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -410,7 +418,7 @@ case "$host" in
         ;;
 esac
 if [ test $kea_undefined_pthread_behavior = "yes" ]; then
-   AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
+    AC_DEFINE([HAS_UNDEFINED_PTHREAD_BEHAVIOR], [1], [Does this platform have some undefined pthreads behavior?])
 fi
 
 # Our experiments have shown Solaris 10 has broken support for the
@@ -569,6 +577,20 @@ AC_TRY_COMPILE([
 [struct sockaddr sa; sa.sa_len = 0; return (0);],
         [AC_MSG_RESULT(yes)
         AC_DEFINE(HAVE_SA_LEN, 1, [Define to 1 if sockaddr has a sa_len member, and corresponding sin_len and sun_len])],
+        AC_MSG_RESULT(no))
+
+AC_MSG_CHECKING(for usuable C++11 regex)
+AC_TRY_RUN([
+#include <regex>
+#include <iostream>
+int main() {
+  const std::regex regex(".*");
+  const std::string string = "This should match!";
+  const auto result = std::regex_search(string, regex);
+  return result ? EXIT_SUCCESS : EXIT_FAILURE;
+}],
+        [AC_MSG_RESULT(yes)
+        AC_DEFINE(USE_REGEX, 1, [Define to 1 if C++11 regex is usable])],
         AC_MSG_RESULT(no))
 
 enable_gtest="no"
@@ -803,7 +825,6 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
     CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
@@ -815,8 +836,8 @@ if test "$CQL_CONFIG" != "" ; then
     fi
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
-    CQL_CPPFLAGS="`$CQL_CONFIG --cflags-only-other $cql_lib` $CQL_INCLUDEDIR"
-    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"    
+    CQL_CPPFLAGS="$CQL_INCLUDEDIR `$CQL_CONFIG --cflags-only-other $cql_lib`"
+    CQL_LIBS="`$CQL_CONFIG --libs $cql_lib`"
     CQL_VERSION=`$CQL_CONFIG --modversion $cql_lib`
 
     AC_SUBST(CQL_CPPFLAGS)
@@ -846,6 +867,104 @@ fi
 
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
+
+DISTCHECK_SYSREPO_CONFIGURE_FLAG=
+sysrepo_config="no"
+AC_ARG_WITH([sysrepo],
+  AC_HELP_STRING([--with-sysrepo=PATH],
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
+    [sysrepo_config="$withval"])
+
+if test "${sysrepo_config}" = "yes" ; then
+    SYSREPO_CONFIG="$PKG_CONFIG"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
+elif test "${sysrepo_config}" != "no" ; then
+    SYSREPO_CONFIG="${sysrepo_config}"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
+fi
+AC_SUBST(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
+
+if test "$SYSREPO_CONFIG" != "" ; then
+    if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
+        AC_MSG_ERROR([--with-sysrepo should point to a pkg-config or sysrepo_config program])
+    fi
+
+    # Let's get the configuration environment for pure Sysrepo (written in C) first
+    SYSREPO_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libsysrepo`
+    SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
+    SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
+    SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+    SYSREPO_REPO=`$SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo`
+
+    # Now get the environment for C++ bindings for Sysrepo.
+    SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
+    SYSREPOCPP_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libSysrepo-cpp`"
+    SYSREPOCPP_LIBS="`$SYSREPO_CONFIG --libs libSysrepo-cpp`"
+    SYSREPOCPP_VERSION=`$SYSREPO_CONFIG --modversion libSysrepo-cpp`
+
+    # If include paths are equal, there's no need to include both. But if they're different,
+    # we need both.
+    if test "${SYSREPO_INCLUDEDIR}" != "${SYSREPOCPP_INCLUDEDIR}"; then
+       SYSREPO_INCLUDEDIR="${SYSREPO_INCLUDEDIR} ${SYSREPOCPP_INCLUDEDIR}"
+    fi
+
+    if test "${SYSREPO_CPPFLAGS}" != "${SYSREPOCPP_CPPFLAGS}"; then
+       SYSREPO_CPPFLAGS="${SYSREPO_CPPFLAGS} ${SYSREPOCPP_CPPFLAGS}"
+    fi
+
+    if test "${SYSREPO_LIBS}" != "${SYSREPOCPP_LIBS}"; then
+       SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
+    fi
+
+    AC_SUBST(SYSREPO_CPPFLAGS)
+    AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_REPO)
+
+    # Check that a simple program using Sysrepo functions can compile and link.
+    CPPFLAGS_SAVED="$CPPFLAGS"
+    LIBS_SAVED="$LIBS"
+
+    CPPFLAGS="$SYSREPO_CPPFLAGS $CPPFLAGS"
+    LIBS="$SYSREPO_LIBS $LIBS"
+
+    AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM([extern "C" {
+                              #include <sysrepo.h>
+                              }],
+                              [sr_conn_ctx_t *connection = NULL;
+                              sr_session_ctx_t *session = NULL;
+                              sr_connect("configure_test", SR_CONN_DEFAULT, &connection);
+                              sr_disconnect(connection);])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... yes])],
+            [AC_MSG_RESULT([checking for Sysrepo headers and library... no])
+             AC_MSG_ERROR([Needs Sysrepo library])]
+    )
+
+    AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM(
+            [#include <sysrepo-cpp/Session.hpp>],
+            [sysrepo::Connection("conn-name");])],
+        [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <sysrepo-cpp/Session.h>],
+                [Connection("conn-name");])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... old])
+             AC_DEFINE([HAVE_PRE_0_7_6_SYSREPO], [1], [Using sysrepo < 0.7.6])],
+             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
+              AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.)])]
+        )]
+    )
+
+    CPPFLAGS=$CPPFLAGS_SAVED
+    LIBS=$LIBS_SAVED
+
+    # Note that Sysrepo is present in the config.h file
+    AC_DEFINE([HAVE_SYSREPO], [1], [SYSREPO is present])
+fi
+
+# ... and at the shell level, so Makefile.am can take action depending on this.
+AM_CONDITIONAL(HAVE_SYSREPO, test "$SYSREPO_CONFIG" != "")
 
 # Check for log4cplus
 DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=
@@ -1172,6 +1291,10 @@ fi
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
+# Use our 'coroutine' header from ext
+# CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+
+#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
@@ -1355,12 +1478,13 @@ AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
                  dns++.pc
                  doc/Makefile
-                 doc/design/Makefile
-                 doc/design/datasrc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
+                 doc/docgen/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
+                 ext/coroutine/Makefile
+                 kea_version.h
                  m4macros/Makefile
                  src/Makefile
                  src/bin/Makefile
@@ -1400,6 +1524,12 @@ AC_CONFIG_FILES([Makefile
                  src/bin/keactrl/tests/keactrl_tests.sh
                  src/bin/lfc/Makefile
                  src/bin/lfc/tests/Makefile
+                 src/bin/netconf/Makefile
+                 src/bin/netconf/tests/Makefile
+                 src/bin/netconf/tests/shtests/Makefile
+                 src/bin/netconf/tests/shtests/netconf_tests.sh
+                 src/bin/netconf/tests/test_data_files_config.h
+                 src/bin/netconf/tests/test_libraries.h
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
@@ -1433,8 +1563,13 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/config_backend/Makefile
+                 src/lib/config_backend/tests/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
+                 src/lib/database/Makefile
+                 src/lib/database/tests/Makefile
+                 src/lib/database/testutils/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile
@@ -1471,6 +1606,15 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
+                 src/lib/mysql/Makefile
+                 src/lib/mysql/testutils/Makefile
+                 src/lib/mysql/tests/Makefile
+                 src/lib/pgsql/Makefile
+                 src/lib/pgsql/tests/Makefile
+                 src/lib/pgsql/testutils/Makefile
+                 src/lib/cql/Makefile
+                 src/lib/cql/tests/Makefile
+                 src/lib/cql/testutils/Makefile
                  src/lib/process/Makefile
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
@@ -1487,11 +1631,16 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/yang/Makefile
+                 src/lib/yang/pretests/Makefile
+                 src/lib/yang/tests/Makefile
+                 src/lib/yang/testutils/Makefile
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
                  src/share/database/scripts/cql/Makefile
                  src/share/database/scripts/cql/upgrade_1.0_to_2.0.sh
+                 src/share/database/scripts/cql/upgrade_2.0_to_3.0.sh
                  src/share/database/scripts/mysql/Makefile
                  src/share/database/scripts/mysql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/mysql/upgrade_2.0_to_3.0.sh
@@ -1501,6 +1650,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.0_to_5.1.sh
                  src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
+                 src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
@@ -1508,6 +1658,9 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.1_to_3.2.sh
                  src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
+                 src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
+                 src/share/yang/Makefile
+                 src/share/yang/modules/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1680,6 +1833,23 @@ else
 cat >> config.report << END
 
 Cassandra CQL:
+  no
+END
+fi
+
+if test "$SYSREPO_CPPFLAGS" != "" ; then
+cat >> config.report << END
+
+Sysrepo:
+  SYSREPO_VERSION:     ${SYSREPO_VERSION}
+  SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
+  SYSREPO_LIBS:        ${SYSREPO_LIBS}
+  SYSREPO_REPO:        ${SYSREPO_REPO}
+END
+else
+cat >> config.report << END
+
+Sysrepo:
   no
 END
 fi

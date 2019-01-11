@@ -34,12 +34,16 @@
     <section>
       <title>Supported Platforms</title>
       <para>
-        Kea is officially supported on Red Hat Enterprise Linux,
-	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.4.0 builds have been tested on (in no
-        particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
-        Ubuntu 14.04, Ubuntu 16.04, Fedora 25, Fedore 26, Fedora 27,
-        CentOS Linux 7, FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11, Debian 9
+        Kea is officially supported on CentOS, Fedora, Ubuntu, Debian and FreeBSD systems.
+        It is also likely to work on many other platforms. Kea-&keaversion; builds have been tested on:
+        <itemizedlist>
+          <listitem>CentOS Linux — 7.1804 (aka 7.5)</listitem>
+          <listitem>Fedora — 28, 29</listitem>
+          <listitem>Ubuntu — 16.04, 18.04</listitem>
+          <listitem>Debian GNU/Linux — 7, 8, 9</listitem>
+          <listitem>FreeBSD — 11.0</listitem>
+          <listitem>macOS — 10.13, 10.14</listitem>
+        </itemizedlist>
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
@@ -63,9 +67,9 @@
         Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
         crypto library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
-        version 1.9 or later. As an alternative to Botan, Kea can use the
+        version 1.9 or later. Note that support for Botan versions earlier than 2.0 will be dropped in Kea 1.6.0 release. As an alternative to Botan, Kea can use the
         OpenSSL crypto library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
-        version 1.0.1 or later.
+        version 1.0.2 or later.
             </simpara>
         </listitem>
 
@@ -75,6 +79,12 @@
         (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://log4cplus.sourceforge.net/">http://log4cplus.sourceforge.net/</uri>).
         It requires log4cplus version 1.0.3 or later.
             </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+            Kea requires Boost system library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>) at run-time, as building with header only version of Boost is no longer recommended.
+          </simpara>
         </listitem>
 
         <listitem>
@@ -99,6 +109,24 @@
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+    As of Kea 1.4.0 release, the integration with RADIUS is provided in Kea via the hooks
+    library available to our Support Customers. Use of this library requires
+    FreeRadius-client library to be present on the system where Kea is running.
+    This is an optional dependency in that Kea can be built without RADIUS support.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+    As of 1.5.0 release, Kea provides NETCONF interface with the kea-netconf agent.
+    This Kea module is built optionally and requires Sysrepo software when used.
+    Building Kea with NETCONF support requires many dependencies to be installed
+    which are described in more details in <xref linkend="netconf-install"/>.
+          </simpara>
         </listitem>
       </itemizedlist>
     </section>
@@ -171,8 +199,16 @@
           <listitem>
             <simpara>
               <command>kea-ctrl-agent</command> —
-              Kea Control Agent (CA) is a daemon exposes a RESTful control
+              Kea Control Agent (CA) is a daemon that exposes a RESTful control
               interface for managing Kea servers.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
+              <command>kea-netconf</command> -
+              Kea netconf is an agent that provides a YANG/NETCONF interface
+              for the Kea environment.
             </simpara>
           </listitem>
 

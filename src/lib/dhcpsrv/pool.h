@@ -26,7 +26,7 @@ namespace dhcp {
 ///
 /// Stores information about pool of IPv4 or IPv6 addresses.
 /// That is a basic component of a configuration.
-class Pool : public UserContext {
+class Pool : public isc::data::UserContext {
 
 public:
     /// @note:

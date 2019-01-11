@@ -72,6 +72,31 @@ CommandCreator::createLease4GetAll() {
 }
 
 ConstElementPtr
+CommandCreator::createLease4GetPage(const Lease4Ptr& last_lease4,
+                                    const uint32_t limit) {
+    // Zero value is not allowed.
+    if (limit == 0) {
+        isc_throw(BadValue, "limit value for lease4-get-page command must not be 0");
+    }
+
+    // Get the last lease returned on the previous page. A null pointer means that
+    // we're fetching first page. In that case a keyword "start" is used to indicate
+    // that first page should be returned.
+    ElementPtr from_element = Element::create(last_lease4 ? last_lease4->addr_.toText() : "start");
+    // Set the maximum size of the page.
+    ElementPtr limit_element = Element::create(static_cast<long long int>(limit));
+    // Put both parameters into arguments map.
+    ElementPtr args = Element::createMap();
+    args->set("from", from_element);
+    args->set("limit", limit_element);
+
+    // Create the command.
+    ConstElementPtr command = config::createCommand("lease4-get-page", args);
+    insertService(command, HAServerType::DHCPv4);
+    return (command);
+}
+
+ConstElementPtr
 CommandCreator::createLease6Update(const Lease6& lease6) {
     ElementPtr lease_as_json = lease6.toElement();
     insertLeaseExpireTime(lease_as_json);
@@ -93,6 +118,31 @@ CommandCreator::createLease6Delete(const Lease6& lease6) {
 ConstElementPtr
 CommandCreator::createLease6GetAll() {
     ConstElementPtr command = config::createCommand("lease6-get-all");
+    insertService(command, HAServerType::DHCPv6);
+    return (command);
+}
+
+ConstElementPtr
+CommandCreator::createLease6GetPage(const Lease6Ptr& last_lease6,
+                                    const uint32_t limit) {
+    // Zero value is not allowed.
+    if (limit == 0) {
+        isc_throw(BadValue, "limit value for lease6-get-page command must not be 0");
+    }
+
+    // Get the last lease returned on the previous page. A null pointer means that
+    // we're fetching first page. In that case a keyword "start" is used to indicate
+    // that first page should be returned.
+    ElementPtr from_element = Element::create(last_lease6 ? last_lease6->addr_.toText() : "start");
+    // Set the maximum size of the page.
+    ElementPtr limit_element = Element::create(static_cast<long long int>(limit));
+    // Put both parameters into arguments map.
+    ElementPtr args = Element::createMap();
+    args->set("from", from_element);
+    args->set("limit", limit_element);
+
+    // Create the command.
+    ConstElementPtr command = config::createCommand("lease6-get-page", args);
     insertService(command, HAServerType::DHCPv6);
     return (command);
 }

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,28 +7,6 @@
 /**
 
  @page unitTests Building Kea with Unit Tests
-
-@section unitTestsIntroduction Introduction
-
-Kea uses the Google C++ Testing Framework (also called googletest or gtest) as a
-base for our C++ unit-tests. See https://github.com/google/googletest for
-details. We used to have Python unit-tests inherited from BIND10
-days but have been removed, so please do not write any new Kea unit
-tests in Python. If you want to write DHCP tests in Python, we encourage you to
-take a look at ISC Forge: http://kea.isc.org/wiki/IscForge .
-
-You must have \c gtest installed or at least extracted in a directory
-before compiling Kea unit-tests.  To enable unit-tests in Kea, use:
-
-@code
-./configure --with-gtest=/path/to/your/gtest/dir
-@endcode
-
-or
-
-@code
-./configure --with-gtest-source=/path/to/your/gtest/dir
-@endcode
 
 Depending on how you compiled or installed \c gtest (e.g. from sources
 or using some package management system) one of those two switches will
@@ -131,7 +109,7 @@ The following environment variable can affect the unit tests:
 
   The unit tests are run automatically when "make check" is executed (providing
   that Kea has been build with the \c --with-mysql switch (see the installation
-  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  section in the <a href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html">Kea Administrator
   Reference Manual</a>).
 
  @subsection pgsqlUnitTestsPrerequisites PostgreSQL Database
@@ -257,7 +235,7 @@ local   all             postgres                                trust
 
   The unit tests are run automatically when "make check" is executed (providing
   that Kea has been build with the \c --with-pgsql switch (see the installation
-  section in the <a href="http://kea.isc.org/docs/kea-guide.html">Kea Administrator
+  section in the <a href="https://kb.isc.org/docs/kea-administrator-reference-manual">Kea Administrator
   Reference Manual</a>).
 
 

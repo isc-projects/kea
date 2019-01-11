@@ -790,9 +790,11 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
     client.config_.leases_[0].addr_ = IOAddress("2001:db8:1:10::");
     // Try to Rebind. The client will use correct IAID but will specify a
     // wrong prefix. The server will discover that the client has a binding
-    // but the prefix will not match. According to the RFC3633, section 12.2.
-    // the server has to return the lease with lifetimes set to 0, when there
-    // is a binding for the client but the prefix doesn't match.
+    // but the prefix will not match. According to the RFC 8415, section 18.3.5
+    // the server may return delegated prefix with lifetime of 0 when it
+    // finds that the lease entry for the particular IAID but the prefix
+    // is not appropriate. This constitues explicit notification to the
+    // client to not use this prefix.
     ASSERT_NO_THROW(client.doRebind());
     // Make sure that the server has discarded client's message. In such case,
     // the message sent back to the client should be NULL.
@@ -829,7 +831,7 @@ TEST_F(RebindTest, directClientPDChangingPrefix) {
 /// @todo Extend PD tests to cover same prefix by different length.
 
 // This test checks that the Rebind message is discarded by the server if it
-// has been sent to unicast address (RFC3315, section 15).
+// has been sent to unicast address (RFC 8415, section 18.4).
 TEST_F(RebindTest, unicast) {
     Dhcp6Client client;
     // Configure client to request IA_NA.
@@ -840,7 +842,7 @@ TEST_F(RebindTest, unicast) {
     Lease6 lease_client = client.getLease(0);
     // Set the unicast destination address for the Rebind message.
     // The Rebind should be discarded when sent to unicast address,
-    // according to section 15 of RFC3315.
+    // according to section 18.4 of RFC 8415.
     client.setDestAddress(IOAddress("2001:db8:1::1"));
     // Send the Rebind message to a unicast address.
     ASSERT_NO_THROW(client.doRebind());

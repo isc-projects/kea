@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -112,6 +112,9 @@ TEST(CfgSharedNetworks4Test, unparse) {
     network1->setIface("eth0");
     network1->addRelayAddress(IOAddress("198.16.1.1"));
     network1->addRelayAddress(IOAddress("198.16.1.2"));
+    network1->setCalculateTeeTimes(true);
+    network1->setT1Percent(.35);
+    network1->setT2Percent(.655);
 
     network2->setIface("eth1");
     network2->setT1(Triplet<uint32_t>(100));
@@ -125,6 +128,7 @@ TEST(CfgSharedNetworks4Test, unparse) {
     std::string expected =
         "[\n"
         "  {\n"
+        "    \"authoritative\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"dog\",\n"
@@ -137,13 +141,17 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "    \"valid-lifetime\": 300\n"
         "  },\n"
         "  {\n"
+        "    \"authoritative\": false,\n"
+        "    \"calculate-tee-times\": true,\n"
         "    \"interface\": \"eth0\",\n"
         "    \"match-client-id\": true,\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
         "    \"relay\": { \"ip-addresses\": [ \"198.16.1.1\", \"198.16.1.2\" ] },\n"
         "    \"reservation-mode\": \"all\","
-        "    \"subnet4\": [ ]\n"
+        "    \"subnet4\": [ ],\n"
+        "    \"t1-percent\": .35,\n"
+        "    \"t2-percent\": .655\n"
         "  }\n"
         "]\n";
 

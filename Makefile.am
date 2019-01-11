@@ -2,7 +2,9 @@ ACLOCAL_AMFLAGS = -I m4macros ${ACLOCAL_FLAGS}
 # ^^^^^^^^ This has to be the first line and cannot come later in this
 # Makefile.am due to some bork in some versions of autotools.
 
-SUBDIRS = compatcheck tools doc . ext src m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
+# We now build doc after src/, because docgen, a tool to generate API
+# documentation requires libkea-exceptions and libkea-cc.
+SUBDIRS = compatcheck tools . ext src doc m4macros @PREMIUM_DIR@ @CONTRIB_DIR@
 
 USE_LCOV=@USE_LCOV@
 LCOV=@LCOV@
@@ -14,6 +16,7 @@ DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG=@DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG@
 DISTCHECK_KEA_SHELL_CONFIGURE_FLAG=@DISTCHECK_KEA_SHELL_CONFIGURE_FLAG@
 DISTCHECK_PREMIUM_CONFIGURE_FLAG=@DISTCHECK_PREMIUM_CONFIGURE_FLAG@
 DISTCHECK_CONTRIB_CONFIGURE_FLAG=@DISTCHECK_CONTRIB_CONFIGURE_FLAG@
+DISTCHECK_SYSREPO_CONFIGURE_FLAG=@DISTCHECK_SYSREPO_CONFIGURE_FLAG@
 
 OVERALL_COVERAGE_DIR=$(abs_top_builddir)/coverage-cpp-html
 
@@ -42,6 +45,9 @@ DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_PREMIUM_CONFIGURE_FLAG)
 
 # Keep the contrib config
 DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_CONTRIB_CONFIGURE_FLAG)
+
+# keerp the sysrepo config
+DISTCHECK_CONFIGURE_FLAGS += $(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 
 dist_doc_DATA = AUTHORS COPYING ChangeLog README
 
@@ -96,6 +102,7 @@ endif
 if HAVE_BOTAN
 			botan/\* \
 endif
+			ext/coroutine/\* \
 			gtest/\* \
 			include/\* \
 			lib/\eval/\* \
@@ -143,6 +150,9 @@ install-exec-hook:
 EXTRA_DIST  = tools/path_replacer.sh
 EXTRA_DIST += tools/mk_cfgrpt.sh
 
+#### include external sources in the distributed tarball:
+EXTRA_DIST += ext/coroutine/coroutine.hpp
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
 
@@ -150,4 +160,4 @@ CLEANFILES = $(abs_top_builddir)/logger_lockfile
 
 # config.h may be included by headers supplied for building user-written
 # hooks libraries, so we need to include it in the distribution.
-pkginclude_HEADERS = config.h
+pkginclude_HEADERS = config.h kea_version.h

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,7 +62,7 @@ src/bin/dhcp6/json_config_parser.cc.
 
 During 1.2 milestone it has been decided to significantly refactor the
 parsers as their old implementation became unsustainable. For the brief overview
-of the problems, see ticket 5014 (http://kea.isc.org/ticket/5014). In
+of the problems, see ticket 5014 (http://oldkea.isc.org/ticket/5014). In
 general, the following issues of the existing code were noted:
 
 -# parsers are overwhelmingly complex. Even though each parser is relatively
@@ -343,7 +343,7 @@ mode). Finally, the syntactic context allows the error message to be more
 descriptive if the input string does not parse properly.
 
 Details of the refactor of the classes derived from DhcpConfigParser are
-documented in http://kea.isc.org/wiki/SimpleParser.
+documented in https://gitlab.isc.org/isc-projects/kea/wikis/designs/simple-parser-design.
 
 For a generic description of the conflict avoidance, see @ref parserFlex.
 
@@ -518,7 +518,7 @@ and is described in @ref dhcpv6ClassifierFull.
 
 For each incoming packet, @ref isc::dhcp::Dhcpv6Srv::classifyPacket() method is
 called.  It attempts to extract content of the vendor class option and interprets
-as a name of the class. Although the RFC3315 says that the vendor class may
+as a name of the class. Although the RFC 8415 says that the vendor class may
 contain more than one chunk of data, the existing code handles only one data
 block, because that is what actual devices use. For now, the code has been
 tested with two classes used in cable modem networks: eRouter1.0 and docsis3.0,

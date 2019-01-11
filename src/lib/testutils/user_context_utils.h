@@ -23,6 +23,12 @@ namespace test {
 /// @return a processed copy of element or unmodified element
 isc::data::ElementPtr moveComments(isc::data::ElementPtr element);
 
+/// @brief Move comment entries to user-context (const variant)
+///
+/// @param element
+/// @return a processed copy of element or unmodified element
+isc::data::ConstElementPtr moveComments(isc::data::ConstElementPtr element);
+
 /// @brief Extract comment entries from user-context
 ///
 /// Process an element looking for user-context entries carrying
@@ -34,6 +40,12 @@ isc::data::ElementPtr moveComments(isc::data::ElementPtr element);
 /// @param element
 /// @return a processed copy of element or unmodified element
 isc::data::ElementPtr extractComments(isc::data::ElementPtr element);
+
+/// @brief Extract comment entries from user-context (const variant)
+///
+/// @param element
+/// @return a processed copy of element or unmodified element
+isc::data::ConstElementPtr extractComments(isc::data::ConstElementPtr element);
 
 }; // end of isc::test namespace
 }; // end of isc namespace

@@ -57,7 +57,6 @@ libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 TESTS += libdhcpsrv_unittests
 
 libdhcpsrv_unittests_SOURCES  = run_unittests.cc
-libdhcpsrv_unittests_SOURCES += addr_utilities_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_utils.cc alloc_engine_utils.h
 libdhcpsrv_unittests_SOURCES += alloc_engine_expiration_unittest.cc
 libdhcpsrv_unittests_SOURCES += alloc_engine_hooks_unittest.cc
@@ -85,9 +84,7 @@ libdhcpsrv_unittests_SOURCES += csv_lease_file4_unittest.cc
 libdhcpsrv_unittests_SOURCES += csv_lease_file6_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_client_unittest.cc
 libdhcpsrv_unittests_SOURCES += d2_udp_unittest.cc
-libdhcpsrv_unittests_SOURCES += daemon_unittest.cc
-libdhcpsrv_unittests_SOURCES += database_connection_unittest.cc
-libdhcpsrv_unittests_SOURCES += dbaccess_parser_unittest.cc
+libdhcpsrv_unittests_SOURCES += dhcp_queue_control_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp4o6_ipc_unittest.cc
 libdhcpsrv_unittests_SOURCES += duid_config_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += expiration_config_parser_unittest.cc
@@ -102,8 +99,6 @@ libdhcpsrv_unittests_SOURCES += lease_file_loader_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_factory_unittest.cc
 libdhcpsrv_unittests_SOURCES += lease_mgr_unittest.cc
-libdhcpsrv_unittests_SOURCES += logging_unittest.cc
-libdhcpsrv_unittests_SOURCES += logging_info_unittest.cc
 libdhcpsrv_unittests_SOURCES += generic_lease_mgr_unittest.cc generic_lease_mgr_unittest.h
 libdhcpsrv_unittests_SOURCES += memfile_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += dhcp_parsers_unittest.cc
@@ -113,16 +108,15 @@ libdhcpsrv_unittests_SOURCES += mysql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += mysql_host_data_source_unittest.cc
 endif
 if HAVE_PGSQL
-libdhcpsrv_unittests_SOURCES += pgsql_exchange_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += pgsql_host_data_source_unittest.cc
 endif
 if HAVE_CQL
-libdhcpsrv_unittests_SOURCES += cql_connection_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_lease_mgr_unittest.cc
 libdhcpsrv_unittests_SOURCES += cql_host_data_source_unittest.cc
 endif
 libdhcpsrv_unittests_SOURCES += pool_unittest.cc
+libdhcpsrv_unittests_SOURCES += sanity_checks_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_parser_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_network_unittest.cc
 libdhcpsrv_unittests_SOURCES += shared_networks_list_parser_unittest.cc
@@ -159,14 +153,41 @@ libdhcpsrv_unittests_LDFLAGS  += $(CQL_LIBS)
 endif
 
 libdhcpsrv_unittests_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+
+if HAVE_MYSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+endif
+
+if HAVE_PGSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+endif
+
+if HAVE_CQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
+endif
+
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
+
+if HAVE_MYSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdhcpsrv_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

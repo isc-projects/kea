@@ -90,6 +90,11 @@ If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
 
+% DHCP6_CONFIG_PACKET_QUEUE DHCPv6 packet queue info after configuration: %1
+This informational message is emitted during DHCPv6 server configuration,
+immediately after configuring the DHCPv6 packet queue.  The information
+shown depends upon the packet queue type selected.
+
 % DHCP6_CONFIG_RECEIVED received configuration: %1
 A debug message listing the configuration received by the DHCPv6 server.
 The source of that configuration depends on used configuration backend.
@@ -113,7 +118,7 @@ An error message indicating that an attempt to reconnect to the lease and/or
 host data bases has failed.  This occurs after connectivity to either one
 has been lost and an automatic attempt to reconnect has failed.
 
-% DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
+% DHCP6_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An informational message indicating that the server is scheduling the next
 attempt to reconnect to its lease and/or host databases.  This occurs when the
 server has lost databse connectivity and is attempting to reconnect

@@ -51,12 +51,13 @@
         "max-queue-size" : 2048,
         "ncr-protocol" : "UDP",
         "ncr-format" : "JSON",
-        "always-include-fqdn" : true,
         "override-no-update" : true,
         "override-client-update" : true,
         "replace-client-name" : "when-present",
         "generated-prefix" : "test.prefix",
-        "qualifying-suffix" : "test.suffix."
+        "qualifying-suffix" : "test.suffix.",
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x"
   }
 
 },

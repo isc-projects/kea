@@ -31,6 +31,18 @@ detected by the host manager.
 This is a normal message being printed when the server closes host data
 source connection.
 
+% HOSTS_CFG_DEL_ALL_SUBNET4 deleted all %1 host(s) for subnet id %2
+This debug message is issued when all IPv4 reservations are deleted for
+the specified subnet. The first argument specifies how many reservations
+have been deleted. The second argument is the subnet identifier.
+
+% HOSTS_CFG_DEL_ALL_SUBNET6 deleted all %1 host(s) including %2 IPv6 reservation(s) for subnet id %3
+This debug message is issued when all IPv6 reservations are deleted for
+the specified subnet. The first argument specifies how many hosts
+have been deleted. The second argument specifies how many IPv6
+(addresses and prefixes) have been deleted. The third argument is the
+subnet identifier.
+
 % HOSTS_CFG_GET_ALL_ADDRESS4 get all hosts with reservations for IPv4 address %1
 This debug message is issued when starting to retrieve all hosts, holding the
 reservation for the specific IPv4 address, from the configuration. The

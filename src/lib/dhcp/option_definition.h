@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,10 +10,12 @@
 #include <dhcp/option.h>
 #include <dhcp/option_data_types.h>
 #include <dhcp/option_space_container.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index_container.hpp>
 #include <boost/shared_ptr.hpp>
@@ -85,7 +87,7 @@ class OptionIntArray;
 /// this is a single value the option type points to the data type of the
 /// value. For example, DHCPv6 option 8 comprises a two-byte option code, a
 /// two-byte option length and two-byte field that carries a uint16 value
-/// (RFC 3315 - http://ietf.org/rfc/rfc3315.txt).  In such a case, the option
+/// (RFC 8415 - http://ietf.org/rfc/rfc8415.txt).  In such a case, the option
 /// type is defined as "uint16". Length and string tuples are a length
 /// on one (DHCPv4) or two (DHCPv6) bytes followed by a string of
 /// the given length.
@@ -95,7 +97,7 @@ class OptionIntArray;
 ///
 /// Array types should be used when the option contains multiple contiguous
 /// data values of the same type laid. For example, DHCPv6 option 6 includes
-/// multiple fields holding uint16 codes of requested DHCPv6 options (RFC 3315).
+/// multiple fields holding uint16 codes of requested DHCPv6 options (RFC 8415).
 /// Such an option can be represented with this class by setting the option
 /// type to "uint16" and the array indicator (array_type) to true.  The number
 /// of elements in the array is effectively unlimited (although it is actually
@@ -133,7 +135,7 @@ class OptionIntArray;
 /// @todo Extend this class to use custom namespaces.
 /// @todo Extend this class with more factory functions.
 /// @todo Derive from UserContext without breaking the multi index.
-class OptionDefinition {
+class OptionDefinition : public data::StampedElement {
 public:
 
     /// List of fields within the record.
@@ -305,6 +307,32 @@ public:
     /// @param map A pointer to map where the user context will be unparsed.
     void contextToElement(data::ElementPtr map) const {
         user_context_.contextToElement(map);
+    }
+
+    /// @brief Returns option space name.
+    ///
+    /// Option definitions are associated with option spaces. Typically,
+    /// such association is made when the option definition is put into
+    /// the @c CfgOptionDef structure. However, in some cases it is also
+    /// required to associate option definition with the particular option
+    /// space outside of that structure. In particular, when the option
+    /// definition is fetched from a database. The database configuration
+    /// backend will set option space upon return of the option definition.
+    /// In other cases this value won't be set.
+    ///
+    /// @return Option space name or empty string if option space
+    /// name is not set.
+    std::string getOptionSpaceName() const {
+        return (option_space_name_);
+    }
+
+    /// @brief Sets option space name for option definition.
+    ///
+    /// See @c getOptionSpaceName to learn when option space name is set.
+    ///
+    /// @param option_space_name New option space name.
+    void setOptionSpaceName(const std::string& option_space_name) {
+        option_space_name_ = option_space_name;
     }
 
     /// @brief Check if the option definition is valid.
@@ -732,7 +760,9 @@ private:
     /// Collection of data fields within the record.
     RecordFieldsCollection record_fields_;
     /// User context
-    UserContext user_context_;
+    data::UserContext user_context_;
+    /// Option space name
+    std::string option_space_name_;
 };
 
 
@@ -781,6 +811,16 @@ typedef boost::multi_index_container<
                 OptionDefinition,
                 std::string,
                 &OptionDefinition::getName
+            >
+        >,
+        // Start definition of index #3
+        boost::multi_index::ordered_non_unique<
+            // Use option definition modification time as the index key.
+            // This value is returned by the StampedElement::getModificationTime
+            boost::multi_index::const_mem_fun<
+                data::StampedElement,
+                boost::posix_time::ptime,
+                &data::StampedElement::getModificationTime
             >
         >
     >

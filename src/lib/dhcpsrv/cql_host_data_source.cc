@@ -17,16 +17,15 @@
 
 #include <config.h>
 
+#include <cql/cql_exchange.h>
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cql_host_data_source.h>
-
 #include <dhcp/duid.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/cql_exchange.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
 #include <util/hash.h>
@@ -45,6 +44,7 @@
 #include <string>  // for std::string
 
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -156,7 +156,7 @@ public:
     /// Creates a bind array to receive @ref Host data from the Cassandra
     /// database. After data is successfully received, @ref retrieve() can be
     /// called to retrieve the @ref Host object. Called in @ref
-    /// CqlExchange::executeSelect().
+    /// db::CqlExchange::executeSelect().
     ///
     /// @param data array of objects representing data being retrieved
     /// @param statement_tag prepared statement being executed; defaults to an
@@ -350,6 +350,9 @@ private:
     /// @brief Boot file name (file).
     std::string host_ipv4_boot_file_name_;
 
+    /// @brief Key for authentication
+    std::string auth_key_;
+
     /// @brief Name reserved for the host
     std::string hostname_;
 
@@ -431,6 +434,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -455,7 +459,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       // host
       "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, "
       // denormalized reservation, option
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ? "
       ") "
       "IF NOT EXISTS "
      }},
@@ -472,6 +476,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -505,6 +510,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -541,6 +547,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -576,6 +583,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -613,6 +621,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -650,6 +659,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -686,6 +696,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -722,6 +733,7 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "host_ipv4_next_server, "
       "host_ipv4_server_hostname, "
       "host_ipv4_boot_file_name, "
+      "auth_key, "
       "hostname, "
       "user_context, "
       "host_ipv4_client_classes, "
@@ -758,6 +770,7 @@ CqlHostExchange::CqlHostExchange()
       host_ipv6_subnet_id_(0), host_ipv4_address_(0), host_ipv4_next_server_(0),
       host_ipv4_server_hostname_(NULL_DHCP4_SERVER_HOSTNAME),
       host_ipv4_boot_file_name_(NULL_DHCP4_BOOT_FILE_NAME),
+      auth_key_(""),
       user_context_(NULL_USER_CONTEXT),
       reserved_ipv6_prefix_length_(NULL_RESERVED_IPV6_PREFIX_LENGTH),
       reserved_ipv6_prefix_address_type_(NULL_RESERVED_IPV6_PREFIX_ADDRESS_TYPE),
@@ -795,6 +808,8 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
     data.add(&host_ipv4_server_hostname_);
     // host_ipv4_boot_file_name: text
     data.add(&host_ipv4_boot_file_name_);
+    // auth_key: text
+    data.add(&auth_key_);
     // hostname: text
     data.add(&hostname_);
     // user_context: text
@@ -888,6 +903,9 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
         // host_ipv4_boot_file_name: text
         host_ipv4_boot_file_name_ = host->getBootFileName();
 
+        // auth_key: varchar
+        auth_key_ = host->getKey().ToText();
+        
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
@@ -1050,6 +1068,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
             data.add(&host_ipv4_next_server_);
             data.add(&host_ipv4_server_hostname_);
             data.add(&host_ipv4_boot_file_name_);
+            data.add(&auth_key_);
             data.add(&hostname_);
             data.add(&user_context_);
             data.add(&host_ipv4_client_classes_);
@@ -1484,7 +1503,7 @@ protected:
 
     /// @brief Retrieves a collection of hosts.
     ///
-    /// Calls @ref CqlExchange::executeSelect().
+    /// Calls @ref db::CqlExchange::executeSelect().
     ///
     /// @param where_values array of bound objects used to filter the results
     /// @param statement_tag prepared statement being executed
@@ -1496,7 +1515,7 @@ protected:
     /// @brief Inserts or deletes a single host.
     ///
     /// All information is available here. Calls @ref
-    /// CqlExchange::executeMutation().
+    /// db::CqlExchange::executeMutation().
     ///
     /// @param insert insert or delete a host
     /// @param host @ref Host object from which options are retrieved and
@@ -1601,6 +1620,11 @@ CqlHostDataSourceImpl::~CqlHostDataSourceImpl() {
 
 bool
 CqlHostDataSourceImpl::insertOrDelete(const HostPtr& host, bool insert) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     // Get option space names and vendor space names and combine them within a
     // single list.
 
@@ -1839,6 +1863,11 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
                                                      const IPv6Resrv* const reservation,
                                                      const std::list<std::string>& option_spaces,
                                                      const ConstCfgOptionPtr cfg_option) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     bool result = true;
 
     // For each option space retrieve all options and insert them into
@@ -1877,6 +1906,11 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithReservations(bool insert,
                                                           const ConstCfgOptionPtr cfg_option4,
                                                           const std::list<std::string>& option_spaces6,
                                                           const ConstCfgOptionPtr cfg_option6) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     bool result = true;
 
     // If host has no reservation, add entries with null reservation.
@@ -1959,6 +1993,11 @@ CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
                                           const IPv6Resrv* const reservation,
                                           const std::string& option_space,
                                           const OptionDescriptor& option_descriptor) {
+    // If there is no host, there is nothing to do.
+    if (!host) {
+        return (false);
+    }
+
     AnyArray assigned_values;
 
     std::unique_ptr<CqlHostExchange> host_exchange(new CqlHostExchange());
@@ -2029,7 +2068,7 @@ bool
 CqlHostDataSource::del(const SubnetID& subnet_id, const asiolink::IOAddress& address) {
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, address));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2038,7 +2077,7 @@ CqlHostDataSource::del4(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get4(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 bool
@@ -2047,7 +2086,7 @@ CqlHostDataSource::del6(const SubnetID& subnet_id, const Host::IdentifierType& i
     HostPtr host = boost::const_pointer_cast<Host>(impl_->get6(subnet_id, identifier_type,
                                                                identifier_begin, identifier_len));
 
-    return (impl_->insertOrDelete(host, false));
+    return (host ? impl_->insertOrDelete(host, false) : false);
 }
 
 ConstHostCollection

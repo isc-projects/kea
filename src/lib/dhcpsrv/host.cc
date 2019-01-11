@@ -5,12 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/host.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
+#include <cryptolink/crypto_rng.h>
 #include <exceptions/exceptions.h>
+
 #include <sstream>
 
 using namespace isc::data;
@@ -18,6 +21,47 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
+
+AuthKey::AuthKey(const std::string key) {
+    setAuthKey(key);
+}
+
+AuthKey::AuthKey(void) {
+    authKey_ = AuthKey::getRandomKeyString();
+}
+
+std::string
+AuthKey::getRandomKeyString() {
+    std::vector<uint8_t> rs = isc::cryptolink::random(AuthKey::KEY_LEN);
+    std::string result;
+    result.resize(rs.size());
+    memmove(&result[0], &rs[0], result.size());
+    return (result);
+}
+
+std::string 
+AuthKey::ToText() const {
+    // this will need enhancement if the stored container is not a string
+    return (authKey_);
+}
+
+void
+AuthKey::setAuthKey(const std::string& key) {
+    authKey_ = key;
+    if (authKey_.size() > AuthKey::KEY_LEN) {
+        authKey_.resize(AuthKey::KEY_LEN);
+    }
+}
+
+bool
+AuthKey::operator==(const AuthKey& other) const {
+    return (authKey_ == other.authKey_);
+}
+
+bool
+AuthKey::operator!=(const AuthKey& other) const {
+    return (authKey_ != other.authKey_);
+}
 
 IPv6Resrv::IPv6Resrv(const Type& type,
                      const asiolink::IOAddress& prefix,
@@ -82,7 +126,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
 
     : identifier_type_(identifier_type),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
@@ -93,7 +138,8 @@ Host::Host(const uint8_t* identifier, const size_t identifier_len,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false), 
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_len, identifier_type);
@@ -117,7 +163,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
            const std::string& dhcp6_client_classes,
            const asiolink::IOAddress& next_server,
            const std::string& server_host_name,
-           const std::string& boot_file_name)
+           const std::string& boot_file_name,
+           const AuthKey& auth_key)
     : identifier_type_(IDENT_HWADDR),
       identifier_value_(), ipv4_subnet_id_(ipv4_subnet_id),
       ipv6_subnet_id_(ipv6_subnet_id),
@@ -127,7 +174,8 @@ Host::Host(const std::string& identifier, const std::string& identifier_name,
       next_server_(asiolink::IOAddress::IPV4_ZERO_ADDRESS()),
       server_host_name_(server_host_name), boot_file_name_(boot_file_name),
       host_id_(0), cfg_option4_(new CfgOption()),
-      cfg_option6_(new CfgOption()), negative_(false) {
+      cfg_option6_(new CfgOption()), negative_(false),
+      key_(auth_key) {
 
     // Initialize host identifier.
     setIdentifier(identifier, identifier_name);
@@ -525,6 +573,10 @@ Host::toElement6() const {
     ConstCfgOptionPtr opts = getCfgOption6();
     map->set("option-data", opts->toElement());
 
+    // Set auth key
+    //@todo: uncomment once storing in configuration file is enabled
+    //map->set("auth-key", Element::create(getKey().ToText()));
+    
     return (map);
 }
 
@@ -535,13 +587,13 @@ Host::toText() const {
     // Add HW address or DUID.
     s << getIdentifierAsText();
 
-    // Add IPv4 subnet id if exists (non-zero).
-    if (ipv4_subnet_id_) {
+    // Add IPv4 subnet id if exists.
+    if (ipv4_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv4_subnet_id=" << ipv4_subnet_id_;
     }
 
-    // Add IPv6 subnet id if exists (non-zero).
-    if (ipv6_subnet_id_) {
+    // Add IPv6 subnet id if exists.
+    if (ipv6_subnet_id_ != SUBNET_ID_UNUSED) {
         s << " ipv6_subnet_id=" << ipv6_subnet_id_;
     }
 
@@ -561,6 +613,8 @@ Host::toText() const {
 
     // Add boot file name.
     s << " file=" << (boot_file_name_.empty() ? "(empty)" : boot_file_name_);
+
+    s << " key=" << (key_.ToText().empty() ? "(empty)" : key_.ToText());
 
     if (ipv6_reservations_.empty()) {
         s << " ipv6_reservations=(none)";

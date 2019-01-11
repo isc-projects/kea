@@ -11,7 +11,7 @@
 #include <asiolink/asiolink.h>
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
-#include <dhcpsrv/database_connection.h>
+#include <database/database_connection.h>
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcp4/dhcp4_srv.h>
 
@@ -41,12 +41,12 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific config file
+    /// @brief Loads specific configuration file
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of
     /// the file has been loaded and verified to be a sane JSON configuration.
-    /// config-set handler will process the config file (load it as current
+    /// config-set handler will process the config file (apply it as current
     /// configuration).
     ///
     /// @param file_name name of the file to be loaded
@@ -119,8 +119,8 @@ public:
         return (server_);
     }
 
-
 private:
+
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
@@ -245,7 +245,6 @@ private:
     commandDhcpEnableHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
-
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -336,7 +335,7 @@ private:
     /// @param db_reconnect_ctl pointer to the ReconnectCtl containing the
     /// configured reconnect parameters
     ///
-    void dbReconnect(ReconnectCtlPtr db_reconnect_ctl);
+    void dbReconnect(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Callback DB backends should invoke upon loss of connectivity
     ///
@@ -356,12 +355,12 @@ private:
     /// configured reconnect parameters
     ///
     /// @return false if reconnect is not configured, true otherwise
-    bool dbLostCallback(ReconnectCtlPtr db_reconnect_ctl);
+    bool dbLostCallback(db::ReconnectCtlPtr db_reconnect_ctl);
 
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
-    /// the server
+    /// the server. Some of them need to be static methods.
     static ControlledDhcpv4Srv* server_;
 
     /// @brief IOService object, used for all ASIO operations.

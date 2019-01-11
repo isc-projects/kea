@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -233,37 +233,6 @@ public:
 
     //@}
 
-    /// @name Methods setting/accessing global configuration for the process.
-    ///
-    //@{
-    /// @brief Sets verbose mode.
-    ///
-    /// @param verbose A boolean value indicating if the process should run
-    /// in verbose (true) or non-verbose mode.
-    void setVerbose(const bool verbose) {
-        verbose_mode_ = verbose;
-    }
-
-    /// @brief Checks if the process has been run in verbose mode.
-    ///
-    /// @return true if verbose mode enabled, false otherwise.
-    bool isVerbose() const {
-        return (verbose_mode_);
-    }
-
-    /// @brief Sets the default logger name.
-    ///
-    /// This name is used in cases when a user doesn't provide a configuration
-    /// for logger in the Kea configuration file.
-    void setDefaultLoggerName(const std::string& name) {
-        default_logger_name_ = name;
-    }
-
-    /// @brief Returns default logger name.
-    std::string getDefaultLoggerName() const {
-        return (default_logger_name_);
-    }
-
     /// @brief Sets address family (AF_INET or AF_INET6)
     void setFamily(uint16_t family) {
         family_ = family == AF_INET ? AF_INET : AF_INET6;
@@ -319,12 +288,6 @@ private:
     /// @brief Container holding all previous and current configurations.
     SrvConfigList configs_;
     //@}
-
-    /// @brief Indicates if a process has been ran in the verbose mode.
-    bool verbose_mode_;
-
-    /// @brief Default logger name.
-    std::string default_logger_name_;
 
     /// @brief Address family.
     uint16_t family_;

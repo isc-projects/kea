@@ -50,6 +50,10 @@ TEST(ClientClassDef, construction) {
     cfg_option = cclass->getCfgOption();
     ASSERT_TRUE(cfg_option);
     EXPECT_TRUE(cfg_option->empty());
+
+    // Verify we don't depend on something.
+    EXPECT_FALSE(cclass->dependOnClass("foobar"));
+    EXPECT_FALSE(cclass->dependOnClass(""));
 }
 
 // Tests options operations.  Note we just do the basics
@@ -222,6 +226,22 @@ TEST(ClientClassDef, copyAndEquality) {
     EXPECT_TRUE(*cclass != *cclass2);
 }
 
+// Tests dependency.
+TEST(ClientClassDef, dependency) {
+    boost::scoped_ptr<ClientClassDef> cclass;
+
+    ExpressionPtr expr;
+
+    // Make an expression
+    expr.reset(new Expression());
+    TokenPtr token(new TokenMember("foo"));
+    expr->push_back(token);
+
+    ASSERT_NO_THROW(cclass.reset(new ClientClassDef("class", expr)));
+    EXPECT_TRUE(cclass->dependOnClass("foo"));
+    EXPECT_FALSE(cclass->dependOnClass("bar"));
+}
+
 
 // Tests the basic operation of ClientClassDictionary
 // This includes adding, finding, and removing classes
@@ -344,6 +364,58 @@ TEST(ClientClassDictionary, copyAndEquality) {
     EXPECT_FALSE(dictionary->equals(*dictionary2));
     EXPECT_FALSE(*dictionary == *dictionary2);
     EXPECT_TRUE(*dictionary != *dictionary2);
+}
+
+// Tests dependency.
+TEST(ClientClassDictionary, dependency) {
+    ClientClassDictionaryPtr dictionary(new ClientClassDictionary());
+    ExpressionPtr expr;
+    CfgOptionPtr cfg_option;
+
+    // Make an expression depending on forward class.
+    ExpressionPtr expr1;
+    expr1.reset(new Expression());
+    TokenPtr token1(new TokenMember("cc2"));
+    expr1->push_back(token1);
+
+    ASSERT_NO_THROW(dictionary->addClass("cc1", expr1, "", false,
+                                         false, cfg_option));
+
+    // Make an expression depending on first class.
+    ExpressionPtr expr2;
+    expr2.reset(new Expression());
+    TokenPtr token2(new TokenMember("cc1"));
+    expr2->push_back(token2);
+
+    ASSERT_NO_THROW(dictionary->addClass("cc2", expr2, "", false,
+                                         false, cfg_option));
+
+    // Make expression with dependency.
+    ASSERT_NO_THROW(dictionary->addClass("cc3", expr, "", false,
+                                         false, cfg_option));
+
+    ExpressionPtr expr3;
+    expr3.reset(new Expression());
+    TokenPtr token3(new TokenMember("cc3"));
+    expr3->push_back(token3);
+
+    ASSERT_NO_THROW(dictionary->addClass("cc4", expr3, "", false,
+                                         false, cfg_option));
+
+    // Not matching dependency does not match.
+    string depend;
+    EXPECT_FALSE(dictionary->dependOnClass("foobar", depend));
+    EXPECT_TRUE(depend.empty());
+
+    // Forward dependency is ignored.
+    depend = "";
+    EXPECT_FALSE(dictionary->dependOnClass("cc2", depend));
+    EXPECT_TRUE(depend.empty());
+
+    // Backward dependency is detected.
+    depend = "";
+    EXPECT_TRUE(dictionary->dependOnClass("cc3", depend));
+    EXPECT_EQ("cc4", depend);
 }
 
 // Tests the default constructor regarding fixed fields

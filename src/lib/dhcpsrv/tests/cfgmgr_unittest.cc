@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <process/logging_info.h>
 #include <stats/stats_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -31,6 +32,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::stats;
+using namespace isc::process;
 using namespace isc;
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
@@ -279,7 +281,6 @@ public:
     }
 
     void clear() {
-        CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().setFamily(AF_INET);
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
@@ -341,8 +342,8 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, D2ClientConfig::RCM_ALWAYS,
-                                  "pre-fix", "suf-fix")));
+                                  true, true, D2ClientConfig::RCM_ALWAYS,
+                                  "pre-fix", "suf-fix", "[^A-z]", "*")));
 
     // Verify that we can assign a new, non-empty configuration.
     ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(new_cfg));
@@ -492,18 +493,6 @@ TEST_F(CfgMgrTest, revert) {
     // of the current configuration will become 12.
     ASSERT_NO_THROW(cfg_mgr.revert(3));
     EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
-}
-
-// This test verifies that the verbosity can be set and obtained from the
-// configuration manager.
-TEST_F(CfgMgrTest, verbosity) {
-    ASSERT_FALSE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(true);
-    ASSERT_TRUE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(false);
-    EXPECT_FALSE(CfgMgr::instance().isVerbose());
 }
 
 // This test verifies that the address family can be set and obtained

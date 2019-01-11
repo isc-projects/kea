@@ -15,10 +15,11 @@ CLEANFILES = *.gcno *.gcda
 
 lib_LTLIBRARIES = libkea-asiolink.la
 
-libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 6:1:0
+libkea_asiolink_la_LDFLAGS = -no-undefined -version-info 7:0:0
 
 libkea_asiolink_la_SOURCES  = asiolink.h
 libkea_asiolink_la_SOURCES += asio_wrapper.h
+libkea_asiolink_la_SOURCES += addr_utilities.cc addr_utilities.h
 libkea_asiolink_la_SOURCES += dummy_io_cb.h
 libkea_asiolink_la_SOURCES += interval_timer.cc interval_timer.h
 libkea_asiolink_la_SOURCES += io_acceptor.h
@@ -47,6 +48,7 @@ libkea_asiolink_la_LIBADD += $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_asiolink_includedir = $(pkgincludedir)/asiolink
 libkea_asiolink_include_HEADERS = \
+	addr_utilities.h \
 	asio_wrapper.h \
 	asiolink.h \
 	dummy_io_cb.h \

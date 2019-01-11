@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -501,7 +501,7 @@ Dhcpv6SrvTest::testReleaseBasic(Lease::Type type, const IOAddress& existing,
     checkIA_NAStatusCode(ia, STATUS_Success, 0, 0);
     checkMsgStatusCode(reply, STATUS_Success);
 
-    // There should be no address returned in RELEASE (see RFC3315, 18.2.6)
+    // There should be no address returned in RELEASE (see RFC 8415, 18.3.7)
     // There should be no prefix
     EXPECT_FALSE(tmp->getOption(D6O_IAADDR));
     EXPECT_FALSE(tmp->getOption(D6O_IAPREFIX));
@@ -699,7 +699,13 @@ Dhcpv6SrvTest::configure(const std::string& config) {
 void
 Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseJSON(config));
+    try {
+        json = parseJSON(config);
+    } catch (const std::exception& ex) {
+        // Fatal failure on parsing error
+        FAIL() << "config parsing failed, test is broken: " << ex.what();
+    }
+
     ConstElementPtr status;
 
     // Disable the re-detect flag
@@ -710,7 +716,8 @@ Dhcpv6SrvTest::configure(const std::string& config, NakedDhcpv6Srv& srv) {
     ASSERT_TRUE(status);
     int rcode;
     ConstElementPtr comment = isc::config::parseAnswer(rcode, status);
-    ASSERT_EQ(0, rcode);
+    ASSERT_EQ(0, rcode) << "configuration failed, test is broken: "
+        << comment->str();
 
     CfgMgr::instance().commit();
 }

@@ -1,4 +1,5 @@
--- Copyright (C) 2015-2017 Deutsche Telekom AG.
+-- Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -193,4 +194,3 @@ CREATE TABLE IF NOT EXISTS schema_version (
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
 
 -- This line concludes database initialization to version 1.0.
-

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,8 @@ struct ClientIdHWAddressSubnetIdIndexTag { };
 /// @brief Tag for indexs by subnet-id.
 struct SubnetIdIndexTag { };
 
+/// @brief Tag for index using DUID.
+struct DuidIndexTag { }; 
 /// @name Multi index containers holding DHCPv4 and DHCPv6 leases.
 ///
 //@{
@@ -112,9 +114,19 @@ typedef boost::multi_index_container<
         // This index sorts leases by SubnetID.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetIdIndexTag>,
-            boost::multi_index::member<Lease, isc::dhcp::SubnetID, &Lease::subnet_id_>
+            boost::multi_index::member<Lease, isc::dhcp::SubnetID,
+            &Lease::subnet_id_>
+        >,
+
+        // Specification of the fifth index starts here
+        // This index is used to retrieve leases for matching duid.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<DuidIndexTag>,
+            boost::multi_index::const_mem_fun<Lease6,
+                                              const std::vector<uint8_t>&,
+                                              &Lease6::getDuidVector>
         >
-     >
+    >
 > Lease6Storage; // Specify the type name of this container.
 
 /// @brief A multi index container holding DHCPv4 leases.
@@ -249,6 +261,9 @@ typedef Lease6Storage::index<ExpirationIndexTag>::type Lease6StorageExpirationIn
 
 /// @brief DHCPv6 lease storage index by Subnet-id.
 typedef Lease6Storage::index<SubnetIdIndexTag>::type Lease6StorageSubnetIdIndex;
+
+/// @brief DHCPv6 lease storage index by Subnet-id.
+typedef Lease6Storage::index<DuidIndexTag>::type Lease6StorageDuidIndex;
 
 /// @brief DHCPv4 lease storage index by address.
 typedef Lease4Storage::index<AddressIndexTag>::type Lease4StorageAddressIndex;

@@ -13,6 +13,7 @@ AM_CXXFLAGS += $(WARNING_GCC_44_STRICT_ALIASING_CFLAG)
 
 lib_LTLIBRARIES = libkea-eval.la
 libkea_eval_la_SOURCES  =
+libkea_eval_la_SOURCES += dependency.cc dependency.h
 libkea_eval_la_SOURCES += eval_log.cc eval_log.h
 libkea_eval_la_SOURCES += evaluate.cc evaluate.h
 libkea_eval_la_SOURCES += token.cc token.h
@@ -37,7 +38,7 @@ libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_eval_la_LIBADD  += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_eval_la_LIBADD  += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_eval_la_LDFLAGS  = -no-undefined -version-info 7:1:0
+libkea_eval_la_LDFLAGS  = -no-undefined -version-info 10:0:0
 libkea_eval_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 EXTRA_DIST  = eval.dox
@@ -108,6 +109,7 @@ endif
 # Specify the headers for copying into the installation directory tree.
 libkea_eval_includedir = $(pkgincludedir)/eval
 libkea_eval_include_HEADERS = \
+	dependency.h \
 	eval_context.h \
 	eval_context_decl.h \
 	eval_log.h \

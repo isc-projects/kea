@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -697,6 +697,8 @@ public:
     }
 
     bool equals(const Element& other) const;
+
+    bool empty() const { return (m.empty()); }
 };
 
 /// Checks whether the given ElementPtr is a NULL pointer
@@ -744,7 +746,7 @@ void merge(ElementPtr element, ConstElementPtr other);
 /// negative means outbound and perhaps looping forever).
 /// @return a pointer to a fresh copy
 /// @throw raises a BadValue is a null pointer occurs.
-ElementPtr copy(ConstElementPtr from, int level = 100); 
+ElementPtr copy(ConstElementPtr from, int level = 100);
 
 /// @brief Compares the data with other using unordered lists
 ///

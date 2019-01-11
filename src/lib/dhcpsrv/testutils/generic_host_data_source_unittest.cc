@@ -6,6 +6,8 @@
 
 #include <config.h>
 
+#include <database/database_connection.h>
+#include <database/db_exceptions.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -13,13 +15,11 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
-#include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
-#include <dhcpsrv/testutils/schema.h>
+#include <database/testutils/schema.h>
 #include <util/buffer.h>
 
 #include <boost/foreach.hpp>
@@ -34,6 +34,8 @@
 
 using namespace std;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::util;
 using namespace isc::data;
 
@@ -41,12 +43,11 @@ namespace isc {
 namespace dhcp {
 namespace test {
 
-GenericHostDataSourceTest::GenericHostDataSourceTest() : hdsptr_() {
-    LibDHCP::clearRuntimeOptionDefs();
+GenericHostDataSourceTest::GenericHostDataSourceTest()
+    : GenericBackendTest(), hdsptr_() {
 }
 
 GenericHostDataSourceTest::~GenericHostDataSourceTest() {
-    LibDHCP::clearRuntimeOptionDefs();
     hdsptr_.reset();
 }
 
@@ -84,34 +85,6 @@ GenericHostDataSourceTest::DuidToHWAddr(const DuidPtr& duid) {
     }
 
     return (HWAddrPtr(new HWAddr(duid->getDuid(), HTYPE_ETHER)));
-}
-
-
-OptionDescriptor
-GenericHostDataSourceTest::createEmptyOption(const Option::Universe& universe,
-                                             const uint16_t option_type,
-                                             const bool persist) const {
-    OptionPtr option(new Option(universe, option_type));
-    OptionDescriptor desc(option, persist);
-    return (desc);
-}
-
-OptionDescriptor
-GenericHostDataSourceTest::createVendorOption(const Option::Universe& universe,
-                                              const bool persist,
-                                              const bool formatted,
-                                              const uint32_t vendor_id) const {
-    OptionVendorPtr option(new OptionVendor(universe, vendor_id));
-
-    std::ostringstream s;
-    if (formatted) {
-        // Vendor id comprises vendor-id field, for which we need to
-        // assign a value in the textual (formatted) format.
-        s << vendor_id;
-    }
-
-    OptionDescriptor desc(option, persist, s.str());
-    return (desc);
 }
 
 void
@@ -260,13 +233,76 @@ GenericHostDataSourceTest::testBasic4(const Host::IdentifierType& id) {
 }
 
 void
+GenericHostDataSourceTest::testGlobalSubnetId4() {
+    std::vector<uint8_t> ident;
+
+    ident = HostDataSourceUtils::generateIdentifier();
+    SubnetID subnet_id4 = SUBNET_ID_GLOBAL;
+    HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                          subnet_id4, SUBNET_ID_UNUSED, IOAddress("0.0.0.0")));
+
+    ASSERT_NO_THROW(addTestOptions(host, true, DHCP4_ONLY));
+    (hdsptr_->add(host));
+    //ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // get4(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get4(subnet_id4,
+                                            host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
+
+    // Now try to delete it: del4(subnet4-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del4(subnet_id4, Host::IDENT_DUID, &ident[0],
+                              ident.size()));
+
+    host_by_id = hdsptr_->get4(subnet_id4, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+
+    EXPECT_FALSE(host_by_id);
+}
+
+void GenericHostDataSourceTest::testGlobalSubnetId6() {
+    std::vector<uint8_t> ident;
+
+    ident = HostDataSourceUtils::generateIdentifier();
+    SubnetID subnet_id6 = SUBNET_ID_GLOBAL;
+    HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
+                          SUBNET_ID_UNUSED, subnet_id6, IOAddress("0.0.0.0")));
+
+    ASSERT_NO_THROW(addTestOptions(host, true, DHCP6_ONLY));
+    ASSERT_NO_THROW(hdsptr_->add(host));
+
+    // get6(subnet_id, identifier_type, identifier, identifier_size)
+    ConstHostPtr host_by_id = hdsptr_->get6(subnet_id6,
+                                            host->getIdentifierType(),
+                                            &host->getIdentifier()[0],
+                                            host->getIdentifier().size());
+
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_id));
+
+    // Now try to delete it: del6(subnet6-id, identifier-type, identifier)
+    EXPECT_TRUE(hdsptr_->del6(subnet_id6, Host::IDENT_DUID, &ident[0],
+                              ident.size()));
+
+    host_by_id = hdsptr_->get4(subnet_id6, host->getIdentifierType(),
+                               &host->getIdentifier()[0],
+                               host->getIdentifier().size());
+
+    EXPECT_FALSE(host_by_id);
+}
+
+
+void
 GenericHostDataSourceTest::testMaxSubnetId4() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id4 = numeric_limits<uint32_t>::max();
+    SubnetID subnet_id4 = SUBNET_ID_MAX;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          subnet_id4, 0, IOAddress("0.0.0.0")));
+                          subnet_id4, SUBNET_ID_UNUSED, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP4_ONLY));
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -295,9 +331,9 @@ GenericHostDataSourceTest::testMaxSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
-    SubnetID subnet_id6 = numeric_limits<uint32_t>::max();
+    SubnetID subnet_id6 = SUBNET_ID_MAX;
     HostPtr host(new Host(&ident[0], ident.size(), Host::IDENT_DUID,
-                          0, subnet_id6, IOAddress("0.0.0.0")));
+                          SUBNET_ID_UNUSED, subnet_id6, IOAddress("0.0.0.0")));
 
     ASSERT_NO_THROW(addTestOptions(host, true, DHCP6_ONLY));
     ASSERT_NO_THROW(hdsptr_->add(host));
@@ -559,13 +595,11 @@ GenericHostDataSourceTest::testMultipleSubnets(int subnets,
     ASSERT_TRUE(hdsptr_);
 
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
-    host->setIPv6SubnetID(0);
+    host->setIPv6SubnetID(SUBNET_ID_UNUSED);
 
     for (int i = 0; i < subnets; ++i) {
         host->setIPv4SubnetID(i + 1000);
-
-        // Check that the same host can have reservations in multiple subnets.
-        EXPECT_NO_THROW(hdsptr_->add(host));
+        ASSERT_NO_THROW(hdsptr_->add(host));
     }
 
     // Now check that the reservations can be retrieved by IPv4 address from
@@ -707,7 +741,8 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     for (int i = 0; i < subnets; ++i) {
         // Last boolean value set to false indicates that the same identifier
         // must be used for each generated host.
-        host = HostDataSourceUtils::initializeHost6(current_address.toText(), id, true, false);
+        host = HostDataSourceUtils::initializeHost6(current_address.toText(),
+                                                    id, true, false, "");
 
         host->setIPv4SubnetID(i + 1000);
         host->setIPv6SubnetID(i + 1000);
@@ -755,10 +790,14 @@ GenericHostDataSourceTest::testGetByIPv6(Host::IdentifierType id, bool prefix) {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, prefix);
-    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, prefix);
-    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, prefix);
-    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, prefix);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                                        id, prefix, "key##1");
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2",
+                                                        id, prefix, "key##2");
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3",
+                                                        id, prefix, "key##3");
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4",
+                                                        id, prefix, "key##4");
 
     // ... and add them to the data source.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -948,8 +987,10 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
     ASSERT_TRUE(hdsptr_);
     uint8_t len = 128;
 
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
-    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                         Host::IDENT_DUID, false, "key##1");
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                         Host::IDENT_DUID, false, "key##1");
 
     // Add some reservations
     IPv6Resrv resv1(IPv6Resrv::TYPE_NA, IOAddress("2001:db8::6"), len);
@@ -1247,7 +1288,9 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
         ss >> n_host;
 
         const std::string prefix = std::string("2001:db8::") + n_host;
-        hosts.push_back(HostDataSourceUtils::initializeHost6(prefix, Host::IDENT_HWADDR, false));
+        hosts.push_back(HostDataSourceUtils::initializeHost6(prefix,
+                        Host::IDENT_HWADDR, false, "key##1"));
+        
         IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
         ASSERT_EQ(1, std::distance(range.first, range.second));
         EXPECT_TRUE(HostDataSourceUtils::reservationExists
@@ -1322,6 +1365,12 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del(subnet1, IOAddress("192.0.2.1")));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById4() {
@@ -1357,6 +1406,14 @@ void GenericHostDataSourceTest::testDeleteById4() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 // Test checks when a IPv4 host with options is deleted that the options are
@@ -1404,6 +1461,14 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
 
     // Check the options are indeed gone.
     EXPECT_EQ(0, countDBOptions4());
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del4(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById6() {
@@ -1411,7 +1476,8 @@ void GenericHostDataSourceTest::testDeleteById6() {
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a v6 host...
-    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1",
+                                         Host::IDENT_DUID, false, "key##1");
     SubnetID subnet1 = host1->getIPv6SubnetID();
 
     // ... and add it to the data source.
@@ -1439,6 +1505,14 @@ void GenericHostDataSourceTest::testDeleteById6() {
 
     // ... and that it's gone after deletion.
     EXPECT_FALSE(after);
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void GenericHostDataSourceTest::testDeleteById6Options() {
@@ -1487,6 +1561,14 @@ void GenericHostDataSourceTest::testDeleteById6Options() {
 
     // Check the options are indeed gone.
     EXPECT_EQ(0, countDBReservations6());
+
+    // An attempt to delete it should not cause an exception. It
+    // should return false.
+    bool result = false;
+    EXPECT_NO_THROW(result = hdsptr_->del6(subnet1, host1->getIdentifierType(),
+                                           &host1->getIdentifier()[0],
+                                           host1->getIdentifier().size()));
+    EXPECT_FALSE(result);
 }
 
 void
@@ -1497,7 +1579,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // Create a host with zero IPv4 address.
     HostPtr host1 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host1->setIPv4SubnetID(1);
-    host1->setIPv6SubnetID(0);
+    host1->setIPv6SubnetID(SUBNET_ID_UNUSED);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host1));
 
@@ -1510,7 +1592,7 @@ GenericHostDataSourceTest::testMultipleHostsNoAddress4() {
     // in the unique index.
     HostPtr host2 = HostDataSourceUtils::initializeHost4("0.0.0.0", Host::IDENT_HWADDR);
     host2->setIPv4SubnetID(1);
-    host2->setIPv6SubnetID(0);
+    host2->setIPv6SubnetID(SUBNET_ID_UNUSED);
     ASSERT_NO_THROW(hdsptr_->add(host2));
 }
 
@@ -1521,7 +1603,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
 
     // Create first host.
     HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
-    host1->setIPv4SubnetID(0);
+    host1->setIPv4SubnetID(SUBNET_ID_UNUSED);
     host1->setIPv6SubnetID(1);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host1));
@@ -1531,7 +1613,7 @@ GenericHostDataSourceTest::testMultipleHosts6() {
     ASSERT_THROW(hdsptr_->add(host1), DuplicateEntry);
 
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", Host::IDENT_DUID, false);
-    host2->setIPv4SubnetID(0);
+    host2->setIPv4SubnetID(SUBNET_ID_UNUSED);
     host2->setIPv6SubnetID(1);
     // Add the host to the database.
     ASSERT_NO_THROW(hdsptr_->add(host2));

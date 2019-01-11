@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -144,7 +144,7 @@ public:
 
         // If this configuration fails to parse most tests will fail.
         ASSERT_TRUE(fromJSON(canned_config_));
-        answer_ = cfg_mgr_->parseConfig(config_set_);
+        answer_ = cfg_mgr_->simpleParseConfig(config_set_);
         ASSERT_TRUE(checkAnswer(0));
     }
 

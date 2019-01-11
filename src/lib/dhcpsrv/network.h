@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <cc/data.h>
+#include <cc/stamped_element.h>
 #include <cc/user_context.h>
 #include <dhcp/classify.h>
 #include <dhcp/option.h>
@@ -45,7 +46,9 @@ typedef std::vector<isc::asiolink::IOAddress> IOAddressList;
 /// class provides an abstract interface that must be implemented by derived
 /// classes and, where appropriate, implements common methods used by the
 /// derived classes.
-class Network : public virtual UserContext, public data::CfgToElement {
+class Network : public virtual isc::data::StampedElement,
+                public virtual isc::data::UserContext,
+                public isc::data::CfgToElement {
 public:
     /// @brief Holds optional information about relay.
     ///
@@ -96,11 +99,16 @@ public:
         /// dealing with with addresses that are in pool.
         HR_OUT_OF_POOL,
 
+        /// Only global reservations are allowed. This mode
+        /// instructs AllocEngine to only look at global reservations.
+        HR_GLOBAL,
+
         /// Both out-of-pool and in-pool reservations are allowed. This is the
         /// most flexible mode, where sysadmin have biggest liberty. However,
         /// there is a non-trivial performance penalty for it, as the
         /// AllocEngine code has to check whether there are reservations, even
         /// when dealing with reservations from within the dynamic pools.
+        /// @todo - should ALL include global?
         HR_ALL
     } HRMode;
 
@@ -110,7 +118,8 @@ public:
     /// @brief Constructor.
     Network()
         : iface_name_(), client_class_(""), t1_(), t2_(), valid_(),
-          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()) {
+          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()),
+          calculate_tee_times_(false), t1_percent_(0.0), t2_percent_(0.0) {
     }
 
     /// @brief Virtual destructor.
@@ -291,15 +300,51 @@ public:
         host_reservation_mode_ = mode;
     }
 
-    /// @brief Returns pointer to the option data configuration for this subnet.
+    /// @brief Returns pointer to the option data configuration for this network.
     CfgOptionPtr getCfgOption() {
         return (cfg_option_);
     }
 
     /// @brief Returns const pointer to the option data configuration for this
-    /// subnet.
+    /// network.
     ConstCfgOptionPtr getCfgOption() const {
         return (cfg_option_);
+    }
+
+    /// @brief Returns whether or not T1/T2 calculation is enabled.
+    bool getCalculateTeeTimes() const {
+        return (calculate_tee_times_);
+    }
+
+    /// @brief Sets whether or not T1/T2 calculation is enabled.
+    ///
+    /// @param calculate_tee_times new value of enabled/disabled.
+    void setCalculateTeeTimes(const bool& calculate_tee_times) {
+        calculate_tee_times_ = calculate_tee_times;
+    }
+
+    /// @brief Returns percentage to use when calculating the T1 (renew timer).
+    double getT1Percent() const {
+        return (t1_percent_);
+    }
+
+    /// @brief Sets new precentage for calculating T1 (renew timer).
+    ///
+    /// @param t1_percent New percentage to use.
+    void setT1Percent(const double& t1_percent) {
+        t1_percent_ = t1_percent;
+    }
+
+    /// @brief Returns percentage to use when calculating the T2 (rebind timer).
+    double getT2Percent() const {
+        return (t2_percent_);
+    }
+
+    /// @brief Sets new precentage for calculating T2 (rebind timer).
+    ///
+    /// @param t2_percent New percentage to use.
+    void setT2Percent(const double& t2_percent) {
+        t2_percent_ = t2_percent;
     }
 
     /// @brief Unparses network object.
@@ -346,6 +391,15 @@ protected:
 
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
+
+    /// @brief Enables calculation of T1 and T2 timers
+    bool calculate_tee_times_;
+
+    /// @brief Percentage of the lease lifetime to use when calculating T1 timer
+    double t1_percent_;
+
+    /// @brief Percentage of the lease lifetime to use when calculating T2 timer
+    double t2_percent_;
 };
 
 /// @brief Pointer to the @ref Network object.
@@ -360,7 +414,7 @@ public:
 
     /// @brief Constructor.
     Network4()
-        : Network(), match_client_id_(true) {
+        : Network(), match_client_id_(true), authoritative_(false) {
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
@@ -380,6 +434,24 @@ public:
         match_client_id_ = match;
     }
 
+    /// @brief Returns the flag indicating if requests for unknown IP addresses
+    /// should be rejected with DHCPNAK instead of ignored.
+    ///
+    /// @return true if requests for unknown IP addresses should be rejected,
+    /// false otherwise.
+    bool getAuthoritative() const {
+        return (authoritative_);
+    }
+
+    /// @brief Sets the flag indicating if requests for unknown IP addresses
+    /// should be rejected with DHCPNAK instead of ignored.
+    ///
+    /// @param authoritative If this value is true, the requests for unknown IP
+    /// addresses will be rejected with DHCPNAK messages
+    void setAuthoritative(const bool authoritative) {
+        authoritative_ = authoritative;
+    }
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -396,6 +468,9 @@ private:
     /// @brief Should server use client identifiers for client lease
     /// lookup.
     bool match_client_id_;
+
+    /// @brief Should requests for unknown IP addresses be rejected.
+    bool authoritative_;
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv6 case.

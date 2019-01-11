@@ -279,6 +279,14 @@ A debug message issued when the server is attempting to obtain an IPv6
 lease from the Cassandra database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
 
+% DHCPSRV_CQL_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+% DHCPSRV_CQL_GET_PAGE6 obtaining at most %1 IPv6 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
 % DHCPSRV_CQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
 leases for a given subnet identifier from the Cassandra database.
@@ -422,6 +430,25 @@ and the attempt ended in error.  The access string in question - which
 should be of the form 'keyword=value keyword=value...' is included in
 the message.
 
+% DHCPSRV_LEASE_SANITY_FAIL The lease %1 with subnet-id %2 failed subnet-id checks.
+This warning message is printed when the lease being loaded does not match the
+configuration. Due to lease-checks value, the lease will be loaded, but
+it will most likely be unused by Kea, as there is no subnet that matches
+the IP address associated with the lease.
+
+% DHCPSRV_LEASE_SANITY_FAIL_DISCARD The lease %1 with subnet-id %2 failed subnet-id checks and was dropped.
+This warning message is printed when a lease was loaded, but Kea was told
+(by setting lease-checks parameter) to discard leases with inconsistent
+data. The lease was discarded, because either there is no subnet configured
+with matching subnet-id or the address of the lease does not belong to the
+subnet.
+
+% DHCPSRV_LEASE_SANITY_FIXED The lease %1 with subnet-id %2 failed subnet-id checks, but was corrected to subnet-id %3.
+This informational message is printed when a lease was loaded, but had
+incorrect subnet-id value. The lease-checks parameter was set to a value
+that told Kea to try to correct the problem. There is a matching subnet,
+so Kea updated subnet-id and loaded the lease successfully.
+
 % DHCPSRV_MEMFILE_ADD_ADDR4 adding IPv4 lease with address %1
 A debug message issued when the server is about to add an IPv4 lease
 with the specified address to the memory file backend database.
@@ -481,6 +508,10 @@ leases from the memory file database.
 A debug message issued when the server is attempting to obtain all IPv6
 leases from the memory file database.
 
+% DHCPSRV_MEMFILE_GET6_DUID obtaining IPv6 leases for DUID %1
+A debug message issued when the server is attempting to obtain IPv6
+leases from the memory file database for the DUID.
+
 % DHCPSRV_MEMFILE_GET_ADDR4 obtaining IPv4 lease for address %1
 A debug message issued when the server is attempting to obtain an IPv4
 lease from the memory file database for the specified address.
@@ -523,6 +554,14 @@ leases from the memory file database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the memory file database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_MEMFILE_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+% DHCPSRV_MEMFILE_GET_PAGE6 obtaining at most %1 IPv6 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
 
 % DHCPSRV_MEMFILE_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
@@ -738,6 +777,10 @@ A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the MySQL database for a client with the specified
 client identification.
 
+% DHCPSRV_MYSQL_GET_DUID obtaining IPv6 lease for duid %1,
+A debug message issued when the server is attempting to obtain an IPv6
+lease from the MySQL database for the specified duid.
+
 % DHCPSRV_MYSQL_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
 A debug message issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
@@ -762,6 +805,14 @@ Association ID) and DUID (DHCP Unique Identifier).
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the MySQL database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_MYSQL_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+% DHCPSRV_MYSQL_GET_PAGE6 obtaining at most %1 IPv6 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
 
 % DHCPSRV_MYSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4
@@ -910,6 +961,10 @@ A debug message issued when the server is attempting to obtain a set
 of IPv4 leases from the PostgreSQL database for a client with the specified
 client identification.
 
+% DHCPSRV_PGSQL_GET_DUID obtaining IPv6 leases for DUID %1,
+A debug message issued when the server is attempting to obtain a set of IPv6
+leases from the PostgreSQL database for a client with the specified DUID (DHCP Unique Identifier).
+
 % DHCPSRV_PGSQL_GET_EXPIRED4 obtaining maximum %1 of expired IPv4 leases
 A debug message issued when the server is attempting to obtain expired
 IPv4 leases to reclaim them. The maximum number of leases to be retrieved
@@ -934,6 +989,14 @@ leases from the PostgreSQL database for a client with the specified IAID
 A debug message issued when the server is attempting to obtain an IPv6
 lease from the PostgreSQL database for a client with the specified IAID
 (Identity Association ID), Subnet ID and DUID (DHCP Unique Identifier).
+
+% DHCPSRV_PGSQL_GET_PAGE4 obtaining at most %1 IPv4 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
+
+% DHCPSRV_PGSQL_GET_PAGE6 obtaining at most %1 IPv6 leases starting from address %2
+A debug message issued when the server is attempting to obtain a page
+of leases beginning with the specified address.
 
 % DHCPSRV_PGSQL_GET_SUBID4 obtaining IPv4 leases for subnet ID %1
 A debug message issued when the server is attempting to obtain all IPv4

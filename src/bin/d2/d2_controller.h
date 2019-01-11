@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,10 @@
 
 namespace isc {
 namespace d2 {
+
+class D2Controller;
+/// @brief Pointer to a process controller.
+typedef boost::shared_ptr<D2Controller> D2ControllerPtr;
 
 /// @brief Process Controller for D2 Process
 /// This class is the DHCP-DDNS specific derivation of DControllerBase. It
@@ -42,6 +46,13 @@ public:
     /// by convention this should match the executable name.
     static const char* d2_bin_name_;
 
+    /// @brief Register commands.
+    void registerCommands();
+
+    /// @brief Deregister commands.
+    /// @note Does not throw.
+    void deregisterCommands();
+
 protected:
     /// @brief Returns version info specific to D2
     virtual std::string getVersionAddendum();
@@ -71,6 +82,9 @@ private:
     /// @brief Constructor is declared private to maintain the integrity of
     /// the singleton instance.
     D2Controller();
+
+    /// To facilitate unit testing.
+    friend class NakedD2Controller;
 };
 
 }; // namespace isc::d2

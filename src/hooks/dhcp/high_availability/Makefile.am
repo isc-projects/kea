@@ -34,7 +34,7 @@ libha_la_SOURCES += ha_impl.cc ha_impl.h
 libha_la_SOURCES += ha_log.cc ha_log.h
 libha_la_SOURCES += ha_server_type.h
 libha_la_SOURCES += ha_service.cc ha_service.h
-libha_la_SOURCES += ha_service_states.h
+libha_la_SOURCES += ha_service_states.cc ha_service_states.h
 libha_la_SOURCES += query_filter.cc query_filter.h
 libha_la_SOURCES += version.cc
 
@@ -53,6 +53,7 @@ libdhcp_ha_la_LDFLAGS  += -avoid-version -export-dynamic -module
 
 libdhcp_ha_la_LIBADD  = libha.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
+libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/process/libkea-process.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 libdhcp_ha_la_LIBADD += $(top_builddir)/src/lib/stats/libkea-stats.la

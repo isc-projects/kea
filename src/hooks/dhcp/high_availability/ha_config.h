@@ -9,6 +9,7 @@
 
 #include <exceptions/exceptions.h>
 #include <http/url.h>
+#include <util/state_model.h>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <map>
@@ -160,6 +161,87 @@ public:
     /// @brief Map of the servers' configurations.
     typedef std::map<std::string, PeerConfigPtr> PeerConfigMap;
 
+
+    /// @brief Configuration specific to a single HA state.
+    class StateConfig {
+    public:
+
+        /// @brief Constructor.
+        ///
+        /// @param state state identifier.
+        explicit StateConfig(const int state);
+
+        /// @brief Returns identifier of the state.
+        int getState() const {
+            return (state_);
+        }
+
+        /// @brief Returns pausing mode for the given state.
+        util::StatePausing getPausing() const {
+            return (pausing_);
+        }
+
+        /// @brief Sets pausing mode for the gievn state.
+        ///
+        /// @param pausing new pausing mode in the textual form. Supported
+        /// values are: always, never, once.
+        void setPausing(const std::string& pausing);
+
+        /// @brief Converts pausing mode from the textual form.
+        ///
+        /// @param pausing pausing mode in the textual form. Supported
+        /// values are: always, never, once.
+        static util::StatePausing stringToPausing(const std::string& pausing);
+
+        /// @brief Returns pausing mode in the textual form.
+        ///
+        /// @param pausing pausing mode.
+        static std::string pausingToString(const util::StatePausing& pausing);
+
+    private:
+
+        /// @brief Idenitifier of state for which configuration is held.
+        int state_;
+
+        /// @brief Pausing mode in the given state.
+        util::StatePausing pausing_;
+    };
+
+    /// @brief Pointer to the state configuration.
+    typedef boost::shared_ptr<StateConfig> StateConfigPtr;
+
+    /// @brief State machine configuration information.
+    ///
+    /// Currently it merely contains a collection of states specific
+    /// configurations. In the future it may also contain global
+    /// state machine configuration parameters.
+    class StateMachineConfig {
+    public:
+
+        /// @brief Constructor.
+        StateMachineConfig()
+            :  states_() {
+        }
+
+        /// @brief Returns pointer to the state specific configuration.
+        ///
+        /// If requested configuration doesn't exist yet, it is created.
+        ///
+        /// @param state identifier of the state for which configuration
+        /// object should be returned.
+        ///
+        /// @return Pointer to the state configuration.
+        StateConfigPtr getStateConfig(const int state);
+
+    private:
+
+        /// @brief Map of configuration for supported states.
+        std::map<int, StateConfigPtr> states_;
+    };
+
+    /// @brief Pointer to a state machine configuration.
+    typedef boost::shared_ptr<StateMachineConfig> StateMachineConfigPtr;
+
     /// @brief Constructor.
     HAConfig();
 
@@ -264,6 +346,22 @@ public:
     /// @param sync_timeout new timeout for lease database synchornization.
     void setSyncTimeout(const uint32_t sync_timeout) {
         sync_timeout_ = sync_timeout;
+    }
+
+    /// @brief Returns maximum number of leases per page to be fetched
+    /// during database synchronization.
+    ///
+    /// @return Maximum number of leases per page.
+    uint32_t getSyncPageLimit() const {
+        return (sync_page_limit_);
+    }
+
+    /// @brief Sets new page limit size for leases fetched from the partner
+    /// during database synchronization.
+    ///
+    /// @param sync_page_limit New page limit value.
+    void setSyncPageLimit(const uint32_t sync_page_limit) {
+        sync_page_limit_ = sync_page_limit;
     }
 
     /// @brief Returns heartbeat delay in milliseconds.
@@ -380,23 +478,31 @@ public:
         return (peers_);
     }
 
+    /// @brief Returns state machine configuration.
+    ///
+    /// @return Pointer to the state machine configuration.
+    StateMachineConfigPtr getStateMachineConfig() const {
+        return (state_machine_);
+    }
+
     /// @brief Validates configuration.
     ///
     /// @throw HAConfigValidationError if configuration is invalid.
     void validate() const;
 
-private:
-
-    std::string this_server_name_; ///< This server name.
-    HAMode ha_mode_;               ///< Mode of operation.
-    bool send_lease_updates_;      ///< Send lease updates to partner?
-    bool sync_leases_;             ///< Synchronize databases on startup?
-    uint32_t sync_timeout_;        ///< Timeout for syncing lease database (ms)
-    uint32_t heartbeat_delay_;     ///< Heartbeat delay in milliseconds.
-    uint32_t max_response_delay_;  ///< Max delay in response to heartbeats.
-    uint32_t max_ack_delay_;       ///< Maximum DHCP message ack delay.
-    uint32_t max_unacked_clients_; ///< Maximum number of unacked clients.
-    PeerConfigMap peers_;          ///< Map of peers' configurations.
+    std::string this_server_name_;        ///< This server name.
+    HAMode ha_mode_;                      ///< Mode of operation.
+    bool send_lease_updates_;             ///< Send lease updates to partner?
+    bool sync_leases_;                    ///< Synchronize databases on startup?
+    uint32_t sync_timeout_;               ///< Timeout for syncing lease database (ms)
+    uint32_t sync_page_limit_;            ///< Page size limit while synchronizing
+                                          ///< leases.
+    uint32_t heartbeat_delay_;            ///< Heartbeat delay in milliseconds.
+    uint32_t max_response_delay_;         ///< Max delay in response to heartbeats.
+    uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.
+    uint32_t max_unacked_clients_;        ///< Maximum number of unacked clients.
+    PeerConfigMap peers_;                 ///< Map of peers' configurations.
+    StateMachineConfigPtr state_machine_; ///< State machine configuration.
 };
 
 /// @brief Pointer to the High Availability configuration structure.

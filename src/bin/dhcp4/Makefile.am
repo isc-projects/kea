@@ -29,6 +29,7 @@ EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy
 
 if GENERATE_DOCS
+
 kea-dhcp4.8: kea-dhcp4.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
 	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
@@ -55,10 +56,10 @@ BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 noinst_LTLIBRARIES = libdhcp4.la
 
 libdhcp4_la_SOURCES  =
-libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
-libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
+libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h
@@ -79,9 +80,22 @@ kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+kea_dhcp4_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp4_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

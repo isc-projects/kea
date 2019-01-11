@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -722,6 +722,45 @@ public:
     ///
     /// @param pkt (unused)
     /// @param values - stack of values (two items are removed)
+    void evaluate(Pkt& pkt, ValueStack& values);
+};
+
+/// @brief Token that converts to hexadecimal string
+///
+/// For example in the sub-expression "hexstring(pkt4.mac, ':')"
+/// the binary MAC address is converted to its usual hexadecimal
+/// representation as a list of (6) pairs of hexadecimal digits
+/// separated by colons (':').
+/// Please note the token is named TokenToHexString when the syntax
+/// use the hexstring name without a leading "to".
+class TokenToHexString : public Token {
+public:
+    /// @brief Constructor (does nothing)
+    TokenToHexString() { }
+
+    /// @brief Convert a binary value to its hexadecimal string representation
+    ///
+    /// Evaluation does not use packet information. It requires at least
+    /// two values to be present on the stack. It will consume the top
+    /// two values on the stack as parameters and push the resulting
+    /// hexadecimal string onto the stack.
+    /// From the top it expects the values on the stack as:
+    /// - separator
+    /// - binary
+    ///
+    /// binary is the binary value (note it can be any value, i.e.
+    /// it is not checked to really be not printable).
+    /// separator is litteral for instance '-' or ':'. The empty separator
+    /// means no separator.
+    ///
+    /// The following example use a binary MAC address 06:ce:8f:55:b3:33:
+    /// - mac, '-' => "06-ce-8f-55-b3-33"
+    ///
+    /// @throw EvalBadStack if there are less than 2 values on stack
+    ///
+    /// @param pkt (unused)
+    /// @param values - stack of values (2 arguments will be popped, 1 result
+    ///        will be pushed)
     void evaluate(Pkt& pkt, ValueStack& values);
 };
 

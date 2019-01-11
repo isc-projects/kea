@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -23,7 +23,8 @@ public:
 
     /// @brief Constructor.
     ///
-    /// Initializes a control buffer used in the message transmission.
+    /// Initializes control buffers used in message transmission and
+    /// reception.
     PktFilterInet6();
 
     /// @brief Opens a socket.
@@ -84,10 +85,16 @@ public:
                      const Pkt6Ptr& pkt);
 
 private:
-    /// Length of the control_buf_ array.
-    size_t control_buf_len_;
-    /// Control buffer, used in transmission and reception.
-    boost::scoped_array<char> control_buf_;
+    /// There are separate control buffers for sending and receiving to be able
+    /// to send and receive packets in parallel in two threads.
+    /// Length of the recv_control_buf_ array.
+    size_t recv_control_buf_len_;
+    /// Length of the send_control_buf_ array.
+    size_t send_control_buf_len_;
+    /// Control buffer, used in reception.
+    boost::scoped_array<char> recv_control_buf_;
+    /// Control buffer, used in transmission.
+    boost::scoped_array<char> send_control_buf_;
 };
 
 } // namespace isc::dhcp

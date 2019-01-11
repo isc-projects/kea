@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -29,6 +29,7 @@ namespace {
 
 /// @brief Set of JSON configurations used by the FQDN tests.
 const char* CONFIGS[] = {
+    // 0
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -53,6 +54,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"\""
         "}"
     "}",
+    // 1
     "{ \"interfaces-config\": {"
         "      \"interfaces\": [ \"*\" ]"
         "},"
@@ -77,6 +79,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 2
     // Simple config with DDNS updates disabled.  Note pool is one address
     // large to ensure we get a specific address back.
     "{ \"interfaces-config\": {"
@@ -93,6 +96,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 3
     // Simple config with DDNS updates enabled.  Note pool is one address
     // large to ensure we get a specific address back.
     "{ \"interfaces-config\": {"
@@ -109,6 +113,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\""
         "}"
     "}",
+    // 4
     // Configuration which disables DNS updates but contains a reservation
     // for a hostname. Reserved hostname should be assigned to a client if
     // the client includes it in the Parameter Request List option.
@@ -136,6 +141,7 @@ const char* CONFIGS[] = {
             "\"qualifying-suffix\": \"\""
         "}"
     "}",
+    // 5
     // Configuration which disables DNS updates but contains a reservation
     // for a hostname and the qualifying-suffix which should be appended to
     // the reserved hostname in the Hostname option returned to a client.
@@ -162,7 +168,35 @@ const char* CONFIGS[] = {
             "\"enable-updates\": false,"
             "\"qualifying-suffix\": \"example.isc.org\""
         "}"
-    "}"
+    "}",
+    // 6
+    // Configuration which enables DNS updates and hostname sanitization
+    "{ \"interfaces-config\": {"
+        "      \"interfaces\": [ \"*\" ]"
+        "},"
+        "\"valid-lifetime\": 3000,"
+        "\"subnet4\": [ { "
+        "    \"subnet\": \"10.0.0.0/24\", "
+        "    \"id\": 1,"
+        "    \"pools\": [ { \"pool\": \"10.0.0.10-10.0.0.100\" } ],"
+        "    \"option-data\": [ {"
+        "        \"name\": \"routers\","
+        "        \"data\": \"10.0.0.200,10.0.0.201\""
+        "    } ],"
+        "    \"reservations\": ["
+        "       {"
+        "         \"hw-address\": \"aa:bb:cc:dd:ee:ff\","
+        "         \"hostname\":   \"unique-xxx-host.example.org\""
+        "       }"
+        "    ]"
+        " }],"
+        "\"dhcp-ddns\": {"
+            "\"enable-updates\": true,"
+            "\"hostname-char-set\" : \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\" : \"x\","
+            "\"qualifying-suffix\": \"example.org\""
+        "}"
+    "}",
 };
 
 class NameDhcpv4SrvTest : public Dhcpv4SrvTest {
@@ -177,10 +211,9 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 
     // Bit Constants for turning on and off DDNS configuration options.
-    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
-    static const uint16_t OVERRIDE_NO_UPDATE = 2;
-    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
-    static const uint16_t REPLACE_CLIENT_NAME = 8;
+    static const uint16_t OVERRIDE_NO_UPDATE = 1;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 2;
+    static const uint16_t REPLACE_CLIENT_NAME = 4;
 
     // Enum used to specify whether a client (packet) should include
     // the hostname option
@@ -237,13 +270,12 @@ public:
                                   isc::asiolink::IOAddress("127.0.0.1"), 53001,
                                   isc::asiolink::IOAddress("0.0.0.0"), 0, 1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
                                   ((mask & REPLACE_CLIENT_NAME) ?
                                     D2ClientConfig::RCM_WHEN_PRESENT
                                    : D2ClientConfig::RCM_NEVER),
-                                  "myhost", "example.com")));
+                                  "myhost", "example.com", "", "")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -425,7 +457,8 @@ public:
 
     // Test that the server's processes the hostname (or lack thereof)
     // in a client request correctly, according to the replace-client-name
-    // mode configuration parameter.
+    // mode configuration parameter.  We include hostname sanitizer to ensure
+    // it does not interfere with name replacement.
     //
     // @param mode - value to use for replace-client-name
     // @param client_name_flag - specifies whether or not the client request
@@ -449,6 +482,8 @@ public:
             "\"dhcp-ddns\": {"
             "\"enable-updates\": true,"
             "\"qualifying-suffix\": \"fake-suffix.isc.org.\","
+            "\"hostname-char-set\": \"[^A-Za-z0-9.-]\","
+            "\"hostname-char-replacement\": \"x\","
             "\"replace-client-name\": \"%s\""
             "}}";
 
@@ -848,8 +883,11 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
 TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
+    // Comparison should be case insensitive, so turning some of the
+    // characters of the old lease hostname to upper case should not
+    // trigger NCRs.
     Lease4Ptr old_lease = createLease(IOAddress("192.0.2.3"),
-                                      "myhost.example.com.", true, true);
+                                      "Myhost.Example.Com.", true, true);
     old_lease->valid_lft_ += 100;
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
@@ -1032,7 +1070,8 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Case in a hostname should be ignored.
+    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
@@ -1107,11 +1146,11 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same FQDN. Server
-    // should generate no NameChangeRequests.
+    // Create another Request message with the same FQDN. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
     Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
-                                       "myhost.example.com.",
+                                       "Myhost.Example.Com.",
                                        Option4ClientFqdn::FULL, true);
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
@@ -1148,9 +1187,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same Hostname. Server
-    // should generate no NameChangeRequests.
-    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Create another Request message with the same Hostname. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
+    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
@@ -1661,5 +1700,138 @@ TEST_F(NameDhcpv4SrvTest, replaceClientNameModeTest) {
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
 }
+
+// Verifies that setting hostname-char-set sanitizes Hostname option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeHost) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[6], *client.getServer());
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified host name with invalid characters",
+            "one-&$_-host",
+            "one-xxx-host.example.org"
+        },
+        {
+            "qualified host name with invalid characters",
+            "two-&$_-host.other.org",
+            "two-xxx-host.other.org"
+        },
+        {
+            "unqualified host name with all valid characters",
+            "three-ok-host",
+            "three-ok-host.example.org"
+        },
+        {
+            "qualified host name with valid characters",
+            "four-ok-host.other.org",
+            "four-ok-host.other.org"
+        }
+    };
+
+    Pkt4Ptr resp;
+    OptionStringPtr hostname;
+    for (auto scenario : scenarios) {
+        SCOPED_TRACE((scenario).description_);
+        {
+            // Set the hostname option.
+            ASSERT_NO_THROW(client.includeHostname((scenario).original_));
+
+            // Send the DHCPDISCOVER and make sure that the server responded.
+            ASSERT_NO_THROW(client.doDiscover());
+            resp = client.getContext().response_;
+            ASSERT_TRUE(resp);
+            ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+            // Make sure the response hostname is what we expect.
+            hostname = boost::dynamic_pointer_cast<OptionString>(resp->getOption(DHO_HOST_NAME));
+            ASSERT_TRUE(hostname);
+            EXPECT_EQ((scenario).sanitized_, hostname->getValue());
+        }
+    }
+}
+
+// Verifies that setting hostname-char-set sanitizes FQDN option
+// values received from clients.
+TEST_F(NameDhcpv4SrvTest, sanitizeFqdn) {
+    Dhcp4Client client(Dhcp4Client::SELECTING);
+
+    // Configure DHCP server.
+    configure(CONFIGS[6], *client.getServer());
+
+    // Make sure that DDNS is enabled.
+    ASSERT_TRUE(CfgMgr::instance().ddnsEnabled());
+    ASSERT_NO_THROW(client.getServer()->startD2());
+
+    struct Scenario {
+        std::string description_;
+        std::string original_;
+        Option4ClientFqdn::DomainNameType name_type_;
+        std::string sanitized_;
+    };
+
+    std::vector<Scenario> scenarios = {
+        {
+            "unqualified FQDN with invalid characters",
+            "one-&*_-host",
+            Option4ClientFqdn::PARTIAL,
+            "one-xxx-host.example.org."
+        },
+        {
+            "qualified FQDN with invalid characters",
+            "two-&*_-host.other.org",
+            Option4ClientFqdn::FULL,
+            "two-xxx-host.other.org."
+        },
+        {
+            "unqualified FQDN name with all valid characters",
+            "three-ok-host",
+            Option4ClientFqdn::PARTIAL,
+            "three-ok-host.example.org."
+        },
+        {
+            "qualified FQDN name with valid characters",
+            "four-ok-host.other.org",
+            Option4ClientFqdn::FULL,
+            "four-ok-host.other.org."
+        }
+    };
+
+    Pkt4Ptr resp;
+    Option4ClientFqdnPtr fqdn;
+    for (auto scenario = scenarios.begin(); scenario != scenarios.end(); ++scenario) {
+        SCOPED_TRACE((*scenario).description_);
+        {
+        // Set the hostname option.
+        ASSERT_NO_THROW(client.includeHostname((*scenario).original_));
+        ASSERT_NO_THROW(client.includeFQDN(0, (*scenario).original_, (*scenario).name_type_));
+
+        // Send the DHCPDISCOVER and make sure that the server responded.
+        ASSERT_NO_THROW(client.doDiscover());
+        resp = client.getContext().response_;
+        ASSERT_TRUE(resp);
+        ASSERT_EQ(DHCPOFFER, static_cast<int>(resp->getType()));
+
+        // Make sure the response fqdn is what we expect.
+        fqdn = boost::dynamic_pointer_cast<Option4ClientFqdn>(resp->getOption(DHO_FQDN));
+        ASSERT_TRUE(fqdn);
+        EXPECT_EQ((*scenario).sanitized_, fqdn->getDomainName());
+        }
+    }
+}
+
 
 } // end of anonymous namespace

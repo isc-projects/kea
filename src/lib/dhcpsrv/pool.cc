@@ -7,7 +7,7 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/pool.h>
 #include <sstream>
 

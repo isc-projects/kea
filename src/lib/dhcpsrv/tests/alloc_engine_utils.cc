@@ -44,7 +44,7 @@ namespace test {
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
                     const SubnetID subnet_id) {
     try {
-        std::string name = (!subnet_id ? stat_name : 
+        std::string name = (subnet_id == SUBNET_ID_UNUSED ? stat_name : 
                             StatsMgr::generateName("subnet", subnet_id, stat_name));
         ObservationPtr observation = StatsMgr::instance().getObservation(name);
         if (observation) {
@@ -194,7 +194,7 @@ AllocEngine6Test::createHost6HWAddr(bool add_to_host_mgr, IPv6Resrv::Type type,
                                     HWAddrPtr& hwaddr, const asiolink::IOAddress& addr,
                                     uint8_t prefix_len) {
     HostPtr host(new Host(&hwaddr->hwaddr_[0], hwaddr->hwaddr_.size(),
-                          Host::IDENT_HWADDR, SubnetID(0), subnet_->getID(),
+                          Host::IDENT_HWADDR, SUBNET_ID_UNUSED, subnet_->getID(),
                           asiolink::IOAddress("0.0.0.0")));
     IPv6Resrv resv(type, addr, prefix_len);
     host->addReservation(resv);

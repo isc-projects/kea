@@ -1,0 +1,92 @@
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::db
+
+% DATABASE_CQL_CONNECTION_BEGIN_TRANSACTION begin transaction on current connection.
+The server has issued a begin transaction call.
+
+% DATABASE_CQL_CONNECTION_COMMIT committing to Cassandra database on current connection.
+A commit call been issued on the server. For Cassandra, this is a no-op.
+
+% DATABASE_CQL_CONNECTION_ROLLBACK rolling back Cassandra database on current connection.
+The code has issued a rollback call. For Cassandra, this is a no-op.
+
+% DATABASE_CQL_DEALLOC_ERROR An error occurred while closing the CQL connection: %1
+This is an error message issued when a DHCP server (either V4 or V6) experienced
+and error freeing CQL database resources as part of closing its connection to
+the Cassandra database. The connection is closed as part of normal server
+shutdown. This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
+
+% DATABASE_INVALID_ACCESS invalid database access string: %1
+This is logged when an attempt has been made to parse a database access string
+and the attempt ended in error.  The access string in question - which
+should be of the form 'keyword=value keyword=value...' is included in
+the message.
+
+% DATABASE_MYSQL_COMMIT committing to MySQL database
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the MySQL settings,
+the committal may not include a write to disk.
+
+% DATABASE_MYSQL_FATAL_ERROR Unrecoverable MySQL error occurred: %1 for <%2>, reason: %3 (error code: %4).
+An error message indicating that communication with the MySQL database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the MySQL server has gone down.
+
+% DATABASE_MYSQL_ROLLBACK rolling back MySQL database
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+% DATABASE_MYSQL_START_TRANSACTION starting new MySQL transaction
+A debug message issued when a new MySQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+% DATABASE_PGSQL_COMMIT committing to PostgreSQL database
+The code has issued a commit call.  All outstanding transactions will be
+committed to the database.  Note that depending on the PostgreSQL settings,
+the committal may not include a write to disk.
+
+% DATABASE_PGSQL_DEALLOC_ERROR An error occurred deallocating SQL statements while closing the PostgreSQL lease database: %1
+This is an error message issued when a DHCP server (either V4 or V6) experienced
+and error freeing database SQL resources as part of closing its connection to
+the PostgreSQL database.  The connection is closed as part of normal server
+shutdown.  This error is most likely a programmatic issue that is highly
+unlikely to occur or negatively impact server operation.
+
+% DATABASE_PGSQL_FATAL_ERROR Unrecoverable PostgreSQL error occurred: Statement: <%1>, reason: %2 (error code: %3).
+An error message indicating that communication with the PostgreSQL database server
+has been lost.  If automatic recovery has been enabled,  then the server will
+attempt to recover the connectivity.  If not the server wil exit with a
+non-zero exit code.  The cause of such an error is most likely a network issue
+or the PostgreSQL server has gone down.
+
+% DATABASE_PGSQL_ROLLBACK rolling back PostgreSQL database
+The code has issued a rollback call.  All outstanding transaction will
+be rolled back and not committed to the database.
+
+% DATABASE_PGSQL_START_TRANSACTION starting a new PostgreSQL transaction
+A debug message issued when a new PostgreSQL transaction is being started.
+This message is typically not issued when inserting data into a
+single table because the server doesn't explicitly start
+transactions in this case. This message is issued when data is
+inserted into multiple tables with multiple INSERT statements
+and there may be a need to rollback the whole transaction if
+any of these INSERT statements fail.
+
+% DATABASE_TO_JSON_ERROR Internal logic error: uknown %1 element found in state: %2
+This error message is printed when conversion to JSON of the internal state is requested,
+but the connection string contains unrecognized parameter. This is a programming error.
+The software will continue operation, but the returned JSON data will be syntactically
+valid, but incomplete. The unknown parameter will not be converted.

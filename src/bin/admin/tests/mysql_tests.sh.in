@@ -165,7 +165,7 @@ EOF
 
     # Second table: hosts
     mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
-    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name FROM hosts;
+    SELECT host_id, dhcp_identifier, dhcp_identifier_type, dhcp4_subnet_id, dhcp6_subnet_id, ipv4_address, hostname, dhcp4_client_classes, dhcp6_client_classes, dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key FROM hosts;
 EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "hosts table is missing or broken. (expected status code %d, returned %d)"
@@ -245,7 +245,7 @@ mysql_upgrade_schema_to_version() {
 
 mysql_upgrade_test() {
 
-    test_start "mysql.host_reservation-upgrade"
+    test_start "mysql.upgrade"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 6.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -382,7 +382,8 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
-    assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
+    # verify that dhcp_option_scope table contains correct number of entries.
+    assert_eq 7 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
 
     #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0)
     # verify that dhcp4_options table includes scope_id
@@ -400,10 +401,10 @@ EOF
 
     #table: DHCPv4 fixed field colums (upgrade 4.1 -> 5.0)
     # verify that hosts table has columns holding values for DHCPv4 fixed fields
-    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name from hosts";
+    qry="select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key from hosts";
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
-    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name failed. (expected status code %d, returned %d)"
+    assert_eq 0 $ERRCODE "select dhcp4_next_server, dhcp4_server_hostname, dhcp4_boot_file_name, auth_key failed. (expected status code %d, returned %d)"
 
     # verify that dhcp4_subnet_id is unsigned
     qry="show columns from hosts like 'dhcp4_subnet_id'"
@@ -449,9 +450,153 @@ EOF
 
     # lease4/6_stats changes are tested separately
 
-    # Verify upgraded schema reports version 6.0
+    #table: user_context to lease4 and lease6 (upgrade 6.0 -> 7.0)
+    # verify that lease4 table includes user_context
+    qry="select user_context from lease4";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease4 failed. (expected status code %d, returned %d)"
+
+    # verify that lease6 table includes user_context
+    qry="select user_context from lease6";
+    count=`mysql_execute "${qry}"`
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "select user_context from lease6 failed. (expected status code %d, returned %d)"
+
+    #table: logs (upgrade 6.0 -> 7.0)
+    mysql -u$db_user -p$db_password $db_name >/dev/null 2>&1 <<EOF
+    SELECT timestamp, address, log FROM logs;
+EOF
+    ERRCODE=$?
+    assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
+
+    # table: modification (upgrade 6.0 -> 7.0)
+    qry="select id, modification_type from modification"
+    run_statement "modification"  "$qry"
+
+    # table: modification table should have 3 entries (upgrade 6.0 -> 7.0)
+    qry="select count(*) from modification"
+    run_statement "modification count" "$qry" 3
+
+    # table: dhcp4_server
+    qry="select id, tag, description, modification_ts from dhcp4_server"
+    run_statement "dhcp4_server" "$qry"
+
+    # table: dhcp4_server - check if it contains default entry
+    qry="select count(*) from dhcp4_server"
+    run_statement "dhcp4_server" "$qry" 1
+
+    # table: dhcp4_audit
+    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp4_audit"
+    run_statement "dhcp4_audit" "$qry"
+
+    # table: dhcp4_global_parameter
+    qry="select id, name, value, modification_ts from dhcp4_global_parameter"
+    run_statement "dhcp4_global_parameter" "$qry"
+
+    # table: dhcp4_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp4_global_parameter_server"
+    run_statement "dhcp4_global_parameter_server" "$qry"
+
+    # table: dhcp4_option_def
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
+    run_statement "dhcp4_option_def" "$qry"
+
+    # table: dhcp4_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp4_option_def_server"
+    run_statement "dhcp4_option_def_server" "$qry"
+
+    # table: dhcp4_shared_network
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    # table: dhcp4_shared_network_server
+    qry="select shared_network_id, server_id, modification_ts from dhcp4_shared_network_server"
+    run_statement "dhcp4_shared_network_server" "$qry"
+
+    # table: dhcp4_subnet
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime from dhcp4_subnet"
+    run_statement "dhcp4_subnet" "$qry"
+
+    # table: dhcp4_pool
+    qry="select id, start_address, end_address, subnet_id, modification_ts from dhcp4_pool"
+    run_statement "dhcp4_pool" "$qry"
+
+    # table: dhcp4_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp4_subnet_server"
+    run_statement "dhcp4_subnet_server" "$qry"
+
+    # table: dhcp4_options (should include three new columns)
+    qry="select shared_network_name, pool_id, modification_ts from dhcp4_options"
+    run_statement "dhcp4_options" "$qry"
+
+    # table: dhcp4_options_server
+    qry="select option_id, server_id, modification_ts from dhcp4_options_server"
+    run_statement "dhcp4_options_server" "$qry"
+
+    # table: dhcp6_server
+    qry="select id, tag, description, modification_ts from dhcp6_server"
+    run_statement "dhcp6_server" "$qry"
+
+    # table: dhcp6_server - check if it contains default entry
+    qry="select count(*) from dhcp6_server"
+    run_statement "dhcp6_server" "$qry" 1
+
+    # table: dhcp6_audit
+    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp6_audit"
+    run_statement "dhcp6_audit" "$qry"
+
+    # table: dhcp6_global_parameter
+    qry="select id, name, value, modification_ts from dhcp6_global_parameter"
+    run_statement "dhcp6_global_parameter" "$qry"
+
+    # table: dhcp6_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp6_global_parameter_server"
+    run_statement "dhcp6_global_parameter_server" "$qry"
+
+    # table: dhcp6_option_def
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
+    run_statement "dhcp6_option_def" "$qry"
+
+    # table: dhcp6_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp6_option_def_server"
+    run_statement "dhcp6_option_def_server" "$qry"
+
+    # table: dhcp6_shared_network
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_shared_network_server
+    qry="select shared_network_id, server_id, modification_ts from dhcp6_shared_network_server"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_subnet
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime from dhcp6_subnet"
+    run_statement "dhcp6_subnet" "$qry"
+
+    # table: dhcp6_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp6_subnet_server"
+    run_statement "dhcp6_subnet_server" "$qry"
+
+    # table: dhcp6_pd_pool
+    qry="select id, prefix_length, delegated_prefix_length, dhcp6_subnet_id, modification_ts from dhcp6_pd_pool"
+    run_statement "dhcp6_pd_pool" "$qry"
+
+    # table: dhcp6_pool
+    qry="select id, start_address, end_address, dhcp6_subnet_id, modification_ts from dhcp6_pool"
+    run_statement "dhcp6_pool" "$qry"
+
+    # table: dhcp6_options (should include four new columns)
+    qry="select shared_network_name, pool_id, pd_pool_id, modification_ts from dhcp6_options"
+    run_statement "dhcp6_options" "$qry"
+
+    # table: dhcp6_options_server
+    qry="select option_id, server_id, modification_ts from dhcp6_options_server"
+    run_statement "dhcp6_options_server" "$qry"
+
+    # Verify upgraded schema reports version 7.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "6.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -492,9 +637,9 @@ mysql_lease4_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0);\
-insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1);\
-insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2);"
+insert into lease4 values(10,20,30,40,'2015-01-01 01:15:30',50,1,1,'one.example.com', 0,NULL);\
+insert into lease4 values(11,NULL,123,40,'2015-02-02 02:30:45',50,1,1,'', 1,NULL);\
+insert into lease4 values(12,22,NULL,40,'2015-03-03 11:01:07',50,1,1,'three.example.com', 2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -552,9 +697,9 @@ mysql_lease6_dump_test() {
 
     # Insert the reference record
     insert_sql="\
-insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0);\
-insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1);\
-insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2);"
+insert into lease6 values(10,20,30,'2015-04-04 01:15:30',40,50,1,60,70,1,1,'one.example.com',80,90,16,0,NULL);\
+insert into lease6 values(11,NULL,30,'2015-05-05 02:30:45',40,50,1,60,70,1,1,'',80,90,1,1,NULL);\
+insert into lease6 values(12,21,30,'2015-06-06 11:01:07',40,50,1,60,70,1,1,'three.example.com',80,90,4,2,NULL);"
 
     mysql_execute "$insert_sql"
     ERRCODE=$?
@@ -848,6 +993,89 @@ mysql_lease_stat_upgrade_test() {
     mysql_wipe
 }
 
+# Verifies that you can upgrade from an earlier version and
+# that unused subnet ID values in hosts and options tables are
+# converted to NULL.
+mysql_unused_subnet_id_test() {
+    test_start "mysql.unused_subnet_id_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert subnet id values
+    #
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Now upgrade to schema 6.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 6.0
+
+    # Now we need insert some hosts to "migrate" for both v4 and v6
+    qry=\
+"insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '0123456', 0, 0, 'both'); \
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '1123456', 4, 0, 'v4only');
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '2123456', 0, 6, 'v6only');\
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname) \
+   values (0, '3123456', 4, 6, 'neither');"
+
+    run_statement "insert hosts" "$qry"
+
+    # Now we need insert some options to "migrate" for both v4 and v6
+    qry=\
+"insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (1, 4, 0);\
+ insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (2, 0, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (1, 6, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (2, 0, 0);"
+
+    run_statement "insert options" "$qry"
+
+    # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    # Upgrade should succeed
+    assert_eq 0 $ERRCODE "upgrade failed"
+
+    # Two hosts should have null v4 subnet ids
+    qry="select count(host_id) from hosts where dhcp4_subnet_id is null;"
+    run_statement "#hosts.1" "$qry" 2
+
+    # Two hosts should have v4 subnet ids = 4
+    qry="select count(host_id) from hosts where dhcp4_subnet_id = 4;"
+    run_statement "#hosts.2" "$qry" 2
+
+    # Two hosts should have null v6 subnet ids
+    qry="select count(host_id) from hosts where dhcp6_subnet_id is null;"
+    run_statement "#hosts.3" "$qry" 2
+
+    # Two hosts should should have v6 subnet ids = 6
+    qry="select count(host_id) from hosts where dhcp6_subnet_id = 6;"
+    run_statement "#hosts.4" "$qry" 2
+
+    # One option should have null v4 subnet id
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id is null;"
+    run_statement "#options.1" "$qry" 1
+
+    # One option should have v4 subnet id = 4
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id = 4;"
+    run_statement "#options.2" "$qry" 1
+
+    # One option should have null v6 subnet id
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id is null;"
+    run_statement "#options.3" "$qry" 1
+
+    # One option should have v4 subnet id = 6
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id = 6;"
+    run_statement "#options.4" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+}
+
 mysql_lease_init_test
 mysql_host_reservation_init_test
 mysql_lease_version_test
@@ -857,3 +1085,4 @@ mysql_lease6_dump_test
 mysql_lease4_stat_test
 mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
+mysql_unused_subnet_id_test

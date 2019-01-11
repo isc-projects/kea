@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -305,6 +305,7 @@ PktFilterLPF::send(const Iface& iface, uint16_t sockfd, const Pkt4Ptr& pkt) {
     buf.writeData(pkt->getBuffer().getData(), pkt->getBuffer().getLength());
 
     sockaddr_ll sa;
+    memset(&sa, 0x0, sizeof(sa));
     sa.sll_family = AF_PACKET;
     sa.sll_ifindex = iface.getIndex();
     sa.sll_protocol = htons(ETH_P_IP);

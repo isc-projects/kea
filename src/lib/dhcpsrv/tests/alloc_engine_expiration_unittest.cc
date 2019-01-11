@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1277,7 +1277,8 @@ ExpirationAllocEngine6Test::createLeases() {
         // Copy the lease before adding it to the lease manager. We want to
         // make sure that modifications to the leases held in the leases_
         // container doesn't affect the leases in the lease manager.
-        LeaseMgrFactory::instance().addLease(Lease6Ptr(new Lease6(*lease)));
+        Lease6Ptr tmp(new Lease6(*lease));
+        LeaseMgrFactory::instance().addLease(tmp);
 
         // Note in the statistics that this lease has been added.
         StatsMgr& stats_mgr = StatsMgr::instance();
@@ -1838,7 +1839,8 @@ ExpirationAllocEngine4Test::createLeases() {
         // Copy the lease before adding it to the lease manager. We want to
         // make sure that modifications to the leases held in the leases_
         // container doesn't affect the leases in the lease manager.
-        LeaseMgrFactory::instance().addLease(Lease4Ptr(new Lease4(*lease)));
+        Lease4Ptr tmp(new Lease4(*lease));
+        LeaseMgrFactory::instance().addLease(tmp);
 
         // Note in the statistics that this lease has been added.
         StatsMgr& stats_mgr = StatsMgr::instance();

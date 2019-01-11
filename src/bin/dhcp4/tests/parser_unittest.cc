@@ -264,12 +264,14 @@ void testFile(const std::string& fname) {
 // the second time with Parser4. Both JSON trees are then compared.
 TEST(ParserTest, file) {
     vector<string> configs = { "advanced.json" ,
+                               "all-keys.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
                                "classify2.json",
                                "comments.json",
                                "dhcpv4-over-dhcpv6.json",
+                               "global-reservations.json",
                                "hooks.json",
                                "leases-expiration.json",
                                "multiple-options.json",

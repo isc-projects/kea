@@ -1,0 +1,159 @@
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+$NAMESPACE isc::netconf
+
+% NETCONF_BOOT_UPDATE_COMPLETED Boot-update configuration completed for server %1
+This informational message is issued when the initial configuration
+was retrieved from Netconf and successfully applied to Kea server.
+
+% NETCONF_CONFIG_CHANGED_DETAIL YANG configuration changed: %1
+This debug message indicates a YANG configuration change. The format
+is the change operation (created, modified, deleted or moved) followed
+by xpaths and values of old and new nodes.
+
+% NETCONF_CONFIG_CHANGE_EVENT Received YANG configuration change %1 event
+This informational message is issued when Netconf receives a YANG
+configuration change event. The type of event is printed.
+
+% NETCONF_CONFIG_CHECK_FAIL Netconf configuration check failed: %1
+This error message indicates that Netconf had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% NETCONF_CONFIG_FAIL Netconf configuration failed: %1
+This error message indicates that Netconf had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% NETCONF_FAILED application experienced a fatal error: %1
+This is a fatal error message issued when the Netconf application
+got an unrecoverable error from within the event loop.
+
+% NETCONF_GET_CONFIG got configuration from %1 server: %2
+This debug message indicates that Netconf got the configuration from a
+Kea server. The server name and the retrieved configuration are printed.
+
+% NETCONF_GET_CONFIG_FAILED getting configuration from %1 server failed: %2
+The error message indicates that Netconf got an error getting the
+configuration from a Kea server. Make sure that the server is up and
+running, has appropriate control socket defined and that the controls
+socket configuration on the server matches that of kea-netconf. The
+name of the server and the error are printed.
+
+% NETCONF_GET_CONFIG_STARTED getting configuration from %1 server
+This informational message indicates that Netconf is trying to get the
+configuration from a Kea server.
+
+% NETCONF_LOG_CHANGE_FAIL Netconf configuration change logging failed: %1
+The warning message indicates that the configuration change logging
+encountered an unexpected condition. Details of it will be logged.
+
+% NETCONF_MODULE_INSTALL Sysrepo (un)installs a module: %1 (revision %2)
+This warning message indicates that sysrepo reports the installation
+or uninstallation of a module used by Kea. The name and revision of
+the module are printed.
+
+% NETCONF_MODULE_MISSING_ERR Missing essential module %1 in sysrepo
+This fatal error message indicates that a module required by Netconf
+configuration is not available in the sysrepo repository.  The name of
+the module is printed.
+
+% NETCONF_MODULE_MISSING_WARN Missing module %1 in sysrepo
+This warning message indicates that a module used by Kea is not
+available in the sysrepo repository. The name of the module is printed.
+
+% NETCONF_MODULE_REVISION_ERR Essential module %1 does have the right revision: expected %2, got %3
+This fatal error message indicates that a module required by Netconf
+configuration is not at the right revision in the sysrepo repository.
+The name, expected and available revisions of the module are printed.
+
+% NETCONF_MODULE_REVISION_WARN Module %1 does have the right revision: expected %2, got %3
+This warning message indicates that a module used by Kea is not at the
+right revision in the sysrepo repository. The name, expected and
+available revisions of the module are printed.
+
+% NETCONF_RUN_EXIT application is exiting the event loop
+This is a debug message issued when the Netconf application exits its
+event loop. This is a normal step during kea-netconf shutdown.
+
+% NETCONF_SET_CONFIG set configuration to %1 server: %2
+This debug message indicates that Netconf set the configuration to a
+Kea server. The server name and the applied configuration are printed.
+
+% NETCONF_SET_CONFIG_FAILED setting configuration to %1 server failed: %2
+The error message indicates that Netconf got an error setting the
+configuration to a Kea server. Make sure that the server is up and
+running, has appropriate control socket defined and that the controls
+socket configuration on the server matches that of kea-netconf. The
+name of the server and the error are printed.
+
+% NETCONF_SET_CONFIG_STARTED setting configuration to %1 server
+This informational message indicates that Netconf is trying to set the
+configuration to a Kea server.
+
+% NETCONF_STARTED Netconf (version %1) started
+This informational message indicates that Netconf has processed
+all configuration information and is ready to begin processing.
+The version is also printed.
+
+% NETCONF_SUBSCRIBE_CONFIG subscribing configuration changes for %1 server with %2 module
+This information message indicates that Netconf is trying to subscribe
+configuration changes for a Kea server. The names of the server and
+the module are printed.
+
+% NETCONF_SUBSCRIBE_CONFIG_FAILED subscribe configuration changes for %1 server with %2 module failed: %3
+The error message indicates that Netconf got an error subscribing
+configuration changes for a Kea server. The names of the server and
+the module, and the error are printed.
+
+% NETCONF_UPDATE_CONFIG updating configuration with %1 server: %2
+This debug message indicates that Netconf update the configuration
+of a Kea server. The server name and the updated configuration are
+printed.
+
+% NETCONF_UPDATE_CONFIG_COMPLETED completed updating configuration for %1 server
+This informational message indicates that Netconf updated with success the
+configuration of a Kea server.
+
+% NETCONF_UPDATE_CONFIG_FAILED updating configuration with %1 server: %2
+The error message indicates that Netconf got an error updating the
+configuration of a Kea server. This includes a configuration rejected
+by a Kea server when it tried to apply it. The name of the server and
+the error are printed.
+
+% NETCONF_UPDATE_CONFIG_STARTED started updating configuration for %1 server
+This informational message indicates that Netconf is trying to update the
+configuration of a Kea server.
+
+% NETCONF_VALIDATE_CONFIG validating configuration with %1 server: %2
+This debug message indicates that Netconf is validating the configuration
+with a Kea server. The server name and the validated configuration are
+printed.
+
+% NETCONF_VALIDATE_CONFIG_COMPLETED completed validating configuration for %1 server
+This informational message indicates that Netconf validated with success the
+configuration with a Kea server.
+
+% NETCONF_VALIDATE_CONFIG_FAILED validating configuration with %1 server got an error: %2
+The error message indicates that Netconf got an error validating the
+configuration with a Kea server. This message is produced when
+exception is thrown during an attempt to validate received
+configuration. Additional explanation may be provided as a
+parameter. You may also take a look at earlier log messages.  The name
+of the server and the error are printed.
+
+% NETCONF_VALIDATE_CONFIG_REJECTED validating configuration with %1 server was rejected: %2
+The warning message indicates that Netconf got an error validating the
+configuration with a Kea server. This message is printed when the
+configuration was rejected during normal processing. Additional
+explanation may be provided as a parameter. You may also take a look
+at earlier log messages.  The name of the server and the error are
+printed.
+
+% NETCONF_VALIDATE_CONFIG_STARTED started validating configuration for %1 server
+This informational message indicates that Netconf is trying to validate the
+configuration with a Kea server.

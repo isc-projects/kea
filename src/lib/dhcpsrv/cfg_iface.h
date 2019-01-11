@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -127,7 +127,7 @@ public:
 /// to which it is bound. It is allowed to select multiple addresses on the
 /// particular interface explicitly, e.g. "eth0/192.168.8.1",
 /// "eth0/192.168.8.2".
-class CfgIface : public UserContext, public isc::data::CfgToElement {
+class CfgIface : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Socket type used by the DHCPv4 server.
@@ -157,6 +157,7 @@ public:
     CfgIface();
 
     /// @brief Convenience function which closes all open sockets.
+    /// It stops the receiver thread too.
     void closeSockets() const;
 
     /// @brief Compares two @c CfgIface objects for equality.
@@ -172,6 +173,7 @@ public:
     /// sockets bound to unicast address. See @c CfgIface::use function
     /// documentation for details how to specify interfaces and unicast
     /// addresses to bind the sockets to.
+    /// This function starts the family receiver.
     ///
     /// @param family Address family (AF_INET or AF_INET6).
     /// @param port Port number to be used to bind sockets to.

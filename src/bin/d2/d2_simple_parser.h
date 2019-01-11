@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define D2_SIMPLE_PARSER_H
 
 #include <cc/simple_parser.h>
+#include <d2/d2_cfg_mgr.h>
 
 namespace isc {
 namespace d2 {
@@ -76,6 +77,17 @@ public:
     static size_t setManagerDefaults(data::ElementPtr global,
                                      const std::string& mgr_name,
                                      const data::SimpleDefaults& mgr_defaults);
+
+    /// @brief Parses the whole D2 configuration
+    ///
+    /// @param ctx - parsed information will be stored here
+    /// @param config - Element tree structure that holds configuration
+    /// @param check_only - if true the configuration is verified only, not applied
+    ///
+    /// @throw ConfigError if any issues are encountered.
+    void parse(const D2CfgContextPtr& ctx,
+               const isc::data::ConstElementPtr& config,
+               bool check_only);
 };
 
 };

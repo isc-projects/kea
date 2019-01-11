@@ -1864,12 +1864,13 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"when-present\", "
         "     \"generated-prefix\" : \"test.prefix\", "
         "     \"qualifying-suffix\" : \"test.suffix.\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
         "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
@@ -1890,7 +1891,6 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(3432, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_TRUE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_TRUE(d2_client_config->getOverrideNoUpdate());
     EXPECT_TRUE(d2_client_config->getOverrideClientUpdate());
     EXPECT_EQ(D2ClientConfig::RCM_WHEN_PRESENT, d2_client_config->getReplaceClientNameMode());
@@ -1919,12 +1919,13 @@ TEST_F(ParseConfigTest, validD2Config) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : false, "
         "     \"override-no-update\" : false, "
         "     \"override-client-update\" : false, "
         "     \"replace-client-name\" : \"never\", "
         "     \"generated-prefix\" : \"\", "
         "     \"qualifying-suffix\" : \"\", "
+        "     \"hostname-char-set\" : \"[^A-Z]\", "
+        "     \"hostname-char-replacement\" : \"*\", "
         "     \"user-context\": { \"foo\": \"bar\" } "
         "    }"
         "}";
@@ -1944,7 +1945,6 @@ TEST_F(ParseConfigTest, validD2Config) {
     EXPECT_EQ(43567, d2_client_config->getServerPort());
     EXPECT_EQ(dhcp_ddns::NCR_UDP, d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::FMT_JSON, d2_client_config->getNcrFormat());
-    EXPECT_FALSE(d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_FALSE(d2_client_config->getOverrideNoUpdate());
     EXPECT_FALSE(d2_client_config->getOverrideClientUpdate());
     EXPECT_EQ(D2ClientConfig::RCM_NEVER, d2_client_config->getReplaceClientNameMode());
@@ -2019,8 +2019,6 @@ TEST_F(ParseConfigTest, parserDefaultsD2Config) {
               d2_client_config->getNcrProtocol());
     EXPECT_EQ(dhcp_ddns::stringToNcrFormat(D2ClientConfig::DFT_NCR_FORMAT),
               d2_client_config->getNcrFormat());
-    EXPECT_EQ(D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN,
-              d2_client_config->getAlwaysIncludeFqdn());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_NO_UPDATE,
               d2_client_config->getOverrideNoUpdate());
     EXPECT_EQ(D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE,
@@ -2053,7 +2051,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2069,7 +2066,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"Bogus\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2085,7 +2081,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"TCP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2101,7 +2096,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : 53001, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"Bogus\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2117,7 +2111,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"server-port\" : \"bogus\", "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2136,7 +2129,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2155,7 +2147,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : true, "
@@ -2174,7 +2165,6 @@ TEST_F(ParseConfigTest, invalidD2Config) {
         "     \"max-queue-size\" : 2048, "
         "     \"ncr-protocol\" : \"UDP\", "
         "     \"ncr-format\" : \"JSON\", "
-        "     \"always-include-fqdn\" : true, "
         "     \"override-no-update\" : true, "
         "     \"override-client-update\" : true, "
         "     \"replace-client-name\" : \"BOGUS\", "

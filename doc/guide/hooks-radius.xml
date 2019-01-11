@@ -8,7 +8,11 @@
  - This license applies to the documentation itself, not the software.
 -->
 
-
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
+]>
 
 <section xml:id="hooks-radius">
   <title>radius: RADIUS server support</title>
@@ -93,7 +97,7 @@ $ sudo yum install gcc-g++ openssl-devel log4cplus-devel wget git
       reported to FreeRadius client project. Acceptance of those
       changes is outside of ISC responsibilities. Until those
       are processed, it is strongly recommended to use FreeRadius
-      client with ISC patches. To and compile this version, please use
+      client with ISC patches. To download and compile this version, please use
       the following steps:
 <screen>
 $ git clone https://github.com/fxdupont/freeradius-client.git
@@ -137,8 +141,7 @@ $ sudo ./b2 install
 </screen>
         Note that b2 script may optionally take extra parameters. One
         of them specify the destination path where the sources are to
-        be compiled. Boost is different compared to other software in
-        the sense that there is no explicit make install step.
+        be compiled.
       </para>
 
       <para>
@@ -154,7 +157,7 @@ $ sudo ./b2 install
 $ git clone https://github.com/isc-projects/kea
 
 # Get a tarball and extract it
-$ tar zxvf kea-1.4.0-beta.tar.gz
+$ tar zxvf kea-&keaversion;.tar.gz
 </screen>
 
 The next step is to extract premium Kea package that contains Radius repository
@@ -163,7 +166,7 @@ a premium/ subdirectory.
 
 <screen>
   $ cd kea
-  $ tar zxvf ../kea-premium-radius-1.4.0-beta.tar.gz
+  $ tar zxvf ../kea-premium-radius-&keaversion;.tar.gz
 </screen>
 
 Once this is done, make sure the kea sources look similar to this:
@@ -188,14 +191,13 @@ drwxr-xr-x  10 thomson  staff     340 Apr 26 19:04 src
 drwxr-xr-x  14 thomson  staff     476 Apr 26 19:04 tools
 </screen>
 
-The next step is to configure Kea. There are several essential steps necessary here.
+The makefiles have to be regenerated using autoreconf.</para>
+
+<para>The next step is to configure Kea. There are several essential steps necessary here.
 Running autoreconf -if is necessary to compile premium package that contains
 RADIUS. Also, --with-freeradius option is necessary to tell Kea where the FreeRADIUS
 client sources can be found. Also, since the non-standard boost is used, the path
 to it has to be specified.</para>
-
-<para>If the sources are not from a tarball release, makefiles have to be regenerated
-using autoreconf.</para>
 
 <screen>
 $ autoreconf -i
@@ -224,8 +226,8 @@ should look as follows:</para>
 
 Package:
   Name:              kea
-  Version:           1.4.0-git
-  Extended version:  1.4.0-git (git ab3cb8afbb7a4cdaa9cbb279fd783aa126a7912a)
+  Version:           &keaversion;
+  Extended version:  &keaversion; (tarball)
   OS Family:         Linux
 
   Hooks directory:   /usr/local/lib/hooks
@@ -569,7 +571,7 @@ Please make sure that your compilation has the following:
             // the incoming packet or even its metadata (e.g. the interface
             // it was received over from)
             "name": "Configuration-Token",
-            "expr": "pkt.iface"
+            "expr": "hexstring(pkt4.mac,':')"
         }
         ] // End of attributes
     } // End of access

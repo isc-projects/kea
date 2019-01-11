@@ -65,7 +65,7 @@
 
        // In subnets
        "subnet6": [
-         { 
+         {
            "comment": "A subnet",
            "subnet": "2001:db1::/64",
            "id": 100,

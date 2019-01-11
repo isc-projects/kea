@@ -29,8 +29,8 @@ typedef boost::shared_ptr<D2CfgContext> D2CfgContextPtr;
 /// It provides a single enclosure for the storage of configuration parameters
 /// and any other DHCP-DDNS specific information that needs to be accessible
 /// during configuration parsing as well as to the application as a whole.
-/// It is derived from the context base class, DCfgContextBase.
-class D2CfgContext : public process::DCfgContextBase {
+/// It is derived from the context base class, ConfigBase.
+class D2CfgContext : public process::ConfigBase {
 public:
     /// @brief Constructor
     D2CfgContext();
@@ -41,8 +41,8 @@ public:
     /// @brief Creates a clone of this context object.
     ///
     /// @return returns a pointer to the new clone.
-    virtual process::DCfgContextBasePtr clone() {
-        return (process::DCfgContextBasePtr(new D2CfgContext(*this)));
+    virtual process::ConfigPtr clone() {
+        return (process::ConfigPtr(new D2CfgContext(*this)));
     }
 
     /// @brief Fetches a reference to the D2Params
@@ -90,6 +90,18 @@ public:
         keys_ = keys;
     }
 
+    /// @brief Returns information about control socket
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo() const {
+        return (control_socket_);
+    }
+
+    /// @brief Sets information about the control socket
+    /// @param control_socket Element that holds control-socket map
+    void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
+        control_socket_ = control_socket;
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to a configuration
@@ -112,8 +124,11 @@ private:
     /// @brief Reverse domain list manager.
     DdnsDomainListMgrPtr reverse_mgr_;
 
-    /// @brief Storage for the map of TSIGKeyInfos
+    /// @brief Storage for the map of TSIGKeyInfos.
     TSIGKeyInfoMapPtr keys_;
+
+    /// @brief Pointer to the control-socket information.
+    isc::data::ConstElementPtr control_socket_;
 };
 
 /// @brief Defines a pointer for DdnsDomain instances.
@@ -254,6 +269,11 @@ public:
     /// @return reference to const D2ParamsPtr
     const D2ParamsPtr& getD2Params();
 
+    /// @brief Convenience method fetches information about control socket
+    /// from context
+    /// @return pointer to the Element that holds control-socket map
+    const isc::data::ConstElementPtr getControlSocketInfo();
+
     /// @brief Returns configuration summary in the textual format.
     ///
     /// @param selection Bitfield which describes the parts of the configuration
@@ -264,19 +284,14 @@ public:
 
 protected:
 
-    /// @brief Parses an element using alternate parsers
+    /// @brief Parses configuration of the D2.
     ///
-    /// Each element to be parsed is passed first into this method to allow
-    /// it to be processed by SimpleParser derivations if they've been
-    /// implemented. The method should return true if it has processed the
-    /// element or false if the element should be passed onto the original
-    /// DhcpConfigParser mechanisms.  This method is invoked in both
-    /// @c DCfgMgrBase::buildParams() and DCfgMgrBase::buildAndCommit().
-    ///
-    /// @param element_id name of the element as it is expected in the cfg
-    /// @param element value of the element as ElementPtr
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
+    /// @param config Pointer to a configuration specified for D2.
+    /// @param check_only Boolean flag indicating if this method should
+    /// only verify correctness of the provided configuration.
+    /// @return Pointer to a result of configuration parsing.
+    virtual isc::data::ConstElementPtr
+    parse(isc::data::ConstElementPtr config, bool check_only);
 
     /// @brief Adds default values to the given config
     ///
@@ -286,26 +301,6 @@ protected:
     /// @param mutable_config - configuration to which defaults should be added
     virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
 
-    /// @brief Performs the parsing of the given "params" element.
-    ///
-    /// Iterates over the set of parameters, creating a parser based on the
-    /// parameter's id and then invoking its build method passing in the
-    /// parameter's configuration value.
-    ///
-    /// It then fetches the parameters, validating their values and if
-    /// valid instantiates a D2Params instance.  Invalid values result in
-    /// a throw.
-    ///
-    /// @param params_config set of scalar configuration elements to parse
-    ///
-    /// @throw D2CfgError if any of the following are true:
-    /// -# ip_address is 0.0.0.0 or ::
-    /// -# port is 0
-    /// -# dns_server_timeout is < 1
-    /// -# ncr_protocol is invalid, currently only NCR_UDP is supported
-    /// -# ncr_format is invalid, currently only FMT_JSON is supported
-    virtual void buildParams(isc::data::ConstElementPtr params_config);
-
     /// @brief Creates an new, blank D2CfgContext context
     ///
     /// This method is used at the beginning of configuration process to
@@ -314,8 +309,8 @@ protected:
     /// existing context provided the configuration process completes without
     /// error.
     ///
-    /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual process::DCfgContextBasePtr createNewContext();
+    /// @return Returns a ConfigPtr to the new context instance.
+    virtual process::ConfigPtr createNewContext();
 };
 
 /// @brief Defines a shared pointer to D2CfgMgr.

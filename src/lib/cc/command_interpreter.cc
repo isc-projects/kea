@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -26,6 +26,7 @@ const char *CONTROL_COMMAND = "command";
 const char *CONTROL_RESULT = "result";
 const char *CONTROL_TEXT = "text";
 const char *CONTROL_ARGUMENTS = "arguments";
+const char *CONTROL_SERVICE = "service";
 
 // Full version, with status, text and arguments
 ConstElementPtr
@@ -134,16 +135,33 @@ answerToText(const ConstElementPtr& msg) {
 
 ConstElementPtr
 createCommand(const std::string& command) {
-    return (createCommand(command, ElementPtr()));
+    return (createCommand(command, ElementPtr(), ""));
 }
 
 ConstElementPtr
 createCommand(const std::string& command, ConstElementPtr arg) {
+    return (createCommand(command, arg, ""));
+}
+
+ConstElementPtr
+createCommand(const std::string& command, const std::string& service) {
+    return (createCommand(command, ElementPtr(), service));
+}
+
+ConstElementPtr
+createCommand(const std::string& command,
+              ConstElementPtr arg,
+              const std::string& service) {
     ElementPtr query = Element::createMap();
     ElementPtr cmd = Element::create(command);
     query->set(CONTROL_COMMAND, cmd);
     if (arg) {
         query->set(CONTROL_ARGUMENTS, arg);
+    }
+    if (!service.empty()) {
+        ElementPtr services = Element::createList();
+        services->add(Element::create(service));
+        query->set(CONTROL_SERVICE, services);
     }
     return (query);
 }
@@ -161,6 +179,17 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
                   "Invalid answer specified, does not contain mandatory 'command'");
     }
 
+    // Make sure that all specified parameters are supported.
+    auto command_params = command->mapValue();
+    for (auto param : command_params) {
+        if ((param.first != CONTROL_COMMAND) &&
+            (param.first != CONTROL_ARGUMENTS) &&
+            (param.first != CONTROL_SERVICE)) {
+            isc_throw(CtrlChannelError, "Received command contains unsupported "
+                      "parameter '" << param.first << "'");
+        }
+    }
+
     ConstElementPtr cmd = command->get(CONTROL_COMMAND);
     if (cmd->getType() != Element::string) {
         isc_throw(CtrlChannelError,
@@ -170,6 +199,32 @@ parseCommand(ConstElementPtr& arg, ConstElementPtr command) {
     arg = command->get(CONTROL_ARGUMENTS);
 
     return (cmd->stringValue());
+}
+
+std::string
+parseCommandWithArgs(ConstElementPtr& arg, ConstElementPtr command) {
+    std::string command_name = parseCommand(arg, command);
+
+    // This function requires arguments within the command.
+    if (!arg) {
+        isc_throw(CtrlChannelError,
+                  "no arguments specified for the '" << command_name
+                  << "' command");
+    }
+
+    // Arguments must be a map.
+    if (arg->getType() != Element::map) {
+        isc_throw(CtrlChannelError, "arguments specified for the '" << command_name
+                  << "' command are not a map");
+    }
+
+    // At least one argument is required.
+    if (arg->size() == 0) {
+        isc_throw(CtrlChannelError, "arguments must not be empty for "
+                  "the '" << command_name << "' command");
+    }
+
+    return (command_name);
 }
 
 ConstElementPtr

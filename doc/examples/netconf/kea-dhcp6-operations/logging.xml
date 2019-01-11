@@ -1,0 +1,26 @@
+<config xmlns="urn:ietf:params:xml:ns:yang:kea-dhcp6-server">
+  <interfaces-config>
+    <interfaces>eth1</interfaces>
+  </interfaces-config>
+  <subnet6>
+    <id>1</id>
+    <pool>
+      <start-address>2001:db8::1:0</start-address>
+      <end-address>2001:db8::1:ffff</end-address>
+      <prefix>2001:db8::1:0/112</prefix>
+    </pool>
+    <subnet>2001:db8::/64</subnet>
+  </subnet6>
+  <control-socket>
+    <socket-name>/tmp/kea6-sock</socket-name>
+    <socket-type>unix</socket-type>
+  </control-socket>
+  <logger>
+    <name>kea-dhcp6</name>
+    <output-option>
+      <output>stderr</output>
+    </output-option>
+    <debuglevel>99</debuglevel>
+    <severity>DEBUG</severity>
+  </logger>
+</config>

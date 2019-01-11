@@ -9,6 +9,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfg_hosts_util.h>
+#include <process/logging_info.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -17,6 +18,7 @@
 
 using namespace isc::log;
 using namespace isc::data;
+using namespace isc::process;
 
 namespace isc {
 namespace dhcp {
@@ -35,7 +37,9 @@ SrvConfig::SrvConfig()
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()) {
+      configured_globals_(Element::createMap()),
+      cfg_consist_(new CfgConsistency()), 
+      server_tag_("") {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -52,7 +56,9 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       class_dictionary_(new ClientClassDictionary()),
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
-      configured_globals_(Element::createMap()) {
+      configured_globals_(Element::createMap()),
+      cfg_consist_(new CfgConsistency()),
+      server_tag_("") {
 }
 
 std::string
@@ -103,12 +109,8 @@ SrvConfig::sequenceEquals(const SrvConfig& other) {
 
 void
 SrvConfig::copy(SrvConfig& new_config) const {
-    // We will entirely replace loggers in the new configuration.
-    new_config.logging_info_.clear();
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        new_config.addLoggingInfo(*it);
-    }
+    ConfigBase::copy(new_config);
+
     // Replace interface configuration.
     new_config.cfg_iface_.reset(new CfgIface(*cfg_iface_));
     // Replace option definitions.
@@ -128,45 +130,15 @@ SrvConfig::copy(SrvConfig& new_config) const {
     }
 }
 
-void
-SrvConfig::applyLoggingCfg() const {
-
-    std::list<LoggerSpecification> specs;
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        specs.push_back(it->toSpec());
-    }
-    LoggerManager manager;
-    manager.process(specs.begin(), specs.end());
-}
-
 bool
 SrvConfig::equals(const SrvConfig& other) const {
-    // If number of loggers is different, then configurations aren't equal.
-    if (logging_info_.size() != other.logging_info_.size()) {
+
+    // Checks common elements: logging & config control
+    if (!ConfigBase::equals(other)) {
         return (false);
     }
-    // Pass through all loggers and try to find the match for each of them
-    // with the loggers from the other configuration. The order doesn't
-    // matter so we can't simply compare the vectors.
-    for (LoggingInfoStorage::const_iterator this_it =
-             logging_info_.begin(); this_it != logging_info_.end();
-         ++this_it) {
-        bool match = false;
-        for (LoggingInfoStorage::const_iterator other_it =
-                 other.logging_info_.begin();
-             other_it != other.logging_info_.end(); ++other_it) {
-            if (this_it->equals(*other_it)) {
-                match = true;
-                break;
-            }
-        }
-        // No match found for the particular logger so return false.
-        if (!match) {
-            return (false);
-        }
-    }
-    // Logging information is equal between objects, so check other values.
+
+    // Common information is equal between objects, so check other values.
     if ((*cfg_iface_ != *other.cfg_iface_) ||
         (*cfg_option_def_ != *other.cfg_option_def_) ||
         (*cfg_option_ != *other.cfg_option_) ||
@@ -208,7 +180,7 @@ SrvConfig::updateStatistics() {
     }
 }
 
-void 
+void
 SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "extractConfiguredGlobals must be given a map element");
@@ -225,15 +197,16 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
 
 ElementPtr
 SrvConfig::toElement() const {
+    // Toplevel map
+    ElementPtr result = ConfigBase::toElement();
+
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
-    // Toplevel map
-    ElementPtr result = Element::createMap();
     // DhcpX global map
     ElementPtr dhcp = Element::createMap();
 
     // Add in explicitly configured globals.
-    dhcp->setValue(configured_globals_->mapValue()); 
+    dhcp->setValue(configured_globals_->mapValue());
 
     // Set user-context
     contextToElement(dhcp);
@@ -339,9 +312,18 @@ SrvConfig::toElement() const {
             }
         }
     }
-    // Insert reservations
+
+    // Host reservations
     CfgHostsList resv_list;
     resv_list.internalize(cfg_hosts_->toElement());
+
+    // Insert global reservations
+    ConstElementPtr global_resvs = resv_list.get(SUBNET_ID_GLOBAL);
+    if (global_resvs->size() > 0) {
+        dhcp->set("reservations", global_resvs);
+    }
+
+    // Insert subnet reservations
     for (std::vector<ElementPtr>::const_iterator subnet = sn_list.cbegin();
          subnet != sn_list.cend(); ++subnet) {
         ConstElementPtr id = (*subnet)->get("id");
@@ -352,6 +334,7 @@ SrvConfig::toElement() const {
         ConstElementPtr resvs = resv_list.get(subnet_id);
         (*subnet)->set("reservations", resvs);
     }
+
     // Set expired-leases-processing
     ConstElementPtr expired = cfg_expiration_->toElement();
     dhcp->set("expired-leases-processing", expired);
@@ -399,18 +382,20 @@ SrvConfig::toElement() const {
     // Set DhcpX
     result->set(family == AF_INET ? "Dhcp4" : "Dhcp6", dhcp);
 
-    // Logging global map (skip if empty)
-    if (!logging_info_.empty()) {
-        ElementPtr logging = Element::createMap();
-        // Set loggers list
-        ElementPtr loggers = Element::createList();
-        for (LoggingInfoStorage::const_iterator logger =
-                 logging_info_.cbegin();
-             logger != logging_info_.cend(); ++logger) {
-            loggers->add(logger->toElement());
-        }
-        logging->set("loggers", loggers);
-        result->set("Logging", logging);
+    ConstElementPtr cfg_consist = cfg_consist_->toElement();
+    dhcp->set("sanity-checks", cfg_consist);
+
+    // Set config-control (if it exists)
+    ConstConfigControlInfoPtr info = getConfigControlInfo();
+    if (info) {
+        ConstElementPtr info_elem = info->toElement();
+        dhcp->set("config-control", info_elem);
+    }
+
+    // Set dhcp-packet-control (if it exists)
+    data::ConstElementPtr dhcp_queue_control = getDHCPQueueControl();
+    if (dhcp_queue_control) {
+        dhcp->set("dhcp-queue-control", dhcp_queue_control);
     }
 
     return (result);

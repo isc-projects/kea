@@ -21,9 +21,10 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/cfg_mac_source.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
-#include <dhcpsrv/logging_info.h>
+#include <process/config_base.h>
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <cc/user_context.h>
@@ -40,7 +41,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig : public UserContext, public isc::data::CfgToElement {
+class SrvConfig : public process::ConfigBase {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -61,6 +62,8 @@ public:
     static const uint32_t CFGSEL_SUBNET  = 0x00000003;
     /// Configured globals
     static const uint32_t CFGSEL_GLOBALS = 0x00000020;
+    /// Config control info
+    static const uint32_t CFGSEL_CFG_CTL = 0x00000040;
     /// IPv4 related config
     static const uint32_t CFGSEL_ALL4    = 0x00000035;
     /// IPv6 related config
@@ -115,25 +118,6 @@ public:
     ///
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
-
-    /// @name Modifiers and accesors for the configuration objects.
-    ///
-    /// @warning References to the objects returned by accessors are only
-    /// valid during the lifetime of the @c SrvConfig object which
-    /// returned them.
-    ///
-    //@{
-    /// @brief Returns logging specific configuration.
-    const LoggingInfoStorage& getLoggingInfo() const {
-        return (logging_info_);
-    }
-
-    /// @brief Sets logging specific configuration.
-    ///
-    /// @param logging_info New logging configuration.
-    void addLoggingInfo(const LoggingInfo& logging_info) {
-        logging_info_.push_back(logging_info);
-    }
 
     /// @brief Returns non-const pointer to interface configuration.
     ///
@@ -341,6 +325,11 @@ public:
         return (cfg_host_operations6_);
     }
 
+    /// @brief Returns const pointer to object holding sanity checks flags
+    CfgConsistencyPtr getConsistency() {
+        return (cfg_consist_);
+    }
+
     //@}
 
     /// @brief Returns non-const reference to an array that stores
@@ -369,6 +358,18 @@ public:
     /// @param control_socket Element that holds control-socket map
     void setControlSocketInfo(const isc::data::ConstElementPtr& control_socket) {
         control_socket_ = control_socket;
+    }
+
+    /// @brief Returns DHCP queue control information
+    /// @return pointer to the DHCP queue control information
+    const isc::data::ConstElementPtr getDHCPQueueControl() const {
+        return (dhcp_queue_control_);
+    }
+
+    /// @brief Sets information about the dhcp queue control
+    /// @param dhcp_queue_control new dhcp queue control information
+    void setDHCPQueueControl(const isc::data::ConstElementPtr dhcp_queue_control) {
+        dhcp_queue_control_ = dhcp_queue_control;
     }
 
     /// @brief Returns pointer to the dictionary of global client
@@ -420,9 +421,6 @@ public:
     /// @param [out] new_config An object to which the configuration will
     /// be copied.
     void copy(SrvConfig& new_config) const;
-
-    /// @brief Apply logging configuration to log4cplus.
-    void applyLoggingCfg() const;
 
     /// @name Methods and operators used to compare configurations.
     ///
@@ -573,6 +571,21 @@ public:
         configured_globals_->set(name, value);
     }
 
+    /// @brief Sets the server's logical name
+    ///
+    /// @param server_tag a unique string name which identifies this server
+    /// from any other configured servers
+    void setServerTag(const std::string& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns the server's logical name
+    ///
+    /// @return string containing the server's tag
+    std::string getServerTag() const {
+        return (server_tag_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -582,9 +595,6 @@ private:
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
-
-    /// @brief Logging specific information.
-    LoggingInfoStorage logging_info_;
 
     /// @brief Interface configuration.
     ///
@@ -653,6 +663,9 @@ private:
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
 
+    /// @brief Pointer to the dhcp-queue-control information
+    isc::data::ConstElementPtr dhcp_queue_control_;
+
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
 
@@ -679,6 +692,12 @@ private:
 
     /// @brief Stores the global parameters specified via configuration
     isc::data::ElementPtr configured_globals_;
+
+    /// @brief Pointer to the configuration consistency settings
+    CfgConsistencyPtr cfg_consist_;
+
+    /// @brief Logical name of the server
+    std::string server_tag_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

@@ -1,4 +1,3 @@
-
  Kea authors and contributors
 ------------------------------
 
@@ -6,16 +5,18 @@ Primary developers:
  - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
                     delegation, memfile, database interface, core libdhcp++,
                     host reservation, MAC extraction in DHCPv6,
-                    statistics manager, kea-shell)
+                    statistics manager, kea-shell, netconf)
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
                      control agent, shared networks, high availability)
- - Thomas Markwalder (DDNS, user_chk)
+ - Thomas Markwalder (DDNS, user_chk, global host reservations)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
- - Francis Dupont (crypto, perfdhcp, control agent)
+ - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
+                   radius, netconf)
  - Shawn Routhier (lease file cleanup)
+ - Michal Nowikowski (testing)
 
 Primary area of work mentioned in parentheses. The list is in a roughly
 chronological order.
@@ -111,6 +112,7 @@ We have received the following contributions:
    2018-02: exit-wait-time param added to perfdhcp (github 55)
    2018-03: Cassandra: host delete, fixed DHCPv4 fields, user contexts,
             Postgres: hwaddress source, type storage (github 70)
+   2018-07: Sysrepo detection improvements
 
  - Patrik Lundin
    2016-07: Replace test by expr for < in configure.ac
@@ -143,6 +145,7 @@ We have received the following contributions:
    2018-02: --with-dhcp-XXX renamed to --with-XXX
    2018-02: Support for Google benchmark added (github 36)
    2018-02: exit-wait-time param added to perfdhcp (github 55)
+   2018-07: Sysrepo detection improvements
 
  - Vincent Legout
    2016-11: Fixed serveral spelling mistakes
@@ -169,12 +172,35 @@ We have received the following contributions:
  - Ryan Goodfellow (rcgoodfellow)
    2018-01: Fix kea-admin typo breaking lease-dump
 
+ - Sunil Mayya
+   2018-07: support for Authentication option in DHCPv6
+   2018-07: support storage of Authentication keys in host structure
+   2018-08: Optimized query for host reservation from the backends
+
+ - Piotr Strzyżewski
+   2018-07: YANG model for DHCPv4 Kea
+
+ - Vicky Risk
+   2018-08: Documentation clean up
+   2018-10: API documentation clean ups
+
+ - Franciszek Gorski
+   2018-10: Makefile bug fixed
+
+ - Suzanne Goldlust
+   2018-10: API documentation
+
+ - lpaserati, Thorsten Krohn
+   2018-11: Two bugfixes in kea-admin
+
 Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
 Boost (http://www.boost.org/) library for almost everything, and can use Botan
 (http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
 cryptographic operations. It can also optionally use PostgreSQL
 (http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) and/or
 Cassandra (http://cassandra.apache.org/) as a database.
+Sysrepo (http://www.sysrepo.org/) and libyang (https://github.com/CESNET/libyang)
+required when netconf is used as configuration backend.
 
 Kea can use googletest for unit-tests (https://github.com/google/googletest).
 

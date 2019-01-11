@@ -10,6 +10,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/pgsql_lease_mgr.h>
 
 #include <boost/static_assert.hpp>
@@ -21,7 +22,10 @@
 #include <time.h>
 
 using namespace isc;
+using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
+using namespace isc::data;
 using namespace std;
 
 namespace {
@@ -58,7 +62,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4"},
 
     // GET_LEASE4_ADDR
@@ -67,7 +71,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE address = $1"},
 
@@ -77,7 +81,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE client_id = $1"},
 
@@ -87,7 +91,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE client_id = $1 AND subnet_id = $2"},
 
@@ -97,7 +101,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE hwaddr = $1"},
 
@@ -107,9 +111,21 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE hwaddr = $1 AND subnet_id = $2"},
+
+    // GET_LEASE4_PAGE
+    { 2, { OID_INT8, OID_INT8 },
+      "get_lease4_page",
+      "SELECT address, hwaddr, client_id, "
+        "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
+        "fqdn_fwd, fqdn_rev, hostname, "
+        "state, user_context "
+      "FROM lease4 "
+      "WHERE address > $1 "
+      "ORDER BY address "
+      "LIMIT $2"},
 
     // GET_LEASE4_SUBID
     { 1, { OID_INT8 },
@@ -117,7 +133,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-      "state "
+      "state, user_context "
       "FROM lease4 "
       "WHERE subnet_id = $1"},
 
@@ -127,7 +143,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT address, hwaddr, client_id, "
         "valid_lifetime, extract(epoch from expire)::bigint, subnet_id, "
         "fqdn_fwd, fqdn_rev, hostname, "
-        "state "
+        "state, user_context "
       "FROM lease4 "
       "WHERE state != $1 AND expire < $2 "
       "ORDER BY expire "
@@ -140,7 +156,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6"},
 
     // GET_LEASE6_ADDR
@@ -150,7 +166,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6 "
       "WHERE address = $1 AND lease_type = $2"},
 
@@ -161,7 +177,7 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6 "
       "WHERE duid = $1 AND iaid = $2 AND lease_type = $3"},
 
@@ -172,10 +188,23 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6 "
       "WHERE lease_type = $1 "
         "AND duid = $2 AND iaid = $3 AND subnet_id = $4"},
+
+    // GET_LEASE6_PAGE
+    { 2, { OID_VARCHAR, OID_INT8 },
+      "get_lease6_page",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE address > $1 "
+      "ORDER BY address "
+      "LIMIT $2"},
 
     // GET_LEASE6_SUBID
     { 1, { OID_INT8 },
@@ -184,9 +213,20 @@ PgSqlTaggedStatement tagged_statements[] = {
         "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6 "
       "WHERE subnet_id = $1"},
+
+    // GET_LEASE6_DUID
+    { 1, { OID_BYTEA },
+      "get_lease6_duid",
+      "SELECT address, duid, valid_lifetime, "
+        "extract(epoch from expire)::bigint, subnet_id, pref_lifetime, "
+        "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
+        "hwaddr, hwtype, hwaddr_source, "
+        "state, user_context "
+      "FROM lease6 "
+      "WHERE duid = $1"},
 
     // GET_LEASE6_EXPIRE
     { 3, { OID_INT8, OID_TIMESTAMP, OID_INT8 },
@@ -196,56 +236,56 @@ PgSqlTaggedStatement tagged_statements[] = {
         "lease_type, iaid, prefix_len, "
         "fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state "
+        "state, user_context "
       "FROM lease6 "
       "WHERE state != $1 AND expire < $2 "
       "ORDER BY expire "
       "LIMIT $3"},
 
     // INSERT_LEASE4
-    { 10, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8 },
+    { 11, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT },
       "insert_lease4",
       "INSERT INTO lease4(address, hwaddr, client_id, "
         "valid_lifetime, expire, subnet_id, fqdn_fwd, fqdn_rev, hostname, "
-        "state) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)"},
+        "state, user_context) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)"},
 
     // INSERT_LEASE6
-    { 16, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+    { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
             OID_INT8, OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL,
-            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8 },
+            OID_VARCHAR, OID_BYTEA, OID_INT2, OID_INT2, OID_INT8, OID_TEXT },
       "insert_lease6",
       "INSERT INTO lease6(address, duid, valid_lifetime, "
         "expire, subnet_id, pref_lifetime, "
         "lease_type, iaid, prefix_len, fqdn_fwd, fqdn_rev, hostname, "
         "hwaddr, hwtype, hwaddr_source, "
-        "state) "
-      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)"},
+        "state, user_context) "
+      "VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)"},
 
     // UPDATE_LEASE4
-    { 11, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
-            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_INT8 },
+    { 12, { OID_INT8, OID_BYTEA, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8,
+            OID_BOOL, OID_BOOL, OID_VARCHAR, OID_INT8, OID_TEXT, OID_INT8 },
       "update_lease4",
       "UPDATE lease4 SET address = $1, hwaddr = $2, "
         "client_id = $3, valid_lifetime = $4, expire = $5, "
         "subnet_id = $6, fqdn_fwd = $7, fqdn_rev = $8, hostname = $9, "
-        "state = $10 "
-      "WHERE address = $11"},
+        "state = $10, user_context = $11 "
+      "WHERE address = $12"},
 
     // UPDATE_LEASE6
-    { 17, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
+    { 18, { OID_VARCHAR, OID_BYTEA, OID_INT8, OID_TIMESTAMP, OID_INT8, OID_INT8,
             OID_INT2, OID_INT8, OID_INT2, OID_BOOL, OID_BOOL, OID_VARCHAR,
             OID_BYTEA, OID_INT2, OID_INT2,
-            OID_INT8, OID_VARCHAR },
+            OID_INT8, OID_TEXT, OID_VARCHAR },
       "update_lease6",
       "UPDATE lease6 SET address = $1, duid = $2, "
         "valid_lifetime = $3, expire = $4, subnet_id = $5, "
         "pref_lifetime = $6, lease_type = $7, iaid = $8, "
         "prefix_len = $9, fqdn_fwd = $10, fqdn_rev = $11, hostname = $12, "
         "hwaddr = $13, hwtype = $14, hwaddr_source = $15, "
-        "state = $16 "
-      "WHERE address = $17"},
+        "state = $16, user_context = $17 "
+      "WHERE address = $18"},
     // ALL_LEASE4_STATS
     { 0, { OID_NONE },
       "all_lease4_stats",
@@ -309,7 +349,7 @@ public:
         : addr_str_(""), valid_lifetime_(0), valid_lifetime_str_(""),
           expire_(0), expire_str_(""), subnet_id_(0), subnet_id_str_(""),
           cltt_(0), fqdn_fwd_(false), fqdn_rev_(false), hostname_(""),
-          state_str_("") {
+          state_str_(""), user_context_("") {
     }
 
     virtual ~PgSqlLeaseExchange(){}
@@ -329,6 +369,7 @@ protected:
     bool                   fqdn_rev_;
     std::string            hostname_;
     std::string            state_str_;
+    std::string            user_context_;
     //@}
 };
 
@@ -350,8 +391,9 @@ private:
     static const size_t FQDN_REV_COL = 7;
     static const size_t HOSTNAME_COL = 8;
     static const size_t STATE_COL = 9;
+    static const size_t USER_CONTEXT_COL = 10;
     /// @brief Number of columns in the table holding DHCPv4 leases.
-    static const size_t LEASE_COLUMNS = 10;
+    static const size_t LEASE_COLUMNS = 11;
 
 public:
 
@@ -376,6 +418,7 @@ public:
         columns_.push_back("fqdn_rev");
         columns_.push_back("hostname");
         columns_.push_back("state");
+        columns_.push_back("user_context");
     }
 
     /// @brief Creates the bind array for sending Lease4 data to the database.
@@ -441,6 +484,14 @@ public:
             state_str_ = boost::lexical_cast<std::string>(lease->state_);
             bind_array.add(state_str_);
 
+            ConstElementPtr ctx = lease->getContext();
+            if (ctx) {
+                user_context_ = ctx->str();
+            } else {
+                user_context_ = "";
+            }
+            bind_array.add(user_context_);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease4: "
@@ -487,6 +538,16 @@ public:
             HWAddrPtr hwaddr(new HWAddr(hwaddr_buffer_, hwaddr_length_,
                                         HTYPE_ETHER));
 
+            user_context_ = getRawColumnValue(r, row, USER_CONTEXT_COL);
+            ConstElementPtr ctx;
+            if (!user_context_.empty()) {
+                ctx = Element::fromJSON(user_context_);
+                if (!ctx || (ctx->getType() != Element::map)) {
+                    isc_throw(BadValue, "user context '" << user_context_
+                              << "' is not a JSON map");
+                }
+            }
+
             Lease4Ptr result(new Lease4(addr4_, hwaddr,
                                          client_id_buffer_, client_id_length_,
                                          valid_lifetime_, 0, 0, cltt_,
@@ -494,6 +555,10 @@ public:
                                          hostname_));
 
             result->state_ = state;
+
+            if (ctx) {
+                result->setContext(ctx);
+            }
 
             return (result);
         } catch (const std::exception& ex) {
@@ -543,9 +608,10 @@ private:
     static const int HWTYPE_COL = 13;
     static const int HWADDR_SOURCE_COL = 14;
     static const int STATE_COL = 15;
+    static const size_t USER_CONTEXT_COL = 16;
     //@}
     /// @brief Number of columns in the table holding DHCPv6 leases.
-    static const size_t LEASE_COLUMNS = 16;
+    static const size_t LEASE_COLUMNS = 17;
 
 public:
     PgSqlLease6Exchange()
@@ -574,6 +640,7 @@ public:
         columns_.push_back("hwtype");
         columns_.push_back("hwaddr_source");
         columns_.push_back("state");
+        columns_.push_back("user_context");
     }
 
     /// @brief Creates the bind array for sending Lease6 data to the database.
@@ -670,6 +737,14 @@ public:
             state_str_ = boost::lexical_cast<std::string>(lease->state_);
             bind_array.add(state_str_);
 
+            ConstElementPtr ctx = lease->getContext();
+            if (ctx) {
+                user_context_ = ctx->str();
+            } else {
+                user_context_ = "";
+            }
+            bind_array.add(user_context_);
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Lease6: "
@@ -743,6 +818,16 @@ public:
             uint32_t state;
             getColumnValue(r, row , STATE_COL, state);
 
+            user_context_ = getRawColumnValue(r, row, USER_CONTEXT_COL);
+            ConstElementPtr ctx;
+            if (!user_context_.empty()) {
+                ctx = Element::fromJSON(user_context_);
+                if (!ctx || (ctx->getType() != Element::map)) {
+                    isc_throw(BadValue, "user context '" << user_context_
+                              << "' is not a JSON map");
+                }
+            }
+
             Lease6Ptr result(new Lease6(lease_type_, addr, duid_ptr,
                                         iaid_u_.uval_, pref_lifetime_,
                                         valid_lifetime_, 0, 0,
@@ -751,6 +836,10 @@ public:
             result->cltt_ = cltt_;
 
             result->state_ = state;
+
+            if (ctx) {
+                result->setContext(ctx);
+            }
 
             return (result);
         } catch (const std::exception& ex) {
@@ -1294,6 +1383,39 @@ PgSqlLeaseMgr::getLeases4() const {
     return (result);
 }
 
+Lease4Collection
+PgSqlLeaseMgr::getLeases4(const asiolink::IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    // Expecting IPv4 address.
+    if (!lower_bound_address.isV4()) {
+        isc_throw(InvalidAddressFamily, "expected IPv4 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE4)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // Bind lower bound address
+    std::string lb_address_data = boost::lexical_cast<std::string>
+        (lower_bound_address.toUint32());
+    bind_array.add(lb_address_data);
+
+    // Bind page size value
+    std::string page_size_data = boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get the leases
+    Lease4Collection result;
+    getLeaseCollection(GET_LEASE4_PAGE, bind_array, result);
+
+    return (result);
+}
+
 Lease6Ptr
 PgSqlLeaseMgr::getLease6(Lease::Type lease_type,
                          const isc::asiolink::IOAddress& addr) const {
@@ -1398,6 +1520,25 @@ PgSqlLeaseMgr::getLeases6(SubnetID subnet_id) const {
 }
 
 Lease6Collection
+PgSqlLeaseMgr::getLeases6(const DUID& duid) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_GET_DUID)
+              .arg(duid.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
+
+    // DUID
+    bind_array.add(duid.getDuid());
+    Lease6Collection result;
+
+    // query to fetch the data
+    getLeaseCollection(GET_LEASE6_DUID, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
 PgSqlLeaseMgr::getLeases6() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET6);
 
@@ -1406,6 +1547,45 @@ PgSqlLeaseMgr::getLeases6() const {
     PsqlBindArray bind_array;
     Lease6Collection result;
     getLeaseCollection(GET_LEASE6, bind_array, result);
+
+    return (result);
+}
+
+Lease6Collection
+PgSqlLeaseMgr::getLeases6(const asiolink::IOAddress& lower_bound_address,
+                          const LeasePageSize& page_size) const {
+    // Expecting IPv6 address.
+    if (!lower_bound_address.isV6()) {
+        isc_throw(InvalidAddressFamily, "expected IPv6 address while "
+                  "retrieving leases from the lease database, got "
+                  << lower_bound_address);
+    }
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_PGSQL_GET_PAGE6)
+        .arg(page_size.page_size_)
+        .arg(lower_bound_address.toText());
+
+    // Prepare WHERE clause
+    PsqlBindArray bind_array;
+
+    // In IPv6 we compare addresses represented as strings. The IPv6 zero address
+    // is ::, so it is greater than any other address. In this special case, we
+    // just use 0 for comparison which should be lower than any real IPv6 address.
+    std::string lb_address_data = "0";
+    if (!lower_bound_address.isV6Zero()) {
+        lb_address_data = lower_bound_address.toText();
+    }
+
+    // Bind lower bound address
+    bind_array.add(lb_address_data);
+
+    // Bind page size value
+    std::string page_size_data = boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array.add(page_size_data);
+
+    // Get the leases
+    Lease6Collection result;
+    getLeaseCollection(GET_LEASE6_PAGE, bind_array, result);
 
     return (result);
 }

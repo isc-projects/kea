@@ -11,6 +11,7 @@
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
+#include <cc/user_context.h>
 #include <cc/cfg_to_element.h>
 
 namespace isc {
@@ -31,7 +32,7 @@ typedef boost::shared_ptr<Lease> LeasePtr;
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease : public isc::data::CfgToElement {
+struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Type of lease or pool
     typedef enum {
@@ -187,6 +188,8 @@ struct Lease : public isc::data::CfgToElement {
 
     /// @brief Returns true if the other lease has equal FQDN data.
     ///
+    /// The comparison of the hostname is case insensitive.
+    ///
     /// @param other Lease which FQDN data is to be compared with our lease.
     ///
     /// @return Boolean value which indicates whether FQDN data of the other
@@ -220,6 +223,9 @@ struct Lease : public isc::data::CfgToElement {
     ///
     /// @param probation_period lease lifetime will be set to this value
     virtual void decline(uint32_t probation_period) = 0;
+
+    /// Avoid a clang spurious error
+    using isc::data::CfgToElement::toElement;
 
 protected:
 

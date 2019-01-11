@@ -32,6 +32,21 @@
         "lfc-interval": 3600
     },
 
+     "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        "lease-checks": "fix-del"
+    },
+
     // Kea 0.9.1 introduced MAC/hardware addresses support in DHCPv6. There is
     // no single reliable method of getting MAC address information in DHCPv6.
     // Kea supports several methods. Depending on your network set up, some

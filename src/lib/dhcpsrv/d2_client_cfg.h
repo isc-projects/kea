@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,7 @@
 #include <cc/user_context.h>
 #include <dhcp_ddns/ncr_io.h>
 #include <exceptions/exceptions.h>
+#include <util/strutil.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -49,11 +50,9 @@ public:
 /// parameters associated with DHCP-DDNS and acting as a client of D2.
 /// Instances of this class may be constructed through configuration parsing.
 ///
-class D2ClientConfig : public UserContext, public isc::data::CfgToElement {
+class D2ClientConfig : public data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Default configuration constants.
-    /// @todo For now these are hard-coded as configuration layer cannot
-    /// readily provide them (see Trac #3358).
     static const char* DFT_SERVER_IP;
     static const size_t DFT_SERVER_PORT;
     static const char* DFT_V4_SENDER_IP;
@@ -62,11 +61,12 @@ public:
     static const size_t DFT_MAX_QUEUE_SIZE;
     static const char* DFT_NCR_PROTOCOL;
     static const char* DFT_NCR_FORMAT;
-    static const bool DFT_ALWAYS_INCLUDE_FQDN;
     static const bool DFT_OVERRIDE_NO_UPDATE;
     static const bool DFT_OVERRIDE_CLIENT_UPDATE;
     static const char* DFT_REPLACE_CLIENT_NAME_MODE;
     static const char* DFT_GENERATED_PREFIX;
+    static const char* DFT_HOSTNAME_CHAR_SET;
+    static const char* DFT_HOSTNAME_CHAR_REPLACEMENT;
 
     /// @brief Defines the client name replacement modes.
     enum ReplaceClientNameMode  {
@@ -88,8 +88,6 @@ public:
     /// Currently only UDP is supported.
     /// @param ncr_format Format of the kea-dhcp-ddns requests.
     /// Currently only JSON format is supported.
-    /// @param always_include_fqdn Enables always including the FQDN option in
-    /// DHCP responses.
     /// @param override_no_update Enables updates, even if clients request no
     /// updates.
     /// @param override_client_update Perform updates, even if client requested
@@ -98,6 +96,10 @@ public:
     /// supplied by the client with a generated name.
     /// @param generated_prefix Prefix to use when generating domain-names.
     /// @param qualifying_suffix Suffix to use to qualify partial domain-names.
+    /// @param hostname_char_set regular expression string which describes invalid
+    /// characters to be scrubbed from client host names 
+    /// @param hostname_char_replacement string of zero or more characters to
+    /// replace invalid chars when sanitizing client host names
     ///
     /// @c enable_updates is mandatory, @c qualifying_suffix is mandatory
     /// when updates are enabled, other parameters are optional.
@@ -111,12 +113,14 @@ public:
                    const size_t max_queue_size,
                    const dhcp_ddns::NameChangeProtocol& ncr_protocol,
                    const dhcp_ddns::NameChangeFormat& ncr_format,
-                   const bool always_include_fqdn,
                    const bool override_no_update,
                    const bool override_client_update,
                    const ReplaceClientNameMode replace_client_name_mode,
                    const std::string& generated_prefix,
-                   const std::string& qualifying_suffix);
+                   const std::string& qualifying_suffix,
+                   const std::string& hostname_char_set,
+                   const std::string& hostname_char_replacement);
+
 
     /// @brief Default constructor
     /// The default constructor creates an instance that has updates disabled.
@@ -165,11 +169,6 @@ public:
         return(ncr_format_);
     }
 
-    /// @brief Return whether or not FQDN is always included in DHCP responses.
-    bool getAlwaysIncludeFqdn() const {
-        return(always_include_fqdn_);
-    }
-
     /// @brief Return if updates are done even if clients request no updates.
     bool getOverrideNoUpdate() const {
         return(override_no_update_);
@@ -193,6 +192,22 @@ public:
     /// @brief Return the suffix to use to qualify partial domain-names.
     const std::string& getQualifyingSuffix() const {
         return(qualifying_suffix_);
+    }
+
+    /// @brief Return the char set regexp used to sanitize client hostnames.
+    const std::string& getHostnameCharSet() const {
+        return(hostname_char_set_);
+    }
+
+    /// @brief Return the invalid char replacement used to sanitize client hostnames.
+    const std::string& getHostnameCharReplacement() const {
+        return(hostname_char_replacement_);
+    }
+
+    /// @brief Return pointer to compiled regular expression string sanitizer
+    /// Will be empty if hostname-char-set is empty.
+    util::str::StringSanitizerPtr getHostnameSanitizer() const {
+        return(hostname_sanitizer_);
     }
 
     /// @brief Compares two D2ClientConfigs for equality
@@ -273,9 +288,6 @@ private:
     /// Currently only JSON format is supported.
     dhcp_ddns::NameChangeFormat ncr_format_;
 
-    /// @brief Should Kea always include the FQDN option in its response.
-    bool always_include_fqdn_;
-
     /// @brief Should Kea perform updates, even if client requested no updates.
     /// Overrides the client request for no updates via the N flag.
     bool override_no_update_;
@@ -291,6 +303,17 @@ private:
 
     /// @brief Suffix Kea should use when to qualify partial domain-names.
     std::string qualifying_suffix_;
+
+    /// @brief Regular expression describing invalid characters for client hostnames.
+    /// If empty, host name scrubbing is not done.
+    std::string hostname_char_set_;
+
+    /// @brief A string to replace invalid characters when scrubbing hostnames.
+    /// Meaningful only if hostname_char_set_ is not empty.
+    std::string hostname_char_replacement_;
+
+    /// @brief Pointer to compiled regular expression string sanitizer
+    util::str::StringSanitizerPtr hostname_sanitizer_;
 };
 
 std::ostream&

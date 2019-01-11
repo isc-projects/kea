@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <iostream>
@@ -112,7 +113,7 @@ Lease::getExpirationTime() const {
 
 bool
 Lease::hasIdenticalFqdn(const Lease& other) const {
-    return (hostname_ == other.hostname_ &&
+    return (boost::algorithm::iequals(hostname_, other.hostname_) &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_);
 }
@@ -251,6 +252,15 @@ Lease::fromElementCommon(const LeasePtr& lease, const data::ConstElementPtr& ele
     }
 
     lease->state_ = state->intValue();
+
+    // user context
+    ConstElementPtr ctx = element->get("user-context");
+    if (ctx) {
+        if (ctx->getType() != Element::map) {
+            isc_throw(BadValue, "user context is not a map");
+        }
+        lease->setContext(ctx);
+    }
 }
 
 Lease4::Lease4(const Lease4& other)
@@ -274,6 +284,10 @@ Lease4::Lease4(const Lease4& other)
     } else {
         client_id_.reset();
 
+    }
+
+    if (other.getContext()) {
+        setContext(other.getContext());
     }
 }
 
@@ -375,6 +389,10 @@ Lease4::operator=(const Lease4& other) {
         } else {
             client_id_.reset();
         }
+
+        if (other.getContext()) {
+            setContext(other.getContext());
+        }
     }
     return (*this);
 }
@@ -383,6 +401,7 @@ isc::data::ElementPtr
 Lease4::toElement() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+    contextToElement(map);
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("subnet-id", Element::create(static_cast<long int>(subnet_id_)));
     map->set("hw-address", Element::create(hwaddr_->toText(false)));
@@ -526,6 +545,10 @@ Lease6::toText() const {
            << "Subnet ID:     " << subnet_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";
 
+    if (getContext()) {
+        stream << "User context:  " << getContext()->str() << "\n";
+    }
+
     return (stream.str());
 }
 
@@ -542,6 +565,10 @@ Lease4::toText() const {
            << "Client id:     " << (client_id_ ? client_id_->toText() : "(none)") << "\n"
            << "Subnet ID:     " << subnet_id_ << "\n"
            << "State:         " << statesToText(state_) << "\n";
+
+    if (getContext()) {
+        stream << "User context:  " << getContext()->str() << "\n";
+    }
 
     return (stream.str());
 }
@@ -560,7 +587,8 @@ Lease4::operator==(const Lease4& other) const {
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            state_ == other.state_);
+            state_ == other.state_ &&
+            nullOrEqualValues(getContext(), other.getContext()));
 }
 
 bool
@@ -580,13 +608,15 @@ Lease6::operator==(const Lease6& other) const {
             hostname_ == other.hostname_ &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_ &&
-            state_ == other.state_);
+            state_ == other.state_ &&
+            nullOrEqualValues(getContext(), other.getContext()));
 }
 
 isc::data::ElementPtr
 Lease6::toElement() const {
     // Prepare the map
     ElementPtr map = Element::createMap();
+    contextToElement(map);
     map->set("ip-address", Element::create(addr_.toText()));
     map->set("type", Element::create(typeToText(type_)));
     if (type_ == Lease::TYPE_PD) {

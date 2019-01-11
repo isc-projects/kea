@@ -23,7 +23,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
-#include <dhcpsrv/daemon.h>
+#include <process/daemon.h>
 
 #include <functional>
 #include <iostream>
@@ -56,7 +56,7 @@ public:
 /// that is going to be used as server-identifier, receives incoming
 /// packets, processes them, manages leases assignment and generates
 /// appropriate responses.
-class Dhcpv6Srv : public Daemon {
+class Dhcpv6Srv : public process::Daemon {
 private:
 
     /// @brief Pointer to IO service used by the server.
@@ -97,7 +97,7 @@ public:
     }
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref Daemon::getVersion()
+    /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
     /// @brief Returns server-identifier option.
@@ -193,9 +193,9 @@ protected:
 
     /// @brief Check if the message can be sent to unicast.
     ///
-    /// This function checks if the received message conforms to the section 15
-    /// of RFC3315 which says that: "A server MUST discard any Solicit, Confirm,
-    /// Rebind or Information-request messages it receives with a unicast
+    /// This function checks if the received message conforms to the section 16
+    /// of RFC 8415 which says that: "A server MUST discard any Solicit, Confirm,
+    /// Rebind or Information-request messages it receives with a Layer 3 unicast
     /// destination address.
     ///
     /// @param pkt DHCPv6 message to be checked.
@@ -284,7 +284,7 @@ protected:
     /// @brief Processes incoming Confirm message and returns Reply.
     ///
     /// This function processes Confirm message from the client according
-    /// to section 18.2.2. of RFC3315. It discards the Confirm message if
+    /// to section 18.3.3. of RFC 8415. It discards the Confirm message if
     /// the message sent by the client contains no addresses, i.e. it has
     /// no IA_NA options or all IA_NA options contain no IAAddr options.
     ///
@@ -396,18 +396,6 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
-    /// @todo The behavior of this function will need to be extended to support
-    /// draft-ietf-dhc-dhcpv6-stateful-issues. This draft modifies the behavior
-    /// described in RFC3315 with respect to Renew and Rebind processing. Key
-    /// changes are (version -05):
-    /// - Renewing and Rebinding client MAY request additional bindings by
-    /// putting an IA for all bindings it desires but has been unable to obtain.
-    /// Server MAY allocate addresses if it finds that they are appropriate for
-    /// the link that client is attached to.
-    /// - When receiving Rebind, if the server determines that the addresses are
-    /// not appropriate for the link the client is attached to, the server MAY
-    /// send the IA with address lifetimes set to 0 or discard the message.
-    ///
     /// @param query client's message (Renew or Rebind)
     /// @param answer server's response to the client's message. This
     /// message should contain Client FQDN option being sent by the server
@@ -425,11 +413,46 @@ protected:
     /// This function is called by the logic which processes Renew and Rebind
     /// messages to extend the lifetime of the existing prefix.
     ///
-    /// The behavior of this function is different in that when there is no
-    /// binding found in the lease database for the particular client the
-    /// NoBinding status code is returned when processing Renew, the exception
-    /// is thrown when there is no binding and the Rebind message is processed
-    /// (see RFC3633, section 12.2. for details).
+    /// The behavior of this function is different than @c extendIA_NA in that
+    /// when there is no subnet found for the rebinding case, the Rebind message
+    /// is discarded by the server. That behavior is based on the following
+    /// statement from the RFC 8415, section 18.3.5:
+    ///
+    /// "If the server chooses to not include any IAs containing IA Address or
+    /// IA Prefix options with lifetimes of 0 and the server does not include
+    /// any other IAs with leases and/or status codes, the server does not send
+    /// a Reply message.  In this situation, the server discards the Rebind
+    /// message".
+    ///
+    /// @todo We should consider unification of the server behavior for address
+    /// assignment and prefix delegation with respect to Rebind message
+    /// processing. The RFC 8415, section 18.3.5 doesn't really differentiate
+    /// between IA_NA and IA_PD in how they should be processed by the server.
+    /// The intention of the spec is as follows:
+    ///
+    /// - If the server finds a lease but addresses and/or prefixes are not
+    ///   appropriate anymore, it sends them with zero lifetimes.
+    /// - If the server doesn't find a lease the server checks if the addresses
+    ///   and/or prefixes the client sends are appropriate and sends them back
+    ///   with zero lifetimes if they aren't.
+    /// - The server may choose to not respond at all, if it cannot determine
+    ///   whether the addresses and/or prefixes are appropriate and it doesn't
+    ///   allocate any other addresses and/or prefixes.
+    /// - If the server cannot find the leases included in the Rebind, the
+    ///   server may either allocate the leases or simply return NoBinding.
+    ///
+    /// The @c extendIA_PD function drops the Rebind message if it cannot find
+    /// the client entry (as a result of not finding a subnet for the client),
+    /// the @c extendIA_NA function sends NoBinding status code in that case.
+    /// Perhaps we should introduce an "Authoritative" configuration flag which,
+    /// if enabled, would cause the server to always respond, either indicating
+    /// that the address/prefix is inappropriate (with zero lifetimes) or that
+    /// there is no binding (NoBinding status code) for both addresses and
+    /// prefixes. When the "Authoritative" flag is disabled the server would
+    /// drop the Rebind for which there is neither subnet selected nor client
+    /// entry found (as it could be handled by another DHCP server). If nothing
+    /// else we could consider unifying the behavior of @c extendIA_NA and
+    /// @c extendIA_PD with respect to Rebind processing.
     ///
     /// @param query client's message
     /// @param ctx client context (contains subnet, duid and other parameters)
@@ -449,8 +472,8 @@ protected:
     /// lease is found, an IA_NA response is generated with an appropriate
     /// status code.
     ///
-    /// As RFC 3315 requires that a single status code be sent for the whole message,
-    /// this method may update the passed general_status: it is set to SUCCESS when
+    /// The server sends top-level Status Code option. This method may update the
+    /// passed value of that option, i.e. general_status. It is set to SUCCESS when
     /// message processing begins, but may be updated to some error code if the
     /// release process fails.
     ///

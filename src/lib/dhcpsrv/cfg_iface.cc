@@ -172,10 +172,10 @@ CfgIface::openSockets(const uint16_t family, const uint16_t port,
         // use_bcast is ignored for V6.
         sopen = IfaceMgr::instance().openSockets6(port, error_callback);
     }
-
-    // If no socket were opened, log a warning because the server will
-    // not respond to any queries.
+    
     if (!sopen) {
+        // If no socket were opened, log a warning because the server will
+        // not respond to any queries.
         LOG_WARN(dhcpsrv_logger, DHCPSRV_NO_SOCKETS_OPEN);
     }
 }

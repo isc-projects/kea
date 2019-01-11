@@ -122,8 +122,8 @@ $ <userinput>./configure [your extra parameters]</userinput></screen>
       </orderedlist>
       <para>
         For instructions specific to your system, please read the
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/SystemSpecificNotes">system specific notes</link>,
-        available on the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/">Kea web site</link>.
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/installing-kea">system specific notes</link>,
+        available in the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs">Kea section of ISC's Knowledgebase</link>.
       </para>
 
       <para>The details of <command>keactrl</command> script usage can be found

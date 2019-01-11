@@ -1,18 +1,9 @@
 SUBDIRS = . testutils tests
-
+dhcp_data_dir = @localstatedir@/@PACKAGE@
 AM_CPPFLAGS  = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
+AM_CPPFLAGS += -DDATA_DIR="\"$(dhcp_data_dir)\""
+
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
-
 AM_CXXFLAGS  = $(KEA_CXXFLAGS)
 
 # Define rule to build logging source files from message file
@@ -36,24 +27,30 @@ CLEANFILES = *.gcno *.gcda process_messages.h process_messages.cc s-messages
 DISTCLEANFILES = spec_config.h.pre
 
 lib_LTLIBRARIES = libkea-process.la
-libkea_process_la_SOURCES  = d_cfg_mgr.cc d_cfg_mgr.h
+libkea_process_la_SOURCES  = config_base.cc config_base.h
+libkea_process_la_SOURCES += config_ctl_info.cc config_ctl_info.h
+libkea_process_la_SOURCES += config_ctl_parser.cc config_ctl_parser.h
+libkea_process_la_SOURCES += d_cfg_mgr.cc d_cfg_mgr.h
 libkea_process_la_SOURCES += d_controller.cc d_controller.h
 libkea_process_la_SOURCES += d_log.cc d_log.h
 libkea_process_la_SOURCES += d_process.h
+libkea_process_la_SOURCES += daemon.cc daemon.h
 libkea_process_la_SOURCES += io_service_signal.cc io_service_signal.h
+libkea_process_la_SOURCES += log_parser.cc log_parser.h
+libkea_process_la_SOURCES += logging_info.cc logging_info.h
 
 nodist_libkea_process_la_SOURCES = process_messages.cc process_messages.h
 
 libkea_process_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_process_la_CPPFLAGS = $(AM_CPPFLAGS)
 libkea_process_la_LDFLAGS  = $(AM_LDFLAGS)
-libkea_process_la_LDFLAGS += -no-undefined -version-info 2:1:0
+libkea_process_la_LDFLAGS += -no-undefined -version-info 3:0:0
 
 libkea_process_la_LIBADD  =
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
-libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+libkea_process_la_LIBADD += $(top_builddir)/src/lib/database/libkea-database.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libkea_process_la_LIBADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
@@ -65,8 +62,14 @@ libkea_process_la_LIBADD += $(LOG4CPLUS_LIBS) $(BOOST_LIBS)
 # Specify the headers for copying into the installation directory tree.
 libkea_process_includedir = $(pkgincludedir)/process
 libkea_process_include_HEADERS = \
+	config_base.h \
+	config_ctl_info.h \
+	config_ctl_parser.h \
+	daemon.h \
 	d_cfg_mgr.h \
 	d_controller.h \
 	d_log.h \
 	d_process.h \
-	io_service_signal.h
+	io_service_signal.h \
+	logging_info.h \
+	log_parser.h

@@ -48,10 +48,9 @@ public:
 
     // Bit Constants for turning on and off DDNS configuration options.
     // (Defined here as these are only meaningful to this class.)
-    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
-    static const uint16_t OVERRIDE_NO_UPDATE = 2;
-    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
-    static const uint16_t REPLACE_CLIENT_NAME = 8;
+    static const uint16_t OVERRIDE_NO_UPDATE = 1;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 2;
+    static const uint16_t REPLACE_CLIENT_NAME = 4;
 
     // Enum used to specify whether a client (packet) should include
     // the hostname option
@@ -123,13 +122,12 @@ public:
                                   isc::asiolink::IOAddress("::"), 0,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
                                   ((mask & REPLACE_CLIENT_NAME) ?
                                    D2ClientConfig::RCM_WHEN_PRESENT
                                    : D2ClientConfig::RCM_NEVER),
-                                  "myhost", "example.com")));
+                                  "myhost", "example.com", "[^A-Za-z0-9-]", "x")));
         ASSERT_NO_THROW(CfgMgr::instance().setD2ClientConfig(cfg));
         ASSERT_NO_THROW(srv_->startD2());
     }
@@ -1515,6 +1513,35 @@ TEST_F(FqdnDhcpv6SrvTest, replaceClientNameModeTest) {
                               CLIENT_NAME_NOT_PRESENT, NAME_REPLACED);
     testReplaceClientNameMode("when-not-present",
                               CLIENT_NAME_PRESENT, NAME_NOT_REPLACED);
+}
+
+
+// Verifies that setting hostname-char-set sanitizes FQDN option
+// values received from clients.
+TEST_F(FqdnDhcpv6SrvTest, sanitizeFqdn) {
+    // Verify a full FQDN with no invalid chars is left alone
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.", false);
+
+    // Verify that a partial FQDN with no invalid chars is left alone
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "myhost",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "myhost.example.com.", false);
+
+    // Verify that a full FQDN with invalid chars is cleaned.
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "m%y*host.example.com",
+             Option6ClientFqdn::FULL, Option6ClientFqdn::FLAG_S,
+             "mxyxhost.example.com.", false);
+
+    // Verify that a partial FQDN with invalid chars is cleaned.
+    testFqdn(DHCPV6_SOLICIT, Option6ClientFqdn::FLAG_S,
+             "m%y*host",
+             Option6ClientFqdn::PARTIAL, Option6ClientFqdn::FLAG_S,
+             "mxyxhost.example.com.", false);
 }
 
 }   // end of anonymous namespace

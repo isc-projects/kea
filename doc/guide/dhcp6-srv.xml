@@ -139,11 +139,9 @@ strings <userinput>path</userinput>/kea-dhcp6 | sed -n 's/;;;; //p'
 <section>
   <title>Introduction</title>
       <para>
-        This section explains how to configure the DHCPv6 server using the
-        Kea configuration backend. (Kea configuration using any other
-        backends is outside of scope of this document.) Before DHCPv6
-        is started, its configuration file has to be created. The
-        basic configuration is as follows:
+        This section explains how to configure the DHCPv6 server using a
+        configuration file. Before DHCPv6 is started, its configuration
+        file has to be created. The basic configuration is as follows:
 <screen>
 {
 # DHCPv6 configuration starts on the next line
@@ -193,13 +191,24 @@ for these and other parameters.</para>
 the server; they do not impact its
 operation in any way.</para>
 
+
 <para>The configuration starts in the first line with the initial
-opening curly bracket (or brace). Each configuration consists of
-one or more objects. In this specific example, we have only one
-object, called Dhcp6. This is a simplified configuration, as usually
-there will be additional objects, like <command>Logging</command> or
-<command>DhcpDdns</command>, but we omit them now for clarity. The Dhcp6
-configuration starts with the <command>"Dhcp6": {</command> line
+opening curly bracket (or brace). Each configuration must contain an
+object specifying the configuration of the Kea module using it.
+In the example above this object is called <command>Dhcp6</command>.
+</para>
+
+<note>
+  <para>In the current Kea release it is possible to specify configurations
+  of multiple modules within a single configuration file, but this is not
+  recommended and support for it will be removed in the future releases. The
+  only object, besides the one specifying module configuration, which can
+  (and usually is) included in the same file is <command>Logging</command>.
+  However, we don't include this object in the example above for clarity.
+  </para>
+</note>
+
+<para>The Dhcp6 configuration starts with the <command>"Dhcp6": {</command> line
 and ends with the corresponding closing brace (in the above example,
 the brace after the last comment).  Everything defined between those
 lines is considered to be the Dhcp6 configuration.</para>
@@ -292,8 +301,8 @@ In some cases in may be preferable to use more compact notation.
 <para>After all parameters are specified, we have two contexts open:
 global and Dhcp6, hence we need two closing curly brackets to close them.
 In a real life configuration file there most likely would be additional
-components defined such as Logging or DhcpDdns, so the closing brace would
-be followed by a comma and another object definition.</para>
+components defined such as Logging, so the closing brace would be followed
+by a comma and another object definition.</para>
 </section>
 
 <section>
@@ -415,8 +424,8 @@ be followed by a comma and another object definition.</para>
   operates on the copy of the original lease file, rather than on the lease
   file used by the server to record lease updates. There are also other files
   being created as a side effect of the lease file cleanup. The detailed
-  description of the LFC is located on the Kea wiki:
-  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/LFCDesign">http://kea.isc.org/wiki/LFCDesign</uri>.
+  description of the LFC is located in the Kea Administrator's Reference Manual:
+  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc">https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc</uri>.
   </para>
 
 </section>
@@ -493,14 +502,28 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 lease database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp6": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp6": { "lease-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
   </para>
+
+  <note>
+    <para>
+      Automatic reconnect to database backends is configured individually per backend.
+      This allows you to tailor the recovery parameters to the each backend you use.
+      We do suggest that you either enable it for all backends or no backends so you
+      have consistent behavior.  Losing connectivity to a backend for which reconnect
+      is disabled will result in the server shutting itself down. This includes the
+      cases when lease database backend and hosts database backend is connected to
+      the same database instance.
+    </para>
+  </note>
+
   <para>
     Note that host parameter is used by MySQL and PostgreSQL
     backends. Cassandra has a concept of contact points that could be
@@ -599,14 +622,28 @@ recovery and the server will exit immediately upon detecting a loss of connectiv
 (MySQL and Postgres only).
   </para>
   <para>
-The number of seconds the server will wait in between attempts to reconnect to the
+The number of milliseconds the server will wait in between attempts to reconnect to the
 host database after connectivity has been lost may also be specified:
 <screen>
-"Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-seconds</replaceable></userinput>, ... }, ... }
+"Dhcp6": { "hosts-database": { <userinput>"reconnect-wait-time" : <replaceable>number-of-milliseconds</replaceable></userinput>, ... }, ... }
 </screen>
-A value of zero (the default) disables automatic recovery and the server will exit
-immediately upon detecting a loss of connectivity (MySQL and Postgres only).
+The default value for MySQL and Postgres is 0, which disables automatic recovery and
+causes the server to exit immediately upon detecting the loss of connectivity.
+The default value for Cassandra is 2000 ms.
   </para>
+
+    <note>
+      <para>
+        Automatic reconnect to database backends is configured individually per backend.
+        This allows you to tailor the recovery parameters to the each backend you use.
+        We do suggest that you either enable it for all backends or no backends so you
+        have consistent behavior.  Losing connectivity to a backend for which reconnect
+        is disabled will result in the server shutting itself down. This includes the
+        cases when lease database backend and hosts database backend is connected to
+        the same database instance.
+      </para>
+    </note>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
@@ -759,6 +796,9 @@ temporarily override a list of interface names and listen on all interfaces.
         at present is to
         manually specify a unique identifier for each subnet.
       </para>
+      <note>
+        Subnet IDs must be greater than zero and less than 4294967295.
+      </note>
       <para>
         The following configuration will assign the specified subnet
         identifier to the newly configured subnet:
@@ -943,9 +983,9 @@ temporarily override a list of interface names and listen on all interfaces.
       <title>Subnet and Prefix Delegation Pools</title>
       <para>
         Subnets may also be configured to delegate prefixes, as defined in
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>.  A
-        subnet may have one or more prefix delegation pools.  Each pool has a
-        prefixed address, which is specified as a prefix
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
+        section 6.3.  A subnet may have one or more prefix delegation pools.
+        Each pool has a prefixed address, which is specified as a prefix
         (<command>prefix</command>) and a prefix length
         (<command>prefix-len</command>), as well as a delegated prefix length
         (<command>delegated-len</command>). The delegated length must not be
@@ -2057,7 +2097,7 @@ should include options from the isc option space:
       <section xml:id="dhcp6-rapid-commit">
         <title>Rapid Commit</title>
         <para>The Rapid Commit option, described in
-        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>, is supported
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>, is supported
         by the Kea DHCPv6 server. However, support is disabled by default for
         all subnets. It can be enabled for a particular subnet using the
         <command>rapid-commit</command> parameter as shown below:
@@ -2513,6 +2553,12 @@ should include options from the isc option space:
       <listitem><simpara>
       <command>"generated-prefix": "myhost"</command>
       </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-set": ""</command>
+      </simpara></listitem>
+      <listitem><simpara>
+      <command>"hostname-char-replacement": ""</command>
+      </simpara></listitem>
       </itemizedlist>
       </para>
 
@@ -2852,6 +2898,80 @@ should include options from the isc option space:
       <para>
         myhost-3001-1--70E.example.com.
       </para>
+      <section xml:id="host-name-sanitization">
+        <title>Sanitizing Client FQDN Names</title>
+        It may be that some of your DHCP clients provide values in the name
+        component of the FQDN option (Option code 39), that contain undesirable
+        characters.  It is possible to configure kea-dhcp5 to sanitize these
+        values. The most typical use case would be ensuring that only
+        characters that are permitted by RFC 1035 be included:
+        A-Z,a-z,0-9, and '-'.  This may be accomplished with following two
+        parameters:
+        <itemizedlist>
+        <listitem><simpara>
+        <command>hostname-char-set</command> - a regular expression describing
+        the invalid character set.  This can be any valid, regular expression
+        using POSIX extended expression syntax.  For example, "[^A-Za-z0-9-]"
+        would replace any character other then the letters A through z, digits
+        0 through 9, and '-'.  An empty string, the default value, disables
+        sanitization.
+        </simpara></listitem>
+        <listitem><simpara>
+        <command>hostname-char-replacement</command> - a string of zero or
+        more characters with which to replace each invalid character in the
+        client value.  The default value is an empty string and will cause
+        invalid characters to be OMITTED rather than replaced.
+        </simpara></listitem>
+        </itemizedlist>
+        The following configuration, will replace anything other than a
+        letter, digit, hyphen, or dot with the letter 'x':
+<screen>
+"Dhcp4": {
+    "dhcp-ddns": {
+        "hostname-char-set": "[^A-Za-z0-9.-]",
+        "hostname-char-replacement": "x",
+        ...
+    },
+    ...
+}
+</screen>
+        Thus, a client supplied value of "myhost-$[123.org" would become
+        "myhost-xx123.org".  Sanitizing is performed only on the portion of
+        the name supplied by the client and it is performed before applying
+        a qualifying suffix (if one is defined and needed).
+        <note>
+        The following are some considerations to keep in mind:
+        <para>
+        Name sanitizing is meant to catch the more common cases of invalid
+        characters through a relatively simple character replacement scheme.
+        It is difficult to devise a scheme that works well in all cases and
+        should you find you have clients that are using odd, corner cases of
+        character combinations that cannot be readily handled with this
+        mechanism, you should consider writing a hook that can carry out
+        sufficiently complex logic to address your needs.
+        </para>
+        <para>
+        You do not account for dots ins your hostname-char-set expression.
+        When scrubbing FQDNs, dots are treated as delimiters and used to
+        separate the option value into individual domain labels that are
+        scrubbed and then re-assembled.
+        </para>
+        <para>
+        If your clients are sending values that differ only by characters
+        considered as invalid by your hostname-char-set, be aware that scrubbing
+        them will yield identical values. In such cases, DDNS conflict rules
+        will permit only one of them from registering the name.
+        </para>
+        <para>
+        Finally, given the latitude clients have in the values they send, it is
+        virtually impossible to guarantee that a combination of these two
+        parameters will always yield a name that is valid for use in DNS. For
+        example, using an empty value for hostname-char-replacment could yield
+        an empty domain label within a name, if that label consists only of
+        invalid characters.
+        </para>
+        </note>
+      </section>
     </section>
 
     <section xml:id="dhcp6-dhcp4o6-config">
@@ -2941,6 +3061,114 @@ should include options from the isc option space:
       Relayed DHCPv4-QUERY DHCPv6 messages are not yet supported.
       </note>
     </section>
+
+     <section xml:id="sanity-checks6">
+       <title>Sanity checks in DHCPv6</title>
+
+       <para>
+         An important aspect of a well running DHCP system is an assurance that
+         the data remains consisent. However, in some cases it may be convenient
+         to tolerate certain inconsistent data. For example, a network
+         administrator that temporarily removed a subnet from a configuration
+         wouldn't want all the leases associated with it disappear from the
+         lease database. Kea 1.5 introduced a mechanism to better control sanity
+         checks such as this. While currently the scope of configurable sanity
+         checks is limited and their default value is set low, it is expected
+         that over time the default settings will be set to more aggressive
+         values and more parameters of similar nature will be added in the
+         future.
+       </para>
+
+       <para>
+         Kea now supports a new configuration scope called
+         <command>sanity-checks</command>. It currently allows only a
+         single parameter called <command>lease-checks</command>. It
+         governs what sort of verification is done when a new lease is
+         being loaded from a lease file. With the introduction of
+         sanity checks mechanism, it is now possible to tell Kea to
+         try to correct inconsistent data.
+       </para>
+
+       <para>
+         Every subnet has a subnet-id value. This is how Kea internally
+         identifies subnets. Each lease has a subnet-id parameter as well, which
+         identifies which subnet it belongs to. However, if configuration has
+         changed, it is possible that a lease could exist with a subnet-id
+         without any subnet that matches it. Also, it may be possible that
+         subnets configuration has changed and the subnet-id now belongs to a
+         subnet that does not match the lease. Kea corrective algorithm first
+         checks if there is a subnet with subnet-id specified by the lease. If
+         there is, it checks whether the lease belongs to that subnet. If not,
+         depending on the lease-checks setting, the lease is discarded, a
+         warning is printed or a new subnet is selected for the lease that
+         matches it topologically.
+       </para>
+
+       <para>
+         Since delegated prefixes do not have to belong to a subnet in which
+         they're offered, there is no way to implement such a mechanism for IPv6
+         prefixes. As such, the mechanism works for IPv6 addresses only.
+       </para>
+
+       <para>
+         There are five levels which are supported:
+       </para>
+
+       <itemizedlist>
+         <listitem>
+           <simpara><command>none</command> - do no special checks, accept the
+           lease as is</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>warn</command> - if problems are detected, a
+           warning will be printed, but the lease data will be accepted
+           anyway. This is the default value. If not explicitly configured to
+           some other value, this level will be used.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is
+           not successful, the data will be inserted anyway.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>fix-del</command> - If data inconsistency is
+           discovered, Kea will try to correct it. If the correction is not
+           succesful, the lease will be rejected. This setting ensures the data
+           correctness, but some incorrect data may be lost. Use with
+           care.</simpara>
+         </listitem>
+         <listitem>
+           <simpara><command>del</command> - This is the strictest mode. If any
+           inconsistency is detected, the lease is rejected. Use with care.
+           </simpara>
+         </listitem>
+       </itemizedlist>
+
+       <para>This feature is currently implemented for memfile backend.</para>
+
+       <para>
+         An example configuration that sets this parameter looks as follows:
+<screen>
+"Dhcp6": {
+    "sanity-checks": {
+        // This parameter determines what to do when a new lease appears in the
+        // system (i.e. either is read from disk during memfile startup or is
+        // added via lease commands). There are five modes supported:
+        // none - do nothing, accept them as is
+        // warn - if subnet-id problems are detected, print a warning, but
+        //        otherwise load the lease as is. This is the default value.
+        // fix - attempt to fix the lease by finding appropriate subnet-id value.
+        //       if there is no suitable subnet, the lease is loaded as is.
+        // fix-del - attempt to fix the lease by findind appropriate subnet-id
+        //           value. If there is no suitable subnet, the lease is deleted.
+        // del - delete leases that have incorrect subnet-id values.
+        <userinput>"lease-checks": "fix-del"</userinput>
+    },
+    ...
+}</screen>
+              </para>
+
+       </section>
 
    </section>
 
@@ -3080,6 +3308,24 @@ should include options from the isc option space:
       reservation checks when dealing with existing leases. Therefore, system
       administrators are encouraged to use out-of-pool reservations if
       possible.</para>
+
+      <para>Beginning with Kea 1.5.0, there is now support for global
+      host reservations.  These are reservations that are specified at the
+      global level within the configuration and that do not belong to any
+      specific subnet.  Kea will still match inbound client packets to a
+      subnet as before, but when the subnet's reservation mode is set to
+      <command>"global"</command>, Kea will look for host reservations only
+      among the global reservations defined. Typcially, such reservations would
+      be used to reserve hostnames for clients which may move from one subnet
+      to another.
+      </para>
+
+      <note>You can reserve any ip-address or prefix in a global reservation.
+      Just keep in mind that Kea will not do any sanity checking on the address
+      or prefix and that for Kea 1.5.0, support for global reservations should
+      be considered experimental.
+      </note>
+
     </section>
 
     <section xml:id="reservation6-conflict">
@@ -3129,6 +3375,15 @@ should include options from the isc option space:
       out-of-pool reservations. If the reserved address does not belong to a
       pool, there is no way that other clients could get this address.
       </para>
+
+    <note>
+     <para>The conflict resolution mechanism does not work for global
+     reservations. As of Kea 1.5.0, it is generally recommended to not use
+     global reservations for addresses or prefixes. If you want to use it
+     anyway, you have to manually ensure that the reserved values are not
+     in the dynamic pools.</para>
+    </note>
+
     </section>
 
     <section xml:id="reservation6-hostname">
@@ -3238,7 +3493,7 @@ should include options from the isc option space:
 } ]</screen>
 
 <para>
- Options defined on host level have the highest priority. In other words,
+ Options defined at host level have the highest priority. In other words,
  if there are options defined with the same type on global, subnet, class and
  host level, the host specific values will be used.
 </para>
@@ -3318,7 +3573,7 @@ should include options from the isc option space:
         managing reservations in a database, section <xref linkend="host-cmds" /> provide
         detailed information. The Kea wiki <uri
         xmlns:xlink="http://www.w3.org/1999/xlink"
-        xlink:href="http://kea.isc.org/wiki/HostReservationsHowTo">http://kea.isc.org/wiki/HostReservationsHowTo</uri>
+        xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management">https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands#23-host-reservations-hr-management</uri>
         provides some examples how to conduct some common operations
         on host reservations.
       </para>
@@ -3350,10 +3605,10 @@ should include options from the isc option space:
       Allowed values are:
 
       <itemizedlist>
-      <listitem><simpara> <command>all</command> - enables all host reservation
-      types. This is the default value. This setting is the safest and the most
-      flexible. It allows in-pool and out-of-pool reservations. As all checks
-      are conducted, it is also the slowest.
+      <listitem><simpara> <command>all</command> - enables both in-pool
+      and out-of-pool host reservation types. This is the default value. This
+      setting is the safest and the most flexible. As all checks are conducted,
+      it is also the slowest. This does not check against global reservations.
       </simpara></listitem>
 
       <listitem><simpara> <command>out-of-pool</command> - allows only out of
@@ -3363,7 +3618,18 @@ should include options from the isc option space:
       with in-pool addresses, thus improving performance. Do not use this mode
       if any of your reservations use in-pool address. Caution is advised when
       using this setting. Kea does not sanity check the reservations against
-      <command>reservation-mode</command> and misconfiguration may cause problems.
+      <command>reservation-mode</command> and misconfiguration may cause
+      problems.
+      </simpara></listitem>
+
+      <listitem><simpara> <command>global</command> - allows only global
+      host reservations.  With this setting in place, the server searches for
+      reservations for a client only among the defined global reservations.
+      If an address is specified, the server will skip the reservation checks
+      done when dealing in other modes, thus improving performance.
+      Caution is advised when using this setting: Kea does not sanity check
+      the reservations when <command>global</command> and
+      misconfiguration may cause problems.
       </simpara></listitem>
 
       <listitem><simpara>
@@ -3374,6 +3640,8 @@ should include options from the isc option space:
       </simpara></listitem>
 
       </itemizedlist>
+      The parameter can be specified at global, subnet and shared network
+      levels.
       </para>
 
       <para>
@@ -3388,8 +3656,38 @@ should include options from the isc option space:
         }
     ]
 }
-</screen>
+       </screen>
       </para>
+
+      <para>
+        An example configuration using global reservations is shown below:
+<screen>
+"Dhcp6": {
+
+    <userinput>
+    "reservation-mode": "global",
+    "reservations": [
+       {
+        "duid": "00:03:00:01:11:22:33:44:55:66",
+        "hostname": "host-one"
+       },
+       {
+        "duid": "00:03:00:01:99:88:77:66:55:44",
+        "hostname": "host-two"
+       }
+    ],
+    </userinput>
+    "subnet6": [
+    {
+        "subnet": "2001:db8:1::/64",
+        ...
+    }
+    ]
+}
+</screen>
+    For more details regarding global reservations, see
+    <xref linkend="global-reservations6"/>.
+    </para>
 
       <para>Another aspect of the host reservations are different types of
       identifiers. Kea 1.1.0 supports two types of identifiers
@@ -3432,6 +3730,76 @@ If not specified, the default value is:
 </screen>
 
 </para>
+
+</section>
+  <section id="global-reservations6">
+    <title>Global reservations in DHCPv6</title>
+
+    <para>In some deployments, such as mobile, clients can roam within the
+    network and there is a desire to specify certain parameters regardless of
+    the client's current location. To facilitate such a need, a global
+    reservation mechanism has been implemented. The idea behind it is that
+    regular host reservations are tied to specific subnets, by using specific
+    subnet-id. Kea 1.5.0 introduced a new capability to specify global
+    reservation that can be used in every subnet that has global reservations
+    enabled.</para>
+
+    <para>This feature can be used to assign certain parameters, such as
+    hostname or other dedicated, host-specific options. It can also be used to
+    assign addresses or prefixes. However, global reservations that assign
+    either of these bypass the whole topology determination provided by DHCP
+    logic implemented in Kea. It is very easy to misuse this feature and get
+    configuration that is inconsistent.  To give a specific example, imagine a
+    global reservation for an address 2001:db8:1111::1 and two subnets
+    2001:db8:1111::/48 and 2001:db8:ffff::/48. If global reservations are used
+    in both subnets and a device matching global host reservations visits part
+    of the network that is covered by 2001:db8:ffff::/48, it will get an IP
+    address 2001:db8:ffff::1, which will be outside of the prefix announced
+    by its local router using Router Advertisements.  Such a configuration
+    would be unsuable or at the very least ridden with issues, such as the
+    downlink traffic not reaching the device.</para>
+
+    <para>
+      To use global host reservations a configuration similar to the following
+      can be used:
+
+<screen>
+"Dhcp6:" {
+    // This specifies global reservations. They will apply to all subnets that
+    // have global reservations enabled.
+    <userinput>
+    "reservations": [
+    {
+       "hw-address": "aa:bb:cc:dd:ee:ff",
+       "hostname": "hw-host-dynamic"
+    },
+    {
+       "hw-address": "01:02:03:04:05:06",
+       "hostname": "hw-host-fixed",
+
+       // Use of IP address is global reservation is risky. If used outside of
+       // matching subnet, such as 3001::/64, it will result in a broken
+       // configuration being handled to the client.
+       "ip-address": "2001:db8:ff::77"
+    },
+    {
+       "duid": "01:02:03:04:05",
+       "hostname": "duid-host"
+    }
+    ]</userinput>,
+    "valid-lifetime": 600,
+    "subnet4": [ {
+        "subnet": "2001:db8:1::/64",
+        <userinput>"reservation-mode": "global",</userinput>
+        "pools": [ { "pool": "2001:db8:1::-2001:db8:1::100" } ]
+    } ]
+}
+</screen>
+    </para>
+
+    <para>When using database backends, the global host reservations are
+    distinguished from regular reservations by using subnet-id value of
+    zero.</para>
 <!-- see CfgHostOperations::createConfig6() in
      src/lib/dhcpsrv/cfg_host_operations.cc -->
 
@@ -3649,12 +4017,12 @@ If not specified, the default value is:
     <para>It is possible to specify interface name in the shared network scope to
     tell the server that this specific shared network is reachable directly (not
     via relays) using local network interface. It is sufficient to specify
-    it once in the shared network level. As all subnets in a shared network are
+    it once at the shared network level. As all subnets in a shared network are
     expected to be used on the same physical link, it is a configuration error
     to attempt to make a shared network out of subnets that are reachable over
     different interfaces. It is allowed to specify interface parameter on each
     subnet, although its value must be the same for each subnet. Thus it's
-    usually more convenient to specify it once on the shared network level.
+    usually more convenient to specify it once at the shared network level.
 <screen>
 "shared-networks": [
     {
@@ -3714,9 +4082,9 @@ for each subnet. Here's an example:
         ]
     }
 ]</screen>
-In this particular case the relay IP address specified on network level doesn't
+In this particular case the relay IP address specified at network level doesn't
 have much sense, as it is overridden in both subnets, but it was left there
-as an example of how one could be defined on network level. Note that the
+as an example of how one could be defined at network level. Note that the
 relay agent IP address typically belongs to the subnet it relays packets from,
 but this is not a strict requirement. Therefore Kea accepts any value here
 as long as it is valid IPv6 address.</para>
@@ -3734,11 +4102,11 @@ as long as it is valid IPv6 address.</para>
       the clients when client classification is in use, to assure that the
       desired subnet is selected for a given client type.</para>
 
-      <para>If a subnet is associated with some classes, only the clients
-      belonging to any of these classes can use this subnet. If there are no
+      <para>If a subnet is associated with a class, only the clients
+      belonging to this class can use this subnet. If there are no
       classes specified for a subnet, any client connected to a given shared
       network can use this subnet. A common mistake is to assume that the
-      subnet including client classes is preferred over subnets without
+      subnet including a client class is preferred over subnets without
       client classes. Consider the following example:
 
 <screen>
@@ -3914,18 +4282,16 @@ autogenerated IDs are not stable across configuration changes.
       <para>The DHCPv6 protocol uses a "server identifier" (also known
       as a DUID) for clients to be able to discriminate between several
       servers present on the same link.
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
-      defines three DUID types: DUID-LLT, DUID-EN and DUID-LL.
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6355">RFC 6355</link>
-      also defines DUID-UUID. Future specifications may introduce new
-      DUID types.</para>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+      defines four DUID types: DUID-LLT, DUID-EN, DUID-LL and DUID-UUID.
+      Future specifications may introduce new DUID types.</para>
 
       <para>The Kea DHCPv6 server generates a server identifier once, upon
       the first startup, and stores it in a file. This identifier isn't
       modified across restarts of the server and so is a stable identifier.</para>
 
       <para>Kea follows recommendation from
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
       to use DUID-LLT as the default server identifier. However, we have
       received reports that some deployments require different DUID
       types, and there is a need to administratively select both DUID
@@ -4189,40 +4555,48 @@ autogenerated IDs are not stable across configuration changes.
     </section>
 
     <section xml:id="dhcp6-rfc7550">
-      <title>Support for RFC 7550</title>
+      <title>Support for RFC 7550 (being now part of RFC 8415)</title>
       <para>The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>
-      introduced some changes to the DHCPv6 protocol to resolve a few issues
-      with the coexistence of multiple stateful options in the messages sent
-      between the clients and servers.</para>
-
-      <para>The typical example is when the client, such as a requesting
-      router, requests an allocation of both addresses and prefixes when
-      it performs the 4-way (SARR) exchange with the server. If the
-      server is not configured to allocate any prefixes but it can allocate
-      some addresses, it will respond with the IA_NA(s) containing allocated
-      addresses and the IA_PD(s) containing the NoPrefixAvail status code. If
-      the client can operate without prefixes it may transition to the
-      'bound' state when it sends Renew/Rebind messages to the server,
-      according to the T1 and T2 times, to extend the lifetimes of the
-      allocated addresses. If the client is still interested in obtaining
-      prefixes from the server it may also include an IA_PD in the Renew/Rebind
-      to request allocation of the prefixes. If the server still cannot
-      allocate the prefixes, it will respond with the IA_PD(s) containing
-      NoPrefixAvail status code. However, if the server can now allocate
-      the prefixes it will do so, and send them in the IA_PD(s) to the client.
-      Allocation of leases during the Renew/Rebind was not supported in the
+      introduced some changes to the previous DHCPv6 specifications,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link>
       and <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link>,
-      and has been introduced in
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>.
-      Kea supports this new behavior and it doesn't provide any configuration
-      mechanisms to disable it.
+      to resolve a few issues with the coexistence of multiple stateful
+      options in the messages sent between the clients and servers. Those
+      changes were later included in the most recent DHCPv6 protocol specification,
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>,
+      which obsoleted <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>.
+      Kea supports <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+      along with these protocol changes, which are briefly described below.
       </para>
 
+      <para>When a client, such as a requesting router, requests an allocation
+      of both addresses and prefixes during the 4-way (SARR) exchange with the
+      server, and the server is not configured to allocate any prefixes but it
+      can allocate some addresses, it will respond with the IA_NA(s) containing
+      allocated addresses and the IA_PD(s) containing the NoPrefixAvail status code.
+      According to the updated specifications, if the client can operate without
+      prefixes it should accept allocated addresses and transition to
+      the 'bound' state. When the client subsequently sends Renew/Rebind messages
+      to the server, according to the T1 and T2 times, to extend the lifetimes of
+      the allocated addresses, if the client is still interested in obtaining
+      prefixes from the server, it may also include an IA_PD in the Renew/Rebind
+      to request allocation of the prefixes. If the server still cannot
+      allocate the prefixes it will respond with the IA_PD(s) containing
+      NoPrefixAvail status code. However, if the server can allocate the
+      prefixes it will allocate and send them in the IA_PD(s) to the client.
+      Similar situation occurs when the server is unable to allocate addresses
+      for the client but can delegate prefixes. The client may request allocation
+      of the addresses while renewing the delegated prefixes. Allocating leases for
+      other IA types while renewing existing leases is by default supported by
+      the Kea DHCPv6 server, and the server provides no configuration mechanisms
+      to disable this behavior.</para>
+
       <para>
-        The following are the other behaviors specified in the
+        The following are the other behaviors first introduced in the
         <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7550">RFC 7550</link>
-        supported by the Kea DHCPv6 server:
+        (now being part of the
+        <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>)
+        and supported by the Kea DHCPv6 server:
         <itemizedlist>
           <listitem><simpara>Set T1/T2 timers to the same value for all
           stateful (IA_NA and IA_PD) options to facilitate renewal of all
@@ -4407,7 +4781,7 @@ autogenerated IDs are not stable across configuration changes.
         <simpara><command>duid</command> - DHCPv6 uses DUID identifiers instead of
         MAC addresses. There are currently four DUID types defined, with two of them
         (DUID-LLT, which is the default one and DUID-LL) convey MAC address information.
-        Although <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="" utl="http://tools.ietf.org/html/rfc3315">RFC 3315</link> forbids
+        Although <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="" utl="http://tools.ietf.org/html/rfc8415">RFC 8415</link> forbids
         it, it is possible to parse those DUIDs and extract
         necessary information from them. This method is not completely reliable, as
         clients may use other DUID types, namely DUID-EN or DUID-UUID.
@@ -5018,7 +5392,7 @@ autogenerated IDs are not stable across configuration changes.
         </para>
 
         <para>
-          User contexts can be specified on either global scope,
+          User contexts can be specified at either global scope,
           shared network, subnet, pool, client class, option data or
           definition level, and host reservation. One other useful
           usage is the ability to store comments or descriptions.
@@ -5165,6 +5539,12 @@ autogenerated IDs are not stable across configuration changes.
             7598</ulink>: All options specified in this specification are
             supported by the DHCPv6 server.</simpara>
           </listitem>
+          <listitem>
+            <simpara><emphasis>Dynamic Host Configuration Protocol for IPv6 (DHCPv6)</emphasis>,
+            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>:
+            New DHCPv6 protocol specification which obsoletes RFC 3315, RFC 3633, RFC 3736, RFC 4242, RFC 7083,
+            RFC 7283 and RFC 7550</simpara>
+          </listitem>
       </itemizedlist>
     </section>
 
@@ -5179,9 +5559,8 @@ autogenerated IDs are not stable across configuration changes.
           <simpara>
             The server will allocate, renew or rebind a maximum of one lease
             for a particular IA option (IA_NA or IA_PD) sent by a client.
-            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3315">RFC 3315</link> and
-            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc3633">RFC 3633</link> allow
-            for multiple addresses or prefixes to be allocated for a single IA.
+            <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc8415">RFC 8415</link>
+            allows for multiple addresses or prefixes to be allocated for a single IA.
           </simpara>
         </listitem>
 

@@ -135,7 +135,9 @@ Pkt4::pack() {
         // write DHCP magic cookie
         buffer_out_.writeUint32(DHCP_OPTIONS_COOKIE);
 
-        LibDHCP::packOptions4(buffer_out_, options_);
+        // Call packOptions4() with parameter,"top", true. This invokes
+        // logic to emit the message type option first.
+        LibDHCP::packOptions4(buffer_out_, options_, true);
 
         // add END option that indicates end of options
         // (End option is very simple, just a 255 octet)

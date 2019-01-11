@@ -93,9 +93,9 @@
         clients are required to embed ther IPv6 DUID within their IPv4 client
         identifier option as described in
         <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
-        In this way, DNS upates for both IPv4 and IPv6 can be managed under
+        In this way, DNS updates for both IPv4 and IPv6 can be managed under
         the same DHCID RR. Support for this does not yet exist in Kea but is
-        called for in the ticket, http://kea.isc.org/ticket/4519, which we
+        called for in the ticket, http://oldkea.isc.org/ticket/4519, which we
         hope to include in a future release.
       </para>
     </section>
@@ -240,6 +240,11 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
           </listitem>
           <listitem>
             <simpara>
+              <emphasis>Control Socket</emphasis> - defines the Control Socket type and name.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
               <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers
             </simpara>
           </listitem>
@@ -319,6 +324,58 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </simpara>
 </note>
       </section> <!-- "d2-server-parameter-config" -->
+
+      <section xml:id="d2-ctrl-channel">
+        <title>Management API for the D2 Server</title>
+        <para>
+          The management API allows the issuing of specific management
+          commands, such as configuration retrieval or shutdown.
+          For more details, see <xref linkend="ctrl-channel"/>.
+          Currently the only supported communication channel type is UNIX
+          stream socket. By default there are no sockets open. To instruct
+          Kea to open a socket, the following entry in the configuration
+          file can be used:
+<screen>
+"DhcpDdns": {
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": <userinput>"/path/to/the/unix/socket"</userinput>
+    },
+    ...
+}
+</screen>
+        </para>
+
+        <para>
+          The length of the path specified by
+          the <command>socket-name</command> parameter is restricted by
+          the maximum length for the unix socket name on your operating
+          system, i.e. the size of the <command>sun_path</command> field
+          in the <command>sockaddr_un</command> structure, decreased by 1.
+          This value varies on different operating systems between
+          91 and 107 characters. Typical values are 107 on Linux and 103
+          on FreeBSD.
+        </para>
+
+        <para>
+          Communication over control channel is conducted using JSON
+          structures.  See the Control Channel section in the Kea
+          Developer's Guide for more details.
+        </para>
+
+        <para>The D2 server supports the following operational commands:
+          <itemizedlist>
+              <listitem>build-report</listitem>
+              <listitem>config-get</listitem>
+              <listitem>config-set</listitem>
+              <listitem>config-test</listitem>
+              <listitem>config-write</listitem>
+              <listitem>list-commands</listitem>
+              <listitem>shutdown</listitem>
+              <listitem>version-get</listitem>
+          </itemizedlist>
+        </para>
+      </section> <!-- "d2-ctrl-channel" -->
 
       <section xml:id="d2-tsig-key-list-config">
         <title>TSIG Key List</title>

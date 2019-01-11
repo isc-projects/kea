@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -139,9 +139,16 @@ TEST(WatchSocketTest, closedWhileReady) {
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
     EXPECT_EQ(1, selectCheck(select_fd));
+    EXPECT_TRUE(watch->isReady());
 
     // Interfere by closing the fd.
     ASSERT_EQ(0, close(select_fd));
+
+    // Verify that isReady() does not throw.
+    ASSERT_NO_THROW(watch->isReady());
+
+    // and return false.
+    EXPECT_FALSE(watch->isReady());
 
     // Verify that trying to clear it does not throw.
     ASSERT_NO_THROW(watch->clearReady());
@@ -168,6 +175,7 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
 
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
+    EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
     // Interfere by reading the fd. This should empty the read pipe.
@@ -179,7 +187,8 @@ TEST(WatchSocketTest, emptyReadySelectFd) {
     // make sure we aren't in a weird state.
     ASSERT_NO_THROW(watch->clearReady());
 
-    // Verify the select_fd fails as socket is invalid/closed.
+    // Verify the select_fd does not fail.
+    EXPECT_FALSE(watch->isReady());
     EXPECT_EQ(0, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns is still good.
@@ -201,6 +210,7 @@ TEST(WatchSocketTest, badReadOnClear) {
 
     /// Verify that the socket can be marked ready.
     ASSERT_NO_THROW(watch->markReady());
+    EXPECT_TRUE(watch->isReady());
     EXPECT_EQ(1, selectCheck(select_fd));
 
     // Interfere by reading the fd. This should empty the read pipe.
@@ -214,6 +224,7 @@ TEST(WatchSocketTest, badReadOnClear) {
     ASSERT_THROW(watch->clearReady(), WatchSocketError);
 
     // Verify the select_fd does not evaluate to ready.
+    EXPECT_FALSE(watch->isReady());
     EXPECT_NE(1, selectCheck(select_fd));
 
     // Verify that getSelectFd() returns INVALID.
@@ -244,6 +255,9 @@ TEST(WatchSocketTest, explicitClose) {
     EXPECT_EQ(WatchSocket::SOCKET_NOT_VALID, watch->getSelectFd());
     // No errors should be reported.
     EXPECT_TRUE(error_string.empty());
+    // Not ready too.
+    ASSERT_NO_THROW(watch->isReady());
+    EXPECT_FALSE(watch->isReady());
 }
 
 } // end of anonymous namespace

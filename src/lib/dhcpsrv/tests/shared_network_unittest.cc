@@ -316,6 +316,7 @@ TEST(SharedNetwork4Test, unparse) {
 
     std::string expected = "{\n"
         "    \"comment\": \"bar\",\n"
+        "    \"authoritative\": false,\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": false,\n"
         "    \"name\": \"frog\",\n"
@@ -332,6 +333,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"4o6-interface\": \"\",\n"
         "        \"4o6-interface-id\": \"\",\n"
         "        \"4o6-subnet\": \"\",\n"
+        "        \"authoritative\": false,\n"
         "        \"id\": 1,\n"
         "        \"match-client-id\": true,\n"
         "        \"next-server\": \"0.0.0.0\",\n"
@@ -352,6 +354,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"4o6-interface\": \"\",\n"
         "        \"4o6-interface-id\": \"\",\n"
         "        \"4o6-subnet\": \"\",\n"
+        "        \"authoritative\": false,\n"
         "        \"id\": 2,\n"
         "        \"match-client-id\": true,\n"
         "        \"next-server\": \"0.0.0.0\",\n"

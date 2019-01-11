@@ -28,3 +28,4 @@ DROP TABLE IF EXISTS lease6_stat CASCADE;
 DROP FUNCTION IF EXISTS proc_stat_lease6_insert ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_update ();
 DROP FUNCTION IF EXISTS proc_stat_lease6_delete ();
+DROP TABLE IF EXISTS logs CASCADE;

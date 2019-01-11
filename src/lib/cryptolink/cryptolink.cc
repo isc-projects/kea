@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,6 +39,11 @@ CryptoLink::createHMAC(const void* secret, size_t secret_len,
                        const HashAlgorithm hash_algorithm)
 {
     return (new HMAC(secret, secret_len, hash_algorithm));
+}
+
+RNGPtr&
+CryptoLink::getRNG() {
+    return (rng_);
 }
 
 } // namespace cryptolink

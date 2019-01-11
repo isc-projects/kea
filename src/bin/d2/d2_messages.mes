@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,16 @@ has been invoked.
 % DHCP_DDNS_CONFIGURE configuration %1 received: %2
 This is a debug message issued when the DHCP-DDNS application configure method
 has been invoked.
+
+% DHCP_DDNS_CONFIG_CHECK_FAIL DHCP-DDNS server configuration check failed: %1
+This error message indicates that the DHCP-DDNS had failed configuration
+check. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
+
+% DHCP_DDNS_CONFIG_FAIL DHCP-DDNS server configuration failed: %1
+This error message indicates that the DHCP-DDNS had failed configuration
+attempt. Details are provided. Additional details may be available
+in earlier log entries, possibly on lower levels.
 
 % DHCP_DDNS_FAILED application experienced a fatal error: %1
 This is a debug message issued when the DHCP-DDNS application encounters an

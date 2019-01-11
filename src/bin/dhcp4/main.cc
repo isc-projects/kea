@@ -1,10 +1,11 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
@@ -22,6 +23,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
@@ -133,7 +135,7 @@ main(int argc, char* argv[]) {
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
-            CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+            Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
             Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
 
             // Check the syntax first.
@@ -180,7 +182,7 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+        Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
@@ -228,7 +230,7 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
-    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+    } catch (const isc::process::DaemonPIDExists& ex) {
         // First, we print the error on stderr (that should always work)
         cerr << DHCP4_NAME << " already running? " << ex.what()
              << endl;

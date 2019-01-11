@@ -21,6 +21,16 @@
 //    "ncr-format" : "JSON"
 
 //
+// ----------------- Control Socket -----------------
+//
+
+//    "control-socket":
+//    {
+//        "socket-type": "unix",
+//        "socket-name": "/tmp/d2-ctrl-socket"
+//    },
+
+//
 // ----------------- Forward DDNS  ------------------
 //
     "forward-ddns" :

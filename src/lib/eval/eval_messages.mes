@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -143,6 +143,15 @@ This debug message indicates that the value of start is outside of the
 string and an empty result will be pushed onto the stack.  The start,
 length and string are still popped from the stack and the result is
 still pushed.  The strings are displayed in hex.
+
+# For use with TokenToHexString
+
+% EVAL_DEBUG_TOHEXSTRING Popping binary value %1 and separator %2, pushing result %3
+This debug message indicates that two values are being popped from
+the value stack and a result is being pushed onto the value stack.
+The values being popped are the binary value to convert and the separator.
+The binary value is converted to its hexadecimal string representation
+and pushed onto the stack. The binary value is displayed in hex.
 
 % EVAL_DEBUG_VENDOR_CLASS_DATA Data %1 (out of %2 received) in vendor class found, pushing result '%3'
 This debug message indicates that vendor class option was found and passed

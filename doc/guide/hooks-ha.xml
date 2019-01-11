@@ -137,9 +137,10 @@
         </para>
       </section>
 
-      <section>
+      <section xml:id="ha-server-states">
         <title>Server States</title>
-        <para>The DHCP server operating within an HA setup runs a state machine
+        <para id="command-ha-heartbeat">The DHCP server operating
+        within an HA setup runs a state machine
         and the state of the server can be retrieved by its peers using the
         <command>ha-heartbeat</command> command sent over the RESTful API. If
         the partner server doesn't respond to the <command>ha-heartbeat</command>
@@ -892,7 +893,7 @@
 
       <section xml:id="ha-sharing-lease-info">
         <title>Lease Information Sharing</title>
-        <para>The HA enabled server informs its active partner about allocated
+        <para>An HA enabled server informs its active partner about allocated
         or renewed leases by sending appropriate control commands. The partner
         updates the lease information in its own database. When the server starts
         up for the first time or recovers after a failure it synchronizes its
@@ -974,7 +975,29 @@
           hooks library configuration is designed to maximize the administration
           flexibility.
         </para>
+      </section>
 
+      <section xml:id="ha-syncing-page-limit">
+        <title>Controlling Lease Page Size Limit</title>
+        <para>An HA enabled server initiates synchronization of the lease
+        database after down time or upon receiving <command>ha-sync</command>
+        command. The server uses commands described in
+        <xref linkend="lease-get-page-cmds"/> to fetch leases from the
+        partner server (lease queries). The size of the results page
+        (maximum number of leases to be returned in a single response to one
+        of these commands) can be controlled via HA hooks library configuration.
+        Increasing the page size decreases the number of lease queries sent to
+        the partner server, but it causes the partner server to generate
+        larger responses, which lengthens transmission time as well as
+        memory and CPU utilization on both servers. Decreasing the
+        page size helps to decrease resources utilization but requires
+        more lease queries to be issued to fetch the entire lease
+        database.</para>
+        <para>The default value of the <command>sync-page-limit</command>
+        controlling the page size is 10000. This means that the entire
+        lease database can be fetched with a single command if the
+        size of this database is equal or lower than 10000.
+        </para>
       </section>
 
       <section xml:id="ha-syncing-timeouts">
@@ -983,14 +1006,25 @@
         network, lease database synchronization after the server failure
         may be a time consuming operation. The synchronizing server needs
         to gather all leases from the partner which yields a large response
-        over the RESTful interface. The time required for generating the
-        response and sending it to the synchronizing server may take from
-        several seconds to tens of seconds. The default timeout value for
-        such communication is set to 60 seconds. However, the server
-        administrator may need to extend this timeout if necessary. The
-        following configuration snippet demonstrates how to extend this
-        timeout to 90 seconds with the <command>sync-timeout</command>
-        parameter:
+        over the RESTful interface. The server receives leases using the
+        paging mechanism described in <xref linkend="ha-syncing-page-limit"/>.
+        Before the page of leases is fetched, the synchronizing server
+        sends a <command>dhcp-disable</command> command to disable the DHCP
+        service on the partner server. If the service is already disabled, this
+        command will reset the timeout for the DHCP service being disabled.
+        This timeout value is by default set to 60 seconds. If fetching a
+        single page of leases takes longer, the partner server will assume that
+        the synchronizing server died and will resume its DHCP service.
+        The connection of the synchronizing server with its partner is also
+        guarded with the timeout. If the synchronization of a single page
+        of leases takes longer than 60 seconds the synchronizing server
+        terminates the connection and the synchronization fails.
+        Both timeout values are controlled by a single configuration
+        parameter <command>sync-timeout</command>. The following
+        configuration snippet deminstrates how to modify the timeout for
+        automatic re-enabling of the DHCP service on the partner server
+        and the timeout for fetching a single page of leases from 60 seconds
+        to 90 seconds:
 <screen>
 {
 "Dhcp4": {
@@ -1045,6 +1079,189 @@
           relevant constants are located in the Kea sources:
           <filename>src/lib/config/timeouts.h</filename>.
         </para>
+      </section>
+
+      <section xml:id="ha-pause-state-machine">
+        <title>Pausing HA State Machine</title>
+        <para>The high availability state machine includes many different
+        states described in detail in <xref linkend="ha-server-states"/>.
+        The server enters each state when certain conditions are met, most
+        often taking into account the partner server's state. In some states
+        the server performs specific actions, e.g. synchronization of the
+        lease database in the <command>syncing</command> state or responding
+        to DHCP queries according to the configured mode of operation in the
+        <command>load-balancing</command> and <command>hot-standby</command>
+        states.
+        </para>
+        <para>
+          By default, transitions between the states are performed
+          automatically and the server administrator has no direct control
+          when the transitions take place and, in most cases, the
+          administrator doesn't need such control. In some situations,
+          however, the administrator may want to "pause" the HA state
+          machine in a selected state to perform some additional administrative
+          actions before the server transitions to the next state.
+        </para>
+
+        <para>Consider a server failure which results in a loss of the entire
+        lease database. Typically, the server will rebuild its lease database
+        when it enters the <command>syncing</command> state by querying
+        the partner server for leases, but it is possible that the
+        partner was also experiencing a failure and lacks lease information.
+        In this case, it may be required to reconstruct lease databases on
+        both servers from some external source, e.g. a backup server. If the
+        lease database is going to be reconstructed via RESTful API, the
+        servers should be started in the initial, i.e. <command>waiting</command>
+        state and remain in this state while leases are being added. In
+        particular, the servers should not attempt to synchronize their lease
+        databases nor start serving DHCP clients.
+        </para>
+
+        <para>The HA hooks library provides configuration parameters and a
+        command to control when the HA state machine should be paused and
+        resumed. The following configuration will cause the HA state machine
+        to pause in the <command>waiting</command> state after server startup.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": {
+                        "states":  [
+                            {
+                                "state": "waiting",
+                                "pause": "once"
+                            }
+                        ]
+                    }
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>The <command>pause</command> parameter value <command>once</command>
+        denotes that the state machine should be paused upon the first transition
+        to the <command>waiting</command> state. Later transitions to this state
+        won't cause the state machine to pause. Two other supported values of the
+        <command>pause</command> parameter are: <command>always</command> and
+        <command>never</command>. The latter is the default value for each state,
+        which instructs the server to never pause the state machine.
+        </para>
+
+        <para>In order to "unpause" the state machine the <command>ha-continue</command>
+        command must be sent to the paused server. This command does not take
+        any arguments. See <xref linkend="ha-control-commands"/> for details
+        about commands specific for HA hooks library.
+        </para>
+
+        <para>It is possible to configure the state machine to pause in more than
+        one state. Consider the following configuration.
+<screen>
+"Dhcp4": {
+
+    ...
+
+    "hooks-libraries": [
+        {
+            "library": "/usr/lib/hooks/libdhcp_lease_cmds.so",
+            "parameters": { }
+        },
+        {
+            "library": "/usr/lib/hooks/libdhcp_ha.so",
+            "parameters": {
+                "high-availability": [ {
+                    "this-server-name": "server1",
+                    "mode": "load-balancing",
+                    "peers": [
+                        {
+                            "name": "server1",
+                            "url": "http://192.168.56.33:8080/",
+                            "role": "primary"
+                        },
+                        {
+                            "name": "server2",
+                            "url": "http://192.168.56.66:8080/",
+                            "role": "secondary"
+                        }
+                    ],
+                    "state-machine": {
+                        "states": [
+                            {
+                                "state": "ready",
+                                "pause": "always"
+                            },
+                            {
+                                "state": "partner-down",
+                                "pause": "once"
+                            }
+                        ]
+                    }
+                } ]
+            }
+        }
+    ],
+
+    ...
+
+}
+</screen>
+        </para>
+
+        <para>This configuration instructs the server to pause the state
+        machine every time it transitions to the <command>ready</command> state
+        and upon the first transition to the <command>partner-down</command>
+        state.</para>
+
+        <para>Refer to the <xref linkend="ha-server-states"/> for a complete of
+        list of server states. The state machine can be paused in any of the
+        supported states, however it is not practical for the
+        <command>backup</command> and <command>terminated</command> states because
+        the server never transitions out of these states anyway.
+        </para>
+
+        <note><para>In the <command>syncing</command> state the server is paused
+        before it makes an attempt to synchronize lease database with a partner.
+        In order to pause the state machine after lease database synchronization,
+        use the <command>ready</command> state instead.
+        </para></note>
+
+        <note><para>The state of the HA state machine depends on the state of the
+        cooperating server. Therefore, it must be taken into account that
+        pausing the state machine of one server may affect the operation of the
+        partner server. For example: if the primary server is paused in the
+        <command>waiting</command> state the partner server will also remain in
+        the <command>waiting</command> state until the state machine of the
+        primary server is resumed and that server transitions to the
+        <command>ready</command> state.</para></note>
       </section>
 
       <section xml:id="ha-ctrl-agent-config">
@@ -1109,7 +1326,7 @@
         HA hook library which are available for the administrator.
         </para>
 
-        <section xml:id="ha-sync-command">
+        <section xml:id="command-ha-sync">
           <title>ha-sync command</title>
           <para>The <command>ha-sync</command> is issued to instruct the
           server to synchronize its local lease database with the
@@ -1146,10 +1363,10 @@
             The <command>max-period</command> parameter specifies the maximum
             duration (in seconds) for which the DHCP service should be disabled.
             If the DHCP service is successfully disabled, the synchronizing
-            server will fetch leases from the remote server by issuing the
-            <command>lease4-get-all</command> command. When the lease database
-            synchronization is complete, the synchronizing server sends the
-            <command>dhcp-enable</command> to the peer to re-enable its
+            server will fetch leases from the remote server by issuing one or
+            more <command>lease4-get-page</command> commands. When the lease
+            database synchronization is complete, the synchronizing server sends
+            the <command>dhcp-enable</command> to the peer to re-enable its
             DHCP service.
           </para>
 
@@ -1163,7 +1380,7 @@
           </para>
         </section> <!-- ha-sync-command -->
 
-        <section xml:id="ha-scopes-command">
+        <section xml:id="command-ha-scopes">
           <title>ha-scopes command</title>
           <para>This command allows for modifying the HA scopes that the
           server is serving. Consult <xref linkend="ha-load-balancing-config"/>
@@ -1174,7 +1391,7 @@
 <screen>
 {
     "command": "ha-scopes",
-    "service": [ "dhcp4 "],
+    "service": [ "dhcp4" ],
     "arguments": {
         "scopes": [ "HA_server1", "HA_server2" ]
     }
@@ -1197,6 +1414,19 @@
 </screen>
           </para>
         </section> <!-- ha-scopes-command -->
+
+        <section xml:id="command-ha-continue">
+        <title>ha-continue command</title>
+        <para>This command is used to resume the operation of the paused HA
+        state machine as described in the <xref linkend="ha-pause-state-machine"/>.
+        It takes no arguments, so the command structure is as simple as:
+<screen>
+{
+    "command": "ha-continue"
+}
+</screen>
+      </para>
+        </section> <!-- ha-continue-command -->
 
       </section> <!-- ha-control-commands -->
 

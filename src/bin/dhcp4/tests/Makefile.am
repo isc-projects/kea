@@ -102,6 +102,7 @@ dhcp4_unittests_SOURCES += dhcp4to6_ipc_unittest.cc
 dhcp4_unittests_SOURCES += simple_parser4_unittest.cc
 dhcp4_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
 dhcp4_unittests_SOURCES += shared_network_unittest.cc
+dhcp4_unittests_SOURCES += host_unittest.cc
 
 nodist_dhcp4_unittests_SOURCES = marker_file.h test_libraries.h
 
@@ -129,11 +130,29 @@ dhcp4_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+
+if HAVE_MYSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
+dhcp4_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 dhcp4_unittests_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
@@ -145,3 +164,21 @@ endif
 noinst_EXTRA_DIST = configs-list.txt
 
 noinst_PROGRAMS = $(TESTS)
+
+# Use this target if you want to rebuild the get-config unit-tests.
+#
+# TODO: We could also automate the replacement step with some variation
+# of this: https://stackoverflow.com/questions/6790631
+rebuild-tests:
+	rm -f x u get_config_unittest.cc
+	cp -f get_config_unittest.cc.skel get_config_unittest.cc
+	$(MAKE) CXXFLAGS=-DEXTRACT_CONFIG V=1
+	./dhcp4_unittests --gtest_filter="Dhcp4Parser*" > /dev/null 2> x
+	echo "Please copy content of x file into EXTRACTED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	$(MAKE) CXXFLAGS=-DGENERATE_ACTION V=1
+	./dhcp4_unittests --gtest_filter="Dhcp4GetConfig*" > /dev/null 2> u
+	echo "Please copy content of u file into UNPARSED_CONFIGS in get_config_unittest.cc"
+	read -p "Press ENTER when ready"
+	touch get_config_unittest.cc
+	$(MAKE)

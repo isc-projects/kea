@@ -203,11 +203,17 @@ public:
     /// @brief Test method which returns all IPv4 leases.
     void testGetLeases4();
 
+    /// @brief Test method which returns range of IPv4 leases with paging.
+    void testGetLeases4Paged();
+
     /// @brief Test method which returns all IPv6 leases for Subnet ID.
     void testGetLeases6SubnetId();
 
     /// @brief Test method which returns all IPv6 leases.
     void testGetLeases6();
+
+    /// @brief Test method which returns range of IPv6 leases with paging.
+    void testGetLeases6Paged();
 
     /// @brief Basic Lease4 Checks
     ///
@@ -272,6 +278,12 @@ public:
     /// Adds leases to the database and checks that they can be accessed via
     /// a combination of DIUID and IAID.
     void testGetLease6DuidIaidSubnetId();
+    
+    /// @brief verifies getLeases6 method by DUID
+    ///
+    /// Adds 3 leases to backend and retrieves, verifes empty
+    /// retrival of non existent DUID.
+    void testGetLeases6Duid();
 
     /// @brief Checks that getLease6() works with different DUID sizes
     void testGetLease6DuidIaidSubnetIdSize();
@@ -426,6 +438,13 @@ public:
     /// @param row_set - set of rows expected to be found in the query rows
     void checkQueryAgainstRowSet(const LeaseStatsQueryPtr& qry, const RowSet& row_set);
 
+    /// @brief Checks if specified range of leases was returned.
+    ///
+    /// @param returned collection of leases returned.
+    /// @param expected_addresses ordered collection of expected addresses.
+    void checkLeaseRange(const Lease4Collection& returned,
+                         const std::vector<std::string>& expected_addresses);
+
     /// @brief String forms of IPv4 addresses
     std::vector<std::string>  straddress4_;
 
@@ -448,11 +467,11 @@ public:
 class LeaseMgrDbLostCallbackTest : public ::testing::Test {
 public:
     LeaseMgrDbLostCallbackTest() {
-        DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback = 0;
     }
 
     virtual ~LeaseMgrDbLostCallbackTest() {
-        DatabaseConnection::db_lost_callback = 0;
+        db::DatabaseConnection::db_lost_callback = 0;
     }
 
     /// @brief Prepares the class for a test.
@@ -501,7 +520,7 @@ public:
     void testDbLostCallback();
 
     /// @brief Callback function registered with the host manager
-    bool db_lost_callback(ReconnectCtlPtr /* not_used */) {
+    bool db_lost_callback(db::ReconnectCtlPtr /* not_used */) {
         return (callback_called_ = true);
     }
 

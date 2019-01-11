@@ -11,10 +11,12 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <gtest/gtest.h>
+#include <ctime>
 #include <sstream>
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
@@ -100,12 +102,12 @@ CSVLeaseFile4Test::absolutePath(const std::string& filename) {
 void
 CSVLeaseFile4Test::writeSampleFile() const {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state\n"
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
                   "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,"
-                  "host.example.com,0\n"
-                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,0\n"
+                  "host.example.com,0,\n"
+                  "192.0.2.1,,a:11:01:04,200,200,8,1,1,host.example.com,0,\n"
                   "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,100,100,7,"
-                  "0,0,,1\n");
+                  "0,0,,1,{ \"foobar\": true }\n");
 }
 
 // This test checks the capability to read and parse leases from the file.
@@ -143,6 +145,7 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("host.example.com", lease->hostname_);
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     // Second lease is malformed - HW address is empty when state 
@@ -174,6 +177,8 @@ TEST_F(CSVLeaseFile4Test, parse) {
     EXPECT_FALSE(lease->fqdn_rev_);
     EXPECT_TRUE(lease->hostname_.empty());
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 
     // There are no more leases. Reading should cause no error, but the returned
@@ -216,11 +221,12 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     checkStats(lf, 0, 0, 0, 1, 1, 0);
     }
 
-    // Create second lease, with non-NULL client id.
+    // Create second lease, with non-NULL client id and user context.
     lease.reset(new Lease4(IOAddress("192.0.3.10"),
                            hwaddr1_,
                            CLIENTID, sizeof(CLIENTID),
                            100, 60, 90, 0, 7));
+    lease->setContext(Element::fromJSON("{ \"foobar\": true }"));
     {
     SCOPED_TRACE("Second write");
     ASSERT_NO_THROW(lf.append(*lease));
@@ -231,10 +237,11 @@ TEST_F(CSVLeaseFile4Test, recreate) {
     lf.close();
     // Check that the contents of the csv file are correct.
     EXPECT_EQ("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-              "fqdn_fwd,fqdn_rev,hostname,state\n"
-              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,2\n"
+              "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+              "192.0.3.2,00:01:02:03:04:05,,200,200,8,1,1,host.example.com,"
+              "2,\n"
               "192.0.3.10,0d:0e:0a:0d:0b:0e:0e:0f,01:02:03:04,100,100,7,0,"
-              "0,,0\n",
+              "0,,0,{ \"foobar\": true }\n",
               io_.readFile());
 }
 
@@ -252,9 +259,9 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
                   // schema 2.0 record - has state
                   "192.0.2.2,06:07:08:09:2a:bc,,200,200,8,1,1,"
                   "two.example.com,1\n"
-                  // schema 2.0 record - has state
+                  // schema 2.1 record - has state and user context
                   "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
-                  "three.example.com,2\n"
+                  "three.example.com,2,{ \"foobar\": true }\n"
                    );
 
     // Open the lease file.
@@ -282,6 +289,7 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     EXPECT_EQ("one.example.com", lease->hostname_);
     // Verify that added state is DEFAULT
     EXPECT_EQ(Lease::STATE_DEFAULT, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     {
@@ -301,6 +309,7 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("two.example.com", lease->hostname_);
     EXPECT_EQ(Lease::STATE_DECLINED, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 
     {
@@ -320,6 +329,8 @@ TEST_F(CSVLeaseFile4Test, mixedSchemaload) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
     EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
     }
 }
 
@@ -341,7 +352,7 @@ TEST_F(CSVLeaseFile4Test, tooFewHeaderColumns) {
 TEST_F(CSVLeaseFile4Test, invalidHeaderColumn) {
     // Create 1.0 file
     io_.writeFile("address,hwaddr,BOGUS,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n");
 
     // Open the lease file.
     CSVLeaseFile4 lf(filename_);
@@ -353,10 +364,10 @@ TEST_F(CSVLeaseFile4Test, invalidHeaderColumn) {
 TEST_F(CSVLeaseFile4Test, downGrade) {
     // Create 2.0 PLUS a column file
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state,FUTURE_COL\n"
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context,FUTURE_COL\n"
 
                   "192.0.2.3,06:07:08:09:3a:bc,,200,200,8,1,1,"
-                  "three.example.com,2,BOGUS\n");
+                  "three.example.com,2,,BOGUS\n");
 
     // Lease file should open and report as needing downgrade.
     CSVLeaseFile4 lf(filename_);
@@ -383,6 +394,7 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
     EXPECT_TRUE(lease->fqdn_rev_);
     EXPECT_EQ("three.example.com", lease->hostname_);
     EXPECT_EQ(Lease::STATE_EXPIRED_RECLAIMED, lease->state_);
+    EXPECT_FALSE(lease->getContext());
     }
 }
 
@@ -390,9 +402,9 @@ TEST_F(CSVLeaseFile4Test, downGrade) {
 // if they are in the declined state.
 TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     io_.writeFile("address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state\n"
-                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0\n"
-                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1\n");
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,0,\n"
+                  "192.0.2.1,,,200,200,8,1,1,host.example.com,1,\n");
 
     CSVLeaseFile4 lf(filename_);
     ASSERT_NO_THROW(lf.open());
@@ -415,10 +427,45 @@ TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     }
 }
 
+// Verifies that it is possible to output a lease with very high valid
+// lifetime (infinite in RFC2131 terms) and current time, and then read
+// back this lease.
+TEST_F(CSVLeaseFile4Test, highLeaseLifetime) {
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
+    ASSERT_TRUE(io_.exists());
+
+    // Write lease with very high lease lifetime and current time.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
+                               hwaddr0_,
+                               NULL, 0,
+                               0xFFFFFFFF, 50, 80, time(0),
+                               8, true, true,
+                               "host.example.com"));
+    // Write this lease out to the lease file.
+    ASSERT_NO_THROW(lf.append(*lease));
+
+    // Close the lease file.
+    lf.close();
+
+    Lease4Ptr lease_read;
+
+    // Re-open the file for reading.
+    ASSERT_NO_THROW(lf.open());
+
+    // Read the lease and make sure it is successful.
+    EXPECT_TRUE(lf.next(lease_read));
+    ASSERT_TRUE(lease_read);
+
+    // The valid lifetime and the cltt should match with the original lease.
+    EXPECT_EQ(lease->valid_lft_, lease_read->valid_lft_);
+    EXPECT_EQ(lease->cltt_, lease_read->cltt_);
+}
+
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
 /// this is implemented we should provide more tests for malformed leases
-/// in the CSV file. See http://kea.isc.org/ticket/2405.
+/// in the CSV file. See http://oldkea.isc.org/ticket/2405.
 
 } // end of anonymous namespace

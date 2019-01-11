@@ -47,9 +47,9 @@ namespace {
 /// variable length data so as there are no restrictions
 /// on a length of their data.
 static uint8_t v4_opts[] = {
+    53, 1, 2, // Message Type (required to not throw exception during unpack)
     12,  3, 0,   1,  2, // Hostname
     14,  3, 10, 11, 12, // Merit Dump File
-    53, 1, 2, // Message Type (required to not throw exception during unpack)
     60,  3, 20, 21, 22, // Class Id
     128, 3, 30, 31, 32, // Vendor specific
     254, 3, 40, 41, 42, // Reserved
@@ -177,16 +177,23 @@ public:
         EXPECT_TRUE(pkt->getOption(128));
         EXPECT_TRUE(pkt->getOption(254));
 
-        boost::shared_ptr<Option> x = pkt->getOption(12);
-        ASSERT_TRUE(x); // option 1 should exist
+        // Verify the packet type is correct.
+        ASSERT_EQ(DHCPOFFER, pkt->getType());
+
+        // First option after message type starts at 3.
+        uint8_t *opt_data_ptr = v4_opts + 3;
+
         // Option 12 is represented by the OptionString class so let's do
         // the appropriate conversion.
+        boost::shared_ptr<Option> x = pkt->getOption(12);
+        ASSERT_TRUE(x); // option 1 should exist
         OptionStringPtr option12 = boost::static_pointer_cast<OptionString>(x);
         ASSERT_TRUE(option12);
         EXPECT_EQ(12, option12->getType());  // this should be option 12
         ASSERT_EQ(3, option12->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option12->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&option12->getValue()[0], v4_opts + 2, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&option12->getValue()[0], opt_data_ptr + 2, 3)); // data len=3
+        opt_data_ptr += x->len();
 
         x = pkt->getOption(14);
         ASSERT_TRUE(x); // option 14 should exist
@@ -197,28 +204,31 @@ public:
         EXPECT_EQ(14, option14->getType());  // this should be option 14
         ASSERT_EQ(3, option14->getValue().length()); // it should be of length 3
         EXPECT_EQ(5, option14->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&option14->getValue()[0], v4_opts + 7, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&option14->getValue()[0], opt_data_ptr + 2, 3)); // data len=3
+        opt_data_ptr += x->len();
 
         x = pkt->getOption(60);
         ASSERT_TRUE(x); // option 60 should exist
         EXPECT_EQ(60, x->getType());  // this should be option 60
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&x->getData()[0], v4_opts + 15, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
+        opt_data_ptr += x->len();
 
         x = pkt->getOption(128);
         ASSERT_TRUE(x); // option 3 should exist
         EXPECT_EQ(128, x->getType());  // this should be option 254
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&x->getData()[0], v4_opts + 20, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
+        opt_data_ptr += x->len();
 
         x = pkt->getOption(254);
         ASSERT_TRUE(x); // option 3 should exist
         EXPECT_EQ(254, x->getType());  // this should be option 254
         ASSERT_EQ(3, x->getData().size()); // it should be of length 3
         EXPECT_EQ(5, x->len()); // total option length 5
-        EXPECT_EQ(0, memcmp(&x->getData()[0], v4_opts + 25, 3)); // data len=3
+        EXPECT_EQ(0, memcmp(&x->getData()[0], opt_data_ptr + 2, 3)); // data len=3
     }
 
 };

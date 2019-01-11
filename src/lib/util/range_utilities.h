@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -39,8 +39,8 @@ isRangeZero(Iterator begin, Iterator end) {
 /// after every start of your process.  Calling srand() is enough. This
 /// method uses default rand(), which is usually a LCG pseudo-random
 /// number generator, so it is not suitable for security
-/// purposes. Please get a decent PRNG implementation, like Mersenne
-/// twister, if you are doing anything related with security.
+/// purposes. Please use cryptolink RNG if you are doing anything
+/// related with security.
 ///
 /// PRNG initialization is left out of this function on purpose. It may
 /// be initialized to specific value on purpose, e.g. to repeat exactly

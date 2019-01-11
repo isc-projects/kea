@@ -11,6 +11,8 @@
 #include <dhcpsrv/memfile_lease_storage.h>
 #include <dhcpsrv/lease_file_loader.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
+#include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/cfg_consistency.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 #include <sstream>
@@ -18,6 +20,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -32,6 +35,11 @@ public:
     /// Initializes filename used for unit tests and creates an
     /// IO object to be used to write to this file.
     LeaseFileLoaderTest();
+
+    /// @brief Destructor
+    ///
+    /// Removes any configuration that may have been added in CfgMgr.
+    ~LeaseFileLoaderTest();
 
     /// @brief Prepends the absolute path to the file specified
     /// as an argument.
@@ -139,20 +147,173 @@ public:
     std::string v4_hdr_; ///< String for the header of the v4 csv test file
     std::string v6_hdr_; ///< String for the header of the v6 csv test file
 
+    Lease4Storage storage4_; ///< Storage for IPv4 leases
+    Lease6Storage storage6_; ///< Storage for IPv4 leases
+
+    /// @brief Creates IPv4 subnet with specified parameters
+    ///
+    /// @param subnet_txt subnet in textual form, e.g. 192.0.2.0/24
+    /// @param subnet_id id to be used.
+    /// @return A pointer to Subnet4 object
+    Subnet4Ptr createSubnet4(std::string subnet_txt, SubnetID id) {
+        size_t pos = subnet_txt.find("/");
+        isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
+        size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+        return (Subnet4Ptr(new Subnet4(addr, len, 1000, 2000, 3000, id)));
+    }
+
+    /// @brief Creates IPv6 subnet with specified parameters
+    ///
+    /// @param subnet_txt subnet in textual form, e.g. 2001:db8::/32
+    /// @param subnet_id id to be used.
+    /// @return A pointer to Subnet4 object
+    Subnet6Ptr createSubnet6(std::string subnet_txt, SubnetID id) {
+        size_t pos = subnet_txt.find("/");
+        isc::asiolink::IOAddress addr(subnet_txt.substr(0, pos));
+        size_t len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
+
+        return (Subnet6Ptr(new Subnet6(addr, len, 1000, 2000, 3000, 4000, id)));
+    }
+
+    /// @brief Checks if IPv4 lease loaded from file is sanity checked.
+    ///
+    /// This method writes a simple lease file with one lease in it,
+    /// then sets sanity checks to tested level, then tries to load
+    /// the lease file and finally checks whether the lease was loaded
+    /// or not.
+    ///
+    /// @param lease address of the lease in text form
+    /// @param lease_id subnet-id to be used in a lease
+    /// @param subnet_txt Text representation of the subnet, e.g. 192.0.2.0/24
+    /// @param subnet_id Subnet-id of the subnet to be created
+    /// @param sanity level of sanity checks
+    /// @param exp_present is the lease expected to be loaded (true = yes)
+    /// @param exp_id expected subnet-id of the loaded lease
+    void sanityChecks4(std::string lease, SubnetID lease_id,
+                       std::string subnet_txt, SubnetID subnet_id,
+                       CfgConsistency::LeaseSanity sanity,
+                       bool exp_present, SubnetID exp_id) {
+
+        // Create the subnet and add it to configuration.
+        if (!subnet_txt.empty()) {
+            Subnet4Ptr subnet = createSubnet4(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->add(subnet));
+        }
+
+        std::stringstream file_content;
+        file_content << v4_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
+                     << "0a:00:01:04,100,100," << static_cast<int>(lease_id)
+                     << ",0,0,,1,\n";
+
+        ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
+                    ->setLeaseSanityCheck(sanity));
+
+        io_.writeFile(file_content.str());
+
+        boost::scoped_ptr<CSVLeaseFile4> lf(new CSVLeaseFile4(filename_));
+        ASSERT_NO_THROW(lf->open());
+
+        // Load leases from the file.
+        ASSERT_NO_THROW(LeaseFileLoader::load<Lease4>(*lf, storage4_, 10));
+
+        {
+            SCOPED_TRACE("Read leases");
+            checkStats(*lf, 2, 1, 0, 0, 0, 0);
+        }
+
+        // Check how many leases were actually loaded.
+        ASSERT_EQ( (exp_present ? 1 : 0), storage4_.size());
+
+        Lease4Ptr l = getLease<Lease4Ptr>(lease, storage4_);
+
+        if (exp_present) {
+            ASSERT_TRUE(l) << "lease not found, but expected";
+            EXPECT_EQ(l->subnet_id_, exp_id);
+        } else {
+            EXPECT_FALSE(l) << "lease found, but was not expected";
+        }
+    }
+
+    /// @brief Checks if IPv4 lease loaded from file is sanity checked.
+    ///
+    /// This method writes a simple lease file with one lease in it,
+    /// then sets sanity checks to tested level, then tries to load
+    /// the lease file and finally checks whether the lease was loaded
+    /// or not.
+    ///
+    /// @param lease address of the lease in text form
+    /// @param lease_id subnet-id to be used in a lease
+    /// @param subnet_txt Text representation of the subnet, e.g. 192.0.2.0/24
+    /// @param subnet_id Subnet-id of the subnet to be created
+    /// @param sanity level of sanity checks
+    /// @param exp_present is the lease expected to be loaded (true = yes)
+    /// @param exp_id expected subnet-id of the loaded lease
+    void sanityChecks6(std::string lease, SubnetID lease_id,
+                       std::string subnet_txt, SubnetID subnet_id,
+                       CfgConsistency::LeaseSanity sanity,
+                       bool exp_present, SubnetID exp_id) {
+
+        // Create the subnet and add it to configuration.
+        if (!subnet_txt.empty()) {
+            Subnet6Ptr subnet = createSubnet6(subnet_txt, subnet_id);
+            ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->add(subnet));
+        }
+
+        std::stringstream file_content;
+
+        file_content << v6_hdr_ << lease << ",dd:de:ba:0d:1b:2e,"
+                     << "300,300," << static_cast<int>(lease_id)
+                     << ",150,0,8,0,0,0,,,1,\n";
+
+        ASSERT_NO_THROW(CfgMgr::instance().getStagingCfg()->getConsistency()
+                    ->setLeaseSanityCheck(sanity));
+
+        io_.writeFile(file_content.str());
+
+        boost::scoped_ptr<CSVLeaseFile6> lf(new CSVLeaseFile6(filename_));
+        ASSERT_NO_THROW(lf->open());
+
+        // Load leases from the file.
+        ASSERT_NO_THROW(LeaseFileLoader::load<Lease6>(*lf, storage6_, 10));
+
+        {
+            SCOPED_TRACE("Read leases");
+            checkStats(*lf, 2, 1, 0, 0, 0, 0);
+        }
+
+        // Check how many leases were actually loaded.
+        ASSERT_EQ( (exp_present ? 1 : 0), storage6_.size());
+
+        Lease6Ptr l = getLease<Lease6Ptr>(lease, storage6_);
+
+        if (exp_present) {
+            ASSERT_TRUE(l) << "lease not found, but expected";
+            EXPECT_EQ(exp_id, l->subnet_id_);
+        } else {
+            EXPECT_FALSE(l) << "lease found, but was not expected";
+        }
+    }
+
 protected:
     /// @brief Sets up the header strings
     virtual void SetUp() {
         v4_hdr_ = "address,hwaddr,client_id,valid_lifetime,expire,subnet_id,"
-                  "fqdn_fwd,fqdn_rev,hostname,state\n";
+                  "fqdn_fwd,fqdn_rev,hostname,state,user_context\n";
 
         v6_hdr_ = "address,duid,valid_lifetime,expire,subnet_id,"
                   "pref_lifetime,lease_type,iaid,prefix_len,fqdn_fwd,"
-                  "fqdn_rev,hostname,hwaddr,state\n";
+                  "fqdn_rev,hostname,hwaddr,state,user_context\n";
     }
 };
 
 LeaseFileLoaderTest::LeaseFileLoaderTest()
     : filename_(absolutePath("leases4.csv")), io_(filename_) {
+    CfgMgr::instance().clear();
+}
+
+LeaseFileLoaderTest::~LeaseFileLoaderTest() {
+    CfgMgr::instance().clear();
 }
 
 std::string
@@ -171,17 +332,19 @@ LeaseFileLoaderTest::absolutePath(const std::string& filename) {
 TEST_F(LeaseFileLoaderTest, loadWrite4) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1\n";
+                      "200,200,8,1,1,host.example.com,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com,1\n";
+                      "200,500,8,1,1,host.example.com,1,"
+                      "{ \"foobar\": true }\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,,1\n";
+                      "100,100,7,0,0,,1,\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,,1\n";
+                      "100,135,7,0,0,,1,\n";
 
     std::string c_1 = "192.0.2.3,,a:11:01:04,"
-                      "200,200,8,1,1,host.example.com,0\n";
+                      "200,200,8,1,1,host.example.com,0,\n";
 
     // Create lease file with leases for 192.0.2.1, 192.0.3.15. The lease
     // entry for the 192.0.2.3 is invalid (lacks HW address) and should
@@ -212,6 +375,10 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(300, lease->cltt_);
 
+    // The lease for 192.0.2.1 should have user context.
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
+
     // The invalid entry should not be loaded.
     lease = getLease<Lease4Ptr>("192.0.2.3", storage);
     ASSERT_FALSE(lease);
@@ -222,6 +389,7 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
     lease = getLease<Lease4Ptr>("192.0.3.15", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(35, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     test_str = v4_hdr_ + a_2 + b_2;
     writeLeases<Lease4, CSVLeaseFile4, Lease4Storage>(*lf, storage, test_str);
@@ -242,14 +410,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite4) {
 TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1\n";
+                      "200,200,8,1,1,host.example.com,1,\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "0,500,8,1,1,host.example.com,1\n";
+                      "0,500,8,1,1,host.example.com,1,\n";
 
     std::string b_1 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,100,7,0,0,,1\n";
+                      "100,100,7,0,0,,1,\n";
     std::string b_2 = "192.0.3.15,dd:de:ba:0d:1b:2e:3e:4f,0a:00:01:04,"
-                      "100,135,7,0,0,,1\n";
+                      "100,135,7,0,0,,1,\n";
 
 
     // Create lease file in which one of the entries for 192.0.2.1
@@ -297,20 +465,21 @@ TEST_F(LeaseFileLoaderTest, loadWrite4LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, loadWrite6) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_2 = "2001:db8:1::1,,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string a_3 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,400,8,100,0,7,0,1,1,host.example.com,,1\n";
-
+                      "200,400,8,100,0,7,0,1,1,host.example.com,,1,"
+                      "{ \"foobar\": true }\n";
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,,1\n";
+                      "300,300,6,150,0,8,0,0,0,,,1,\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,,1\n";
+                      "300,800,6,150,0,8,0,0,0,,,1,\n";
 
     std::string c_1 = "3000:1::,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "100,200,8,0,2,16,64,0,0,,,1\n";
-
+                      "100,200,8,0,2,16,64,0,0,,,1,\n";
 
 
     // Create a lease file with three valid leases: 2001:db8:1::1,
@@ -341,16 +510,22 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
     ASSERT_TRUE(lease);
     EXPECT_EQ(200, lease->cltt_);
 
+    // The 2001:db8:1::1 should have user context.
+    ASSERT_TRUE(lease->getContext());
+    EXPECT_EQ("{ \"foobar\": true }", lease->getContext()->str());
+
     // The 3000:1:: lease should be present.
     lease = getLease<Lease6Ptr>("3000:1::", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(100, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     // The 2001:db8:2::10 should be present and the cltt should be
     // calculated according to the last entry in the lease file.
     lease = getLease<Lease6Ptr>("2001:db8:2::10", storage);
     ASSERT_TRUE(lease);
     EXPECT_EQ(500, lease->cltt_);
+    EXPECT_FALSE(lease->getContext());
 
     test_str = v6_hdr_ + a_3 + b_2 + c_1;
     writeLeases<Lease6, CSVLeaseFile6, Lease6Storage>(*lf, storage, test_str);
@@ -371,14 +546,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite6) {
 TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
     std::string test_str;
     std::string a_1 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "200,200,8,100,0,7,0,1,1,host.example.com,,1\n";
+                      "200,200,8,100,0,7,0,1,1,host.example.com,,1,\n";
     std::string a_2 = "2001:db8:1::1,00:01:02:03:04:05:06:0a:0b:0c:0d:0e:0f,"
-                      "0,400,8,100,0,7,0,1,1,host.example.com,,1\n";
+                      "0,400,8,100,0,7,0,1,1,host.example.com,,1,\n";
 
     std::string b_1 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,300,6,150,0,8,0,0,0,,,1\n";
+                      "300,300,6,150,0,8,0,0,0,,,1,\n";
     std::string b_2 = "2001:db8:2::10,01:01:01:01:0a:01:02:03:04:05,"
-                      "300,800,6,150,0,8,0,0,0,,,1\n";
+                      "300,800,6,150,0,8,0,0,0,,,1,\n";
 
     // Create lease file in which one of the entries for the 2001:db8:1::1
     // has valid lifetime set to 0, in which case the lease should be
@@ -423,13 +598,14 @@ TEST_F(LeaseFileLoaderTest, loadWrite6LeaseRemove) {
 TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
     std::string test_str;
     std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,200,8,1,1,host.example.com,1\n";
+                      "200,200,8,1,1,host.example.com,1,\n";
     std::string a_2 = "192.0.2.1,06:07:08:09:0a:bc,,"
-                      "200,500,8,1,1,host.example.com,1\n";
+                      "200,500,8,1,1,host.example.com,1,\n";
 
-    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com,0\n";
+    std::string b_1 = "192.0.2.3,,a:11:01:04,200,200,8,1,1,host.example.com,"
+                      "0,\n";
 
-    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,,1\n";
+    std::string c_1 = "192.0.2.10,01:02:03:04:05:06,,200,300,8,1,1,,1,\n";
 
     // Create a lease file for which there is a number of invalid
     // entries.  b_1 is invalid and gets used multiple times.
@@ -493,8 +669,8 @@ TEST_F(LeaseFileLoaderTest, loadMaxErrors) {
 // and comparing that with the expected value.
 TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     std::string test_str;
-    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,1\n";
-    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,1\n";
+    std::string a_1 = "192.0.2.1,06:07:08:09:0a:bc,,200,200,8,1,1,,1,\n";
+    std::string b_2 = "192.0.2.3,06:07:08:09:0a:bd,,0,200,8,1,1,,1,\n";
 
     // Create lease file. The second lease has a valid lifetime of 0.
     test_str = v4_hdr_ + a_1 + b_2;
@@ -531,4 +707,117 @@ TEST_F(LeaseFileLoaderTest, loadWriteLeaseWithZeroLifetime) {
     checkStats(*lf, 0, 0, 0, 1, 1, 0);
     }
 }
+
+// This test checks if the lease can be loaded, even though there are no
+// subnets configured that it would match.
+// Scenario: print a warning, there's no subnet,
+// expected outcome: add the lease as is
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsWarn) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: add the lease as is
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsFix) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+}
+
+// This test checks if the lease can be discarded if it's impossible to fix.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsFixDel) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease can be discarded.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4NoSubnetsDel) {
+    sanityChecks4("192.0.2.1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: correct the lease
+TEST_F(LeaseFileLoaderTest, sanityChecker4Fix) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+}
+
+// This test checks if the lease can be fixed when it's possible.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4FixDel1) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+}
+
+// This test checks if the lease is discarded, when fix is not possible.
+// Scenario: try to fix the lease, there's a subnet, but it doesn't match,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4FixDel2) {
+    sanityChecks4("192.0.2.1", 1, "192.0.3.0/24", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease is discarded.
+// Scenario: delete the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker4Del) {
+    sanityChecks4("192.0.2.1", 1, "192.0.2.0/24", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks if the lease can be loaded, even though there are no
+// subnets configured that it would match.
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsWarn) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_WARN, true, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: add the lease as is
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsFix) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX, true, 1);
+}
+
+// This test checks if the lease can be discarded if it's impossible to fix.
+// Scenario: try to fix the lease, there's no subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsFixDel) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease can be discarded.  Note we are
+// verifying whether the checks are conducted at all when loading a file.
+// Thorough tests were conducted in sanity_checks_unittest.cc.
+TEST_F(LeaseFileLoaderTest, sanityChecker6NoSubnetsDel) {
+    sanityChecks6("2001::1", 1, "", 0, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
+// This test checks if the lease can be fixed.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: correct the lease
+TEST_F(LeaseFileLoaderTest, sanityChecker6Fix) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_FIX, true, 2);
+}
+
+// This test checks if the lease can be fixed when it's possible.
+// Scenario: try to fix the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6FixDel1) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, true, 2);
+}
+
+// This test checks if the lease is discarded, when fix is not possible.
+// Scenario: try to fix the lease, there's a subnet, but it doesn't match,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6FixDel2) {
+    sanityChecks6("2001::1", 1, "2002::/16", 2, CfgConsistency::LEASE_CHECK_FIX_DEL, false, 1);
+}
+
+// This test checks if the lease is discarded.
+// Scenario: delete the lease, there's a subnet,
+// expected outcome: the lease is not loaded
+TEST_F(LeaseFileLoaderTest, sanityChecker6Del) {
+    sanityChecks6("2001::1", 1, "2001::/16", 2, CfgConsistency::LEASE_CHECK_DEL, false, 1);
+}
+
 } // end of anonymous namespace

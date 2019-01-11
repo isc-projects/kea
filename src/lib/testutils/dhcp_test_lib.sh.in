@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,6 +130,25 @@ create_config() {
     fi
     printf "Creating Kea configuration file: %s.\n" ${CFG_FILE}
     printf "%b" ${cfg} > ${CFG_FILE}
+}
+
+# Stores the netconf configuration specified as a parameter in the
+# configuration file which name has been set in the ${NETCONF_CFG_FILE}
+# variable.
+create_netconf_config() {
+    local cfg="${1}"  # Configuration string.
+    if [ -z ${NETCONF_CFG_FILE} ]; then
+        test_lib_error "create_netconf_config requires NETCONF_CFG_FILE \
+variable be set"
+        clean_exit 1
+
+    elif [ -z "${cfg}" ]; then
+        test_lib_error "create_netconf_config requires argument holding a \
+configuration"
+        clean_exit 1
+    fi
+    printf "Creating Netconf configuration file: %s.\n" ${NETCONF_CFG_FILE}
+    printf "%b" ${cfg} > ${NETCONF_CFG_FILE}
 }
 
 # Stores the keactrl configuration specified as a parameter in the

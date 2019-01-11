@@ -74,9 +74,9 @@
     will not retrieve statistics for it.
  </para>
 
-<section>
+<section id="command-stat-lease4-get">
   <title>stat-lease4-get, stat-lease6-get commands</title>
-    <para>
+    <para id="command-stat-lease6-get">
       The <command>stat-lease4-get</command> and <command>stat-lease6-get</command>
       commands fetch lease statistics for a range of known subnets.  The
       range of subnets is determined through the use of optional command

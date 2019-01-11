@@ -269,6 +269,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::d2::D2ParserContext::DNS_SERVERS:
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_USER_CONTEXT(driver.loc_);
     default:
@@ -285,6 +286,7 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     case isc::d2::D2ParserContext::DNS_SERVERS:
     case isc::d2::D2ParserContext::TSIG_KEY:
     case isc::d2::D2ParserContext::TSIG_KEYS:
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
     case isc::d2::D2ParserContext::LOGGERS:
         return isc::d2::D2Parser::make_COMMENT(driver.loc_);
     default:
@@ -387,6 +389,33 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::d2::D2Parser::make_SECRET(driver.loc_);
     default:
         return isc::d2::D2Parser::make_STRING("secret", driver.loc_);
+    }
+}
+
+\"control-socket\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::DHCPDDNS:
+        return isc::d2::D2Parser::make_CONTROL_SOCKET(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("control-socket", driver.loc_);
+    }
+}
+
+\"socket-type\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_SOCKET_TYPE(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-type", driver.loc_);
+    }
+}
+
+\"socket-name\" {
+    switch(driver.ctx_) {
+    case isc::d2::D2ParserContext::CONTROL_SOCKET:
+        return isc::d2::D2Parser::make_SOCKET_NAME(driver.loc_);
+    default:
+        return isc::d2::D2Parser::make_STRING("socket-name", driver.loc_);
     }
 }
 

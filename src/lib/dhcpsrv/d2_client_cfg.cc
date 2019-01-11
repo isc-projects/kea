@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@ using namespace isc::data;
 namespace isc {
 namespace dhcp {
 
+/// These values need to match those used in D2ClientConfigParser::SimpleDefaults
 const char* D2ClientConfig::DFT_SERVER_IP = "127.0.0.1";
 const size_t D2ClientConfig::DFT_SERVER_PORT = 53001;
 const char* D2ClientConfig::DFT_V4_SENDER_IP = "0.0.0.0";
@@ -29,12 +30,12 @@ const size_t D2ClientConfig::DFT_SENDER_PORT = 0;
 const size_t D2ClientConfig::DFT_MAX_QUEUE_SIZE = 1024;
 const char* D2ClientConfig::DFT_NCR_PROTOCOL = "UDP";
 const char* D2ClientConfig::DFT_NCR_FORMAT = "JSON";
-const bool D2ClientConfig::DFT_ALWAYS_INCLUDE_FQDN = false;
 const bool D2ClientConfig::DFT_OVERRIDE_NO_UPDATE = false;
 const bool D2ClientConfig::DFT_OVERRIDE_CLIENT_UPDATE = false;
 const char* D2ClientConfig::DFT_REPLACE_CLIENT_NAME_MODE = "NEVER";
 const char* D2ClientConfig::DFT_GENERATED_PREFIX = "myhost";
-
+const char* D2ClientConfig::DFT_HOSTNAME_CHAR_SET = "";
+const char* D2ClientConfig::DFT_HOSTNAME_CHAR_REPLACEMENT = "";
 
 D2ClientConfig::ReplaceClientNameMode
 D2ClientConfig::stringToReplaceClientNameMode(const std::string& mode_str) {
@@ -88,12 +89,13 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
                                      NameChangeProtocol& ncr_protocol,
                                const dhcp_ddns::
                                      NameChangeFormat& ncr_format,
-                               const bool always_include_fqdn,
                                const bool override_no_update,
                                const bool override_client_update,
                                const ReplaceClientNameMode replace_client_name_mode,
                                const std::string& generated_prefix,
-                               const std::string& qualifying_suffix)
+                               const std::string& qualifying_suffix,
+                               const std::string& hostname_char_set,
+                               const std::string& hostname_char_replacement)
     : enable_updates_(enable_updates),
       server_ip_(server_ip),
       server_port_(server_port),
@@ -102,12 +104,14 @@ D2ClientConfig::D2ClientConfig(const  bool enable_updates,
       max_queue_size_(max_queue_size),
       ncr_protocol_(ncr_protocol),
       ncr_format_(ncr_format),
-      always_include_fqdn_(always_include_fqdn),
       override_no_update_(override_no_update),
       override_client_update_(override_client_update),
       replace_client_name_mode_(replace_client_name_mode),
       generated_prefix_(generated_prefix),
-      qualifying_suffix_(qualifying_suffix) {
+      qualifying_suffix_(qualifying_suffix),
+      hostname_char_set_(hostname_char_set),
+      hostname_char_replacement_(hostname_char_replacement),
+      hostname_sanitizer_(0) {
     validateContents();
 }
 
@@ -120,12 +124,14 @@ D2ClientConfig::D2ClientConfig()
       max_queue_size_(DFT_MAX_QUEUE_SIZE),
       ncr_protocol_(dhcp_ddns::stringToNcrProtocol(DFT_NCR_PROTOCOL)),
       ncr_format_(dhcp_ddns::stringToNcrFormat(DFT_NCR_FORMAT)),
-      always_include_fqdn_(DFT_ALWAYS_INCLUDE_FQDN),
       override_no_update_(DFT_OVERRIDE_NO_UPDATE),
       override_client_update_(DFT_OVERRIDE_CLIENT_UPDATE),
       replace_client_name_mode_(stringToReplaceClientNameMode(DFT_REPLACE_CLIENT_NAME_MODE)),
       generated_prefix_(DFT_GENERATED_PREFIX),
-      qualifying_suffix_("") {
+      qualifying_suffix_(""),
+      hostname_char_set_(DFT_HOSTNAME_CHAR_SET),
+      hostname_char_replacement_(DFT_HOSTNAME_CHAR_SET),
+      hostname_sanitizer_(0) {
     validateContents();
 }
 
@@ -164,6 +170,16 @@ D2ClientConfig::validateContents() {
                   << server_ip_.toText() << "/" << server_port_);
     }
 
+    if (!hostname_char_set_.empty()) {
+        try {
+            hostname_sanitizer_.reset(new isc::util::str::StringSanitizer(hostname_char_set_,
+                                                                          hostname_char_replacement_));
+        } catch (const std::exception& ex) {
+            isc_throw(D2ClientError, "D2ClientConfig: hostname-char-set"
+                      " is not a valid regular expression");
+        }
+    }
+
     /// @todo perhaps more validation we should do yet?
     /// Are there any invalid combinations of options we need to test against?
 }
@@ -178,12 +194,13 @@ D2ClientConfig::operator == (const D2ClientConfig& other) const {
             (max_queue_size_ == other.max_queue_size_) &&
             (ncr_protocol_ == other.ncr_protocol_) &&
             (ncr_format_ == other.ncr_format_) &&
-            (always_include_fqdn_ == other.always_include_fqdn_) &&
             (override_no_update_ == other.override_no_update_) &&
             (override_client_update_ == other.override_client_update_) &&
             (replace_client_name_mode_ == other.replace_client_name_mode_) &&
             (generated_prefix_ == other.generated_prefix_) &&
-            (qualifying_suffix_ == other.qualifying_suffix_));
+            (qualifying_suffix_ == other.qualifying_suffix_) &&
+            (hostname_char_set_ == other.hostname_char_set_) &&
+            (hostname_char_replacement_ == other.hostname_char_replacement_));
 }
 
 bool
@@ -197,23 +214,23 @@ D2ClientConfig::toText() const {
 
     stream << "enable_updates: " << (enable_updates_ ? "yes" : "no");
     if (enable_updates_) {
-        stream << ", server_ip: " << server_ip_.toText()
-               << ", server_port: " << server_port_
-               << ", sender_ip: " << sender_ip_.toText()
-               << ", sender_port: " << sender_port_
-               << ", max_queue_size: " << max_queue_size_
-               << ", ncr_protocol: " << ncrProtocolToString(ncr_protocol_)
-               << ", ncr_format: " << ncrFormatToString(ncr_format_)
-               << ", always_include_fqdn: " << (always_include_fqdn_ ?
-                                                "yes" : "no")
-               << ", override_no_update: " << (override_no_update_ ?
+        stream << ", server-ip: " << server_ip_.toText()
+               << ", server-port: " << server_port_
+               << ", sender-ip: " << sender_ip_.toText()
+               << ", sender-port: " << sender_port_
+               << ", max-queue-size: " << max_queue_size_
+               << ", ncr-protocol: " << ncrProtocolToString(ncr_protocol_)
+               << ", ncr-format: " << ncrFormatToString(ncr_format_)
+               << ", override-no-update: " << (override_no_update_ ?
                                                "yes" : "no")
-               << ", override_client_update: " << (override_client_update_ ?
+               << ", override-client-update: " << (override_client_update_ ?
                                                    "yes" : "no")
-               << ", replace_client_name: "
+               << ", replace-client-name: "
                << replaceClientNameModeToString(replace_client_name_mode_)
-               << ", generated_prefix: [" << generated_prefix_ << "]"
-               << ", qualifying_suffix: [" << qualifying_suffix_ << "]";
+               << ", generated-prefix: [" << generated_prefix_ << "]"
+               << ", qualifying-suffix: [" << qualifying_suffix_ << "]"
+               << ", hostname-char-set: [" << hostname_char_set_ << "]"
+               << ", hostname-char-replacement: [" << hostname_char_replacement_ << "]";
     }
 
     return (stream.str());
@@ -242,8 +259,6 @@ D2ClientConfig::toElement() const {
     result->set("ncr-protocol", Element::create(dhcp_ddns::ncrProtocolToString(ncr_protocol_)));
     // Set ncr-format
     result->set("ncr-format", Element::create(dhcp_ddns::ncrFormatToString(ncr_format_)));
-    // Set always-include-fqdn
-    result->set("always-include-fqdn", Element::create(always_include_fqdn_));
     // Set override-no-update
     result->set("override-no-update", Element::create(override_no_update_));
     // Set override-client-update
@@ -253,6 +268,10 @@ D2ClientConfig::toElement() const {
                 Element::create(replaceClientNameModeToString(replace_client_name_mode_)));
     // Set generated-prefix
     result->set("generated-prefix", Element::create(generated_prefix_));
+    // Set hostname-char-set
+    result->set("hostname-char-set", Element::create(hostname_char_set_));
+    // Set hostname-char-replacement
+    result->set("hostname-char-replacement", Element::create(hostname_char_replacement_));
     return (result);
 }
 

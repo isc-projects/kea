@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -15,6 +15,7 @@
 #include <vector>
 #include <exceptions/exceptions.h>
 #include <boost/lexical_cast.hpp>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace util {
@@ -255,6 +256,53 @@ void
 decodeFormattedHexString(const std::string& hex_string,
                          std::vector<uint8_t>& binary);
 
+/// @brief Forward declaration to the @c StringSanitizer implementation.
+class StringSanitizerImpl;
+
+/// @brief Implements a regular expression based string scrubber
+///
+/// The implementation uses C++11 regex IF the environemnt supports it
+/// (tested in configure.ac). If not it falls back to C lib regcomp/regexec.
+/// Older compilers, such as pre Gnu g++ 4.9.0, provided only experimental
+/// implementations of regex which are recognized as buggy.
+class StringSanitizer {
+public:
+
+    /// Constructor
+    ///
+    /// Compiles the given character set into a regular expression, and
+    /// retains the given character replacement. Thereafter, the instance
+    /// may be used to scrub an arbitrary number of strings.
+    ///
+    /// @param char_set string containing a regular expression (POSIX
+    /// extended syntax) that describes the characters to replace.  If you
+    /// wanted to sanitize hostnames for example, you could specify the
+    /// inversion of valid characters "[^A-Za-z0-9_-]".
+    /// @param char_replacement string of one or more characters to use as the
+    /// replacement for invalid characters.
+    /// @throw BadValue if given an invalid regular expression
+    StringSanitizer(const std::string& char_set,
+                    const std::string& char_replacement);
+
+    /// @brief Destructor.
+    ///
+    /// Destroys the implementation instance.
+    ~StringSanitizer();
+
+    /// Returns a scrubbed copy of a given string
+    ///
+    /// Replaces all occurrences of characters described by the regular
+    /// expression with the character replacement.
+    ///
+    /// @param original the string to scrub
+    /// @throw Unexpected if an error occurs during scrubbing
+    std::string scrub(const std::string& original);
+private:
+    /// @brief Pointer to the @c StringSanitizerImpl.
+    StringSanitizerImpl* impl_;
+};
+
+typedef boost::shared_ptr<StringSanitizer> StringSanitizerPtr;
 
 } // namespace str
 } // namespace util

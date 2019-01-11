@@ -44,7 +44,7 @@ namespace test {
 /// @return true if the statistic manager holds a particular value,
 /// false otherwise.
 bool testStatistics(const std::string& stat_name, const int64_t exp_value,
-                    const SubnetID subnet_id = 0);
+                    const SubnetID subnet_id = SUBNET_ID_UNUSED);
 
 /// @brief Allocation engine with some internal methods exposed
 class NakedAllocEngine : public AllocEngine {
@@ -153,7 +153,7 @@ public:
     /// @return Lease6 pointer (or NULL if collection was empty)
     Lease6Ptr expectOneLease(const Lease6Collection& col) {
         if (col.size() > 1) {
-            isc_throw(MultipleRecords, "More than one lease found in collection");
+            isc_throw(db::MultipleRecords, "More than one lease found in collection");
         }
         if (col.empty()) {
             return (Lease6Ptr());
@@ -178,9 +178,11 @@ public:
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
 
         if (expected_in_subnet) {
-            EXPECT_TRUE(subnet_->inRange(lease->addr_));
+            EXPECT_TRUE(subnet_->inRange(lease->addr_)) 
+                << " address: " << lease->addr_.toText();
         } else {
-            EXPECT_FALSE(subnet_->inRange(lease->addr_));
+            EXPECT_FALSE(subnet_->inRange(lease->addr_))
+                << " address: " << lease->addr_.toText();
         }
 
         if (expected_in_pool) {
@@ -374,7 +376,7 @@ public:
     createHost6(bool add_to_host_mgr, IPv6Resrv::Type type,
                 const asiolink::IOAddress& addr, uint8_t prefix_len) {
         HostPtr host(new Host(&duid_->getDuid()[0], duid_->getDuid().size(),
-                              Host::IDENT_DUID, SubnetID(0), subnet_->getID(),
+                              Host::IDENT_DUID, SUBNET_ID_UNUSED, subnet_->getID(),
                               asiolink::IOAddress("0.0.0.0")));
         IPv6Resrv resv(type, addr, prefix_len);
         host->addReservation(resv);

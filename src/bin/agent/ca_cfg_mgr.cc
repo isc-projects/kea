@@ -12,6 +12,7 @@
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
 
+using namespace isc::config;
 using namespace isc::dhcp;
 using namespace isc::process;
 using namespace isc::data;
@@ -24,13 +25,13 @@ CtrlAgentCfgContext::CtrlAgentCfgContext()
 }
 
 CtrlAgentCfgContext::CtrlAgentCfgContext(const CtrlAgentCfgContext& orig)
-    : DCfgContextBase(), ctrl_sockets_(orig.ctrl_sockets_),
+    : ConfigBase(), ctrl_sockets_(orig.ctrl_sockets_),
       http_host_(orig.http_host_), http_port_(orig.http_port_),
       hooks_config_(orig.hooks_config_) {
 }
 
 CtrlAgentCfgMgr::CtrlAgentCfgMgr()
-    : DCfgMgrBase(DCfgContextBasePtr(new CtrlAgentCfgContext())) {
+    : DCfgMgrBase(ConfigPtr(new CtrlAgentCfgContext())) {
 }
 
 CtrlAgentCfgMgr::~CtrlAgentCfgMgr() {
@@ -59,9 +60,9 @@ CtrlAgentCfgMgr::getConfigSummary(const uint32_t /*selection*/) {
     return (s.str());
 }
 
-DCfgContextBasePtr
+ConfigPtr
 CtrlAgentCfgMgr::createNewContext() {
-    return (DCfgContextBasePtr(new CtrlAgentCfgContext()));
+    return (ConfigPtr(new CtrlAgentCfgContext()));
 }
 
 isc::data::ConstElementPtr
@@ -86,10 +87,10 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
         parser.parse(ctx, cfg, check_only);
     } catch (const isc::Exception& ex) {
         excuse = ex.what();
-        answer = isc::config::createAnswer(2, excuse);
+        answer = createAnswer(CONTROL_RESULT_ERROR, excuse);
     } catch (...) {
         excuse = "undefined configuration parsing error";
-        answer = isc::config::createAnswer(2, excuse);
+        answer = createAnswer(CONTROL_RESULT_ERROR, excuse);
     }
 
     // At this stage the answer was created only in case of exception.
@@ -103,9 +104,11 @@ CtrlAgentCfgMgr::parse(isc::data::ConstElementPtr config_set, bool check_only) {
     }
 
     if (check_only) {
-        answer = isc::config::createAnswer(0, "Configuration check successful");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS,
+                              "Configuration check successful");
     } else {
-        answer = isc::config::createAnswer(0, "Configuration applied successfully.");
+        answer = createAnswer(CONTROL_RESULT_SUCCESS,
+                              "Configuration applied successfully.");
     }
 
     return (answer);

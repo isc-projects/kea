@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,9 +24,10 @@ using namespace boost::posix_time;
 namespace isc {
 namespace d2 {
 
-/// @brief Test fixture class for testing D2Controller class. This class
-/// derives from DControllerTest and wraps a D2Controller.  Much of the
-/// underlying functionality is in the DControllerBase class which has an
+/// @brief Test fixture class for testing D2Controller class.
+///
+/// This class derives from DControllerTest and wraps a D2Controller. Much of
+/// the underlying functionality is in the DControllerBase class which has an
 /// extensive set of unit tests that are independent of DHCP-DDNS.
 /// @TODO Currently These tests are relatively light and duplicate some of
 /// the testing done on the base class.  These tests are sufficient to ensure
@@ -82,8 +83,8 @@ public:
 /// Verifies that the controller singleton gets created and that the
 /// basic derivation from the base class is intact.
 TEST_F(D2ControllerTest, basicInstanceTesting) {
-    // Verify the we can the singleton instance can be fetched and that
-    // it is the correct type.
+    // Verify the singleton instance can be fetched and that
+    // it has the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
     ASSERT_TRUE(controller);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<D2Controller>(controller));
@@ -183,7 +184,7 @@ TEST_F(D2ControllerTest, configUpdateTests) {
     EXPECT_EQ(0, rcode);
 
     // Use an invalid configuration to verify parsing error return.
-    std::string config = "{ \"bogus\": 1000 } ";
+    std::string config = "{ \"ip-address\": 1000 } ";
     config_set = isc::data::Element::fromJSON(config);
     answer = updateConfig(config_set);
     isc::config::parseAnswer(rcode, answer);

@@ -11,7 +11,6 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_db_access.h>
-#include <dhcpsrv/database_connection.h>
 #include <dhcp6/ctrl_dhcp6_srv.h>
 #include <dhcp6/dhcp6to4_ipc.h>
 #include <dhcp6/dhcp6_log.h>
@@ -24,6 +23,7 @@
 #include <sstream>
 
 using namespace isc::config;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::hooks;
@@ -278,7 +278,8 @@ ControlledDhcpv6Srv::commandConfigWriteHandler(const string&, ConstElementPtr ar
     // Ok, it's time to write the file.
     size_t size = 0;
     try {
-        size = writeConfigFile(filename);
+        ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+        size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
                              + ex.what()));
@@ -652,6 +653,22 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure DHCP packet queueing
+    try {
+        data::ConstElementPtr qc;
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET6, qc)) {
+            LOG_INFO(dhcp6_logger, DHCP6_CONFIG_PACKET_QUEUE)
+                     .arg(IfaceMgr::instance().getPacketQueue6()->getInfoStr());
+        }
+
+    } catch (const std::exception& ex) {
+        std::ostringstream err;
+        err << "Error setting packet queue controls after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function
@@ -907,7 +924,7 @@ ControlledDhcpv6Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->registerTimer("Dhcp6DbReconnectTimer",
                             boost::bind(&ControlledDhcpv6Srv::dbReconnect, this,
                             db_reconnect_ctl),
-                            db_reconnect_ctl->retryInterval() * 1000,
+                            db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }
 

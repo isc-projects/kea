@@ -47,7 +47,7 @@
         This is the reference guide for Kea version &keaversion;.
         The most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
-        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs">http://kea.isc.org/docs</uri>.
+        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/kea-administrator-reference-manual">kb.isc.org/docs</uri>.
         </para> </abstract>
 
   </info>
@@ -72,6 +72,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lease-expiration.xml"/>
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="congestion-handling.xml"/>
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lfc.xml"/>
@@ -90,9 +92,11 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="netconf.xml"/>
 
-  <chapter xml:id="acknowledgments">
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
+
+  <appendix xml:id="acknowledgments">
       <title>Acknowledgments</title>
 
       <para>Kea is an open source project designed, developed, and maintained by Internet Systems
@@ -116,7 +120,7 @@
       within the BIND 10 framework. We thank the founding sponsors of the BIND10 project:
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.afilias.info/">Afilias</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.iis.se/">IIS.SE</link>,
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, 
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://jprs.co.jp/">JPRS</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cira.ca/">CIRA</link>; and additional sponsors
@@ -131,8 +135,7 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.tcinet.ru/">Technical Center of Internet</link>
       .</para>
 
-    </chapter>
-
+    </appendix>
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
 

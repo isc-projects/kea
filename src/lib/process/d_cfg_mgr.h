@@ -10,19 +10,12 @@
 #include <cc/data.h>
 #include <cc/cfg_to_element.h>
 #include <cc/user_context.h>
+#include <process/config_base.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <functional>
 
 #include <stdint.h>
 #include <string>
-
-// Undefine the macro OPTIONAL which is defined in some operating
-// systems but conflicts with class constant is the context base class.
-
-#ifdef OPTIONAL
-#undef OPTIONAL
-#endif
 
 namespace isc {
 namespace process {
@@ -36,184 +29,6 @@ public:
     DCfgMgrBaseError(const char* file, size_t line, const char* what) :
         isc::Exception(file, line, what) { };
 };
-
-class DCfgContextBase;
-/// @brief Pointer to a configuration context.
-typedef boost::shared_ptr<DCfgContextBase> DCfgContextBasePtr;
-
-/// @brief Abstract class that implements a container for configuration context.
-/// It provides a single enclosure for the storage of configuration parameters
-/// and any other context specific information that needs to be accessible
-/// during configuration parsing as well as to the application as a whole.
-/// The base class supports storage for a small set of simple data types.
-/// Derivations simply add additional storage as needed.  Note that this class
-/// declares the pure virtual clone() method, its copy constructor is protected,
-/// and its copy operator is inaccessible.  Derivations must supply an
-/// implementation of clone that calls the base class copy constructor.
-/// This allows the management class to perform context backup and restoration
-/// without derivation specific knowledge using logic like
-/// the following:
-///
-///    // Make a backup copy
-///    DCfgContextBasePtr backup_copy(context_->clone());
-///    :
-///    // Restore from backup
-///    context_ = backup_copy;
-///
-class DCfgContextBase : public isc::dhcp::UserContext, public isc::data::CfgToElement {
-public:
-    /// @brief Indicator that a configuration parameter is optional.
-    static const bool OPTIONAL = true;
-    static const bool REQUIRED = false;
-
-    /// @brief Constructor
-    DCfgContextBase();
-
-    /// @brief Destructor
-    virtual ~DCfgContextBase();
-
-    /// @brief Fetches the value for a given boolean configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    /// It defaults to false if not specified.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, bool& value, bool optional=false);
-
-    /// @brief Fetches the value for a given uint32_t configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, uint32_t& value,
-                 bool optional=false);
-
-    /// @brief Fetches the value for a given string configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @param optional if true, the parameter is optional and the method
-    /// will not throw if the parameter is not found in the context. The
-    /// contents of the output parameter, value, will not be altered.
-    ///
-    /// @return The parameter's element's position information if found,
-    /// otherwise it returns isc::data::Element::ZERO_POSITION().
-    ///
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter and optional is false.
-    const data::Element::Position&
-    getParam(const std::string& name, std::string& value,
-                  bool optional=false);
-
-    /// @brief Fetches the Boolean Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the Boolean Storage.
-    isc::dhcp::BooleanStoragePtr getBooleanStorage() {
-        return (boolean_values_);
-    }
-
-    /// @brief Fetches the uint32 Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the uint32 Storage.
-    isc::dhcp::Uint32StoragePtr getUint32Storage() {
-        return (uint32_values_);
-    }
-
-    /// @brief Fetches the string Storage. Typically used for passing
-    /// into parsers.
-    ///
-    /// @return returns a pointer to the string Storage.
-    isc::dhcp::StringStoragePtr getStringStorage() {
-        return (string_values_);
-    }
-
-    /// @brief Creates a clone of this context object.
-    ///
-    /// As mentioned in the the class brief, derivation must supply an
-    /// implementation that initializes the base class storage as well as its
-    /// own.  Typically the derivation's clone method would return the result
-    /// of passing  "*this" into its own copy constructor:
-    ///
-    /// @code
-    /// class DStubContext : public DCfgContextBase {
-    /// public:
-    ///  :
-    ///     // Clone calls its own copy constructor
-    ///     virtual DCfgContextBasePtr clone() {
-    ///         return (DCfgContextBasePtr(new DStubContext(*this)));
-    ///     }
-    ///
-    ///     // Note that the copy constructor calls the base class copy ctor
-    ///     // then initializes its additional storage.
-    ///     DStubContext(const DStubContext& rhs) : DCfgContextBase(rhs),
-    ///         extra_values_(new Uint32Storage(*(rhs.extra_values_))) {
-    ///     }
-    ///  :
-    ///    // Here's the derivation's additional storage.
-    ///    isc::dhcp::Uint32StoragePtr extra_values_;
-    ///  :
-    /// @endcode
-    ///
-    /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone() = 0;
-
-    /// @brief Unparse a configuration object
-    ///
-    /// Returns an element which must parse into the same object, i.e.
-    /// @code
-    /// for all valid config C parse(parse(C)->toElement()) == parse(C)
-    /// @endcode
-    ///
-    /// @return a pointer to a configuration which can be parsed into
-    /// the initial configuration object
-    virtual isc::data::ElementPtr toElement() const = 0;
-
-protected:
-    /// @brief Copy constructor for use by derivations in clone().
-    DCfgContextBase(const DCfgContextBase& rhs);
-
-private:
-    /// @brief Private assignment operator to avoid potential for slicing.
-    DCfgContextBase& operator=(const DCfgContextBase& rhs);
-
-    /// @brief Storage for boolean parameters.
-    isc::dhcp::BooleanStoragePtr boolean_values_;
-
-    /// @brief Storage for uint32 parameters.
-    isc::dhcp::Uint32StoragePtr uint32_values_;
-
-    /// @brief Storage for string parameters.
-    isc::dhcp::StringStoragePtr string_values_;
-};
-
-/// @brief Defines a sequence of Element IDs used to specify a parsing order.
-typedef std::vector<std::string> ElementIdList;
 
 /// @brief Configuration Manager
 ///
@@ -262,8 +77,8 @@ typedef std::vector<std::string> ElementIdList;
 /// This allows a derivation to specify the order in which its elements are
 /// parsed if there are dependencies between elements.
 ///
-/// To parse a given element, its id along with the element itself, 
-/// is passed into the virtual method, @c parseElement. Derivations are 
+/// To parse a given element, its id along with the element itself,
+/// is passed into the virtual method, @c parseElement. Derivations are
 /// expected to converts the element into application specific object(s),
 /// thereby isolating the CPL from application details.
 ///
@@ -296,28 +111,14 @@ public:
     /// will use for storing parsed results.
     ///
     /// @throw throws DCfgMgrBaseError if context is null
-    DCfgMgrBase(DCfgContextBasePtr context);
+    DCfgMgrBase(ConfigPtr context);
 
     /// @brief Destructor
     virtual ~DCfgMgrBase();
 
-    /// @brief Acts as the receiver of new configurations and coordinates
-    /// the parsing as described in the class brief.
-    ///
-    /// @param config_set is a set of configuration elements to be parsed.
-    /// @param check_only true if the config is to be checked only, but not applied
-    ///
-    /// @return an Element that contains the results of configuration composed
-    /// of an integer status value (0 means successful, non-zero means failure),
-    /// and a string explanation of the outcome.
-    isc::data::ConstElementPtr
-    parseConfig(isc::data::ConstElementPtr config_set,
-                bool check_only = false);
-
-
     /// @brief Acts as the receiver of new configurations.
     ///
-    /// This method is similar to what @ref parseConfig does, execept it employs
+    /// This method is similar to what parseConfig did, execept it employs
     /// the simple parser paradigm: no intermediate storage, no parser pointers
     /// no distinction between params_map and objects_map, parse order (if needed)
     /// can be enforced in the actual implementation by calling specific
@@ -342,30 +143,10 @@ public:
                       bool check_only = false,
                       const std::function<void()>& post_config_cb = nullptr);
 
-    /// @brief Adds a given element id to the end of the parse order list.
-    ///
-    /// The order in which object elements are retrieved from this is the
-    /// order in which they are added to the list. Derivations should use this
-    /// method to populate the parse order as part of their constructor.
-    /// Scalar parameters should NOT be included in this list.
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    void addToParseOrder(const std::string& element_id){
-        parse_order_.push_back(element_id);
-    }
-
-    /// @brief Fetches the parse order list.
-    ///
-    /// @return returns a const reference to the list.
-    const ElementIdList& getParseOrder() const {
-        return (parse_order_);
-    }
-
     /// @brief Fetches the configuration context.
     ///
     /// @return returns a pointer reference to the configuration context.
-    DCfgContextBasePtr& getContext() {
+    ConfigPtr& getContext() {
         return (context_);
     }
 
@@ -390,33 +171,6 @@ protected:
     /// @param mutable_config - configuration to which defaults should be added
     virtual void setCfgDefaults(isc::data::ElementPtr mutable_config);
 
-    /// @brief Parses an individual element
-    ///
-    /// Each element to be parsed is passed into this method to be converted
-    /// into the requisite application object(s).
-    ///
-    /// @param element_id name of the element as it is expected in the cfg
-    /// @param element value of the element as ElementPtr
-    ///
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
-
-    /// @brief Parses a set of scalar configuration elements into global
-    /// parameters
-    ///
-    /// For each scalar element in the set:
-    /// - Invoke parseElement
-    /// - If it returns true go to the next element otherwise:
-    ///     - create a parser for the element
-    ///     - invoke the parser's build method
-    ///     - invoke the parser's commit method
-    ///
-    /// This will commit the values to context storage making them accessible
-    /// during object parsing.
-    ///
-    /// @param params_config set of scalar configuration elements to parse
-    virtual void buildParams(isc::data::ConstElementPtr params_config);
-
     /// @brief Abstract factory which creates a context instance.
     ///
     /// This method is used at the beginning of configuration process to
@@ -425,8 +179,8 @@ protected:
     /// and will replace the existing context provided the configuration
     /// process completes without error.
     ///
-    /// @return Returns a DCfgContextBasePtr to the new context instance.
-    virtual DCfgContextBasePtr createNewContext() = 0;
+    /// @return Returns a ConfigPtr to the new context instance.
+    virtual ConfigPtr createNewContext() = 0;
 
     /// @brief Replaces existing context with a new, empty context.
     void resetContext();
@@ -436,7 +190,7 @@ protected:
     /// Replaces the existing context with the given context.
     /// @param context Pointer to the new context.
     /// @throw DCfgMgrBaseError if context is NULL.
-    void setContext(DCfgContextBasePtr& context);
+    void setContext(ConfigPtr& context);
 
     /// @brief Parses actual configuration.
     ///
@@ -457,31 +211,8 @@ protected:
                                              bool check_only);
 
 private:
-
-    /// @brief Parse a configuration element.
-    ///
-    /// Given an element_id and data value, invoke parseElement. If
-    /// it returns true the return, otherwise created the appropriate
-    /// parser, parse the data value, and commit the results.
-    ///
-    ///
-    /// @param element_id is the string name of the element as it will appear
-    /// in the configuration set.
-    /// @param value is the data value to be parsed and associated with
-    /// element_id.
-    ///
-    /// @throw throws DCfgMgrBaseError if an error occurs.
-    void buildAndCommit(std::string& element_id,
-                        isc::data::ConstElementPtr value);
-
-    /// @brief A list of element ids which specifies the element parsing order.
-    ///
-    /// If the list is empty, the natural order in the configuration set
-    /// it used.
-    ElementIdList parse_order_;
-
     /// @brief Pointer to the configuration context instance.
-    DCfgContextBasePtr context_;
+    ConfigPtr context_;
 };
 
 /// @brief Defines a shared pointer to DCfgMgrBase.

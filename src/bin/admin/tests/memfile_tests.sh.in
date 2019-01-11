@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,12 @@
 # Include common test library.
 . @abs_top_builddir@/src/lib/testutils/dhcp_test_lib.sh
 
+# Set location of the kea-admin.
+keaadmin=@abs_top_builddir@/src/bin/admin/kea-admin
+
 memfile_init_test() {
     test_start "memfile.init"
-    
+
     # @todo: Implement this (ticket #3601)
 
     test_finish 0
@@ -19,7 +22,7 @@ memfile_init_test() {
 
 memfile_version_test() {
     test_start "memfile.version"
-    
+
     # @todo: Implement this (ticket #3601)
 
     test_finish 0
@@ -27,11 +30,40 @@ memfile_version_test() {
 
 memfile_upgrade_test() {
     test_start "memfile.upgrade"
-    
+
     # @todo: Implement this (ticket #3601)
 
     test_finish 0
 }
+
+# This test checks version reported by kea-admin. It has nothing to do
+# with memfile, but that is the only test file that is always ran,
+# so decided to put the generic test here.
+version_test() {
+    test_start "version"
+
+    # This is what we expect to get.
+    EXPECTED_VERSION=@PACKAGE_VERSION@
+
+    # Let's use short version: -v
+    reported_version=$(${keaadmin} -v)
+
+    assert_str_eq ${EXPECTED_VERSION} ${reported_version} \
+                  "Expected kea-admin -v to report %s, but it reported %s"
+
+    # Let's try the long version: --version
+    reported_version=$(${keaadmin} --version)
+
+    assert_str_eq ${EXPECTED_VERSION} ${reported_version} \
+                  "Expected kea-admin -v to report %s, but it reported %s"
+
+    # This is a test whether the reviewer pays any attention. If you miss this
+    # nonsense, you owe me a beer. If you spot it, it's the other way around.
+    test_finish 0
+}
+
+
+version_test
 
 memfile_init_test
 memfile_version_test

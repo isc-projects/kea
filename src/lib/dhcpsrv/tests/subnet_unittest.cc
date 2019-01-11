@@ -548,6 +548,36 @@ TEST(Subnet4Test, toText) {
     EXPECT_EQ("192.0.2.0/24", subnet->toText());
 }
 
+// This test verifies that the IPv4 prefix can be parsed into prefix/length pair.
+TEST(Subnet4Test, parsePrefix) {
+    std::pair<IOAddress, uint8_t> parsed =
+        std::make_pair(IOAddress::IPV4_ZERO_ADDRESS(), 0);
+
+    // Valid prefix.
+    EXPECT_NO_THROW(parsed = Subnet4::parsePrefix("192.0.5.0/24"));
+    EXPECT_EQ("192.0.5.0", parsed.first.toText());
+    EXPECT_EQ(24, static_cast<int>(parsed.second));
+
+    // Invalid IPv4 address.
+    EXPECT_THROW(Subnet4::parsePrefix("192.0.2.322/24"), BadValue);
+
+    // Invalid prefix length.
+    EXPECT_THROW(Subnet4::parsePrefix("192.0.2.0/64"), BadValue);
+    EXPECT_THROW(Subnet4::parsePrefix("192.0.2.0/0"), BadValue);
+
+    // No IP address.
+    EXPECT_THROW(Subnet4::parsePrefix(" /24"), BadValue);
+
+    // No prefix length but slash present.
+    EXPECT_THROW(Subnet4::parsePrefix("10.0.0.0/ "), BadValue);
+
+    // No slash sign.
+    EXPECT_THROW(Subnet4::parsePrefix("10.0.0.1"), BadValue);
+
+    // IPv6 is not allowed here.
+    EXPECT_THROW(Subnet4::parsePrefix("3000::/24"), BadValue);
+}
+
 // This test checks if the get() method returns proper parameters
 TEST(Subnet4Test, get) {
     Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"), 28, 1, 2, 3));
@@ -1403,6 +1433,36 @@ TEST(Subnet6Test, PdinRangeinPool) {
 TEST(Subnet6Test, toText) {
     Subnet6 subnet(IOAddress("2001:db8::"), 32, 1, 2, 3, 4);
     EXPECT_EQ("2001:db8::/32", subnet.toText());
+}
+
+// This test verifies that the IPv6 prefix can be parsed into prefix/length pair.
+TEST(Subnet6Test, parsePrefix) {
+    std::pair<IOAddress, uint8_t> parsed =
+        std::make_pair(IOAddress::IPV6_ZERO_ADDRESS(), 0);
+
+    // Valid prefix.
+    EXPECT_NO_THROW(parsed = Subnet6::parsePrefix("2001:db8:1::/64"));
+    EXPECT_EQ("2001:db8:1::", parsed.first.toText());
+    EXPECT_EQ(64, static_cast<int>(parsed.second));
+
+    // Invalid IPv6 address.
+    EXPECT_THROW(Subnet6::parsePrefix("2001:db8::1::/64"), BadValue);
+
+    // Invalid prefix length.
+    EXPECT_THROW(Subnet6::parsePrefix("2001:db8:1::/164"), BadValue);
+    EXPECT_THROW(Subnet6::parsePrefix("2001:db8:1::/0"), BadValue);
+
+    // No IP address.
+    EXPECT_THROW(Subnet6::parsePrefix(" /64"), BadValue);
+
+    // No prefix length but slash present.
+    EXPECT_THROW(Subnet6::parsePrefix("3000::/ "), BadValue);
+
+    // No slash sign.
+    EXPECT_THROW(Subnet6::parsePrefix("3000::"), BadValue);
+
+    // IPv4 is not allowed here.
+    EXPECT_THROW(Subnet6::parsePrefix("192.0.2.0/24"), BadValue);
 }
 
 // This test checks if the get() method returns proper parameters

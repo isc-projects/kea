@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -55,7 +55,7 @@ CREATE TABLE lease6 (
     pref_lifetime INT UNSIGNED,                 # Preferred lifetime
     lease_type TINYINT,                         # Lease type (see lease6_types
                                                 #    table for possible values)
-    iaid INT UNSIGNED,                          # See Section 10 of RFC 3315
+    iaid INT UNSIGNED,                          # See Section 12 of RFC 8415
     prefix_len TINYINT UNSIGNED,                # For IA_PD only
     fqdn_fwd BOOL,                              # Has forward DNS update been performed by a server
     fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server

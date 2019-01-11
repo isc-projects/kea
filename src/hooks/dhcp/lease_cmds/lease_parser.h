@@ -29,7 +29,8 @@ namespace lease_cmds {
 ///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
-///     "state": 0
+///     "state": 0,
+///     "user-context": { \"version\": 1 }
 /// }
 class Lease4Parser : public isc::data::SimpleParser {
 public:
@@ -67,7 +68,8 @@ public:
 ///     "fqdn-fwd": true,
 ///     "fqdn-rev": true,
 ///     "hostname": "myhost.example.org",
-///     "state": 0
+///     "state": 0,
+///     "user-context": { \"version\": 1 }
 /// }
 
 /// It expects the input data to use the following format:

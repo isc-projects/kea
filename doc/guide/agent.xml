@@ -75,9 +75,13 @@
             },
             "dhcp6": {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4",
+                "socket-name": "/path/to/the/unix/socket-v6",
                 "user-context": { "version": 3 }
-            }
+            },
+            "d2": {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-d2"
+            },
         },
 
         "hooks-libraries": [
@@ -130,9 +134,10 @@
       commands to it. Obviously, the DHCPv4 server must be configured to
       listen to connections via this same socket. In other words, the command
       socket configuration for the DHCPv4 server and CA (for this server)
-      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/> and the
-      <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
-      configuration is specified for the DHCPv4 and DHCPv6 services.
+      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/>, the
+      <xref linkend="dhcp6-ctrl-channel"/> and
+      <xref linkend="d2-ctrl-channel"/> to learn how the socket
+      configuration is specified for the DHCPv4, DHCPv6 and D2 services.
     </para>
 
     <warning>
@@ -295,23 +300,6 @@ http {
 
   </section>
 
-  <section xml:id="agent-limitations">
-    <title>Control Agent Limitations</title>
-    <para>
-      Control Agent is a new component, first released in Kea 1.2. In
-      this release it comes with one notable limitation:
-      <itemizedlist>
-        <listitem>
-          <simpara>
-            keactrl hasn't been updated to manage the Control Agent (start, stop
-            reload). As a result, the CA must be started directly as described in
-            <xref linkend="agent-launch"/>
-          </simpara>
-        </listitem>
-      </itemizedlist>
-    </para>
-  </section>
-
   <section xml:id="agent-launch">
     <title>Starting Control Agent</title>
     <para>
@@ -320,6 +308,7 @@ http {
 <screen>
 $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 </screen>
+      It can be started by keactrl as well (see <xref linkend="keactrl"/>).
     </para>
   </section>
 

@@ -174,6 +174,8 @@ Parser6Context::contextName()
         return ("duid-type");
     case CONTROL_SOCKET:
         return ("control-socket");
+    case DHCP_QUEUE_CONTROL:
+        return ("dhcp-queue-control");
     case POOLS:
         return ("pools");
     case PD_POOLS:
@@ -196,7 +198,13 @@ Parser6Context::contextName()
         return ("replace-client-name");
     case SHARED_NETWORK:
         return ("shared-networks");
-     default:
+    case SANITY_CHECKS:
+        return ("sanity-checks");
+    case CONFIG_CONTROL:
+        return ("config-control");
+    case CONFIG_DATABASE:
+        return ("config-database");
+    default:
         return ("__unknown__");
     }
 }

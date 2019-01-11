@@ -12,6 +12,13 @@
     "port": 53001,
     "dns-server-timeout" : 1000,
 
+    "control-socket":
+    {
+        "comment": "Control channel",
+        "socket-type": "unix",
+        "socket-name": "/tmp/d2-ctrl-socket"
+    },
+
     "forward-ddns":
     {
         "ddns-domains":
@@ -54,6 +61,5 @@
         }
     ]
 }
-    
 
 }

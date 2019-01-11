@@ -25,12 +25,14 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/pointer_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <cstdint>
 #include <map>
+#include <utility>
 
 namespace isc {
 namespace dhcp {
 
-class Subnet : public virtual UserContext, public data::CfgToElement {
+class Subnet : public virtual data::UserContext, public data::CfgToElement {
 
     // Assignable network is our friend to allow it to call
     // @ref Subnet::setSharedNetwork private function.
@@ -265,6 +267,29 @@ private:
         shared_network_ = shared_network;
     }
 
+public:
+
+    /// @brief Returns shared network name.
+    std::string getSharedNetworkName() const {
+        return (shared_network_name_);
+    }
+
+    /// @brief Sets new shared network name.
+    ///
+    /// In certain cases the subnet must be associated with the shared network
+    /// but the shared network object is not available. In particular, subnets
+    /// are returned from the configuration database with only names of the
+    /// shared networks. The actual shared networks must be fetched from the
+    /// database using a separate query. In order to not loose associations
+    /// of subnets with shared networks, the configuration backends will use
+    /// this method to store the shared network names. The servers will later
+    /// use those names to associate subnets with shared network instances.
+    ///
+    /// @param shared_network_name New shared network name.
+    void setSharedNetworkName(const std::string& shared_network_name) {
+        shared_network_name_ = shared_network_name;
+    }
+
 protected:
     /// @brief Returns all pools (non-const variant)
     ///
@@ -315,6 +340,10 @@ protected:
     ///
     /// @return the next unique Subnet-ID
     static SubnetID generateNextID() {
+        if (static_id_ == SUBNET_ID_MAX) {
+            resetSubnetID();
+        }
+
         return (static_id_++);
     }
 
@@ -354,6 +383,17 @@ protected:
     ///
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
+
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// IPv4 and IPv6 specific conversion functions should apply extra checks
+    /// on the returned values, i.e. whether length is in range and the IP
+    /// address has a valid type.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided prefix is not valid.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefixCommon(const std::string& prefix);
 
     /// @brief subnet-id
     ///
@@ -406,6 +446,9 @@ protected:
 
     /// @brief Pointer to a shared network that subnet belongs to.
     WeakNetworkPtr shared_network_;
+
+    /// @brief Shared network name.
+    std::string shared_network_name_;
 };
 
 /// @brief A generic pointer to either Subnet4 or Subnet6 object
@@ -541,6 +584,13 @@ public:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided invalid IPv4 prefix.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefix(const std::string& prefix);
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -653,6 +703,13 @@ public:
     /// @return A pointer to unparsed subnet configuration.
     virtual data::ElementPtr toElement() const;
 
+    /// @brief Converts subnet prefix to a pair of prefix/length pair.
+    ///
+    /// @param prefix Prefix to be parsed.
+    /// @throw BadValue if provided invalid IPv4 prefix.
+    static std::pair<asiolink::IOAddress, uint8_t>
+    parsePrefix(const std::string& prefix);
+
 private:
 
     /// @brief Returns default address for pool selection
@@ -686,6 +743,9 @@ struct SubnetPrefixIndexTag { };
 
 /// @brief Tag for the index for searching by server identifier.
 struct SubnetServerIdIndexTag { };
+
+/// @brief Tag for the index for searching by subnet modification time.
+struct SubnetModificationTimeIndexTag { };
 
 /// @brief A collection of @c Subnet4 objects
 ///
@@ -731,11 +791,19 @@ typedef boost::multi_index_container<
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
         >,
 
-        // Fourth index allows for searching using an output from getServerId
+        // Fourth index allows for searching using an output from getServerId.
         boost::multi_index::ordered_non_unique<
             boost::multi_index::tag<SubnetServerIdIndexTag>,
             boost::multi_index::const_mem_fun<Network4, asiolink::IOAddress,
                                               &Network4::getServerId>
+        >,
+
+        // Fifth index allows for searching using subnet modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetModificationTimeIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement,
+                                              boost::posix_time::ptime,
+                                              &data::StampedElement::getModificationTime>
         >
     >
 > Subnet4Collection;
@@ -781,6 +849,13 @@ typedef boost::multi_index_container<
         boost::multi_index::ordered_unique<
             boost::multi_index::tag<SubnetPrefixIndexTag>,
             boost::multi_index::const_mem_fun<Subnet, std::string, &Subnet::toText>
+        >,
+        // Fourth index allows for searching using subnet modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<SubnetModificationTimeIndexTag>,
+            boost::multi_index::const_mem_fun<data::StampedElement,
+                                              boost::posix_time::ptime,
+                                              &data::StampedElement::getModificationTime>
         >
     >
 > Subnet6Collection;

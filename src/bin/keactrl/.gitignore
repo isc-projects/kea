@@ -3,5 +3,6 @@
 /kea-dhcp6.conf
 /kea-dhcp-ddns.conf
 /kea-ctrl-agent.conf
+/kea-netconf.conf
 /keactrl.conf
 /keactrl.8

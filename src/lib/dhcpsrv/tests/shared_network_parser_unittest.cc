@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -131,6 +131,7 @@ public:
                 "            \"rebind-timer\": 200,"
                 "            \"valid-lifetime\": 300,"
                 "            \"match-client-id\": false,"
+                "            \"authoritative\": false,"
                 "            \"next-server\": \"\","
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
@@ -142,7 +143,10 @@ public:
                 "            \"4o6-subnet\": \"\","
                 "            \"dhcp4o6-port\": 0,"
                 "            \"decline-probation-period\": 86400,"
-                "            \"reservation-mode\": \"all\""
+                "            \"reservation-mode\": \"all\","
+                "            \"calculate-tee-times\": true,"
+                "            \"t1-percent\": .45,"
+                "            \"t2-percent\": .65"
                 "        },"
                 "        {"
                 "            \"id\": 2,"
@@ -152,6 +156,7 @@ public:
                 "            \"rebind-timer\": 20,"
                 "            \"valid-lifetime\": 30,"
                 "            \"match-client-id\": false,"
+                "            \"authoritative\": false,"
                 "            \"next-server\": \"\","
                 "            \"server-hostname\": \"\","
                 "            \"boot-file-name\": \"\","
@@ -163,7 +168,10 @@ public:
                 "            \"4o6-subnet\": \"\","
                 "            \"dhcp4o6-port\": 0,"
                 "            \"decline-probation-period\": 86400,"
-                "            \"reservation-mode\": \"all\""
+                "            \"reservation-mode\": \"all\","
+                "            \"calculate-tee-times\": false,"
+                "            \"t1-percent\": .40,"
+                "            \"t2-percent\": .80"
                 "        }"
                 "    ]"
                 "}";
@@ -194,6 +202,13 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     // Parse configuration specified above.
     SharedNetwork4Parser parser;
     SharedNetwork4Ptr network;
+
+    try { 
+        network = parser.parse(config_element);
+    } catch (const std::exception& ex) {
+        std::cout << "kabook: " << ex.what() << std::endl;
+    }
+
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
 
@@ -244,12 +259,13 @@ TEST_F(SharedNetwork4ParserTest, missingName) {
     ASSERT_THROW(network = parser.parse(config_element), DhcpConfigError);
 }
 
-// This test verifies that it's possible to specify client-class
-// and match-client-id on shared-network level.
-TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
+// This test verifies that it's possible to specify client-class,
+// match-client-id, and authoritative on shared-network level.
+TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
     std::string config = getWorkingConfig();
     ElementPtr config_element = Element::fromJSON(config);
 
+    config_element->set("authoritative", Element::create(true));
     config_element->set("match-client-id", Element::create(false));
     config_element->set("client-class", Element::create("alpha"));
 
@@ -262,6 +278,8 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientId) {
     EXPECT_EQ("alpha", network->getClientClass());
 
     EXPECT_FALSE(network->getMatchClientId());
+
+    EXPECT_TRUE(network->getAuthoritative());
 }
 
 // This test verifies that parsing of the "relay" element.

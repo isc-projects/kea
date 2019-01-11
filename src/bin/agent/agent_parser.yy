@@ -113,7 +113,7 @@ using namespace std;
 // is parsed.
 start: START_JSON      { ctx.ctx_ = ctx.NO_KEYWORDS; } json
      | START_AGENT     { ctx.ctx_ = ctx.CONFIG; } agent_syntax_map
-     | START_SUB_AGENT { ctx.ctx_ = ctx.AGENT; } sub_agent 
+     | START_SUB_AGENT { ctx.ctx_ = ctx.AGENT; } sub_agent
      ;
 
 // This rule defines a "shortcut". Instead of specifying the whole structure

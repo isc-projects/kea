@@ -19,12 +19,12 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
+#include <cql/cql_connection.h>
+#include <cql/testutils/cql_schema.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/cql_schema.h>
 #include <exceptions/exceptions.h>
 
 #include <gtest/gtest.h>
@@ -37,6 +37,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
@@ -588,6 +590,11 @@ TEST_F(CqlLeaseMgrTest, getLeases4) {
     testGetLeases4();
 }
 
+// Test that a range of IPv4 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases4Paged) {
+    testGetLeases4Paged();
+}
+
 /// @brief Basic Lease4 Checks
 ///
 /// Checks that the addLease, getLease4(by address), getLease4(hwaddr,subnet_id),
@@ -675,6 +682,14 @@ TEST_F(CqlLeaseMgrTest, lease6LeaseTypeCheck) {
     testLease6LeaseTypeCheck();
 }
 
+/// @brief Verifies the getLeases6(DUID) method
+///
+/// Adds 3 lease and verifies fetch by DUID.
+/// Verifies retrival of non existant DUID fails
+TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
+   testGetLeases6Duid(); 
+}
+
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
 ///
 /// Adds leases to the database and checks that they can be accessed via
@@ -686,6 +701,11 @@ TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetId) {
 // Test checks that getLease6() works with different DUID sizes
 TEST_F(CqlLeaseMgrTest, getLease6DuidIaidSubnetIdSize) {
     testGetLease6DuidIaidSubnetIdSize();
+}
+
+// Test that a range of IPv6 leases is returned with paging.
+TEST_F(CqlLeaseMgrTest, getLeases6Paged) {
+    testGetLeases6Paged();
 }
 
 /// @brief Lease6 update tests

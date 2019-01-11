@@ -10,6 +10,8 @@
 // IMPORTANT NOTE: only very few ASIO headers files can be included in
 // this file.  In particular, asio.hpp should never be included here.
 // See the description of the namespace below.
+#include <config.h>
+
 #include <unistd.h>             // for some network system calls
 
 #include <functional>
@@ -22,7 +24,14 @@
 #include <asiolink/io_error.h>
 #include <asiolink/io_socket.h>
 
+// We want to use coroutine.hpp from the system's boost headers if possible.
+// However, very old Boost versions (provided by RHEL 7 or CentOS 7) didn't have
+// this header. So we can resort to our bundled version, but only if necessary.
+#ifndef HAVE_BOOST_ASIO_COROUTINE_HPP
+#include <ext/coroutine/coroutine.hpp>
+#else
 #include <boost/asio/coroutine.hpp>
+#endif
 
 namespace isc {
 namespace asiolink {

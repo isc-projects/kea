@@ -17,6 +17,7 @@
 #include <string>
 #include <unordered_map>
 #include <list>
+#include <vector>
 
 /// @file client_class_def.h
 ///
@@ -42,7 +43,7 @@ public:
 };
 
 /// @brief Embodies a single client class definition
-class ClientClassDef : public UserContext, public isc::data::CfgToElement {
+class ClientClassDef : public data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -114,6 +115,13 @@ public:
     ///
     /// @param cfg_option the option collection to assign the class
     void setCfgOption(const CfgOptionPtr& cfg_option);
+
+    /// @brief Checks direct dependency.
+    ///
+    /// @param name The client class name.
+    ///
+    /// @return true if the definition depends on the class name, false if not.
+    bool dependOnClass(const std::string& name) const;
 
     /// @brief Compares two @c ClientClassDef objects for equality.
     ///
@@ -250,7 +258,7 @@ typedef std::unordered_map<std::string, ClientClassDefPtr> ClientClassDefMap;
 typedef boost::shared_ptr<ClientClassDefMap> ClientClassDefMapPtr;
 
 /// @brief Defines a list of ClientClassDefPtr's, using insert order.
-typedef std::list<ClientClassDefPtr> ClientClassDefList;
+typedef std::vector<ClientClassDefPtr> ClientClassDefList;
 
 /// @brief Defines a pointer to a ClientClassDefList
 typedef boost::shared_ptr<ClientClassDefList> ClientClassDefListPtr;
@@ -321,6 +329,15 @@ public:
     ///
     /// @return ClientClassDefListPtr to the list of classes
     const ClientClassDefListPtr& getClasses() const;
+
+    /// @brief Checks direct dependency.
+    ///
+    /// @param name The client class name.
+    /// @param [out] dependent_class Reference to a variable where the
+    /// name of the first class depending on the checked class is set.
+    ///
+    /// @return true if a definition depends on the class name, false if none.
+    bool dependOnClass(const std::string& name, std::string& dependent_class) const;
 
     /// @brief Compares two @c ClientClassDictionary objects for equality.
     ///

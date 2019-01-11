@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -169,6 +169,9 @@ Network::toElement() const {
     case HR_OUT_OF_POOL:
         mode = "out-of-pool";
         break;
+    case HR_GLOBAL:
+        mode = "global";
+        break;
     case HR_ALL:
         mode = "all";
         break;
@@ -182,6 +185,14 @@ Network::toElement() const {
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
+    // Output calcualte-tee-times and percentages if calculation is enabled.
+    bool calc_tee_times = getCalculateTeeTimes();
+    if (calc_tee_times) {
+        map->set("calculate-tee-times", Element::create(calc_tee_times));
+        map->set("t1-percent", Element::create(getT1Percent()));
+        map->set("t2-percent", Element::create(getT2Percent()));
+    }
+
     return (map);
 }
 
@@ -191,6 +202,9 @@ Network4::toElement() const {
 
     // Set match-client-id
     map->set("match-client-id", Element::create(getMatchClientId()));
+
+    // Set authoritative
+    map->set("authoritative", Element::create(getAuthoritative()));
 
     return (map);
 }

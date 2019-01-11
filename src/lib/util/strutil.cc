@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,9 +14,20 @@
 #include <boost/algorithm/string/split.hpp>
 
 #include <numeric>
+#include <iostream>
 #include <sstream>
-#include <string.h>
 
+// Early versions of C++11 regex were buggy, use it if we
+// can otherwise, we fall back to regcomp/regexec.  For more info see:
+// https://stackoverflow.com/questions/12530406/is-gcc-4-8-or-earlier-buggy-about-regular-expressions
+#ifdef USE_REGEX
+#include <regex>
+#else
+#include <sys/types.h>
+#include <regex.h>
+#endif
+
+#include <string.h>
 
 using namespace std;
 
@@ -286,6 +297,113 @@ decodeFormattedHexString(const std::string& hex_string,
                       " string of hexadecimal digits");
         }
     }
+}
+
+class StringSanitizerImpl {
+public:
+    StringSanitizerImpl(const std::string& char_set, const std::string& char_replacement)
+        : char_set_(char_set), char_replacement_(char_replacement) {
+#ifdef USE_REGEX
+        try {
+            scrub_exp_ = std::regex(char_set, std::regex::extended);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "invalid regex: '"
+                      << char_set_ << "', " << ex.what());
+        }
+#else
+        int ec = regcomp(&scrub_exp_, char_set_.c_str(), REG_EXTENDED);
+        if (ec) {
+            char errbuf[512] = "";
+            static_cast<void>(regerror(ec, &scrub_exp_, errbuf, sizeof(errbuf)));
+            regfree(&scrub_exp_);
+            isc_throw(isc::BadValue, "invalid regex: '" << char_set_ << "', " << errbuf);
+        }
+#endif
+    }
+
+    /// @brief Destructor.
+    ~StringSanitizerImpl() {
+#ifndef USE_REGEX
+        regfree(&scrub_exp_);
+#endif
+    }
+
+    std::string scrub(const std::string& original) {
+#ifdef USE_REGEX
+        std::stringstream result;
+        try {
+            std::regex_replace(std::ostream_iterator<char>(result),
+                               original.begin(), original.end(),
+                               scrub_exp_, char_replacement_);
+        } catch (const std::exception& ex) {
+            isc_throw(isc::BadValue, "replacing '" << char_set_ << "' with '"
+                   << char_replacement_ << "' in '" << original << "' failed: ,"
+                   << ex.what());
+        }
+
+        return (result.str());
+#else
+        // Iterate over original string, match by match.
+        const char* origStr = original.c_str();
+        const char* startFrom = origStr;
+        const char* endAt = origStr + strlen(origStr);
+        regmatch_t matches[2];  // n matches + 1
+        stringstream result;
+
+        while (startFrom < endAt) {
+            // Look for the next match
+            if (regexec(&scrub_exp_, startFrom, 1, matches, 0) == REG_NOMATCH) {
+                // No matches, so add in the remainder
+                result << startFrom;
+                break;
+            }
+
+            // Shouldn't happen, but one never knows eh?
+            if (matches[0].rm_so == -1) {
+                isc_throw(isc::Unexpected, "matched but so is -1?");
+            }
+
+            // Add everything from starting point up to the current match
+            const char* matchAt = startFrom + matches[0].rm_so;
+            while (startFrom < matchAt) {
+                result << *startFrom;
+                ++startFrom;
+            }
+
+            // Add in the replacement
+            result << char_replacement_;
+
+            // Move past the match.
+            ++startFrom;
+        }
+
+        return (result.str());
+#endif
+    }
+
+private:
+    std::string char_set_;
+    std::string char_replacement_;
+
+#ifdef USE_REGEX
+    regex scrub_exp_;
+#else
+    regex_t scrub_exp_;
+#endif
+};
+
+StringSanitizer::StringSanitizer(const std::string& char_set,
+                                 const std::string& char_replacement)
+    : impl_(new StringSanitizerImpl(char_set, char_replacement)) {
+}
+
+StringSanitizer::~StringSanitizer() {
+    delete impl_;
+}
+
+std::string
+StringSanitizer::scrub(const std::string& original) {
+    return (impl_->scrub(original));
 }
 
 } // namespace str

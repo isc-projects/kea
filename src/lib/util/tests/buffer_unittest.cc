@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -324,6 +324,32 @@ TEST_F(BufferTest, inputBufferReadVectorChunks) {
     );
 
     EXPECT_EQ(0, memcmp(&vec[0], testdata+3, 2));
+}
+
+// Tests whether uint64 can be written properly.
+TEST_F(BufferTest, writeUint64) {
+
+    uint64_t val1 = 0x0102030405060708ul;
+    uint64_t val2 = 0xfffffffffffffffful;
+
+    uint8_t exp_val1[] = { 1, 2, 3, 4, 5, 6, 7, 8 };
+    uint8_t exp_val2[] = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+
+    const uint8_t* cp;
+
+    obuffer.writeUint64(val1);
+    ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
+    cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_TRUE(cp);
+    EXPECT_FALSE(memcmp(exp_val1, obuffer.getData(), sizeof(uint64_t)));
+
+    EXPECT_NO_THROW(obuffer.clear());
+
+    obuffer.writeUint64(val2);
+    ASSERT_EQ(sizeof(uint64_t), obuffer.getLength());
+    cp = static_cast<const uint8_t*>(obuffer.getData());
+    EXPECT_TRUE(cp);
+    EXPECT_FALSE(memcmp(exp_val2, obuffer.getData(), sizeof(uint64_t)));
 }
 
 }

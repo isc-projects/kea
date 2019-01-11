@@ -19,16 +19,14 @@
     the server may refuse to start, which will further extend the
     downtime period until the issue is resolved.</para>
 
-    <para>To avoid such problems, both the DHCPv4 and DHCPv6 servers
+    <para>To avoid such problems, the DHCPv4, DHCPv6 and D2 servers
     include support for a mechanism that allows
     on-line reconfiguration without requiring server shutdown.
     Both servers can be instructed to open control sockets, which
     is a communication channel. The server is able to receive
-    commands on that channel, act on them and report back status.
-    While the set of commands in Kea 1.2.0 is limited,
-    the number is expected to grow over time.</para>
+    commands on that channel, act on them and report back status.</para>
 
-    <para>The DHCPv4 and DHCPv6 servers receive commands over the
+    <para>The DHCPv4, DHCPv6 and D2 servers receive commands over the
     unix domain sockets. The details how to configure these sockets,
     see <xref linkend="dhcp4-ctrl-channel"/> and <xref linkend="dhcp6-ctrl-channel"/>. While it is possible control
     the servers directly using unix domain sockets it requires that
@@ -601,11 +599,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       <section xml:id="command-version-get">
         <title>version-get</title>
         <para>
-          The <emphasis>version-get</emphasis> command returns on the control
-          channel what the command line <command>-v</command> argument
-          displays with in arguments the extended version, i.e., what
-          the command line <command>-V</command> argument displays. This command
-          does not take any parameters.
+          The <emphasis>version-get</emphasis> command returns an
+          extended information about Kea version. It is the same
+          information as Kea caled with <command>-V</command> command
+          line argument. This command does not take any parameters.
         </para>
 <screen>
 {
@@ -615,6 +612,39 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       </section> <!-- end of command-version-get -->
 
     </section> <!-- end of commands supported by both servers -->
+
+    <section>
+      <title>Commands Supported by D2 Server</title>
+      <para>The D2 server supports only a subset of DHCPv4 / DHCPv6 server
+      commands:
+      <itemizedlist>
+        <listitem>
+          <simpara>build-report</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-set</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-test</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-write</simpara>
+        </listitem>
+        <listitem>
+          <simpara>list-commands</simpara>
+        </listitem>
+        <listitem>
+          <simpara>shutdown</simpara>
+        </listitem>
+        <listitem>
+          <simpara>version-get</simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+    </section>
 
     <section xml:id="agent-commands">
       <title>Commands Supported by Control Agent</title>
@@ -628,6 +658,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </listitem>
         <listitem>
           <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-set</simpara>
         </listitem>
         <listitem>
           <simpara>config-test</simpara>

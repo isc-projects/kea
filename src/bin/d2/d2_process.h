@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -67,10 +67,8 @@ public:
     /// PRIOR to configuration reception.  The base class provides this method
     /// as a place to perform any derivation-specific initialization steps
     /// that are inappropriate for the constructor but necessary prior to
-    /// launch.  So far, no such steps have been identified for D2, so its
-    /// implementation is empty but required.
-    ///
-    /// @throw DProcessBaseError if the initialization fails.
+    /// configure.
+    /// For D2 it is used to initialize the command manager.
     virtual void init();
 
     /// @brief Implements the process's event loop.
@@ -254,6 +252,15 @@ protected:
         shutdown_type_ = value;
     }
 
+    /// @brief (Re-)Configure the command channel.
+    ///
+    /// Only close the current channel, if the new channel configuration is
+    /// different.  This avoids disconnecting a client and hence not sending
+    /// them a command result, unless they specifically alter the channel
+    /// configuration. In that case the user simply has to accept they'll
+    /// be disconnected.
+    void reconfigureCommandChannel();
+
 public:
     /// @brief Returns a pointer to the configuration manager.
     /// Note, this method cannot return a reference as it uses dynamic
@@ -302,6 +309,10 @@ private:
 
     /// @brief Indicates the type of shutdown requested.
     ShutdownType shutdown_type_;
+
+    /// @brief Current socket control configuration.
+    isc::data::ConstElementPtr current_control_socket_;
+
 };
 
 /// @brief Defines a shared pointer to D2Process.

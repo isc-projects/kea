@@ -270,6 +270,7 @@ void testFile(const std::string& fname) {
 TEST(ParserTest, file) {
     vector<string> configs;
     configs.push_back("advanced.json");
+    configs.push_back("all-keys.json");
     configs.push_back("backends.json");
     configs.push_back("cassandra.json");
     configs.push_back("classify.json");
@@ -277,6 +278,7 @@ TEST(ParserTest, file) {
     configs.push_back("comments.json");
     configs.push_back("dhcpv4-over-dhcpv6.json");
     configs.push_back("duid.json");
+    configs.push_back("global-reservations.json");
     configs.push_back("hooks.json");
     configs.push_back("iPXE.json");
     configs.push_back("leases-expiration.json");

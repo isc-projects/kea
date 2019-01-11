@@ -1,11 +1,10 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-
 #include <dhcp/iface_mgr.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcpsrv/cfgmgr.h>
@@ -526,6 +525,8 @@ SubnetConfigParser::hrModeFromText(const std::string& txt) {
         return (Network::HR_DISABLED);
     } else if (txt.compare("out-of-pool") == 0) {
         return (Network::HR_OUT_OF_POOL);
+    } else if (txt.compare("global") == 0) {
+        return (Network::HR_GLOBAL);
     } else if (txt.compare("all") == 0) {
         return (Network::HR_ALL);
     } else {
@@ -572,7 +573,7 @@ SubnetConfigParser::createSubnet(ConstElementPtr params) {
     unsigned int len;
     try {
         len = boost::lexical_cast<unsigned int>(subnet_txt.substr(pos + 1));
-    } catch (const boost::bad_lexical_cast) {
+    } catch (const boost::bad_lexical_cast&) {
         ConstElementPtr elem = params->get("subnet");
         isc_throw(DhcpConfigError, "prefix length: '" <<
                   subnet_txt.substr(pos+1) << "' is not an integer ("
@@ -713,6 +714,12 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // SimpleParser4::setAllDefaults was called.
     bool match_client_id = getBoolean(params, "match-client-id");
     subnet4->setMatchClientId(match_client_id);
+
+    // Set the authoritative value for the subnet. It is always present.
+    // If not explicitly specified, the default value was filled in when
+    // SimpleParser4::setAllDefaults was called.
+    bool authoritative = getBoolean(params, "authoritative");
+    subnet4->setAuthoritative(authoritative);
 
     // Set next-server. The default value is 0.0.0.0. Nevertheless, the
     // user could have messed that up by specifying incorrect value.
@@ -857,6 +864,31 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
 
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet4->getCfgOption());
+
+    bool calculate_tee_times = getBoolean(params, "calculate-tee-times");
+    subnet4->setCalculateTeeTimes(calculate_tee_times);
+    float t2_percent = getDouble(params, "t2-percent");
+    float t1_percent = getDouble(params, "t1-percent");
+    if (calculate_tee_times) {
+        if (t2_percent <= 0.0 || t2_percent >= 1.0) {
+            isc_throw(DhcpConfigError, "t2-percent:  " << t2_percent
+                      << " is invalid, it must be greater than 0.0 and less than 1.0");
+        }
+
+        if (t1_percent <= 0.0 || t1_percent >= 1.0) {
+            isc_throw(DhcpConfigError, "t1-percent:  " << t1_percent
+                      << " is invalid it must be greater than 0.0 and less than 1.0");
+        }
+
+        if (t1_percent >= t2_percent) {
+            isc_throw(DhcpConfigError, "t1-percent:  " << t1_percent
+                      << " is invalid, it must be less than t2-percent: " << t2_percent);
+        }
+
+    }
+
+    subnet4->setT2Percent(t2_percent);
+    subnet4->setT1Percent(t1_percent);
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1306,9 +1338,6 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
     dhcp_ddns::NameChangeFormat ncr_format =
         getFormat(client_config, "ncr-format");
 
-    bool always_include_fqdn =
-        getBoolean(client_config, "always-include-fqdn");
-
     bool override_no_update =
         getBoolean(client_config, "override-no-update");
 
@@ -1320,6 +1349,12 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
 
     std::string generated_prefix =
         getString(client_config, "generated-prefix");
+
+    std::string hostname_char_set =
+        getString(client_config, "hostname-char-set");
+
+    std::string hostname_char_replacement =
+        getString(client_config, "hostname-char-replacement");
 
     // qualifying-suffix is the only parameter which has no default
     std::string qualifying_suffix = "";
@@ -1397,13 +1432,13 @@ D2ClientConfigParser::parse(isc::data::ConstElementPtr client_config) {
                                             max_queue_size,
                                             ncr_protocol,
                                             ncr_format,
-                                            always_include_fqdn,
                                             override_no_update,
                                             override_client_update,
                                             replace_client_name_mode,
                                             generated_prefix,
-                                            qualifying_suffix));
-
+                                            qualifying_suffix,
+                                            hostname_char_set,
+                                            hostname_char_replacement));
     }  catch (const std::exception& ex) {
         isc_throw(DhcpConfigError, ex.what() << " ("
                   << client_config->getPosition() << ")");
@@ -1430,11 +1465,12 @@ const SimpleDefaults D2ClientConfigParser::D2_CLIENT_CONFIG_DEFAULTS = {
     { "max-queue-size", Element::integer, "1024" },
     { "ncr-protocol", Element::string, "UDP" },
     { "ncr-format", Element::string, "JSON" },
-    { "always-include-fqdn", Element::boolean, "false" },
     { "override-no-update", Element::boolean, "false" },
     { "override-client-update", Element::boolean, "false" },
     { "replace-client-name", Element::string, "never" },
-    { "generated-prefix", Element::string, "myhost" }
+    { "generated-prefix", Element::string, "myhost" },
+    { "hostname-char-set", Element::string, "" },
+    { "hostname-char-replacement", Element::string, "" }
     // qualifying-suffix has no default
 };
 

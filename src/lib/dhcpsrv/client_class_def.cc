@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <eval/dependency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <boost/foreach.hpp>
@@ -134,6 +135,11 @@ ClientClassDef::getCfgOption() const {
 void
 ClientClassDef::setCfgOption(const CfgOptionPtr& cfg_option) {
     cfg_option_ = cfg_option;
+}
+
+bool
+ClientClassDef::dependOnClass(const std::string& name) const {
+    return (isc::dhcp::dependOnClass(match_expr_, name));
 }
 
 bool
@@ -277,6 +283,27 @@ ClientClassDictionary::removeClass(const std::string& name) {
 const ClientClassDefListPtr&
 ClientClassDictionary::getClasses() const {
     return (list_);
+}
+
+bool
+ClientClassDictionary::dependOnClass(const std::string& name,
+                                     std::string& dependent_class) const {
+    // Skip previous classes as they should not depend on name.
+    bool found = false;
+    for (ClientClassDefList::iterator this_class = list_->begin();
+         this_class != list_->end(); ++this_class) {
+        if (found) {
+            if ((*this_class)->dependOnClass(name)) {
+                dependent_class = (*this_class)->getName();
+                return (true);
+            }
+        } else {
+            if ((*this_class)->getName() == name) {
+                found = true;
+            }
+        }
+    }
+    return (false);
 }
 
 bool

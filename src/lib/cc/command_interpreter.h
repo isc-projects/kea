@@ -1,4 +1,4 @@
-// Copyright (C) 2009-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2009-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 ///
 /// This file contains several functions and constants that are used for
 /// handling commands and responses sent over control channel. The design
-/// is described here: http://kea.isc.org/wiki/StatsDesign, but also
+/// is described here: https://gitlab.isc.org/isc-projects/kea/wikis/Stats-design, but also
 /// in @ref ctrlSocket section in the Developer's Guide.
 
 namespace isc {
@@ -31,6 +31,9 @@ extern const char *CONTROL_TEXT;
 
 /// @brief String used for arguments map ("arguments")
 extern const char *CONTROL_ARGUMENTS;
+
+/// @brief String used for service list ("service")
+extern const char *CONTROL_SERVICE;
 
 /// @brief Status code indicating a successful operation
 const int CONTROL_RESULT_SUCCESS = 0;
@@ -104,14 +107,14 @@ isc::data::ConstElementPtr parseAnswer(int &status_code,
 /// @return printable string
 std::string answerToText(const isc::data::ConstElementPtr& msg);
 
-/// @brief Creates a standard config/command command message with no
+/// @brief Creates a standard command message with no
 /// argument (of the form { "command": "my_command" })
 ///
 /// @param command The command string
 /// @return The created message
 isc::data::ConstElementPtr createCommand(const std::string& command);
 
-/// @brief Creates a standard config/command command message with the
+/// @brief Creates a standard command message with the
 /// given argument (of the form { "command": "my_command", "arguments": arg }
 ///
 /// @param command The command string
@@ -121,18 +124,59 @@ isc::data::ConstElementPtr createCommand(const std::string& command);
 isc::data::ConstElementPtr createCommand(const std::string& command,
                                          isc::data::ConstElementPtr arg);
 
+/// @brief Creates a standard config/command command message with no
+/// argument and with the given service (of the form
+/// { "command": "my_command", "service": [ service ] })
+///
+/// @param command The command string
+/// @param service The target service. May be empty.
+/// @return The created message
+ isc::data::ConstElementPtr createCommand(const std::string& command,
+                                          const std::string& service);
+
+/// @brief Creates a standard config/command command message with the
+/// given argument and given service (of the form
+/// { "command": "my_command", "arguments": arg, "service": [ service ] }
+///
+/// @param command The command string
+/// @param arg The optional argument for the command. This can be of
+///        any Element type. May be NULL.
+/// @param service The target service. May be empty.
+/// @return The created message
+isc::data::ConstElementPtr createCommand(const std::string& command,
+                                         isc::data::ConstElementPtr arg,
+                                         const std::string& service);
+
 /// @brief Parses the given command into a string containing the actual
 ///        command and an ElementPtr containing the optional argument.
 ///
-/// @throw Raises a CtrlChannelError if this is not a well-formed command
+/// @throw CtrlChannelError if this is not a well-formed command
 ///
 /// @param arg This value will be set to the ElementPtr pointing to
 ///        the argument, or to an empty Map (ElementPtr) if there was none.
 /// @param command The command message containing the command (as made
 ///        by createCommand()
-/// @return The command name
+/// @return The command name.
 std::string parseCommand(isc::data::ConstElementPtr& arg,
                          isc::data::ConstElementPtr command);
+
+
+/// @brief Parses the given command into a string containing the command
+///        name and an ElementPtr containing the mandatory argument.
+///
+/// This function expects that command arguments are specified and are
+/// a map.
+///
+/// @throw CtrlChannelError if this is not a well-formed command,
+///        arguments are not specified or are not a map.
+///
+/// @param arg Reference to the data element to which command arguments
+///        will be assigned.
+/// @param command The command message containing the command and
+///        the arguments.
+/// @return Command name.
+std::string parseCommandWithArgs(isc::data::ConstElementPtr& arg,
+                                 isc::data::ConstElementPtr command);
 
 /// @brief Combines lists of commands carried in two responses.
 ///

@@ -195,6 +195,19 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
+          FreeRADIUS client library when --with-freeradius configuration flag used.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
+          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r2 or later) when
+          --with-sysrepo configuration flag used.
+        </para>
+        </listitem>
+
+        <listitem>
+        <para>
           googletest (version 1.8 or later), when using the --with-gtest configuration
           option to build the unit tests.
         </para>
@@ -211,8 +224,8 @@ Debian and Ubuntu:
         </itemizedlist>
 
         <para>
-          Visit the user-contributed wiki at
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Install">http://kea.isc.org/wiki/Install</uri>
+          Visit ISC's Knowledgebase at
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/installing-kea">https://kb.isc.org/docs/installing-kea</uri>
           for system-specific installation tips.
         </para>
     </section>
@@ -222,8 +235,8 @@ Debian and Ubuntu:
       <para>
         Kea is open source software written in C++.  It is freely available in
         source code form from ISC as a downloadable tar file.  A copy of the Kea
-        source code repository is accessible from Github (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). Kea may also be available
-        in pre-compiled ready-to-use packages from operating system vendors.
+        source code repository is accessible from Gitlab (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>).
+        Kea may also be available in pre-compiled ready-to-use packages from operating system vendors.
       </para>
 
       <section>
@@ -253,16 +266,16 @@ Debian and Ubuntu:
         </note>
 
         <para>
-          The latest development code is available on Github (see
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/isc-projects/kea">https://github.com/isc-projects/kea</uri>). The Kea source
+          The latest development code is available on Gitlab (see
+          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>). The Kea source
           is public and development is done in the <quote>master</quote>
           branch.
         </para>
         <para>
           The code can be checked out from
-          <filename>https://github.com/isc-projects/kea.git</filename>:
+          <filename>https://gitlab.isc.org/isc-projects/kea.git</filename>:
 
-        <screen>$ <userinput>git clone https://github.com/isc-projects/kea.git</userinput></screen>
+        <screen>$ <userinput>git clone https://gitlab.isc.org/isc-projects/kea.git</userinput></screen>
         </para>
 
         <para>
@@ -281,14 +294,10 @@ Debian and Ubuntu:
 
         <para>
           Write access to the Kea repository is only granted to ISC staff. If you
-          are a developer planning to contribute to Kea, please fork our Github
-          repository and use the "pull request" mechanism to request integration of
-          your code. Please consult
-          <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://help.github.com/articles/fork-a-repo/">https://help.github.com/articles/fork-a-repo/</uri> for help on
-          how to fork a Github repository.
-          The <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs/devel/">Kea
-          Developer's Guide</link> contains more information about the process, as
-          well as describing the requirements for contributed code to be accepted by ISC.
+          are a developer planning to contribute to Kea, please check our
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/contributor's-guide">Contributor's Guide</link>. The
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link> contains more information about the process, as
+          well as describes the requirements for contributed code to be accepted by ISC.
         </para>
 
       </section>
@@ -414,8 +423,6 @@ Debian and Ubuntu:
             <para>
               For instructions concerning the installation and configuration
               of database backends for Kea, see <xref linkend="dhcp-install-configure"/>.
-              For information concerning the configuration backends, see
-              <xref linkend="dhcp-config-backend"/>.
             </para>
           </note>
         </para>
@@ -505,29 +512,6 @@ Debian and Ubuntu:
 
     </section>
 
-    <section xml:id="dhcp-config-backend">
-      <title>Selecting the Configuration Backend</title>
-      <para>Kea 0.9 introduced configuration backends that are
-      switchable during the compilation phase. Only one backend, JSON,
-      is currently supported.
-      </para>
-
-      <variablelist>
-
-        <varlistentry>
-          <term>JSON</term>
-          <listitem>
-            <simpara>JSON is the default configuration backend
-            that allows Kea to read JSON configuration files from
-            disk. It does not require any framework and thus is
-            considered more lightweight. It allows dynamic on-line
-            reconfiguration using Kea API.</simpara>
-          </listitem>
-        </varlistentry>
-      </variablelist>
-
-    </section>
-
     <section xml:id="dhcp-install-configure">
       <title>DHCP Database Installation and Configuration</title>
       <para>
@@ -547,8 +531,7 @@ Debian and Ubuntu:
           When unit tests are built with Kea (the --with-gtest configuration option is specified),
           the databases must be manually pre-configured for the unit tests to run.
           The details of this configuration can be found in the
-          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://git.kea.isc.org/~tester/kea/doxygen">Kea Developer's
-          Guide</link>.
+          <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
         </simpara>
       </note>
 
@@ -613,7 +596,7 @@ Debian and Ubuntu:
           (and thus in the shell path) you do not need to supply its path.
           If it does not work (e.g. no pkg-config, package not available in
           pkg-config with the cassandra name), you can still use
-          the <command>cql_config</command> script in tools/ as describe below.
+          the <command>cql_config</command> script in tools/ as described below.
         </para>
         <para>
           Download and compile cpp-driver from DataStax. For details regarding
@@ -632,14 +615,16 @@ $ <userinput>make</userinput>
         <para>
           As of June 2016, cpp-driver does not include cql_config script
           yet. Work is in progress to contribute such a script to the cpp-driver
-          project but, until that is complete, intermediate steps that need to
+          project but, until that is complete, intermediate steps need to
           be conducted. A cql_config script is present in the tools/ directory
           of the Kea sources. Before using it, please create a
           cql_config_defines.sh in the same directory (there is an example in
           cql_config_define.sh.sample available, you may copy it over to
           cql_config_defines.sh and edit path specified in it) and change the
           environment variable CPP_DRIVER_PATH to point to the directory, where
-          cpp-driver sources are located.
+          cpp-driver sources are located. Make sure that appropriate access
+          rights are set on this file. It should be executable by the system
+          user building Kea.
         </para>
         <para>
           Build and install Kea as described in <xref linkend="installation"/>, with

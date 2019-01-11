@@ -63,7 +63,7 @@ public:
     ///
     /// The const pointer is returned by this method to prevent a caller from
     /// modifying the subnet configuration. Modifications to subnet configuration
-    /// is dangerous and must be done carefully. The subnets' configruation is
+    /// is dangerous and must be done carefully. The subnets' configuration is
     /// held in the multi index container and any modifications to the subnet
     /// id or subnet prefix must trigger re-indexing of multi index container.
     /// There is no possibility to enforce this when the non-const pointer is
@@ -80,7 +80,7 @@ public:
     ///
     /// The const pointer is returned by this method to prevent a caller from
     /// modifying the subnet configuration. Modifications to subnet configuration
-    /// is dangerous and must be done carefully. The subnets' configruation is
+    /// is dangerous and must be done carefully. The subnets' configuration is
     /// held in the multi index container and any modifications to the subnet
     /// id or subnet prefix must trigger re-indexing of multi index container.
     /// There is no possibility to enforce this when the non-const pointer is
@@ -226,7 +226,7 @@ public:
     ///   received over.
     ///
     /// @todo: Add additional selection criteria. See
-    ///  http://kea.isc.org/wiki/ISC-DHCP4o6-Design for details.
+    ///  https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design for details.
     ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used
