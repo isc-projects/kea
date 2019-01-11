@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,6 +43,42 @@ CfgHosts::getAll(const Host::IdentifierType& identifier_type,
     HostCollection collection;
     getAllInternal<HostCollection>(identifier_type, identifier_begin,
                                    identifier_len, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getAll4(const SubnetID& subnet_id) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    ConstHostCollection collection;
+    getAllInternal4<ConstHostCollection>(subnet_id, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll4(const SubnetID& subnet_id) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    HostCollection collection;
+    getAllInternal4<HostCollection>(subnet_id, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getAll6(const SubnetID& subnet_id) const {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    ConstHostCollection collection;
+    getAllInternal6<ConstHostCollection>(subnet_id, collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getAll6(const SubnetID& subnet_id) {
+    // Do not issue logging message here because it will be logged by
+    // the getAllInternal method.
+    HostCollection collection;
+    getAllInternal6<HostCollection>(subnet_id, collection);
     return (collection);
 }
 
@@ -120,6 +156,63 @@ CfgHosts::getAllInternal(const Host::IdentifierType& identifier_type,
         .arg(identifier_text)
         .arg(storage.size());
 }
+
+template<typename Storage>
+void
+CfgHosts::getAllInternal4(const SubnetID& subnet_id,
+                          Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID4)
+        .arg(subnet_id);
+
+    // Use try DHCPv4 subnet id.
+    const HostContainerIndex2& idx = hosts_.get<2>();
+
+    // Append each Host object to the storage.
+    for (HostContainerIndex2::iterator host = idx.lower_bound(subnet_id);
+         host != idx.upper_bound(subnet_id);
+         ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getAllInternal6(const SubnetID& subnet_id,
+                          Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID6)
+        .arg(subnet_id);
+
+    // Use try DHCPv6 subnet id.
+    const HostContainerIndex3& idx = hosts_.get<3>();
+
+    // Append each Host object to the storage.
+    for (HostContainerIndex3::iterator host = idx.lower_bound(subnet_id);
+         host != idx.upper_bound(subnet_id);
+         ++host) {
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
 
 template<typename Storage>
 void
@@ -447,7 +540,7 @@ CfgHosts::add(const HostPtr& host) {
     }
 
     // At least one subnet ID must be used
-    if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED && 
+    if (host->getIPv4SubnetID() == SUBNET_ID_UNUSED &&
         host->getIPv6SubnetID() == SUBNET_ID_UNUSED) {
         isc_throw(BadValue, "must not use both IPv4 and IPv6 subnet ids of"
                   " 0 when adding new host reservation");

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -74,6 +74,50 @@ public:
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len);
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getAll4(const SubnetID& subnet_id);
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of const @c Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns all @c Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getAll6(const SubnetID& subnet_id);
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -331,6 +375,34 @@ private:
                         const uint8_t* identifier,
                         const size_t identifier_len,
                         Storage& storage) const;
+
+    /// @brief Returns @c Host objects in a DHCPv4 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getAllInternal
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getAllInternal4(const SubnetID& subnet_id,
+                         Storage& storage) const;
+
+    /// @brief Returns @c Host objects in a DHCPv6 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getAllInternal
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getAllInternal6(const SubnetID& subnet_id,
+                         Storage& storage) const;
 
     /// @brief Returns @c Host objects for the specified IPv4 address.
     ///

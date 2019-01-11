@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,7 +98,7 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
     if ((added_options == DHCP4_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv4 options.
         CfgOptionPtr opts = host->getCfgOption4();
-        OptionDescriptor desc = 
+        OptionDescriptor desc =
             createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
                                        true, formatted, "my-boot-file");
         desc.setContext(user_context);
@@ -129,7 +129,7 @@ GenericHostDataSourceTest::addTestOptions(const HostPtr& host,
     if ((added_options == DHCP6_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv6 options.
         CfgOptionPtr opts = host->getCfgOption6();
-        OptionDescriptor desc = 
+        OptionDescriptor desc =
             createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
                                        true, formatted, "my-boot-file");
         desc.setContext(user_context);
@@ -1022,6 +1022,11 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     // Subnet id will be used in queries to the database.
     SubnetID subnet_id = host->getIPv4SubnetID();
 
+    // getAll4(subnet_id)
+    ConstHostCollection hosts_by_subnet = hdsptr_->getAll4(subnet_id);
+    // Not yet implemented.
+    EXPECT_EQ(0, hosts_by_subnet.size());
+
     // getAll4(address)
     ConstHostCollection hosts_by_addr =
         hdsptr_->getAll4(host->getIPv4Reservation());
@@ -1069,6 +1074,13 @@ GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_AND_DHCP6));
     // Insert host, options and IPv6 reservations into respective tables.
     ASSERT_NO_THROW(hdsptr_->add(host));
+    // Subnet id will be used in queries to the database.
+    SubnetID subnet_id = host->getIPv6SubnetID();
+
+    // getAll6(subnet_id)
+    ConstHostCollection hosts_by_subnet = hdsptr_->getAll6(subnet_id);
+    // Not yet implemented.
+    EXPECT_EQ(0, hosts_by_subnet.size());
 
     // getAll(identifier_type, identifier, identifier_size)
     ConstHostCollection hosts_by_id =
@@ -1289,7 +1301,7 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
         const std::string prefix = std::string("2001:db8::") + n_host;
         hosts.push_back(HostDataSourceUtils::initializeHost6(prefix,
                         Host::IDENT_HWADDR, false, "key##1"));
-        
+
         IPv6ResrvRange range = hosts.back()->getIPv6Reservations();
         ASSERT_EQ(1, std::distance(range.first, range.second));
         EXPECT_TRUE(HostDataSourceUtils::reservationExists

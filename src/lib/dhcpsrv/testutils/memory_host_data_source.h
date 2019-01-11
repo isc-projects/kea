@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,22 @@ public:
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len) const;
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// Currently not implemented.
+    ///
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// Currently not implemented.
+    ///
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///

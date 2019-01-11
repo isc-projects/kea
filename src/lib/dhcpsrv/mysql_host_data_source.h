@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -130,6 +130,28 @@ public:
     virtual ConstHostCollection
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin, const size_t identifier_len) const;
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns all @ref Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id subnet identifier to filter by
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const override;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns all @ref Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id subnet identifier to filter by
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const override;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
