@@ -192,16 +192,3 @@ We have received the following contributions:
 
  - lpaserati, Thorsten Krohn
    2018-11: Two bugfixes in kea-admin
-
-Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
-Boost (http://www.boost.org/) library for almost everything, and can use Botan
-(http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
-cryptographic operations. It can also optionally use PostgreSQL
-(http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) and/or
-Cassandra (http://cassandra.apache.org/) as a database.
-Sysrepo (http://www.sysrepo.org/) and libyang (https://github.com/CESNET/libyang)
-required when netconf is used as configuration backend.
-
-Kea can use googletest for unit-tests (https://github.com/google/googletest).
-
-Kea uses ISC Forge (https://github.com/isc-projects/forge/) for conformance testing.
