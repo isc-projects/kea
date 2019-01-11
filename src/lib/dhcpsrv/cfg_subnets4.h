@@ -80,6 +80,12 @@ public:
     ///   will hold the instance of the new subnet with the shared network
     ///   it originally belonged to.
     ///
+    /// @warning The merge operation affects the @c other configuration.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    ///
     /// @param other the subnet configuration to be merged into this
     /// configuration.
     void merge(const CfgSubnets4& other);
