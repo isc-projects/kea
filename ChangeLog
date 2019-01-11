@@ -1,3 +1,7 @@
+1511.	[func]		fdupont
+	Obsolete experimental secure DHCPv6 options (701-704) removed.
+	(Gitlab #386,!196, git 1114527652615fb730e323946cafaf1c7ca72b42)
+
 1510.	[bug]		fdupont
 	DHCPv4 and DHCPv6 no longer crash if badly broken configuration
 	is received.
