@@ -425,7 +425,7 @@ def _configure_mysql(system):
 def _configure_pgsql(system):
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
-        exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf')
+        exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
         if exitcode != 0:
             execute('sudo postgresql-setup --initdb --unit postgresql')
     execute('sudo systemctl start postgresql.service')
@@ -498,7 +498,7 @@ def prepare_deps_local(features, check_times):
             packages.extend(['postgresql-devel', 'postgresql-server'])
 
         cmd = 'sudo dnf -y install %s' % ' '.join(packages)
-        execute(cmd, env=env, timeout=120, check_times=check_times)
+        execute(cmd, env=env, timeout=300, check_times=check_times)
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -506,7 +506,7 @@ def prepare_deps_local(features, check_times):
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_rpm()
+            _install_cassandra_rpm(system)
 
     elif system == 'centos':
         install_yum('epel-release', env=env, check_times=check_times)
@@ -529,7 +529,7 @@ def prepare_deps_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm()
+            _install_cassandra_rpm(system)
 
     elif system == 'rhel':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel', 'boost-devel',
@@ -564,7 +564,7 @@ def prepare_deps_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm()
+            _install_cassandra_rpm(system)
 
     elif system == 'ubuntu':
         execute('sudo apt update', env=env, check_times=check_times)
