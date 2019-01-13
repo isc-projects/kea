@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -177,6 +177,20 @@ public:
     ///
     /// Uses gtest macros to report failures.
     void testMaxSubnetId6();
+
+    /// @brief Test that Verifies that IPv4 host reservations in the
+    /// same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type.
+    void testGetAll4(const Host::IdentifierType& id);
+
+    /// @brief Test that Verifies that IPv6 host reservations in the
+    /// same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type.
+    void testGetAll6(const Host::IdentifierType& id);
 
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.

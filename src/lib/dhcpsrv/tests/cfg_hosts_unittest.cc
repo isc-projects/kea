@@ -206,6 +206,64 @@ TEST_F(CfgHostsTest, getAllRepeatingHosts) {
     }
 }
 
+// This test checks that hosts in the same subnet can be retrieved from
+// the host configuration.
+TEST_F(CfgHostsTest, getAll4BySubnet) {
+    CfgHosts cfg;
+    // Add 25 hosts identified by HW address in the same subnet.
+    for (unsigned i = 0; i < 25; ++i) {
+        cfg.add(HostPtr(new Host(hwaddrs_[i]->toText(false),
+                                 "hw-address",
+                                 SubnetID(1), SubnetID(1),
+                                 addressesa_[i])));
+    }
+
+    // Check that other subnets are empty.
+    HostCollection hosts = cfg.getAll4(SubnetID(100));
+    EXPECT_EQ(0, hosts.size());
+
+    // Try to retrieve all added reservations.
+    hosts = cfg.getAll4(SubnetID(1));
+    ASSERT_EQ(25, hosts.size());
+    for (unsigned i = 0; i < 25; ++i) {
+        EXPECT_EQ(1, hosts[i]->getIPv4SubnetID());
+        EXPECT_EQ(addressesa_[i].toText(),
+                  hosts[i]->getIPv4Reservation().toText());
+    }
+}
+
+// This test checks that hosts in the same subnet can be retrieved from
+// the host configuration.
+TEST_F(CfgHostsTest, getAll6BySubnet) {
+    CfgHosts cfg;
+    // Add 25 hosts identified by DUID in the same subnet.
+    for (unsigned i = 0; i < 25; ++i) {
+        HostPtr host = HostPtr(new Host(duids_[i]->toText(), "duid",
+                                        SubnetID(1), SubnetID(1),
+                                        IOAddress("0.0.0.0")));
+        host->addReservation(IPv6Resrv(IPv6Resrv::TYPE_NA,
+                                       increase(IOAddress("2001:db8:1::1"),
+                                                i)));
+        cfg.add(host);
+    }
+
+    // Check that other subnets are empty.
+    HostCollection hosts = cfg.getAll6(SubnetID(100));
+    EXPECT_EQ(0, hosts.size());
+
+    // Try to retrieve all added reservations.
+    hosts = cfg.getAll6(SubnetID(1));
+    ASSERT_EQ(25, hosts.size());
+    for (unsigned i = 0; i < 25; ++i) {
+        EXPECT_EQ(1, hosts[i]->getIPv6SubnetID());
+        IPv6ResrvRange reservations =
+            hosts[i]->getIPv6Reservations(IPv6Resrv::TYPE_NA);
+        ASSERT_EQ(1, std::distance(reservations.first, reservations.second));
+        EXPECT_EQ(increase(IOAddress("2001:db8:1::1"), i),
+                  reservations.first->second.getPrefix());
+    }
+}
+
 // This test checks that all reservations for the specified IPv4 address can
 // be retrieved.
 TEST_F(CfgHostsTest, getAll4ByAddress) {

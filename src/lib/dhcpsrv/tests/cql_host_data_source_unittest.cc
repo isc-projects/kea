@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -291,6 +291,16 @@ TEST(CqlConnection, checkTimeConversion) {
 // We currently don't test Cassandra in read-only mode.
 TEST_F(CqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
     testReadOnlyDatabase(CQL_VALID_TYPE);
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+TEST_F(CqlHostDataSourceTest, getAll4BySubnet) {
+    testGetAll4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+TEST_F(CqlHostDataSourceTest, getAll6BySubnet) {
+    testGetAll6(Host::IDENT_DUID);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

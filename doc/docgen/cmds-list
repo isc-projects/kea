@@ -51,6 +51,7 @@ network6-subnet-del
 reservation-add
 reservation-del
 reservation-get
+reservation-get-all
 shutdown
 stat-lease4-get
 stat-lease6-get
