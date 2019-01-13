@@ -47,6 +47,22 @@ MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
 }
 
 ConstHostCollection
+MemHostDataSource::getPage4(const SubnetID& /*subnet_id*/,
+                            size_t& /*source_index*/,
+                            uint64_t /*lower_host_id*/,
+                            const HostPageSize& /*page_size*/) const {
+    return (ConstHostCollection());
+}
+
+ConstHostCollection
+MemHostDataSource::getPage6(const SubnetID& /*subnet_id*/,
+                            size_t& /*source_index*/,
+                            uint64_t /*lower_host_id*/,
+                            const HostPageSize& /*page_size*/) const {
+    return (ConstHostCollection());
+}
+
+ConstHostCollection
 MemHostDataSource::getAll4(const asiolink::IOAddress& /*address*/) const {
     return (ConstHostCollection());
 }

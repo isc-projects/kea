@@ -119,6 +119,78 @@ public:
     virtual HostCollection
     getAll6(const SubnetID& subnet_id);
 
+    /// @brief Returns range of hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage4(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects (may be empty).
+    virtual HostCollection
+    getPage4(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size);
+
+    /// @brief Returns range of hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage6(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Returns range of hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns a page of @c Host objects which represent
+    /// reservations in a specified subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects (may be empty).
+    virtual HostCollection
+    getPage6(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size);
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected
@@ -360,7 +432,7 @@ private:
 
     /// @brief Returns @c Host objects for the specific identifier and type.
     ///
-    /// This private method is called by the @c CfgHosts::getAllInternal
+    /// This private method is called by the @c CfgHosts::getAll
     /// method which finds the @c Host objects using specified identifier.
     /// The retrieved objects are appended to the @c storage container.
     ///
@@ -378,7 +450,7 @@ private:
 
     /// @brief Returns @c Host objects in a DHCPv4 subnet.
     ///
-    /// This private method is called by the @c CfgHosts::getAllInternal
+    /// This private method is called by the @c CfgHosts::getAll4
     /// method which finds the @c Host objects in a specified subnet.
     /// The retrieved objects are appended to the @c storage container.
     ///
@@ -392,7 +464,7 @@ private:
 
     /// @brief Returns @c Host objects in a DHCPv6 subnet.
     ///
-    /// This private method is called by the @c CfgHosts::getAllInternal
+    /// This private method is called by the @c CfgHosts::getAll6
     /// method which finds the @c Host objects in a specified subnet.
     /// The retrieved objects are appended to the @c storage container.
     ///
@@ -403,6 +475,44 @@ private:
     template<typename Storage>
     void getAllInternal6(const SubnetID& subnet_id,
                          Storage& storage) const;
+
+    /// @brief Returns a page of @c Host objects in a DHCPv4 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getPage4
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getPageInternal4(const SubnetID& subnet_id,
+                          uint64_t lower_host_id,
+                          const HostPageSize& page_size,
+                          Storage& storage) const;
+
+    /// @brief Returns a page of @c Host objects in a DHCPv6 subnet.
+    ///
+    /// This private method is called by the @c CfgHosts::getPage6
+    /// method which finds the @c Host objects in a specified subnet.
+    /// The retrieved objects are appended to the @c storage container.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    /// @param [out] storage Container to which the retrieved objects are
+    /// appended.
+    /// @tparam One of the @c ConstHostCollection of @c HostCollection.
+    template<typename Storage>
+    void getPageInternal6(const SubnetID& subnet_id,
+                          uint64_t lower_host_id,
+                          const HostPageSize& page_size,
+                          Storage& storage) const;
 
     /// @brief Returns @c Host objects for the specified IPv4 address.
     ///
@@ -522,12 +632,17 @@ private:
     /// the IPv6 subnet.
     virtual void add6(const HostPtr& host);
 
+    /// @brief Next host id.
+    uint64_t next_host_id_;
+
     /// @brief Multi-index container holding @c Host objects.
     ///
     /// It can be used for finding hosts by the following criteria:
     /// - IPv4 address
     /// - DUID
     /// - HW/MAC address
+    /// - subnet ID
+    /// - host ID
     HostContainer hosts_;
 
     /// @brief Multi-index container holding @c Host objects with v6 reservations.

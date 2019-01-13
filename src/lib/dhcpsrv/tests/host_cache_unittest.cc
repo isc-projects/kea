@@ -611,6 +611,16 @@ public:
         return (getCollection());
     }
 
+    ConstHostCollection getPage4(const SubnetID&, size_t&, uint64_t,
+                                 const HostPageSize&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getPage6(const SubnetID&, size_t&, uint64_t,
+                                 const HostPageSize&) const {
+        return (getCollection());
+    }
+
     ConstHostCollection getAll4(const IOAddress&) const {
         return (getCollection());
     }

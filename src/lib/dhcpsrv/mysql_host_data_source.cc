@@ -1953,6 +1953,8 @@ public:
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
         GET_HOST_SUBID4,        // Gets host by IPv4 SubnetID
         GET_HOST_SUBID6,        // Gets host by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Gets host by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Gets host by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -2366,8 +2368,43 @@ TaggedStatementArray tagged_statements = { {
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
             "WHERE h.dhcp6_subnet_id = ? "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id"}
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp4_options AS o "
+                "ON h.host_id = o.host_id "
+            "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
+            "ORDER BY h.host_id, o.option_id "
+            "LIMIT ?"},
+
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"
+            "LIMIT ?"}
     }
 };
 
@@ -2935,6 +2972,74 @@ MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
 
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+                             inbind, impl_->host_ipv6_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getPage4(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind subnet id
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind lower host id
+    uint32_t host_id = lower_host_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&host_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    uint32_t page_size_data = page_size.page_size_;
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&page_size_data);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
+                             inbind, impl_->host_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getPage6(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind subnet id
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind lower host id
+    uint32_t host_id = lower_host_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&host_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    uint32_t page_size_data = page_size.page_size_;
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&page_size_data);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
                              inbind, impl_->host_ipv6_exchange_,
                              result, false);
     return (result);
