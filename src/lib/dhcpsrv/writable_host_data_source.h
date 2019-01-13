@@ -57,6 +57,36 @@ public:
     virtual HostCollection
     getAll6(const SubnetID& subnet_id) = 0;
 
+    /// @brief Returns range of hosts in a DHCPv4 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getPage4(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) = 0;
+
+    /// @brief Returns range of hosts in a DHCPv6 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source.
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of non-const @c Host objects.
+    virtual HostCollection
+    getPage6(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) = 0;
+
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
     /// This method may return multiple @c Host objects if they are connected

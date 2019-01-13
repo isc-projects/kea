@@ -131,7 +131,66 @@ HostMgr::getAll6(const SubnetID& subnet_id) const {
     return (hosts);
 }
 
-
+ConstHostCollection
+HostMgr::getPage4(const SubnetID& subnet_id,
+                  size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    for (;;) {
+        if (source_index > alternate_sources_.size()) {
+            return (ConstHostCollection());
+        }
+        ConstHostCollection hosts;
+        if (source_index == 0) {
+            hosts = getCfgHosts()->getPage4(subnet_id,
+                                            source_index,
+                                            lower_host_id,
+                                            page_size);
+        } else {
+            hosts = alternate_sources_[source_index]->getPage4(subnet_id,
+                                                               source_index,
+                                                               lower_host_id,
+                                                               page_size);
+        }
+        if (!hosts.empty()) {
+            return (hosts);
+        } else {
+            ++source_index;
+            continue;
+        }
+    }
+}
+        
+ConstHostCollection
+HostMgr::getPage6(const SubnetID& subnet_id,
+                  size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    for (;;) {
+        if (source_index > alternate_sources_.size()) {
+            return (ConstHostCollection());
+        }
+        ConstHostCollection hosts;
+        if (source_index == 0) {
+            hosts = getCfgHosts()->getPage6(subnet_id,
+                                            source_index,
+                                            lower_host_id,
+                                            page_size);
+        } else {
+            hosts = alternate_sources_[source_index]->getPage6(subnet_id,
+                                                               source_index,
+                                                               lower_host_id,
+                                                               page_size);
+        }
+        if (!hosts.empty()) {
+            return (hosts);
+        } else {
+            ++source_index;
+            continue;
+        }
+    }
+}
+        
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
     ConstHostCollection hosts = getCfgHosts()->getAll4(address);

@@ -321,6 +321,26 @@ public:
     // associated with a host using subnet identifier.
     static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID =
         "GET_HOST_BY_IPV6_SUBNET_ID";
+
+    // Retrieves host information along with the IPv4 options associated
+    // with it using a subnet identifier. First page.
+    static constexpr StatementTag GET_HOST_BY_IPV4_SUBNET_ID_LIMIT =
+        "GET_HOST_BY_IPV4_SUBNET_ID_LIMIT";
+
+    // Retrieves host information along with the IPv4 options associated
+    // with it using a subnet identifier. Next page.
+    static constexpr StatementTag GET_HOST_BY_IPV4_SUBNET_ID_PAGE =
+        "GET_HOST_BY_IPV4_SUBNET_ID_PAGE";
+
+    // Retrieves host information along with the IPv6 options associated
+    // with it using a subnet identifier. First page.
+    static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_LIMIT =
+        "GET_HOST_BY_IPV6_SUBNET_ID_LIMIT";
+
+    // Retrieves host information along with the IPv6 options associated
+    // with it using a subnet identifier. Next page.
+    static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_PAGE =
+        "GET_HOST_BY_IPV6_SUBNET_ID_PAGE";
     /// @}
 
     /// @brief Cassandra statements
@@ -432,6 +452,10 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::DELETE_HOST;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_LIMIT;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
     {INSERT_HOST,
@@ -845,6 +869,154 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv6_subnet_id = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_IPV4_SUBNET_ID_LIMIT,
+     {GET_HOST_BY_IPV4_SUBNET_ID_LIMIT,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv4_subnet_id = ? "
+      "LIMIT ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
+     {GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv4_subnet_id = ? AND TOKEN(id) > TOKEN(?) "
+      "LIMIT ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_IPV6_SUBNET_ID_LIMIT,
+     {GET_HOST_BY_IPV6_SUBNET_ID_LIMIT,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv6_subnet_id = ? "
+      "LIMIT ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
+     {GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv6_subnet_id = ? AND TOKEN(id) > TOKEN(?) "
+      "LIMIT ? "
       "ALLOW FILTERING "
      }}
 };
@@ -1526,6 +1698,32 @@ public:
     /// @param subnet_id identifier of the subnet to which hosts belong
     virtual ConstHostCollection getAll6(const SubnetID& subnet_id) const;
 
+    /// @brief Implementation of @ref CqlHostDataSource::getPage4()
+    ///
+    /// See @ref CqlHostDataSource::getPage4() for parameter details.
+    ///
+    /// @param subnet_id identifier of the subnet to which hosts belong
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage4(const SubnetID& subnet_id,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getPage6()
+    ///
+    /// See @ref CqlHostDataSource::getPage6() for parameter details.
+    ///
+    /// @param subnet_id identifier of the subnet to which hosts belong
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage6(const SubnetID& subnet_id,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
     /// @brief Implementation of @ref CqlHostDataSource::getAll4()
     ///
     /// See @ref CqlHostDataSource::getAll4() for parameter details.
@@ -1946,6 +2144,67 @@ CqlHostDataSourceImpl::getAll6(const SubnetID& subnet_id) const {
 }
 
 ConstHostCollection
+CqlHostDataSourceImpl::getPage4(const SubnetID& subnet_id,
+                                uint64_t lower_host_id,
+                                const HostPageSize& page_size) const {
+    // Convert to CQL data types.
+    cass_int32_t host_ipv4_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&host_ipv4_subnet_id);
+
+    cass_int64_t id = static_cast<cass_int64_t>(lower_host_id);
+    if (id) {
+        where_values.add(&id);
+    }
+
+    cass_int32_t page_size_data =
+        static_cast<cass_int32_t>(page_size.page_size_);
+    where_values.add(&page_size_data);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(id == 0 ?
+                          CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_LIMIT :
+                          CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getPage6(const SubnetID& subnet_id,
+                                uint64_t lower_host_id,
+                                const HostPageSize& page_size) const {
+    // Convert to CQL data types.
+    cass_int32_t host_ipv6_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&host_ipv6_subnet_id);
+
+    cass_int64_t id = static_cast<cass_int64_t>(lower_host_id);
+    if (id) {
+        where_values.add(&id);
+    }
+
+    cass_int32_t page_size_data =
+        static_cast<cass_int32_t>(page_size.page_size_);
+    where_values.add(&page_size_data);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(id == 0 ?
+                          CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT :
+                          CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
+                          where_values);
+
+    return (result);
+}
+
+
+ConstHostCollection
 CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {
     // Convert to CQL data types.
     cass_int32_t host_ipv4_address = static_cast<cass_int32_t>(address.toUint32());
@@ -2243,6 +2502,26 @@ CqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
 
     return (impl_->getAll6(subnet_id));
+}
+
+ConstHostCollection
+CqlHostDataSource::getPage4(const SubnetID& subnet_id,
+                            size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getPage4(subnet_id, lower_host_id, page_size));
+}
+
+ConstHostCollection
+CqlHostDataSource::getPage6(const SubnetID& subnet_id,
+                            size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getPage6(subnet_id, lower_host_id, page_size));
 }
 
 ConstHostCollection

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -81,6 +81,13 @@ typedef boost::multi_index_container<
             // Index using values returned by the @c Host::getIPv6SubnetID
             boost::multi_index::const_mem_fun<Host, SubnetID,
                                               &Host::getIPv6SubnetID>
+        >,
+
+        // Fifth index is used to search by increasing host id
+        boost::multi_index::ordered_unique<
+            // Index using values returned by the @c Host::getHostId
+            boost::multi_index::const_mem_fun<Host, uint64_t,
+                                              &Host::getHostId>
         >
     >
 > HostContainer;
@@ -124,6 +131,15 @@ typedef HostContainer::nth_index<3>::type HostContainerIndex3;
 /// @brief Results range returned using the @c HostContainerIndex3.
 typedef std::pair<HostContainerIndex3::iterator,
                   HostContainerIndex3::iterator> HostContainerIndex3Range;
+
+/// @brief Fifth index type in the @c HostContainer.
+///
+/// This index allows for searching for @c Host objects using a host id.
+typedef HostContainer::nth_index<4>::type HostContainerIndex4;
+
+/// @brief Results range returned using the @c HostContainerIndex4.
+typedef std::pair<HostContainerIndex4::iterator,
+                  HostContainerIndex4::iterator> HostContainerIndex4Range;
 
 /// @brief Defines one entry for the Host Container for v6 hosts
 ///

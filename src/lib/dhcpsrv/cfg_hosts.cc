@@ -49,7 +49,7 @@ CfgHosts::getAll(const Host::IdentifierType& identifier_type,
 ConstHostCollection
 CfgHosts::getAll4(const SubnetID& subnet_id) const {
     // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
+    // the getAllInternal4 method.
     ConstHostCollection collection;
     getAllInternal4<ConstHostCollection>(subnet_id, collection);
     return (collection);
@@ -58,7 +58,7 @@ CfgHosts::getAll4(const SubnetID& subnet_id) const {
 HostCollection
 CfgHosts::getAll4(const SubnetID& subnet_id) {
     // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
+    // the getAllInternal4 method.
     HostCollection collection;
     getAllInternal4<HostCollection>(subnet_id, collection);
     return (collection);
@@ -67,7 +67,7 @@ CfgHosts::getAll4(const SubnetID& subnet_id) {
 ConstHostCollection
 CfgHosts::getAll6(const SubnetID& subnet_id) const {
     // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
+    // the getAllInternal6 method.
     ConstHostCollection collection;
     getAllInternal6<ConstHostCollection>(subnet_id, collection);
     return (collection);
@@ -76,9 +76,69 @@ CfgHosts::getAll6(const SubnetID& subnet_id) const {
 HostCollection
 CfgHosts::getAll6(const SubnetID& subnet_id) {
     // Do not issue logging message here because it will be logged by
-    // the getAllInternal method.
+    // the getAllInternal6 method.
     HostCollection collection;
     getAllInternal6<HostCollection>(subnet_id, collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getPage4(const SubnetID& subnet_id,
+                   size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) const {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal4 method.
+    ConstHostCollection collection;
+    getPageInternal4<ConstHostCollection>(subnet_id,
+                                          lower_host_id,
+                                          page_size,
+                                          collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getPage4(const SubnetID& subnet_id,
+                   size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal4 method.
+    HostCollection collection;
+    getPageInternal4<HostCollection>(subnet_id,
+                                     lower_host_id,
+                                     page_size,
+                                     collection);
+    return (collection);
+}
+
+ConstHostCollection
+CfgHosts::getPage6(const SubnetID& subnet_id,
+                   size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) const {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal6 method.
+    ConstHostCollection collection;
+    getPageInternal6<ConstHostCollection>(subnet_id,
+                                          lower_host_id,
+                                          page_size,
+                                          collection);
+    return (collection);
+}
+
+HostCollection
+CfgHosts::getPage6(const SubnetID& subnet_id,
+                   size_t& /*source_index*/,
+                   uint64_t lower_host_id,
+                   const HostPageSize& page_size) {
+    // Do not issue logging message here because it will be logged by
+    // the getPageInternal6 method.
+    HostCollection collection;
+    getPageInternal6<HostCollection>(subnet_id,
+                                     lower_host_id,
+                                     page_size,
+                                     collection);
     return (collection);
 }
 
@@ -205,6 +265,88 @@ CfgHosts::getAllInternal6(const SubnetID& subnet_id,
             .arg(subnet_id)
             .arg((*host)->toText());
         storage.push_back(*host);
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID6_COUNT)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getPageInternal4(const SubnetID& subnet_id,
+                           uint64_t lower_host_id,
+                           const HostPageSize& page_size,
+                           Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID4)
+        .arg(subnet_id);
+
+    // Use the host id last index.
+    const HostContainerIndex4& idx = hosts_.get<4>();
+    HostContainerIndex4::const_iterator host = idx.lower_bound(lower_host_id);
+
+    // Exclude the lower bound id when it is not zero.
+    if (lower_host_id &&
+        (host != idx.end()) && ((*host)->getHostId() == lower_host_id)) {
+        ++host;
+    }
+
+    // Return hosts in the subnet within the page size.
+    for (; host != idx.end(); ++host) {
+        if ((*host)->getIPv4SubnetID() != subnet_id) {
+            continue;
+        }
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_SUBNET_ID4_HOST)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+        if (storage.size() >= page_size.page_size_) {
+            break;
+        }
+    }
+
+    // Log how many hosts have been found.
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_RESULTS, HOSTS_CFG_GET_ALL_SUBNET_ID4_COUNT)
+        .arg(subnet_id)
+        .arg(storage.size());
+}
+
+template<typename Storage>
+void
+CfgHosts::getPageInternal6(const SubnetID& subnet_id,
+                           uint64_t lower_host_id,
+                           const HostPageSize& page_size,
+                           Storage& storage) const {
+
+    LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE, HOSTS_CFG_GET_ALL_SUBNET_ID6)
+        .arg(subnet_id);
+
+    // Use the host id last index.
+    const HostContainerIndex4& idx = hosts_.get<4>();
+    HostContainerIndex4::const_iterator host = idx.lower_bound(lower_host_id);
+
+    // Exclude the lower bound id when it is not zero.
+    if (lower_host_id &&
+        (host != idx.end()) && ((*host)->getHostId() == lower_host_id)) {
+        ++host;
+    }
+
+    // Return hosts in the subnet within the page size.
+    for (; host != idx.end(); ++host) {
+        if ((*host)->getIPv6SubnetID() != subnet_id) {
+            continue;
+        }
+        LOG_DEBUG(hosts_logger, HOSTS_DBG_TRACE_DETAIL_DATA,
+                  HOSTS_CFG_GET_ALL_SUBNET_ID6_HOST)
+            .arg(subnet_id)
+            .arg((*host)->toText());
+        storage.push_back(*host);
+        if (storage.size() >= page_size.page_size_) {
+            break;
+        }
     }
 
     // Log how many hosts have been found.
@@ -644,6 +786,7 @@ CfgHosts::add4(const HostPtr& host) {
     }
 
     // This is a new instance - add it.
+    host->setHostId(++next_host_id_);
     hosts_.insert(host);
 }
 
