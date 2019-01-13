@@ -63,6 +63,7 @@
 , <command><link linkend="ref-reservation-add">reservation-add</link></command>
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
+, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
@@ -143,6 +144,7 @@
 , <command><link linkend="ref-reservation-add">reservation-add</link></command>
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
+, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -198,6 +200,7 @@
 , <command><link linkend="ref-reservation-add">reservation-add</link></command>
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
+, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -233,6 +236,7 @@
 <para xml:id="commands-host_cmds-lib">Commands supported by host_cmds hook library: <command><link linkend="ref-reservation-add">reservation-add</link></command>
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
+, <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
 .</para>
 <para xml:id="commands-lease_cmds-lib">Commands supported by lease_cmds hook library: <command><link linkend="ref-lease4-add">lease4-add</link></command>
 , <command><link linkend="ref-lease4-del">lease4-del</link></command>
@@ -2510,6 +2514,61 @@ object appear only if specific field is set.</para>
 
 </section>
 <!-- end of reservation-get -->
+
+<!-- start of reservation-get-all -->
+<section xml:id="reference-reservation-get-all">
+<title>reservation-get reference</title>
+<para xml:id="ref-reservation-get-all"><command>reservation-get-all</command> - Retrieve all host reservations for a specified subnet.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-host_cmds-lib">host_cmds</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-reservation-get-all"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "reservation-get-all",
+    "arguments": {
+        "subnet-id": &lt;integer&gt;
+    }
+}</screen>
+Host reservations can be identified by subnet-id.</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": &lt;integer&gt;,
+    "text": &lt;string&gt;,
+    "arguments": {
+        "hosts": [
+            {
+                "boot-file-name": &lt;string&gt;,
+                "comment": &lt;string&gt;
+                "client-id": &lt;string&gt;,
+                "circuit-id": &lt;string&gt;,
+                "duid": &lt;string&gt;,
+                "flex-id": &lt;string&gt;,
+                "ip-address": &lt;string (IPv4 address)&gt;,
+                "ip-addresses": [ &lt;comma separated strings&gt; ],
+                "hw-address": &lt;string&gt;,
+                "hostname": &lt;string&gt;,
+                "next-server": &lt;string (IPv4 address)&gt;,
+                "option-data-list": [ &lt;comma separated structures defining options&gt; ],
+                "prefixes": [ &lt;comma separated IPv6 prefixes&gt; ],
+                "reservation-client-classes": [ &lt;comma separated strings&gt; ],
+                "server-hostname": &lt;string&gt;,
+                "subnet-id": &lt;integer&gt;,
+                "user-context": &lt;any valid JSON&gt;,
+            },
+            ...
+        ]
+    }
+}</screen>
+
+The reservation-get-all command may result in very large responses.</para>
+
+</section>
+<!-- end of reservation-get-all -->
 
 <!-- start of shutdown -->
 <section xml:id="reference-shutdown">

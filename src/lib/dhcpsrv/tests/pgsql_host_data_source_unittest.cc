@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -294,6 +294,16 @@ TEST_F(PgSqlHostDataSourceTest, maxSubnetId4) {
 // for  dhcp6_subnet id
 TEST_F(PgSqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+TEST_F(PgSqlHostDataSourceTest, getAll4BySubnet) {
+    testGetAll4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+TEST_F(PgSqlHostDataSourceTest, getAll6BySubnet) {
+    testGetAll6(Host::IDENT_DUID);
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

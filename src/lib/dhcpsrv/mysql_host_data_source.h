@@ -140,7 +140,7 @@ public:
     ///
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection
-    getAll4(const SubnetID& subnet_id) const override;
+    getAll4(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
@@ -151,7 +151,7 @@ public:
     ///
     /// @return Collection of const @ref Host objects.
     virtual ConstHostCollection
-    getAll6(const SubnetID& subnet_id) const override;
+    getAll6(const SubnetID& subnet_id) const;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///

@@ -48,15 +48,11 @@ public:
 
     /// @brief Return all hosts in a DHCPv4 subnet.
     ///
-    /// Currently not implemented.
-    ///
     /// @param subnet_id Subnet identifier.
     virtual ConstHostCollection
     getAll4(const SubnetID& subnet_id) const;
 
     /// @brief Return all hosts in a DHCPv6 subnet.
-    ///
-    /// Currently not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     virtual ConstHostCollection
@@ -211,6 +207,9 @@ protected:
 
     /// @brief Store
     std::vector<HostPtr> store_;
+
+    /// @brief Next host id
+    uint64_t next_host_id_;
 };
 
 /// Pointer to the Mem host data source.

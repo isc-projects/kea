@@ -23,13 +23,27 @@ MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
 }
 
 ConstHostCollection
-MemHostDataSource::getAll4(const SubnetID& /*subnet_id*/) const {
-    return (ConstHostCollection());
+MemHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Keep it when subnet_id matchs.
+        if ((*h)->getIPv4SubnetID() == subnet_id) {
+            hosts.push_back(*h);
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection
-MemHostDataSource::getAll6(const SubnetID& /*subnet_id*/) const {
-    return (ConstHostCollection());
+MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Keep it when subnet_id matchs.
+        if ((*h)->getIPv6SubnetID() == subnet_id) {
+            hosts.push_back(*h);
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection
@@ -129,6 +143,7 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
 
 void
 MemHostDataSource::add(const HostPtr& host) {
+    host->setHostId(++next_host_id_);
     store_.push_back(host);
 }
 

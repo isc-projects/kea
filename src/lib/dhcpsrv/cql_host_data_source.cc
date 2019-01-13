@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -311,6 +311,16 @@ public:
     // Deletes a host reservation.
     static constexpr StatementTag DELETE_HOST =
         "DELETE_HOST";
+
+    // Retrieves host information along with the IPv4 options associated
+    // with it using a subnet identifier.
+    static constexpr StatementTag GET_HOST_BY_IPV4_SUBNET_ID =
+        "GET_HOST_BY_IPV4_SUBNET_ID";
+
+    // Retrieves host information; IPv6 reservations and IPv6 options
+    // associated with a host using subnet identifier.
+    static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID =
+        "GET_HOST_BY_IPV6_SUBNET_ID";
     /// @}
 
     /// @brief Cassandra statements
@@ -420,6 +430,8 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_PREFIX;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::DELETE_HOST;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID;
+constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
     {INSERT_HOST,
@@ -762,6 +774,78 @@ StatementMap CqlHostExchange::tagged_statements_ = {
      {DELETE_HOST,
       "DELETE FROM host_reservations WHERE id = ? "
       "IF EXISTS "
+     }},
+
+    {GET_HOST_BY_IPV4_SUBNET_ID,
+     {GET_HOST_BY_IPV4_SUBNET_ID,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv4_subnet_id = ? "
+      "ALLOW FILTERING "
+     }},
+
+    {GET_HOST_BY_IPV6_SUBNET_ID,
+     {GET_HOST_BY_IPV6_SUBNET_ID,
+      "SELECT "
+      "id, "
+      "host_identifier, "
+      "host_identifier_type, "
+      "host_ipv4_subnet_id, "
+      "host_ipv6_subnet_id, "
+      "host_ipv4_address, "
+      "host_ipv4_next_server, "
+      "host_ipv4_server_hostname, "
+      "host_ipv4_boot_file_name, "
+      "auth_key, "
+      "hostname, "
+      "user_context, "
+      "host_ipv4_client_classes, "
+      "host_ipv6_client_classes, "
+      "reserved_ipv6_prefix_address, "
+      "reserved_ipv6_prefix_length, "
+      "reserved_ipv6_prefix_address_type, "
+      "iaid, "
+      "option_universe, "
+      "option_code, "
+      "option_value, "
+      "option_formatted_value, "
+      "option_space, "
+      "option_is_persistent, "
+      "option_client_class, "
+      "option_subnet_id, "
+      "option_user_context, "
+      "option_scope_id "
+      "FROM host_reservations "
+      "WHERE host_ipv6_subnet_id = ? "
+      "ALLOW FILTERING "
      }}
 };
 
@@ -905,7 +989,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
 
         // auth_key: varchar
         auth_key_ = host->getKey().ToText();
-        
+
         // hostname: text
         hostname_ = host->getHostname();
         if (hostname_.size() > HOSTNAME_MAX_LENGTH) {
@@ -1432,6 +1516,20 @@ public:
     ///
     /// See @ref CqlHostDataSource::getAll4() for parameter details.
     ///
+    /// @param subnet_id identifier of the subnet to which hosts belong
+    virtual ConstHostCollection getAll4(const SubnetID& subnet_id) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getAll6()
+    ///
+    /// See @ref CqlHostDataSource::getAll6() for parameter details.
+    ///
+    /// @param subnet_id identifier of the subnet to which hosts belong
+    virtual ConstHostCollection getAll6(const SubnetID& subnet_id) const;
+
+    /// @brief Implementation of @ref CqlHostDataSource::getAll4()
+    ///
+    /// See @ref CqlHostDataSource::getAll4() for parameter details.
+    ///
     /// @param address IPv4 address of the reservation to be retrieved
     virtual ConstHostCollection
     getAll4(const asiolink::IOAddress& address) const;
@@ -1814,6 +1912,40 @@ CqlHostDataSourceImpl::getAll(const Host::IdentifierType& identifier_type,
 }
 
 ConstHostCollection
+CqlHostDataSourceImpl::getAll4(const SubnetID& subnet_id) const {
+    // Convert to CQL data types.
+    cass_int32_t host_ipv4_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&host_ipv4_subnet_id);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
+CqlHostDataSourceImpl::getAll6(const SubnetID& subnet_id) const {
+    // Convert to CQL data types.
+    cass_int32_t host_ipv6_subnet_id = static_cast<cass_int32_t>(subnet_id);
+
+    // Bind to array.
+    AnyArray where_values;
+    where_values.add(&host_ipv6_subnet_id);
+
+    // Run statement.
+    ConstHostCollection result =
+        getHostCollection(CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID,
+                          where_values);
+
+    return (result);
+}
+
+ConstHostCollection
 CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {
     // Convert to CQL data types.
     cass_int32_t host_ipv4_address = static_cast<cass_int32_t>(address.toUint32());
@@ -2097,6 +2229,20 @@ CqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
 
     return (impl_->getAll(identifier_type, identifier_begin, identifier_len));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getAll4(subnet_id));
+}
+
+ConstHostCollection
+CqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL, DHCPSRV_CQL_HOST_GET_ALL);
+
+    return (impl_->getAll6(subnet_id));
 }
 
 ConstHostCollection

@@ -357,6 +357,92 @@ void GenericHostDataSourceTest::testMaxSubnetId6() {
 }
 
 void
+GenericHostDataSourceTest::testGetAll4(const Host::IdentifierType& id) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a couple of hosts...
+    HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
+    HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", id);
+    HostPtr host3 = HostDataSourceUtils::initializeHost4("192.0.2.3", id);
+    HostPtr host4 = HostDataSourceUtils::initializeHost4("192.0.2.4", id);
+
+    // Set them in the same subnets.
+    SubnetID subnet4 = host1->getIPv4SubnetID();
+    host2->setIPv4SubnetID(subnet4);
+    host3->setIPv4SubnetID(subnet4);
+    host4->setIPv4SubnetID(subnet4);
+    SubnetID subnet6 = host1->getIPv6SubnetID();
+    host2->setIPv6SubnetID(subnet6);
+    host3->setIPv6SubnetID(subnet6);
+    host4->setIPv6SubnetID(subnet6);
+
+    // ... and add them to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // And then try to retrieve them back.
+    ConstHostCollection from_hds = hdsptr_->getAll4(subnet4);
+
+    // Make sure we got something back.
+    ASSERT_EQ(4, from_hds.size());
+
+    // Then let's check that what we got seems correct.
+    // There is no ORDER BY in Cassandra so skip it.
+    if (hdsptr_->getType() != "cql") {
+        HostDataSourceUtils::compareHosts(host1, from_hds[0]);
+        HostDataSourceUtils::compareHosts(host2, from_hds[1]);
+        HostDataSourceUtils::compareHosts(host3, from_hds[2]);
+        HostDataSourceUtils::compareHosts(host4, from_hds[3]);
+    }
+}
+
+void
+GenericHostDataSourceTest::testGetAll6(const Host::IdentifierType& id) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create a couple of hosts...
+    HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, false);
+    HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, false);
+    HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, false);
+    HostPtr host4 = HostDataSourceUtils::initializeHost6("2001:db8::4", id, false);
+
+    // Set them in the same subnets.
+    SubnetID subnet4 = host1->getIPv4SubnetID();
+    host2->setIPv4SubnetID(subnet4);
+    host3->setIPv4SubnetID(subnet4);
+    host4->setIPv4SubnetID(subnet4);
+    SubnetID subnet6 = host1->getIPv6SubnetID();
+    host2->setIPv6SubnetID(subnet6);
+    host3->setIPv6SubnetID(subnet6);
+    host4->setIPv6SubnetID(subnet6);
+
+    // ... and add them to the data source.
+    ASSERT_NO_THROW(hdsptr_->add(host1));
+    ASSERT_NO_THROW(hdsptr_->add(host2));
+    ASSERT_NO_THROW(hdsptr_->add(host3));
+    ASSERT_NO_THROW(hdsptr_->add(host4));
+
+    // And then try to retrieve them back.
+    ConstHostCollection from_hds = hdsptr_->getAll6(subnet6);
+
+    // Make sure we got something back.
+    ASSERT_EQ(4, from_hds.size());
+
+    // Then let's check that what we got seems correct.
+    // There is no ORDER BY in Cassandra so skip it.
+    if (hdsptr_->getType() != "cql") {
+        HostDataSourceUtils::compareHosts(host1, from_hds[0]);
+        HostDataSourceUtils::compareHosts(host2, from_hds[1]);
+        HostDataSourceUtils::compareHosts(host3, from_hds[2]);
+        HostDataSourceUtils::compareHosts(host4, from_hds[3]);
+    }
+}
+
+void
 GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
@@ -1024,8 +1110,8 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
 
     // getAll4(subnet_id)
     ConstHostCollection hosts_by_subnet = hdsptr_->getAll4(subnet_id);
-    // Not yet implemented.
-    EXPECT_EQ(0, hosts_by_subnet.size());
+    ASSERT_EQ(1, hosts_by_subnet.size());
+    ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, *hosts_by_subnet.begin()));
 
     // getAll4(address)
     ConstHostCollection hosts_by_addr =
@@ -1079,8 +1165,8 @@ GenericHostDataSourceTest::testOptionsReservations46(const bool formatted) {
 
     // getAll6(subnet_id)
     ConstHostCollection hosts_by_subnet = hdsptr_->getAll6(subnet_id);
-    // Not yet implemented.
-    EXPECT_EQ(0, hosts_by_subnet.size());
+    EXPECT_EQ(1, hosts_by_subnet.size());
+    // Don't compare as getAll6() returns the v6 part only.
 
     // getAll(identifier_type, identifier, identifier_size)
     ConstHostCollection hosts_by_id =

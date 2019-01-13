@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,7 +129,7 @@ public:
           bind_(columns_num_), columns_(columns_num_),
           error_(columns_num_, MLM_FALSE), host_id_(0),
           dhcp_identifier_length_(0), dhcp_identifier_type_(0),
-          dhcp4_subnet_id_(SUBNET_ID_UNUSED), 
+          dhcp4_subnet_id_(SUBNET_ID_UNUSED),
           dhcp6_subnet_id_(SUBNET_ID_UNUSED), ipv4_address_(0),
           hostname_length_(0), dhcp4_client_classes_length_(0),
           dhcp6_client_classes_length_(0),
@@ -407,7 +407,7 @@ public:
             auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
             bind_[13].buffer_length = auth_key.length();
-        
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Host: "
@@ -542,7 +542,7 @@ public:
         bind_[13].buffer_length = auth_key_length_;
         bind_[13].length = &auth_key_length_;
         bind_[13].is_null = &auth_key_null_;
-        
+
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -800,7 +800,7 @@ private:
 
     /// The length of the string for holding keys
     unsigned long auth_key_length_;
-    
+
     /// @name Boolean values indicating if values of specific columns in
     /// the database are NULL.
     //@{
@@ -1951,6 +1951,8 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
+        GET_HOST_SUBID4,        // Gets host by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Gets host by IPv6 SubnetID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -2330,7 +2332,41 @@ TaggedStatementArray tagged_statements = { {
 
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
      "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
-     "AND dhcp_identifier = ?"}
+     "AND dhcp_identifier = ?"},
+
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID4,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp4_options AS o "
+                "ON h.host_id = o.host_id "
+            "WHERE h.dhcp4_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id"},
+
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.dhcp6_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"}
 
     }
 };
@@ -2866,6 +2902,40 @@ MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_DHCPID, inbind,
                              impl_->host_ipv46_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4,
+                             inbind, impl_->host_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+                             inbind, impl_->host_ipv6_exchange_,
                              result, false);
     return (result);
 }
