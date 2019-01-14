@@ -143,7 +143,8 @@ public:
     /// starting host id of the range. If not zero this host id is
     /// excluded from the returned range. When a source is exhausted
     /// the index is updated. There is no guarantee about the order
-    /// of returned host reservations, only the sources are ordered.
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source.
@@ -165,7 +166,8 @@ public:
     /// starting host id of the range. If not zero this host id is
     /// excluded from the returned range. When a source is exhausted
     /// the index is updated. There is no guarantee about the order
-    /// of returned host reservations, only the sources are ordered.
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source.

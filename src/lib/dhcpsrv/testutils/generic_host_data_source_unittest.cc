@@ -443,6 +443,100 @@ GenericHostDataSourceTest::testGetAll6(const Host::IdentifierType& id) {
 }
 
 void
+GenericHostDataSourceTest::testGetPage4(const Host::IdentifierType& id) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    IOAddress addr("192.0.2.0");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+    for (unsigned i = 0; i < 25; ++i) {
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = HostDataSourceUtils::initializeHost4(addr.toText(), id);
+        host->setIPv4SubnetID(subnet4);
+        host->setIPv6SubnetID(subnet6);
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+    }
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(10);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(5, page.size());
+    host_id = page[4]->getHostId();
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+    host_id = 0;
+
+    // Other subnets are empty.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
+GenericHostDataSourceTest::testGetPage6(const Host::IdentifierType& id) {
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    IOAddress addr("2001:db8:1::");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+    for (unsigned i = 0; i < 25; ++i) {
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = HostDataSourceUtils::initializeHost6(addr.toText(), id, false);
+        host->setIPv4SubnetID(subnet4);
+        host->setIPv6SubnetID(subnet6);
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+    }
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(10);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(10, page.size());
+    host_id = page[9]->getHostId();
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(5, page.size());
+    host_id = page[4]->getHostId();
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+    host_id = 0;
+
+    // Other subnets are empty.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
 GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
