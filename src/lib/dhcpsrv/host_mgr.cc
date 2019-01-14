@@ -152,6 +152,7 @@ HostMgr::getPage4(const SubnetID& subnet_id,
             return (hosts);
         } else {
             ++source_index;
+            lower_host_id = 0;
             continue;
         }
     }
@@ -178,6 +179,7 @@ HostMgr::getPage6(const SubnetID& subnet_id,
             return (hosts);
         } else {
             ++source_index;
+            lower_host_id = 0;
             continue;
         }
     }

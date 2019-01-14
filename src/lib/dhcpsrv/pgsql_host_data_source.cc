@@ -2273,7 +2273,7 @@ PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
 
     ConstHostCollection result;
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
-                             bind_array, impl_->host_exchange_,
+                             bind_array, impl_->host_ipv6_exchange_,
                              result, false);
 
     return (result);
