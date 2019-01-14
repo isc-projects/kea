@@ -64,6 +64,7 @@
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
+, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
@@ -145,6 +146,7 @@
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
+, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease4-get">stat-lease4-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -201,6 +203,7 @@
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
+, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
 , <command><link linkend="ref-shutdown">shutdown</link></command>
 , <command><link linkend="ref-stat-lease6-get">stat-lease6-get</link></command>
 , <command><link linkend="ref-statistic-get">statistic-get</link></command>
@@ -237,6 +240,7 @@
 , <command><link linkend="ref-reservation-del">reservation-del</link></command>
 , <command><link linkend="ref-reservation-get">reservation-get</link></command>
 , <command><link linkend="ref-reservation-get-all">reservation-get-all</link></command>
+, <command><link linkend="ref-reservation-get-page">reservation-get-page</link></command>
 .</para>
 <para xml:id="commands-lease_cmds-lib">Commands supported by lease_cmds hook library: <command><link linkend="ref-lease4-add">lease4-add</link></command>
 , <command><link linkend="ref-lease4-del">lease4-del</link></command>
@@ -2569,6 +2573,71 @@ The reservation-get-all command may result in very large responses.</para>
 
 </section>
 <!-- end of reservation-get-all -->
+
+<!-- start of reservation-get-page -->
+<section xml:id="reference-reservation-get-page">
+<title>reservation-get reference</title>
+<para xml:id="ref-reservation-get-page"><command>reservation-get-page</command> - Retrieve all host reservations for a specified subnet by pages.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-host_cmds-lib">host_cmds</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-reservation-get-page"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "reservation-get-page",
+    "arguments": {
+        "subnet-id": &lt;integer&gt;,
+        "limit": &lt;integer&gt;,
+        "source-index": &lt;integer&gt;,
+        "from": &lt;integer&gt;
+    }
+}</screen>
+Returned host reservations are from the specified subnet. Page size is
+limited by the limit parameter. Start of the page is given by the optional
+source index (default 0 i.e. configuration file) and from host id (default
+0).
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": &lt;integer&gt;,
+    "text": &lt;string&gt;,
+    "arguments": {
+        "source-index": &lt;string&gt;,
+        "count": &lt;string&gt;,
+        "next": &lt;integer&gt;,
+        "hosts": [
+            {
+                "boot-file-name": &lt;string&gt;,
+                "comment": &lt;string&gt;
+                "client-id": &lt;string&gt;,
+                "circuit-id": &lt;string&gt;,
+                "duid": &lt;string&gt;,
+                "flex-id": &lt;string&gt;,
+                "ip-address": &lt;string (IPv4 address)&gt;,
+                "ip-addresses": [ &lt;comma separated strings&gt; ],
+                "hw-address": &lt;string&gt;,
+                "hostname": &lt;string&gt;,
+                "next-server": &lt;string (IPv4 address)&gt;,
+                "option-data-list": [ &lt;comma separated structures defining options&gt; ],
+                "prefixes": [ &lt;comma separated IPv6 prefixes&gt; ],
+                "reservation-client-classes": [ &lt;comma separated strings&gt; ],
+                "server-hostname": &lt;string&gt;,
+                "subnet-id": &lt;integer&gt;,
+                "user-context": &lt;any valid JSON&gt;,
+            },
+            ...
+        ]
+    }
+}</screen>
+The source index and the next host id should be used getting the next page.
+After the last page the result is 3 (empty).
+</para>
+</section>
+<!-- end of reservation-get-page -->
 
 <!-- start of shutdown -->
 <section xml:id="reference-shutdown">

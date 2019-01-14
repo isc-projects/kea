@@ -52,6 +52,7 @@ reservation-add
 reservation-del
 reservation-get
 reservation-get-all
+reservation-get-page
 shutdown
 stat-lease4-get
 stat-lease6-get
