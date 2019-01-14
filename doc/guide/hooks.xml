@@ -1421,8 +1421,9 @@ $
           Currently four commands are supported: reservation-add (which adds
           new host reservation), reservation-get (which returns existing
           reservation if specified criteria are matched), reservation-get-all
-          (which returns all reservations in a specified subnet) and
-          reservation-del
+          (which returns all reservations in a specified subnet),
+          reservation-get-page (variant of reservation-get-all which returns
+          all reservations in a specified subnet by pages) and reservation-del
           (which attempts to delete a reservation matching specified
           criteria). To use commands that change the reservation information
           (currently these are reservation-add and reservation-del, but this
@@ -1664,7 +1665,27 @@ An example result returned when the query was malformed:<screen>
           <para>The response returned by <command>reservation-get-all</command>
           can be very long.
           </para>
-       </section>
+        </section>
+
+        <section xml:id="command-reservation-get-page">
+          <title>reservation-get-page command</title>
+          <para><command>reservation-get-page</command> can be used to
+          query the host database and retrieve all reservations in a
+          specified subnet by pages. This command uses parameters providing the
+          mandatory subnet-id. Use a value of zero (0) to fetch global
+          reservations. The second mandatory parameter is the page size limit.
+          Optional source-index and from host id, both defaulting to 0, are
+          uses to chain page queries.
+          </para>
+
+          <!-- Add example -->
+
+          <para>The first page is queried without source-index and from,
+          for next pages source-index and from should be set using
+          the preceeding result source-index and next. After the last page
+          the result is empty (code 3).
+          </para>
+        </section>
 
         <section xml:id="command-reservation-del">
           <title>reservation-del command</title>
