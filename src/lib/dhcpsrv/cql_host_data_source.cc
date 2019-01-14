@@ -2170,6 +2170,12 @@ CqlHostDataSourceImpl::getPage4(const SubnetID& subnet_id,
                           CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
                           where_values);
 
+    // Sort result.
+    std::sort(result.begin(), result.end(),
+              [] (const ConstHostPtr& host1,
+                  const ConstHostPtr& host2) {
+                  return (host1->getHostId() < host2->getHostId()); });
+
     return (result);
 }
 
@@ -2199,6 +2205,12 @@ CqlHostDataSourceImpl::getPage6(const SubnetID& subnet_id,
                           CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT :
                           CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
                           where_values);
+
+    // Sort result.
+    std::sort(result.begin(), result.end(),
+              [] (const ConstHostPtr& host1,
+                  const ConstHostPtr& host2) {
+                  return (host1->getHostId() < host2->getHostId()); });
 
     return (result);
 }

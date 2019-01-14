@@ -2403,7 +2403,7 @@ TaggedStatementArray tagged_statements = { {
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
             "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id"
+            "ORDER BY h.host_id, o.option_id, r.reservation_id "
             "LIMIT ?"}
     }
 };

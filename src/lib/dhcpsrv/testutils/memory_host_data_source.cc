@@ -47,19 +47,47 @@ MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
 }
 
 ConstHostCollection
-MemHostDataSource::getPage4(const SubnetID& /*subnet_id*/,
+MemHostDataSource::getPage4(const SubnetID& subnet_id,
                             size_t& /*source_index*/,
-                            uint64_t /*lower_host_id*/,
-                            const HostPageSize& /*page_size*/) const {
-    return (ConstHostCollection());
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Skip it when subnet_id does not match.
+        if ((*h)->getIPv4SubnetID() != subnet_id) {
+            continue;
+        }
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection
-MemHostDataSource::getPage6(const SubnetID& /*subnet_id*/,
+MemHostDataSource::getPage6(const SubnetID& subnet_id,
                             size_t& /*source_index*/,
-                            uint64_t /*lower_host_id*/,
-                            const HostPageSize& /*page_size*/) const {
-    return (ConstHostCollection());
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Skip it when subnet_id does not match.
+        if ((*h)->getIPv6SubnetID() != subnet_id) {
+            continue;
+        }
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection

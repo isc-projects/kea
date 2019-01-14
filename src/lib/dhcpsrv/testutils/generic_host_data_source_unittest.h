@@ -192,6 +192,20 @@ public:
     /// @param id Identifier type.
     void testGetAll6(const Host::IdentifierType& id);
 
+    /// @brief Test that Verifies that pages of host reservations in the
+    /// same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type.
+    void testGetPage4(const Host::IdentifierType& id);
+
+    /// @brief Test that Verifies that pages of host reservations in the
+    /// same subnet can be retrieved properly.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type.
+    void testGetPage6(const Host::IdentifierType& id);
+
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///

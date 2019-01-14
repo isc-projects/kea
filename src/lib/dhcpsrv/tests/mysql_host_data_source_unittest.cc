@@ -321,6 +321,18 @@ TEST_F(MySqlHostDataSourceTest, getAll6BySubnet) {
     testGetAll6(Host::IDENT_DUID);
 }
 
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+// by pages.
+TEST_F(MySqlHostDataSourceTest, getPage4) {
+    testGetPage4(Host::IDENT_DUID);
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+// by pages.
+TEST_F(MySqlHostDataSourceTest, getPage6) {
+    testGetPage6(Host::IDENT_HWADDR);
+}
+
 // Test verifies if a host reservation can be added and later retrieved by IPv4
 // address. Host uses client-id (DUID) as identifier.
 TEST_F(MySqlHostDataSourceTest, basic4ClientId) {

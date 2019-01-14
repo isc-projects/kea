@@ -60,8 +60,6 @@ public:
 
     /// @brief Return range of hosts in a DHCPv4 subnet.
     ///
-    /// Currently not implemented.
-    ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).
     /// @param lower_host_id Host identifier used as lower bound for the
@@ -74,8 +72,6 @@ public:
              const HostPageSize& page_size) const;
 
     /// @brief Return range of hosts in a DHCPv6 subnet.
-    ///
-    /// Currently not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).

@@ -142,15 +142,11 @@ HostMgr::getPage4(const SubnetID& subnet_id,
         }
         ConstHostCollection hosts;
         if (source_index == 0) {
-            hosts = getCfgHosts()->getPage4(subnet_id,
-                                            source_index,
-                                            lower_host_id,
-                                            page_size);
+            hosts = getCfgHosts()->
+                getPage4(subnet_id, source_index, lower_host_id, page_size);
         } else {
-            hosts = alternate_sources_[source_index]->getPage4(subnet_id,
-                                                               source_index,
-                                                               lower_host_id,
-                                                               page_size);
+            hosts = alternate_sources_[source_index - 1]->
+                getPage4(subnet_id, source_index, lower_host_id, page_size);
         }
         if (!hosts.empty()) {
             return (hosts);
@@ -172,15 +168,11 @@ HostMgr::getPage6(const SubnetID& subnet_id,
         }
         ConstHostCollection hosts;
         if (source_index == 0) {
-            hosts = getCfgHosts()->getPage6(subnet_id,
-                                            source_index,
-                                            lower_host_id,
-                                            page_size);
+            hosts = getCfgHosts()->
+                getPage6(subnet_id, source_index, lower_host_id, page_size);
         } else {
-            hosts = alternate_sources_[source_index]->getPage6(subnet_id,
-                                                               source_index,
-                                                               lower_host_id,
-                                                               page_size);
+            hosts = alternate_sources_[source_index - 1]->
+                getPage6(subnet_id, source_index, lower_host_id, page_size);
         }
         if (!hosts.empty()) {
             return (hosts);
