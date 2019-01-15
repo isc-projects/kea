@@ -10,8 +10,7 @@
 #include <perfdhcp/better_socket.h>
 #include <perfdhcp/command_options.h>
 
-#include <dhcp/pkt4.h>
-#include <dhcp/pkt6.h>
+#include <dhcp/pkt.h>
 #include <util/threads/thread.h>
 
 #include <queue>
@@ -21,8 +20,6 @@
 
 namespace isc {
 namespace perfdhcp {
-
-typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
 /// \brief A receviving DHCP packets class.
 ///
@@ -48,7 +45,7 @@ private:
     std::unique_ptr<util::thread::Thread> recv_thread_;
 
     /// \brief Queue for passing packets from receiver thread to main thread.
-    std::queue<PktPtr> pkt_queue_;
+    std::queue<dhcp::PktPtr> pkt_queue_;
 
     /// \brief Mutex for controlling access to the queue.
     std::mutex pkt_queue_mutex_;
@@ -82,7 +79,7 @@ public:
     ///
     /// In single-thread mode it reads directly from the socket.
     /// In multi-thread mode it reads packets from the queue.
-    PktPtr getPkt();
+    dhcp::PktPtr getPkt();
 
 private:
     /// \brief Receiving thread main function.
@@ -94,7 +91,7 @@ private:
     void receivePackets();
 
     /// \brief Read a packet directly from the socket.
-    PktPtr readPktFromSocket();
+    dhcp::PktPtr readPktFromSocket();
 };
 
 }
