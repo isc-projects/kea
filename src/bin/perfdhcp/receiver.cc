@@ -118,14 +118,14 @@ Receiver::readPktFromSocket() {
     } catch (const Exception& e) {
         cerr << "Failed to receive DHCP packet: " << e.what() << endl;
     }
-    if (!pkt) {
-        return nullptr;
+
+    if (pkt) {
+        /// @todo: Add packet exception handling here. Right now any
+        /// malformed packet will cause perfdhcp to abort.
+        pkt->unpack();
     }
 
-    /// @todo: Add packet exception handling here. Right now any
-    /// malformed packet will cause perfdhcp to abort.
-    pkt->unpack();
-    return pkt;
+    return (pkt);
 }
 
 void
