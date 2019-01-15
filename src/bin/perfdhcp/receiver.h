@@ -4,7 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#pragma once
+#ifndef PERFDHCP_RECEIVER_H
+#define PERFDHCP_RECEIVER_H
 
 #include <perfdhcp/better_socket.h>
 #include <perfdhcp/command_options.h>
@@ -98,3 +99,5 @@ private:
 
 }
 }
+
+#endif /* PERFDHCP_RECEIVER_H */
