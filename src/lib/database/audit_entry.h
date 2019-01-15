@@ -8,6 +8,10 @@
 #define AUDIT_ENTRY_H
 
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/multi_index_container.hpp>
+#include <boost/multi_index/hashed_index.hpp>
+#include <boost/multi_index/mem_fun.hpp>
+#include <boost/multi_index/ordered_index.hpp>
 #include <boost/shared_ptr.hpp>
 #include <cstdint>
 #include <string>
@@ -150,6 +154,42 @@ private:
 
 /// @brief Pointer to the @c AuditEntry object.
 typedef boost::shared_ptr<AuditEntry> AuditEntryPtr;
+
+/// @brief Tag used to access index by object type.
+struct AuditEntryObjectTypeTag { };
+
+/// @brief Tag used to access index by modification time.
+struct AuditEntryModificationTimeTag { };
+
+/// @brief Multi idnex container holding @c AuditEntry instances.
+///
+/// This container provides indexes to access the audit entries
+/// by object type and modification time.
+typedef boost::multi_index_container<
+    // The container holds pointers to @c AuditEntry objects.
+    AuditEntryPtr,
+    // First index allows for accessing by the object type.
+    boost::multi_index::indexed_by<
+        boost::multi_index::hashed_non_unique<
+            boost::multi_index::tag<AuditEntryObjectTypeTag>,
+            boost::multi_index::const_mem_fun<
+                AuditEntry,
+                std::string,
+                &AuditEntry::getObjectType
+            >
+        >,
+
+        // Second index allows for accessing by the modification time.
+        boost::multi_index::ordered_non_unique<
+            boost::multi_index::tag<AuditEntryModificationTimeTag>,
+            boost::multi_index::const_mem_fun<
+                AuditEntry,
+                boost::posix_time::ptime,
+                &AuditEntry::getModificationTime
+            >
+        >
+    >
+> AuditEntryCollection;
 
 } // end of namespace isc::db
 } // end of namespace isc

@@ -131,4 +131,155 @@ TEST_F(AuditEntryTest, createFailures) {
     }
 }
 
+/// @brief Test fixture class for testing @c AuditEntryCollection.
+class AuditEntryCollectionTest : public AuditEntryTest {
+public:
+
+    /// @brief Constructor.
+    ///
+    /// Creates a collection of audit entries used in the tests.
+    AuditEntryCollectionTest()
+        : AuditEntryTest(), audit_entries_() {
+        createTestAuditEntries();
+    }
+
+    /// @brief Returns a time value being being a specified number of
+    /// seconds later or earlier than the time returned by @c fixedTime.
+    ///
+    /// @param secs offset in seconds since the @c fixedTime output. If
+    /// the parameter is negative, the returned time is earlier than the
+    /// fixed time. Otherwise, it is later than fixed time.
+    boost::posix_time::ptime diffTime(const long secs) {
+        if (secs < 0) {
+            return (fixedTime() - boost::posix_time::seconds(-secs));
+        }
+        return (fixedTime() + boost::posix_time::seconds(secs));
+    }
+
+    /// @brief Creates an @c AuditEntry instance and inserts it to
+    /// the @c audit_entries_ collection.
+    ///
+    /// @tparam Args types of the arguments to be passed to the @c AuditEntry
+    /// constructors.
+    /// @param args arguments to be passed to the @c AuditEntry constructors.
+    template<typename... Args>
+    void create(Args&& ...args) {
+        audit_entries_.insert(boost::make_shared<AuditEntry>(args...));
+    }
+
+    /// @brief Creates a collection of @c AuditEntry objects to be used by
+    /// the tests.
+    void createTestAuditEntries() {
+        create("dhcp4_subnet", 10, AuditEntry::ModificationType::CREATE,
+               diffTime(-5), "added subnet 10");
+        create("dhcp4_shared_network", 1, AuditEntry::ModificationType::CREATE,
+               diffTime(-5), "added shared network 1");
+        create("dhcp4_shared_network", 120, AuditEntry::ModificationType::UPDATE,
+               diffTime(-8), "updated shared network 120");
+        create("dhcp4_subnet", 120, AuditEntry::ModificationType::DELETE,
+               diffTime(8), "deleted subnet 120");
+        create("dhcp4_subnet", 1000, AuditEntry::ModificationType::CREATE,
+               diffTime(4), "created subnet 1000");
+        create("dhcp4_option", 15, AuditEntry::ModificationType::UPDATE,
+               diffTime(16), "updated option 15");
+    }
+
+    /// @brief Checks if the returned results range contains an @c AuditEntry
+    /// with a given object type and identifier.
+    ///
+    /// @param object_type expected object type.
+    /// @param object_id expected object id.
+    /// @param begin beginning of the results range to be examined.
+    /// @param end end of the results range to be examined.
+    template<typename Iterator>
+    bool includes(const std::string& object_type, const uint64_t object_id,
+                  Iterator begin, Iterator end) {
+        // Iterate over the results range and look for the entry.
+        for (auto it = begin; it != end; ++it) {
+            if (((*it)->getObjectType() == object_type) &&
+                ((*it)->getObjectId() == object_id)) {
+                // Entry found.
+                return (true);
+            }
+        }
+
+        // Entry not found.
+        return (false);
+    }
+
+    /// @brief Audit entries used in the tests.
+    AuditEntryCollection audit_entries_;
+
+};
+
+// Checks that entries can be found by object type.
+TEST_F(AuditEntryCollectionTest, getByObjectType) {
+    const auto& object_type_idx = audit_entries_.get<AuditEntryObjectTypeTag>();
+
+    // Search for "dhcp4_subnet" objects.
+    auto range = object_type_idx.equal_range("dhcp4_subnet");
+    ASSERT_EQ(3, std::distance(range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10, range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, range.first, range.second));
+
+    // Search for "dhcp4_shared_network" objects.
+    range = object_type_idx.equal_range("dhcp4_shared_network");
+    ASSERT_EQ(2, std::distance(range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 1, range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 120, range.first, range.second));
+
+    // Search for "dhcp4_option" objects.
+    range = object_type_idx.equal_range("dhcp4_option");
+    ASSERT_EQ(1, std::distance(range.first, range.second));
+    EXPECT_TRUE(includes("dhcp4_option", 15, range.first, range.second));
+}
+
+// Checks that entries can be found by modification time.
+TEST_F(AuditEntryCollectionTest, getByModificationTime) {
+    const auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+
+    // Search for objects later than fixed time - 10s.
+    auto lb = mod_time_idx.lower_bound(diffTime(-10));
+    ASSERT_EQ(6, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 1, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Search for objects later than fixed time - 7s.
+    lb = mod_time_idx.lower_bound(diffTime(-7));
+    ASSERT_EQ(5, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 10, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_shared_network", 1, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Search for objects later than fixed time - 1s.
+    lb = mod_time_idx.lower_bound(diffTime(-1));
+    ASSERT_EQ(3, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 1000, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Search for objects later than fixed time + 6s.
+    lb = mod_time_idx.lower_bound(diffTime(6));
+    ASSERT_EQ(2, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_subnet", 120, lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Search for objects later than fixed time + 10s.
+    lb = mod_time_idx.lower_bound(diffTime(10));
+    ASSERT_EQ(1, std::distance(lb, mod_time_idx.end()));
+    EXPECT_TRUE(includes("dhcp4_option", 15, lb, mod_time_idx.end()));
+
+    // Search for objects later than fixed time + 20s.
+    lb = mod_time_idx.lower_bound(diffTime(20));
+    // None found.
+    ASSERT_EQ(0, std::distance(lb, mod_time_idx.end()));
+}
+
 }
