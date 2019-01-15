@@ -398,7 +398,7 @@ protected:
     /// \param type option-type (ignored).
     /// \param buf option-buffer (ignored).
     /// \return instance o the generic option.
-     static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
+    static dhcp::OptionPtr factoryRequestList4(dhcp::Option::Universe u,
                                                uint16_t type,
                                                const dhcp::OptionBuffer& buf);
 
@@ -558,22 +558,6 @@ protected:
     /// \throw isc::Unexpected if unexpected error occurred.
     void processReceivedPacket6(const BetterSocket& socket,
                                 const dhcp::Pkt6Ptr& pkt6);
-
-    /// \brief Receive DHCPv4 or DHCPv6 packets from the server.
-    ///
-    /// Method receives DHCPv4 or DHCPv6 packets from the server.
-    /// This function will call \ref processReceivedPacket4 or
-    /// \ref processReceivedPacket6 depending if DHCPv4 or DHCPv6 packet
-    /// has arrived.
-    ///
-    /// \warning this method does not check if provided socket is
-    /// valid. Ensure that it is valid prior to calling it.
-    ///
-    /// \param socket socket to be used.
-    /// \throw isc::BadValue if unknown message type received.
-    /// \throw isc::Unexpected if unexpected error occurred.
-    /// \return number of received packets.
-    uint64_t receivePackets(const BetterSocket& socket);
 
     /// \brief Register option factory functions for DHCPv4
     ///
