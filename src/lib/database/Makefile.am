@@ -23,7 +23,8 @@ EXTRA_DIST = db_messages.mes
 CLEANFILES = *.gcno *.gcda db_messages.h db_messages.cc s-messages
 
 lib_LTLIBRARIES = libkea-database.la
-libkea_database_la_SOURCES  = backend_selector.cc backend_selector.h
+libkea_database_la_SOURCES  = audit_entry.cc audit_entry.h
+libkea_database_la_SOURCES += backend_selector.cc backend_selector.h
 libkea_database_la_SOURCES += database_connection.cc database_connection.h
 libkea_database_la_SOURCES += dbaccess_parser.h dbaccess_parser.cc
 libkea_database_la_SOURCES += db_exceptions.h
@@ -45,6 +46,7 @@ libkea_database_la_LDFLAGS = -no-undefined -version-info 1:0:0
 # Specify the headers for copying into the installation directory tree.
 libkea_database_includedir = $(pkgincludedir)/database
 libkea_database_include_HEADERS = \
+	audit_entry.h \
 	backend_selector.h \
 	database_connection.h \
 	dbaccess_parser.h \
