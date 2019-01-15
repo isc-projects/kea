@@ -4,7 +4,8 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#pragma once
+#ifndef BETTER_SOCKET_H
+#define BETTER_SOCKET_H
 
 #include <dhcp/socket_info.h>
 
@@ -56,3 +57,5 @@ private:
 
 }
 }
+
+#endif /* BETTER_SOCKET_H */
