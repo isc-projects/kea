@@ -1,6 +1,6 @@
-// Copyright (C) 2017-2018 Deutsche Telekom AG.
+// Copyright (C) 2018 Deutsche Telekom AG.
 //
-// Authors: Andrei Pavel <andrei.pavel@qualitance.com>
+// Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,16 +16,13 @@
 
 #include <config.h>
 
-#include <benchmark/benchmark.h>
-#include <log/logger_support.h>
+#include <sql_common.h>
 
-/// @brief A simple class that initializes logging.
-struct Initializer {
-    Initializer() {
-        isc::log::initLogger();
-    }
-};
+namespace isc {
+namespace db {
 
-Initializer initializer;
+SqlExchange::~SqlExchange() {
+}
 
-BENCHMARK_MAIN();
+}  // namespace db
+}  // namespace isc

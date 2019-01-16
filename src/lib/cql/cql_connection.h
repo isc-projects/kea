@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -19,28 +19,21 @@
 #ifndef CQL_CONNECTION_H
 #define CQL_CONNECTION_H
 
+#include <cql/cql_memory_mgr.h>
+
 #include <database/database_connection.h>
 
 #include <cassandra.h>
 
-#include <cstring>
-#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
-#include <vector>
 
 namespace isc {
 namespace db {
 
-/// @brief Pair containing major and minor versions
-/// @todo: This is already defined in lease_mgr.h. Need to have one
-/// definition. May need to move it if necessary.
-typedef std::pair<uint32_t, uint32_t> VersionPair;
-
 /// @brief Statement index representing the statement name
-typedef char const* const StatementTag;
+typedef char const* StatementTag;
 
 /// @brief Define CQL backend version. The CASS_VERSION_* constants
 ///        are defined in a header provided by cpp-driver.
@@ -57,15 +50,14 @@ constexpr uint32_t CQL_SCHEMA_VERSION_MINOR = 0u;
 
 /// @brief Defines a single statement or query
 struct CqlTaggedStatement {
-
     /// Short description of the query
-    StatementTag name_;
+    std::string const name_;
 
     /// Text representation of the actual query
-    char const* const text_;
+    std::string const text_;
 
     /// Internal Cassandra object representing the prepared statement
-    const CassPrepared* prepared_statement_;
+    CassPreparedPtr prepared_statement_;
 
     /// Should the statement be executed raw or with binds?
     bool is_raw_;
@@ -73,16 +65,16 @@ struct CqlTaggedStatement {
     /// @brief Constructor
     /// @param name brief name of the query
     /// @param text text (CQL) representation of the query
-    CqlTaggedStatement(StatementTag name, char const* const text)
-        : name_(name), text_(text), prepared_statement_(NULL), is_raw_(false) {
+    CqlTaggedStatement(std::string const& name, std::string const& text)
+        : name_(name), text_(text), is_raw_(false) {
     }
 
     /// @brief Constructor
     /// @param name brief name of the query
     /// @param text text (CQL) representation of the query
     /// @param is_raw should the statement be executed raw?
-    CqlTaggedStatement(StatementTag name, char const* const text, bool const& is_raw)
-        : name_(name), text_(text), prepared_statement_(NULL), is_raw_(is_raw) {
+    CqlTaggedStatement(StatementTag const& name, std::string const& text, bool const& is_raw)
+        : name_(name), text_(text), is_raw_(is_raw) {
     }
 };
 
@@ -103,11 +95,7 @@ struct StatementTagEqual {
 };
 
 /// @brief A container for all statements.
-typedef std::unordered_map<StatementTag, CqlTaggedStatement,
-                           StatementTagHash, StatementTagEqual> StatementMap;
-
-/// @brief A type for a single entry on the statements map
-typedef std::pair<StatementTag, CqlTaggedStatement> StatementMapEntry;
+typedef std::unordered_map<std::string, CqlTaggedStatement> StatementMap;
 
 /// @brief Common CQL connector pool
 ///
@@ -155,9 +143,11 @@ public:
     /// - request-timeout 12000
     /// - tcp-keepalive no
     /// - tcp-nodelay no
+    /// - max-statement-tries 3
     ///
     /// @throw DbOpenError error opening the database
     void openDatabase();
+
 
     /// @brief Set consistency
     void setConsistency(bool force, CassConsistency consistency);
@@ -181,29 +171,26 @@ public:
     /// @param future the structure that holds the status of operation
     /// @param statement_tag statement that was used (optional)
     /// @return text description of the error
-    static const std::string
-    checkFutureError(const std::string& what,
-                     CassFuture* future,
-                     StatementTag statement_tag = NULL);
+    static std::string const checkFutureError(std::string const& what,
+                                              CassFuturePtr& future,
+                                              StatementTag statement_tag = "");
+
 
     /// @brief Pointer to external array of tagged statements containing
     ///     statement name, array of names of bind parameters and text query
     StatementMap statements_;
 
     /// @brief CQL connection handle
-    CassCluster* cluster_;
+    CassClusterPtr cluster_;
 
     /// @brief CQL session handle
-    CassSession* session_;
+    CassSessionPtr session_;
 
     /// @brief CQL consistency
     CassConsistency consistency_;
 
-    // @brief Schema meta information, used for UDTs
-    const CassSchemaMeta* schema_meta_;
-
-    /// @brief Keyspace meta information, used for UDTs
-    const CassKeyspaceMeta* keyspace_meta_;
+    /// @brief Maximum tries for any executeMutation().
+    uint32_t max_statement_tries_;
 
     /// @brief CQL consistency enabled
     bool force_consistency_;

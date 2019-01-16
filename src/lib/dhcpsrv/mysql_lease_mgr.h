@@ -316,7 +316,7 @@ public:
     /// @return Lease collection (may be empty if no IPv6 lease found)
     /// for the DUID.
     virtual Lease6Collection getLeases6(const DUID& duid) const;
-    
+
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first
@@ -397,16 +397,19 @@ public:
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param addr Address of the lease to be deleted.  This can be an IPv4
-    ///             address or an IPv6 address.
+    /// @param lease lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease4Ptr& lease);
+
+    /// @brief Deletes an IPv6 lease.
     ///
-    /// @throw isc::db::DbOperationError An operation on the open database has
-    ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    /// @param lease lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
     ///
@@ -547,7 +550,7 @@ public:
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const;
+    virtual db::VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///

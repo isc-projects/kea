@@ -8,7 +8,9 @@
 #define TEST_CQL_SCHEMA_H
 
 #include <config.h>
+
 #include <database/testutils/schema.h>
+
 #include <string>
 
 namespace isc {
@@ -35,13 +37,17 @@ std::string validCqlConnectionString();
 /// @param force_wipe forces wipe of the database, even if
 /// KEA_TEST_CASSANDRA_WIPE is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void destroyCqlSchema(bool force_wipe, bool show_err = false);
+void destroyCqlSchema(bool force_wipe, bool show_err = true);
 
 /// @brief Create the CQL Schema
 ///
 /// Submits the current schema creation script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/cql/dhcpdb_create.cql
+///
+/// and the configuration upgrade script:
+///
+/// <TEST_ADMIN_SCRIPTS_DIR>/cql/configdb_create.cql
 ///
 /// to the unit test CQL database. If the script fails, the invoking test
 /// will fail. The output of stderr is suppressed unless the parameter,
@@ -50,7 +56,7 @@ void destroyCqlSchema(bool force_wipe, bool show_err = false);
 /// @param force_wipe forces wipe of the database, even if
 /// KEA_TEST_CASSANDRA_WIPE is set.
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void createCqlSchema(bool force_wipe, bool show_err = false);
+void createCqlSchema(bool force_wipe, bool show_err = true);
 
 /// @brief Run a CQL script against the CQL unit test database
 ///
@@ -62,8 +68,7 @@ void createCqlSchema(bool force_wipe, bool show_err = false);
 /// @param path - path (if not blank) of the script to execute
 /// @param script_name - file name of the path to execute
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void runCqlScript(const std::string& path, const std::string& script_name,
-                    bool show_err);
+void runCqlScript(const std::string& path, const std::string& script_name, bool show_err);
 
 /// @brief Returns status if the soft-wipe is enabled or not.
 ///
@@ -88,8 +93,9 @@ void runCqlScript(const std::string& path, const std::string& script_name,
 ///
 /// @return true if soft-wipe is enabled, false otherwise
 bool softWipeEnabled();
-};
-};
-};
 
-#endif
+}  // namespace test
+}  // namespace db
+}  // namespace isc
+
+#endif  // TEST_CQL_SCHEMA_H

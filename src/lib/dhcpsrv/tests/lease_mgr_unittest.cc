@@ -15,6 +15,7 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 #include <time.h>
@@ -293,13 +294,11 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease6(const Lease6Ptr&) {}
 
-    /// @brief Deletes a lease.
-    ///
-    /// @param addr Address of the lease to be deleted. (This can be either
-    ///        a V4 address or a V6 address.)
-    ///
-    /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease(const isc::asiolink::IOAddress&) {
+    virtual bool deleteLease(const Lease4Ptr&) {
+        return (false);
+    }
+
+    virtual bool deleteLease(const Lease6Ptr&) {
         return (false);
     }
 
@@ -364,8 +363,8 @@ public:
     }
 
     /// @brief Returns backend version.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
-        return (make_pair(uint32_t(0), uint32_t(0)));
+    virtual VersionPair getVersion() const {
+        return std::make_pair(uint32_t(0), uint32_t(0));
     }
 
     /// @brief Commit transactions
@@ -412,11 +411,11 @@ TEST_F(LeaseMgrTest, getLease6) {
     Lease6Ptr lease;
 
     // the getLease6() is calling getLeases6(), which is a dummy. It returns
-    // whatever is there in leases6_ field.
+    // whatever is in leases6_ field.
     EXPECT_NO_THROW(lease = mgr->getLease6(leasetype6_[1], *leases[1]->duid_,
                                            leases[1]->iaid_,
                                            leases[1]->subnet_id_));
-    EXPECT_TRUE(Lease6Ptr() == lease);
+    EXPECT_FALSE(lease);
 
     // For a single lease, the function should return that lease
     mgr->leases6_.push_back(leases[1]);
@@ -481,4 +480,4 @@ TEST (LeaseStatsQueryTest, subnetRangeCtor) {
 // are purely virtual, so we would only call ConcreteLeaseMgr methods.
 // Those methods are just stubs that do not return anything.
 
-}; // end of anonymous namespace
+}  // namespace

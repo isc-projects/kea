@@ -10,14 +10,12 @@
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
 #include <database/db_exceptions.h>
+#include <database/sql_common.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-
-#include <boost/noncopyable.hpp>
-#include <boost/shared_ptr.hpp>
 
 #include <fstream>
 #include <iostream>
@@ -35,9 +33,6 @@
 /// from LeaseMgr class.
 namespace isc {
 namespace dhcp {
-
-/// @brief Pair containing major and minor versions
-typedef std::pair<uint32_t, uint32_t> VersionPair;
 
 /// @brief Wraps value holding size of the page with leases.
 class LeasePageSize {
@@ -208,6 +203,9 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
+
+/// @brief Collection of the @c LeaseStatsRow objects.
+typedef std::vector<LeaseStatsRowPtr> LeaseStatsCollection;
 
 /// @brief Abstract Lease Manager
 ///
@@ -459,9 +457,9 @@ public:
 
     /// @brief Returns collection of leases for matching DUID
     ///
-    /// @return Lease collection 
+    /// @return Lease collection
     /// (may be empty if no IPv6 lease found for the DUID).
-    virtual Lease6Collection getLeases6(const DUID& duid) const = 0; 
+    virtual Lease6Collection getLeases6(const DUID& duid) const = 0;
 
     /// @brief Returns range of IPv6 leases using paging.
     ///
@@ -531,14 +529,23 @@ public:
 
     /// @brief Deletes a lease.
     ///
-    /// @param addr Address of the lease to be deleted. This can be an IPv4
-    ///             address or an IPv6 address.
+    /// @param lease IPv4 lease to be deleted
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    ///
+    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    ///        failed.
+    virtual bool deleteLease(const Lease4Ptr& lease) = 0;
+
+    /// @brief Deletes a lease.
+    ///
+    /// @param lease IPv6 lease to be deleted
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
     /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
+    virtual bool deleteLease(const Lease6Ptr& lease) = 0;
 
     /// @brief Deletes all expired and reclaimed DHCPv4 leases.
     ///
@@ -726,7 +733,7 @@ public:
     /// B>=A and B=C (it is ok to have newer backend, as it should be backward
     /// compatible)
     /// Also if B>C, some database upgrade procedure may be triggered
-    virtual VersionPair getVersion() const = 0;
+    virtual db::VersionPair getVersion() const = 0;
 
     /// @brief Commit Transactions
     ///

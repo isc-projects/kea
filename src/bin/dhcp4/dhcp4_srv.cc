@@ -38,7 +38,6 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/utils.h>
-#include <dhcpsrv/utils.h>
 #include <eval/evaluate.h>
 #include <eval/eval_messages.h>
 #include <hooks/callout_handle.h>
@@ -69,6 +68,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <iomanip>
+
 
 using namespace isc;
 using namespace isc::asiolink;
@@ -2761,7 +2761,7 @@ Dhcpv4Srv::processRelease(Pkt4Ptr& release, AllocEngine::ClientContext4Ptr& cont
         // Callout didn't indicate to skip the release process. Let's release
         // the lease.
         if (!skip) {
-            bool success = LeaseMgrFactory::instance().deleteLease(lease->addr_);
+            bool success = LeaseMgrFactory::instance().deleteLease(lease);
 
             if (success) {
 
@@ -3652,5 +3652,5 @@ void Dhcpv4Srv::discardPackets() {
     HooksManager::clearParkingLots();
 }
 
-}   // namespace dhcp
-}   // namespace isc
+}  // namespace dhcp
+}  // namespace isc

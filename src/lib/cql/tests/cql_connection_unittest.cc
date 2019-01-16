@@ -1,9 +1,19 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v. 2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/.
+// Author: Andrei Pavel <andrei.pavel@qualitance.com>
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//           http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
 
 #include <config.h>
 
@@ -16,66 +26,35 @@
 
 #include <gtest/gtest.h>
 
+using namespace isc::db;
+
 namespace {
 
-using isc::db::CqlTaggedStatement;
-using isc::db::StatementMap;
-using isc::db::StatementTag;
-using isc::db::StatementTagHash;
-using isc::db::exchangeType;
-
-class CqlConnectionTest {
-public:
-    /// @brief Constructor
-    CqlConnectionTest() {
-    }
-
-    /// @brief Destructor
-    virtual ~CqlConnectionTest() {
-    }
-};
+struct CqlConnectionTest {};
 
 /// @brief Check that the key is properly hashed for StatementMap.
-TEST(CqlConnection, statementMapHash) {
+TEST(CqlConnectionTest, statementMapHash) {
     // Build std::strings to prevent optimizations on underlying C string.
     std::string tag1_s = "same";
     std::string tag2_s = "same";
-    StatementTag tag1 = tag1_s.c_str();
-    StatementTag tag2 = tag2_s.c_str();
-    StatementMap map;
+    char const* const tag1 = tag1_s.c_str();
+    char const* const tag2 = tag2_s.c_str();
 
     // Make sure addresses are different.
     EXPECT_NE(tag1, tag2);
 
     // Insert two entries with the same key value.
-    map.insert({tag1, CqlTaggedStatement(tag1, "your fancy select here")});
-    map.insert({tag2, CqlTaggedStatement(tag2, "DELETE FROM world.evil")});
+    StatementMap map;
+    map.insert({tag1, {tag1, "your fancy select here"}});
+    map.insert({tag2, {tag2, "DELETE FROM world.evil}"}});
 
     // Make sure the first one was overwritten.
-    char const* const tag1_text = map.find(tag1)->second.text_;
-    char const* const tag2_text = map.find(tag2)->second.text_;
-    EXPECT_TRUE(tag1_text);
-    EXPECT_TRUE(tag2_text);
-    ASSERT_EQ(std::strcmp(tag1_text, tag2_text), 0);
+    std::string const tag1_text = map.at(tag1).text_;
+    std::string const tag2_text = map.at(tag2).text_;
+    EXPECT_NE(tag1_text.size(), 0);
+    EXPECT_NE(tag2_text.size(), 0);
+    ASSERT_EQ(tag1_text, tag2_text);
     ASSERT_EQ(map.size(), 1u);
 }
 
-/// @brief Check anything related to exchange types.
-TEST(CqlConnection, exchangeTypeCoverage) {
-    // Check that const and non-const are supported and both point to the same
-    // exchange type.
-    int i = 1;
-
-    // non-const
-    int* pi = &i;
-    boost::any bi(pi);
-
-    // const
-    int* const cpi = &i;
-    boost::any bci(cpi);
-
-    ASSERT_EQ(exchangeType(bi), exchangeType(bci));
-}
-
 }  // namespace
-

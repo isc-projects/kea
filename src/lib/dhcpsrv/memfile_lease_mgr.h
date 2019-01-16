@@ -316,10 +316,10 @@ public:
     /// @brief Returns IPv6 leases for the DUID.
     ///
     /// @todo: implement an optimised of the query using index.
-    /// @return Lease collection (may be empty if no IPv6 lease found) 
+    /// @return Lease collection (may be empty if no IPv6 lease found)
     /// for the DUID.
     virtual Lease6Collection getLeases6(const DUID& duid) const;
-    
+
     /// @brief Returns range of IPv6 leases using paging.
     ///
     /// This method implements paged browsing of the lease database. The first
@@ -394,13 +394,19 @@ public:
     /// If no such lease is present, an exception will be thrown.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
-    /// @brief Deletes a lease.
+    /// @brief Deletes an IPv4 lease.
     ///
-    /// @param addr Address of the lease to be deleted. (This can be IPv4 or
-    ///        IPv6.)
+    /// @param lease lease being deleted.
     ///
     /// @return true if deletion was successful, false if no such lease exists
-    virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
+    virtual bool deleteLease(const Lease4Ptr& lease);
+
+    /// @brief Deletes an IPv6 lease.
+    ///
+    /// @param lease lease being deleted.
+    ///
+    /// @return true if deletion was successful, false if no such lease exists
+    virtual bool deleteLease(const Lease6Ptr& lease);
 
     /// @brief Deletes all expired-reclaimed DHCPv4 leases.
     ///
@@ -504,8 +510,8 @@ public:
     ///
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
-    virtual std::pair<uint32_t, uint32_t> getVersion() const {
-        return (std::make_pair(MAJOR_VERSION, MINOR_VERSION));
+    virtual db::VersionPair getVersion() const {
+        return std::make_pair(MAJOR_VERSION, MINOR_VERSION);
     }
 
     /// @brief Commit Transactions
@@ -848,7 +854,7 @@ private:
     //@}
 };
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc
 
 #endif // MEMFILE_LEASE_MGR_H

@@ -16,19 +16,32 @@ namespace db {
 ///
 /// Cassandra have a concept of mutation (any statement that does change the
 /// data, like INSERT, UPDATE or DELETE). Under certain conditions it may be
-/// possible that those statesments may fail to apply.
-class StatementNotApplied : public Exception {
-public:
+/// possible that those statements may fail to apply.
+struct StatementNotApplied : public Exception {
     StatementNotApplied(const char* file, size_t line, const char* what)
-        : isc::Exception(file, line, what) {
+        : Exception(file, line, what) {
     }
 };
 
-/// @brief Multiple lease records found where one expected
-class MultipleRecords : public Exception {
-public:
-    MultipleRecords(const char* file, size_t line, const char* what) :
-        isc::Exception(file, line, what) {}
+/// @brief Zero or multiple records found where one expected
+struct SingleRecordException : public Exception {
+    SingleRecordException(const char* file, size_t line, const char* what)
+        : Exception(file, line, what) {
+    }
+};
+
+/// @brief Zero records found where one expected
+struct ZeroRecords : public SingleRecordException {
+    ZeroRecords(const char* file, size_t line, const char* what)
+        : SingleRecordException(file, line, what) {
+    }
+};
+
+/// @brief Multiple records found where one expected
+struct MultipleRecords : public SingleRecordException {
+    MultipleRecords(const char* file, size_t line, const char* what)
+        : SingleRecordException(file, line, what) {
+    }
 };
 
 /// @brief Data is truncated
