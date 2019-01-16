@@ -116,7 +116,7 @@ public:
 
     /// @brief Returns modification time.
     ///
-    /// @return Modification time of the correponding record.
+    /// @return Modification time of the corresponding record.
     boost::posix_time::ptime getModificationTime() const {
         return (modification_time_);
     }
@@ -161,7 +161,7 @@ struct AuditEntryObjectTypeTag { };
 /// @brief Tag used to access index by modification time.
 struct AuditEntryModificationTimeTag { };
 
-/// @brief Multi idnex container holding @c AuditEntry instances.
+/// @brief Multi index container holding @c AuditEntry instances.
 ///
 /// This container provides indexes to access the audit entries
 /// by object type and modification time.
