@@ -20,7 +20,7 @@ EXTRA_DIST = $(man_MANS) kea-netconf.xml
 
 if GENERATE_DOCS
 kea-netconf.8: kea-netconf.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-netconf.xml
 

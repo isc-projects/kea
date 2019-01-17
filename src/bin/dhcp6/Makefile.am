@@ -31,7 +31,7 @@ EXTRA_DIST += dhcp6_parser.yy
 if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
 	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp6.xml
 
