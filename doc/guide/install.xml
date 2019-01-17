@@ -117,9 +117,9 @@
             <listitem>
                 <para>Boost C++ Libraries
           (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>).
-          The oldest Boost version used for testing is 1.57 (it may work with
-          older versions). The Boost system library is required. Building the Boost
-          header only is no longer recommended.
+          The oldest Boost version used for testing is 1.57 (although it may also work with
+          older versions). The Boost system library must also be installed. Installing
+          a header-only version of Boost is no longer recommended.
         </para>
         </listitem>
 
@@ -195,14 +195,16 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          FreeRADIUS client library when --with-freeradius configuration flag used.
+          The FreeRADIUS client library is required to connect to a RADIUS server.
+          (This is specified using the --with-freeradius configuration switch.)
         </para>
         </listitem>
 
         <listitem>
         <para>
-          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r2 or later) when
-          --with-sysrepo configuration flag used.
+          Sysrepo (version 0.7.6 or later) and libyang (version 0.16-r2 or later)
+          are needed to connect to a Sysrepo database. (This is specified using
+          the --with-sysrepo switch when running "configure".)
         </para>
         </listitem>
 
@@ -233,10 +235,10 @@ Debian and Ubuntu:
     <section xml:id="install">
       <title>Installation from Source</title>
       <para>
-        Kea is open source software written in C++. It is freely available in
-        source code form from ISC as a downloadable tar file. A copy of the Kea
-        source code repository is accessible from Gitlab (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>).
-        Kea may also be available in pre-compiled ready-to-use packages from operating system vendors.
+        Although Kea may be available in pre-compiled, ready-to-use packages from operating system vendors, it is open source software written in C++. As such, it is freely available in
+        source code form from ISC as a downloadable tar file. The source code can also be obtained from the
+        Kea Gitlab repository at (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea">https://gitlab.isc.org/isc-projects/kea</uri>).
+        This section describes how to build Kea from the source code.
       </para>
 
       <section>
@@ -674,8 +676,8 @@ $ <userinput>make</userinput>
 </screen>
         </para>
         <para>
-          As of June 2016, cpp-driver does not include cql_config script
-          yet. Work is in progress to contribute such a script to the cpp-driver
+          As of January 2019, cpp-driver does not include cql_config script.
+          Work is in progress to contribute such a script to the cpp-driver
           project but, until that is complete, intermediate steps need to
           be conducted. A cql_config script is present in the tools/ directory
           of the Kea sources. Before using it, please create a
