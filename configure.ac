@@ -1397,6 +1397,14 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
 
 if test "x$enable_generate_docs" != xno ; then
 
+# xsltproc --nonet parameter
+  NONET="--nonet"
+  AC_ARG_VAR(XSLTPROC_NET, [xsltproc uses the Internet to fetch DTDs, entities or documents.])
+  if test "x$XSLTPROC_NET" != x ; then
+    NONET=
+  fi
+  AC_SUBST(NONET)
+
 # Check for xsltproc
   AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
@@ -1404,11 +1412,11 @@ if test "x$enable_generate_docs" != xno ; then
   else
     AC_MSG_CHECKING([if $XSLTPROC works])
     # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
     fi
-    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
     fi

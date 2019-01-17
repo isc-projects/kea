@@ -18,7 +18,7 @@ EXTRA_DIST += agent.dox agent_hooks.dox
 
 if GENERATE_DOCS
 kea-ctrl-agent.8: kea-ctrl-agent.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-ctrl-agent.xml
 

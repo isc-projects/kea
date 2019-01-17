@@ -59,7 +59,7 @@ EXTRA_DIST += $(man_MANS) perfdhcp.xml
 if GENERATE_DOCS
 
 perfdhcp.8: perfdhcp.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/perfdhcp.xml
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/perfdhcp.xml
 
 else
 

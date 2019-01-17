@@ -27,7 +27,7 @@ EXTRA_DIST += images/trans_classes.svg images/update_exec_classes.svg
 
 if GENERATE_DOCS
 kea-dhcp-ddns.8: kea-dhcp-ddns.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp-ddns.xml
 
