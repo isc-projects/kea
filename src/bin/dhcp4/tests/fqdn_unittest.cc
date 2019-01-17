@@ -412,6 +412,29 @@ public:
 
     }
 
+    // Create a message holding an empty Hostname option.
+    Pkt4Ptr generatePktWithEmptyHostname(const uint8_t msg_type) {
+
+        Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        // For DISCOVER we don't include server id, because client broadcasts
+        // the message to all servers.
+        if (msg_type != DHCPDISCOVER) {
+            pkt->addOption(srv_->getServerID());
+        }
+
+        pkt->addOption(generateClientId());
+
+        // Create Hostname option.
+        std::string hostname(" ");
+        OptionPtr opt = createHostname(hostname);
+        opt->setData(hostname.begin(), hostname.begin());
+        pkt->addOption(opt);
+
+        return (pkt);
+
+    }
+
     // Create a message holding of a given type
     Pkt4Ptr generatePkt(const uint8_t msg_type) {
         Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
@@ -813,6 +836,17 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
     EXPECT_FALSE(hostname);
 }
 
+// Test that the server does not see an empty Hostname option.
+// Suppressing the empty Hostname is done in libdhcp++ during
+// unpackcing, so technically we don't need this test but,
+// hey it's already written.
+TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithEmptyHostname(DHCPREQUEST));
+    OptionStringPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+    EXPECT_FALSE(hostname);
+}
 
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the partial name.
