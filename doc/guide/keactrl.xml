@@ -112,6 +112,13 @@ kea_verbose=no
 </screen>
       </para>
 
+<note>
+   <para>
+      In the example above, strings of the form @something@ are replaced by the
+      appropriate values when Kea is installed.
+   </para>
+</note>
+
       <para>
         The <parameter>dhcp4</parameter>, <parameter>dhcp6</parameter>,
         <parameter>dhcp_ddns</parameter>, <parameter>ctrl_agent</parameter>,
@@ -145,7 +152,7 @@ kea_verbose=no
         described in <xref linkend="logging"/>, will have no effect as long
         as the <parameter>kea_verbose</parameter> is set to "yes." Setting
         it to "no" will cause the server to use the logging levels specified
-        in the Kea configuration file for respective loggers. If no
+        in the Kea configuration file. If no
         logging configuration is specified, the default settings will be
         used.
       </para>
@@ -180,7 +187,7 @@ kea_verbose=no
         </simpara></listitem>
         <listitem><simpara>
           <command>version</command> - prints out the version of the
-          keactrl tool itself, and also the Kea daemons.
+          keactrl tool itself, together with the versions of the Kea daemons.
         </simpara></listitem>
       </itemizedlist>
       </para>
@@ -258,9 +265,9 @@ INFO/keactrl: Reloading kea-ctrl-agent...
 </screen>
       If any of the servers are not running, an informational message
       is displayed as in the <command>reload</command> command output below.
-      Note that as of 1.5.0, kea-netconf does not yet support SIGHUP signal.
-      If its configuration has changed, please stop and restart it.
-      This limitation will be removed in upcoming Kea releases.
+      Note that as of version 1.5.0, kea-netconf does not support the SIGHUP
+      signal. If its configuration has changed, please stop and restart it for
+      the change to take effect. This limitation will be removed in a future release.
 <screen>
 <userinput>$ keactrl stop</userinput>
 INFO/keactrl: kea-dhcp4 isn't running.
@@ -327,7 +334,7 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
       <para>
         Similarly, the following
         will start only the <command>kea-dhcp4</command> and
-        <command>kea-dhcp-ddns</command> servers, and not
+        <command>kea-dhcp-ddns</command> servers, but not
         <command>kea-dhcp6</command> or <command>kea-ctrl-agent</command>.
 <screen>
 <userinput>$ keactrl start -s dhcp4,dhcp_ddns</userinput>
