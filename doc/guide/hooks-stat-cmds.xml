@@ -85,16 +85,17 @@
             <para><command>subnet-id</command> - The ID of the subnet for which
             lease statistics should be fetched. Use this to get statistics for
             a single subnet. If the subnet does not exist, the command result
-            code will be 3 (i.e. CONTROL_RESULT_EMPTY).
+            code is 3 (i.e. CONTROL_RESULT_EMPTY).
             </para>
           </listitem>
           <listitem>
             <para><command>subnet-range</command> - A pair of subnet IDs which
             describe an inclusive range of subnets for which statistics should
-            be retrieved. Note that fuzzy values are supported, thus allowing
-            for a query for statistics using approximate ID values. If the
-            range does not include any known subnets, the command result code
-            will be 3 (i.e. CONTROL_RESULT_EMPTY).
+            be retrieved. The range may include one or more IDs that correspond
+            to no subnet: in this case, the command will only output lease
+            statistics for those that exist. However, if the range does not
+            include any known subnets, the command result code is 3
+            (i.e. CONTROL_RESULT_EMPTY).
             <itemizedlist>
               <listitem>
                 <para><command>first-subnet-id</command> - The ID of the first
@@ -114,7 +115,7 @@
         subnets, this can result in a large response.
     </para>
     <para>
-      The following command would fetch lease statistics for all known subnets from a kea-dhcp4 server:
+      The following command fetches lease statistics for all known subnets from a kea-dhcp4 server:
 <screen>
 {
   "command": "stat-lease4-get"
@@ -122,7 +123,7 @@
 </screen>
     </para>
     <para>
-        The following command would fetch lease statistcis for subnet ID 10 from a kea-dhcp6 server:
+        The following command fetches lease statistics for subnet ID 10 from a kea-dhcp6 server:
 <screen>
 {
   "command": "stat-lease6-get",
@@ -133,7 +134,7 @@
 </screen>
     </para>
     <para>
-        The following command would fetch lease statistics for all subnets from subnet IDs 10 through 50 from a kea-dhcp4 server:
+        The following command fetches lease statistics for all subnets with IDs in the range 10 through 50 from a kea-dhcp4 server:
 <screen>
 {
   "command": "stat-lease4-get",
