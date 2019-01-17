@@ -21,13 +21,6 @@
     </para>
 
     <para>
-      Kea was initially developed as a part of the BIND 10 framework.
-      In early 2014, ISC made the decision to discontinue active
-      development of BIND 10 and to continue development of Kea as
-      standalone DHCP software.
-    </para>
-
-    <para>
       This guide covers Kea version &keaversion;.
     </para>
 
@@ -64,11 +57,11 @@
 
         <listitem>
             <simpara>
-        Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
+        Kea supports two cryptographic libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
-        crypto library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
-        version 1.9 or later. Note that support for Botan versions earlier than 2.0 will be dropped in the Kea 1.6.0 release. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
+        library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
+        version 1.9 or later. Note that support for Botan versions earlier than 2.0 will be removed in Kea 1.6.0 and later. As an alternative to Botan, Kea can use the
+        OpenSSL cryptographic library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
         version 1.0.2 or later.
             </simpara>
         </listitem>
@@ -83,7 +76,7 @@
 
         <listitem>
           <simpara>
-            Kea requires the Boost system library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>) at run-time, as building with the header-only version of Boost is no longer recommended.
+            Kea requires the Boost system library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>). Building with the header-only version of Boost is no longer recommended.
           </simpara>
         </listitem>
 
@@ -125,7 +118,7 @@
     As of the 1.5.0 release, Kea provides a NETCONF interface with the kea-netconf agent.
     This Kea module is built optionally and requires Sysrepo software when used.
     Building Kea with NETCONF support requires many dependencies to be installed,
-    which are described in more details in <xref linkend="netconf-install"/>.
+    which are described in more detail in <xref linkend="netconf-install"/>.
           </simpara>
         </listitem>
       </itemizedlist>
