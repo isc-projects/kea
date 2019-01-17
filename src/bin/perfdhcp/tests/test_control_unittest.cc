@@ -466,7 +466,7 @@ public:
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
         for (int i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
             // id wll be used by the TestControl class for DHCPDISCOVER.
@@ -531,7 +531,7 @@ public:
         tc.setTransidGenerator(generator);
         // Socket is needed to send packets through the interface.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
         uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
@@ -673,7 +673,7 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
 
         // Send a number of DHCPDISCOVER messages. Each generated message will
         // be assigned a different transaction id, starting from 1 to 10.
@@ -880,7 +880,7 @@ public:
         // Socket has to be created so as we can actually send packets.
         int sock_handle = 0;
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
 
         // Send a number of Solicit messages. Each generated Solicit will be
         // assigned a different transaction id, starting from 1 to 10.
@@ -1373,7 +1373,7 @@ TEST_F(TestControlTest, Packet4) {
         // We have to create the socket to setup some parameters of
         // outgoing packet.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
         // Set parameters on outgoing packet.
@@ -1406,7 +1406,7 @@ TEST_F(TestControlTest, Packet6) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
@@ -1439,7 +1439,7 @@ TEST_F(TestControlTest, Packet6Relayed) {
         // Create the socket. It will be needed to set packet's
         // parameters.
         ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        BetterSocket sock(sock_handle);
+        PerfSocket sock(sock_handle);
         uint32_t transid = 123;
         boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
         // Set packet's parameters.
@@ -1783,7 +1783,7 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
     // Socket is needed to send packets through the interface.
     int sock_handle = 0;
     ASSERT_NO_THROW(sock_handle = tc.openSocket());
-    BetterSocket sock(sock_handle);
+    PerfSocket sock(sock_handle);
 
     // Make tc send the packet. The first packet of each type is saved in templates.
     ASSERT_NO_THROW(tc.sendDiscover4(sock));

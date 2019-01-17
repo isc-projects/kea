@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 
-#include <perfdhcp/better_socket.h>
+#include <perfdhcp/perf_socket.h>
 
 #include <dhcp/iface_mgr.h>
 
@@ -17,7 +17,7 @@ using namespace isc::dhcp;
 namespace isc {
 namespace perfdhcp {
 
-BetterSocket::BetterSocket(const int socket) :
+PerfSocket::PerfSocket(const int socket) :
 SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
     ifindex_(0), valid_(true) {
     try {
@@ -27,7 +27,7 @@ SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, socket),
     }
 }
 
-BetterSocket::~BetterSocket() {
+PerfSocket::~PerfSocket() {
     IfacePtr iface = IfaceMgr::instance().getIface(ifindex_);
     if (iface) {
         iface->delSocket(sockfd_);
@@ -35,7 +35,7 @@ BetterSocket::~BetterSocket() {
 }
 
 void
-BetterSocket::initSocketData() {
+PerfSocket::initSocketData() {
     BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
         BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
             if (s.sockfd_ == sockfd_) {
