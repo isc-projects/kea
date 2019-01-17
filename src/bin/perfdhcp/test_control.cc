@@ -858,7 +858,7 @@ TestControl::openSocket() const {
 }
 
 void
-TestControl::sendPackets(const BetterSocket& socket,
+TestControl::sendPackets(const PerfSocket& socket,
                          const uint64_t packets_num,
                          const bool preload /* = false */) {
     CommandOptions& options = CommandOptions::instance();
@@ -888,7 +888,7 @@ TestControl::sendPackets(const BetterSocket& socket,
 }
 
 uint64_t
-TestControl::sendMultipleRequests(const BetterSocket& socket,
+TestControl::sendMultipleRequests(const PerfSocket& socket,
                                   const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
         if (!sendRequestFromAck(socket)) {
@@ -899,7 +899,7 @@ TestControl::sendMultipleRequests(const BetterSocket& socket,
 }
 
 uint64_t
-TestControl::sendMultipleMessages6(const BetterSocket& socket,
+TestControl::sendMultipleMessages6(const PerfSocket& socket,
                                    const uint32_t msg_type,
                                    const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
@@ -1137,7 +1137,7 @@ TestControl::readPacketTemplate(const std::string& file_name) {
 }
 
 void
-TestControl::processReceivedPacket4(const BetterSocket& socket,
+TestControl::processReceivedPacket4(const PerfSocket& socket,
                             const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
         Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
@@ -1180,7 +1180,7 @@ TestControl::processReceivedPacket4(const BetterSocket& socket,
 }
 
 void
-TestControl::processReceivedPacket6(const BetterSocket& socket,
+TestControl::processReceivedPacket6(const PerfSocket& socket,
                             const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
     if (packet_type == DHCPV6_ADVERTISE) {
@@ -1236,7 +1236,7 @@ TestControl::processReceivedPacket6(const BetterSocket& socket,
 }
 
 unsigned int
-TestControl::consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket) {
+TestControl::consumeReceivedPackets(Receiver& receiver, const PerfSocket& socket) {
     unsigned int pkt_count = 0;
     PktPtr pkt;
     while ((pkt = receiver.getPkt())) {
@@ -1374,7 +1374,7 @@ TestControl::run() {
     printDiagnostics();
     // Option factories have to be registered.
     registerOptionFactories();
-    BetterSocket socket(openSocket());
+    PerfSocket socket(openSocket());
     if (!socket.valid_) {
         isc_throw(Unexpected, "invalid socket descriptor");
     }
@@ -1430,6 +1430,7 @@ TestControl::run() {
         // CPU idle for a moment, to not consume 100% CPU all the time
         // but only if it is not that high request rate expected.
         if (options.getRate() < 10000 && packets_due == 0 && pkt_count == 0) {
+            // @todo: need to implement adaptive time here, so the sleep time is not fixed, but adjusts to current situation.
             usleep(1);
         }
 
@@ -1560,7 +1561,7 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 }
 
 void
-TestControl::sendDiscover4(const BetterSocket& socket,
+TestControl::sendDiscover4(const PerfSocket& socket,
                            const bool preload /*= false*/) {
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
@@ -1609,7 +1610,7 @@ TestControl::sendDiscover4(const BetterSocket& socket,
 }
 
 void
-TestControl::sendDiscover4(const BetterSocket& socket,
+TestControl::sendDiscover4(const PerfSocket& socket,
                            const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
     // Get the first argument if multiple the same arguments specified
@@ -1660,7 +1661,7 @@ TestControl::sendDiscover4(const BetterSocket& socket,
 }
 
 bool
-TestControl::sendRequestFromAck(const BetterSocket& socket) {
+TestControl::sendRequestFromAck(const PerfSocket& socket) {
     // Get one of the recorded DHCPACK messages.
     Pkt4Ptr ack = ack_storage_.getRandom();
     if (!ack) {
@@ -1688,7 +1689,7 @@ TestControl::sendRequestFromAck(const BetterSocket& socket) {
 
 bool
 TestControl::sendMessageFromReply(const uint16_t msg_type,
-                                  const BetterSocket& socket) {
+                                  const PerfSocket& socket) {
     // We only permit Release or Renew messages to be sent using this function.
     if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
         isc_throw(isc::BadValue, "invalid message type " << msg_type
@@ -1718,7 +1719,7 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
 }
 
 void
-TestControl::sendRequest4(const BetterSocket& socket,
+TestControl::sendRequest4(const PerfSocket& socket,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     // Use the same transaction id as the one used in the discovery packet.
@@ -1784,7 +1785,7 @@ TestControl::sendRequest4(const BetterSocket& socket,
 }
 
 void
-TestControl::sendRequest4(const BetterSocket& socket,
+TestControl::sendRequest4(const PerfSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
@@ -1898,7 +1899,7 @@ TestControl::sendRequest4(const BetterSocket& socket,
 }
 
 void
-TestControl::sendRequest6(const BetterSocket& socket,
+TestControl::sendRequest6(const PerfSocket& socket,
                           const Pkt6Ptr& advertise_pkt6) {
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
@@ -1955,7 +1956,7 @@ TestControl::sendRequest6(const BetterSocket& socket,
 }
 
 void
-TestControl::sendRequest6(const BetterSocket& socket,
+TestControl::sendRequest6(const PerfSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const Pkt6Ptr& advertise_pkt6) {
     // Get the second argument if multiple the same arguments specified
@@ -2074,7 +2075,7 @@ TestControl::sendRequest6(const BetterSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const BetterSocket& socket,
+TestControl::sendSolicit6(const PerfSocket& socket,
                           const bool preload /*= false*/) {
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
@@ -2125,7 +2126,7 @@ TestControl::sendSolicit6(const BetterSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const BetterSocket& socket,
+TestControl::sendSolicit6(const PerfSocket& socket,
                           const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
     const int arg_idx = 0;
@@ -2174,7 +2175,7 @@ TestControl::sendSolicit6(const BetterSocket& socket,
 
 
 void
-TestControl::setDefaults4(const BetterSocket& socket,
+TestControl::setDefaults4(const PerfSocket& socket,
                           const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
@@ -2200,7 +2201,7 @@ TestControl::setDefaults4(const BetterSocket& socket,
 }
 
 void
-TestControl::setDefaults6(const BetterSocket& socket,
+TestControl::setDefaults6(const PerfSocket& socket,
                           const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.

@@ -7,15 +7,15 @@
 #ifndef PERFDHCP_RECEIVER_H
 #define PERFDHCP_RECEIVER_H
 
-#include <perfdhcp/better_socket.h>
+#include <perfdhcp/perf_socket.h>
 #include <perfdhcp/command_options.h>
 
 #include <dhcp/pkt.h>
 #include <util/threads/thread.h>
+#include <util/threads/sync.h>
 
 #include <queue>
 #include <thread>
-#include <mutex>
 #include <boost/atomic.hpp>
 
 namespace isc {
@@ -35,7 +35,7 @@ namespace perfdhcp {
 class Receiver {
 public:
     /// \brief Socket for receiving.
-    const BetterSocket& socket_;
+    const PerfSocket& socket_;
 
 private:
     /// \brief Flag indicating if thread should run (true) or not (false).
@@ -48,7 +48,7 @@ private:
     std::queue<dhcp::PktPtr> pkt_queue_;
 
     /// \brief Mutex for controlling access to the queue.
-    std::mutex pkt_queue_mutex_;
+    util::thread::Mutex pkt_queue_mutex_;
 
     /// \brief Single- or thread-mode indicator.
     bool single_threaded_;
@@ -57,7 +57,7 @@ public:
     /// \brief Receiver constructor.
     ///
     /// \param socket A socket for receiving packets.
-    Receiver(const BetterSocket& socket) :
+    Receiver(const PerfSocket& socket) :
         socket_(socket),
         single_threaded_(CommandOptions::instance().isSingleThreaded()) {
     }

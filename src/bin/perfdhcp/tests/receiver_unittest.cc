@@ -20,7 +20,7 @@ TEST(Receiver, singleThreaded) {
     CommandOptionsHelper::process("perfdhcp -g single -l 127.0.0.1 all");
     ASSERT_TRUE(CommandOptions::instance().isSingleThreaded());
 
-    BetterSocket sock(123);
+    PerfSocket sock(123);
 
     Receiver receiver(sock);
 
@@ -37,7 +37,7 @@ TEST(Receiver, multiThreaded) {
     CommandOptionsHelper::process("perfdhcp -g multi -l 127.0.0.1 all");
     ASSERT_FALSE(CommandOptions::instance().isSingleThreaded());
 
-    BetterSocket sock(123);
+    PerfSocket sock(123);
 
     Receiver receiver(sock);
 

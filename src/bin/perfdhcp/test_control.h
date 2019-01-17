@@ -523,7 +523,7 @@ protected:
     /// \brief Pull packets from receiver and process them.
 
     /// It runs in a loop until there are no packets in receiver.
-    unsigned int consumeReceivedPackets(Receiver& receiver, const BetterSocket& socket);
+    unsigned int consumeReceivedPackets(Receiver& receiver, const PerfSocket& socket);
 
     /// \brief Process received DHCPv4 packet.
     ///
@@ -539,7 +539,7 @@ protected:
     /// \param [in] pkt4 object representing DHCPv4 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occurred.
-    void processReceivedPacket4(const BetterSocket& socket,
+    void processReceivedPacket4(const PerfSocket& socket,
                                 const dhcp::Pkt4Ptr& pkt4);
 
     /// \brief Process received DHCPv6 packet.
@@ -556,7 +556,7 @@ protected:
     /// \param [in] pkt6 object representing DHCPv6 packet received.
     /// \throw isc::BadValue if unknown message type received.
     /// \throw isc::Unexpected if unexpected error occurred.
-    void processReceivedPacket6(const BetterSocket& socket,
+    void processReceivedPacket6(const PerfSocket& socket,
                                 const dhcp::Pkt6Ptr& pkt6);
 
     /// \brief Register option factory functions for DHCPv4
@@ -639,7 +639,7 @@ protected:
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::BadValue if MAC address has invalid length.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendDiscover4(const BetterSocket& socket,
+    void sendDiscover4(const PerfSocket& socket,
                        const bool preload = false);
 
     /// \brief Send DHCPv4 DISCOVER message from template.
@@ -657,7 +657,7 @@ protected:
     ///
     /// \throw isc::OutOfRange if randomization offset is out of bounds.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendDiscover4(const BetterSocket& socket,
+    void sendDiscover4(const PerfSocket& socket,
                        const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
 
@@ -682,7 +682,7 @@ protected:
     /// \throw isc::Unexpected if thrown by packet sending method.
     /// \throw isc::InvalidOperation if thrown by packet sending method.
     /// \throw isc::OutOfRange if thrown by packet sending method.
-    void sendPackets(const BetterSocket &socket,
+    void sendPackets(const PerfSocket &socket,
                      const uint64_t packets_num,
                      const bool preload = false);
 
@@ -692,7 +692,7 @@ protected:
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleRequests(const BetterSocket& socket,
+    uint64_t sendMultipleRequests(const PerfSocket& socket,
                                   const uint64_t msg_num);
 
     /// \brief Send number of DHCPv6 Renew or Release messages to the server.
@@ -703,7 +703,7 @@ protected:
     /// \param msg_num A number of messages to be sent.
     ///
     /// \return A number of messages actually sent.
-    uint64_t sendMultipleMessages6(const BetterSocket& socket,
+    uint64_t sendMultipleMessages6(const PerfSocket& socket,
                                    const uint32_t msg_type,
                                    const uint64_t msg_num);
 
@@ -713,7 +713,7 @@ protected:
     /// a packet.
     ///
     /// \return true if the message has been sent, false otherwise.
-    bool sendRequestFromAck(const BetterSocket& socket);
+    bool sendRequestFromAck(const PerfSocket& socket);
 
     /// \brief Send DHCPv6 Renew or Release message using specified socket.
     ///
@@ -728,7 +728,7 @@ protected:
     ///
     /// \return true if the message has been sent, false otherwise.
     bool sendMessageFromReply(const uint16_t msg_type,
-                              const BetterSocket& socket);
+                              const PerfSocket& socket);
 
     /// \brief Send DHCPv4 REQUEST message.
     ///
@@ -744,7 +744,7 @@ protected:
     /// \throw isc::InvalidOperation if Statistics Manager has not been
     /// initialized.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest4(const BetterSocket& socket,
+    void sendRequest4(const PerfSocket& socket,
                       const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
 
@@ -760,7 +760,7 @@ protected:
     /// \param offer_pkt4 OFFER packet received.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest4(const BetterSocket& socket,
+    void sendRequest4(const PerfSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt4Ptr& discover_pkt4,
                       const dhcp::Pkt4Ptr& offer_pkt4);
@@ -782,7 +782,7 @@ protected:
     /// initialized.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest6(const BetterSocket& socket,
+    void sendRequest6(const PerfSocket& socket,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
     /// \brief Send DHCPv6 REQUEST message from template.
@@ -796,7 +796,7 @@ protected:
     /// \param advertise_pkt6 ADVERTISE packet object.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendRequest6(const BetterSocket& socket,
+    void sendRequest6(const PerfSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const dhcp::Pkt6Ptr& advertise_pkt6);
 
@@ -817,7 +817,7 @@ protected:
     ///
     /// \throw isc::Unexpected if failed to create new packet instance.
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendSolicit6(const BetterSocket& socket,
+    void sendSolicit6(const PerfSocket& socket,
                       const bool preload = false);
 
     /// \brief Send DHCPv6 SOLICIT message from template.
@@ -831,7 +831,7 @@ protected:
     /// \param preload mode, packets not included in statistics.
     ///
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
-    void sendSolicit6(const BetterSocket& socket,
+    void sendSolicit6(const PerfSocket& socket,
                       const std::vector<uint8_t>& template_buf,
                       const bool preload = false);
 
@@ -847,7 +847,7 @@ protected:
     ///
     /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
-    void setDefaults4(const BetterSocket& socket,
+    void setDefaults4(const PerfSocket& socket,
                       const dhcp::Pkt4Ptr& pkt);
 
     /// \brief Set default DHCPv6 packet parameters.
@@ -862,7 +862,7 @@ protected:
     ///
     /// \param socket socket used to send the packet.
     /// \param pkt reference to packet to be configured.
-    void setDefaults6(const BetterSocket& socket,
+    void setDefaults6(const PerfSocket& socket,
                       const dhcp::Pkt6Ptr& pkt);
 
     /// @brief Inserts extra options specified by user.

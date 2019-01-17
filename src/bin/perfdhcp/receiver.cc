@@ -6,7 +6,6 @@
 
 #include <perfdhcp/receiver.h>
 #include <perfdhcp/command_options.h>
-#include <util/threads/thread.h>
 
 #include <dhcp/iface_mgr.h>
 
@@ -60,7 +59,7 @@ Receiver::getPkt() {
         return readPktFromSocket();
     } else {
         // In multi thread mode read packet from the queue which is feed by Receiver thread.
-        unique_lock<mutex> lock(pkt_queue_mutex_);
+        util::thread::Mutex::Locker lock(pkt_queue_mutex_);
         if (pkt_queue_.empty()) {
             if (CommandOptions::instance().getIpVersion() == 4) {
                 return Pkt4Ptr();
@@ -140,7 +139,7 @@ Receiver::receivePackets() {
         if (pkt->getType() == DHCPOFFER || pkt->getType() == DHCPACK ||
             pkt->getType() == DHCPV6_ADVERTISE || pkt->getType() == DHCPV6_REPLY) {
             // Otherwise push the packet to the queue, to main thread.
-            unique_lock<mutex> lock(pkt_queue_mutex_);
+            util::thread::Mutex::Locker lock(pkt_queue_mutex_);
             pkt_queue_.push(pkt);
         }
     }
