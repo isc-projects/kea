@@ -1610,12 +1610,12 @@ This rather belong to the DDNS configuration
 <row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 <row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
-<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <!-- Client identifier should not be configured by a user.
-<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>hex</entry><entry>false</entry><entry>true</entry></row>
+<row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry><entry>true</entry></row>
 -->
 <row><entry>nwip-domain-name</entry><entry>62</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>nwip-suboptions</entry><entry>63</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>nwip-suboptions</entry><entry>63</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nisplus-domain-name</entry><entry>64</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>nisplus-servers</entry><entry>65</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>tftp-server-name</entry><entry>66</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
@@ -1629,7 +1629,7 @@ This rather belong to the DDNS configuration
 <row><entry>irc-server</entry><entry>74</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>streettalk-server</entry><entry>75</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>streettalk-directory-assistance-server</entry><entry>76</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
-<row><entry>user-class</entry><entry>77</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>user-class</entry><entry>77</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>slp-directory-agent</entry><entry>78</entry><entry>record (boolean, ipv4-address)</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>slp-service-scope</entry><entry>79</entry><entry>record (boolean, string)</entry><entry>false</entry><entry>false</entry></row>
 <!-- The Client FQDN option value is not explicitly configured.
@@ -1646,7 +1646,7 @@ It is merely echoed by the server
 <row><entry>bcms-controller-names</entry><entry>88</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>bcms-controller-address</entry><entry>89</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <!-- Authentication option requires special processing
-<row><entry>authenticate</entry><entry>90</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>authenticate</entry><entry>90</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 -->
 <!-- Last transaction time and associated IP is dynamically calculated
 <row><entry>client-last-transaction-time</entry><entry>91</entry><entry>uint32</entry><entry>false</entry><entry>false</entry></row>
@@ -1654,9 +1654,9 @@ It is merely echoed by the server
 -->
 <row><entry>client-system</entry><entry>93</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>client-ndi</entry><entry>94</entry><entry>record (uint8, uint8, uint8)</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>uuid-guid</entry><entry>97</entry><entry>record (uint8, hex)</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>uuid-guid</entry><entry>97</entry><entry>record (uint8, binary)</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>uap-servers</entry><entry>98</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>geoconf-civic</entry><entry>99</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>geoconf-civic</entry><entry>99</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>pcode</entry><entry>100</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>tcode</entry><entry>101</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>netinfo-server-address</entry><entry>112</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
@@ -1666,8 +1666,8 @@ It is merely echoed by the server
 <row><entry>name-service-search</entry><entry>117</entry><entry>uint16</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>subnet-selection</entry><entry>118</entry><entry>ipv4-address</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>domain-search</entry><entry>119</entry><entry>fqdn</entry><entry>true</entry><entry>false</entry></row>
-<row><entry>vivco-suboptions</entry><entry>124</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
-<row><entry>vivso-suboptions</entry><entry>125</entry><entry>hex</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vivco-suboptions</entry><entry>124</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vivso-suboptions</entry><entry>125</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>pana-agent</entry><entry>136</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
 <row><entry>v4-lost</entry><entry>137</entry><entry>fqdn</entry><entry>false</entry><entry>false</entry></row>
 <row><entry>capwap-ac-v4</entry><entry>138</entry><entry>ipv4-address</entry><entry>true</entry><entry>false</entry></row>
