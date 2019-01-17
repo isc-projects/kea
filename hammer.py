@@ -278,7 +278,10 @@ class VagrantEnv(object):
 
         if not tarball_path:
             name_ver = 'kea-1.5.0'
-            execute('tar --transform "flags=r;s|^|%s/|" --exclude hammer --exclude "*~" --exclude .git -zcf /tmp/%s.tar.gz .' % (name_ver, name_ver))
+            cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
+            cmd += ' --exclude "*~" --exclude .git --exclude .libs --exclude .deps --exclude \'*.o\'  --exclude \'*.lo\' '
+            cmd += ' -zcf /tmp/%s.tar.gz .' % name_ver
+            execute(cmd)
             tarball_path = '/tmp/%s.tar.gz' % name_ver
         execute('vagrant upload %s %s.tar.gz' % (tarball_path, name_ver), cwd=self.vagrant_dir)
 
@@ -456,6 +459,17 @@ def _install_cassandra_deb():
         execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb')
 
 
+def _install_freeradius_client():
+    execute('rm -rf freeradius-client')
+    execute('git clone https://github.com/fxdupont/freeradius-client.git')
+    execute('git checkout iscdev', cwd='freeradius-client')
+    execute('./configure', cwd='freeradius-client')
+    execute('make', cwd='freeradius-client')
+    execute('sudo make install', cwd='freeradius-client')
+    execute('sudo ldconfig')
+    execute('rm -rf freeradius-client')
+
+
 def _install_cassandra_rpm(system):
     if not os.path.exists('/usr/bin/cassandra'):
         #execute('sudo dnf config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
@@ -497,6 +511,9 @@ def prepare_deps_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
 
+        if 'radius' in features:
+            packages.extend(['git'])
+
         cmd = 'sudo dnf -y install %s' % ' '.join(packages)
         execute(cmd, env=env, timeout=300, check_times=check_times)
 
@@ -523,6 +540,9 @@ def prepare_deps_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql-devel', 'postgresql-server'])
 
+        if 'radius' in features:
+            packages.extend(['git'])
+
         install_yum(packages, env=env, check_times=check_times)
 
         if 'unittest' in features:
@@ -544,6 +564,9 @@ def prepare_deps_local(features, check_times):
 
         # if 'pgsql' in features:
         #     packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
+
+        if 'radius' in features:
+            packages.extend(['git'])
 
         install_cmd = 'sudo dnf -y install %s'
         execute(install_cmd % ' '.join(packages), env=env, check_times=check_times)
@@ -591,6 +614,9 @@ def prepare_deps_local(features, check_times):
         if 'pgsql' in features:
             packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
 
+        if 'radius' in features:
+            packages.extend(['git'])
+
         done = False
         while not done:
             try:
@@ -621,6 +647,9 @@ def prepare_deps_local(features, check_times):
         if 'mysql' in features:
             packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
+        if 'radius' in features:
+            packages.extend(['git'])
+
         execute('sudo apt install --no-install-recommends -y %s' % ' '.join(packages), env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
@@ -637,6 +666,9 @@ def prepare_deps_local(features, check_times):
         if 'docs' in features:
             packages.extend(['libxslt', 'elinks', 'docbook-xsl'])
 
+        if 'radius' in features:
+            packages.extend(['git'])
+
         if 'unittest' in features:
             _install_gtest_sources()
 
@@ -650,6 +682,11 @@ def prepare_deps_local(features, check_times):
 
     if 'pgsql' in features:
         _configure_pgsql(system)
+
+    if 'radius' in features:
+        _install_freeradius_client()
+
+    #execute('sudo rm -rf /usr/share/doc')
 
 
 def build_local(features, tarball_path, check_times):
@@ -744,6 +781,8 @@ def build_local(features, tarball_path, check_times):
                 raise NotImplementedError
         if 'docs' in features and not (distro == 'rhel' and revision == '8'):
             cmd += ' --enable-generate-docs'
+        if 'radius' in features:
+            cmd += ' --with-freeradius=/usr/local'
 
         if distro == 'freebsd':
             cmd += ' --with-boost-include=/usr/local/include'  # TODO: this should be fixed in ./configure.ac
@@ -893,7 +932,7 @@ def ensure_hammer_deps():
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
-ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg']
+ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Kea develepment environment management tool.')
