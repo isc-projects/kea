@@ -1,3 +1,8 @@
+1513.	[func]		godfryd
+	Fixed perfdhcp that now it keeps requested rate during performance
+	testing. Previously it was always about 20% lower than expected.
+	(Gitlab #283,!135, git 329f54bb151ec35888e9a8070cc5fa368d6f1f5e)
+
 1512.   [func]      tmark
 	kea-dhcp4 will now ignore empty Host Name (option code 12) values
 	received from clients.  While an empty value for this option is
