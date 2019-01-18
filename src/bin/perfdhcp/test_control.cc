@@ -139,7 +139,7 @@ TestControl::cleanCachedPackets() {
         // just leave enough packets to handle Renews for 1 second but
         // since we want to randomize leases to be renewed so leave 5
         // times more packets to randomize from.
-        // @todo The cache size might be controlled from the command line.
+        /// @todo The cache size might be controlled from the command line.
         if (reply_storage_.size() > 5 * options.getRenewRate()) {
             reply_storage_.clear(reply_storage_.size() -
                                  5 * options.getRenewRate());
@@ -421,7 +421,7 @@ TestControl::factoryGeneric(Option::Universe u, uint16_t type,
 OptionPtr
 TestControl::factoryIana6(Option::Universe, uint16_t,
                           const OptionBuffer& buf) {
-    // @todo allow different values of T1, T2 and IAID.
+    /// @todo allow different values of T1, T2 and IAID.
     const uint8_t buf_array[] = {
         0, 0, 0, 1,                     // IAID = 1
         0, 0, 3600 >> 8, 3600 & 0xff,  // T1 = 3600
@@ -437,7 +437,7 @@ TestControl::factoryIana6(Option::Universe, uint16_t,
 OptionPtr
 TestControl::factoryIapd6(Option::Universe, uint16_t,
                           const OptionBuffer& buf) {
-    // @todo allow different values of T1, T2 and IAID.
+    /// @todo allow different values of T1, T2 and IAID.
     static const uint8_t buf_array[] = {
         0, 0, 0, 1,                     // IAID = 1
         0, 0, 3600 >> 8, 3600 & 0xff,   // T1 = 3600
@@ -585,7 +585,7 @@ TestControl::generateDuid(uint8_t& randomized) {
       }
       // Get the base DUID. We are going to randomize part of it.
       std::vector<uint8_t> duid(options.getDuidTemplate());
-      // @todo: add support for DUIDs of different sizes.
+      /// @todo: add support for DUIDs of different sizes.
       duid.resize(duid.size());
       std::copy(mac_addr.begin(), mac_addr.end(),
                 duid.begin() + duid.size() - mac_addr.size());
@@ -785,7 +785,7 @@ TestControl::openSocket() const {
               port = DHCP6_SERVER_PORT;
             }
         } else if (options.getIpVersion() == 4) {
-            port = 67; //  TODO: find out why port 68 is wrong here.
+            port = 67; /// @todo: find out why port 68 is wrong here.
         }
     }
 
@@ -869,8 +869,8 @@ TestControl::sendPackets(const PerfSocket& socket,
             if (template_buffers_.empty()) {
                 sendDiscover4(socket, preload);
             } else {
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
+                /// @todo add defines for packet type index that can be
+                /// used to access template_buffers_.
                 sendDiscover4(socket, template_buffers_[0], preload);
             }
         } else {
@@ -879,8 +879,8 @@ TestControl::sendPackets(const PerfSocket& socket,
             if (template_buffers_.empty()) {
                 sendSolicit6(socket, preload);
             } else {
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
+                /// @todo add defines for packet type index that can be
+                /// used to access template_buffers_.
                 sendSolicit6(socket, template_buffers_[0], preload);
             }
         }
@@ -1148,8 +1148,8 @@ TestControl::processReceivedPacket4(const PerfSocket& socket,
             if (template_buffers_.size() < 2) {
                 sendRequest4(socket, discover_pkt4, pkt4);
             } else {
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
+                /// @todo add defines for packet type index that can be
+                /// used to access template_buffers_.
                 sendRequest4(socket, template_buffers_[1], discover_pkt4, pkt4);
             }
         }
@@ -1189,14 +1189,14 @@ TestControl::processReceivedPacket6(const PerfSocket& socket,
         CommandOptions::ExchangeMode xchg_mode =
             CommandOptions::instance().getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
-            // \todo check whether received ADVERTISE packet is sane.
-            // We might want to check if STATUS_CODE option is non-zero
-            // and if there is IAADR option in IA_NA.
+            /// @todo check whether received ADVERTISE packet is sane.
+            /// We might want to check if STATUS_CODE option is non-zero
+            /// and if there is IAADR option in IA_NA.
             if (template_buffers_.size() < 2) {
                 sendRequest6(socket, pkt6);
             } else {
-                // @todo add defines for packet type index that can be
-                // used to access template_buffers_.
+                /// @todo add defines for packet type index that can be
+                /// used to access template_buffers_.
                 sendRequest6(socket, template_buffers_[1], pkt6);
             }
         }
@@ -1430,7 +1430,8 @@ TestControl::run() {
         // CPU idle for a moment, to not consume 100% CPU all the time
         // but only if it is not that high request rate expected.
         if (options.getRate() < 10000 && packets_due == 0 && pkt_count == 0) {
-            // @todo: need to implement adaptive time here, so the sleep time is not fixed, but adjusts to current situation.
+            /// @todo: need to implement adaptive time here, so the sleep time
+            /// is not fixed, but adjusts to current situation.
             usleep(1);
         }
 
@@ -2222,8 +2223,8 @@ TestControl::setDefaults6(const PerfSocket& socket,
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 
     // only act as a relay agent when told so.
-    // TODO: support more level of encapsulation, at the moment we only support
-    // one, via -A1 option.
+    /// @todo: support more level of encapsulation, at the moment we only support
+    /// one, via -A1 option.
     if (options.isUseRelayedV6()) {
       Pkt6::RelayInfo relay_info;
       relay_info.msg_type_ = DHCPV6_RELAY_FORW;
