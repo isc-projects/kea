@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,7 +16,11 @@ namespace cb {
 /// fetched variable length data in them.
 ///
 //@{
-constexpr unsigned long SUBNET_PREFIX_BUF_LENGTH = 32;
+constexpr unsigned long POOL_ADDRESS6_BUF_LENGTH = 45;
+
+constexpr unsigned long SUBNET4_PREFIX_BUF_LENGTH = 32;
+
+constexpr unsigned long SUBNET6_PREFIX_BUF_LENGTH = 64;
 
 constexpr unsigned long DHCP4O6_INTERFACE_BUF_LENGTH = 128;
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -471,6 +471,11 @@ interfaces and is therefore shutting down.
 This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
+
+% DHCP6_OPEN_CONFIG_DB Opening configuration database: %1
+This message is printed when the DHCPv6 server is attempting to open a
+configuration database.  The database access string with password redacted
+is logged.
 
 % DHCP6_OPEN_SOCKET opening service sockets on port %1
 A debug message issued during startup, this indicates that the IPv6 DHCP

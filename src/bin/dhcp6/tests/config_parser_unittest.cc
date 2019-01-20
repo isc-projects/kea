@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,6 +25,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <dhcpsrv/testutils/config_result_check.h>
+#include <dhcpsrv/testutils/test_config_backend_dhcp6.h>
 #include <hooks/hooks_manager.h>
 #include <process/config_ctl_info.h>
 
@@ -6918,6 +6919,19 @@ TEST_F(Dhcp6ParserTest, globalReservations) {
     ASSERT_TRUE(opt_prf);
     EXPECT_EQ(11, static_cast<int>(opt_prf->getValue()));
 }
+
+// Rather than disable these tests they are compiled out.  This avoids them
+// reporting as disbabled and thereby drawing attention to them.
+#ifdef CONFIG_BACKEND
+// This test verifies that configuration control with unsupported type fails
+TEST_F(Dhcp6ParserTest, configControlInfoNoFactory) {
+    string config = PARSER_CONFIGS[6];
+    extractConfig(config);
+
+    // Should fail because "type=mysql" has no factories.
+    configure(config, CONTROL_RESULT_ERROR,
+              "The type of the configuration backend: 'mysql' is not supported");
+#endif // CONFIG_BACKEND}
 
 // This test verifies that configuration control info gets populated.
 TEST_F(Dhcp6ParserTest, configControlInfo) {

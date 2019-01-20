@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 #include <dhcp/iface_mgr.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/config_backend_dhcp6_mgr.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet.h>
@@ -62,6 +63,7 @@ using namespace isc::data;
 using namespace isc::dhcp;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::process;
 
 namespace {
 
@@ -619,8 +621,8 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             }
 
             if (config_pair.first == "config-control") {
-                process::ConfigControlParser parser;
-                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                ConfigControlParser parser;
+                ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
                 CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
                 continue;
             }
@@ -711,6 +713,11 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
+
+#ifdef CONFIG_BACKEND // Disabled until we restart CB work
+            // If there are config backends, fetch and merge into staging config
+            databaseConfigFetch(srv_cfg, mutable_cfg);
+#endif
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp6_logger, DHCP6_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -742,6 +749,49 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
     // Everything was fine. Configuration is successful.
     answer = isc::config::createAnswer(0, "Configuration successful.");
     return (answer);
+}
+
+bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
+    // We need to get rid of any existing backends.  These would be any
+    // opened by previous configuration cycle.
+    ConfigBackendDHCPv6Mgr& mgr = ConfigBackendDHCPv6Mgr::instance();
+    mgr.delAllBackends();
+
+    // Fetch the config-control info.
+    ConstConfigControlInfoPtr config_ctl = srv_cfg->getConfigControlInfo();
+    if (!config_ctl || config_ctl->getConfigDatabases().empty()) {
+        // No config dbs, nothing to do.
+        return (false);
+    }
+
+    // Iterate over the configured DBs and instantiate them.
+    for (auto db : config_ctl->getConfigDatabases()) {
+        LOG_INFO(dhcp6_logger, DHCP6_OPEN_CONFIG_DB)
+                 .arg(db.redactedAccessString());
+        mgr.addBackend(db.getAccessString());
+    }
+
+    // Let the caller know we have opened DBs.
+    return (true);
+}
+
+void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /* mutable_cfg */) {
+
+    // Close any existing CB databasess, then open all in srv_cfg (if any)
+    if (!databaseConfigConnect(srv_cfg)) {
+        // There are no CB databases so we're done
+        return;
+    }
+
+    // @todo Fetching and merging the configuration falls under #99
+    // ConfigBackendDHCPv6Mgr& mgr = ConfigBackendDHCPv6Mgr::instance();
+    // Next we have to fetch the pieces we care about it and merge them
+    // probably in this order?
+    // globals
+    // option defs
+    // options
+    // shared networks
+    // subnets
 }
 
 }; // end of isc::dhcp namespace
