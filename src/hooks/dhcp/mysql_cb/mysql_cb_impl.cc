@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -190,10 +190,10 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
 }
 
 void
-MySqlConfigBackendImpl::getOptions(const int index,
-                                   const db::MySqlBindingCollection& in_bindings,
-                                   const Option::Universe& universe,
-                                   OptionContainer& options) {
+MySqlConfigBackendImpl::getOptions4(const int index,
+                                    const db::MySqlBindingCollection& in_bindings,
+                                    const Option::Universe& universe,
+                                    OptionContainer& options) {
     // Create output bindings. The order must match that in the prepared
     // statement.
     MySqlBindingCollection out_bindings = {
@@ -222,7 +222,7 @@ MySqlConfigBackendImpl::getOptions(const int index,
              (last_option_id < out_bindings[0]->getInteger<uint64_t>()))) {
             last_option_id = out_bindings[0]->getInteger<uint64_t>();
 
-            OptionDescriptorPtr desc = processOptionRow(universe, out_bindings.begin());
+            OptionDescriptorPtr desc = processOptionRow4(universe, out_bindings.begin());
             if (desc) {
                 options.push_back(*desc);
             }
@@ -230,16 +230,61 @@ MySqlConfigBackendImpl::getOptions(const int index,
     });
 }
 
-OptionDescriptorPtr
-MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
-                                         MySqlBindingCollection::iterator first_binding) {
+void
+MySqlConfigBackendImpl::getOptions6(const int index,
+                                    const db::MySqlBindingCollection& in_bindings,
+                                    const Option::Universe& universe,
+                                    OptionContainer& options) {
+    // Create output bindings. The order must match that in the prepared
+    // statement.
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(), // option_id
+        MySqlBinding::createInteger<uint16_t>(), // code
+        MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // value
+        MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // formatted_value
+        MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // space
+        MySqlBinding::createInteger<uint8_t>(), // persistent
+        MySqlBinding::createInteger<uint32_t>(), // dhcp6_subnet_id
+        MySqlBinding::createInteger<uint8_t>(), // scope_id
+        MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
+        MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
+        MySqlBinding::createInteger<uint64_t>(), // pool_id
+        MySqlBinding::createInteger<uint64_t>(), // pd_pool_id
+        MySqlBinding::createTimestamp() //modification_ts
+    };
+
+    uint64_t last_option_id = 0;
+
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [this, universe, &options, &last_option_id]
+                      (MySqlBindingCollection& out_bindings) {
+        // Parse option.
+        if (!out_bindings[0]->amNull() &&
+            ((last_option_id == 0) ||
+             (last_option_id < out_bindings[0]->getInteger<uint64_t>()))) {
+            last_option_id = out_bindings[0]->getInteger<uint64_t>();
+
+            OptionDescriptorPtr desc = processOptionRow6(universe, out_bindings.begin());
+            if (desc) {
+                options.push_back(*desc);
+            }
+        }
+    });
+}
+
+namespace {
+
+template<typename T> OptionDescriptorPtr
+processOptionRowCommon(const Option::Universe& universe,
+                       MySqlBindingCollection::iterator first_binding,
+                       const size_t tm_off) {
     // Some of the options have standard or custom definitions.
     // Depending whether the option has a definition or not a different
     // C++ class may be used to represent the option. Therefore, the
     // first thing to do is to see if there is a definition for our
     // parsed option. The option code and space is needed for it.
     std::string space = (*(first_binding + 4))->getString();
-    uint16_t code = (*(first_binding + 1))->getInteger<uint8_t>();
+    uint16_t code = (*(first_binding + 1))->getInteger<T>();
 
     // See if the option has standard definition.
     OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
@@ -296,9 +341,23 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // its option space and timestamp.
     OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
     desc->space_name_ = space;
-    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+    desc->setModificationTime((*(first_binding + tm_off))->getTimestamp());
 
     return (desc);
+}
+
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::processOptionRow4(const Option::Universe& universe,
+                                          MySqlBindingCollection::iterator first_binding) {
+    return (processOptionRowCommon<uint8_t>(universe, first_binding, 11));
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::processOptionRow6(const Option::Universe& universe,
+                                          MySqlBindingCollection::iterator first_binding) {
+    return (processOptionRowCommon<uint16_t>(universe, first_binding, 12));
 }
 
 MySqlBindingPtr

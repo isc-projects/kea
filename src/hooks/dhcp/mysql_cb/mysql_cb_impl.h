@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -188,12 +188,29 @@ public:
     /// @param universe Option universe, i.e. V4 or V6.
     /// @param [out] options Reference to the container where fetched options
     /// will be inserted.
-    void getOptions(const int index,
-                    const db::MySqlBindingCollection& in_bindings,
-                    const Option::Universe& universe,
-                    OptionContainer& options);
+    void getOptions4(const int index,
+                     const db::MySqlBindingCollection& in_bindings,
+                     const Option::Universe& universe,
+                     OptionContainer& options);
 
-    /// @brief Returns DHCP option instance from output bindings.
+    /// @brief Sends query to the database to retrieve multiple options.
+    ///
+    /// Query should order by option_id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param [out] options Reference to the container where fetched options
+    /// will be inserted.
+    void getOptions6(const int index,
+                     const db::MySqlBindingCollection& in_bindings,
+                     const Option::Universe& universe,
+                     OptionContainer& options);
+
+    /// @brief Returns DHCPv4 option instance from output bindings.
     ///
     /// The following is the expected order of columns specified in the SELECT
     /// query:
@@ -214,8 +231,33 @@ public:
     /// @param first_binding Iterator of the output binding containing
     /// option_id.
     OptionDescriptorPtr
-    processOptionRow(const Option::Universe& universe,
-                     db::MySqlBindingCollection::iterator first_binding);
+    processOptionRow4(const Option::Universe& universe,
+                      db::MySqlBindingCollection::iterator first_binding);
+
+    /// @brief Returns DHCPv6 option instance from output bindings.
+    ///
+    /// The following is the expected order of columns specified in the SELECT
+    /// query:
+    /// - option_id,
+    /// - code,
+    /// - value,
+    /// - formatted_value,
+    /// - space,
+    /// - persistent,
+    /// - dhcp6_subnet_id,
+    /// - scope_id,
+    /// - user_context,
+    /// - shared_network_name,
+    /// - pool_id,
+    /// - pd_pool_id,
+    /// - modification_ts
+    ///
+    /// @param universe V4 or V6.
+    /// @param first_binding Iterator of the output binding containing
+    /// option_id.
+    OptionDescriptorPtr
+    processOptionRow6(const Option::Universe& universe,
+                      db::MySqlBindingCollection::iterator first_binding);
 
     /// @brief Creates input binding for relay addresses.
     ///
