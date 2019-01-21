@@ -1366,6 +1366,21 @@ ALTER TABLE dhcp4_audit
         ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- -----------------------------------------------------
+-- Stored procedure which initializes the session
+-- variables for creation of the new audit revision.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS initAuditRevision;
+DELIMITER $$
+CREATE PROCEDURE initAuditRevision(IN log_message TEXT,
+                                   IN distinct_transaction TINYINT(1))
+BEGIN
+    SET @audit_log_message = log_message;
+    SET @distinct_transaction = distinct_transaction;
+    SET @audit_revision_id = NULL;
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
 -- Stored procedure which creates a new entry in the
 -- dhcp4_audit_revision table. This procedure should
 -- be called from the triggers of the tables where
@@ -1377,9 +1392,12 @@ DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DELIMITER $$
 CREATE PROCEDURE createAuditRevisionDHCP4()
 BEGIN
+    DECLARE local_audit_log_message TEXT;
     IF @audit_revision_id IS NULL THEN
+       SET local_audit_log_message = @audit_log_message;
+       SET @audit_log_message = NULL;
        INSERT INTO dhcp4_audit_revision (modification_ts, log_message)
-           VALUES (NOW(), @audit_log_message);
+           VALUES (NOW(), local_audit_log_message);
        SET @audit_revision_id = LAST_INSERT_ID();
     END IF;
 END $$
@@ -1398,6 +1416,7 @@ CREATE PROCEDURE createAuditEntryDHCP4(IN object_type_val VARCHAR(256),
                                        IN object_id_val BIGINT(20) UNSIGNED,
                                        IN modification_type_val TINYINT(1))
 BEGIN
+    CALL createAuditRevisionDHCP4();
     INSERT INTO dhcp4_audit (object_type, object_id, modification_type, revision_id)
         VALUES (object_type_val, object_id_val, modification_type_val, @audit_revision_id);
 END $$
@@ -1414,7 +1433,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_global_parameter_AINS AFTER INSERT ON dhcp4_global_parameter
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_global_parameter', NEW.id, 0);
     END $$
 DELIMITER ;
@@ -1424,7 +1442,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_global_parameter_AUPD AFTER UPDATE ON dhcp4_global_parameter
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_global_parameter', NEW.id, 1);
     END $$
 DELIMITER ;
@@ -1434,7 +1451,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_global_parameter_ADEL AFTER DELETE ON dhcp4_global_parameter
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_global_parameter', OLD.id, 2);
     END $$
 DELIMITER ;
@@ -1444,7 +1460,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_subnet_AINS AFTER INSERT ON dhcp4_subnet
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, 0);
     END $$
 DELIMITER ;
@@ -1454,7 +1469,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_subnet_AUPD AFTER UPDATE ON dhcp4_subnet
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, 1);
     END $$
 DELIMITER ;
@@ -1464,7 +1478,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_subnet_ADEL AFTER DELETE ON dhcp4_subnet
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_subnet', OLD.subnet_id, 2);
     END $$
 DELIMITER ;
@@ -1474,7 +1487,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_shared_network_AINS AFTER INSERT ON dhcp4_shared_network
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, 0);
     END $$
 DELIMITER ;
@@ -1484,7 +1496,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_shared_network_AUPD AFTER UPDATE ON dhcp4_shared_network
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, 1);
     END $$
 DELIMITER ;
@@ -1494,7 +1505,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_shared_network_ADEL AFTER DELETE ON dhcp4_shared_network
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, 2);
     END $$
 DELIMITER ;
@@ -1504,7 +1514,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_option_def_AINS AFTER INSERT ON dhcp4_option_def
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_option_def', NEW.id, 0);
     END $$
 DELIMITER ;
@@ -1514,7 +1523,6 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_option_def_AUPD AFTER UPDATE ON dhcp4_option_def
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_option_def', NEW.id, 1);
     END $$
 DELIMITER ;
@@ -1524,8 +1532,107 @@ DELIMITER $$
 CREATE TRIGGER dhcp4_option_def_ADEL AFTER DELETE ON dhcp4_option_def
     FOR EACH ROW
     BEGIN
-        CALL createAuditRevisionDHCP4();
         CALL createAuditEntryDHCP4('dhcp4_option_def', OLD.id, 2);
+    END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates an audit entry for a
+-- DHCPv4 option. Depending on the scope of the option
+-- the audit entry can be created for various levels
+-- of configuration hierarchy. If this is a global
+-- option the audit entry is created for this option
+-- for CREATE, UPDATE or DELETE. If the option is being
+-- added for an owning option, e.g. for a subnet, the
+-- audit entry is created as an UPDATE to this object.
+-- From the Kea perspective such option addition will
+-- be seen as a subnet update and the server will fetch
+-- the whole subnet and merge it into its configuration.
+-- The audit entry is not created if it was already
+-- created as part of the current transaction.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: CREATE, UPDATE or DELETE
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createOptionAuditDHCP4;
+DELIMITER $$
+CREATE PROCEDURE createOptionAuditDHCP4(IN modification_type TINYINT(1),
+                                        IN scope_id TINYINT(3) UNSIGNED,
+                                        IN option_id BIGINT(20) UNSIGNED,
+                                        IN subnet_id INT(10) UNSIGNED,
+                                        IN host_id INT(10) UNSIGNED,
+                                        IN network_name VARCHAR(128))
+BEGIN
+    # This variable will hold shared network id that we will retrieve
+    # by matching it name.
+    DECLARE snid VARCHAR(128);
+
+    # Distinct transaction flag is set when audit entry must be
+    # associated with the option. For example: adding a global
+    # option or adding an option to the existing subnet etc.
+    IF @distinct_transaction != 0 THEN
+        IF scope_id = 0 THEN
+            # If a global option is added or modified, create audit
+            # entry for the 'dhcp4_options' table.
+            CALL createAuditEntryDHCP4('dhcp4_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            # If subnet specific option is added or modified, create
+            # audit entry for the entire subnet, which indicates that
+            # it should be treated as the subnet update.
+            CALL createAuditEntryDHCP4('dhcp4_subnet', subnet_id, 1);
+        ELSEIF scope_id = 3 THEN
+            # If host specific option is added or modified, create
+            # audit entry for the host, which indicates that it
+            # should be treated as the host update.
+            CALL createAuditEntryDHCP4('hosts', host_id, 1);
+        ELSEIF scope_id = 4 THEN
+            # If shared network specific option is added or modified,
+            # created audit entry for the shared network which
+            # indicates that it should be treated as the shared
+            # network update.
+           SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
+           CALL createAuditEntryDHCP4('dhcp4_shared_network', snid, 1);
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+# Create dhcp4_options insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4(0, NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_options update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4(1, NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_options delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4(2, OLD.scope_id, OLD.option_id, OLD.dhcp4_subnet_id,
+                                    OLD.host_id, OLD.shared_network_name);
     END $$
 DELIMITER ;
 

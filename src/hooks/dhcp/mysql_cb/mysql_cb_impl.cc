@@ -68,6 +68,17 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
 }
 
 void
+MySqlConfigBackendImpl::initAuditRevision(const int index,
+                                          const std::string& log_message,
+                                          const bool distinct_transaction) {
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString("this is a log message"),
+        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(distinct_transaction))
+    };
+    conn_.insertQuery(index, in_bindings);
+}
+
+void
 MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                               const boost::posix_time::ptime& modification_time,
                                               AuditEntryCollection& audit_entries) {

@@ -98,6 +98,32 @@ public:
         return (s.str());
     }
 
+    /// @brief Invokes the corresponding stored procedure in MySQL.
+    ///
+    /// The @c initAuditRevision stored procedure initializes several
+    /// session variables used when creating new audit revision in the
+    /// database. That includes setting a log message for the revision,
+    /// setting the boolean value indicating if the audit entries should
+    /// be created for DHCP options (that should only be the case when
+    /// the options are not added as part of the subnet, shared network
+    /// etc.). Finally, it resets the session variables used internally
+    /// by the database to corrdinate between the triggers.
+    ///
+    /// @param index query index.
+    /// @param log_message log message to be used for the audit revision.
+    /// @param distinct_transaction boolean value indicating if a single
+    /// change will be applied in the transaction (distinct transaction)
+    /// or a chain of transactions. The example of the former is when
+    /// an option is added to the existing subnet. The example of the
+    /// latter is when the subnet along with the options is added. This
+    /// consists of two changes (adding the subnet and options) as part
+    /// of the single transaction. The MySQL database needs to
+    /// distinguish between these two cases to bind audit revisions
+    /// to the appropriate objects.
+    void initAuditRevision(const int index,
+                           const std::string& log_message,
+                           const bool distinct_transaction);
+
     /// @brief Sends query to the database to retrieve most recent audit entries.
     ///
     /// @param index Index of the query to be used.
