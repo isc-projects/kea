@@ -45,7 +45,7 @@ public:
 
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4Test()
-        : test_subnets_(), test_networks_(), timestamps_() {
+        : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
         // Recreate database schema.
         destroyMySQLSchema();
         createMySQLSchema();
@@ -295,6 +295,31 @@ public:
         timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
     }
 
+    /// @brief Tests that the new audit entry is added.
+    ///
+    /// This method retrieves a collection of the existing audit entries and
+    /// checks that the new one has been added at the end of this collection.
+    /// It then verifies the values of the audit entry against the values
+    /// specified by the caller.
+    ///
+    /// @param exp_object_type Expected object type.
+    /// @param exp_modification_time Expected modification time.
+    /// @param exp_log_message Expected log message.
+    void testNewAuditEntry(const std::string& exp_object_type,
+                           const AuditEntry::ModificationType& exp_modification_type,
+                           const std::string& exp_log_message) {
+        auto audit_entries_size_save = audit_entries_.size();
+        audit_entries_ = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
+                                                        timestamps_["two days ago"]);
+        ASSERT_EQ(audit_entries_size_save + 1, audit_entries_.size());
+
+        auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+        auto audit_entry = *mod_time_idx.rbegin();
+        EXPECT_EQ(exp_object_type, audit_entry->getObjectType());
+        EXPECT_EQ(exp_modification_type, audit_entry->getModificationType());
+        EXPECT_EQ(exp_log_message, audit_entry->getLogMessage());
+    }
+
     /// @brief Holds pointers to subnets used in tests.
     std::vector<Subnet4Ptr> test_subnets_;
 
@@ -312,6 +337,9 @@ public:
 
     /// @brief Holds pointer to the backend.
     boost::shared_ptr<ConfigBackendDHCPv4> cbptr_;
+
+    /// @brief Holds the most recent audit entries.
+    AuditEntryCollection audit_entries_;
 };
 
 // This test verifies that the expected backend type is returned.
@@ -357,16 +385,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          global_parameter);
 
-    AuditEntryCollection audit_entries =
-        cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
-                                       timestamps_["two days ago"]);
-    ASSERT_EQ(1, audit_entries.size());
-
-    auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
-    auto audit_entry = mod_time_idx.begin();
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+    {
+        SCOPED_TRACE("CREATE audit entry for global parameter");
+        testNewAuditEntry("dhcp4_global_parameter",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
 
     // Verify returned parameter and the modification time.
     StampedValuePtr returned_global_parameter =
@@ -399,21 +423,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
 
-    // There should now be two audit entries.
-    audit_entries = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
-                                       timestamps_["two days ago"]);
-    ASSERT_EQ(2, audit_entries.size());
-
-    mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
-    audit_entry = mod_time_idx.begin();
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
-
-    ++audit_entry;
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::UPDATE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+    {
+        SCOPED_TRACE("UPDATE audit entry for the global parameter");
+        testNewAuditEntry("dhcp4_global_parameter",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 
     // Should not delete parameter specified for all servers if explicit
     // server name is provided.
@@ -426,26 +441,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
                                                             "global");
     EXPECT_FALSE(returned_global_parameter);
 
-    // There should now be three audit entries.
-    audit_entries = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
-                                       timestamps_["two days ago"]);
-    ASSERT_EQ(3, audit_entries.size());
-
-    mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
-    audit_entry = mod_time_idx.begin();
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
-
-    ++audit_entry;
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::UPDATE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
-
-    ++audit_entry;
-    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
-    EXPECT_EQ(AuditEntry::ModificationType::DELETE, (*audit_entry)->getModificationType());
-    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+    {
+        SCOPED_TRACE("DELETE audit entry for the global parameter");
+        testNewAuditEntry("dhcp4_global_parameter",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
 }
 
 // This test verifies that all global parameters can be retrieved and deleted.
@@ -540,6 +541,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // subnet is to convert both to text.
     EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
 
+    {
+        SCOPED_TRACE("CREATE audit entry for the subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     // Update the subnet in the database (both use the same ID).
     Subnet4Ptr subnet2 = test_subnets_[1];
     cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet2);
@@ -554,6 +562,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for the subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 }
 
 // Test that subnet can be associated with a shared network.
@@ -612,6 +627,21 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     // overwrite the first subnet as they use the same ID.
     for (auto subnet : test_subnets_) {
         cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+
+        // That subnet overrides the first subnet so the audit entry should
+        // indicate an update.
+        if (subnet->toText() == "10.0.0.0/8") {
+            SCOPED_TRACE("UPDATE audit entry for the subnet " + subnet->toText());
+            testNewAuditEntry("dhcp4_subnet",
+                              AuditEntry::ModificationType::UPDATE,
+                              "this is a log message");
+
+        } else {
+            SCOPED_TRACE("CREATE audit entry for the subnet " + subnet->toText());
+            testNewAuditEntry("dhcp4_subnet",
+                              AuditEntry::ModificationType::CREATE,
+                              "this is a log message");
+        }
     }
 
     // Fetch all subnets.
@@ -650,6 +680,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     // Delete first subnet by id and verify that it is gone.
     EXPECT_EQ(1, cbptr_->deleteSubnet4(ServerSelector::ALL(),
                                        test_subnets_[1]->getID()));
+
+    {
+        SCOPED_TRACE("DELETE first subnet audit entry");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
+
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 2, subnets.size());
 
@@ -659,10 +697,24 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_EQ(test_subnets_.size() - 3, subnets.size());
 
+    {
+        SCOPED_TRACE("DELETE second subnet audit entry");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
+
     // Delete all.
     EXPECT_EQ(1, cbptr_->deleteAllSubnets4(ServerSelector::ALL()));
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
     ASSERT_TRUE(subnets.empty());
+
+    {
+        SCOPED_TRACE("DELETE all subnets audit entry");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
 }
 
 // Test that subnets modified after given time can be fetched.

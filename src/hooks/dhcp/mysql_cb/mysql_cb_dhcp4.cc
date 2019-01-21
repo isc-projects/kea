@@ -215,6 +215,7 @@ public:
 
         MySqlTransaction transaction(conn_);
 
+        // Set log message to be used to create the audit revision.
         conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
                           { MySqlBinding::createString("this is a log message") });
 
@@ -748,6 +749,10 @@ public:
         MySqlTransaction transaction(conn_);
 
         try {
+            // Set log message to be used to create the audit revision.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
+                              { MySqlBinding::createString("this is a log message") });
+
             // Try to insert subnet. If this duplicates primary key, i.e. this
             // subnet already exists it will throw DuplicateEntry exception in
             // which case we'll try an update.
