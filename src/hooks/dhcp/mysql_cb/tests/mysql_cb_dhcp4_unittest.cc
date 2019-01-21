@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -289,6 +289,8 @@ public:
             - boost::posix_time::hours(1);
         // Yesterday.
         timestamps_["yesterday"] = timestamps_["today"] - boost::posix_time::hours(24);
+        // Two days ago.
+        timestamps_["two days ago"] = timestamps_["today"] - boost::posix_time::hours(48);
         // Tomorrow.
         timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
     }
@@ -355,6 +357,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          global_parameter);
 
+    AuditEntryCollection audit_entries =
+        cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
+                                       timestamps_["two days ago"]);
+    ASSERT_EQ(1, audit_entries.size());
+
+    auto& mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
+    auto audit_entry = mod_time_idx.begin();
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+
     // Verify returned parameter and the modification time.
     StampedValuePtr returned_global_parameter =
         cbptr_->getGlobalParameter4(ServerSelector::ALL(), "global");
@@ -386,6 +399,22 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     EXPECT_TRUE(returned_global_parameter->getModificationTime() ==
                 global_parameter->getModificationTime());
 
+    // There should now be two audit entries.
+    audit_entries = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
+                                       timestamps_["two days ago"]);
+    ASSERT_EQ(2, audit_entries.size());
+
+    mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
+    audit_entry = mod_time_idx.begin();
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+
+    ++audit_entry;
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::UPDATE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+
     // Should not delete parameter specified for all servers if explicit
     // server name is provided.
     EXPECT_EQ(0, cbptr_->deleteGlobalParameter4(ServerSelector::ONE("server1"),
@@ -396,6 +425,27 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
     returned_global_parameter = cbptr_->getGlobalParameter4(ServerSelector::ALL(),
                                                             "global");
     EXPECT_FALSE(returned_global_parameter);
+
+    // There should now be three audit entries.
+    audit_entries = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
+                                       timestamps_["two days ago"]);
+    ASSERT_EQ(3, audit_entries.size());
+
+    mod_time_idx = audit_entries.get<AuditEntryModificationTimeTag>();
+    audit_entry = mod_time_idx.begin();
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::CREATE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+
+    ++audit_entry;
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::UPDATE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
+
+    ++audit_entry;
+    EXPECT_EQ("dhcp4_global_parameter", (*audit_entry)->getObjectType());
+    EXPECT_EQ(AuditEntry::ModificationType::DELETE, (*audit_entry)->getModificationType());
+    EXPECT_EQ("this is a log message", (*audit_entry)->getLogMessage());
 }
 
 // This test verifies that all global parameters can be retrieved and deleted.
@@ -412,10 +462,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     ASSERT_EQ(3, parameters.size());
 
+    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+
     // Verify their values.
-    EXPECT_EQ("value1", parameters[0]->getValue());
-    EXPECT_EQ(65, parameters[1]->getSignedIntegerValue());
-    EXPECT_EQ("value3", parameters[2]->getValue());
+    EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
+    EXPECT_EQ(65, (*parameters_index.find("name2"))->getSignedIntegerValue());
+    EXPECT_EQ("value3", (*parameters_index.find("name3"))->getValue());
 
     // Should be able to fetct these parameters when explicitly providing
     // the server tag.
@@ -455,10 +507,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
     auto parameters = cbptr_->getModifiedGlobalParameters4(ServerSelector::ALL(),
                                                            timestamps_["today"]);
 
+    const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
+
     // It should be the one modified "tomorrow". 
-    ASSERT_EQ(1, parameters.size());
-    ASSERT_TRUE(parameters[0]);
-    EXPECT_EQ("value3", parameters[0]->getValue());
+    ASSERT_EQ(1, parameters_index.size());
+
+    auto parameter = parameters_index.find("name3");
+    ASSERT_FALSE(parameter == parameters_index.end());
+
+    ASSERT_TRUE(*parameter);
+    EXPECT_EQ("value3", (*parameter)->getValue());
 
     // Should be able to fetct these parameters when explicitly providing
     // the server tag.

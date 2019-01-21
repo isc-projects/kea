@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -33,6 +33,7 @@ DROP TRIGGER IF EXISTS lease6_stat_delete;
 DROP TABLE IF EXISTS lease6_stat;
 DROP TABLE IF EXISTS logs;
 DROP TABLE IF EXISTS dhcp4_audit;
+DROP TABLE IF EXISTS dhcp4_audit_revision;
 DROP TABLE IF EXISTS dhcp4_global_parameter;
 DROP TABLE IF EXISTS dhcp4_global_parameter_server;
 DROP TABLE IF EXISTS dhcp4_option_def;
@@ -58,3 +59,8 @@ DROP TABLE IF EXISTS dhcp6_shared_network_server;
 DROP TABLE IF EXISTS dhcp6_subnet;
 DROP TABLE IF EXISTS dhcp6_subnet_server;
 DROP TABLE IF EXISTS modification;
+DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
+DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
+DROP TRIGGER IF EXISTS dhcp4_global_parameter_AINS;
+DROP TRIGGER IF EXISTS dhcp4_global_parameter_AUPD;
+DROP TRIGGER IF EXISTS dhcp4_global_parameter_ADEL;

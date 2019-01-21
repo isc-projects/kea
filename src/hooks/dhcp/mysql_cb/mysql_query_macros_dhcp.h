@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -192,6 +192,22 @@ namespace {
     "  ON a.server_id = s.id " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
     " ORDER BY o.option_id"
+#endif
+
+#ifndef MYSQL_GET_AUDIT_ENTRIES_TIME
+#define MYSQL_GET_AUDIT_ENTRIES_TIME(table_prefix) \
+    "SELECT" \
+    "  a.id," \
+    "  a.object_type," \
+    "  a.object_id," \
+    "  a.modification_type," \
+    "  r.modification_ts," \
+    "  r.log_message " \
+    "FROM " #table_prefix "_audit AS a " \
+    "LEFT JOIN " #table_prefix "_audit_revision AS r " \
+    "  ON a.revision_id = r.id " \
+    "WHERE (r.modification_ts > ?) " \
+    "ORDER BY r.modification_ts"
 #endif
 
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER

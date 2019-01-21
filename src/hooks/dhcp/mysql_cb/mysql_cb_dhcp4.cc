@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -51,6 +51,7 @@ public:
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
+        SET_AUDIT_LOG_MESSAGE,
         GET_GLOBAL_PARAMETER4,
         GET_ALL_GLOBAL_PARAMETERS4,
         GET_MODIFIED_GLOBAL_PARAMETERS4,
@@ -71,6 +72,7 @@ public:
         GET_OPTION4_SUBNET_ID_CODE_SPACE,
         GET_OPTION4_POOL_ID_CODE_SPACE,
         GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
+        GET_AUDIT_ENTRIES4_TIME,
         INSERT_GLOBAL_PARAMETER4,
         INSERT_GLOBAL_PARAMETER4_SERVER,
         INSERT_SUBNET4,
@@ -116,6 +118,17 @@ public:
     explicit MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap&
                                           parameters);
 
+    /// @brief Sends query to insert an audit entry.
+    ///
+    /// @param in_bindings Collection of bindings representing an option.
+    void insertAuditEntry4(const MySqlBindingCollection& in_bindings) {
+        // Fetch unique identifier of the inserted option.
+        uint64_t id = mysql_insert_id(conn_.mysql_);
+
+        // Create bindings needed to insert association of that option with
+        // a server into the dhcp4_options_server table.
+    }
+
     /// @brief Sends query to retrieve multiple global parameters.
     ///
     /// @param index Index of the query to be used.
@@ -148,7 +161,7 @@ public:
                 StampedValuePtr stamped_value(new StampedValue(out_bindings[1]->getString(),
                                                                out_bindings[2]->getString()));
                 stamped_value->setModificationTime(out_bindings[3]->getTimestamp());
-                parameters.push_back(stamped_value);
+                parameters.insert(stamped_value);
             }
         });
     }
@@ -202,12 +215,16 @@ public:
 
         MySqlTransaction transaction(conn_);
 
+        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
+                          { MySqlBinding::createString("this is a log message") });
+
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
                                     in_bindings) == 0) {
 
             // No such parameter found, so let's insert it. We have to adjust the
             // bindings collection to match the prepared statement for insert.
+            in_bindings.pop_back();
             in_bindings.pop_back();
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4,
                               in_bindings);
@@ -229,6 +246,7 @@ public:
             // Insert association.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_GLOBAL_PARAMETER4_SERVER,
                               in_server_bindings);
+
         }
 
         transaction.commit();
@@ -1926,6 +1944,10 @@ TaggedStatementArray;
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve data from the database.
 TaggedStatementArray tagged_statements = { {
+    { MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
+      "SET @audit_log_message = ?"
+    },
+
     // Select global parameter by name.
     { MySqlConfigBackendDHCPv4Impl::GET_GLOBAL_PARAMETER4,
       MYSQL_GET_GLOBAL_PARAMETER(dhcp4, AND g.name = ?)
@@ -2046,6 +2068,11 @@ TaggedStatementArray tagged_statements = { {
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
       MYSQL_GET_OPTION(dhcp4,
                        AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+    },
+
+    // Retrieves the most recent audit entries.
+    { MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
+      MYSQL_GET_AUDIT_ENTRIES_TIME(dhcp4)
     },
 
     // Insert global parameter.
@@ -2437,6 +2464,17 @@ getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
     }
 
     return (parameters);
+}
+
+AuditEntryCollection
+MySqlConfigBackendDHCPv4::
+getRecentAuditEntries4(const db::ServerSelector&,
+                       const boost::posix_time::ptime& modification_time) const {
+    AuditEntryCollection audit_entries;
+    impl_->getRecentAuditEntries(MySqlConfigBackendDHCPv4Impl::GET_AUDIT_ENTRIES4_TIME,
+                                 modification_time, audit_entries);
+
+    return (audit_entries);
 }
 
 void
