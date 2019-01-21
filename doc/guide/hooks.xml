@@ -1418,7 +1418,7 @@ $
         </para>
 
         <para>
-          Currently four commands are supported: reservation-add (which adds
+          Currently five commands are supported: reservation-add (which adds
           new host reservation), reservation-get (which returns existing
           reservation if specified criteria are matched), reservation-get-all
           (which returns all reservations in a specified subnet),
@@ -1429,7 +1429,8 @@ $
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
           hosts database must be specified (see hosts-databases description in
-          <xref linkend="hosts-databases-configuration4"/> and <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
+          <xref linkend="hosts-databases-configuration4"/> and
+          <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
           read-only mode. If the hosts-databases are not specified or are running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
@@ -1438,8 +1439,10 @@ $
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands">Control API
-Requirements </link> document.</para>
+          <link xmlns:xlink="http://www.w3.org/1999/xlink"
+           xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands">Control API
+          Requirements </link> document.
+        </para>
 
         <para>
           All commands are using JSON syntax. They can be issued either using
@@ -1656,14 +1659,20 @@ An example result returned when the query was malformed:<screen>
           <para><command>reservation-get-all</command> can be used to
           query the host database and retrieve all reservations in a
           specified subnet. This command uses parameters providing the
-          mandatory subnet-id. Use a value of zero (0) to fetch global
-          reservations.
+          mandatory subnet-id. Global host reservations can be
+          retrieved by using subnet-id value of zero (0).
           </para>
 
           <!-- Add example? -->
 
           <para>The response returned by <command>reservation-get-all</command>
-          can be very long.
+          can be very long. The DHCP server does not handle DHCP
+          traffic when preparing a response to reservation-get-all.
+          If there are many reservations in a subnet, this may be disruptive. Use with caution.
+          For larger deployments, please consider using
+          <command>reservation-get-page</command> instead (see <xref
+          linkend="command-reservation-get-page"/>).
+          For a reference, see <xref linkend="ref-reservation-get-all"/>.
           </para>
         </section>
 
@@ -1683,8 +1692,17 @@ An example result returned when the query was malformed:<screen>
           <para>The first page is queried without source-index and from,
           for next pages source-index and from should be set using
           the preceeding result source-index and next. After the last page
-          the result is empty (code 3).
+          the returned list is empty and result 3 is returned.
           </para>
+
+          <para>This command is more complex than
+          <command>reservation-get-all</command>, but lets users
+          retrieve larger host reservations lists by smaller
+          chunks. For small deployments with few reservations, is it
+          easier to use <command>reservation-get-all</command> (see
+          <xref linkend="command-reservation-get-all"/>.</para>
+
+          <para>For a reference, see <xref linkend="ref-reservation-get-page"/>.</para>
         </section>
 
         <section xml:id="command-reservation-del">
