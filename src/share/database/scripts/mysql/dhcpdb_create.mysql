@@ -1469,6 +1469,36 @@ CREATE TRIGGER dhcp4_subnet_ADEL AFTER DELETE ON dhcp4_subnet
     END $$
 DELIMITER ;
 
+# Create dhcp4_shared_network insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_AINS AFTER INSERT ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, 0);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_shared_network update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_AUPD AFTER UPDATE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, 1);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_shared_network delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_ADEL AFTER DELETE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, 2);
+    END $$
+DELIMITER ;
+
 
 # Update the schema version number
 UPDATE schema_version
