@@ -1439,6 +1439,37 @@ CREATE TRIGGER dhcp4_global_parameter_ADEL AFTER DELETE ON dhcp4_global_paramete
     END $$
 DELIMITER ;
 
+# Create dhcp4_subnet insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_AINS AFTER INSERT ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, 0);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_subnet update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_AUPD AFTER UPDATE ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, 1);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_subnet delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_ADEL AFTER DELETE ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditRevisionDHCP4();
+        CALL createAuditEntryDHCP4('dhcp4_subnet', OLD.subnet_id, 2);
+    END $$
+DELIMITER ;
+
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '8', minor = '0';
