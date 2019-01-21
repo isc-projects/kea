@@ -1109,6 +1109,11 @@ public:
         MySqlTransaction transaction(conn_);
 
         try {
+
+            // Set log message to be used to create the audit revision.
+            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
+                              { MySqlBinding::createString("this is a log message") });
+
             // Try to insert shared network. The shared network name must be unique,
             // so if inserting fails with DuplicateEntry exception we'll need to
             // update existing shared network entry.

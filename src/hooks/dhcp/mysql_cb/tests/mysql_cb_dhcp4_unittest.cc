@@ -305,19 +305,28 @@ public:
     /// @param exp_object_type Expected object type.
     /// @param exp_modification_time Expected modification time.
     /// @param exp_log_message Expected log message.
+    /// @param new_entries_num Number of the new entries expected to be inserted.
     void testNewAuditEntry(const std::string& exp_object_type,
                            const AuditEntry::ModificationType& exp_modification_type,
-                           const std::string& exp_log_message) {
+                           const std::string& exp_log_message,
+                           const size_t new_entries_num = 1) {
         auto audit_entries_size_save = audit_entries_.size();
         audit_entries_ = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
                                                         timestamps_["two days ago"]);
-        ASSERT_EQ(audit_entries_size_save + 1, audit_entries_.size());
+        ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_.size());
 
         auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
-        auto audit_entry = *mod_time_idx.rbegin();
-        EXPECT_EQ(exp_object_type, audit_entry->getObjectType());
-        EXPECT_EQ(exp_modification_type, audit_entry->getModificationType());
-        EXPECT_EQ(exp_log_message, audit_entry->getLogMessage());
+
+        // Iterate over specified number of entries starting from the most recent
+        // one and check they have correct values.
+        for (auto audit_entry_it = mod_time_idx.rbegin();
+             std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num;
+             ++audit_entry_it) {
+            auto audit_entry = *audit_entry_it;
+            EXPECT_EQ(exp_object_type, audit_entry->getObjectType());
+            EXPECT_EQ(exp_modification_type, audit_entry->getModificationType());
+            EXPECT_EQ(exp_log_message, audit_entry->getLogMessage());
+        }
     }
 
     /// @brief Holds pointers to subnets used in tests.
@@ -776,6 +785,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
     EXPECT_EQ(shared_network->toElement()->str(),
               returned_network->toElement()->str());
 
+    {
+        SCOPED_TRACE("CREATE audit entry for a shared network");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     // Update shared network in the database.
     SharedNetwork4Ptr shared_network2 = test_networks_[1];
     cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network2);
@@ -785,6 +801,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
                                                  test_networks_[1]->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
               returned_network->toElement()->str());
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for a shared network");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 
     // Fetching the shared network for an explicitly specified server tag should
     // succeed too.
@@ -800,6 +823,24 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     // network will overwrite the first shared network as they use the same name.
     for (auto network : test_networks_) {
         cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), network);
+
+        // That shared network overrides the first one so the audit entry should
+        // indicate an update.
+        if ((network->getName() == "level1") && (!audit_entries_.empty())) {
+            SCOPED_TRACE("UPDATE audit entry for the shared network " +
+                         network->getName());
+            testNewAuditEntry("dhcp4_shared_network",
+                              AuditEntry::ModificationType::UPDATE,
+                              "this is a log message");
+
+        } else {
+            SCOPED_TRACE("CREATE audit entry for the shared network " +
+                         network->getName());
+            testNewAuditEntry("dhcp4_shared_network",
+                              AuditEntry::ModificationType::CREATE,
+                              "this is a log message");
+        }
+
     }
 
     // Fetch all shared networks.
@@ -838,10 +879,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_EQ(test_networks_.size() - 2, networks.size());
 
+    {
+        SCOPED_TRACE("DELETE audit entry for the first shared network");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
+
     // Delete all.
     EXPECT_EQ(2, cbptr_->deleteAllSharedNetworks4(ServerSelector::ALL()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
     ASSERT_TRUE(networks.empty());
+
+    {
+        SCOPED_TRACE("DELETE audit entry for the remaining two shared networks");
+        // The last parameter indicates that we expect two new audit entries.
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message", 2);
+    }
 }
 
 // Test that shared networks modified after given time can be fetched.
