@@ -1293,10 +1293,10 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        GET_HOST_SUBID4,        // Gets host by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Gets host by IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Gets host by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Gets host by IPv6 SubnetID beginning by HID
+        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1721,9 +1721,11 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID4
-    // Retrieves host information along with the DHCPv4 options associated with
-    // it. Left joining the dhcp4_options table results in multiple rows being
-    // returned for the same host. The host is retrieved by subnet id.
+    //
+    // Retrieves host information for all hosts in a subnet, along with the
+    // DHCPv4 options associated with it. Left joining the dhcp4_options table
+    // results in multiple rows being returned for the same host. The hosts are
+    // retrieved by subnet id.
     {1,
      { OID_INT8 }, "get_host_subid4",
      "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
@@ -1740,12 +1742,15 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID6
+    //
     // Retrieves host information, IPv6 reservations and DHCPv6 options
-    // associated with a host using IPv6 subnet id. This query returns
-    // host information for a single host. However, multiple rows are
+    // associated with all hosts using the IPv6 subnet id. This query returns
+    // host information for many hosts. However, multiple rows are
     // returned due to left joining IPv6 reservations and DHCPv6 options.
     // The number of rows returned is multiplication of number of existing
-    // IPv6 reservations and DHCPv6 options.
+    // IPv6 reservations and DHCPv6 options for each host in a subnet. There
+    // are usually many hosts in a subnet. The amount of returned data may
+    // be huge.
     {1,
      { OID_INT8 }, "get_host_subid6",
      "SELECT h.host_id, h.dhcp_identifier, "
@@ -1767,7 +1772,8 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
-    // returned for the same host. The host is retrieved by subnet id.
+    // returned for the same host. The hosts are retrieved by subnet id, starting
+    // from specified host id. Specified number of hosts is returned.
     {3,
      { OID_INT8, OID_INT8, OID_INT8 },
      "get_host_subid4_page",

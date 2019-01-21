@@ -1951,10 +1951,10 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
-        GET_HOST_SUBID4,        // Gets host by IPv4 SubnetID
-        GET_HOST_SUBID6,        // Gets host by IPv6 SubnetID
-        GET_HOST_SUBID4_PAGE,   // Gets host by IPv4 SubnetID beginning by HID
-        GET_HOST_SUBID6_PAGE,   // Gets host by IPv6 SubnetID beginning by HID
+        GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
