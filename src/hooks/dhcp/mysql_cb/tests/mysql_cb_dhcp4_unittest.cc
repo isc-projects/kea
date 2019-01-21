@@ -1129,6 +1129,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name);
     EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
 
+    {
+        SCOPED_TRACE("CREATE audit entry for an option");
+        testNewAuditEntry("dhcp4_options",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     // Modify option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
@@ -1141,6 +1148,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
                                                      opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
     EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for an option");
+        testNewAuditEntry("dhcp4_options",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 
     // Deleting an option with explicitly specified server tag should fail.
     EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
@@ -1155,6 +1169,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
     EXPECT_FALSE(cbptr_->getOption4(ServerSelector::ALL(),
                                     opt_boot_file_name->option_->getType(),
                                     opt_boot_file_name->space_name_));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for an option");
+        testNewAuditEntry("dhcp4_options",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
 }
 
 // This test verifies that all global options can be retrieved.
@@ -1243,6 +1264,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
                                                     subnet->getID());
     ASSERT_TRUE(returned_subnet);
 
+    {
+        SCOPED_TRACE("CREATE audit entry for a new subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
                                 opt_boot_file_name);
@@ -1256,6 +1284,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
+    {
+        SCOPED_TRACE("UPDATE audit entry for an added subnet option");
+        // Instead of adding an audit entry for an option we add an audit
+        // entry for the entire subnet so as the server refreshes the
+        // subnet with the new option. Note that the server doesn't
+        // have means to retrieve only the newly added option.
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
+
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(), subnet->getID(),
                                 opt_boot_file_name);
@@ -1267,6 +1306,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
         returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 
     // Deleting an option with explicitly specified server tag should fail.
     EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
@@ -1284,6 +1330,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     ASSERT_TRUE(returned_subnet);
 
     EXPECT_FALSE(returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for a deleted subnet option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 }
 
 // This test verifies that option can be inserted, updated and deleted
@@ -1381,6 +1434,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                                   shared_network->getName());
     ASSERT_TRUE(returned_network);
 
+    {
+        SCOPED_TRACE("CREATE audit entry for the new shared network");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 shared_network->getName(),
@@ -1395,6 +1455,17 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
+    {
+        SCOPED_TRACE("UPDATE audit entry for the added shared network option");
+        // Instead of adding an audit entry for an option we add an audit
+        // entry for the entire shared network so as the server refreshes the
+        // shared network with the new option. Note that the server doesn't
+        // have means to retrieve only the newly added option.
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
+
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
                                 shared_network->getName(),
@@ -1407,6 +1478,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
         returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for the updated shared network option");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 
     // Deleting an option with explicitly specified server tag should fail.
     EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
@@ -1423,6 +1501,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
                                                  shared_network->getName());
     ASSERT_TRUE(returned_network);
     EXPECT_FALSE(returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME).option_);
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for the deleted shared network option");
+        testNewAuditEntry("dhcp4_shared_network",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 }
 
 

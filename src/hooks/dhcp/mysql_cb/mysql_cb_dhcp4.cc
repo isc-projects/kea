@@ -24,6 +24,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/pointer_cast.hpp>
+#include <boost/scoped_ptr.hpp>
 #include <mysql.h>
 #include <mysqld_error.h>
 #include <array>
@@ -51,7 +52,7 @@ public:
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
-        SET_AUDIT_LOG_MESSAGE,
+        INIT_AUDIT_REVISION,
         GET_GLOBAL_PARAMETER4,
         GET_ALL_GLOBAL_PARAMETERS4,
         GET_MODIFIED_GLOBAL_PARAMETERS4,
@@ -215,9 +216,11 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Set log message to be used to create the audit revision.
-        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
-                          { MySqlBinding::createString("this is a log message") });
+        // The last parameter indicates that the parameter is not bound to any
+        // other object (e.g. addition of a subnet), so an audit entry should
+        // be created for the addition of the parameter.
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", true);
 
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
@@ -749,9 +752,14 @@ public:
         MySqlTransaction transaction(conn_);
 
         try {
-            // Set log message to be used to create the audit revision.
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
-                              { MySqlBinding::createString("this is a log message") });
+
+            // The change will involve multiple statements. The audit entry should
+            // be created for the parent object and should not be created for the
+            // DHCP options. The boolean value set to false indicates that the
+            // MySQL triggers should not create audit revision for the DHCP
+            // options associated with the subnet.
+            initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                              "this is log message", false);
 
             // Try to insert subnet. If this duplicates primary key, i.e. this
             // subnet already exists it will throw DuplicateEntry exception in
@@ -795,7 +803,8 @@ public:
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
-                createUpdateOption4(server_selector, subnet->getID(), desc_copy);
+                createUpdateOption4(server_selector, subnet->getID(), desc_copy,
+                                    false);
             }
         }
 
@@ -1109,10 +1118,13 @@ public:
         MySqlTransaction transaction(conn_);
 
         try {
-
-            // Set log message to be used to create the audit revision.
-            conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
-                              { MySqlBinding::createString("this is a log message") });
+            // The change will involve multiple statements. The audit entry should
+            // be created for the parent object and should not be created for the
+            // DHCP options. The boolean value set to false indicates that the
+            // MySQL triggers should not create audit revision for the DHCP
+            // options associated with the shared network.
+            initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                              "this is log message", false);
 
             // Try to insert shared network. The shared network name must be unique,
             // so if inserting fails with DuplicateEntry exception we'll need to
@@ -1150,7 +1162,7 @@ public:
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, shared_network->getName(),
-                                    desc_copy);
+                                    desc_copy, false);
             }
         }
 
@@ -1218,6 +1230,13 @@ public:
         OptionDescriptorPtr existing_option = getOption4(server_selector,
                                                          option->option_->getType(),
                                                          option->space_name_);
+
+        // The last parameter indicates that the option is not bound to any
+        // other object (e.g. addition of a subnet), so an audit entry should
+        // be created for the addition of the option.
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", true);
+
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(option->option_->getType()));
@@ -1238,9 +1257,12 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
+    /// @param distinct_transaction Boolean value indicating whether setting
+    /// the option value should be enclosed in a separate transaction.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const SubnetID& subnet_id,
-                             const OptionDescriptorPtr& option) {
+                             const OptionDescriptorPtr& option,
+                             const bool distinct_transaction = false) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1266,11 +1288,21 @@ public:
         };
 
 
-        MySqlTransaction transaction(conn_);
+        boost::scoped_ptr<MySqlTransaction> transaction;
+        // Only start new transaction if specified to do so. This function may
+        // be called from within an existing transaction in which case we
+        // don't start the new one.
+        if (distinct_transaction) {
+            transaction.reset(new MySqlTransaction(conn_));
+        }
 
         OptionDescriptorPtr existing_option = getOption4(server_selector, subnet_id,
                                                          option->option_->getType(),
                                                          option->space_name_);
+
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", distinct_transaction);
+
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)));
@@ -1283,7 +1315,9 @@ public:
             insertOption4(server_selector, in_bindings);
         }
 
-        transaction.commit();
+        if (transaction) {
+            transaction->commit();
+        }
     }
 
     /// @brief Sends query to insert or update DHCP option in a pool.
@@ -1305,7 +1339,7 @@ public:
                       << pool_end_address);
         }
 
-        createUpdateOption4(server_selector, pool_id, option);
+        createUpdateOption4(server_selector, pool_id, option, false);
     }
 
 
@@ -1314,9 +1348,12 @@ public:
     /// @param selector Server selector.
     /// @param pool_id Identifier of the pool the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
+    /// @param distinct_transaction Boolean value indicating whether setting
+    /// the option value should be enclosed in a separate transaction.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const uint64_t pool_id,
-                             const OptionDescriptorPtr& option) {
+                             const OptionDescriptorPtr& option,
+                             const bool distinct_transaction = false) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1341,10 +1378,21 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
-        MySqlTransaction transaction(conn_);
+        boost::scoped_ptr<MySqlTransaction> transaction;
+        // Only start new transaction if specified to do so. This function may
+        // be called from within an existing transaction in which case we
+        // don't start the new one.
+        if (distinct_transaction) {
+            transaction.reset(new MySqlTransaction(conn_));
+        }
+
         OptionDescriptorPtr existing_option = getOption4(server_selector, pool_id,
                                                          option->option_->getType(),
                                                          option->space_name_);
+
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", distinct_transaction);
+
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
@@ -1357,7 +1405,9 @@ public:
             insertOption4(server_selector, in_bindings);
         }
 
-        transaction.commit();
+        if (transaction) {
+            transaction->commit();
+        }
     }
 
     /// @brief Sends query to insert or update DHCP option in a shared network.
@@ -1366,9 +1416,12 @@ public:
     /// @param shared_network_name Name of the shared network the option
     /// belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
+    /// @param distinct_transaction Boolean value indicating whether setting
+    /// the option value should be enclosed in a separate transaction.)
     void createUpdateOption4(const ServerSelector& server_selector,
                              const std::string& shared_network_name,
-                             const OptionDescriptorPtr& option) {
+                             const OptionDescriptorPtr& option,
+                             const bool distinct_transaction = false) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1393,11 +1446,21 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
-        MySqlTransaction transaction(conn_);
+        boost::scoped_ptr<MySqlTransaction> transaction;
+        // Only start new transaction if specified to do so. This function may
+        // be called from within an existing transaction in which case we
+        // don't start the new one.
+        if (distinct_transaction) {
+            transaction.reset(new MySqlTransaction(conn_));
+        }
 
         OptionDescriptorPtr existing_option = getOption4(server_selector, shared_network_name,
                                                          option->option_->getType(),
                                                          option->space_name_);
+
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", distinct_transaction);
+
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
             in_bindings.push_back(MySqlBinding::createString(shared_network_name));
@@ -1410,7 +1473,9 @@ public:
             insertOption4(server_selector, in_bindings);
         }
 
-        transaction.commit();
+        if (transaction) {
+            transaction->commit();
+        }
     }
 
     /// @brief Sends query to retrieve single option definition by code and
@@ -1712,10 +1777,8 @@ public:
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
 
-        // Set log message to be used to create the audit revision.
-        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
-                          { MySqlBinding::createString("this is a log message") });
-
+        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                          "this is log message", true);
 
         if (existing_definition) {
             // Need to add three more bindings for WHERE clause.
@@ -1960,8 +2023,8 @@ TaggedStatementArray;
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve data from the database.
 TaggedStatementArray tagged_statements = { {
-    { MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
-      "SET @audit_log_message = ?"
+    { MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+      "CALL initAuditRevision(?, ?)"
     },
 
     // Select global parameter by name.
@@ -2521,14 +2584,14 @@ void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                               const std::string& shared_network_name,
                                               const OptionDescriptorPtr& option) {
-    impl_->createUpdateOption4(server_selector, shared_network_name, option);
+    impl_->createUpdateOption4(server_selector, shared_network_name, option, true);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selector,
                                               const SubnetID& subnet_id,
                                               const OptionDescriptorPtr& option) {
-    impl_->createUpdateOption4(server_selector, subnet_id, option);
+    impl_->createUpdateOption4(server_selector, subnet_id, option, true);
 }
 
 void
