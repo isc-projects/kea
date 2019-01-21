@@ -70,3 +70,6 @@ DROP TRIGGER IF EXISTS dhcp4_subnet_ADEL;
 DROP TRIGGER IF EXISTS dhcp4_shared_network_AINS;
 DROP TRIGGER IF EXISTS dhcp4_shared_network_AUPD;
 DROP TRIGGER IF EXISTS dhcp4_shared_network_ADEL;
+DROP TRIGGER IF EXISTS dhcp4_option_def_AINS;
+DROP TRIGGER IF EXISTS dhcp4_option_def_AUPD;
+DROP TRIGGER IF EXISTS dhcp4_option_def_ADEL;

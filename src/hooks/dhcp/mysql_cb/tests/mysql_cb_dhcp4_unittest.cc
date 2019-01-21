@@ -953,6 +953,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
 
     EXPECT_TRUE(returned_option_def->equals(*option_def));
 
+    {
+        SCOPED_TRACE("CREATE audit entry for an option definition");
+        testNewAuditEntry("dhcp4_option_def",
+                          AuditEntry::ModificationType::CREATE,
+                          "this is a log message");
+    }
+
     // Update the option definition in the database.
     OptionDefinitionPtr option_def2 = test_option_defs_[1];
     cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def2);
@@ -969,6 +976,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
                                                 test_option_defs_[1]->getCode(),
                                                 test_option_defs_[1]->getOptionSpaceName());
     EXPECT_TRUE(returned_option_def->equals(*option_def2));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for an option definition");
+        testNewAuditEntry("dhcp4_option_def",
+                          AuditEntry::ModificationType::UPDATE,
+                          "this is a log message");
+    }
 }
 
 // Test that all option definitions can be fetched.
@@ -978,6 +992,23 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
     // the same code and space.
     for (auto option_def : test_option_defs_) {
         cbptr_->createUpdateOptionDef4(ServerSelector::ALL(), option_def);
+
+        // That option definition overrides the first one so the audit entry should
+        // indicate an update.
+        if (option_def->getName() == "bar") {
+            SCOPED_TRACE("UPDATE audit entry for the option definition " +
+                         option_def->getName());
+            testNewAuditEntry("dhcp4_option_def",
+                              AuditEntry::ModificationType::UPDATE,
+                              "this is a log message");
+
+        } else {
+            SCOPED_TRACE("CREATE audit entry for the option defnition " +
+                         option_def->getName());
+            testNewAuditEntry("dhcp4_option_def",
+                              AuditEntry::ModificationType::CREATE,
+                              "this is a log message");
+        }
     }
 
     // Fetch all option_definitions.
@@ -1024,10 +1055,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
                                        test_option_defs_[2]->getCode(),
                                        test_option_defs_[2]->getOptionSpaceName()));
 
+    {
+        SCOPED_TRACE("DELETE audit entry for the first option definition");
+        testNewAuditEntry("dhcp4_option_def",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message");
+    }
+
     // Delete all remaining option definitions.
     EXPECT_EQ(2, cbptr_->deleteAllOptionDefs4(ServerSelector::ALL()));
     option_defs = cbptr_->getAllOptionDefs4(ServerSelector::ALL());
     ASSERT_TRUE(option_defs.empty());
+
+    {
+        SCOPED_TRACE("DELETE audit entries for the remaining option definitions");
+        // The last parameter indicates that we expect two new audit entries.
+        testNewAuditEntry("dhcp4_option_def",
+                          AuditEntry::ModificationType::DELETE,
+                          "this is a log message", 2);
+    }
 }
 
 // Test that option definitions modified after given time can be fetched.

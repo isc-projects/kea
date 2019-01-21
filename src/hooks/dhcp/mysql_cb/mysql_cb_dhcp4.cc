@@ -1711,6 +1711,12 @@ public:
         OptionDefinitionPtr existing_definition = getOptionDef4(server_selector,
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
+
+        // Set log message to be used to create the audit revision.
+        conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::SET_AUDIT_LOG_MESSAGE,
+                          { MySqlBinding::createString("this is a log message") });
+
+
         if (existing_definition) {
             // Need to add three more bindings for WHERE clause.
             in_bindings.push_back(MySqlBinding::createString(tag));
