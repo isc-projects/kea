@@ -9,6 +9,7 @@
 
 #include <cc/stamped_value.h>
 #include <config_backend/base_config_backend.h>
+#include <database/audit_entry.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
@@ -169,6 +170,16 @@ public:
     virtual data::StampedValueCollection
     getModifiedGlobalParameters4(const db::ServerSelector& selector,
                                  const boost::posix_time::ptime& modification_time) const = 0;
+
+    /// @brief Retrieves the most recent audit entries.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Timestamp being a lower limit for the returned
+    /// result set, i.e. entries later than specified time are returned.
+    /// @return Collection of audit entries.
+    virtual db::AuditEntryCollection
+    getRecentAuditEntries4(const db::ServerSelector& server_selector,
+                           const boost::posix_time::ptime& modification_time) const = 0;
 
     /// @brief Creates or updates a subnet.
     ///
