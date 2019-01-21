@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #ifndef MYSQL_CONFIG_BACKEND_IMPL_H
 #define MYSQL_CONFIG_BACKEND_IMPL_H
 
+#include <database/audit_entry.h>
 #include <database/database_connection.h>
 #include <database/server_selector.h>
 #include <dhcp/option.h>
@@ -96,6 +97,17 @@ public:
 
         return (s.str());
     }
+
+    /// @brief Sends query to the database to retrieve most recent audit entries.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param modification_time Timestamp being a lower limit for the returned
+    /// result set, i.e. entries later than specified time are returned.
+    /// @param [out] audit_entries Reference to the container where fetched audit
+    /// entries will be inserted.
+    void getRecentAuditEntries(const int index,
+                               const boost::posix_time::ptime& modification_time,
+                               db::AuditEntryCollection& audit_entries);
 
     /// @brief Sends query to delete rows from a table.
     ///

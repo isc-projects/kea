@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -65,6 +65,43 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
             conn_.statements_[i] = NULL;
         }
     }
+}
+
+void
+MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
+                                              const boost::posix_time::ptime& modification_time,
+                                              AuditEntryCollection& audit_entries) {
+    // Create the output bindings for receiving the data.
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(),
+        MySqlBinding::createString(AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH),
+        MySqlBinding::createInteger<uint64_t>(),
+        MySqlBinding::createInteger<uint8_t>(),
+        MySqlBinding::createTimestamp(),
+        MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH)
+    };
+
+    // There is only one input binding, modification time.
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createTimestamp(modification_time)
+    };
+
+    // Execute select.
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [&audit_entries] (MySqlBindingCollection& out_bindings) {
+        // Convert the numeric modification type into modification type enum.
+        AuditEntry::ModificationType mod_type =
+            static_cast<AuditEntry::ModificationType>(out_bindings[3]->getInteger<uint8_t>());
+
+        // Create new audit entry and add it to the collection of received
+        // entries.
+        AuditEntryPtr audit_entry(new AuditEntry(out_bindings[1]->getString(),
+                                                 out_bindings[2]->getInteger<uint64_t>(),
+                                                 mod_type,
+                                                 out_bindings[4]->getTimestamp(),
+                                                 out_bindings[5]->getStringOrDefault("")));
+        audit_entries.insert(audit_entry);
+    });
 }
 
 uint64_t

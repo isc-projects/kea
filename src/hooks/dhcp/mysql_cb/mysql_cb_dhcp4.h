@@ -172,6 +172,16 @@ public:
     getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
                                  const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves the most recent audit entries.
+    ///
+    /// @param selector Server selector.
+    /// @param modification_time Timestamp being a lower limit for the returned
+    /// result set, i.e. entries later than specified time are returned.
+    /// @return Collection of audit entries.
+    virtual db::AuditEntryCollection
+    getRecentAuditEntries4(const db::ServerSelector& server_selector,
+                           const boost::posix_time::ptime& modification_time) const;
+
     /// @brief Creates or updates a subnet.
     ///
     /// @param server_selector Server selector.
