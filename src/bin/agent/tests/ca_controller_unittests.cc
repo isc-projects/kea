@@ -651,7 +651,7 @@ TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
     // Check that the config was indeed applied?
 
     // Remove the file.
-    //::remove("testvalid.json");
+    ::remove("testvalid.json");
 
     // Now clean up after ourselves.
     ctrl->deregisterCommands();
