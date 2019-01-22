@@ -15,6 +15,7 @@ Primary developers:
  - Wlodek Wencel (testing, release engineering)
  - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
                    radius, netconf)
+ - Brian Reid     (logo design)
  - Shawn Routhier (lease file cleanup)
  - Michal Nowikowski (testing)
 
