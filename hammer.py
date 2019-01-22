@@ -76,6 +76,7 @@ Vagrant.configure("2") do |config|
 
   config.vm.provider "lxc" do |lxc|
     lxc.container_name = "{name}"
+    lxc.customize 'rootfs.path', "/var/lib/lxc/{name}/rootfs"
   end
 
   config.vm.synced_folder '.', '/vagrant', disabled: true
