@@ -1,3 +1,9 @@
+1514.	[func]		fdupont
+	Control Agent and DHCP-DDNS daemons now support config-reload
+	command, that instruct a given server to load again its
+	configuration from a file on disk.
+	(Gitlab #375,!192, git 93648a3a4918225e2c4413ae220fccc59eaea99a)
+
 1513.	[func]		godfryd
 	Fixed perfdhcp that now it keeps requested rate during performance
 	testing. Previously it was always about 20% lower than expected.
@@ -9,7 +15,7 @@
 	not RFC-compliant, some clients do send them.  Prior to the this
 	server would drop the entire packet.  In the spirit of being liberal
 	in what we accept, the server will now simply omit the option.
-	(#40,!203, git f41bd35c3e7a3bdc1f31c5602fd91d5c84c60163)
+	(Gitlab #40,!203, git f41bd35c3e7a3bdc1f31c5602fd91d5c84c60163)
 
 1511.	[func]		fdupont
 	Obsolete experimental secure DHCPv6 options (701-704) removed.
