@@ -29,9 +29,10 @@ EXTRA_DIST += dhcp4.dox dhcp4_hooks.dox dhcp4o6.dox
 EXTRA_DIST += dhcp4_parser.yy
 
 if GENERATE_DOCS
+
 kea-dhcp4.8: kea-dhcp4.xml
 	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
-        http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
+	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp4.xml
 
 else
@@ -55,10 +56,10 @@ BUILT_SOURCES = dhcp4_messages.h dhcp4_messages.cc
 noinst_LTLIBRARIES = libdhcp4.la
 
 libdhcp4_la_SOURCES  =
-libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
-libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4_log.cc dhcp4_log.h
 libdhcp4_la_SOURCES += dhcp4_srv.cc dhcp4_srv.h
+libdhcp4_la_SOURCES += ctrl_dhcp4_srv.cc ctrl_dhcp4_srv.h
+libdhcp4_la_SOURCES += json_config_parser.cc json_config_parser.h
 libdhcp4_la_SOURCES += dhcp4to6_ipc.cc dhcp4to6_ipc.h
 libdhcp4_la_SOURCES += dhcp4_lexer.ll location.hh position.hh stack.hh
 libdhcp4_la_SOURCES += dhcp4_parser.cc dhcp4_parser.h

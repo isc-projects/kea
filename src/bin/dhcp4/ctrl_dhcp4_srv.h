@@ -43,12 +43,12 @@ public:
     /// This method may throw if initialization fails.
     void init(const std::string& config_file);
 
-    /// @brief Loads specific config file
+    /// @brief Loads specific configuration file
     ///
     /// This utility method is called whenever we know a filename of the config
     /// and need to load it. It calls config-set command once the content of
     /// the file has been loaded and verified to be a sane JSON configuration.
-    /// config-set handler will process the config file (load it as current
+    /// config-set handler will process the config file (apply it as current
     /// configuration).
     ///
     /// @param file_name name of the file to be loaded
@@ -121,12 +121,12 @@ public:
         return (server_);
     }
 
-
 private:
+
     /// @brief Callback that will be called from iface_mgr when data
     /// is received over control socket.
     ///
-    /// This static callback method is called from IfaceMgr::receive6() method,
+    /// This static callback method is called from IfaceMgr::receive4() method,
     /// when there is a new command or configuration sent over control socket
     /// (that was sent from some yet unspecified sender).
     static void sessionReader(void);
@@ -247,7 +247,6 @@ private:
     commandDhcpEnableHandler(const std::string& command,
                              isc::data::ConstElementPtr args);
 
-
     /// @Brief handler for processing 'version-get' command
     ///
     /// This handler processes version-get command, which returns
@@ -363,7 +362,7 @@ private:
     /// @brief Static pointer to the sole instance of the DHCP server.
     ///
     /// This is required for config and command handlers to gain access to
-    /// the server
+    /// the server. Some of them need to be static methods.
     static ControlledDhcpv4Srv* server_;
 
     /// @brief IOService object, used for all ASIO operations.

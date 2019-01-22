@@ -29,6 +29,7 @@ libkea_database_la_SOURCES += database_connection.cc database_connection.h
 libkea_database_la_SOURCES += dbaccess_parser.h dbaccess_parser.cc
 libkea_database_la_SOURCES += db_exceptions.h
 libkea_database_la_SOURCES += db_log.cc db_log.h
+libkea_database_la_SOURCES += sql_common.cc sql_common.h
 libkea_database_la_SOURCES += server_selector.h
 
 nodist_libkea_database_la_SOURCES = db_messages.cc db_messages.h
@@ -52,4 +53,5 @@ libkea_database_include_HEADERS = \
 	dbaccess_parser.h \
 	db_exceptions.h \
 	db_log.h \
-	server_selector.h
+	server_selector.h \
+	sql_common.h

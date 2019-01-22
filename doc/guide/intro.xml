@@ -89,7 +89,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a MySQL database, Kea requires MySQL
+    In order to store lease information in a MySQL database, Kea requires MySQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without MySQL support.
             </simpara>
@@ -97,7 +97,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
+    In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
     headers and libraries.  This is an optional dependency in that Kea can be
     built without PostgreSQL support.
             </simpara>
@@ -105,7 +105,7 @@
 
         <listitem>
             <simpara>
-	In order to store lease information in a Cassandra  database (CQL), Kea
+    In order to store lease information in a Cassandra  database (CQL), Kea
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>

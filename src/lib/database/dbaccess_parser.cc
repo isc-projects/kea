@@ -59,8 +59,9 @@ DbAccessParser::parse(std::string& access_string,
     // 2. Update the copy with the passed keywords.
     for (std::pair<std::string, ConstElementPtr> param : database_config->mapValue()) {
         try {
-            if ((param.first == "persist") || (param.first == "readonly") ||
-                (param.first == "tcp-nodelay")) {
+            if ((param.first == "persist") ||
+                (param.first == "tcp-nodelay") ||
+                (param.first == "readonly")) {
                 values_copy[param.first] = (param.second->boolValue() ?
                                             "true" : "false");
 
@@ -100,6 +101,14 @@ DbAccessParser::parse(std::string& access_string,
                     boost::lexical_cast<std::string>(port);
 
             } else {
+                // all remaining string parameters
+                // type
+                // user
+                // password
+                // host
+                // name
+                // contact-points
+                // keyspace
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
@@ -182,18 +191,18 @@ DbAccessParser::parse(std::string& access_string,
     }
 
     // Check that request_timeout value makes sense.
-    if ((reconnect_wait_time < 0) ||
-        (reconnect_wait_time > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DbConfigError, "reconnect-wait-time " << reconnect_wait_time
+    if ((request_timeout < 0) ||
+        (request_timeout > std::numeric_limits<uint32_t>::max())) {
+        ConstElementPtr value = database_config->get("request-timeout");
+        isc_throw(DhcpConfigError, "request-timeout " << request_timeout
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }
     // Check that tcp_keepalive value makes sense.
     if ((tcp_keepalive < 0) ||
         (tcp_keepalive > std::numeric_limits<uint32_t>::max())) {
-        ConstElementPtr value = database_config->get("reconnect-wait-time");
-        isc_throw(DbConfigError, "tcp-keepalive " << tcp_keepalive
+        ConstElementPtr value = database_config->get("tcp-keepalive");
+        isc_throw(DhcpConfigError, "tcp-keepalive " << tcp_keepalive
                   << " must be in range 0...MAX_UINT32 (4294967295) "
                   << " (" << value->getPosition() << ")");
     }

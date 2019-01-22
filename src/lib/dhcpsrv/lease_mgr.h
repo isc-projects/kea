@@ -209,6 +209,9 @@ typedef boost::shared_ptr<LeaseStatsQuery> LeaseStatsQueryPtr;
 /// @brief Defines a pointer to a LeaseStatsRow.
 typedef boost::shared_ptr<LeaseStatsRow> LeaseStatsRowPtr;
 
+/// @brief Collection of the @c LeaseStatsRow objects.
+typedef std::vector<LeaseStatsRowPtr> LeaseStatsCollection;
+
 /// @brief Abstract Lease Manager
 ///
 /// This is an abstract API for lease database backends. It provides unified

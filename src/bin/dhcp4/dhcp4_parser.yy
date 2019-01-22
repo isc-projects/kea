@@ -62,9 +62,6 @@ using namespace std;
   USE_ROUTING "use-routing"
   RE_DETECT "re-detect"
 
-  SANITY_CHECKS "sanity-checks"
-  LEASE_CHECKS "lease-checks"
-
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
   AUTHORITATIVE "authoritative"
@@ -88,13 +85,13 @@ using namespace std;
   LFC_INTERVAL "lfc-interval"
   READONLY "readonly"
   CONNECT_TIMEOUT "connect-timeout"
-  CONTACT_POINTS "contact-points"
-  KEYSPACE "keyspace"
-  MAX_RECONNECT_TRIES "max-reconnect-tries"
+  TCP_NODELAY "tcp-nodelay"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
-  TCP_NODELAY "tcp-nodelay"
+  CONTACT_POINTS "contact-points"
+  KEYSPACE "keyspace"
+  MAX_RECONNECT_TRIES "max-reconnect-tries"
 
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
@@ -120,8 +117,6 @@ using namespace std;
   ENCAPSULATE "encapsulate"
   ARRAY "array"
 
-  SHARED_NETWORKS "shared-networks"
-
   POOLS "pools"
   POOL "pool"
   USER_CONTEXT "user-context"
@@ -135,8 +130,12 @@ using namespace std;
   OUT_OF_POOL "out-of-pool"
   GLOBAL "global"
   ALL "all"
+  SHARED_NETWORKS "shared-networks"
 
   HOST_RESERVATION_IDENTIFIERS "host-reservation-identifiers"
+
+  SANITY_CHECKS "sanity-checks"
+  LEASE_CHECKS "lease-checks"
 
   CLIENT_CLASSES "client-classes"
   REQUIRE_CLIENT_CLASSES "require-client-classes"
@@ -145,6 +144,7 @@ using namespace std;
   CLIENT_CLASS "client-class"
 
   RESERVATIONS "reservations"
+  IP_ADDRESSES "ip-addresses"
   DUID "duid"
   HW_ADDRESS "hw-address"
   CIRCUIT_ID "circuit-id"
@@ -154,7 +154,6 @@ using namespace std;
 
   RELAY "relay"
   IP_ADDRESS "ip-address"
-  IP_ADDRESSES "ip-addresses"
 
   HOOKS_LIBRARIES "hooks-libraries"
   LIBRARY "library"
@@ -532,7 +531,6 @@ authoritative: AUTHORITATIVE COLON BOOLEAN {
     ctx.stack_.back()->set("authoritative", prf);
 };
 
-
 interfaces_config: INTERFACES_CONFIG {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("interfaces-config", i);
@@ -542,6 +540,15 @@ interfaces_config: INTERFACES_CONFIG {
     // No interfaces config param is required
     ctx.stack_.pop_back();
     ctx.leave();
+};
+
+sub_interfaces4: LCURLY_BRACKET {
+    // Parse the interfaces-config map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} interfaces_config_params RCURLY_BRACKET {
+    // No interfaces config param is required
+    // parsing completed
 };
 
 interfaces_config_params: interfaces_config_param
@@ -556,15 +563,6 @@ interfaces_config_param: interfaces_list
                        | comment
                        | unknown_map_entry
                        ;
-
-sub_interfaces4: LCURLY_BRACKET {
-    // Parse the interfaces-config map
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.push_back(m);
-} interfaces_config_params RCURLY_BRACKET {
-    // No interfaces config param is required
-    // parsing completed
-};
 
 interfaces_list: INTERFACES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -605,7 +603,6 @@ re_detect: RE_DETECT COLON BOOLEAN {
     ctx.stack_.back()->set("re-detect", b);
 };
 
-
 lease_database: LEASE_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
     ctx.stack_.back()->set("lease-database", i);
@@ -617,39 +614,6 @@ lease_database: LEASE_DATABASE {
     ctx.stack_.pop_back();
     ctx.leave();
 };
-
-sanity_checks: SANITY_CHECKS {
-    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
-    ctx.stack_.back()->set("sanity-checks", m);
-    ctx.stack_.push_back(m);
-    ctx.enter(ctx.SANITY_CHECKS);
-} COLON LCURLY_BRACKET sanity_checks_params RCURLY_BRACKET {
-    ctx.stack_.pop_back();
-    ctx.leave();
-};
-
-sanity_checks_params: sanity_checks_param
-                    | sanity_checks_params COMMA sanity_checks_param;
-
-sanity_checks_param: lease_checks;
-
-lease_checks: LEASE_CHECKS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-
-    if ( (string($4) == "none") ||
-         (string($4) == "warn") ||
-         (string($4) == "fix") ||
-         (string($4) == "fix-del") ||
-         (string($4) == "del")) {
-        ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
-        ctx.stack_.back()->set("lease-checks", user);
-        ctx.leave();
-    } else {
-        error(@4, "Unsupported 'lease-checks value: " + string($4) +
-              ", supported values are: none, warn, fix, fix-del, del");
-    }
-}
 
 hosts_database: HOSTS_DATABASE {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
@@ -705,12 +669,12 @@ database_map_param: database_type
                   | lfc_interval
                   | readonly
                   | connect_timeout
-                  | contact_points
-                  | max_reconnect_tries
+                  | tcp_nodelay
                   | reconnect_wait_time
                   | request_timeout
                   | tcp_keepalive
-                  | tcp_nodelay
+                  | contact_points
+                  | max_reconnect_tries
                   | keyspace
                   | unknown_map_entry
                   ;
@@ -785,6 +749,16 @@ connect_timeout: CONNECT_TIMEOUT COLON INTEGER {
     ctx.stack_.back()->set("connect-timeout", n);
 };
 
+tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
+    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("tcp-nodelay", n);
+};
+
+reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
+    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("reconnect-wait-time", n);
+};
+
 request_timeout: REQUEST_TIMEOUT COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("request-timeout", n);
@@ -793,11 +767,6 @@ request_timeout: REQUEST_TIMEOUT COLON INTEGER {
 tcp_keepalive: TCP_KEEPALIVE COLON INTEGER {
     ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("tcp-keepalive", n);
-};
-
-tcp_nodelay: TCP_NODELAY COLON BOOLEAN {
-    ElementPtr n(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("tcp-nodelay", n);
 };
 
 contact_points: CONTACT_POINTS {
@@ -821,9 +790,42 @@ max_reconnect_tries: MAX_RECONNECT_TRIES COLON INTEGER {
     ctx.stack_.back()->set("max-reconnect-tries", n);
 };
 
-reconnect_wait_time: RECONNECT_WAIT_TIME COLON INTEGER {
-    ElementPtr n(new IntElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("reconnect-wait-time", n);
+sanity_checks: SANITY_CHECKS {
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("sanity-checks", m);
+    ctx.stack_.push_back(m);
+    ctx.enter(ctx.SANITY_CHECKS);
+} COLON LCURLY_BRACKET sanity_checks_params RCURLY_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sanity_checks_params: sanity_checks_param
+                    | sanity_checks_params COMMA sanity_checks_param;
+
+sanity_checks_param: lease_checks;
+
+lease_checks: LEASE_CHECKS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+
+    if ( (string($4) == "none") ||
+         (string($4) == "warn") ||
+         (string($4) == "fix") ||
+         (string($4) == "fix-del") ||
+         (string($4) == "del")) {
+        ElementPtr user(new StringElement($4, ctx.loc2pos(@4)));
+        ctx.stack_.back()->set("lease-checks", user);
+        ctx.leave();
+    } else {
+        error(@4, "Unsupported 'lease-checks value: " + string($4) +
+              ", supported values are: none, warn, fix, fix-del, del");
+    }
+}
+
+duid_id : DUID {
+    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(duid);
 };
 
 host_reservation_identifiers: HOST_RESERVATION_IDENTIFIERS {
@@ -847,14 +849,14 @@ host_reservation_identifier: duid_id
                            | flex_id
                            ;
 
-duid_id : DUID {
-    ElementPtr duid(new StringElement("duid", ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(duid);
-};
-
 hw_address_id : HW_ADDRESS {
     ElementPtr hwaddr(new StringElement("hw-address", ctx.loc2pos(@1)));
     ctx.stack_.back()->add(hwaddr);
+};
+
+flex_id : FLEX_ID {
+    ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
+    ctx.stack_.back()->add(flex_id);
 };
 
 circuit_id : CIRCUIT_ID {
@@ -867,10 +869,6 @@ client_id : CLIENT_ID {
     ctx.stack_.back()->add(client);
 };
 
-flex_id: FLEX_ID {
-    ElementPtr flex_id(new StringElement("flex-id", ctx.loc2pos(@1)));
-    ctx.stack_.back()->add(flex_id);
-};
 
 hooks_libraries: HOOKS_LIBRARIES {
     ElementPtr l(new ListElement(ctx.loc2pos(@1)));
@@ -1163,6 +1161,7 @@ id: ID COLON INTEGER {
     ctx.stack_.back()->set("id", id);
 };
 
+
 // ---- shared-networks ---------------------
 
 shared_networks: SHARED_NETWORKS {
@@ -1177,8 +1176,8 @@ shared_networks: SHARED_NETWORKS {
 
 // This allows 0 or more shared network definitions.
 shared_networks_content: %empty
-                       | shared_networks_list
-                       ;
+                    | shared_networks_list
+                    ;
 
 // This allows 1 or more shared network definitions.
 shared_networks_list: shared_network
@@ -1493,7 +1492,6 @@ sub_pool4: LCURLY_BRACKET {
 } pool_params RCURLY_BRACKET {
     // The pool parameter is required.
     ctx.require("pool", ctx.loc2pos(@1), ctx.loc2pos(@4));
-    // parsing completed
 };
 
 pool_params: pool_param
@@ -1621,10 +1619,10 @@ reservation_param: duid
                  | reservation_client_classes
                  | client_id_value
                  | circuit_id_value
-                 | flex_id_value
                  | ip_address
                  | hw_address
                  | hostname
+                 | flex_id_value
                  | option_data_list
                  | next_server
                  | server_hostname
@@ -1655,14 +1653,6 @@ boot_file_name: BOOT_FILE_NAME {
 } COLON STRING {
     ElementPtr bootfile(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("boot-file-name", bootfile);
-    ctx.leave();
-};
-
-ip_address: IP_ADDRESS {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("ip-address", addr);
     ctx.leave();
 };
 
@@ -1708,19 +1698,19 @@ circuit_id_value: CIRCUIT_ID {
     ctx.leave();
 };
 
-flex_id_value: FLEX_ID {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("flex-id", hw);
-    ctx.leave();
-};
-
 hostname: HOSTNAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr host(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("hostname", host);
+    ctx.leave();
+};
+
+flex_id_value: FLEX_ID {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr hw(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("flex-id", hw);
     ctx.leave();
 };
 
@@ -1750,6 +1740,14 @@ relay: RELAY {
 relay_map: ip_address
          | ip_addresses
          ;
+
+ip_address: IP_ADDRESS {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr addr(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("ip-address", addr);
+    ctx.leave();
+};
 
 // --- end of relay definitions ------------------------------
 
@@ -1816,8 +1814,6 @@ only_if_required: ONLY_IF_REQUIRED COLON BOOLEAN {
 
 // --- end of client classes ---------------------------------
 
-// was server-id but in is DHCPv6-only
-
 dhcp4o6_port: DHCP4O6_PORT COLON INTEGER {
     ElementPtr time(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("dhcp4o6-port", time);
@@ -1839,14 +1835,14 @@ control_socket_params: control_socket_param
                      | control_socket_params COMMA control_socket_param
                      ;
 
-control_socket_param: control_socket_type
-                    | control_socket_name
+control_socket_param: socket_type
+                    | socket_name
                     | user_context
                     | comment
                     | unknown_map_entry
                     ;
 
-control_socket_type: SOCKET_TYPE {
+socket_type: SOCKET_TYPE {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stype(new StringElement($4, ctx.loc2pos(@4)));
@@ -1854,7 +1850,7 @@ control_socket_type: SOCKET_TYPE {
     ctx.leave();
 };
 
-control_socket_name: SOCKET_NAME {
+socket_name: SOCKET_NAME {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr name(new StringElement($4, ctx.loc2pos(@4)));
@@ -1880,6 +1876,7 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
         error(@1, msg.str());
     }
 
+    // queue-enable is mandatory
     ConstElementPtr enable_queue = qc->get("enable-queue");
     if (enable_queue->getType() != Element::boolean) {
         std::stringstream msg;
@@ -1888,6 +1885,7 @@ dhcp_queue_control: DHCP_QUEUE_CONTROL {
         error(@1, msg.str());
     }
 
+    // if queue-type is supplied make sure it's a string
     if (qc->contains("queue-type")) {
         ConstElementPtr queue_type = qc->get("queue-type");
         if (queue_type->getType() != Element::string) {
@@ -2096,6 +2094,8 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.stack_.back()->set("Control-agent", $4);
     ctx.leave();
 };
+
+// Config control information element
 
 config_control: CONFIG_CONTROL {
     ElementPtr i(new MapElement(ctx.loc2pos(@1)));
