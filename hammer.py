@@ -10,13 +10,14 @@ from __future__ import print_function
 import os
 import sys
 import glob
-import argparse
 import time
-import platform
-import subprocess
+import json
 import logging
 import datetime
-import json
+import platform
+import binascii
+import argparse
+import subprocess
 import multiprocessing
 import xml.etree.ElementTree as ET
 
@@ -210,11 +211,6 @@ class VagrantEnv(object):
         image_tpl = IMAGE_TEMPLATES["%s-%s-%s" % (system, sys_revision, provider)][image_template_variant]
         self.repo_dir = os.getcwd()
 
-        self.name = "hmr-%s-%s-kea-srv" % (system, sys_revision.replace('.', '-'))
-
-        vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
-                                             name=self.name)
-
         sys_dir = "%s-%s" % (system, sys_revision)
         if provider == "virtualbox":
             self.vagrant_dir = os.path.join(self.repo_dir, 'hammer', sys_dir, 'vbox')
@@ -233,8 +229,16 @@ class VagrantEnv(object):
             # TODO: destroy any existing VM
             pass
 
+        crc = binascii.crc32(self.vagrant_dir.encode())
+        self.name = "hmr-%s-%s-kea-srv-%08d" % (system, sys_revision.replace('.', '-'), crc)
+
+        vagrantfile = vagrantfile_tpl.format(image_tpl=image_tpl,
+                                             name=self.name)
+
         with open(vagrantfile_path, "w") as f:
             f.write(vagrantfile)
+
+        log.info('Prepared vagrant system %s in %s', self.name, self.vagrant_dir)
 
     def up(self):
         execute("vagrant box update", cwd=self.vagrant_dir, timeout=20 * 60, dry_run=self.dry_run)
@@ -272,7 +276,7 @@ class VagrantEnv(object):
             execute('tar -czf %s ./*' % box_path, cwd=lxc_box_dir)
             execute('sudo rm -rf %s' % lxc_box_dir)
 
-    def run_build_and_test(self, tarball_path):
+    def run_build_and_test(self, tarball_path, jobs):
         if self.dry_run:
             return 0, 0
 
@@ -290,7 +294,7 @@ class VagrantEnv(object):
 
         t0 = time.time()
 
-        bld_cmd = "%s hammer.py build -p local -t %s.tar.gz" % (self.python, name_ver)
+        bld_cmd = "%s hammer.py build -p local -t %s.tar.gz -j %d" % (self.python, name_ver, jobs)
         if self.features_arg:
             bld_cmd += ' ' + self.features_arg
         if self.nofeatures_arg:
@@ -689,7 +693,7 @@ def prepare_deps_local(features, check_times):
     #execute('sudo rm -rf /usr/share/doc')
 
 
-def build_local(features, tarball_path, check_times):
+def build_local(features, tarball_path, check_times, jobs):
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
@@ -790,11 +794,14 @@ def build_local(features, tarball_path, check_times):
 
         execute(cmd, cwd=src_path, env=env, check_times=check_times)
 
-        cpus = multiprocessing.cpu_count() - 1
-        if distro == 'centos':
-            cpus = cpus // 2
-        if cpus == 0:
-            cpus = 1
+        if jobs == 0:
+            cpus = multiprocessing.cpu_count() - 1
+            if distro == 'centos':
+                cpus = cpus // 2
+            if cpus == 0:
+                cpus = 1
+        else:
+            cpus = jobs
         cmd = 'make -j%s' % cpus
         execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times)
 
@@ -844,7 +851,7 @@ def build_local(features, tarball_path, check_times):
     execute('df -h')
 
 
-def build_in_vagrant(provider, system, sys_revision, features, leave_system, tarball_path, dry_run, quiet, clean_start, check_times):
+def build_in_vagrant(provider, system, sys_revision, features, leave_system, tarball_path, dry_run, quiet, clean_start, check_times, jobs):
     log.info('')
     log.info(">>> Building %s, %s, %s" % (provider, system, sys_revision))
     log.info('')
@@ -860,7 +867,7 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
             ve.destroy(force=True)
         ve.up()
         ve.prepare_deps()
-        total, passed = ve.run_build_and_test(tarball_path)
+        total, passed = ve.run_build_and_test(tarball_path, jobs)
         msg = ' - ' + green('all ok')
     except KeyboardInterrupt as e:
         error = e
@@ -962,6 +969,7 @@ def parse_args():
     parser.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
     parser.add_argument('-c', '--clean-start', action='store_true', help='If there is pre-existing system then it is destroyed first.')
     parser.add_argument('-i', '--check-times', action='store_true', help='Do not allow executing commands infinitelly.')
+    parser.add_argument('-j', '--jobs', default=0, help='Number of processes used in compilation. Override make -j default value.')
 
     args = parser.parse_args()
 
@@ -1049,7 +1057,7 @@ def main():
     elif args.command == "build":
         log.info('Enabled features: %s', ' '.join(features))
         if args.provider == 'local':
-            build_local(features, args.from_tarball, args.check_times)
+            build_local(features, args.from_tarball, args.check_times, int(args.jobs))
             return
 
         if args.provider == 'all':
@@ -1084,7 +1092,7 @@ def main():
         fail = False
         for provider, system, revision in plan:
             duration, error, total, passed = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
-                                                              args.dry_run, args.quiet, args.clean_start, args.check_times)
+                                                              args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs))
             results[(provider, system, revision)] = (duration, error, total, passed)
 
             if error:
