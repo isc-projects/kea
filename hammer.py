@@ -859,6 +859,7 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
 
     t0 = time.time()
 
+    ve = None
     error = None
     total = 0
     passed = 0
@@ -881,7 +882,7 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
         error = e
         msg = ' - ' + red(str(e))
     finally:
-        if not leave_system:
+        if not leave_system and ve:
             ve.destroy(force=True)
 
     t1 = time.time()
