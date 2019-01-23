@@ -635,7 +635,10 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
                                              D6O_INFORMATION_REFRESH_TIME,
                                              false, false, 3600 + i),
                   DHCP6_OPTION_SPACE);
-        opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
+        opts->add(createAddressOption<Option6AddrLst>(D6O_SIP_SERVERS_ADDR,
+                                                      false, false,
+                                                      addr.toText()),
+                  DHCP6_OPTION_SPACE);
 
         ASSERT_NO_THROW(hdsptr_->add(host));
         hosts.push_back(host);
@@ -663,6 +666,184 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
 
     // Verify we got what we expected.
     HostDataSourceUtils::compareHosts(hosts[4], page[0]);
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
+GenericHostDataSourceTest::testGetPage4Subnets() {
+    // From the ticket: add one host to subnet1, add one host to subnet2.
+    // repeat 5 times. Get hosts from subnet1 with page size 3.
+    // Make sure the right hosts are returned and in expected page
+    //sizes (3, then 2).
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    const Host::IdentifierType& id = Host::IDENT_HWADDR;
+    IOAddress addr("192.0.2.0");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+    vector<HostPtr> hosts;
+    for (unsigned i = 0; i < 10; ++i) {
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = HostDataSourceUtils::initializeHost4(addr.toText(), id);
+        host->setIPv4SubnetID(subnet4 + (i & 1));
+        host->setIPv6SubnetID(subnet6 + (i & 1));
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+        hosts.push_back(host);
+    }
+
+    // First subnet.
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(3);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(3, page.size());
+    host_id = page[2]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 3; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2], page[i]);
+    }
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(2, page.size());
+    host_id = page[1]->getHostId();
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 2; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[(i + 3) * 2], page[i]);
+    }
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+
+    // Second subnet.
+    ++subnet4;
+
+    // Get first page.
+    idx = 0;
+    host_id = 0;
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(3, page.size());
+    host_id = page[2]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 3; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[1 + (i * 2)], page[i]);
+    }
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(2, page.size());
+    host_id = page[1]->getHostId();
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 2; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[1 + ((i + 3) * 2)], page[i]);
+    }
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
+GenericHostDataSourceTest::testGetPage6Subnets() {
+    // From the ticket: add one host to subnet1, add one host to subnet2.
+    // repeat 5 times. Get hosts from subnet1 with page size 3.
+    // Make sure the right hosts are returned and in expected page
+    //sizes (3, then 2).
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    const Host::IdentifierType& id = Host::IDENT_DUID;
+    IOAddress addr("2001:db8:1::");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+    vector<HostPtr> hosts;
+    for (unsigned i = 0; i < 10; ++i) {
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = HostDataSourceUtils::initializeHost6(addr.toText(), id, false);
+        host->setIPv4SubnetID(subnet4 + (i & 1));
+        host->setIPv6SubnetID(subnet6 + (i & 1));
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+        hosts.push_back(host);
+    }
+
+    // First subnet.
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(3);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(3, page.size());
+    host_id = page[2]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 3; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2], page[i]);
+    }
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(2, page.size());
+    host_id = page[1]->getHostId();
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 2; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[(i + 3) * 2], page[i]);
+    }
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+
+    // Second subnet.
+    ++subnet6;
+
+    // Get first page.
+    idx = 0;
+    host_id = 0;
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(3, page.size());
+    host_id = page[2]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 3; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[1 + (i * 2)], page[i]);
+    }
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(2, page.size());
+    host_id = page[1]->getHostId();
+
+    // Verify retrieved hosts.
+    for (size_t i = 0; i < 2; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[1 + ((i + 3) * 2)], page[i]);
+    }
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));

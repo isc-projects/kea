@@ -222,6 +222,18 @@ public:
     /// @param id Identifier type (hwaddr or duid).
     void testGetPageLimit6(const Host::IdentifierType& id);
 
+    /// @brief Test that Verifies that pages of host reservations in the
+    /// same subnet can be retrieved properly even with multiple subnets.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetPage4Subnets();
+
+    /// @brief Test that Verifies that pages of host reservations in the
+    /// same subnet can be retrieved properly even with multiple subnets.
+    ///
+    /// Uses gtest macros to report failures.
+    void testGetPage6Subnets();
+
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///
