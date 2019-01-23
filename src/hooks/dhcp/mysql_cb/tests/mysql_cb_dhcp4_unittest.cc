@@ -20,6 +20,7 @@
 #include <boost/shared_ptr.hpp>
 #include <gtest/gtest.h>
 #include <map>
+#include <sstream>
 
 using namespace isc::asiolink;
 using namespace isc::db;
@@ -295,6 +296,26 @@ public:
         timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
     }
 
+    std::string logExistingAuditEntries() {
+        std::ostringstream s;
+
+        auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
+
+        for (auto audit_entry_it = mod_time_idx.begin();
+             audit_entry_it != mod_time_idx.end();
+             ++audit_entry_it) {
+            auto audit_entry = *audit_entry_it;
+            s << audit_entry->getObjectType() << ", "
+              << audit_entry->getObjectId() << ", "
+              << static_cast<int>(audit_entry->getModificationType()) << ", "
+              << audit_entry->getModificationTime() << ", "
+              << audit_entry->getLogMessage()
+              << std::endl;
+        }
+
+        return (s.str());
+    }
+
     /// @brief Tests that the new audit entry is added.
     ///
     /// This method retrieves a collection of the existing audit entries and
@@ -313,7 +334,8 @@ public:
         auto audit_entries_size_save = audit_entries_.size();
         audit_entries_ = cbptr_->getRecentAuditEntries4(ServerSelector::ALL(),
                                                         timestamps_["two days ago"]);
-        ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_.size());
+        ASSERT_EQ(audit_entries_size_save + new_entries_num, audit_entries_.size())
+            << logExistingAuditEntries();
 
         auto& mod_time_idx = audit_entries_.get<AuditEntryModificationTimeTag>();
 
@@ -323,9 +345,12 @@ public:
              std::distance(mod_time_idx.rbegin(), audit_entry_it) < new_entries_num;
              ++audit_entry_it) {
             auto audit_entry = *audit_entry_it;
-            EXPECT_EQ(exp_object_type, audit_entry->getObjectType());
-            EXPECT_EQ(exp_modification_type, audit_entry->getModificationType());
-            EXPECT_EQ(exp_log_message, audit_entry->getLogMessage());
+            EXPECT_EQ(exp_object_type, audit_entry->getObjectType())
+                << logExistingAuditEntries();
+            EXPECT_EQ(exp_modification_type, audit_entry->getModificationType())
+                << logExistingAuditEntries();
+            EXPECT_EQ(exp_log_message, audit_entry->getLogMessage())
+                << logExistingAuditEntries();
         }
     }
 
@@ -398,7 +423,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
         SCOPED_TRACE("CREATE audit entry for global parameter");
         testNewAuditEntry("dhcp4_global_parameter",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "global parameter set");
     }
 
     // Verify returned parameter and the modification time.
@@ -436,7 +461,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
         SCOPED_TRACE("UPDATE audit entry for the global parameter");
         testNewAuditEntry("dhcp4_global_parameter",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "global parameter set");
     }
 
     // Should not delete parameter specified for all servers if explicit
@@ -454,7 +479,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
         SCOPED_TRACE("DELETE audit entry for the global parameter");
         testNewAuditEntry("dhcp4_global_parameter",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "global parameter deleted");
     }
 }
 
@@ -554,7 +579,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
         SCOPED_TRACE("CREATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "subnet set");
     }
 
     // Update the subnet in the database (both use the same ID).
@@ -576,7 +601,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
         SCOPED_TRACE("UPDATE audit entry for the subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "subnet set");
     }
 }
 
@@ -643,13 +668,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
             SCOPED_TRACE("UPDATE audit entry for the subnet " + subnet->toText());
             testNewAuditEntry("dhcp4_subnet",
                               AuditEntry::ModificationType::UPDATE,
-                              "this is a log message");
+                              "subnet set");
 
         } else {
             SCOPED_TRACE("CREATE audit entry for the subnet " + subnet->toText());
             testNewAuditEntry("dhcp4_subnet",
                               AuditEntry::ModificationType::CREATE,
-                              "this is a log message");
+                              "subnet set");
         }
     }
 
@@ -694,7 +719,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
         SCOPED_TRACE("DELETE first subnet audit entry");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "subnet deleted");
     }
 
     subnets = cbptr_->getAllSubnets4(ServerSelector::ALL());
@@ -710,7 +735,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
         SCOPED_TRACE("DELETE second subnet audit entry");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "subnet deleted");
     }
 
     // Delete all.
@@ -722,7 +747,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSubnets4) {
         SCOPED_TRACE("DELETE all subnets audit entry");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "deleted all subnets");
     }
 }
 
@@ -789,14 +814,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
         SCOPED_TRACE("CREATE audit entry for a shared network");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "shared network set");
     }
-
+    
     // Update shared network in the database.
     SharedNetwork4Ptr shared_network2 = test_networks_[1];
     cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network2);
 
-    // Fetch updated subnet and see if it matches.
+    // Fetch updated shared betwork and see if it matches.
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[1]->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
@@ -806,7 +831,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
         SCOPED_TRACE("UPDATE audit entry for a shared network");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "shared network set");
     }
 
     // Fetching the shared network for an explicitly specified server tag should
@@ -831,16 +856,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                          network->getName());
             testNewAuditEntry("dhcp4_shared_network",
                               AuditEntry::ModificationType::UPDATE,
-                              "this is a log message");
+                              "shared network set");
 
         } else {
             SCOPED_TRACE("CREATE audit entry for the shared network " +
                          network->getName());
             testNewAuditEntry("dhcp4_shared_network",
                               AuditEntry::ModificationType::CREATE,
-                              "this is a log message");
+                              "shared network set");
         }
-
     }
 
     // Fetch all shared networks.
@@ -883,7 +907,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
         SCOPED_TRACE("DELETE audit entry for the first shared network");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "shared network deleted");
     }
 
     // Delete all.
@@ -896,7 +920,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
         // The last parameter indicates that we expect two new audit entries.
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message", 2);
+                          "deleted all shared networks", 2);
     }
 }
 
@@ -957,7 +981,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
         SCOPED_TRACE("CREATE audit entry for an option definition");
         testNewAuditEntry("dhcp4_option_def",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "option definition set");
     }
 
     // Update the option definition in the database.
@@ -981,7 +1005,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getOptionDef4) {
         SCOPED_TRACE("UPDATE audit entry for an option definition");
         testNewAuditEntry("dhcp4_option_def",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "option definition set");
     }
 }
 
@@ -1000,14 +1024,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
                          option_def->getName());
             testNewAuditEntry("dhcp4_option_def",
                               AuditEntry::ModificationType::UPDATE,
-                              "this is a log message");
+                              "option definition set");
 
         } else {
             SCOPED_TRACE("CREATE audit entry for the option defnition " +
                          option_def->getName());
             testNewAuditEntry("dhcp4_option_def",
                               AuditEntry::ModificationType::CREATE,
-                              "this is a log message");
+                              "option definition set");
         }
     }
 
@@ -1059,7 +1083,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
         SCOPED_TRACE("DELETE audit entry for the first option definition");
         testNewAuditEntry("dhcp4_option_def",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "option definition deleted");
     }
 
     // Delete all remaining option definitions.
@@ -1072,7 +1096,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptionDefs4) {
         // The last parameter indicates that we expect two new audit entries.
         testNewAuditEntry("dhcp4_option_def",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message", 2);
+                          "deleted all option definitions", 2);
     }
 }
 
@@ -1133,7 +1157,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
         SCOPED_TRACE("CREATE audit entry for an option");
         testNewAuditEntry("dhcp4_options",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "global option set");
     }
 
     // Modify option and update it in the database.
@@ -1153,7 +1177,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
         SCOPED_TRACE("UPDATE audit entry for an option");
         testNewAuditEntry("dhcp4_options",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "global option set");
     }
 
     // Deleting an option with explicitly specified server tag should fail.
@@ -1174,7 +1198,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
         SCOPED_TRACE("DELETE audit entry for an option");
         testNewAuditEntry("dhcp4_options",
                           AuditEntry::ModificationType::DELETE,
-                          "this is a log message");
+                          "global option deleted");
     }
 }
 
@@ -1268,7 +1292,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
         SCOPED_TRACE("CREATE audit entry for a new subnet");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "subnet set");
     }
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
@@ -1292,7 +1316,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
         // have means to retrieve only the newly added option.
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "subnet specific option set");
     }
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
@@ -1311,7 +1335,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
         SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "subnet specific option set");
     }
 
     // Deleting an option with explicitly specified server tag should fail.
@@ -1335,7 +1359,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
         SCOPED_TRACE("UPDATE audit entry for a deleted subnet option");
         testNewAuditEntry("dhcp4_subnet",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "subnet specific option deleted");
     }
 }
 
@@ -1438,7 +1462,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
         SCOPED_TRACE("CREATE audit entry for the new shared network");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::CREATE,
-                          "this is a log message");
+                          "shared network set");
     }
 
     OptionDescriptorPtr opt_boot_file_name = test_options_[0];
@@ -1463,7 +1487,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
         // have means to retrieve only the newly added option.
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "shared network specific option set");
     }
 
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
@@ -1483,7 +1507,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
         SCOPED_TRACE("UPDATE audit entry for the updated shared network option");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "shared network specific option set");
     }
 
     // Deleting an option with explicitly specified server tag should fail.
@@ -1506,7 +1530,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
         SCOPED_TRACE("UPDATE audit entry for the deleted shared network option");
         testNewAuditEntry("dhcp4_shared_network",
                           AuditEntry::ModificationType::UPDATE,
-                          "this is a log message");
+                          "shared network specific option deleted");
     }
 }
 

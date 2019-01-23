@@ -26,8 +26,22 @@ namespace isc {
 namespace dhcp {
 
 MySqlConfigBackendImpl::
+ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
+                                         const int index,
+                                         const std::string& log_message,
+                                         bool cascade_transaction)
+    : impl_(impl) {
+    impl_->initAuditRevision(index, log_message, cascade_transaction);
+}
+
+MySqlConfigBackendImpl::
+ScopedAuditRevision::~ScopedAuditRevision() {
+    impl_->clearAuditRevision();
+}
+
+MySqlConfigBackendImpl::
 MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters)
-    : conn_(parameters) {
+    : conn_(parameters), audit_revision_created_(false) {
     // Open the database.
     conn_.openDatabase();
 
@@ -70,12 +84,23 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
 void
 MySqlConfigBackendImpl::initAuditRevision(const int index,
                                           const std::string& log_message,
-                                          const bool distinct_transaction) {
+                                          const bool cascade_transaction) {
+    // Do not touch existing audit revision in case of the cascade update.
+    if (audit_revision_created_) {
+        return;
+    }
+
     MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString("this is a log message"),
-        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(distinct_transaction))
+        MySqlBinding::createString(log_message),
+        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(!cascade_transaction))
     };
     conn_.insertQuery(index, in_bindings);
+    audit_revision_created_ = true;
+}
+
+void
+MySqlConfigBackendImpl::clearAuditRevision() {
+    audit_revision_created_ = false;
 }
 
 void
@@ -116,36 +141,11 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
 }
 
 uint64_t
-MySqlConfigBackendImpl::deleteFromTable(const int index) {
-    MySqlBindingCollection in_bindings;
-    return (conn_.updateDeleteQuery(index, in_bindings));
-}
-
-uint64_t
-MySqlConfigBackendImpl::deleteFromTable(const int index, const std::string& key) {
-    MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(key)
-    };
-    return (conn_.updateDeleteQuery(index, in_bindings));
-}
-
-uint64_t
 MySqlConfigBackendImpl::deleteFromTable(const int index,
                                         const ServerSelector& server_selector,
                                         const std::string& operation) {
-
-    if (server_selector.amUnassigned()) {
-        isc_throw(NotImplemented, "managing configuration for no particular server"
-                  " (unassigned) is unsupported at the moment");
-    }
-
-    auto tag = getServerTag(server_selector, operation);
-
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString(tag)
-    };
-
-    return (conn_.updateDeleteQuery(index, in_bindings));
+    MySqlBindingCollection in_bindings;
+    return (deleteFromTable(index, server_selector, operation, in_bindings));
 }
 
 void

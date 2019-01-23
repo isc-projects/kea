@@ -216,11 +216,13 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // The last parameter indicates that the parameter is not bound to any
-        // other object (e.g. addition of a subnet), so an audit entry should
-        // be created for the addition of the parameter.
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", true);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "global parameter set", false);
 
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
@@ -751,15 +753,15 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        try {
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "subnet set", true);
 
-            // The change will involve multiple statements. The audit entry should
-            // be created for the parent object and should not be created for the
-            // DHCP options. The boolean value set to false indicates that the
-            // MySQL triggers should not create audit revision for the DHCP
-            // options associated with the subnet.
-            initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                              "this is log message", false);
+        try {
 
             // Try to insert subnet. If this duplicates primary key, i.e. this
             // subnet already exists it will throw DuplicateEntry exception in
@@ -804,7 +806,7 @@ public:
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, subnet->getID(), desc_copy,
-                                    false);
+                                    true);
             }
         }
 
@@ -835,9 +837,34 @@ public:
             for (auto desc = options->begin(); desc != options->end(); ++desc) {
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
-                createUpdateOption4(server_selector, pool_id, desc_copy);
+                createUpdateOption4(server_selector, pool_id, desc_copy, true);
             }
         }
+    }
+
+    template<typename... Args>
+    uint64_t deleteTransactional(const int index,
+                                 const db::ServerSelector& server_selector,
+                                 const std::string& operation,
+                                 const std::string& log_message,
+                                 const bool cascade_delete,
+                                 Args&&... keys) {
+
+        MySqlTransaction transaction(conn_);
+
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           log_message, cascade_delete);
+
+        auto count = deleteFromTable(index, server_selector, operation, keys...);
+
+        transaction.commit();
+
+        return (count);
     }
 
     /// @brief Sends query to delete subnet by id.
@@ -846,10 +873,12 @@ public:
     /// @param subnet_id Identifier of the subnet to be deleted.
     /// @return Number of deleted subnets.
     uint64_t deleteSubnet4(const ServerSelector& server_selector,
-                       const SubnetID& subnet_id) {
-        return (deleteFromTable<uint32_t>(DELETE_SUBNET4_ID, server_selector,
-                                          "deleting a subnet",
-                                          subnet_id));
+                           const SubnetID& subnet_id) {
+        return (deleteTransactional(DELETE_SUBNET4_ID, server_selector,
+                                    "deleting a subnet",
+                                    "subnet deleted",
+                                    true,
+                                    static_cast<uint32_t>(subnet_id)));
     }
 
     /// @brief Deletes pools belonging to a subnet from the database.
@@ -1117,14 +1146,15 @@ public:
 
         MySqlTransaction transaction(conn_);
 
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "shared network set", true);
+
         try {
-            // The change will involve multiple statements. The audit entry should
-            // be created for the parent object and should not be created for the
-            // DHCP options. The boolean value set to false indicates that the
-            // MySQL triggers should not create audit revision for the DHCP
-            // options associated with the shared network.
-            initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                              "this is log message", false);
 
             // Try to insert shared network. The shared network name must be unique,
             // so if inserting fails with DuplicateEntry exception we'll need to
@@ -1162,7 +1192,7 @@ public:
                 OptionDescriptorPtr desc_copy(new OptionDescriptor(*desc));
                 desc_copy->space_name_ = option_space;
                 createUpdateOption4(server_selector, shared_network->getName(),
-                                    desc_copy, false);
+                                    desc_copy, true);
             }
         }
 
@@ -1231,11 +1261,13 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        // The last parameter indicates that the option is not bound to any
-        // other object (e.g. addition of a subnet), so an audit entry should
-        // be created for the addition of the option.
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", true);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "global option set", false);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1257,12 +1289,12 @@ public:
     /// @param server_selector Server selector.
     /// @param subnet_id Identifier of the subnet the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
-    /// @param distinct_transaction Boolean value indicating whether setting
-    /// the option value should be enclosed in a separate transaction.
+    /// @param cascade_update Boolean value indicating whether the update is
+    /// performed as part of the ownining element, e.g. subnet.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const SubnetID& subnet_id,
                              const OptionDescriptorPtr& option,
-                             const bool distinct_transaction = false) {
+                             const bool cascade_update) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1292,7 +1324,7 @@ public:
         // Only start new transaction if specified to do so. This function may
         // be called from within an existing transaction in which case we
         // don't start the new one.
-        if (distinct_transaction) {
+        if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
 
@@ -1300,8 +1332,13 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", distinct_transaction);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "subnet specific option set", cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1339,7 +1376,7 @@ public:
                       << pool_end_address);
         }
 
-        createUpdateOption4(server_selector, pool_id, option, false);
+        createUpdateOption4(server_selector, pool_id, option, true);
     }
 
 
@@ -1348,12 +1385,12 @@ public:
     /// @param selector Server selector.
     /// @param pool_id Identifier of the pool the option belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
-    /// @param distinct_transaction Boolean value indicating whether setting
-    /// the option value should be enclosed in a separate transaction.
+    /// @param cascade_update Boolean value indicating whether the update is
+    /// performed as part of the ownining element, e.g. subnet.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const uint64_t pool_id,
                              const OptionDescriptorPtr& option,
-                             const bool distinct_transaction = false) {
+                             const bool cascade_update) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1382,7 +1419,7 @@ public:
         // Only start new transaction if specified to do so. This function may
         // be called from within an existing transaction in which case we
         // don't start the new one.
-        if (distinct_transaction) {
+        if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
 
@@ -1390,8 +1427,13 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", distinct_transaction);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "pool specific option set", cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1416,12 +1458,12 @@ public:
     /// @param shared_network_name Name of the shared network the option
     /// belongs to.
     /// @param option Pointer to the option descriptor encapsulating the option.
-    /// @param distinct_transaction Boolean value indicating whether setting
-    /// the option value should be enclosed in a separate transaction.)
+    /// @param cascade_update Boolean value indicating whether the update is
+    /// performed as part of the ownining element, e.g. shared network.
     void createUpdateOption4(const ServerSelector& server_selector,
                              const std::string& shared_network_name,
                              const OptionDescriptorPtr& option,
-                             const bool distinct_transaction = false) {
+                             const bool cascade_update) {
 
         if (server_selector.amUnassigned()) {
             isc_throw(NotImplemented, "managing configuration for no particular server"
@@ -1450,7 +1492,7 @@ public:
         // Only start new transaction if specified to do so. This function may
         // be called from within an existing transaction in which case we
         // don't start the new one.
-        if (distinct_transaction) {
+        if (!cascade_update) {
             transaction.reset(new MySqlTransaction(conn_));
         }
 
@@ -1458,8 +1500,14 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", distinct_transaction);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "shared network specific option set",
+                                           cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1777,8 +1825,14 @@ public:
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
 
-        initAuditRevision(MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                          "this is log message", true);
+        // Create scoped audit revision. It initiates session variables in the
+        // database to be used for creating new audit revision. As long as this
+        // instance exists no new audit revisions are created as a result of
+        // any subsequent calls.
+        ScopedAuditRevision audit_revision(this,
+                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           "option definition set",
+                                           true);
 
         if (existing_definition) {
             // Need to add three more bindings for WHERE clause.
@@ -1822,21 +1876,17 @@ public:
                               const uint16_t code,
                               const std::string& space) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting option definition");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
             MySqlBinding::createString(space)
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTION_DEF4_CODE_NAME, in_bindings));
+        return (deleteTransactional(DELETE_OPTION_DEF4_CODE_NAME, server_selector,
+                                    "deleting option definition",
+                                    "option definition deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes global option.
@@ -1849,21 +1899,17 @@ public:
                            const uint16_t code,
                            const std::string& space) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting global option");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTION4, in_bindings));
+        return (deleteTransactional(DELETE_OPTION4, server_selector,
+                                    "deleting global option",
+                                    "global option deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes subnet level option.
@@ -1879,22 +1925,18 @@ public:
                            const uint16_t code,
                            const std::string& space) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting option for a subnet");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTION4_SUBNET_ID, in_bindings));
+        return (deleteTransactional(DELETE_OPTION4_SUBNET_ID, server_selector,
+                                    "deleting option for a subnet",
+                                    "subnet specific option deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes pool level option.
@@ -1911,15 +1953,7 @@ public:
                            const uint16_t code,
                            const std::string& space) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting option for a pool");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space),
             MySqlBinding::createInteger<uint32_t>(pool_start_address.toUint32()),
@@ -1927,8 +1961,11 @@ public:
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTION4_POOL_RANGE,
-                                        in_bindings));
+        return (deleteTransactional(DELETE_OPTION4_POOL_RANGE, server_selector,
+                                    "deleting option for a pool",
+                                    "pool specific option deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes shared network level option.
@@ -1944,23 +1981,18 @@ public:
                            const uint16_t code,
                            const std::string& space) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting option for a shared network");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network_name),
             MySqlBinding::createInteger<uint8_t>(code),
             MySqlBinding::createString(space)
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTION4_SHARED_NETWORK,
-                                        in_bindings));
+        return (deleteTransactional(DELETE_OPTION4_SHARED_NETWORK, server_selector,
+                                    "deleting option for a shared network",
+                                    "shared network specific option deleted",
+                                    false,
+                                    in_bindings));
     }
 
     /// @brief Deletes options belonging to a subnet from the database.
@@ -1972,21 +2004,16 @@ public:
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const Subnet4Ptr& subnet) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting options for a subnet");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createInteger<uint32_t>(subnet->getID())
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTIONS4_SUBNET_ID,
-                                        in_bindings));
+        return (deleteTransactional(DELETE_OPTIONS4_SUBNET_ID, server_selector,
+                                    "deleting options for a subnet",
+                                    "subnet specific options deleted",
+                                    true,
+                                    in_bindings));
     }
 
     /// @brief Deletes options belonging to a shared network from the database.
@@ -1998,21 +2025,16 @@ public:
     uint64_t deleteOptions4(const ServerSelector& server_selector,
                             const SharedNetwork4Ptr& shared_network) {
 
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "deleting options for a shared network");
-
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
             MySqlBinding::createString(shared_network->getName())
         };
 
         // Run DELETE.
-        return (conn_.updateDeleteQuery(DELETE_OPTIONS4_SHARED_NETWORK,
-                                        in_bindings));
+        return (deleteTransactional(DELETE_OPTIONS4_SHARED_NETWORK, server_selector,
+                                    "deleting options for a shared network",
+                                    "shared network specific options deleted",
+                                    true,
+                                    in_bindings));
     }
 };
 
@@ -2584,14 +2606,14 @@ void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const db::ServerSelector& server_selector,
                                               const std::string& shared_network_name,
                                               const OptionDescriptorPtr& option) {
-    impl_->createUpdateOption4(server_selector, shared_network_name, option, true);
+    impl_->createUpdateOption4(server_selector, shared_network_name, option, false);
 }
 
 void
 MySqlConfigBackendDHCPv4::createUpdateOption4(const ServerSelector& server_selector,
                                               const SubnetID& subnet_id,
                                               const OptionDescriptorPtr& option) {
-    impl_->createUpdateOption4(server_selector, subnet_id, option, true);
+    impl_->createUpdateOption4(server_selector, subnet_id, option, false);
 }
 
 void
@@ -2612,9 +2634,10 @@ MySqlConfigBackendDHCPv4::createUpdateGlobalParameter4(const ServerSelector& ser
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
                                         const std::string& subnet_prefix) {
-    return(impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
-                                  server_selector, "deleting a subnet by prefix",
-                                  subnet_prefix));
+    return(impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SUBNET4_PREFIX,
+                                      server_selector, "deleting a subnet by prefix",
+                                      "subnet deleted", true,
+                                      subnet_prefix));
 }
 
 uint64_t
@@ -2625,22 +2648,25 @@ MySqlConfigBackendDHCPv4::deleteSubnet4(const ServerSelector& server_selector,
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selector) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
-                                   server_selector, "deleting all subnets"));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
+                                       server_selector, "deleting all subnets",
+                                       "deleted all subnets", true));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteSharedNetwork4(const ServerSelector& server_selector,
                                                const std::string& name) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
-                                   server_selector, "deleting a shared network",
-                                   name));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_SHARED_NETWORK4_NAME,
+                                       server_selector, "deleting a shared network",
+                                       "shared network deleted", true,
+                                       name));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllSharedNetworks4(const ServerSelector& server_selector) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
-                                   server_selector, "deleting all shared networks"));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SHARED_NETWORKS4,
+                                       server_selector, "deleting all shared networks",
+                                       "deleted all shared networks", true));
 }
 
 uint64_t
@@ -2652,8 +2678,9 @@ MySqlConfigBackendDHCPv4::deleteOptionDef4(const ServerSelector& server_selector
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllOptionDefs4(const ServerSelector& server_selector) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
-                                   server_selector, "deleting all option definitions"));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_OPTION_DEFS4,
+                                       server_selector, "deleting all option definitions",
+                                       "deleted all option definitions", true));
 }
 
 uint64_t
@@ -2693,15 +2720,17 @@ MySqlConfigBackendDHCPv4::deleteOption4(const ServerSelector& server_selector,
 uint64_t
 MySqlConfigBackendDHCPv4::deleteGlobalParameter4(const ServerSelector& server_selector,
                                                  const std::string& name) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
-                                   server_selector, "deleting global parameter",
-                                   name));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_GLOBAL_PARAMETER4,
+                                       server_selector, "deleting global parameter",
+                                       "global parameter deleted", false,
+                                       name));
 }
 
 uint64_t
 MySqlConfigBackendDHCPv4::deleteAllGlobalParameters4(const ServerSelector& server_selector) {
-    return (impl_->deleteFromTable(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
-                                   server_selector, "deleting all global parameters"));
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_GLOBAL_PARAMETERS4,
+                                       server_selector, "deleting all global parameters",
+                                       "all global parameters deleted", true));
 }
 
 std::string
