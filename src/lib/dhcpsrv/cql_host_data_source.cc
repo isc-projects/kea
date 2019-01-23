@@ -321,26 +321,6 @@ public:
     // associated with a host using subnet identifier.
     static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID =
         "GET_HOST_BY_IPV6_SUBNET_ID";
-
-    // Retrieves host information along with the IPv4 options associated
-    // with it using a subnet identifier. First page.
-    static constexpr StatementTag GET_HOST_BY_IPV4_SUBNET_ID_LIMIT =
-        "GET_HOST_BY_IPV4_SUBNET_ID_LIMIT";
-
-    // Retrieves host information along with the IPv4 options associated
-    // with it using a subnet identifier. Next page.
-    static constexpr StatementTag GET_HOST_BY_IPV4_SUBNET_ID_PAGE =
-        "GET_HOST_BY_IPV4_SUBNET_ID_PAGE";
-
-    // Retrieves host information along with the IPv6 options associated
-    // with it using a subnet identifier. First page.
-    static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_LIMIT =
-        "GET_HOST_BY_IPV6_SUBNET_ID_LIMIT";
-
-    // Retrieves host information along with the IPv6 options associated
-    // with it using a subnet identifier. Next page.
-    static constexpr StatementTag GET_HOST_BY_IPV6_SUBNET_ID_PAGE =
-        "GET_HOST_BY_IPV6_SUBNET_ID_PAGE";
     /// @}
 
     /// @brief Cassandra statements
@@ -452,10 +432,6 @@ constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_AND_ADDRESS;
 constexpr StatementTag CqlHostExchange::DELETE_HOST;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID;
 constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID;
-constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_LIMIT;
-constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE;
-constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT;
-constexpr StatementTag CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE;
 
 StatementMap CqlHostExchange::tagged_statements_ = {
     {INSERT_HOST,
@@ -869,154 +845,6 @@ StatementMap CqlHostExchange::tagged_statements_ = {
       "option_scope_id "
       "FROM host_reservations "
       "WHERE host_ipv6_subnet_id = ? "
-      "ALLOW FILTERING "
-     }},
-
-    {GET_HOST_BY_IPV4_SUBNET_ID_LIMIT,
-     {GET_HOST_BY_IPV4_SUBNET_ID_LIMIT,
-      "SELECT "
-      "id, "
-      "host_identifier, "
-      "host_identifier_type, "
-      "host_ipv4_subnet_id, "
-      "host_ipv6_subnet_id, "
-      "host_ipv4_address, "
-      "host_ipv4_next_server, "
-      "host_ipv4_server_hostname, "
-      "host_ipv4_boot_file_name, "
-      "auth_key, "
-      "hostname, "
-      "user_context, "
-      "host_ipv4_client_classes, "
-      "host_ipv6_client_classes, "
-      "reserved_ipv6_prefix_address, "
-      "reserved_ipv6_prefix_length, "
-      "reserved_ipv6_prefix_address_type, "
-      "iaid, "
-      "option_universe, "
-      "option_code, "
-      "option_value, "
-      "option_formatted_value, "
-      "option_space, "
-      "option_is_persistent, "
-      "option_client_class, "
-      "option_subnet_id, "
-      "option_user_context, "
-      "option_scope_id "
-      "FROM host_reservations "
-      "WHERE host_ipv4_subnet_id = ? "
-      "LIMIT ? "
-      "ALLOW FILTERING "
-     }},
-
-    {GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
-     {GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
-      "SELECT "
-      "id, "
-      "host_identifier, "
-      "host_identifier_type, "
-      "host_ipv4_subnet_id, "
-      "host_ipv6_subnet_id, "
-      "host_ipv4_address, "
-      "host_ipv4_next_server, "
-      "host_ipv4_server_hostname, "
-      "host_ipv4_boot_file_name, "
-      "auth_key, "
-      "hostname, "
-      "user_context, "
-      "host_ipv4_client_classes, "
-      "host_ipv6_client_classes, "
-      "reserved_ipv6_prefix_address, "
-      "reserved_ipv6_prefix_length, "
-      "reserved_ipv6_prefix_address_type, "
-      "iaid, "
-      "option_universe, "
-      "option_code, "
-      "option_value, "
-      "option_formatted_value, "
-      "option_space, "
-      "option_is_persistent, "
-      "option_client_class, "
-      "option_subnet_id, "
-      "option_user_context, "
-      "option_scope_id "
-      "FROM host_reservations "
-      "WHERE host_ipv4_subnet_id = ? AND TOKEN(id) > TOKEN(?) "
-      "LIMIT ? "
-      "ALLOW FILTERING "
-     }},
-
-    {GET_HOST_BY_IPV6_SUBNET_ID_LIMIT,
-     {GET_HOST_BY_IPV6_SUBNET_ID_LIMIT,
-      "SELECT "
-      "id, "
-      "host_identifier, "
-      "host_identifier_type, "
-      "host_ipv4_subnet_id, "
-      "host_ipv6_subnet_id, "
-      "host_ipv4_address, "
-      "host_ipv4_next_server, "
-      "host_ipv4_server_hostname, "
-      "host_ipv4_boot_file_name, "
-      "auth_key, "
-      "hostname, "
-      "user_context, "
-      "host_ipv4_client_classes, "
-      "host_ipv6_client_classes, "
-      "reserved_ipv6_prefix_address, "
-      "reserved_ipv6_prefix_length, "
-      "reserved_ipv6_prefix_address_type, "
-      "iaid, "
-      "option_universe, "
-      "option_code, "
-      "option_value, "
-      "option_formatted_value, "
-      "option_space, "
-      "option_is_persistent, "
-      "option_client_class, "
-      "option_subnet_id, "
-      "option_user_context, "
-      "option_scope_id "
-      "FROM host_reservations "
-      "WHERE host_ipv6_subnet_id = ? "
-      "LIMIT ? "
-      "ALLOW FILTERING "
-     }},
-
-    {GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
-     {GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
-      "SELECT "
-      "id, "
-      "host_identifier, "
-      "host_identifier_type, "
-      "host_ipv4_subnet_id, "
-      "host_ipv6_subnet_id, "
-      "host_ipv4_address, "
-      "host_ipv4_next_server, "
-      "host_ipv4_server_hostname, "
-      "host_ipv4_boot_file_name, "
-      "auth_key, "
-      "hostname, "
-      "user_context, "
-      "host_ipv4_client_classes, "
-      "host_ipv6_client_classes, "
-      "reserved_ipv6_prefix_address, "
-      "reserved_ipv6_prefix_length, "
-      "reserved_ipv6_prefix_address_type, "
-      "iaid, "
-      "option_universe, "
-      "option_code, "
-      "option_value, "
-      "option_formatted_value, "
-      "option_space, "
-      "option_is_persistent, "
-      "option_client_class, "
-      "option_subnet_id, "
-      "option_user_context, "
-      "option_scope_id "
-      "FROM host_reservations "
-      "WHERE host_ipv6_subnet_id = ? AND TOKEN(id) > TOKEN(?) "
-      "LIMIT ? "
       "ALLOW FILTERING "
      }}
 };
@@ -1700,6 +1528,9 @@ public:
 
     /// @brief Implementation of @ref CqlHostDataSource::getPage4()
     ///
+    /// Not implemented.
+    /// @todo: implement it.
+    ///
     /// See @ref CqlHostDataSource::getPage4() for parameter details.
     ///
     /// @param subnet_id identifier of the subnet to which hosts belong
@@ -1712,6 +1543,9 @@ public:
              const HostPageSize& page_size) const;
 
     /// @brief Implementation of @ref CqlHostDataSource::getPage6()
+    ///
+    /// Not implemented.
+    /// @todo: implement it.
     ///
     /// See @ref CqlHostDataSource::getPage6() for parameter details.
     ///
@@ -2143,70 +1977,28 @@ CqlHostDataSourceImpl::getAll6(const SubnetID& subnet_id) const {
     return (result);
 }
 
+// There are some problems implementing this for Cassandra.
+// Attempts show the per page ordering does not work and
+// it is not possible to order by TOKEN(host_id).
+// If the issue solved by paging is the Kea API overhead then
+// a solution is to get and cache all reservations and to handle
+// paging at the API level.
+
 ConstHostCollection
-CqlHostDataSourceImpl::getPage4(const SubnetID& subnet_id,
-                                uint64_t lower_host_id,
-                                const HostPageSize& page_size) const {
-    // Convert to CQL data types.
-    cass_int32_t host_ipv4_subnet_id = static_cast<cass_int32_t>(subnet_id);
-
-    // Bind to array.
-    AnyArray where_values;
-    where_values.add(&host_ipv4_subnet_id);
-
-    cass_int64_t id = static_cast<cass_int64_t>(lower_host_id);
-    if (id) {
-        where_values.add(&id);
-    }
-
-    cass_int32_t page_size_data =
-        static_cast<cass_int32_t>(page_size.page_size_);
-    where_values.add(&page_size_data);
-
-    // Run statement.
-    ConstHostCollection result =
-        getHostCollection(id == 0 ?
-                          CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_LIMIT :
-                          CqlHostExchange::GET_HOST_BY_IPV4_SUBNET_ID_PAGE,
-                          where_values);
-
-    // Note the result is not ordered (or ordered following TOKEN).
-
-    return (result);
+CqlHostDataSourceImpl::getPage4(const SubnetID& /*subnet_id*/,
+                                uint64_t /*lower_host_id*/,
+                                const HostPageSize& /*page_size*/) const {
+    isc_throw(NotImplemented,
+              "reservation-get-page is not supported by Cassandra");
 }
 
 ConstHostCollection
-CqlHostDataSourceImpl::getPage6(const SubnetID& subnet_id,
-                                uint64_t lower_host_id,
-                                const HostPageSize& page_size) const {
-    // Convert to CQL data types.
-    cass_int32_t host_ipv6_subnet_id = static_cast<cass_int32_t>(subnet_id);
-
-    // Bind to array.
-    AnyArray where_values;
-    where_values.add(&host_ipv6_subnet_id);
-
-    cass_int64_t id = static_cast<cass_int64_t>(lower_host_id);
-    if (id) {
-        where_values.add(&id);
-    }
-
-    cass_int32_t page_size_data =
-        static_cast<cass_int32_t>(page_size.page_size_);
-    where_values.add(&page_size_data);
-
-    // Run statement.
-    ConstHostCollection result =
-        getHostCollection(id == 0 ?
-                          CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_LIMIT :
-                          CqlHostExchange::GET_HOST_BY_IPV6_SUBNET_ID_PAGE,
-                          where_values);
-
-    // Note the result is not ordered (or ordered following TOKEN).
-
-    return (result);
+CqlHostDataSourceImpl::getPage6(const SubnetID& /*subnet_id*/,
+                                uint64_t /*lower_host_id*/,
+                                const HostPageSize& /*page_size*/) const {
+    isc_throw(NotImplemented,
+              "reservation-get-page is not supported by Cassandra");
 }
-
 
 ConstHostCollection
 CqlHostDataSourceImpl::getAll4(const asiolink::IOAddress& address) const {

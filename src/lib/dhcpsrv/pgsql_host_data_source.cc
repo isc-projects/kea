@@ -1784,11 +1784,12 @@ TaggedStatementArray tagged_statements = { {
      "  h.dhcp4_boot_file_name, h.auth_key, "
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context "
-     "FROM hosts AS h "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.dhcp4_subnet_id = $1 AND h.host_id > $2 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $3 ) AS h "
      "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
-     "WHERE h.dhcp4_subnet_id = $1 AND h.host_id > $2 "
-     "ORDER BY h.host_id, o.option_id "
-     "LIMIT $3"
+     "ORDER BY h.host_id, o.option_id"
     },
 
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE
@@ -1810,12 +1811,13 @@ TaggedStatementArray tagged_statements = { {
      "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
      "  o.persistent, o.user_context, "
      "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
-     "FROM hosts AS h "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $3 ) AS h "
      "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
      "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
-     "WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
-     "ORDER BY h.host_id, o.option_id, r.reservation_id "
-     "LIMIT $3"
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
     }
 }
 };

@@ -1663,7 +1663,48 @@ An example result returned when the query was malformed:<screen>
           retrieved by using subnet-id value of zero (0).
           </para>
 
-          <!-- Add example? -->
+	  <para>For instance for retrieving host reservations for the
+          subnet 1:
+<screen>
+{
+    "command": "reservation-get-all",
+    "arguments": {
+        <userinput>"subnet-id": 1</userinput>
+     }
+}
+</screen> returns found some IPv4 hosts:
+<screen>
+{
+    "arguments": {
+        "hosts": [
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "somehost.example.org",
+                "hw-address": "01:02:03:04:05:06",
+                "ip-address": "192.0.2.100",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            },
+            ...
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "otherhost.example.org",
+                "hw-address": "01:02:03:04:05:ff",
+                "ip-address": "192.0.2.200",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            }
+        ]
+    },
+    "result": 0,
+    "text": "72 IPv4 host(s) found."
+}
+</screen>
+         </para>
 
           <para>The response returned by <command>reservation-get-all</command>
           can be very long. The DHCP server does not handle DHCP
@@ -1690,13 +1731,82 @@ An example result returned when the query was malformed:<screen>
           uses to chain page queries.
           </para>
 
-          <!-- Add example -->
-
           <para>The first page is queried without source-index and from,
           for next pages source-index and from should be set using
           the preceeding result source-index and next. After the last page
           the returned list is empty, count is 0 and result 3 is returned.
           </para>
+
+	  <para>For instance for retrieving host reservations for the
+	  subnet 1 requesting the first page can be done by:
+<screen>
+{
+    "command": "reservation-get-page",
+    "arguments": {
+        <userinput>"subnet-id": 1,
+	"limit": 10</userinput>
+     }
+}
+</screen> leaving source-index and from to their zero default values.
+          </para>
+
+          <para>Some hosts are returned with informations to get the next page:
+<screen>
+{
+    "arguments": {
+        "count": 72,
+        "hosts": [
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "somehost.example.org",
+                "hw-address": "01:02:03:04:05:06",
+                "ip-address": "192.0.2.100",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            },
+            ...
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "otherhost.example.org",
+                "hw-address": "01:02:03:04:05:ff",
+                "ip-address": "192.0.2.200",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            }
+        ],
+        "next": 1234567,
+        "source-index": 0
+    },
+    "result": 0,
+    "text": "72 IPv4 host(s) found."
+}
+</screen> To get the next page this can be sent:
+<screen>
+{
+    "command": "reservation-get-page",
+    "arguments": {
+        <userinput>"subnet-id": 1,
+        "source-index": 1,
+        "from": 1234567,
+	"limit": 10</userinput>
+     }
+}
+</screen> responses after the last page look like:
+<screen>
+{
+    "arguments": {
+        "count": 0,
+        "hosts": [ ],
+        "source-index": 2,
+    },
+    "result": 3,
+    "0 IPv4 host(s) found."
+}
+</screen></para>
 
           <para>This command is more complex than
           <command>reservation-get-all</command>, but lets users
