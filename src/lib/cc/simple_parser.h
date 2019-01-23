@@ -70,7 +70,7 @@ class SimpleParser {
     /// @brief Checks that all required keywords are present.
     ///
     /// This method throws an exception when a required
-    /// entry is not present un the given scope.
+    /// entry is not present in the given scope.
     ///
     /// @param required Required keywords.
     /// @param scope Specified parameters which are checked.
