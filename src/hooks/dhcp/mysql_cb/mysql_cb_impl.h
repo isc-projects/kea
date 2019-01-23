@@ -14,6 +14,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/network.h>
+#include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_connection.h>
 #include <set>
@@ -29,6 +30,21 @@ namespace dhcp {
 /// MySQL database, used by all servers.
 class MySqlConfigBackendImpl {
 public:
+
+    class ScopedAuditRevision {
+    public:
+
+        ScopedAuditRevision(MySqlConfigBackendImpl* impl,
+                            const int index,
+                            const std::string& log_message,
+                            bool cascade_transaction);
+
+        ~ScopedAuditRevision();
+
+    private:
+        MySqlConfigBackendImpl* impl_;
+
+    };
 
     /// @brief Constructor.
     ///
@@ -111,18 +127,16 @@ public:
     ///
     /// @param index query index.
     /// @param log_message log message to be used for the audit revision.
-    /// @param distinct_transaction boolean value indicating if a single
-    /// change will be applied in the transaction (distinct transaction)
-    /// or a chain of transactions. The example of the former is when
-    /// an option is added to the existing subnet. The example of the
-    /// latter is when the subnet along with the options is added. This
-    /// consists of two changes (adding the subnet and options) as part
-    /// of the single transaction. The MySQL database needs to
-    /// distinguish between these two cases to bind audit revisions
-    /// to the appropriate objects.
+    /// @param cascade_transaction Boolean value indicating whether the
+    /// configuration modification is performed as part of the ownining
+    /// element modification, e.g. subnet is modified resulting in
+    /// modification of the DHCP options it owns. In that case only the
+    /// audit entry for the owning element should be created.
     void initAuditRevision(const int index,
                            const std::string& log_message,
-                           const bool distinct_transaction);
+                           const bool cascade_transaction);
+
+    void clearAuditRevision();
 
     /// @brief Sends query to the database to retrieve most recent audit entries.
     ///
@@ -138,17 +152,29 @@ public:
     /// @brief Sends query to delete rows from a table.
     ///
     /// @param index Index of the statement to be executed.
-    /// @return Number of deleted rows.
-    uint64_t deleteFromTable(const int index);
-
-    /// @brief Sends query to delete rows from a table.
-    ///
-    /// @param index Index of the statement to be executed.
-    /// @param key String value to be used as input binding to the delete
-    /// statement
+    /// @param server_selector Server selector.
+    /// @param operation Operation which results in calling this function. This is
+    /// used for logging purposes.
+    /// @param in_bindings Reference to the MySQL input bindings. They are modified
+    /// as a result of this function - server tag is inserted into the beginning
+    /// of the bindings collection.
     /// @return Number of deleted rows.
     uint64_t deleteFromTable(const int index,
-                             const std::string& key);
+                             const db::ServerSelector& server_selector,
+                             const std::string& operation,
+                             db::MySqlBindingCollection& in_bindings) {
+
+        if (server_selector.amUnassigned()) {
+            isc_throw(NotImplemented, "managing configuration for no particular server"
+                      " (unassigned) is unsupported at the moment");
+        }
+
+        auto tag = getServerTag(server_selector, operation);
+
+        in_bindings.insert(in_bindings.begin(), db::MySqlBinding::createString(tag));
+
+        return (conn_.updateDeleteQuery(index, in_bindings));
+    }
 
     /// @brief Sends query to delete rows from a table.
     ///
@@ -182,11 +208,7 @@ public:
                              const db::ServerSelector& server_selector,
                              const std::string& operation,
                              KeyType key) {
-        auto tag = getServerTag(server_selector, operation);
-
-        db::MySqlBindingCollection in_bindings = {
-            db::MySqlBinding::createString(tag)
-        };
+        db::MySqlBindingCollection in_bindings;
 
         if (db::MySqlBindingTraits<KeyType>::column_type == MYSQL_TYPE_STRING) {
             in_bindings.push_back(db::MySqlBinding::createString(key));
@@ -195,7 +217,7 @@ public:
             in_bindings.push_back(db::MySqlBinding::createInteger<KeyType>(key));
         }
 
-        return (conn_.updateDeleteQuery(index, in_bindings));
+        return (deleteFromTable(index, server_selector, operation, in_bindings));
     }
 
     /// @brief Sends query to the database to retrieve multiple option
@@ -317,6 +339,10 @@ public:
 
     /// @brief Represents connection to the MySQL database.
     db::MySqlConnection conn_;
+
+    /// @brief Boolean flag indicating if audit revision has been created
+    /// using @c ScopedAuditRevision object.
+    bool audit_revision_created_;
 };
 
 } // end of namespace isc::dhcp
