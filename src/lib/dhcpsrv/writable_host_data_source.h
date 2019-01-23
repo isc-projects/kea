@@ -59,6 +59,14 @@ public:
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
+    ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source.
     /// @param lower_host_id Host identifier used as lower bound for the
@@ -73,6 +81,14 @@ public:
              const HostPageSize& page_size) = 0;
 
     /// @brief Returns range of hosts in a DHCPv6 subnet.
+    ///
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source.

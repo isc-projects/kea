@@ -161,7 +161,8 @@ public:
     /// @brief Return all hosts in a DHCPv4 subnet.
     ///
     /// This method returns all @ref Host objects which represent reservations
-    /// in a specified subnet.
+    /// in a specified subnet. Global reservations are returned for the
+    /// subnet id 0.
     ///
     /// @param subnet_id subnet identifier to filter by
     ///
@@ -172,7 +173,8 @@ public:
     /// @brief Return all hosts in a DHCPv6 subnet.
     ///
     /// This method returns all @ref Host objects which represent reservations
-    /// in a specified subnet.
+    /// in a specified subnet. Global reservations are returned for the
+    /// subnet id 0.
     ///
     /// @param subnet_id subnet identifier to filter by
     ///
@@ -182,8 +184,13 @@ public:
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
-    /// This method returns a page of @c Host objects which represent
-    /// reservations in a specified subnet.
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).
@@ -200,8 +207,13 @@ public:
 
     /// @brief Returns range of hosts in a DHCPv6 subnet.
     ///
-    /// This method returns a page of @c Host objects which represent
-    /// reservations in a specified subnet.
+    /// This method implements paged browsing of host databases. The
+    /// parameters specify a page size, an index in sources and the
+    /// starting host id of the range. If not zero this host id is
+    /// excluded from the returned range. When a source is exhausted
+    /// the index is updated. There is no guarantee about the order
+    /// of returned host reservations, only the sources and
+    /// reservations from the same source are ordered.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).
