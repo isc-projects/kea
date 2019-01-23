@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
+#include <map>
 #include <vector>
 #include <string>
 #include <stdint.h>
@@ -18,7 +19,7 @@
 namespace isc {
 namespace data {
 
-/// This array defines a single entry of default values
+/// This array defines a single entry of default values.
 struct SimpleDefault {
     SimpleDefault(const char* name, isc::data::Element::types type, const char* value)
         :name_(name), type_(type), value_(value) {}
@@ -27,11 +28,17 @@ struct SimpleDefault {
     const char* value_;
 };
 
-/// This specifies all default values in a given scope (e.g. a subnet)
+/// This specifies all required keywords.
+typedef std::vector<std::string> SimpleRequiredKeywords;
+
+/// This specifies all accepted keywords with their types.
+typedef std::map<std::string, isc::data::Element::types> SimpleKeywords;
+
+/// This specifies all default values in a given scope (e.g. a subnet).
 typedef std::vector<SimpleDefault> SimpleDefaults;
 
 /// This defines a list of all parameters that are derived (or inherited) between
-/// contexts
+/// contexts.
 typedef std::vector<std::string> ParamsList;
 
 
@@ -59,6 +66,30 @@ typedef std::vector<std::string> ParamsList;
 ///   spread out in multiple files in multiple directories).
 class SimpleParser {
  public:
+
+    /// @brief Checks that all required keywords are present.
+    ///
+    /// This method throws an exception when a required
+    /// entry is not present un the given scope.
+    ///
+    /// @param required Required keywords.
+    /// @param scope Specified parameters which are checked.
+    /// @throw DhcpConfigError if a required parameter is not present.
+    static void checkRequired(const SimpleRequiredKeywords& required,
+                              isc::data::ConstElementPtr scope);
+
+    /// @brief Checks acceptable keywords with their expected type.
+    ///
+    /// This methods throws an exception when a not acceptable keyword
+    /// is found or when an acceptable entry does not have the expected type.
+    ///
+    /// @param keywords The @c SimpleKeywords keywords and types map.
+    /// @param scope Specified parameters which are checked.
+    /// @throw DhcpConfigError if a not acceptable keyword is found.
+    /// @throw DhcpConfigError if an acceptable entry does not have
+    /// the expected type.
+    static void checkKeywords(const SimpleKeywords& keywords,
+                              isc::data::ConstElementPtr scope);
 
     /// @brief Derives (inherits) parameters from parent scope to a child
     ///

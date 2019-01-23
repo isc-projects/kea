@@ -14,6 +14,16 @@ using namespace isc::data;
 using namespace isc::asiolink;
 using isc::dhcp::DhcpConfigError;
 
+/// This list defines required keywords.
+const SimpleRequiredKeywords REQUIRED_KEYWORDS = { "foobar" };
+
+/// This table defines keywords and types.
+const SimpleKeywords KEYWORDS = {
+    { "id",     Element::integer },
+    { "prefix", Element::string },
+    { "map",    Element::map }
+};
+
 /// This table defines sample default values. Although these are DHCPv6
 /// specific, the mechanism is generic and can be used by any other component.
 const SimpleDefaults SAMPLE_DEFAULTS = {
@@ -85,6 +95,49 @@ public:
         }
     }
 };
+
+// This test checks if the checkRequired method works as expected.
+TEST_F(SimpleParserTest, checkRequired) {
+    ConstElementPtr empty = Element::fromJSON("{ }");
+    EXPECT_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, empty),
+                 DhcpConfigError);
+    ConstElementPtr other = Element::fromJSON("{ \"foo\": 1, \"bar\": 2 }");
+    EXPECT_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, other),
+                 DhcpConfigError);
+    ConstElementPtr good = Element::fromJSON("{ \"foobar\": 2 }");
+    EXPECT_NO_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, good));
+}
+
+// This test checks if the checkKeywords method works as expected.
+TEST_F(SimpleParserTest, checkKeywords) {
+    ConstElementPtr empty = Element::fromJSON("{ }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, empty));
+    ConstElementPtr id = Element::fromJSON("{ \"id\": 1 }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, id));
+    ConstElementPtr bad_id = Element::fromJSON("{ \"id\": true }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_id),
+                 DhcpConfigError);
+    ConstElementPtr bad_prefix = Element::fromJSON("{ \"prefix\": 12 }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_prefix),
+                 DhcpConfigError);
+    ConstElementPtr bad_map = Element::fromJSON("{ \"map\": [ ] }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_map),
+                 DhcpConfigError);
+    ConstElementPtr spurious = Element::fromJSON("{ \"spurious\": 1 }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, spurious),
+                 DhcpConfigError);
+
+    // Bad type has precedence.
+    ConstElementPtr bad = Element::fromJSON("{ \"spurious\": 1, \"id\": true }");
+    try {
+        SimpleParser::checkKeywords(KEYWORDS, bad);
+        ADD_FAILURE() << "expect exception";
+    } catch (const DhcpConfigError& ex) {
+        EXPECT_EQ("'id' parameter is not an integer", std::string(ex.what()));
+    } catch (...) {
+        ADD_FAILURE() << "expect DhcpConfigError";
+    }
+}
 
 // This test checks if the parameters can be inherited from the global
 // scope to the subnet scope.

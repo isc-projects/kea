@@ -20,8 +20,43 @@ using isc::dhcp::DhcpConfigError;
 namespace isc {
 namespace data {
 
+void
+SimpleParser::checkRequired(const SimpleRequiredKeywords& required,
+                            ConstElementPtr scope) {
+    for (auto name : required) {
+        if (scope->contains(name)) {
+            continue;
+        }
+        isc_throw(DhcpConfigError, "missing '" << name << "' parameter");
+    }
+}
+
+void
+SimpleParser::checkKeywords(const SimpleKeywords& keywords,
+                            ConstElementPtr scope) {
+    string spurious;
+    for (auto entry : scope->mapValue()) {
+        if (keywords.count(entry.first) == 0) {
+            if (spurious.empty()) {
+                spurious = entry.first;
+            }
+            continue;
+        }
+        Element::types expected = keywords.at(entry.first);
+        if (entry.second->getType() == expected) {
+            continue;
+        }
+        isc_throw(DhcpConfigError, "'" << entry.first << "' parameter is not "
+                  << (expected == Element::integer ? "an " : "a ")
+                  << Element::typeToName(expected));
+    }
+    if (!spurious.empty()) {
+        isc_throw(DhcpConfigError, "spurious '" << spurious << "' parameter");
+    }
+}
+
 std::string
-SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getString(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -38,7 +73,7 @@ SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& nam
 }
 
 int64_t
-SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getInteger(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -55,7 +90,7 @@ SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& na
 }
 
 bool
-SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getBoolean(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -85,7 +120,7 @@ SimpleParser::getAddress(const ConstElementPtr& scope,
 }
 
 double
-SimpleParser::getDouble(const isc::data::ConstElementPtr& scope,
+SimpleParser::getDouble(const ConstElementPtr& scope,
                         const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
@@ -116,7 +151,7 @@ SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr p
     return (elem->getPosition());
 }
 
-size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
+size_t SimpleParser::setDefaults(ElementPtr scope,
                                  const SimpleDefaults& default_values) {
     size_t cnt = 0;
 
@@ -190,7 +225,7 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
 }
 
 size_t
-SimpleParser::setListDefaults(isc::data::ConstElementPtr list,
+SimpleParser::setListDefaults(ConstElementPtr list,
                               const SimpleDefaults& default_values) {
     size_t cnt = 0;
     BOOST_FOREACH(ElementPtr entry, list->listValue()) {
@@ -200,8 +235,8 @@ SimpleParser::setListDefaults(isc::data::ConstElementPtr list,
 }
 
 size_t
-SimpleParser::deriveParams(isc::data::ConstElementPtr parent,
-                           isc::data::ElementPtr child,
+SimpleParser::deriveParams(ConstElementPtr parent,
+                           ElementPtr child,
                            const ParamsList& params) {
     if ( (parent->getType() != Element::map) ||
          (child->getType() != Element::map)) {
