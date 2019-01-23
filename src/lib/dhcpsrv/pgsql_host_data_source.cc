@@ -1772,8 +1772,8 @@ TaggedStatementArray tagged_statements = { {
     // PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE
     // Retrieves host information along with the DHCPv4 options associated with
     // it. Left joining the dhcp4_options table results in multiple rows being
-    // returned for the same host. The hosts are retrieved by subnet id, starting
-    // from specified host id. Specified number of hosts is returned.
+    // returned for the same host. The hosts are retrieved by subnet id,
+    // starting from specified host id. Specified number of hosts is returned.
     {3,
      { OID_INT8, OID_INT8, OID_INT8 },
      "get_host_subid4_page",

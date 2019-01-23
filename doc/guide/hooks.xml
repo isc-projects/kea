@@ -1672,6 +1672,9 @@ An example result returned when the query was malformed:<screen>
           For larger deployments, please consider using
           <command>reservation-get-page</command> instead (see <xref
           linkend="command-reservation-get-page"/>).
+          </para>
+          
+          <para>
           For a reference, see <xref linkend="ref-reservation-get-all"/>.
           </para>
         </section>
@@ -1692,7 +1695,7 @@ An example result returned when the query was malformed:<screen>
           <para>The first page is queried without source-index and from,
           for next pages source-index and from should be set using
           the preceeding result source-index and next. After the last page
-          the returned list is empty and result 3 is returned.
+          the returned list is empty, count is 0 and result 3 is returned.
           </para>
 
           <para>This command is more complex than
@@ -1702,7 +1705,9 @@ An example result returned when the query was malformed:<screen>
           easier to use <command>reservation-get-all</command> (see
           <xref linkend="command-reservation-get-all"/>.</para>
 
-          <para>For a reference, see <xref linkend="ref-reservation-get-page"/>.</para>
+          <para>
+          For a reference, see <xref linkend="ref-reservation-get-page"/>.
+          </para>
         </section>
 
         <section xml:id="command-reservation-del">

@@ -2521,7 +2521,7 @@ object appear only if specific field is set.</para>
 
 <!-- start of reservation-get-all -->
 <section xml:id="reference-reservation-get-all">
-<title>reservation-get reference</title>
+<title>reservation-get-all reference</title>
 <para xml:id="ref-reservation-get-all"><command>reservation-get-all</command> - Retrieve all host reservations for a specified subnet.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
@@ -2576,7 +2576,7 @@ The reservation-get-all command may result in very large responses.</para>
 
 <!-- start of reservation-get-page -->
 <section xml:id="reference-reservation-get-page">
-<title>reservation-get reference</title>
+<title>reservation-get-page reference</title>
 <para xml:id="ref-reservation-get-page"><command>reservation-get-page</command> - Retrieve all host reservations for a specified subnet by pages.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
