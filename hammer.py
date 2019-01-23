@@ -138,6 +138,8 @@ def get_system_revision():
         if system == 'debian':
             if revision.startswith('8.'):
                 revision = '8'
+            if revision.startswith('9.'):
+                revision = '9'
         elif system == 'redhat':
             system = 'rhel'
             if revision.startswith('8.'):
@@ -409,7 +411,7 @@ def _install_gtest_sources():
         os.unlink('/tmp/gtest.tar.gz')
 
 
-def _configure_mysql(system):
+def _configure_mysql(system, revision):
     if system in ['fedora', 'centos']:
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl start mariadb.service')
@@ -428,6 +430,19 @@ def _configure_mysql(system):
     cmd += "GRANT SELECT ON keatest.* TO 'keatest_readonly'@'localhost';\n"
     cmd += "EOF\n\""
     execute(cmd)
+
+    log.info("FIX FOR ISSUE: %s %s", system, revision)
+    if system == 'debian' and revision == '9':
+        log.info("FIX FOR ISSUE 2: %s %s", system, revision)
+        # fix for issue: https://gitlab.isc.org/isc-projects/kea/issues/389
+        cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
+        cmd += "use keatest;\n"
+        cmd += "set global innodb_large_prefix=on;\n"
+        cmd += "set global innodb_file_format=Barracuda;\n"
+        cmd += "set global innodb_file_per_table=true;\n"
+        cmd += "set global innodb_default_row_format=dynamic;\n"
+        cmd += "EOF\n\""
+        execute(cmd)
 
 
 def _configure_pgsql(system):
@@ -683,7 +698,7 @@ def prepare_deps_local(features, check_times):
         raise NotImplementedError
 
     if 'mysql' in features:
-        _configure_mysql(system)
+        _configure_mysql(system, revision)
 
     if 'pgsql' in features:
         _configure_pgsql(system)
@@ -788,10 +803,8 @@ def build_local(features, tarball_path, check_times, jobs):
             cmd += ' --enable-generate-docs'
         if 'radius' in features:
             cmd += ' --with-freeradius=/usr/local'
-
-        if distro == 'freebsd':
-            cmd += ' --with-boost-include=/usr/local/include'  # TODO: this should be fixed in ./configure.ac
-            cmd += ' --with-boost-lib-dir=/usr/local/lib'      # TODO: this should be fixed in ./configure.ac
+        if 'shell' in features:
+            cmd += ' --enable-shell'
 
         execute(cmd, cwd=src_path, env=env, check_times=check_times)
 
@@ -941,7 +954,7 @@ def ensure_hammer_deps():
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
-ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius']
+ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Kea develepment environment management tool.')
