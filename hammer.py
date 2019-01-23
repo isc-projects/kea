@@ -589,7 +589,7 @@ def prepare_deps_local(features, check_times):
             packages.extend(['git'])
 
         install_cmd = 'sudo dnf -y install %s'
-        execute(install_cmd % ' '.join(packages), env=env, check_times=check_times)
+        execute(install_cmd % ' '.join(packages), env=env, timeout=120, check_times=check_times)
 
         # prepare lib4cplus as epel repos are not available for rhel 8 yet
         if revision == '8' and not os.path.exists('/usr/include/log4cplus/logger.h'):
@@ -806,7 +806,7 @@ def build_local(features, tarball_path, check_times, jobs):
         if 'shell' in features:
             cmd += ' --enable-shell'
 
-        execute(cmd, cwd=src_path, env=env, check_times=check_times)
+        execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times)
 
         if jobs == 0:
             cpus = multiprocessing.cpu_count() - 1
