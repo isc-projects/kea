@@ -192,8 +192,7 @@ public:
 
     /// @brief Returns range of hosts in a DHCPv4 subnet.
     ///
-    /// This method returns a page of @c Host objects which represent
-    /// reservations in a specified subnet.
+    /// Not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).
@@ -210,8 +209,7 @@ public:
 
     /// @brief Returns range of hosts in a DHCPv6 subnet.
     ///
-    /// This method returns a page of @c Host objects which represent
-    /// reservations in a specified subnet.
+    /// Not implemented.
     ///
     /// @param subnet_id Subnet identifier.
     /// @param source_index Index of the source (unused).

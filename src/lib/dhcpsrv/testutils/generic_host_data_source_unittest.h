@@ -206,6 +206,22 @@ public:
     /// @param id Identifier type (hwaddr or duid).
     void testGetPage6(const Host::IdentifierType& id);
 
+    /// @brief Test that Verifies that pages of complex host reservations
+    /// are not truncated, i.e. the limit applies on the number of hosts
+    /// and not on the number of rows.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type (hwaddr or duid).
+    // void testGetPageLimit4(const Host::IdentifierType& id);
+
+    /// @brief Test that Verifies that pages of complex host reservations
+    /// are not truncated, i.e. the limit applies on the number of hosts
+    /// and not on the number of rows.
+    ///
+    /// Uses gtest macros to report failures.
+    /// @param id Identifier type (hwaddr or duid).
+    // void testGetPageLimit6(const Host::IdentifierType& id);
+
     /// @brief Test inserts several hosts with unique IPv4 address and
     ///        checks that they can be retrieved properly.
     ///

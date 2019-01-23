@@ -2325,17 +2325,23 @@ TaggedStatementArray tagged_statements = { {
             "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
+    // Delete a single IPv4 reservation by subnet id and reserved address.
     {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
 
+    // Delete a single IPv4 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
      "AND dhcp_identifier = ?"},
 
+    // Delete a single IPv6 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
      "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
      "AND dhcp_identifier = ?"},
 
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. Hosts are retrieved by IPv4 subnet id.
     {MySqlHostDataSourceImpl::GET_HOST_SUBID4,
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -2350,6 +2356,10 @@ TaggedStatementArray tagged_statements = { {
             "WHERE h.dhcp4_subnet_id = ? "
             "ORDER BY h.host_id, o.option_id"},
 
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host. The number of rows returned is a multiplication
+    // of number of IPv6 reservations and DHCPv6 options. Hosts are retrieved
+    // by IPv6 subnet id.
     {MySqlHostDataSourceImpl::GET_HOST_SUBID6,
             "SELECT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -2370,6 +2380,11 @@ TaggedStatementArray tagged_statements = { {
             "WHERE h.dhcp6_subnet_id = ? "
             "ORDER BY h.host_id, o.option_id, r.reservation_id"},
 
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. Hosts are retrieved by IPv4 subnet id
+    // and with a host id greater than the start one.
+    // The number of hosts returned is lower or equal to the limit.
     {MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
             "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
                 "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
@@ -2378,13 +2393,19 @@ TaggedStatementArray tagged_statements = { {
                 "h.dhcp4_boot_file_name, h.auth_key, "
                 "o.option_id, o.code, o.value, o.formatted_value, o.space, "
                 "o.persistent, o.user_context "
-            "FROM hosts AS h "
+            "FROM ( SELECT * FROM hosts AS h "
+                       "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
+                       "ORDER BY h.host_id "
+                       "LIMIT ? ) AS h "
             "LEFT JOIN dhcp4_options AS o "
                 "ON h.host_id = o.host_id "
-            "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
-            "ORDER BY h.host_id, o.option_id "
-            "LIMIT ?"},
+            "ORDER BY h.host_id, o.option_id"},
 
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host. The number of rows returned is a multiplication
+    // of number of IPv6 reservations and DHCPv6 options. Hosts are retrieved
+    // by IPv6 subnet id and with a host id greater than the start one.
+    // The number of hosts returned is lower or equal to the limit.
     {MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
             "SELECT h.host_id, h.dhcp_identifier, "
                 "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
@@ -2397,14 +2418,15 @@ TaggedStatementArray tagged_statements = { {
                 "o.persistent, o.user_context, "
                 "r.reservation_id, r.address, r.prefix_len, r.type, "
                 "r.dhcp6_iaid "
-            "FROM hosts AS h "
+            "FROM ( SELECT * FROM hosts AS h "
+                       "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
+                       "ORDER BY h.host_id "
+                       "LIMIT ? ) AS h "
             "LEFT JOIN dhcp6_options AS o "
                 "ON h.host_id = o.host_id "
             "LEFT JOIN ipv6_reservations AS r "
                 "ON h.host_id = r.host_id "
-            "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
-            "ORDER BY h.host_id, o.option_id, r.reservation_id "
-            "LIMIT ?"}
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"}
     }
 };
 
