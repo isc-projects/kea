@@ -537,6 +537,139 @@ GenericHostDataSourceTest::testGetPage6(const Host::IdentifierType& id) {
 }
 
 void
+GenericHostDataSourceTest::testGetPageLimit4(const Host::IdentifierType& id) {
+    // From the ticket: add 5 hosts each with 3 options.
+    // call getPage4 with limit of 4.
+    // The first page should return 4 hosts,
+    // the second should return one host.b
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    IOAddress addr("192.0.2.0");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+    for (unsigned i = 0; i < 5; ++i) {
+        addr = IOAddress::increase(addr);
+
+        HostPtr host = HostDataSourceUtils::initializeHost4(addr.toText(), id);
+        host->setIPv4SubnetID(subnet4);
+        host->setIPv6SubnetID(subnet6);
+
+        // Add DHCPv4 options.
+        CfgOptionPtr opts = host->getCfgOption4();
+        OptionDescriptor desc =
+            createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                       true, false, "my-boot-file");
+        opts->add(desc, DHCP4_OPTION_SPACE);
+        opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
+                                            false, false, 64 + i),
+                  DHCP4_OPTION_SPACE);
+        opts->add(createEmptyOption(Option::V4, 1, true), "isc");
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+    }
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(4);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(4, page.size());
+    host_id = page[3]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(1, page.size());
+    host_id = page[0]->getHostId();
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
+GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
+    // From the ticket: add several v6 hosts with multiple address/prefix
+    // reservations and multiple options.
+    // Get hosts by page with page size 1.
+    // Make sure all address/prefix reservations are returned.
+    // Make sure all options are returned as expected.
+
+    // Make sure we have a pointer to the host data source.
+    ASSERT_TRUE(hdsptr_);
+
+    // Let's create some hosts...
+    IOAddress addr("2001:db8:1::");
+    SubnetID subnet4(4);
+    SubnetID subnet6(6);
+
+    vector<HostPtr> hosts;
+
+    for (unsigned i = 0; i < 5; ++i) {
+        addr = IOAddress::increase(addr);
+        ostringstream pref;
+        pref << "2001:db8:2:" << 10 + i << "::";
+
+        HostPtr host = HostDataSourceUtils::initializeHost6(addr.toText(), id, false);
+        host->setIPv4SubnetID(subnet4);
+        host->setIPv6SubnetID(subnet6);
+
+        // Add address/prefix.
+        addr = IOAddress::increase(addr);
+        IPv6Resrv resva(IPv6Resrv::TYPE_NA, addr, 128);
+        host->addReservation(resva);
+        IPv6Resrv resvp(IPv6Resrv::TYPE_PD, IOAddress(pref.str()), 64);
+        host->addReservation(resvp);
+
+        // Add DHCPv6 options.
+        CfgOptionPtr opts = host->getCfgOption6();
+        OptionDescriptor desc =
+            createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL,
+                                       true, false, "my-boot-file");
+        opts->add(desc, DHCP6_OPTION_SPACE);
+        opts->add(createOption<OptionUint32>(Option::V6,
+                                             D6O_INFORMATION_REFRESH_TIME,
+                                             false, false, 3600 + i),
+                  DHCP6_OPTION_SPACE);
+        opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
+
+        ASSERT_NO_THROW(hdsptr_->add(host));
+        hosts.push_back(host);
+    }
+
+    // Get first page.
+    size_t idx(1);
+    uint64_t host_id(0);
+    HostPageSize page_size(4);
+    ConstHostCollection page;
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(4, page.size());
+    host_id = page[3]->getHostId();
+    ASSERT_NE(0, host_id);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 4; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i], page[i]);
+    }
+
+    // Get second and last pages.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(1, page.size());
+    host_id = page[0]->getHostId();
+
+    // Verify we got what we expected.
+    HostDataSourceUtils::compareHosts(hosts[4], page[0]);
+
+    // Verify we have everything.
+    ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
+    ASSERT_EQ(0, page.size());
+}
+
+void
 GenericHostDataSourceTest::testGetByIPv4(const Host::IdentifierType& id) {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
