@@ -73,7 +73,7 @@
         indicate that the lease is now available for re-assignment.</simpara>
       </listitem>
       <listitem>
-        <simpara>Update counters on the server, which includes
+        <simpara>Update counters on the server, a process that includes
         increasing the number of reclaimed leases and decreasing the
         number of assigned addresses or delegated prefixes.</simpara>
       </listitem>
@@ -111,7 +111,6 @@
         "reclaim-timer-wait-time": 5,
         "max-reclaim-leases": 0,
         "max-reclaim-time": 0,
-        "flush-reclaimed-timer-wait-time": 0,
     },
 
     ...
