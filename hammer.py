@@ -423,7 +423,7 @@ def _install_gtest_sources():
         os.unlink('/tmp/gtest.tar.gz')
 
 
-def _configure_mysql(system, revision):
+def _configure_mysql(system, revision, features):
     if system in ['fedora', 'centos']:
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl start mariadb.service')
@@ -443,6 +443,18 @@ def _configure_mysql(system, revision):
     cmd += "EOF\n\""
     execute(cmd)
 
+    if 'forge' in features:
+        cmd = "echo 'DROP DATABASE IF EXISTS keadb;' | sudo mysql -u root"
+        execute(cmd)
+        cmd = "echo 'DROP USER 'keauser'@'localhost';' | sudo mysql -u root"
+        execute(cmd, raise_error=False)
+        cmd = "bash -c \"cat <<EOF | sudo mysql -u root\n"
+        cmd += "CREATE DATABASE keadb;\n"
+        cmd += "CREATE USER 'keauser'@'localhost' IDENTIFIED BY 'keapass';\n"
+        cmd += "GRANT ALL ON keadb.* TO 'keauser'@'localhost';\n"
+        cmd += "EOF\n\""
+        execute(cmd)
+
     log.info("FIX FOR ISSUE: %s %s", system, revision)
     if system == 'debian' and revision == '9':
         log.info("FIX FOR ISSUE 2: %s %s", system, revision)
@@ -457,7 +469,7 @@ def _configure_mysql(system, revision):
         execute(cmd)
 
 
-def _configure_pgsql(system):
+def _configure_pgsql(system, features):
     if system in ['fedora', 'centos']:
         # https://fedoraproject.org/wiki/PostgreSQL
         exitcode = execute('sudo ls /var/lib/pgsql/data/postgresql.conf', raise_error=False)
@@ -475,6 +487,16 @@ def _configure_pgsql(system):
     cmd += "ALTER DEFAULT PRIVILEGES IN SCHEMA public GRANT SELECT ON TABLES to keatest_readonly;\n"
     cmd += "EOF\n\""
     execute(cmd)
+
+    if 'forge' in features:
+        cmd = "bash -c \"cat <<EOF | sudo -u postgres psql postgres\n"
+        cmd += "DROP DATABASE IF EXISTS keadb;\n"
+        cmd += "DROP USER IF EXISTS keauser;\n"
+        cmd += "CREATE USER keauser WITH PASSWORD 'keapass';\n"
+        cmd += "CREATE DATABASE keadb;\n"
+        cmd += "GRANT ALL PRIVILEGES ON DATABASE keauser TO keadb;\n"
+        cmd += "EOF\n\""
+        execute(cmd)
 
 
 def _install_cassandra_deb():
@@ -710,10 +732,10 @@ def prepare_deps_local(features, check_times):
         raise NotImplementedError
 
     if 'mysql' in features:
-        _configure_mysql(system, revision)
+        _configure_mysql(system, revision, features)
 
     if 'pgsql' in features:
-        _configure_pgsql(system)
+        _configure_pgsql(system, features)
 
     if 'radius' in features:
         _install_freeradius_client()
@@ -723,15 +745,16 @@ def prepare_deps_local(features, check_times):
     log.info('Preparing deps completed successfully.')
 
 
-def build_local(features, tarball_path, check_times, jobs):
+def build_local(features, tarball_path, check_times, jobs, dry_run):
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
     distro, revision = get_system_revision()
 
-    execute('df -h')
+    execute('df -h', dry_run=dry_run)
 
-    tarball_path = os.path.abspath(tarball_path)
+    if tarball_path:
+        tarball_path = os.path.abspath(tarball_path)
 
     if 'native-pkg' in features:
         # native pkg build
@@ -789,7 +812,7 @@ def build_local(features, tarball_path, check_times, jobs):
         else:
             src_path = '.'
 
-        execute('autoreconf -f -i', cwd=src_path, env=env)
+        execute('autoreconf -f -i', cwd=src_path, env=env, dry_run=dry_run)
 
         cmd = './configure'
         if 'mysql' in features:
@@ -820,7 +843,7 @@ def build_local(features, tarball_path, check_times, jobs):
         if 'shell' in features:
             cmd += ' --enable-shell'
 
-        execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times)
+        execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
 
         if jobs == 0:
             cpus = multiprocessing.cpu_count() - 1
@@ -831,16 +854,16 @@ def build_local(features, tarball_path, check_times, jobs):
         else:
             cpus = jobs
         cmd = 'make -j%s' % cpus
-        execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times)
+        execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times, dry_run=dry_run)
 
         if 'unittest' in features:
             results_dir = os.path.abspath(os.path.join(src_path, 'tests_result'))
-            execute('rm -rf %s' % results_dir)
+            execute('rm -rf %s' % results_dir, dry_run=dry_run)
             if not os.path.exists(results_dir):
                 os.mkdir(results_dir)
             env['GTEST_OUTPUT'] = 'xml:%s/' % results_dir
             env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
-            execute('make check -k', cwd=src_path, env=env, timeout=60 * 60, raise_error=False, check_times=check_times)
+            execute('make check -k', cwd=src_path, env=env, timeout=60 * 60, raise_error=False, check_times=check_times, dry_run=dry_run)
 
             results = {}
             grand_total = 0
@@ -874,9 +897,16 @@ def build_local(features, tarball_path, check_times, jobs):
                 f.write(json.dumps(results))
 
         if 'install' in features:
-            execute('sudo make install', cwd=src_path, env=env, check_times=check_times)
+            execute('sudo make install', cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
+            execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
 
-    execute('df -h')
+            if 'forge' in features:
+                if 'mysql' in features:
+                    execute('kea-admin lease-init mysql -u keauser -p keapass -n keadb', dry_run=dry_run)
+                if 'pgsql' in features:
+                    execute('kea-admin lease-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
+
+    execute('df -h', dry_run=dry_run)
 
 
 def build_in_vagrant(provider, system, sys_revision, features, leave_system, tarball_path, dry_run, quiet, clean_start, check_times, jobs):
@@ -968,7 +998,7 @@ def ensure_hammer_deps():
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
-ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell']
+ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Kea develepment environment management tool.')
@@ -1086,7 +1116,7 @@ def main():
     elif args.command == "build":
         log.info('Enabled features: %s', ' '.join(features))
         if args.provider == 'local':
-            build_local(features, args.from_tarball, args.check_times, int(args.jobs))
+            build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
             return
 
         if args.provider == 'all':
