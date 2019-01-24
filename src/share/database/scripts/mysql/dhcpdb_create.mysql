@@ -1570,11 +1570,13 @@ CREATE PROCEDURE createOptionAuditDHCP4(IN modification_type TINYINT(1),
                                         IN option_id BIGINT(20) UNSIGNED,
                                         IN subnet_id INT(10) UNSIGNED,
                                         IN host_id INT(10) UNSIGNED,
-                                        IN network_name VARCHAR(128))
+                                        IN network_name VARCHAR(128),
+                                        IN pool_id BIGINT(20))
 BEGIN
-    # This variable will hold shared network id that we will retrieve
-    # by matching it name.
+    # These variables will hold shared network id and subnet id that
+    # we will select.
     DECLARE snid VARCHAR(128);
+    DECLARE sid INT(10) UNSIGNED;
 
     # Cascade transaction flag is set to 1 to prevent creation of
     # the audit entries for the options when the options are
@@ -1605,11 +1607,16 @@ BEGIN
             CALL createAuditEntryDHCP4('hosts', host_id, 1);
         ELSEIF scope_id = 4 THEN
             # If shared network specific option is added or modified,
-            # created audit entry for the shared network which
+            # create audit entry for the shared network which
             # indicates that it should be treated as the shared
             # network update.
            SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
            CALL createAuditEntryDHCP4('dhcp4_shared_network', snid, 1);
+        ELSEIF scope_id = 5 THEN
+            # If pool specific option is added or modified, create
+            # audit entry for the subnet which this pool belongs to.
+            SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
+            CALL createAuditEntryDHCP4('dhcp4_subnet', sid, 1);
         END IF;
     END IF;
 END $$
@@ -1621,7 +1628,7 @@ CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
     FOR EACH ROW
     BEGIN
         CALL createOptionAuditDHCP4(0, NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
-                                    NEW.host_id, NEW.shared_network_name);
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id);
     END $$
 DELIMITER ;
 
@@ -1631,7 +1638,7 @@ CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
     FOR EACH ROW
     BEGIN
         CALL createOptionAuditDHCP4(1, NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
-                                    NEW.host_id, NEW.shared_network_name);
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id);
     END $$
 DELIMITER ;
 
@@ -1641,7 +1648,7 @@ CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
     FOR EACH ROW
     BEGIN
         CALL createOptionAuditDHCP4(2, OLD.scope_id, OLD.option_id, OLD.dhcp4_subnet_id,
-                                    OLD.host_id, OLD.shared_network_name);
+                                    OLD.host_id, OLD.shared_network_name, OLD.pool_id);
     END $$
 DELIMITER ;
 

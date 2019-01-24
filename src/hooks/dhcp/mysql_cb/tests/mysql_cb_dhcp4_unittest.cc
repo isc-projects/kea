@@ -1370,6 +1370,13 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     Subnet4Ptr subnet = test_subnets_[1];
     cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
 
+    {
+        SCOPED_TRACE("CREATE audit entry for a subnet");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set");
+    }
+
     // Add an option into the pool.
     const PoolPtr pool = subnet->getPool(Lease::TYPE_V4, IOAddress("192.0.2.10"));
     ASSERT_TRUE(pool);
@@ -1395,6 +1402,15 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
 
+    {
+        SCOPED_TRACE("UPDATE audit entry for a subnet after adding an option "
+                     "to the pool");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "pool specific option set");
+    }
+
+
     // Modify the option and update it in the database.
     opt_boot_file_name->persistent_ = !opt_boot_file_name->persistent_;
     cbptr_->createUpdateOption4(ServerSelector::ALL(),
@@ -1415,6 +1431,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
         returned_pool1->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
     EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for a subnet when updating pool "
+                     "specific option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "pool specific option set");
+    }
 
     // Deleting an option with explicitly specified server tag should fail.
     EXPECT_EQ(0, cbptr_->deleteOption4(ServerSelector::ONE("server1"),
@@ -1442,6 +1466,14 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     // Option should be gone.
     EXPECT_FALSE(returned_pool2->getCfgOption()->get(DHCP4_OPTION_SPACE,
                                                      DHO_BOOT_FILE_NAME).option_);
+
+    {
+        SCOPED_TRACE("UPDATE audit entry for a subnet when deleting pool "
+                     "specific option");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::UPDATE,
+                          "pool specific option deleted");
+    }
 }
 
 // This test verifies that shared network level option can be added,

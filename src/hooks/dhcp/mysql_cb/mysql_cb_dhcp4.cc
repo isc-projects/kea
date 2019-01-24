@@ -1394,7 +1394,7 @@ public:
                       << pool_end_address);
         }
 
-        createUpdateOption4(server_selector, pool_id, option, true);
+        createUpdateOption4(server_selector, pool_id, option, false);
     }
 
 
@@ -1433,13 +1433,7 @@ public:
             MySqlBinding::createTimestamp(option->getModificationTime())
         };
 
-        boost::scoped_ptr<MySqlTransaction> transaction;
-        // Only start new transaction if specified to do so. This function may
-        // be called from within an existing transaction in which case we
-        // don't start the new one.
-        if (!cascade_update) {
-            transaction.reset(new MySqlTransaction(conn_));
-        }
+        MySqlTransaction transaction(conn_);
 
         OptionDescriptorPtr existing_option = getOption4(server_selector, pool_id,
                                                          option->option_->getType(),
@@ -1465,9 +1459,7 @@ public:
             insertOption4(server_selector, in_bindings);
         }
 
-        if (transaction) {
-            transaction->commit();
-        }
+        transaction.commit();
     }
 
     /// @brief Sends query to insert or update DHCP option in a shared network.
