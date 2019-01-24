@@ -2581,7 +2581,7 @@ The reservation-get-all command may result in very large responses.</para>
 
 <para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command>, <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
 
-<para>Availability: 1.6.0 (<link linkend="commands-host_cmds-lib">host_cmds</link>  hook)</para>
+<para>Availability: 1.6.0 (<link linkend="commands-host_cmds-lib">host_cmds</link> hook) at the exception of the Cassandra host backend</para>
 
 <para>Description and examples: See <xref linkend="command-reservation-get-page"/></para>
 

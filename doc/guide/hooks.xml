@@ -1663,7 +1663,7 @@ An example result returned when the query was malformed:<screen>
           retrieved by using subnet-id value of zero (0).
           </para>
 
-	  <para>For instance for retrieving host reservations for the
+          <para>For instance for retrieving host reservations for the
           subnet 1:
 <screen>
 {
@@ -1737,14 +1737,14 @@ An example result returned when the query was malformed:<screen>
           the returned list is empty, count is 0 and result 3 is returned.
           </para>
 
-	  <para>For instance for retrieving host reservations for the
-	  subnet 1 requesting the first page can be done by:
+          <para>For instance for retrieving host reservations for the
+          subnet 1 requesting the first page can be done by:
 <screen>
 {
     "command": "reservation-get-page",
     "arguments": {
         <userinput>"subnet-id": 1,
-	"limit": 10</userinput>
+        "limit": 10</userinput>
      }
 }
 </screen> leaving source-index and from to their zero default values.
@@ -1792,7 +1792,7 @@ An example result returned when the query was malformed:<screen>
         <userinput>"subnet-id": 1,
         "source-index": 1,
         "from": 1234567,
-	"limit": 10</userinput>
+        "limit": 10</userinput>
      }
 }
 </screen> responses after the last page look like:
@@ -1818,6 +1818,11 @@ An example result returned when the query was malformed:<screen>
           <para>
           For a reference, see <xref linkend="ref-reservation-get-page"/>.
           </para>
+
+          <note><simpara>
+              Currently <command>reservation-get-page</command> is not
+              supported by the Cassandra host backend.
+          </simpara></note>
         </section>
 
         <section xml:id="command-reservation-del">
