@@ -6397,7 +6397,6 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
 
 // Rather than disable these tests they are compiled out.  This avoids them
 // reporting as disbabled and thereby drawing attention to them.
-#ifdef CONFIG_BACKEND
 // This test verifies that configuration control with unsupported type fails
 TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
     string config = PARSER_CONFIGS[6];
@@ -6475,7 +6474,6 @@ TEST_F(Dhcp4ParserTest, serverTag) {
     // Make sure a invalid server-tag fails to parse.
     ASSERT_THROW(parseDHCP4(bad_tag), std::exception);
 }
-#endif // CONFIG_BACKEND
 
 // Check whether it is possible to configure packet queue
 TEST_F(Dhcp4ParserTest, dhcpQueueControl) {
@@ -6679,7 +6677,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
     // Subnet 100 should use it's own explicit values.
     ConstSubnet4Ptr subnet4 = subnets4->getBySubnetId(100);
     ASSERT_TRUE(subnet4);
-    EXPECT_EQ(false, subnet4->getCalculateTeeTimes());
+    EXPECT_FALSE(subnet4->getCalculateTeeTimes());
     EXPECT_TRUE(util::areDoublesEquivalent(0.45, subnet4->getT1Percent()));
     EXPECT_TRUE(util::areDoublesEquivalent(0.65, subnet4->getT2Percent()));
 
@@ -6693,7 +6691,7 @@ TEST_F(Dhcp4ParserTest, calculateTeeTimesInheritence) {
     // Subnet 300 should use the global values.
     subnet4 = subnets4->getBySubnetId(300);
     ASSERT_TRUE(subnet4);
-    EXPECT_EQ(false, subnet4->getCalculateTeeTimes());
+    EXPECT_FALSE(subnet4->getCalculateTeeTimes());
     EXPECT_TRUE(util::areDoublesEquivalent(0.5, subnet4->getT1Percent()));
     EXPECT_TRUE(util::areDoublesEquivalent(0.875, subnet4->getT2Percent()));
 }

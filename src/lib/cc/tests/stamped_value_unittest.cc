@@ -36,4 +36,71 @@ TEST(StampedValueTest, createFromInteger) {
     EXPECT_EQ(5, signed_integer);
 }
 
+// Tests that Elements can be created from stamped values.
+TEST(StampedValueTest, toElement) {
+    ElementPtr elem;
+    boost::scoped_ptr<StampedValue> value;
+
+    // Make sure we can create a StringElement.
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "boo")));
+    ASSERT_NO_THROW(elem = value->toElement(Element::string));
+    ASSERT_EQ(Element::string, elem->getType());
+    ASSERT_EQ("boo", elem->stringValue());
+
+    // Make non-string types fail.
+    ASSERT_THROW(value->toElement(Element::integer), BadValue);
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+    ASSERT_THROW(value->toElement(Element::real), BadValue);
+
+    // Make sure we can create a IntElement.
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "777")));
+    ASSERT_NO_THROW(elem = value->toElement(Element::integer));
+    ASSERT_EQ(Element::integer, elem->getType());
+    ASSERT_EQ(777, elem->intValue());
+
+    // String should work.
+    ASSERT_NO_THROW(elem = value->toElement(Element::string));
+    ASSERT_EQ("777", elem->stringValue());
+
+    // Real should work.
+    ASSERT_NO_THROW(elem = value->toElement(Element::real));
+    ASSERT_EQ(777.0, elem->doubleValue());
+
+    // Boolean will fail.
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+
+    // Make sure we can create a Boolean.
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "true")));
+    ASSERT_NO_THROW(elem = value->toElement(Element::boolean));
+    ASSERT_EQ(Element::boolean, elem->getType());
+    ASSERT_TRUE(elem->boolValue());
+
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "false")));
+    ASSERT_NO_THROW(elem = value->toElement(Element::boolean));
+    ASSERT_EQ(Element::boolean, elem->getType());
+    ASSERT_FALSE(elem->boolValue());
+
+    // String should work.
+    ASSERT_NO_THROW(elem = value->toElement(Element::string));
+    ASSERT_EQ("false", elem->stringValue());
+
+    // Make numerics should fail.
+    ASSERT_THROW(value->toElement(Element::integer), BadValue);
+    ASSERT_THROW(value->toElement(Element::real), BadValue);
+
+    // Make sure we can create a DoubleElement.
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "45.0")));
+    ASSERT_NO_THROW(elem = value->toElement(Element::real));
+    ASSERT_EQ(Element::real, elem->getType());
+    ASSERT_EQ(45.0, elem->doubleValue());
+
+    // String should work.
+    ASSERT_NO_THROW(elem = value->toElement(Element::string));
+    ASSERT_EQ("45.0", elem->stringValue());
+
+    // Int and Boolean should fail.
+    ASSERT_THROW(value->toElement(Element::integer), BadValue);
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+}
+
 }
