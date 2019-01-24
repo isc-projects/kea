@@ -1731,11 +1731,32 @@ An example result returned when the query was malformed:<screen>
           uses to chain page queries.
           </para>
 
-          <para>The first page is queried without source-index and from,
-          for next pages source-index and from should be set using
-          the preceeding result source-index and next. After the last page
-          the returned list is empty, count is 0 and result 3 is returned.
+          <para>
+            The usage of next and source-index parameters requires
+            additional explanation. For the first call those
+            parameters should not be specified (or specified as
+            zeros). For any follow up calls they should be set to the
+            values returned in previous calls. The subsequent calls
+            should be issued until all reservations are returned. The
+            end is reached once the returned list is empty, count is 0
+            and result status 3 (empty) is returned.
           </para>
+
+          <note>
+            <simpara>The next and source-index parameters are
+            reflecting internal state of the search. There is no need
+            to understand what they represent, it's simply a value
+            that is supposed to be copied from one response to the
+            next query. However, if you are curious, next field
+            represents a 64 bits representation of host identifier
+            used by a host backend. The source-index represents
+            internal representation of multiple host backends: 0 is
+            used to represent hosts defined in a configuration file, 1
+            represents the first database backend. In some uncommon
+            cases there may be more than one database backend
+            configured, so potentially there may be 2. In any case,
+            Kea will iterate over all backends configured.
+          </note>
 
           <para>For instance for retrieving host reservations for the
           subnet 1 requesting the first page can be done by:
@@ -1747,7 +1768,8 @@ An example result returned when the query was malformed:<screen>
         "limit": 10</userinput>
      }
 }
-</screen> leaving source-index and from to their zero default values.
+</screen> Since this is the first call, source-index and next should
+not be specified. They will default to their zero default values.
           </para>
 
           <para>Some hosts are returned with informations to get the next page:
@@ -1784,18 +1806,23 @@ An example result returned when the query was malformed:<screen>
     "result": 0,
     "text": "72 IPv4 host(s) found."
 }
-</screen> To get the next page this can be sent:
+</screen> Note that next and source-index fields were specified in the
+response. Those two must be copied to the next command, so Kea
+continues from the place where the last command finished. To get the
+next page the following command can be sent:
 <screen>
 {
     "command": "reservation-get-page",
     "arguments": {
         <userinput>"subnet-id": 1,
         "source-index": 1,
-        "from": 1234567,
+        "next": 1234567,
         "limit": 10</userinput>
      }
 }
-</screen> responses after the last page look like:
+</screen>. The response will contain a list of hosts with updated
+source-index and next fields. Continue calling the command until you
+get the last page. Its response will look like this:
 <screen>
 {
     "arguments": {
