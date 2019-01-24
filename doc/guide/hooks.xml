@@ -1756,6 +1756,7 @@ An example result returned when the query was malformed:<screen>
             cases there may be more than one database backend
             configured, so potentially there may be 2. In any case,
             Kea will iterate over all backends configured.
+            </simpara>
           </note>
 
           <para>For instance for retrieving host reservations for the
