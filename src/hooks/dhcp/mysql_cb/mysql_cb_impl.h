@@ -29,22 +29,66 @@ namespace dhcp {
 /// This class contains common methods for manipulating data in the
 /// MySQL database, used by all servers.
 class MySqlConfigBackendImpl {
-public:
+protected:
 
+    /// @brief RAII object used to protect against creating multiple
+    /// audit revision during cascade configuration updates.
+    ///
+    /// Audit revision is created per a single database transaction.
+    /// It includes log message associated with the configuration
+    /// change. Single command sent over the control API should
+    /// result in a single audit revision entry in the database.
+    /// A single configuration update often consists of multiple
+    /// insertions, updates and/or deletes in the database. For
+    /// example, a subnet contains pools and DHCP options which are
+    /// inserted to their respective tables. We refer to such update
+    /// as a cascade update. Cascade update should result in a single
+    /// audit revision and an audit entry for a subnet, rather than
+    /// multiple audit revisions and audit entries for the subnet,
+    /// pools and child DHCP options.
+    ///
+    /// Creating an instance of the @c ScopedAuditRevision guards
+    /// against creation of multiple audit revisions when child
+    /// objects are inserted or updated in the database. When the
+    /// instance of this object goes out of scope the new audit
+    /// revisions can be created.
     class ScopedAuditRevision {
     public:
 
+        /// @brief Constructor.
+        ///
+        /// Initializes new audit revision and sets the flag in the
+        /// MySQL CB implementation object which prevents new audit
+        /// revisions to be created while this instance exists.
+        ///
+        /// @param impl pointer to the MySQL CB implementation.
+        /// @param index index of the query to set session variables
+        /// used for creation of the audit revision and the audit
+        /// entries.
+        /// @param log_message log message associated with the audit
+        /// revision to be inserted into the database.
+        /// @param cascade_transaction boolean flag indicating if
+        /// we're performing cascade transaction. If set to true,
+        /// the audit entries for the child objects (e.g. DHCP
+        /// options) won't be created.
         ScopedAuditRevision(MySqlConfigBackendImpl* impl,
                             const int index,
                             const std::string& log_message,
                             bool cascade_transaction);
 
+        /// @brief Destructor.
+        ///
+        /// Clears the flag which is blocking creation of the new
+        /// audit revisions.
         ~ScopedAuditRevision();
 
     private:
-        MySqlConfigBackendImpl* impl_;
 
+        /// @brief Pointer to the MySQL CB implementation.
+        MySqlConfigBackendImpl* impl_;
     };
+
+public:
 
     /// @brief Constructor.
     ///
@@ -136,6 +180,9 @@ public:
                            const std::string& log_message,
                            const bool cascade_transaction);
 
+    /// @brief Clears the flag blocking creation of the new audit revisions.
+    ///
+    /// This is used by the @c ScopedAuditRevision object.
     void clearAuditRevision();
 
     /// @brief Sends query to the database to retrieve most recent audit entries.

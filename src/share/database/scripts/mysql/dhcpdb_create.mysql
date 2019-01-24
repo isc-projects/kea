@@ -1588,7 +1588,7 @@ BEGIN
     # entire subnet. The only case when the object_type will be
     # set to 'dhcp4_options' is when the global option is added.
     # Global options do not have the owner.
-    IF @cascade_transaction == 0 THEN
+    IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
         IF scope_id = 0 THEN
             # If a global option is added or modified, create audit
             # entry for the 'dhcp4_options' table.

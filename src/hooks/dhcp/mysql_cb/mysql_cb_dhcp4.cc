@@ -842,6 +842,24 @@ public:
         }
     }
 
+    /// @brief Sends a query to delete data from a table.
+    ///
+    /// If creates a new audit revision for this change if such audit
+    /// revision doesn't exist yet (using ScopedAuditRevision mechanism).
+    ///
+    /// @tparam Args type of the arguments to be passed to one of the existing
+    /// @c deleteFromTable methods.
+    /// @param server_selector server selector.
+    /// @param operation operation which results in calling this function. This is
+    /// used for logging purposes.
+    /// @param log_message log message to be associated with the audit revision.
+    /// @param cascade_delete boolean flag indicating if we're performing
+    /// cascade delete. If set to true, the audit entries for the child
+    /// objects (e.g. DHCPoptions) won't be created.
+    /// @param keys arguments to be passed to one of the existing
+    /// @c deleteFromTable methods.
+    ///
+    /// @return Number of deleted entries.
     template<typename... Args>
     uint64_t deleteTransactional(const int index,
                                  const db::ServerSelector& server_selector,
