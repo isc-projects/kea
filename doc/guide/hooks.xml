@@ -2021,7 +2021,7 @@ If the subnet exists the response will be similar to this:
 {
     "command": "subnet4-add",
     "arguments": {
-        "subnets": [ {
+        "subnet4": [ {
             "id": 123,
             "subnet": "10.20.30.0/24",
             ...
@@ -2038,7 +2038,7 @@ If the subnet exists the response will be similar to this:
     "result": 0,
     "text": "IPv4 subnet added",
     "arguments": {
-        "subnets": [
+        "subnet4": [
             {
                 "id": 123,
                 "subnet": "10.20.30.0/24"
