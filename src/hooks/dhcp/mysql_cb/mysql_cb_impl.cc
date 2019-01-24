@@ -92,7 +92,7 @@ MySqlConfigBackendImpl::initAuditRevision(const int index,
 
     MySqlBindingCollection in_bindings = {
         MySqlBinding::createString(log_message),
-        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(!cascade_transaction))
+        MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))
     };
     conn_.insertQuery(index, in_bindings);
     audit_revision_created_ = true;
