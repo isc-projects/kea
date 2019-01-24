@@ -238,7 +238,7 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 }
 
 /// @brief Make sure open failures do NOT invoke db lost callback
-/// The db lost callback should only be invoked after succesfully
+/// The db lost callback should only be invoked after successfully
 /// opening the DB and then subsequently losing it. Failing to
 /// open should be handled directly by the application layer.
 /// There is simply no good way to break the connection in a

@@ -298,7 +298,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id = $1 "
-      "  ORDER BY state"},
+      "  ORDER BY state" },
 
     // SUBNET_RANGE_LEASE4_STATS
     { 2, { OID_INT8, OID_INT8 },
@@ -306,7 +306,7 @@ PgSqlTaggedStatement tagged_statements[] = {
       "SELECT subnet_id, state, leases as state_count"
       "  FROM lease4_stat "
       "  WHERE subnet_id >= $1 and subnet_id <= $2 "
-      "  ORDER BY subnet_id, state"},
+      "  ORDER BY subnet_id, state" },
 
     // ALL_LEASE6_STATS,
     { 0, { OID_NONE },
@@ -1086,14 +1086,13 @@ PgSqlLeaseMgr::PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters)
     conn_.openDatabase();
 
     // Validate schema version first.
-    std::pair<uint32_t, uint32_t> code_version(PG_SCHEMA_VERSION_MAJOR,
-                                               PG_SCHEMA_VERSION_MINOR);
-    std::pair<uint32_t, uint32_t> db_version = getVersion();
+    VersionPair code_version(PG_SCHEMA_VERSION_MAJOR, PG_SCHEMA_VERSION_MINOR);
+    VersionPair db_version = getVersion();
     if (code_version != db_version) {
         isc_throw(DbOpenError,
                   "PostgreSQL schema version mismatch: need version: "
                       << code_version.first << "." << code_version.second
-                      << " found version:  " << db_version.first << "."
+                      << " found version: " << db_version.first << "."
                       << db_version.second);
     }
 
@@ -1679,9 +1678,9 @@ PgSqlLeaseMgr::updateLease4(const Lease4Ptr& lease) {
     exchange4_->createBindForSend(lease, bind_array);
 
     // Set up the WHERE clause and append it to the SQL_BIND array
-    std::string addr4_ = boost::lexical_cast<std::string>
+    std::string addr4_str = boost::lexical_cast<std::string>
                          (lease->addr_.toUint32());
-    bind_array.add(addr4_);
+    bind_array.add(addr4_str);
 
     // Drop to common update code
     updateLeaseCommon(stindex, bind_array, lease);
@@ -1722,19 +1721,30 @@ PgSqlLeaseMgr::deleteLeaseCommon(StatementIndex stindex,
 }
 
 bool
-PgSqlLeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+PgSqlLeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_PGSQL_DELETE_ADDR).arg(addr.toText());
+              DHCPSRV_PGSQL_DELETE_ADDR)
+        .arg(addr.toText());
 
     // Set up the WHERE clause value
     PsqlBindArray bind_array;
 
-    if (addr.isV4()) {
-        std::string addr4_str = boost::lexical_cast<std::string>
-                                 (addr.toUint32());
-        bind_array.add(addr4_str);
-        return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
-    }
+    std::string addr4_str =
+        boost::lexical_cast<std::string>(addr.toUint32());
+    bind_array.add(addr4_str);
+    return (deleteLeaseCommon(DELETE_LEASE4, bind_array) > 0);
+}
+
+bool
+PgSqlLeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_PGSQL_DELETE_ADDR)
+        .arg(addr.toText());
+
+    // Set up the WHERE clause value
+    PsqlBindArray bind_array;
 
     std::string addr6_str = addr.toText();
     bind_array.add(addr6_str);
@@ -1855,7 +1865,7 @@ PgSqlLeaseMgr::getDescription() const {
     return (string("PostgreSQL Database"));
 }
 
-pair<uint32_t, uint32_t>
+VersionPair
 PgSqlLeaseMgr::getVersion() const {
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
               DHCPSRV_PGSQL_GET_VERSION);
@@ -1867,18 +1877,13 @@ PgSqlLeaseMgr::getVersion() const {
                   << version_sql << ", reason: " << PQerrorMessage(conn_));
     }
 
-    istringstream tmp;
-    uint32_t version;
-    tmp.str(PQgetvalue(r, 0, 0));
-    tmp >> version;
-    tmp.str("");
-    tmp.clear();
+    uint32_t major;
+    PgSqlExchange::getColumnValue(r, 0, 0, major);
 
     uint32_t minor;
-    tmp.str(PQgetvalue(r, 0, 1));
-    tmp >> minor;
+    PgSqlExchange::getColumnValue(r, 0, 1, minor);
 
-    return (make_pair(version, minor));
+    return std::make_pair(major, minor);
 }
 
 void
@@ -1891,5 +1896,5 @@ PgSqlLeaseMgr::rollback() {
     conn_.rollback();
 }
 
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace dhcp
+}  // namespace isc

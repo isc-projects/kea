@@ -133,7 +133,7 @@ TEST_F(AllocEngine6Test, pdFakeAlloc6) {
 
     // We should not have bumped the assigned counter
     EXPECT_TRUE(testStatistics("assigned-pds", 0, subnet_->getID()));
-};
+}
 
 // This test checks if the allocation with a hint that is valid (in range,
 // in pool and free) can succeed
@@ -2447,7 +2447,7 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkOutOfAddresses) {
     ASSERT_EQ("2001:db8:1::1", lease2->addr_.toText());
 
     // Delete the lease in the first subnet.
-    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease->addr_));
+    ASSERT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Now, try requesting this address by providing a hint. The engine
     // should try to honor the hint even though we start from the subnet2.
@@ -2908,6 +2908,6 @@ TEST_F(AllocEngine6Test, globalHostReservedPrefix) {
         << "Lease lifetime was not extended, but it should";
 }
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

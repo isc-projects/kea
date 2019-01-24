@@ -329,7 +329,9 @@ Dhcpv6SrvTest::testRenewBasic(Lease::Type type, const std::string& existing_addr
     // equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(renew_addr));
+    Lease6Ptr lease(new Lease6());
+    lease->addr_ = renew_addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 void
@@ -651,7 +653,9 @@ Dhcpv6SrvTest::testReleaseReject(Lease::Type type, const IOAddress& addr) {
     EXPECT_EQ(1, stat->getInteger().first);
 
     // Finally, let's cleanup the database
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr));
+    lease.reset(new Lease6());
+    lease->addr_ = addr;
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 }
 
 void
@@ -858,6 +862,6 @@ NakedDhcpv6SrvTest::checkIA_NAStatusCode(
     }
 }
 
-}; // end of isc::dhcp::test namespace
-}; // end of isc::dhcp namespace
-}; // end of isc namespace
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc

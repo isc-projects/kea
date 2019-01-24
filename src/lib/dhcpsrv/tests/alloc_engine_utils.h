@@ -178,7 +178,7 @@ public:
         EXPECT_EQ(lease->subnet_id_, subnet_->getID());
 
         if (expected_in_subnet) {
-            EXPECT_TRUE(subnet_->inRange(lease->addr_)) 
+            EXPECT_TRUE(subnet_->inRange(lease->addr_))
                 << " address: " << lease->addr_.toText();
         } else {
             EXPECT_FALSE(subnet_->inRange(lease->addr_))

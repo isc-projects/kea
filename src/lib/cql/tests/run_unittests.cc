@@ -6,11 +6,10 @@
 
 #include <config.h>
 
-#include <log/logger_support.h>
 #include <gtest/gtest.h>
+#include <log/logger_support.h>
 
-int
-main(int argc, char* argv[]) {
+int main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
     isc::log::initLogger();
 

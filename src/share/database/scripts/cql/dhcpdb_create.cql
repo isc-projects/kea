@@ -46,16 +46,16 @@
 -- Table `lease4`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease4 (
-    address int,
-    hwaddr blob,
-    client_id blob,
-    valid_lifetime bigint,
-    expire bigint,
-    subnet_id int,
-    fqdn_fwd boolean,
-    fqdn_rev boolean,
-    hostname varchar,
-    state int,
+    address BIGINT,
+    hwaddr BLOB,
+    client_id BLOB,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id INT,
+    fqdn_fwd BOOLEAN,
+    fqdn_rev BOOLEAN,
+    hostname VARCHAR,
+    state INT,
     PRIMARY KEY ((address))
 );
 
@@ -73,22 +73,22 @@ CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 -- Table `lease6`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease6 (
-    address varchar,
-    valid_lifetime bigint,
-    expire bigint,
-    subnet_id int,
-    pref_lifetime bigint,
-    duid blob,
-    iaid int,
-    lease_type int,
-    prefix_len int,
-    fqdn_fwd boolean,
-    fqdn_rev boolean,
-    hostname varchar,
-    hwaddr blob,
-    hwtype int,
-    hwaddr_source int,
-    state int,
+    address VARCHAR,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id INT,
+    pref_lifetime BIGINT,
+    duid BLOB,
+    iaid INT,
+    lease_type INT,
+    prefix_len INT,
+    fqdn_fwd BOOLEAN,
+    fqdn_rev BOOLEAN,
+    hostname VARCHAR,
+    hwaddr BLOB,
+    hwtype INT,
+    hwaddr_source INT,
+    state INT,
     PRIMARY KEY ((address))
 );
 
@@ -109,8 +109,8 @@ CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 -- Table `lease6_types`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease6_types (
-    lease_type int,                             -- Lease type code.
-    name varchar,                               -- Name of the lease type
+    lease_type INT,                             -- Lease type code.
+    name VARCHAR,                               -- Name of the lease type
     PRIMARY KEY ((lease_type))
 );
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
@@ -127,8 +127,8 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- Table `lease_hwaddr_source`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
-    hwaddr_source int,
-    name varchar,
+    hwaddr_source INT,
+    name VARCHAR,
     PRIMARY KEY ((hwaddr_source))
 );
 
@@ -164,8 +164,8 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (128, 'HWADDR_SOURC
 -- Table `lease_state`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease_state (
-    state int,
-    name varchar,
+    state INT,
+    name VARCHAR,
     PRIMARY KEY ((state))
 );
 
@@ -182,8 +182,8 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- Table `schema_version`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS schema_version (
-    version int,
-    minor int,
+    version INT,
+    minor INT,
     PRIMARY KEY ((version))
 );
 
@@ -197,35 +197,35 @@ INSERT INTO schema_version (version, minor) VALUES (1, 0);
 -- Table `host_reservations`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS host_reservations (
-    id bigint,
-    host_identifier blob,
-    host_identifier_type int,
-    host_ipv4_subnet_id int,
-    host_ipv6_subnet_id int,
-    host_ipv4_address int,
-    host_ipv4_next_server int,
-    host_ipv4_server_hostname text,
-    host_ipv4_boot_file_name text,
-    hostname text,
-    user_context text,
-    host_ipv4_client_classes text,
-    host_ipv6_client_classes text,
+    id BIGINT,
+    host_identifier BLOB,
+    host_identifier_type INT,
+    host_ipv4_subnet_id INT,
+    host_ipv6_subnet_id INT,
+    host_ipv4_address INT,
+    host_ipv4_next_server INT,
+    host_ipv4_server_hostname VARCHAR,
+    host_ipv4_boot_file_name VARCHAR,
+    hostname VARCHAR,
+    user_context VARCHAR,
+    host_ipv4_client_classes VARCHAR,
+    host_ipv6_client_classes VARCHAR,
     -- reservation
-    reserved_ipv6_prefix_address text,
-    reserved_ipv6_prefix_length int,
-    reserved_ipv6_prefix_address_type int,
-    iaid int,
+    reserved_ipv6_prefix_address VARCHAR,
+    reserved_ipv6_prefix_length INT,
+    reserved_ipv6_prefix_address_type INT,
+    iaid INT,
     -- option
-    option_universe int,
-    option_code int,
-    option_value blob,
-    option_formatted_value text,
-    option_space text,
-    option_is_persistent boolean,
-    option_client_class text,
-    option_subnet_id int,
-    option_user_context text,
-    option_scope_id int,
+    option_universe INT,
+    option_code INT,
+    option_value BLOB,
+    option_formatted_value VARCHAR,
+    option_space VARCHAR,
+    option_is_persistent BOOLEAN,
+    option_client_class VARCHAR,
+    option_subnet_id INT,
+    option_user_context VARCHAR,
+    option_scope_id INT,
     PRIMARY KEY ((id))
 );
 
@@ -242,8 +242,8 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserve
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS host_identifier_type (
-    type int,
-    name varchar,
+    type INT,
+    name VARCHAR,
     PRIMARY KEY ((type))
 );
 
@@ -259,8 +259,8 @@ INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS dhcp_option_scope (
-  scope_id int,
-  scope_name varchar,
+  scope_id INT,
+  scope_name VARCHAR,
   PRIMARY KEY ((scope_id))
 );
 
@@ -277,16 +277,16 @@ INSERT INTO schema_version (version, minor) VALUES(2, 0);
 -- This line starts database upgrade to version 3.0
 
 -- Add a column holding leases for user context.
-ALTER TABLE lease4 ADD user_context text;
-ALTER TABLE lease6 ADD user_context text;
+ALTER TABLE lease4 ADD user_context VARCHAR;
+ALTER TABLE lease6 ADD user_context VARCHAR;
 
 -- -----------------------------------------------------
 -- Table `logs` (logs table is used by forensic logging hook library)
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS logs (
-    timeuuid timeuuid,  -- creation timeuuid, use dateOf() to get timestamp
-    address varchar,    -- address or prefix
-    log text,           -- the log itself
+    timeuuid TIMEUUID,  -- creation timeuuid, use dateOf() to get timestamp
+    address VARCHAR,    -- address or prefix
+    log VARCHAR,        -- the log itself
     PRIMARY KEY ((timeuuid))
 );
 
@@ -294,7 +294,7 @@ CREATE TABLE IF NOT EXISTS logs (
 CREATE INDEX IF NOT EXISTS logsindex ON logs (address);
 
 -- This line adds auth_key column into host reservation table
-ALTER TABLE host_reservations ADD auth_key text;
+ALTER TABLE host_reservations ADD auth_key VARCHAR;
 
 -- Cql requires primary keys in the WHERE here.
 DELETE FROM schema_version WHERE version=2;

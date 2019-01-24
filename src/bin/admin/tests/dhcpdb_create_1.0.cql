@@ -1,4 +1,5 @@
--- Copyright (C) 2015-2017 Deutsche Telekom AG.
+-- Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+-- Copyright (C) 2015-2018 Deutsche Telekom AG.
 
 -- Author: Razvan Becheriu <razvan.becheriu@qualitance.com>
 
@@ -47,16 +48,16 @@
 -- Table `lease4`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease4 (
-    address int,
-    hwaddr blob,
-    client_id blob,
-    valid_lifetime bigint,
-    expire bigint,
-    subnet_id int,
-    fqdn_fwd boolean,
-    fqdn_rev boolean,
-    hostname varchar,
-    state int,
+    address BIGINT,
+    hwaddr BLOB,
+    client_id BLOB,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id INT,
+    fqdn_fwd BOOLEAN,
+    fqdn_rev BOOLEAN,
+    hostname VARCHAR,
+    state INT,
     PRIMARY KEY ((address))
 );
 
@@ -74,22 +75,22 @@ CREATE INDEX IF NOT EXISTS lease4index5 ON lease4 (state);
 -- Table `lease6`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease6 (
-    address varchar,
-    valid_lifetime bigint,
-    expire bigint,
-    subnet_id int,
-    pref_lifetime bigint,
-    duid blob,
-    iaid int,
-    lease_type int,
-    prefix_len int,
-    fqdn_fwd boolean,
-    fqdn_rev boolean,
-    hostname varchar,
-    hwaddr blob,
-    hwtype int,
-    hwaddr_source int,
-    state int,
+    address VARCHAR,
+    valid_lifetime BIGINT,
+    expire BIGINT,
+    subnet_id INT,
+    pref_lifetime BIGINT,
+    duid BLOB,
+    iaid INT,
+    lease_type INT,
+    prefix_len INT,
+    fqdn_fwd BOOLEAN,
+    fqdn_rev BOOLEAN,
+    hostname VARCHAR,
+    hwaddr BLOB,
+    hwtype INT,
+    hwaddr_source INT,
+    state INT,
     PRIMARY KEY ((address))
 );
 
@@ -110,8 +111,8 @@ CREATE INDEX IF NOT EXISTS lease6index6 ON lease6 (state);
 -- Table `lease6_types`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease6_types (
-    lease_type int,                             -- Lease type code.
-    name varchar,                               -- Name of the lease type
+    lease_type INT,                             -- Lease type code.
+    name VARCHAR,                               -- Name of the lease type
     PRIMARY KEY ((lease_type))
 );
 INSERT INTO lease6_types (lease_type, name) VALUES (0, 'IA_NA');   -- Non-temporary v6 addresses
@@ -128,10 +129,12 @@ INSERT INTO lease6_types (lease_type, name) VALUES (2, 'IA_PD');   -- Prefix del
 -- Table `lease_hwaddr_source`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease_hwaddr_source (
-    hwaddr_source int,
-    name varchar,
+    hwaddr_source INT,
+    name VARCHAR,
     PRIMARY KEY ((hwaddr_source))
 );
+
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (0, 'HWADDR_SOURCE_UNKNOWN');
 
 -- Hardware address obtained from raw sockets
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (1, 'HWADDR_SOURCE_RAW');
@@ -154,6 +157,8 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (32, 'HWADDR_SOURCE
 -- Hardware address extracted from docsis options
 INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE_DOCSIS_CMTS');
 
+INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (128, 'HWADDR_SOURCE_DOCSIS_MODEM');
+
 -- Create table holding mapping of the lease states to their names.
 -- This is not used in queries from the DHCP server but rather in
 -- direct queries from the lease database management tools.
@@ -161,8 +166,8 @@ INSERT INTO lease_hwaddr_source (hwaddr_source, name) VALUES (64, 'HWADDR_SOURCE
 -- Table `lease_state`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS lease_state (
-    state int,
-    name varchar,
+    state INT,
+    name VARCHAR,
     PRIMARY KEY ((state))
 );
 
@@ -181,12 +186,11 @@ INSERT INTO lease_state (state, name) VALUES (2, 'expired-reclaimed');
 -- Table `schema_version`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS schema_version (
-    version int,
-    minor int,
+    version INT,
+    minor INT,
     PRIMARY KEY ((version))
 );
 
 INSERT INTO schema_version (version, minor) VALUES (1, 0);
 
 -- This line concludes database initialization to version 1.0.
-

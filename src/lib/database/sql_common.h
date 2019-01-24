@@ -1,7 +1,7 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
-// Author: Cristian Secăreanu <cristian.secareanu@qualitance.com>
+// Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,36 +18,39 @@
 #ifndef SQL_COMMON_H
 #define SQL_COMMON_H
 
+#include <stdint.h>
+
+#include <boost/shared_ptr.hpp>
+
+#include <memory>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace isc {
 namespace db {
 
-/// @brief Used to map server data types with internal backend storage data
-/// types.
-enum ExchangeDataType {
-    EXCHANGE_DATA_TYPE_NONE,
-    EXCHANGE_DATA_TYPE_BOOL,
-    EXCHANGE_DATA_TYPE_INT8,
-    EXCHANGE_DATA_TYPE_INT16,
-    EXCHANGE_DATA_TYPE_INT32,
-    EXCHANGE_DATA_TYPE_INT64,
-    EXCHANGE_DATA_TYPE_TIMESTAMP,
-    EXCHANGE_DATA_TYPE_STRING,
-    EXCHANGE_DATA_TYPE_BYTES,
-    EXCHANGE_DATA_TYPE_UUID,
-    EXCHANGE_DATA_TYPE_UDT,       ///< User-Defined Type (used in Cassandra)
-    EXCHANGE_DATA_TYPE_COLLECTION ///< Collection (used in Cassandra)
-};
+template <typename T>
+using Ptr = boost::shared_ptr<T>;
+
+template <typename T>
+using Collection = std::vector<Ptr<T>>;
+
+template <typename T>
+using Map = std::unordered_map<std::string, T>;
+
+/// @brief Pair containing major and minor versions
+using VersionPair = std::pair<uint32_t, uint32_t>;
+using VersionPairPtr = boost::shared_ptr<VersionPair>;
 
 /// @brief Base class for backend exchanges.
-class SqlExchange {
-public:
+struct SqlExchange {
     /// @brief Constructor
     SqlExchange() {
     }
 
     /// @brief Destructor
-    virtual ~SqlExchange() {
-    }
+    virtual ~SqlExchange() = 0;
 };
 
 }  // namespace db

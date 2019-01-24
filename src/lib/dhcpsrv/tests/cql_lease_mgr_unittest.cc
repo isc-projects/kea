@@ -1,5 +1,5 @@
 // Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2015-2017 Deutsche Telekom AG.
+// Copyright (C) 2015-2018 Deutsche Telekom AG.
 //
 // Authors: Razvan Becheriu <razvan.becheriu@qualitance.com>
 //          Andrei Pavel <andrei.pavel@qualitance.com>
@@ -223,7 +223,7 @@ public:
     }
 
     // This is the CQL implementation for
-    // GenericLeaseMgrTest::testGetExpiredLeases4().
+    // GenericLeaseMgrTest::testGetExpiredLeases6().
     // The GenericLeaseMgrTest implementation checks for the order of expired
     // leases to be from the most expired to the least expired. Cassandra
     // doesn't support ORDER BY without imposing a EQ / IN restriction on the
@@ -285,8 +285,7 @@ public:
         }
 
         // Retrieve expired leases again. The limit of 0 means return all
-        // expired
-        // leases.
+        // expired leases.
         ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
 
         // The same leases should be returned.
@@ -318,7 +317,9 @@ public:
 
         // This the returned leases should exclude reclaimed ones. So the number
         // of returned leases should be roughly half of the expired leases.
-        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0));
+        ASSERT_NO_THROW(lmptr_->getExpiredLeases6(expired_leases, 0u));
+        ASSERT_EQ(static_cast<size_t>(saved_expired_leases.size() / 2u),
+                  expired_leases.size());
 
         // Make sure that returned leases are those that are not reclaimed, i.e.
         // those that have even index.
@@ -471,11 +472,11 @@ TEST_F(CqlLeaseMgrTest, checkTimeConversion) {
     cass_int64_t cql_expire;
 
     // Convert to the database time.
-    CqlExchange::convertToDatabaseTime(cltt, valid_lft, cql_expire);
+    CqlExchange<Lease4>::convertToDatabaseTime(cltt, valid_lft, cql_expire);
 
     // Convert back
     time_t converted_cltt = 0;
-    CqlExchange::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
+    CqlExchange<Lease4>::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
 
@@ -487,7 +488,7 @@ TEST_F(CqlLeaseMgrTest, getName) {
 /// @brief Check that getVersion() returns the expected version
 TEST_F(CqlLeaseMgrTest, checkVersion) {
     // Check version
-    pair<uint32_t, uint32_t> version;
+    VersionPair version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
     EXPECT_EQ(CQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(CQL_SCHEMA_VERSION_MINOR, version.second);
@@ -686,7 +687,7 @@ TEST_F(CqlLeaseMgrTest, lease6LeaseTypeCheck) {
 /// Adds 3 lease and verifies fetch by DUID.
 /// Verifies retrival of non existant DUID fails
 TEST_F(CqlLeaseMgrTest, getLeases6Duid) {
-   testGetLeases6Duid(); 
+   testGetLeases6Duid();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
@@ -737,12 +738,12 @@ TEST_F(CqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether CQL can store and retrieve hardware addresses
 TEST_F(CqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether CQL can store and retrieve hardware addresses
 TEST_F(CqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
@@ -773,14 +774,14 @@ TEST_F(CqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 /// @todo: uncomment this once lease wipe is implemented
 /// for Cassandra (see #5485)
 TEST_F(CqlLeaseMgrTest, DISABLED_wipeLeases6) {

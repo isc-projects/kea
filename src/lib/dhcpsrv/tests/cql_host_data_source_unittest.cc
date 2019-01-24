@@ -1,5 +1,5 @@
 // Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2016-2017 Deutsche Telekom AG.
+// Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -279,11 +279,11 @@ TEST(CqlConnection, checkTimeConversion) {
     cass_int64_t cql_expire;
 
     // Convert to the database time
-    CqlExchange::convertToDatabaseTime(cltt, valid_lft, cql_expire);
+    CqlExchange<Lease4>::convertToDatabaseTime(cltt, valid_lft, cql_expire);
 
     // Convert back
     time_t converted_cltt = 0;
-    CqlExchange::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
+    CqlExchange<Lease4>::convertFromDatabaseTime(cql_expire, valid_lft, converted_cltt);
     EXPECT_EQ(cltt, converted_cltt);
 }
 
@@ -297,6 +297,30 @@ TEST_F(CqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
 // address. Host uses hw address as identifier.
 TEST_F(CqlHostDataSourceTest, basic4HWAddr) {
     testBasic4(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv4 host reservation with options can have a the global
+// subnet id value
+TEST_F(CqlHostDataSourceTest, globalSubnetId4) {
+    testGlobalSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a the global
+// subnet id value
+TEST_F(CqlHostDataSourceTest, globalSubnetId6) {
+    testGlobalSubnetId6();
+}
+
+// Verifies that IPv4 host reservation with options can have a max value
+// for  dhcp4_subnet id
+TEST_F(CqlHostDataSourceTest, maxSubnetId4) {
+    testMaxSubnetId4();
+}
+
+// Verifies that IPv6 host reservation with options can have a max value
+// for  dhcp6_subnet id
+TEST_F(CqlHostDataSourceTest, maxSubnetId6) {
+    testMaxSubnetId6();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4
@@ -593,22 +617,29 @@ TEST_F(CqlHostDataSourceTest, testAddRollback) {
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));
 
-    // There is no ipv6_reservations table, so the insertion should fail.
-    ASSERT_THROW(hdsptr_->add(host), DbOperationError);
+    if (softWipeEnabled()) {
+        // Soft wipe leaves table created so add() and get() will work.
 
-    // Even though we have created a DHCPv6 host, we can't use get6()
-    // method to retrieve the host from the database, because the
-    // query would expect that the ipv6_reservations table is present.
-    // Therefore, the query would fail. Instead, we use the get4 method
-    // which uses the same client identifier, but doesn't attempt to
-    // retrieve the data from ipv6_reservations table. The query should
-    // pass but return no host because the (insert) transaction is expected
-    // to be rolled back.
-    ASSERT_THROW(hdsptr_->get4(host->getIPv4SubnetID(),
-                               host->getIdentifierType(),
-                               &host->getIdentifier()[0],
-                               host->getIdentifier().size()),
-                               DbOperationError);
+        ASSERT_NO_THROW(hdsptr_->add(host));
+
+        ASSERT_NO_THROW(hdsptr_->get4(host->getIPv4SubnetID(), host->getIdentifierType(),
+                                      &host->getIdentifier()[0], host->getIdentifier().size()));
+    } else {
+        // There is no ipv6_reservations table, so the insertion should fail.
+        ASSERT_THROW(hdsptr_->add(host), DbOperationError);
+
+        // Even though we have created a DHCPv6 host, we can't use get6()
+        // method to retrieve the host from the database, because the
+        // query would expect that the ipv6_reservations table is present.
+        // Therefore, the query would fail. Instead, we use the get4 method
+        // which uses the same client identifier, but doesn't attempt to
+        // retrieve the data from ipv6_reservations table. The query should
+        // pass but return no host because the (insert) transaction is expected
+        // to be rolled back.
+        ASSERT_THROW(hdsptr_->get4(host->getIPv4SubnetID(), host->getIdentifierType(),
+                                   &host->getIdentifier()[0], host->getIdentifier().size()),
+                     DbOperationError);
+    }
 }
 
 TEST_F(CqlHostDataSourceTest, DISABLED_stressTest) {
@@ -664,31 +695,5 @@ TEST_F(CqlHostDataSourceTest, testMultipleHostsNoAddress4) {
 TEST_F(CqlHostDataSourceTest, testMultipleHosts6) {
     testMultipleHosts6();
 }
-
-// Verifies that IPv4 host reservation with options can have a the global
-// subnet id value
-TEST_F(CqlHostDataSourceTest, globalSubnetId4) {
-    testGlobalSubnetId4();
-}
-
-// Verifies that IPv6 host reservation with options can have a the global
-// subnet id value
-TEST_F(CqlHostDataSourceTest, globalSubnetId6) {
-    testGlobalSubnetId6();
-}
-
-// Verifies that IPv4 host reservation with options can have a max value
-// for  dhcp4_subnet id
-TEST_F(CqlHostDataSourceTest, maxSubnetId4) {
-    testMaxSubnetId4();
-}
-
-// Verifies that IPv6 host reservation with options can have a max value
-// for  dhcp6_subnet id
-TEST_F(CqlHostDataSourceTest, maxSubnetId6) {
-    testMaxSubnetId6();
-}
-
-
 
 }  // namespace

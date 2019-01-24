@@ -20,62 +20,31 @@
 
 #include <cql/cql_connection.h>
 #include <cql/cql_exchange.h>
+
 #include <database/db_exceptions.h>
 #include <database/db_log.h>
 
+#include <boost/lexical_cast.hpp>
+
+#include <syslog.h>
+
+#include <fstream>
 #include <string>
 
 namespace isc {
 namespace db {
 
+
 CqlConnection::CqlConnection(const ParameterMap& parameters)
-    : DatabaseConnection(parameters), statements_(), cluster_(NULL),
-      session_(NULL), consistency_(CASS_CONSISTENCY_QUORUM), schema_meta_(NULL),
-      keyspace_meta_(NULL), force_consistency_(true) {
+    : DatabaseConnection(parameters),
+      statements_(), cluster_(MakePtr(cass_cluster_new())), session_(MakePtr(cass_session_new())),
+      consistency_(CASS_CONSISTENCY_QUORUM), max_statement_tries_(1), force_consistency_(true) {
 }
 
 CqlConnection::~CqlConnection() {
-    // Free up the prepared statements, ignoring errors. Session and connection
-    // resources are deallocated.
-    CassError rc = CASS_OK;
-    std::string error;
-
-    // Let's free the prepared statements.
-    for (StatementMapEntry s : statements_) {
-        CqlTaggedStatement statement = s.second;
-        if (statement.prepared_statement_) {
-            cass_prepared_free(statement.prepared_statement_);
-        }
-    }
-
-    // If there's a session, tear it down and free the resources.
-    if (session_) {
-        cass_schema_meta_free(schema_meta_);
-        CassFuture* close_future = cass_session_close(session_);
-        cass_future_wait(close_future);
-        error = checkFutureError(
-            "CqlConnection::~CqlConnection(): cass_sesssion_close() != CASS_OK",
-            close_future);
-        rc = cass_future_error_code(close_future);
-        cass_future_free(close_future);
-        cass_session_free(session_);
-        session_ = NULL;
-    }
-
-    // Free the cluster if there's one.
-    if (cluster_) {
-        cass_cluster_free(cluster_);
-        cluster_ = NULL;
-    }
-
-    if (rc != CASS_OK) {
-        // We're closing the connection anyway. Let's not throw at this stage.
-        DB_LOG_ERROR(CQL_DEALLOC_ERROR).arg(error);
-    }
 }
 
-void
-CqlConnection::openDatabase() {
+void CqlConnection::openDatabase() {
     CassError rc;
     // Set up the values of the parameters
     const char* contact_points = "127.0.0.1";
@@ -166,11 +135,29 @@ CqlConnection::openDatabase() {
         // No tcp-nodelay. Fine, we'll use the default false.
     }
 
-    cluster_ = cass_cluster_new();
-    cass_cluster_set_contact_points(cluster_, contact_points);
+    const char* ssl_cert = NULL;
+    std::string sssl_cert;
+    try {
+        sssl_cert = getParameter("ssl-cert");
+        ssl_cert = sssl_cert.c_str();
+    } catch (...) {
+        // No ssl-cert. Fine, we'll disable the ssl verification.
+    }
+
+    const char* max_statement_tries = NULL;
+    std::string smax_statement_tries;
+    try {
+        smax_statement_tries = getParameter("max-statement-tries");
+        max_statement_tries = smax_statement_tries.c_str();
+    } catch (...) {
+        // No max statement tries. Fine, we'll use the default 1.
+    }
+
+
+    cass_cluster_set_contact_points(cluster_.get(), contact_points);
 
     if (user && password) {
-        cass_cluster_set_credentials(cluster_, user, password);
+        cass_cluster_set_credentials(cluster_.get(), user, password);
     }
 
     if (port) {
@@ -178,84 +165,72 @@ CqlConnection::openDatabase() {
         try {
             port_number = boost::lexical_cast<int32_t>(port);
             if (port_number < 1 || port_number > 65535) {
-                isc_throw(DbOperationError,
-                          "CqlConnection::openDatabase(): "
-                          "port outside of range, expected "
-                          "1-65535, instead got "
-                              << port);
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                            "port outside of range, expected "
+                                            "1-65535, instead got "
+                                                << port);
             }
         } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::openDatabase(): invalid "
-                      "port, expected castable to int, instead got "
-                      "\"" << port
-                           << "\", " << ex.what());
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid "
+                                        "port, expected castable to int, instead got "
+                                        "\"" << port
+                                             << "\", " << ex.what());
         }
-        cass_cluster_set_port(cluster_, port_number);
+        cass_cluster_set_port(cluster_.get(), port_number);
     }
 
     if (reconnect_wait_time) {
         int32_t reconnect_wait_time_number;
         try {
-            reconnect_wait_time_number =
-                boost::lexical_cast<int32_t>(reconnect_wait_time);
+            reconnect_wait_time_number = boost::lexical_cast<int32_t>(reconnect_wait_time);
             if (reconnect_wait_time_number < 0) {
-                isc_throw(DbOperationError,
-                          "CqlConnection::openDatabase(): invalid reconnect "
-                          "wait time, expected positive number, instead got "
-                              << reconnect_wait_time);
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid reconnect "
+                                            "wait time, expected positive number, instead got "
+                                                << reconnect_wait_time);
             }
         } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::openDatabase(): "
-                      "invalid reconnect wait time, expected "
-                      "castable to int, instead got \""
-                          << reconnect_wait_time << "\", " << ex.what());
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                        "invalid reconnect wait time, expected "
+                                        "castable to int, instead got \""
+                                            << reconnect_wait_time << "\", " << ex.what());
         }
-        cass_cluster_set_reconnect_wait_time(cluster_,
-                                             reconnect_wait_time_number);
+        cass_cluster_set_reconnect_wait_time(cluster_.get(), reconnect_wait_time_number);
     }
 
     if (connect_timeout) {
         int32_t connect_timeout_number;
         try {
-            connect_timeout_number =
-                boost::lexical_cast<int32_t>(connect_timeout);
+            connect_timeout_number = boost::lexical_cast<int32_t>(connect_timeout);
             if (connect_timeout_number < 0) {
-                isc_throw(DbOperationError,
-                          "CqlConnection::openDatabase(): "
-                          "invalid connect timeout, expected "
-                          "positive number, instead got "
-                              << connect_timeout);
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                            "invalid connect timeout, expected "
+                                            "positive number, instead got "
+                                                << connect_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::openDatabase(): invalid connect timeout, "
-                      "expected castable to int, instead got \""
-                          << connect_timeout << "\", " << ex.what());
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid connect timeout, "
+                                        "expected castable to int, instead got \""
+                                            << connect_timeout << "\", " << ex.what());
         }
-        cass_cluster_set_connect_timeout(cluster_, connect_timeout_number);
+        cass_cluster_set_connect_timeout(cluster_.get(), connect_timeout_number);
     }
 
     if (request_timeout) {
         int32_t request_timeout_number;
         try {
-            request_timeout_number =
-                boost::lexical_cast<int32_t>(request_timeout);
+            request_timeout_number = boost::lexical_cast<int32_t>(request_timeout);
             if (request_timeout_number < 0) {
-                isc_throw(DbOperationError,
-                          "CqlConnection::openDatabase(): "
-                          "invalid request timeout, expected "
-                          "positive number, instead got "
-                              << request_timeout);
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                            "invalid request timeout, expected "
+                                            "positive number, instead got "
+                                                << request_timeout);
             }
         } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::openDatabase(): invalid request timeout, "
-                      "expected castable to int, instead got \""
-                          << request_timeout << "\", " << ex.what());
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid request timeout, "
+                                        "expected castable to int, instead got \""
+                                            << request_timeout << "\", " << ex.what());
         }
-        cass_cluster_set_request_timeout(cluster_, request_timeout_number);
+        cass_cluster_set_request_timeout(cluster_.get(), request_timeout_number);
     }
 
     if (tcp_keepalive) {
@@ -263,126 +238,141 @@ CqlConnection::openDatabase() {
         try {
             tcp_keepalive_number = boost::lexical_cast<int32_t>(tcp_keepalive);
             if (tcp_keepalive_number < 0) {
-                isc_throw(DbOperationError,
-                          "CqlConnection::openDatabase(): "
-                          "invalid TCP keepalive, expected "
-                          "positive number, instead got "
-                              << tcp_keepalive);
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                            "invalid TCP keepalive, expected "
+                                            "positive number, instead got "
+                                                << tcp_keepalive);
             }
         } catch (const boost::bad_lexical_cast& ex) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::openDatabase(): invalid TCP keepalive, "
-                      "expected castable to int, instead got \""
-                          << tcp_keepalive << "\", " << ex.what());
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid TCP keepalive, "
+                                        "expected castable to int, instead got \""
+                                            << tcp_keepalive << "\", " << ex.what());
         }
-        cass_cluster_set_tcp_keepalive(cluster_, cass_true,
-                                       tcp_keepalive_number);
+        cass_cluster_set_tcp_keepalive(cluster_.get(), cass_true, tcp_keepalive_number);
     }
 
     if (stcp_nodelay == "true") {
-        cass_cluster_set_tcp_nodelay(cluster_, cass_true);
+        cass_cluster_set_tcp_nodelay(cluster_.get(), cass_true);
     }
 
-    session_ = cass_session_new();
+    auto ssl = MakePtr(cass_ssl_new());
 
-    CassFuture* connect_future =
-        cass_session_connect_keyspace(session_, cluster_, keyspace);
-    cass_future_wait(connect_future);
-    const std::string error =
-        checkFutureError("CqlConnection::openDatabase(): "
-                         "cass_session_connect_keyspace() != CASS_OK",
-                         connect_future);
-    rc = cass_future_error_code(connect_future);
-    cass_future_free(connect_future);
+    if (ssl_cert) {
+        std::ifstream ssl_cert_file(ssl_cert, std::ios::binary);
+        if (!ssl_cert_file.is_open()) {
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                        "invalid ssl certificate file: "
+                                            << sssl_cert);
+        }
+
+        std::vector<char> cert((std::istreambuf_iterator<char>(ssl_cert_file)),
+                               (std::istreambuf_iterator<char>()));
+        ssl_cert_file.close();
+
+        rc = cass_ssl_add_trusted_cert_n(ssl.get(), cert.data(), cert.size());
+        if (rc != CASS_OK) {
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                        "error loading ssl certificate file: "
+                                            << sssl_cert);
+        }
+
+        cass_ssl_set_verify_flags(ssl.get(), CASS_SSL_VERIFY_PEER_CERT);
+        cass_cluster_set_ssl(cluster_.get(), ssl.get());
+    } else {
+        cass_ssl_set_verify_flags(ssl.get(), CASS_SSL_VERIFY_NONE);
+    }
+
+    if (max_statement_tries) {
+        int32_t max_statement_tries_number;
+        try {
+            max_statement_tries_number = boost::lexical_cast<int32_t>(max_statement_tries);
+            if (max_statement_tries_number < 0) {
+                isc_throw(DbOperationError, "CqlConnection::openDatabase(): invalid reconnect "
+                                            "wait time, expected positive number, instead got "
+                                                << max_statement_tries);
+            }
+        } catch (const boost::bad_lexical_cast& ex) {
+            isc_throw(DbOperationError, "CqlConnection::openDatabase(): "
+                                        "invalid reconnect wait time, expected "
+                                        "castable to int, instead got \""
+                                            << max_statement_tries << "\", " << ex.what());
+        }
+        max_statement_tries_ = max_statement_tries_number;
+    }
+
+    auto connect_future =
+        MakePtr(cass_session_connect_keyspace(session_.get(), cluster_.get(), keyspace));
+    cass_future_wait(connect_future.get());
+    const std::string error = checkFutureError("CqlConnection::openDatabase(): "
+                                               "cass_session_connect_keyspace() != CASS_OK",
+                                               connect_future);
+    rc = cass_future_error_code(connect_future.get());
     if (rc != CASS_OK) {
-        cass_session_free(session_);
-        session_ = NULL;
-        cass_cluster_free(cluster_);
-        cluster_ = NULL;
         isc_throw(DbOpenError, error);
-    }
-
-    // Get keyspace meta.
-    schema_meta_ = cass_session_get_schema_meta(session_);
-    keyspace_meta_ = cass_schema_meta_keyspace_by_name(schema_meta_, keyspace);
-    if (!keyspace_meta_) {
-        isc_throw(DbOpenError, "CqlConnection::openDatabase(): "
-                               "!cass_schema_meta_keyspace_by_name()");
     }
 }
 
-void
-CqlConnection::prepareStatements(StatementMap& statements) {
-    CassError rc = CASS_OK;
-    for (StatementMapEntry it : statements) {
+void CqlConnection::prepareStatements(StatementMap& statements) {
+    for (auto& it : statements) {
         CqlTaggedStatement& tagged_statement = it.second;
         if (statements_.find(tagged_statement.name_) != statements_.end()) {
-            isc_throw(DbOperationError,
-                      "CqlConnection::prepareStatements(): "
-                      "duplicate statement with name "
-                          << tagged_statement.name_);
+            isc_throw(DbOperationError, "CqlConnection::prepareStatements(): "
+                                        "duplicate statement with name "
+                                            << tagged_statement.name_);
         }
 
-        CassFuture* future =
-            cass_session_prepare(session_, tagged_statement.text_);
-        cass_future_wait(future);
-        const std::string error =
-            checkFutureError("CqlConnection::prepareStatements():"
-                             " cass_session_prepare() != CASS_OK",
-                             future, tagged_statement.name_);
-        rc = cass_future_error_code(future);
+        auto future = MakePtr(cass_session_prepare(session_.get(), tagged_statement.text_.c_str()));
+        cass_future_wait(future.get());
+        const std::string error = checkFutureError("CqlConnection::prepareStatements():"
+                                                   " cass_session_prepare() != CASS_OK",
+                                                   future, tagged_statement.name_.c_str());
+        auto rc = cass_future_error_code(future.get());
         if (rc != CASS_OK) {
-            cass_future_free(future);
             isc_throw(DbOperationError, error);
         }
 
-        tagged_statement.prepared_statement_ = cass_future_get_prepared(future);
-        statements_.insert(it);
-        cass_future_free(future);
+        tagged_statement.prepared_statement_ = MakePtr(cass_future_get_prepared(future.get()));
+        statements_.emplace(it);
     }
 }
 
-void
-CqlConnection::setConsistency(bool force, CassConsistency consistency) {
+void CqlConnection::setConsistency(bool force, CassConsistency consistency) {
     force_consistency_ = force;
     consistency_ = consistency;
 }
 
-void
-CqlConnection::startTransaction() {
+void CqlConnection::startTransaction() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_BEGIN_TRANSACTION);
 }
 
-void
-CqlConnection::commit() {
+void CqlConnection::commit() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_COMMIT);
 }
 
-void
-CqlConnection::rollback() {
+void CqlConnection::rollback() {
     DB_LOG_DEBUG(DB_DBG_TRACE_DETAIL, CQL_CONNECTION_ROLLBACK);
 }
 
-const std::string
-CqlConnection::checkFutureError(const std::string& what,
-                                CassFuture* future,
-                                StatementTag statement_tag /* = NULL */) {
-    CassError cass_error = cass_future_error_code(future);
+
+const std::string CqlConnection::checkFutureError(const std::string& what,
+                                                  CassFuturePtr& future,
+                                                  StatementTag statement_tag /* = NULL */) {
+    CassError cass_error = cass_future_error_code(future.get());
     const char* error_message;
     size_t error_message_size;
-    cass_future_error_message(future, &error_message, &error_message_size);
+    cass_future_error_message(future.get(), &error_message, &error_message_size);
 
     std::stringstream stream;
-    if (statement_tag && std::strlen(statement_tag) > 0) {
+    if (statement_tag && std::strlen(statement_tag)) {
         // future is from cass_session_execute() call.
         stream << "Statement ";
         stream << statement_tag;
     } else {
         // future is from cass_session_*() call.
-        stream << "Session action ";
+        stream << "Session action";
     }
     if (cass_error == CASS_OK) {
-        stream << " executed succesfully.";
+        stream << " executed successfully.";
     } else {
         stream << " failed, Kea error: " << what
                << ", Cassandra error code: " << cass_error_desc(cass_error)
@@ -391,5 +381,5 @@ CqlConnection::checkFutureError(const std::string& what,
     return stream.str();
 }
 
-}  // namespace dhcp
+}  // namespace db
 }  // namespace isc

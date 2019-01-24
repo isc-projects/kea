@@ -848,7 +848,7 @@ public:
         handle.getArgument("id_value", id_test);
 
         // Ok, now set the identifier.
-        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f }; // foo
+        std::vector<uint8_t> id = { 0x66, 0x6f, 0x6f };  // foo
         handle.setArgument("id_value", id);
         handle.setArgument("id_type", Host::IDENT_FLEX);
 
@@ -2866,7 +2866,9 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Renew) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
+    Lease6Ptr deleted_lease(new Lease6());
+    deleted_lease->addr_ = addr_opt->getAddress();
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(deleted_lease));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(req);
@@ -3985,7 +3987,9 @@ TEST_F(HooksDhcpv6SrvTest, leaseUpdateLease6Rebind) {
     // Equality or difference by 1 between cltt and expected is ok.
     EXPECT_GE(1, abs(cltt - expected));
 
-    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(addr_opt->getAddress()));
+    lease.reset(new Lease6());
+    lease->addr_ = addr_opt->getAddress();
+    EXPECT_TRUE(LeaseMgrFactory::instance().deleteLease(lease));
 
     // Check if the callout handle state was reset after the callout.
     checkCalloutHandleReset(req);
@@ -4944,7 +4948,7 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
     ASSERT_NO_THROW(answer = srv->processConfig(config));
 
     // Make sure there were no errors.
-    int status_code;
+    int status_code = -1;
     isc::config::parseAnswer(status_code, answer);
     ASSERT_EQ(0, status_code);
 
@@ -4969,4 +4973,4 @@ TEST_F(LoadUnloadDhcpv6SrvTest, Dhcpv6SrvConfigured) {
                                 "3io_contextjson_confignetwork_stateserver_config"));
 }
 
-}   // end of anonymous namespace
+}  // namespace

@@ -37,7 +37,7 @@ const uint32_t MAX_LEASE_ERRORS = 100;
 /// Kea installation directory.
 const char* KEA_LFC_EXECUTABLE_ENV_NAME = "KEA_LFC_EXECUTABLE";
 
-} // end of anonymous namespace
+}  // namespace
 
 using namespace isc::asiolink;
 using namespace isc::db;
@@ -1171,49 +1171,54 @@ Memfile_LeaseMgr::updateLease6(const Lease6Ptr& lease) {
 }
 
 bool
-Memfile_LeaseMgr::deleteLease(const isc::asiolink::IOAddress& addr) {
+Memfile_LeaseMgr::deleteLease(const Lease4Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
-              DHCPSRV_MEMFILE_DELETE_ADDR).arg(addr.toText());
-    if (addr.isV4()) {
-        // v4 lease
-        Lease4Storage::iterator l = storage4_.find(addr);
-        if (l == storage4_.end()) {
-            // No such lease
-            return (false);
-        } else {
-            if (persistLeases(V4)) {
-                // Copy the lease. The valid lifetime needs to be modified and
-                // we don't modify the original lease.
-                Lease4 lease_copy = **l;
-                // Setting valid lifetime to 0 means that lease is being
-                // removed.
-                lease_copy.valid_lft_ = 0;
-                lease_file4_->append(lease_copy);
-            }
-            storage4_.erase(l);
-            return (true);
-        }
+              DHCPSRV_MEMFILE_DELETE_ADDR)
+        .arg(addr.toText());
 
+    Lease4Storage::iterator l = storage4_.find(addr);
+    if (l == storage4_.end()) {
+        // No such lease
+        return (false);
     } else {
-        // v6 lease
-        Lease6Storage::iterator l = storage6_.find(addr);
-        if (l == storage6_.end()) {
-            // No such lease
-            return (false);
-        } else {
-            if (persistLeases(V6)) {
-                // Copy the lease. The lifetimes need to be modified and we
-                // don't modify the original lease.
-                Lease6 lease_copy = **l;
-                // Setting lifetimes to 0 means that lease is being removed.
-                lease_copy.valid_lft_ = 0;
-                lease_copy.preferred_lft_ = 0;
-                lease_file6_->append(lease_copy);
-            }
-
-            storage6_.erase(l);
-            return (true);
+        if (persistLeases(V4)) {
+            // Copy the lease. The valid lifetime needs to be modified and
+            // we don't modify the original lease.
+            Lease4 lease_copy = **l;
+            // Setting valid lifetime to 0 means that lease is being
+            // removed.
+            lease_copy.valid_lft_ = 0;
+            lease_file4_->append(lease_copy);
         }
+        storage4_.erase(l);
+        return (true);
+    }
+}
+
+bool
+Memfile_LeaseMgr::deleteLease(const Lease6Ptr& lease) {
+    const isc::asiolink::IOAddress& addr = lease->addr_;
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE_DETAIL,
+              DHCPSRV_MEMFILE_DELETE_ADDR)
+        .arg(addr.toText());
+
+    Lease6Storage::iterator l = storage6_.find(addr);
+    if (l == storage6_.end()) {
+        // No such lease
+        return (false);
+    } else {
+        if (persistLeases(V6)) {
+            // Copy the lease. The lifetimes need to be modified and we
+            // don't modify the original lease.
+            Lease6 lease_copy = **l;
+            // Setting lifetimes to 0 means that lease is being removed.
+            lease_copy.valid_lft_ = 0;
+            lease_copy.preferred_lft_ = 0;
+            lease_file6_->append(lease_copy);
+        }
+        storage6_.erase(l);
+        return (true);
     }
 }
 
@@ -1633,7 +1638,7 @@ size_t Memfile_LeaseMgr::wipeLeases4(const SubnetID& subnet_id) {
 
     size_t num = leases.size();
     for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease((*l)->addr_);
+        deleteLease(*l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES4_FINISHED)
         .arg(subnet_id).arg(num);
@@ -1661,7 +1666,7 @@ size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
 
     size_t num = leases.size();
     for (auto l = leases.begin(); l != leases.end(); ++l) {
-        deleteLease((*l)->addr_);
+        deleteLease(*l);
     }
     LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_WIPE_LEASES6_FINISHED)
         .arg(subnet_id).arg(num);
@@ -1669,6 +1674,6 @@ size_t Memfile_LeaseMgr::wipeLeases6(const SubnetID& subnet_id) {
     return (num);
 }
 
+}  // namespace dhcp
+}  // namespace isc
 
-} // end of namespace isc::dhcp
-} // end of namespace isc

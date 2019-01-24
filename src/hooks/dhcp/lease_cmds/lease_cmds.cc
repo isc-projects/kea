@@ -760,7 +760,10 @@ LeaseCmdsImpl::lease4DelHandler(CalloutHandle& handle) {
         }
         }
 
-        if (LeaseMgrFactory::instance().deleteLease(addr)) {
+        Lease4Ptr lease(new Lease4());
+        lease->addr_ = addr;
+
+        if (LeaseMgrFactory::instance().deleteLease(lease)) {
             setSuccessResponse(handle, "IPv4 lease deleted.");
         } else {
             setErrorResponse (handle, "IPv4 lease not found.", CONTROL_RESULT_EMPTY);
@@ -817,7 +820,10 @@ LeaseCmdsImpl::lease6DelHandler(CalloutHandle& handle) {
         }
         }
 
-        if (LeaseMgrFactory::instance().deleteLease(addr)) {
+        Lease6Ptr lease(new Lease6());
+        lease->addr_ = addr;
+
+        if (LeaseMgrFactory::instance().deleteLease(lease)) {
             setSuccessResponse(handle, "IPv6 lease deleted.");
         } else {
             setErrorResponse (handle, "IPv6 lease not found.", CONTROL_RESULT_EMPTY);

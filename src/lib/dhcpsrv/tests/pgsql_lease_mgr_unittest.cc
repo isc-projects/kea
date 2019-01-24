@@ -112,8 +112,8 @@ public:
 TEST(PgSqlOpenTest, OpenDatabase) {
 
     // Schema needs to be created for the test to work.
-    destroyPgSQLSchema(true);
-    createPgSQLSchema(true);
+    destroyPgSQLSchema();
+    createPgSQLSchema();
 
     // Check that lease manager open the database opens correctly and tidy up.
     // If it fails, print the error message.
@@ -193,7 +193,7 @@ TEST(PgSqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyPgSQLSchema(true);
+    destroyPgSQLSchema();
 }
 
 /// @brief Test fixture class for validating @c LeaseMgr using
@@ -244,7 +244,7 @@ TEST_F(PgSqlLeaseMgrTest, getName) {
 /// @brief Check that getVersion() returns the expected version
 TEST_F(PgSqlLeaseMgrTest, checkVersion) {
     // Check version
-    pair<uint32_t, uint32_t> version;
+    VersionPair version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
     EXPECT_EQ(PG_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(PG_SCHEMA_VERSION_MINOR, version.second);
@@ -458,7 +458,7 @@ TEST_F(PgSqlLeaseMgrTest, lease6LeaseTypeCheck) {
 /// Adds 3 lease and verifies fetch by DUID.
 /// Verifies retrival of non existant DUID fails
 TEST_F(PgSqlLeaseMgrTest, getLeases6Duid) {
-   testGetLeases6Duid(); 
+   testGetLeases6Duid();
 }
 
 /// @brief Check GetLease6 methods - access by DUID/IAID/SubnetID
@@ -504,12 +504,12 @@ TEST_F(PgSqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether Postgres can store and retrieve hardware addresses
+/// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether Postgres can store and retrieve hardware addresses
+/// @brief Tests whether PostgreSQL can store and retrieve hardware addresses
 TEST_F(PgSqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
@@ -540,12 +540,12 @@ TEST_F(PgSqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(PgSqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }

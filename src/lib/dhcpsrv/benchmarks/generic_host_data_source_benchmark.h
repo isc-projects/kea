@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -28,16 +28,14 @@ namespace dhcp {
 namespace bench {
 
 /// @brief Base fixture class for benchmarking host backends.
-class GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
-public:
-
+struct GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
     /// @brief Defines universe (IPv4 or IPv6)
     enum Universe { V4, V6 };
 
     /// @brief Defines what kind of options should be added for a host
     enum AddedOptions {
-        DHCP4_ONLY,      ///< DHCPv4-only options
-        DHCP6_ONLY,      ///< DHCPv6-only options
+        DHCP4_ONLY,  ///< DHCPv4-only options
+        DHCP6_ONLY,  ///< DHCPv6-only options
         DHCP4_AND_DHCP6  ///< Both DHCPv4 and DHCPv6 options
     };
 
@@ -99,11 +97,12 @@ public:
     /// @param address3 third address to be used (optional)
     /// @return the option created wrapped in an option descriptor structure
     template <typename OptionType>
-    OptionDescriptor
-    createAddressOption(const uint16_t option_type, const bool persist,
-                        const bool formatted, const std::string& address1 = "",
-                        const std::string& address2 = "",
-                        const std::string& address3 = "") const {
+    OptionDescriptor createAddressOption(const uint16_t option_type,
+                                         const bool persist,
+                                         const bool formatted,
+                                         const std::string& address1 = "",
+                                         const std::string& address2 = "",
+                                         const std::string& address3 = "") const {
 
         std::ostringstream s;
         // First address.
@@ -158,7 +157,8 @@ public:
     /// @param host host reservation to be extended with options
     /// @param formatted whether to generate text representation
     /// @param added_options v4, v6 or both
-    void addTestOptions(const HostPtr& host,const bool formatted,
+    void addTestOptions(const HostPtr& host,
+                        const bool formatted,
                         const AddedOptions& added_options) const;
 
     /// @brief Sets up timers, creates and inserts hosts.
@@ -184,8 +184,6 @@ public:
     /// @brief Updates all hosts stored in hosts_ in the benchmarked host backend
     void updateHosts();
 
-    void benchGetAllByHWAddrDuid();
-
     /// @brief Essential steps required to benchmark the
     ///        getAll(identifier-type, identifier) call.
     void benchGetAll();
@@ -195,20 +193,12 @@ public:
     void getAllv4Resv();
 
     /// @brief Essential steps requires to benchmark host reservation retrieval
-    ///        using getAll(hw-addr, duid) call.
-    void benchGet4BySubnetHWAddrDuid();
-
-    /// @brief Essential steps requires to benchmark host reservation retrieval
     ///        using getAll(identifier-type, identifier, subnet-id) call.
     void benchGet4IdentifierSubnetId();
 
     /// @brief Essential steps requires to benchmark host reservation retrieval
     ///        using getAll(v4-reservation) call.
     void benchGet4SubnetIdv4Resrv();
-
-    /// @brief Essential steps requires to benchmark host reservation retrieval
-    ///        using get6(subnet-id, duid, hw-addr) call.
-    void benchGet6SubnetIdDuidHWAddr();
 
     /// @brief Essential steps requires to benchmark host reservation retrieval
     ///        using get6(identifier-type, identifier, subnet-id) call.

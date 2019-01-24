@@ -110,8 +110,8 @@ public:
 /// opened: the fixtures assume that and check basic operations.
 TEST(MySqlOpenTest, OpenDatabase) {
     // Schema needs to be created for the test to work.
-    destroyMySQLSchema(true);
-    createMySQLSchema(true);
+    destroyMySQLSchema();
+    createMySQLSchema();
 
     // Check that lease manager open the database opens correctly and tidy up.
     // If it fails, print the error message.
@@ -194,7 +194,7 @@ TEST(MySqlOpenTest, OpenDatabase) {
         NoDatabaseName);
 
     // Tidy up after the test
-    destroyMySQLSchema(true);
+    destroyMySQLSchema();
     LeaseMgrFactory::destroy();
 }
 
@@ -255,7 +255,7 @@ TEST_F(MySqlLeaseMgrTest, getName) {
 /// @brief Check that getVersion() returns the expected version
 TEST_F(MySqlLeaseMgrTest, checkVersion) {
     // Check version
-    pair<uint32_t, uint32_t> version;
+    VersionPair version;
     ASSERT_NO_THROW(version = lmptr_->getVersion());
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MAJOR, version.first);
     EXPECT_EQ(MYSQL_SCHEMA_VERSION_MINOR, version.second);
@@ -515,12 +515,12 @@ TEST_F(MySqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
@@ -551,12 +551,12 @@ TEST_F(MySqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }

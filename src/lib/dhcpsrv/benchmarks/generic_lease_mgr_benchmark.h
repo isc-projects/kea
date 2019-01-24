@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -27,9 +27,7 @@ namespace dhcp {
 namespace bench {
 
 /// @brief A base class for a fixture for specific lease manager benchmarks
-class GenericLeaseMgrBenchmark : public benchmark::Fixture {
-public:
-
+struct GenericLeaseMgrBenchmark : public benchmark::Fixture {
     /// Specifies the IP protocol family to be bested.
     enum Universe { V4, V6 };
 
