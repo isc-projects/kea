@@ -279,6 +279,18 @@ class VagrantEnv(object):
             execute('tar -czf %s ./*' % box_path, cwd=lxc_box_dir)
             execute('sudo rm -rf %s' % lxc_box_dir)
 
+    def upload(self, src):
+        attempt = 4
+        while attempt > 0:
+            exitcode = execute('vagrant upload %s' % src, cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
+            if exitcode == 0:
+                break
+            attempt -= 1
+        if exitcode != 0:
+            msg = 'cannot upload %s' % src
+            log.error(msg)
+            raise ExecutionError(msg)
+
     def run_build_and_test(self, tarball_path, jobs):
         if self.dry_run:
             return 0, 0
@@ -290,7 +302,7 @@ class VagrantEnv(object):
             cmd += ' -zcf /tmp/%s.tar.gz .' % name_ver
             execute(cmd)
             tarball_path = '/tmp/%s.tar.gz' % name_ver
-        execute('vagrant upload %s %s.tar.gz' % (tarball_path, name_ver), cwd=self.vagrant_dir)
+        self.upload(tarball_path)
 
         log_file_path = os.path.join(self.vagrant_dir, 'build.log')
         log.info('Build log file stored to %s', log_file_path)
@@ -391,7 +403,7 @@ class VagrantEnv(object):
                 self.execute("sudo dnf install -y python36")
 
         hmr_py_path = os.path.join(self.repo_dir, 'hammer.py')
-        execute('vagrant upload %s' % hmr_py_path, cwd=self.vagrant_dir, dry_run=self.dry_run)
+        self.upload(hmr_py_path)
 
         log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
         log.info('Prepare log file stored to %s', log_file_path)
@@ -599,7 +611,7 @@ def prepare_deps_local(features, check_times):
             execute('rm -rf rpmbuild')
             execute('wget --no-verbose -O srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm https://rpmfind.net/linux/epel/7/SRPMS/Packages/l/log4cplus-1.1.3-0.4.rc3.el7.src.rpm',
                     check_times=check_times)
-            execute('rpmbuild --rebuild srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm', env=env, check_times=check_times)
+            execute('rpmbuild --rebuild srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm', env=env, timeout=120, check_times=check_times)
             execute('sudo rpm -i rpmbuild/RPMS/x86_64/log4cplus-1.1.3-0.4.rc3.el8.x86_64.rpm', env=env, check_times=check_times)
             execute('sudo rpm -i rpmbuild/RPMS/x86_64/log4cplus-devel-1.1.3-0.4.rc3.el8.x86_64.rpm', env=env, check_times=check_times)
 
@@ -707,6 +719,8 @@ def prepare_deps_local(features, check_times):
         _install_freeradius_client()
 
     #execute('sudo rm -rf /usr/share/doc')
+
+    log.info('Preparing deps completed successfully.')
 
 
 def build_local(features, tarball_path, check_times, jobs):
