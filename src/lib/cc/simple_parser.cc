@@ -89,6 +89,19 @@ SimpleParser::getInteger(ConstElementPtr scope, const std::string& name) {
     return (x->intValue());
 }
 
+int64_t
+SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name,
+                         int64_t min, int64_t max) {
+    int64_t tmp = getInteger(scope, name);
+    if (tmp < min || tmp > max) {
+        isc_throw(DhcpConfigError,
+                  "The '" << name << "' value (" << tmp
+                  << ") is not within expected range: (" << min << " - " << max
+                  << ");");
+    }
+    return (tmp);
+}
+
 bool
 SimpleParser::getBoolean(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);

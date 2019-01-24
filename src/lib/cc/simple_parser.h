@@ -170,6 +170,22 @@ class SimpleParser {
     static int64_t getInteger(isc::data::ConstElementPtr scope,
                               const std::string& name);
 
+    /// @brief Returns an integer parameter from a scope and checks its range
+    ///
+    /// Unconditionally returns a parameter. Checks that the value specified
+    /// is in min =< X =< max range.
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @param min minimum allowed value
+    /// @param max maximum allowed value
+    /// @return an integer value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type or is out of range
+    static int64_t getInteger(isc::data::ConstElementPtr scope,
+                              const std::string& name,
+                              int64_t min, int64_t max);
+
     /// @brief Returns a boolean parameter from a scope
     ///
     /// Unconditionally returns a parameter.

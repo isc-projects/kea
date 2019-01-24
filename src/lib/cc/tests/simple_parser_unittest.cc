@@ -242,6 +242,27 @@ TEST_F(SimpleParserTest, getIntType) {
     EXPECT_EQ(100, val);
 }
 
+// This test exercises the getInteger with range checking
+TEST_F(SimpleParserTest, getInteger) {
+
+    // The value specified is 100.
+    ElementPtr json = Element::fromJSON("{ \"bar\": 100 }");
+    int64_t x;
+
+    // Positive case: we expect value in range 0..200. All ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 0, 200));
+    EXPECT_EQ(100, x);
+
+    // Border checks: 100 for 100..200 range is still ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 100, 200));
+    // Border checks: 100 for 1..100 range is still ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 1, 100));
+
+    // Out of expected range. Should throw.
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 101, 200), DhcpConfigError);
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 1, 99), DhcpConfigError);
+}
+
 // This test exercises the getAndConvert template
 TEST_F(SimpleParserTest, getAndConvert) {
 
