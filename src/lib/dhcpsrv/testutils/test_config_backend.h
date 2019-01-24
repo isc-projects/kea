@@ -34,7 +34,7 @@ public:
         }
 
         try {
-            db_type_ = connection_.getParameter("host");
+            host_ = connection_.getParameter("host");
         } catch (...) {
             host_ = "default_host";
         }

@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <cc/data.h>
+#include <cc/stamped_value.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <exceptions/exceptions.h>
 
@@ -59,6 +60,19 @@ configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
+/// @param Fetch and merge data from config backends into the staging config
+///
+/// If the given SrvConfig specifies one or more config backends it calls
+/// @c databaseConfigConnect() to open connections to them, otherwise it
+/// simply returns.  Next it creates an external SrvConfig instance,
+/// and populates with data it fetches from the  config backends.
+/// Finally, it merges this external config into the staging config.
+///
+/// @param srv_cfg server configuration that (may) specify the backends
+/// should be merged
+void
+databaseConfigFetch(const SrvConfigPtr& srv_cfg);
+
 /// @brief Attempts to connect to configured CB databases
 ///
 /// First, this function will close all existing CB backends. It
@@ -76,17 +90,52 @@ configureDhcp4Server(Dhcpv4Srv&,
 bool
 databaseConfigConnect(const SrvConfigPtr& srv_cfg);
 
-/// @brief Fetch configuration from CB databases and merge it into the given configuration
+/// @brief Adds globals fetched from config backend(s) to a SrvConfig instance
 ///
-/// It will call @c databaseConfigConnect, passing in the given server configuration. If
-/// that call results in open CB databases, the function will then proceed to fetch
-/// configuration components from said databases and merge them into the given server
-/// configuration.
+/// Iterates over the given collection of global parameters and either uses them
+/// to set explicit members of the given SrvConfig or to it's list of configured
+/// (aka implicit) globals.
 ///
-/// @param srv_cfg Server configuration into which database configuration should be merged
-/// @param mutable_cfg parsed configuration from the configuration file plus default values (ignored)
-void
-databaseConfigFetch(const SrvConfigPtr& srv_cfg, isc::data::ElementPtr mutable_cfg);
+/// @param external_cfg SrvConfig instance to update
+/// @param cb_globals collection of global parameters supplied by configuration
+/// backend
+///
+/// @throw DhcpConfigError if any of the globals is not recognized as a supported
+/// value.
+void addGlobalsToConfig(SrvConfigPtr external_cfg,
+                        data::StampedValueCollection& cb_globals);
+
+/// @brief Sets the appropriate member of SrvConfig from a config backend
+/// global value
+///
+/// If the given global maps to a global parameter stored explicitly as member
+/// of SrvConfig, then it's value is used to set said member.
+///
+/// @param external_cfg SrvConfig instance to update
+/// @param cb_global global parameter supplied by configuration backend
+///
+/// @return True if the global mapped to an explicit member of SrvConfig,
+/// false otherwise
+///
+/// @throw BadValue if the global's value is not the expected data type
+bool handleExplicitGlobal(SrvConfigPtr external_cfg,
+                          const data::StampedValuePtr& cb_global);
+
+/// @brief Adds a config backend global value to a SrvConfig's list of
+/// configured globals
+///
+/// The given global is converted to an Element of the appropriate type and
+/// added to the SrvConfig's list of configured globals.
+///
+/// @param external_cfg SrvConfig instance to update
+/// @param cb_global global parameter supplied by configuration backend
+///
+/// @return true if the global is recognized as a supported global, false
+/// otherwise
+///
+/// @throw BadValue if the global's value is not the expected data type
+bool handleImplicitGlobal(SrvConfigPtr external_cfg,
+                          const data::StampedValuePtr& cb_global);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
