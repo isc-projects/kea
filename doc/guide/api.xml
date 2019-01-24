@@ -3009,7 +3009,7 @@ Result is an integer representation of the status. Currently supported statuses 
   <screen>{
     "command": "subnet4-add",
     "arguments": {
-        "subnets": [ {
+        "subnet4": [ {
             "id": 123,
             "subnet": "10.20.30.0/24",
             ...
