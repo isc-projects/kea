@@ -666,6 +666,8 @@ void databaseConfigFetch(const SrvConfigPtr& srv_cfg) {
         return;
     }
 
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_FETCH);
+
     // For now we find data based on first backend that has it.
     BackendSelector backend_selector(BackendSelector::Type::UNSPEC);
 
@@ -708,8 +710,8 @@ void databaseConfigFetch(const SrvConfigPtr& srv_cfg) {
     }
 
     // Now we merge the fecthed configuration into the staging configuration.
-    // Probably a good place for a log message
     CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_MERGED);
 }
 
 bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {

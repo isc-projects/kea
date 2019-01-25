@@ -14,11 +14,10 @@
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
-//#include <dhcp/option_custom.h>
-//#include <dhcp/option_int.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/testutils/generic_backend_unittest.h>
 #include <dhcpsrv/testutils/test_config_backend_dhcp4.h>
 
 #include "dhcp4_test_utils.h"
@@ -32,7 +31,6 @@
 #include <sstream>
 #include <limits.h>
 
-using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::config;
 using namespace isc::data;
@@ -44,7 +42,7 @@ using namespace std;
 namespace {
 
 /// @brief Test fixture for testing external configuration merging
-class Dhcp4CBTest : public ::testing::Test {
+class Dhcp4CBTest : public GenericBackendTest {
 protected:
     /// @brief Pre test set up
     /// Called prior to each test.  It creates two configuration backends
@@ -65,8 +63,8 @@ protected:
         db2_.reset(new TestConfigBackendDHCPv4(params));
 
         ConfigBackendDHCPv4Mgr::instance().registerBackendFactory("memfile",
-            [this](const db::DatabaseConnection::ParameterMap& params)
-                -> dhcp::ConfigBackendDHCPv4Ptr {
+            [this](const DatabaseConnection::ParameterMap& params)
+                -> ConfigBackendDHCPv4Ptr {
                     auto host = params.find("host");
                     if (host != params.end()) {
                         if (host->second == "db1") {
@@ -79,6 +77,12 @@ protected:
                     // Apparently we're looking for on that does not prexist.
                     return (TestConfigBackendDHCPv4Ptr(new TestConfigBackendDHCPv4(params)));
                 });
+    }
+
+    /// @brief Clean up after each test
+    virtual void TearDown() {
+        // Unregister the factory to be tidy.
+        ConfigBackendDHCPv4Mgr::instance().unregisterBackendFactory("memfile");
     }
 
 public:
@@ -96,9 +100,15 @@ public:
     }
 
     /// Destructor
-    ~Dhcp4CBTest() {
+    virtual ~Dhcp4CBTest() {
         resetConfiguration();
     };
+
+    /// @brief Reset configuration singletons.
+    void resetConfiguration() {
+        CfgMgr::instance().clear();
+        ConfigBackendDHCPv4Mgr::destroy();
+    }
 
     /// @brief Convenience method for running configuration
     ///
@@ -137,26 +147,6 @@ public:
                 ASSERT_EQ(exp_error, text);
             }
         }
-    }
-
-    /// @brief Reset configuration database.
-    ///
-    /// This function resets configuration data base by
-    /// removing all subnets and option-data. Reset must
-    /// be performed after each test to make sure that
-    /// contents of the database do not affect result of
-    /// subsequent tests.
-    void resetConfiguration() {
-        string config =
-            "{ \n"
-            "\"hooks-libraries\": [ ], \n"
-            "\"valid-lifetime\": 4000, \n"
-            "\"subnet4\": [ ], \n"
-            "\"dhcp-ddns\": { \"enable-updates\" : false }, \n"
-            "\"option-def\": [ ], \n"
-            "\"option-data\": [ ] }\n";
-        configure(config, CONTROL_RESULT_SUCCESS, "");
-        CfgMgr::instance().clear();
     }
 
     /// @brief Tests that a given global is in the staged configured globals
@@ -219,6 +209,7 @@ public:
 
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
+// @todo enable test when SrvConfig can merge globals.
 TEST_F(Dhcp4CBTest, DISABLED_mergeGlobals) {
     string base_config =
         "{ \n"
@@ -282,6 +273,119 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calcTeeTimes, Element::boolean));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2Percent, Element::real));
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renewTimer, Element::integer));
+}
+
+// This test verifies that externally configured option definitions
+// merged correctly into staging configuration.
+// @todo enable test when SrvConfig can merge option definitions.
+TEST_F(Dhcp4CBTest, DISABLED_mergeOptionDefs) {
+    string base_config =
+        "{ \n"
+        "    \"option-def\": [ {"
+        "        \"name\": \"one\","
+        "        \"code\": 100,"
+        "        \"type\": \"ipv4-address\","
+        "        \"space\": \"isc\""
+        "     } ],"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option two and add it to first backend.
+    OptionDefinitionPtr def_two(new OptionDefinition("two", 234, "string"));
+    def_two->setOptionSpaceName("dhcp4");
+    db1_->createUpdateOptionDef4(ServerSelector::ALL(), def_two);
+
+    // Create option three and add it to second backend.
+    OptionDefinitionPtr def_three(new OptionDefinition("three", 235, "string"));
+    def_three->setOptionSpaceName("dhcp4");
+    db2_->createUpdateOptionDef4(ServerSelector::ALL(), def_two);
+
+    // Should parse and merge without error.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    // Verify the composite staging is correct.
+    SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Option definition from JSON should be there.
+    ConstCfgOptionDefPtr option_defs = staging_cfg->getCfgOptionDef();
+    OptionDefinitionPtr found_def = option_defs->get("isc", 100);
+    ASSERT_TRUE(found_def);
+
+    // Option definition from db1 should be there.
+    found_def = option_defs->get("dhcp4", 234);
+    ASSERT_TRUE(found_def);
+
+    // Option definition from db2 should not be there.
+    found_def = option_defs->get("dhcp4", 235);
+    ASSERT_FALSE(found_def);
+}
+
+// This test verifies that externally configured options
+// merged correctly into staging configuration.
+// @todo enable test when SrvConfig can merge options.
+TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
+    string base_config =
+        "{ \n"
+        "    \"option-data\": [ {"
+        "        \"name\": \"dhcp-message\","
+        "        \"data\": \"0A0B0C0D\","
+        "        \"csv-format\": false"
+        "     } ],"
+        "    \"config-control\": { \n"
+        "       \"config-databases\": [ { \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db1\" \n"
+        "           },{ \n"
+        "               \"type\": \"memfile\", \n"
+        "               \"host\": \"db2\" \n"
+        "           } \n"
+        "       ] \n"
+        "   } \n"
+        "} \n";
+
+    extractConfig(base_config);
+
+    // Create option two and add it to first backend.
+    OptionDescriptorPtr opt_two(new OptionDescriptor(
+        createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                   true, false, "my-boot-file")));
+    opt_two->space_name_ = DHCP4_OPTION_SPACE;
+    db1_->createUpdateOption4(ServerSelector::ALL(), opt_two);
+
+    // Create option three and add it to second backend.
+    OptionDescriptorPtr opt_three(new OptionDescriptor(
+        createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME,
+                                   true, false, "your-boot-file")));
+    opt_three->space_name_ = DHCP4_OPTION_SPACE;
+    db2_->createUpdateOption4(ServerSelector::ALL(), opt_three);
+
+    // Should parse and merge without error.
+    ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
+
+    // Verify the composite staging is correct.
+    SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
+
+    // Option definition from JSON should be there.
+    CfgOptionPtr options = staging_cfg->getCfgOption();
+
+    OptionDescriptor found_opt = options->get("dhcp4", DHO_DHCP_MESSAGE);
+    ASSERT_TRUE(found_opt.option_);
+    EXPECT_EQ("0x0A0B0C0D", found_opt.option_->toHexString());
+
+    found_opt = options->get("dhcp4", DHO_BOOT_FILE_NAME);
+    ASSERT_TRUE(found_opt.option_);
+    EXPECT_EQ("my-boot-file", found_opt.formatted_value_);
 }
 
 // This test verifies that externally configured shared-networks are
