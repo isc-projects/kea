@@ -152,40 +152,54 @@ def get_system_revision():
 
 class ExecutionError(Exception): pass
 
-def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None, quiet=False, check_times=False):
+def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None, quiet=False, check_times=False, capture=False,
+            interactive=False):
     log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
         timeout = None
     if dry_run:
         return 0
-    if log_file_path:
-        p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-        with open(log_file_path, "wb") as log_file:
-            t0 = time.time()
-            t1 = time.time()
-            while p.poll() is None and (timeout is None or t1 - t0 < timeout):
-                line = p.stdout.readline()
-                if line:
-                    if not quiet:
-                        print(line.decode(errors='ignore').strip() + '\r')
-                    log_file.write(line)
-                t1 = time.time()
 
-            if p.poll() is None:
-                raise ExecutionError('Execution timeout')
-            exitcode = p.returncode
-
-    else:
+    if interactive:
         p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
         ver = platform.python_version()
-        if ver.startswith('2'):
-            exitcode = p.wait()
-        else:
-            exitcode = p.wait(timeout)
+        exitcode = p.wait()
+    else:
+        if log_file_path:
+            log_file = open(log_file_path, "wb")
+
+        p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        if capture:
+            output = ''
+        t0 = time.time()
+        t1 = time.time()
+        while p.poll() is None and (timeout is None or t1 - t0 < timeout):
+            line = p.stdout.readline()
+            if line:
+                line_decoded = line.decode(errors='ignore').rstrip() + '\r'
+                if not quiet:
+                    print(line_decoded)
+                if capture:
+                    output += line_decoded
+                if log_file_path:
+                    log_file.write(line)
+            t1 = time.time()
+
+        if log_file_path:
+            log_file.close()
+
+        if p.poll() is None:
+            raise ExecutionError('Execution timeout')
+        exitcode = p.returncode
 
     if exitcode != 0 and raise_error:
         raise ExecutionError("The command return non-zero exitcode %s, cmd: '%s'" % (exitcode, cmd))
-    return exitcode
+
+    if capture:
+        return exitcode, output
+    else:
+        return exitcode
 
 
 def install_yum(pkgs, env=None, check_times=False):
@@ -348,14 +362,12 @@ class VagrantEnv(object):
 
         return total, passed
 
-    def destroy(self, force=False):
-        cmd = 'vagrant destroy'
-        if force:
-            cmd += ' --force'
+    def destroy(self):
+        cmd = 'vagrant destroy --force'
         execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
 
     def ssh(self):
-        execute('vagrant ssh', cwd=self.vagrant_dir, timeout=None, dry_run=self.dry_run)
+        execute('vagrant ssh', cwd=self.vagrant_dir, timeout=None, dry_run=self.dry_run, interactive=True)
 
     def dump_ssh_config(self):
         ssh_cfg_path = os.path.join(self.vagrant_dir, 'ssh.cfg')
@@ -370,7 +382,7 @@ class VagrantEnv(object):
         return execute('vagrant ssh -c "%s"' % cmd, env=env, cwd=self.vagrant_dir, timeout=timeout, raise_error=raise_error,
                        dry_run=self.dry_run, log_file_path=log_file_path, quiet=quiet, check_times=self.check_times)
 
-    def prepare_deps(self):
+    def prepare_system(self):
         if self.features:
             self.features_arg = '--with ' + ' '.join(self.features)
         else:
@@ -543,7 +555,7 @@ def _install_cassandra_rpm(system):
         execute('rm -rf cassandra-cpp-driver-2.11.0-1.el7.x86_64.rpm cassandra-cpp-driver-devel-2.11.0-1.el7.x86_64.rpm')
 
 
-def prepare_deps_local(features, check_times):
+def prepare_system_local(features, check_times):
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
@@ -923,9 +935,9 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
     try:
         ve = VagrantEnv(provider, system, sys_revision, features, 'kea', dry_run, quiet, check_times)
         if clean_start:
-            ve.destroy(force=True)
+            ve.destroy()
         ve.up()
-        ve.prepare_deps()
+        ve.prepare_system()
         total, passed = ve.run_build_and_test(tarball_path, jobs)
         msg = ' - ' + green('all ok')
     except KeyboardInterrupt as e:
@@ -940,7 +952,7 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
         msg = ' - ' + red(str(e))
     finally:
         if not leave_system and ve:
-            ve.destroy(force=True)
+            ve.destroy()
 
     t1 = time.time()
     dt = int(t1 - t0)
@@ -954,23 +966,23 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
 
 def package_box(provider, system, sys_revision, features, dry_run, check_times):
     ve = VagrantEnv(provider, system, sys_revision, features, 'bare', dry_run, check_times=check_times)
-    ve.destroy(force=True)
+    ve.destroy()
     ve.up()
-    ve.prepare_deps()
+    ve.prepare_system()
     # TODO cleanup
     ve.package()
 
 
-def prepare_system(provider, system, sys_revision, features, dry_run, check_times, clean_start):
+def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run, check_times, clean_start):
     ve = VagrantEnv(provider, system, sys_revision, features, 'kea', dry_run, check_times=check_times)
     if clean_start:
-        ve.destroy(force=True)
+        ve.destroy()
     ve.up()
-    ve.prepare_deps()
+    ve.prepare_system()
 
 
-def ssh(provider, system, sys_revision, features, dry_run):
-    ve = VagrantEnv(provider, system, sys_revision, features, 'kea', dry_run)
+def ssh(provider, system, sys_revision):
+    ve = VagrantEnv(provider, system, sys_revision, [], 'kea', False)
     ve.up()
     ve.ssh()
 
@@ -1001,41 +1013,71 @@ DEFAULT_FEATURES = ['install', 'unittest', 'docs']
 ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
 
 def parse_args():
-    parser = argparse.ArgumentParser(description='Kea develepment environment management tool.')
+    main_parser = argparse.ArgumentParser(description='Hammer - Kea develepment environment management tool.')
+    main_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose mode.')
+    main_parser.add_argument('-q', '--quiet', action='store_true', help='Enable quiet mode.')
 
-    parser.add_argument('command', choices=['package-box', 'prepare-system', 'build', 'prepare-deps', 'list-systems', 'ssh', 'ensure-hammer-deps'],
-                        help='Commands.')
-    parser.add_argument('-p', '--provider', default='virtualbox', choices=['lxc', 'virtualbox', 'all', 'local'],
-                        help="Backend build executor. If 'all' then build is executed several times on all providers. "
-                        "If 'local' then build is executed on current system. Default is 'virtualbox'.")
-    parser.add_argument('-s', '--system', default='all', choices=list(SYSTEMS.keys()) + ['all'],
-                        help="Build is executed on selected system. If 'all' then build is executed several times on all systems. "
-                        "If provider is 'local' then this option is ignored. Default is 'all'.")
-    parser.add_argument('-r', '--revision', default='all',
-                        help="Revision of selected system. If 'all' then build is executed several times "
-                        "on all revisions of selected system. To list supported systems and their revisions invoke 'list-systems'. "
-                        "Default is 'all'.")
-    parser.add_argument('-w', '--with', nargs='+', default=set(), choices=ALL_FEATURES,
-                        help="Enabled, comma-separated features. Default is '%s'." % ' '.join(DEFAULT_FEATURES))
-    parser.add_argument('-x', '--without', nargs='+', default=set(), choices=ALL_FEATURES,
-                        help="Disabled, comma-separated features. Default is ''.")
-    parser.add_argument('-l', '--leave-system', action='store_true',
-                        help='At the end of the command do not destroy vagrant system. Default behavior is destroing the system.')
+    subparsers = main_parser.add_subparsers(dest='command',
+                                            title="Hammer commands",
+                                            description="The following commands are provided by Hammer. "
+                                            "To get more information about particular command invoke: ./hammer.py <command> -h.")
+
+    parent_parser1 = argparse.ArgumentParser(add_help=False)
+    parent_parser1.add_argument('-p', '--provider', default='virtualbox', choices=['lxc', 'virtualbox', 'local', 'all'],
+                                help="Backend build executor. If 'all' then build is executed several times on all providers. "
+                                "If 'local' then build is executed on current system. Default is 'virtualbox'.")
+    parent_parser1.add_argument('-s', '--system', default='all', choices=list(SYSTEMS.keys()) + ['all'],
+                                help="Build is executed on selected system. If 'all' then build is executed several times on all systems. "
+                                "If provider is 'local' then this option is ignored. Default is 'all'.")
+    parent_parser1.add_argument('-r', '--revision', default='all',
+                                help="Revision of selected system. If 'all' then build is executed several times "
+                                "on all revisions of selected system. To list supported systems and their revisions invoke 'supported-systems'. "
+                                "Default is 'all'.")
+
+    parent_parser2 = argparse.ArgumentParser(add_help=False)
+    parent_parser2.add_argument('-w', '--with', nargs='+', default=set(), choices=ALL_FEATURES,
+                                help="Enabled, comma-separated features. Default is '%s'." % ' '.join(DEFAULT_FEATURES))
+    parent_parser2.add_argument('-x', '--without', nargs='+', default=set(), choices=ALL_FEATURES,
+                                help="Disabled, comma-separated features. Default is ''.")
+    parent_parser2.add_argument('-l', '--leave-system', action='store_true',
+                                help='At the end of the command do not destroy vagrant system. Default behavior is destroing the system.')
+    parent_parser2.add_argument('-c', '--clean-start', action='store_true', help='If there is pre-existing system then it is destroyed first.')
+    parent_parser2.add_argument('-i', '--check-times', action='store_true', help='Do not allow executing commands infinitelly.')
+    parent_parser2.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
+
+
+    parser = subparsers.add_parser('ensure-hammer-deps', help="Install Hammer dependencies on current, host system.")
+    parser = subparsers.add_parser('supported-systems', help="List system supported by Hammer for doing Kea development.")
+    parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
+                                   parents=[parent_parser1, parent_parser2])
+    parser.add_argument('-j', '--jobs', default=0, help='Number of processes used in compilation. Override make -j default value.')
     parser.add_argument('-t', '--from-tarball',
                         help='Instead of building sources in current folder use provided tarball package (e.g. tar.gz).')
-    parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose mode.')
-    parser.add_argument('-q', '--quiet', action='store_true', help='Enable quiet mode.')
-    parser.add_argument('-n', '--dry-run', action='store_true', help='Print only what would be done.')
-    parser.add_argument('-c', '--clean-start', action='store_true', help='If there is pre-existing system then it is destroyed first.')
-    parser.add_argument('-i', '--check-times', action='store_true', help='Do not allow executing commands infinitelly.')
-    parser.add_argument('-j', '--jobs', default=0, help='Number of processes used in compilation. Override make -j default value.')
+    parser = subparsers.add_parser('prepare-system',
+                                   help="Prepare system for doing Kea development i.e. install all required dependencies "
+                                   "and pre-configure the system. build command always first calls prepare-system internally.",
+                                   parents=[parent_parser1, parent_parser2])
+    parser = subparsers.add_parser('ssh', help="SSH to indicated system.",
+                                   formatter_class=argparse.RawDescriptionHelpFormatter,
+                                   description="Allows getting into the system using SSH. If the system is not present then it will be created first "
+                                   "but not prepared. The command can be run in 2 way: "
+                                   "\n1) ./hammer.py ssh -p <provider> -s <system> -r <revision>\n2) ./hammer.py ssh -d <path-to-vagrant-dir>",
+                                   parents=[parent_parser1])
+    parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
+    parser = subparsers.add_parser('created-systems', help="List ALL systems created by Hammer.")
+    parser = subparsers.add_parser('destroy', help="Destroy indicated system.",
+                                   description="Destroys system indicated by a path to directory with Vagrantfile. "
+                                   "To get the list of created systems run: ./hammer.py created-systems.")
+    parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
+    parser = subparsers.add_parser('package-box', help="Package currently running system into Vagrant Box. Prepared box can be later deployed to Vagrant Cloud.",
+                                   parents=[parent_parser1, parent_parser2])
 
-    args = parser.parse_args()
+    args = main_parser.parse_args()
 
     return args
 
 
-def list_systems():
+def list_supported_systems():
     for system, revisions in SYSTEMS.items():
         print('%s:' % system)
         for r in revisions:
@@ -1046,6 +1088,31 @@ def list_systems():
                     providers.append(p)
             providers = ', '.join(providers)
             print('  - %s: %s' % (r, providers))
+
+
+def list_created_systems():
+    exitcode, output = execute('vagrant global-status', quiet=True, capture=True)
+    systems = []
+    for line in output.splitlines():
+        if 'hammer' not in line:
+            continue
+        elems = line.split()
+        state = elems[3]
+        path = elems[4]
+        systems.append([path, state])
+
+    print('')
+    print('%-10s %s' % ('State', 'Path'))
+    print('-' * 80)
+    for path, state, in sorted(systems):
+        print('%-10s %s' % (state, path))
+    print('-' * 80)
+    print('To destroy a system run: ./hammer.py destroy -d <path>')
+    print('')
+
+
+def destroy_system(path):
+    execute('vagrant destroy', cwd=path, interactive=True)
 
 
 def _what_features(args):
@@ -1100,20 +1167,35 @@ def main():
     format = '[HAMMER]  %(asctime)-15s  %(message)s'
     logging.basicConfig(format=format, level=level)
 
-    features = _what_features(args)
+    if args.command == 'supported-systems':
+        list_supported_systems()
 
-    if args.command == 'list-systems':
-        list_systems()
+    elif args.command == 'created-systems':
+        list_created_systems()
 
     elif args.command == "package-box":
+        features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
 
     elif args.command == "prepare-system":
+        if args.system == 'all' or args.revision == 'all':
+            print('Please provide required system and its version.')
+            print('Example: ./hammer.py prepare-system -s fedora -r 28.')
+            print('To get list of supported systems run: ./hammer.py supported-systems.')
+            sys.exit(1)
+
+        features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
-        prepare_system(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
+
+        if args.provider == 'local':
+            prepare_system_local(features, args.check_times)
+            return
+
+        prepare_system_in_vagrant(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
 
     elif args.command == "build":
+        features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
         if args.provider == 'local':
             build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
@@ -1164,15 +1246,14 @@ def main():
         if fail:
             sys.exit(1)
 
-    elif args.command == "prepare-deps":
-        log.info('Enabled features: %s', ' '.join(features))
-        prepare_deps_local(features, args.check_times)
-
     elif args.command == "ssh":
-        ssh(args.provider, args.system, args.revision, features, args.dry_run)
+        ssh(args.provider, args.system, args.revision)
 
     elif args.command == "ensure-hammer-deps":
         ensure_hammer_deps()
+
+    elif args.command == "destroy":
+        destroy_system(args.directory)
 
 
 if __name__ == '__main__':
