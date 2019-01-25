@@ -220,7 +220,7 @@ public:
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
             audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
-                           "global parameter set", false);
+                           server_selector, "global parameter set", false);
 
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
@@ -755,6 +755,7 @@ public:
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision audit_revision(this,
                                            MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                                           server_selector,
                                            "subnet set", true);
 
         try {
@@ -869,7 +870,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            log_message, cascade_delete);
 
         auto count = deleteFromTable(index, server_selector, operation, keys...);
@@ -1161,7 +1164,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "shared network set", true);
 
         try {
@@ -1274,7 +1279,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "global option set", false);
 
         if (existing_option) {
@@ -1343,7 +1350,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "subnet specific option set", cascade_update);
 
         if (existing_option) {
@@ -1430,7 +1439,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "pool specific option set", cascade_update);
 
         if (existing_option) {
@@ -1499,7 +1510,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "shared network specific option set",
                            cascade_update);
 
@@ -1822,7 +1835,9 @@ public:
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision
-            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+            audit_revision(this,
+                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           server_selector,
                            "option definition set",
                            true);
 

@@ -28,10 +28,12 @@ namespace dhcp {
 MySqlConfigBackendImpl::
 ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
                                          const int index,
+                                         const ServerSelector& server_selector,
                                          const std::string& log_message,
                                          bool cascade_transaction)
     : impl_(impl) {
-    impl_->initAuditRevision(index, log_message, cascade_transaction);
+    impl_->createAuditRevision(index, server_selector, log_message,
+                               cascade_transaction);
 }
 
 MySqlConfigBackendImpl::
@@ -82,16 +84,20 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
 }
 
 void
-MySqlConfigBackendImpl::initAuditRevision(const int index,
-                                          const std::string& log_message,
-                                          const bool cascade_transaction) {
+MySqlConfigBackendImpl::createAuditRevision(const int index,
+                                            const ServerSelector& server_selector,
+                                            const std::string& log_message,
+                                            const bool cascade_transaction) {
     // Do not touch existing audit revision in case of the cascade update.
     if (audit_revision_created_) {
         return;
     }
 
+    auto tag = getServerTag(server_selector, "creating new configuration "
+                            "audit revision");
+
     MySqlBindingCollection in_bindings = {
-        MySqlBinding::createString("all"),
+        MySqlBinding::createString(tag),
         MySqlBinding::createString(log_message),
         MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))
     };
