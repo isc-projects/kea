@@ -1819,14 +1819,12 @@ public:
                                                                 option_def->getCode(),
                                                                 option_def->getOptionSpaceName());
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
-                                           "option definition set",
-                                           true);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "option definition set",
+                           true);
 
         if (existing_definition) {
             // Need to add three more bindings for WHERE clause.

@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -487,7 +487,7 @@ EOF
     run_statement "dhcp4_server" "$qry" 1
 
     # table: dhcp4_audit
-    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp4_audit"
+    qry="select id, object_type, object_id, modification_type from dhcp4_audit"
     run_statement "dhcp4_audit" "$qry"
 
     # table: dhcp4_global_parameter
@@ -543,7 +543,7 @@ EOF
     run_statement "dhcp6_server" "$qry" 1
 
     # table: dhcp6_audit
-    qry="select id, object_type, object_id, modification_type, modification_ts, log_message from dhcp6_audit"
+    qry="select id, object_type, object_id, modification_type from dhcp6_audit"
     run_statement "dhcp6_audit" "$qry"
 
     # table: dhcp6_global_parameter
@@ -594,9 +594,57 @@ EOF
     qry="select option_id, server_id, modification_ts from dhcp6_options_server"
     run_statement "dhcp6_options_server" "$qry"
 
-    # Verify upgraded schema reports version 7.0
+    # Schema upgrade from 7.0 to 8.0
+
+    # Test that createAuditRevisionDHCP4 exists and creates entry in
+    # the dhcp4_audit_revision table.
+    qry="CALL createAuditRevisionDHCP4('all', 'some log message', 0)"
+    run_statement "createAuditRevisionDHCP4" "$qry"
+
+    qry="SELECT COUNT(*) from dhcp4_audit_revision"
+    run_statement "dhcp4_audit_revision count" "$qry" 1
+
+    qry="SELECT id, modification_ts, server_id, log_message FROM dhcp4_audit_revision"
+    run_statement "dhcp4_audit_revision" "$qry"
+
+    # Test that createAuditEntryDHCP4 exists and creates entry in
+    # the dhcp4_audit table.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); CALL createAuditEntryDHCP4('dhcp4_subnet', 1, 'create')"
+    run_statement "createAuditRevisionDHCP4" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp4_audit"
+    run_statement "dhcp4_audit count" "$qry" 1
+
+    qry="SELECT id, object_type, object_id, modification_type, revision_id FROM dhcp4_audit"
+    run_statement "dhcp4_audit" "$qry"
+
+    # Test that createOptionAuditDHCP4 exists can create an audit
+    # entry.
+
+    # First set the cascade_transaction session variable to check that
+    # the procedure won't create the audit entry for the option when
+    # this flag is set.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP4 cascade update" "$qry"
+
+    # The number of rows matching the audit entry should be 0.
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 0;
+
+    # This time set the cascade_update to 0 and expect that the
+    # audit entry will be created for the option.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP4 cascade update" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 1;
+
+    # New triggers aren't tested here because the extensive tests are
+    # provided with the backend implementations.
+
+    # Verify upgraded schema reports version 8.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    assert_str_eq "8.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
