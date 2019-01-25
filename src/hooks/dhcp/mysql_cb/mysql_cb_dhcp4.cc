@@ -52,7 +52,7 @@ public:
     /// reading the database are less than those of statements modifying the
     /// database.
     enum StatementIndex {
-        INIT_AUDIT_REVISION,
+        CREATE_AUDIT_REVISION,
         GET_GLOBAL_PARAMETER4,
         GET_ALL_GLOBAL_PARAMETERS4,
         GET_MODIFIED_GLOBAL_PARAMETERS4,
@@ -216,13 +216,11 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "global parameter set", false);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "global parameter set", false);
 
         // Try to update the existing row.
         if (conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_GLOBAL_PARAMETER4,
@@ -753,12 +751,10 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
         ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                                            "subnet set", true);
 
         try {
@@ -870,13 +866,11 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           log_message, cascade_delete);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           log_message, cascade_delete);
 
         auto count = deleteFromTable(index, server_selector, operation, keys...);
 
@@ -1164,13 +1158,11 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "shared network set", true);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "shared network set", true);
 
         try {
 
@@ -1279,13 +1271,11 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "global option set", false);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "global option set", false);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1350,13 +1340,11 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "subnet specific option set", cascade_update);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "subnet specific option set", cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1439,13 +1427,11 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "pool specific option set", cascade_update);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "pool specific option set", cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1510,14 +1496,12 @@ public:
                                                          option->option_->getType(),
                                                          option->space_name_);
 
-        // Create scoped audit revision. It initiates session variables in the
-        // database to be used for creating new audit revision. As long as this
-        // instance exists no new audit revisions are created as a result of
-        // any subsequent calls.
-        ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-                                           "shared network specific option set",
-                                           cascade_update);
+        // Create scoped audit revision. As long as this instance exists
+        // no new audit revisions are created in any subsequent calls.
+        ScopedAuditRevision
+            audit_revision(this, MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+                           "shared network specific option set",
+                           cascade_update);
 
         if (existing_option) {
             in_bindings.push_back(MySqlBinding::createString(tag));
@@ -1840,7 +1824,7 @@ public:
         // instance exists no new audit revisions are created as a result of
         // any subsequent calls.
         ScopedAuditRevision audit_revision(this,
-                                           MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
+                                           MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
                                            "option definition set",
                                            true);
 
@@ -2055,8 +2039,8 @@ TaggedStatementArray;
 /// @brief Prepared MySQL statements used by the backend to insert and
 /// retrieve data from the database.
 TaggedStatementArray tagged_statements = { {
-    { MySqlConfigBackendDHCPv4Impl::INIT_AUDIT_REVISION,
-      "CALL initAuditRevision(?, ?)"
+    { MySqlConfigBackendDHCPv4Impl::CREATE_AUDIT_REVISION,
+      "CALL createAuditRevisionDHCP4(?, ?, ?)"
     },
 
     // Select global parameter by name.
