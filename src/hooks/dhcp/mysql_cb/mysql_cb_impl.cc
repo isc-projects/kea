@@ -112,6 +112,7 @@ MySqlConfigBackendImpl::clearAuditRevision() {
 
 void
 MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
+                                              const db::ServerSelector& server_selector,
                                               const boost::posix_time::ptime& modification_time,
                                               AuditEntryCollection& audit_entries) {
     // Create the output bindings for receiving the data.
@@ -124,27 +125,33 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
         MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH)
     };
 
-    // There is only one input binding, modification time.
-    MySqlBindingCollection in_bindings = {
-        MySqlBinding::createTimestamp(modification_time)
-    };
+    auto tags = getServerTags(server_selector);
 
-    // Execute select.
-    conn_.selectQuery(index, in_bindings, out_bindings,
-                      [&audit_entries] (MySqlBindingCollection& out_bindings) {
-        // Convert the numeric modification type into modification type enum.
-        AuditEntry::ModificationType mod_type =
-            static_cast<AuditEntry::ModificationType>(out_bindings[3]->getInteger<uint8_t>());
+    for (auto tag : tags) {
 
-        // Create new audit entry and add it to the collection of received
-        // entries.
-        AuditEntryPtr audit_entry(new AuditEntry(out_bindings[1]->getString(),
-                                                 out_bindings[2]->getInteger<uint64_t>(),
-                                                 mod_type,
-                                                 out_bindings[4]->getTimestamp(),
-                                                 out_bindings[5]->getStringOrDefault("")));
-        audit_entries.insert(audit_entry);
-    });
+        // There is only one input binding, modification time.
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
+            MySqlBinding::createTimestamp(modification_time)
+        };
+
+        // Execute select.
+        conn_.selectQuery(index, in_bindings, out_bindings,
+                          [&audit_entries] (MySqlBindingCollection& out_bindings) {
+             // Convert the numeric modification type into modification type enum.
+            AuditEntry::ModificationType mod_type =
+                static_cast<AuditEntry::ModificationType>(out_bindings[3]->getInteger<uint8_t>());
+
+            // Create new audit entry and add it to the collection of received
+            // entries.
+            AuditEntryPtr audit_entry(new AuditEntry(out_bindings[1]->getString(),
+                                                     out_bindings[2]->getInteger<uint64_t>(),
+                                                     mod_type,
+                                                     out_bindings[4]->getTimestamp(),
+                                                     out_bindings[5]->getStringOrDefault("")));
+            audit_entries.insert(audit_entry);
+        });
+    }
 }
 
 uint64_t
