@@ -540,7 +540,7 @@ Please make sure that your compilation has the following:
         "servers": [
         {
             // These are parameters for the first (and only) access server
-            "server": "127.0.0.1",
+            "name": "127.0.0.1",
             "port": 1812,
             "secret": "secret"
         }
@@ -576,9 +576,21 @@ Please make sure that your compilation has the following:
         ] // End of attributes
     } // End of access
 
-    // accounting could be specified here.
-
+    // Accounting parameters.
+    "accounting": {
+        // This starts the list of accounting servers
+        "servers": [
+        {
+            // These are parameters for the first (and only) accounting server
+            "name": "127.0.0.1",
+            "port": 1813,
+            "secret": "secret"
+        }
+        // Additional accounting servers could be specified here
+        ]
     }
+
+}
 </screen>
 </para>
 
