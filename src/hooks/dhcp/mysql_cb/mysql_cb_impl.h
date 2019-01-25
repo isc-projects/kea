@@ -32,7 +32,7 @@ class MySqlConfigBackendImpl {
 protected:
 
     /// @brief RAII object used to protect against creating multiple
-    /// audit revision during cascade configuration updates.
+    /// audit revisions during cascade configuration updates.
     ///
     /// Audit revision is created per a single database transaction.
     /// It includes log message associated with the configuration
@@ -51,13 +51,15 @@ protected:
     /// against creation of multiple audit revisions when child
     /// objects are inserted or updated in the database. When the
     /// instance of this object goes out of scope the new audit
-    /// revisions can be created.
+    /// revisions can be created. The caller must ensure that
+    /// the instance of this object exists throughout the whole
+    /// transaction with the database.
     class ScopedAuditRevision {
     public:
 
         /// @brief Constructor.
         ///
-        /// Initializes new audit revision and sets the flag in the
+        /// Creates new audit revision and sets the flag in the
         /// MySQL CB implementation object which prevents new audit
         /// revisions to be created while this instance exists.
         ///
@@ -65,6 +67,7 @@ protected:
         /// @param index index of the query to set session variables
         /// used for creation of the audit revision and the audit
         /// entries.
+        /// @param server_selector Server selector.
         /// @param log_message log message associated with the audit
         /// revision to be inserted into the database.
         /// @param cascade_transaction boolean flag indicating if
@@ -73,6 +76,7 @@ protected:
         /// options) won't be created.
         ScopedAuditRevision(MySqlConfigBackendImpl* impl,
                             const int index,
+                            const db::ServerSelector& server_selector,
                             const std::string& log_message,
                             bool cascade_transaction);
 
@@ -160,25 +164,23 @@ public:
 
     /// @brief Invokes the corresponding stored procedure in MySQL.
     ///
-    /// The @c initAuditRevision stored procedure initializes several
-    /// session variables used when creating new audit revision in the
-    /// database. That includes setting a log message for the revision,
-    /// setting the boolean value indicating if the audit entries should
-    /// be created for DHCP options (that should only be the case when
-    /// the options are not added as part of the subnet, shared network
-    /// etc.). Finally, it resets the session variables used internally
-    /// by the database to corrdinate between the triggers.
+    /// The @c createAuditRevision stored procedure creates new audit
+    /// revision and initializes several session variables to be used when
+    /// the audit entries will be created for the inserted, updated or
+    /// deleted configuration elements.
     ///
     /// @param index query index.
+    /// @param server_selector Server selector.
     /// @param log_message log message to be used for the audit revision.
     /// @param cascade_transaction Boolean value indicating whether the
     /// configuration modification is performed as part of the ownining
     /// element modification, e.g. subnet is modified resulting in
     /// modification of the DHCP options it owns. In that case only the
     /// audit entry for the owning element should be created.
-    void initAuditRevision(const int index,
-                           const std::string& log_message,
-                           const bool cascade_transaction);
+    void createAuditRevision(const int index,
+                             const db::ServerSelector& server_selector,
+                             const std::string& log_message,
+                             const bool cascade_transaction);
 
     /// @brief Clears the flag blocking creation of the new audit revisions.
     ///
