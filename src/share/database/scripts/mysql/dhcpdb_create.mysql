@@ -1607,6 +1607,8 @@ BEGIN
     # set to 'dhcp4_options' is when the global option is added.
     # Global options do not have the owner.
     IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
+        # todo: host manager hasn't been updated to use audit
+        # mechanisms so ignore host specific options for now.
         IF scope_id = 0 THEN
             # If a global option is added or modified, create audit
             # entry for the 'dhcp4_options' table.
@@ -1616,11 +1618,6 @@ BEGIN
             # audit entry for the entire subnet, which indicates that
             # it should be treated as the subnet update.
             CALL createAuditEntryDHCP4('dhcp4_subnet', subnet_id, "update");
-        ELSEIF scope_id = 3 THEN
-            # If host specific option is added or modified, create
-            # audit entry for the host, which indicates that it
-            # should be treated as the host update.
-            CALL createAuditEntryDHCP4('hosts', host_id, "update");
         ELSEIF scope_id = 4 THEN
             # If shared network specific option is added or modified,
             # create audit entry for the shared network which
