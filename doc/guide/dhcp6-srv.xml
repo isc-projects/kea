@@ -1310,7 +1310,7 @@ temporarily override a list of interface names and listen on all interfaces.
                     <userinput>"option-data": [
                         {
                             "name": "new-posix-timezone",
-                            "data": "EST5EDT4\,M3.2.0/02:00\,M11.1.0/02:00"
+                            "data": "EST5EDT4\\,M3.2.0/02:00\,M11.1.0/02:00"
                         }
                     ]</userinput>
                 },
