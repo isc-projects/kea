@@ -633,6 +633,8 @@ $ <userinput>make</userinput>
           <screen><userinput>./configure [other-options] --with-cql=<replaceable>path-to-cql_config</replaceable></userinput></screen>
         </para>
       </section>
-   </section>
+    </section>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hammer.xml"/>
 
   </chapter>

@@ -1,0 +1,85 @@
+<!--
+ - Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+-->
+
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
+]>
+
+<section xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hammer">
+    <title>Hammer Building Tool</title>
+    <para>
+      An optionl building tool called hammer was introduced with Kea 1.6.0. It
+      is a Python 3 script that lets users automate tasks related to building
+      Kea, such as setting up virtual machines, installing Kea dependencies,
+      compiling Kea with various options, running unit-tests and more. This tool
+      was created primarily for internal QA purposes at ISC, but since it was
+      proven to be quite powerful, it is now part of the Kea distribution.
+    </para>
+
+    <note>
+      <simpara>Use of this tool is completely optional. Everything it does can
+      be done manually.</simpara>
+    </note>
+
+
+    <para>
+      The first time user is strongly encouraged to look at hammer's built in
+      help: <screen><userinput>./hammer.py --help</userinput></screen> It will
+      list available parameters.
+    </para>
+
+    <para>
+      Hammer is able to set up various operating systems running in LXC of
+      virtualbox. To list of supported systems, use
+      <command>list-systems</command> command:
+      <screen>
+$<userinput>./hammer.py list-systems</userinput>
+fedora:
+  - 27: lxc, virtualbox
+  - 28: lxc, virtualbox
+  - 29: lxc, virtualbox
+centos:
+  - 7: lxc, virtualbox
+rhel:
+  - 8: virtualbox
+ubuntu:
+  - 16.04: lxc, virtualbox
+  - 18.04: lxc, virtualbox
+  - 18.10: lxc, virtualbox
+debian:
+  - 8: lxc, virtualbox
+  - 9: lxc, virtualbox
+freebsd:
+  - 11.2: virtualbox
+  - 12.0: virtualbox
+</screen>
+</para>
+
+<!-- @todo: explain how to install deps (hammer ensure-hammer-deps), explain
+     what is installed -->
+
+<!-- @todo: explain how to install deps and kea on host system, without setting
+     up any VMs (is ensure-hammer-deps needed for this? if not, make a note
+     about it above) -->
+
+<para>
+  Hammer can be told to set up a new virtual machine and install specified OS on
+  it:
+  <screen>
+    ./hammer.py -p virtualbox -s freebsd -r 12.0 prepare-system
+  </screen>
+</para>
+
+<!-- @todo: describe how to install kea on a system,
+
+This didn't work (why?)
+./hammer.py -p virtualbox -s freebsd -r 12.0 -w install,unittest,docs,mysql build -->
+
+</section>
