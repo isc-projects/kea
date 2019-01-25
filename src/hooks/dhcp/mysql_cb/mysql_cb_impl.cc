@@ -91,6 +91,7 @@ MySqlConfigBackendImpl::initAuditRevision(const int index,
     }
 
     MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString("all"),
         MySqlBinding::createString(log_message),
         MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))
     };

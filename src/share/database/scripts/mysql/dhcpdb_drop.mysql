@@ -59,7 +59,6 @@ DROP TABLE IF EXISTS dhcp6_shared_network_server;
 DROP TABLE IF EXISTS dhcp6_subnet;
 DROP TABLE IF EXISTS dhcp6_subnet_server;
 DROP TABLE IF EXISTS modification;
-DROP PROCEDURE IF EXISTS initAuditRevision;
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
 DROP TRIGGER IF EXISTS dhcp4_global_parameter_AINS;
