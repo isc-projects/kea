@@ -204,9 +204,11 @@ namespace {
     "  r.modification_ts," \
     "  r.log_message " \
     "FROM " #table_prefix "_audit AS a " \
-    "LEFT JOIN " #table_prefix "_audit_revision AS r " \
+    "INNER JOIN " #table_prefix "_audit_revision AS r " \
     "  ON a.revision_id = r.id " \
-    "WHERE (r.modification_ts > ?) " \
+    "INNER JOIN " #table_prefix "_server AS s" \
+    "  ON r.server_id = s.id " \
+    "WHERE (s.tag = ? OR s.id = 1) AND (r.modification_ts > ?) " \
     "ORDER BY r.modification_ts"
 #endif
 

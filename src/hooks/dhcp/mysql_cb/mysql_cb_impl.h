@@ -190,11 +190,13 @@ public:
     /// @brief Sends query to the database to retrieve most recent audit entries.
     ///
     /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
     /// @param modification_time Timestamp being a lower limit for the returned
     /// result set, i.e. entries later than specified time are returned.
     /// @param [out] audit_entries Reference to the container where fetched audit
     /// entries will be inserted.
     void getRecentAuditEntries(const int index,
+                               const db::ServerSelector& server_selector,
                                const boost::posix_time::ptime& modification_time,
                                db::AuditEntryCollection& audit_entries);
 
