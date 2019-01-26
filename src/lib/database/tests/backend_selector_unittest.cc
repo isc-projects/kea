@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 
 #include <config.h>
 #include <database/backend_selector.h>
+#include <testutils/test_to_element.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -169,6 +170,32 @@ TEST(BackendSelectorTest, backendTypeToString) {
               BackendSelector::backendTypeToString(BackendSelector::Type::CQL));
 }
 
+// Tests toElement from backend selectors.
+TEST(BackendSelectorTest, backendToElement) {
+    // Unspecified.
+    boost::scoped_ptr<BackendSelector> sel(new BackendSelector());
+    EXPECT_THROW(sel->toElement(), BadValue);
+
+    // Unspecified type.
+    sel.reset(new BackendSelector("myhost", 1234));
+    EXPECT_THROW(sel->toElement(), BadValue);
+
+    // Type only.
+    EXPECT_NO_THROW(sel.reset(new BackendSelector(BackendSelector::Type::MYSQL)));
+    ElementPtr expected = Element::createMap();
+    expected->set("type", Element::create("mysql"));
+    test::runToElementTest<BackendSelector>(expected, *sel);
+
+    // Add host.
+    expected->set("host", Element::create("myhost"));
+    EXPECT_NO_THROW(sel.reset(new BackendSelector(expected)));
+    test::runToElementTest<BackendSelector>(expected, *sel);
+
+    // Add port.
+    expected->set("port", Element::create(1234L));
+    EXPECT_NO_THROW(sel.reset(new BackendSelector(expected)));
+    test::runToElementTest<BackendSelector>(expected, *sel);
+}
 
 }
 
