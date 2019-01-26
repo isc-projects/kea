@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,6 +107,22 @@ BackendSelector::toText() const {
     }
 
     return (text);
+}
+
+ElementPtr
+BackendSelector::toElement() const {
+    if (backend_type_ == BackendSelector::Type::UNSPEC) {
+        isc_throw(BadValue, "toElement: backend selector type is unspecified");
+    }
+    ElementPtr result = Element::createMap();
+    result->set("type", Element::create(backendTypeToString(backend_type_)));
+    if (!host_.empty()) {
+        result->set("host", Element::create(host_));
+        if (port_ > 0) {
+            result->set("port", Element::create(static_cast<long int>(port_)));
+        }
+    }
+    return (result);
 }
 
 BackendSelector::Type

@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define BACKEND_SELECTOR_H
 
 #include <cc/data.h>
+#include <cc/cfg_to_element.h>
 #include <cstdint>
 #include <string>
 
@@ -51,7 +52,7 @@ namespace db {
 ///
 /// The @c BackendSelector class may be extended in the future to provide
 /// additional backend selection criteria.
-class BackendSelector {
+class BackendSelector : public data::CfgToElement {
 public:
 
     /// @brief Supported database types.
@@ -171,6 +172,14 @@ public:
     /// "type=mysql,host=somehost.example.org,port=1234".
     std::string toText() const;
 
+    /// @brief Unparse a backend selector object.
+    ///
+    /// The caller must check if the type is specified before.
+    ///
+    /// @return A pointer to unparsed backend selector configuration.
+    /// @throw BadValue If the backend selector type is unspecified.
+    virtual data::ElementPtr toElement() const;
+
     /// @brief Converts string to backend type.
     ///
     /// @param type Backend type as string.
@@ -180,7 +189,6 @@ public:
     ///
     /// @param type Backend type to be converted.
     static std::string backendTypeToString(const Type& type);
-
 
 private:
 
