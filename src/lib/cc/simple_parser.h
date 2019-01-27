@@ -181,7 +181,8 @@ class SimpleParser {
     /// @param max maximum allowed value
     /// @return an integer value of the parameter
     /// @throw DhcpConfigError if the parameter is not there or is not of
-    /// appropriate type or is out of range
+    /// appropriate type.
+    /// @throw OutOfRange if the parameter is out of range
     static int64_t getInteger(isc::data::ConstElementPtr scope,
                               const std::string& name,
                               int64_t min, int64_t max);
