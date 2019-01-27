@@ -14,5 +14,5 @@
         \"from\": <integer>
     }
 }",
-    "cmd-comment": "the subnet id and the page size limit are mandatory. The source index and from host id are optional and default to 0."
+    "cmd-comment": "the subnet id and the page size limit are mandatory. The source index and from host id are optional and default to 0. Values to use to next the next page are returned in responses in a next map."
 }
