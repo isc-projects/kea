@@ -1732,22 +1732,23 @@ An example result returned when the query was malformed:<screen>
           </para>
 
           <para>
-            The usage of next and source-index parameters requires
+            The usage of from and source-index parameters requires
             additional explanation. For the first call those
             parameters should not be specified (or specified as
             zeros). For any follow up calls they should be set to the
-            values returned in previous calls. The subsequent calls
-            should be issued until all reservations are returned. The
-            end is reached once the returned list is empty, count is 0
-            and result status 3 (empty) is returned.
+            values returned in previous calls in a next map holding
+            from and source-index values.  The subsequent calls should
+            be issued until all reservations are returned. The end is
+            reached once the returned list is empty, count is 0, no
+            next map is present and result status 3 (empty) is returned.
           </para>
 
           <note>
-            <simpara>The next and source-index parameters are
+            <simpara>The from and source-index parameters are
             reflecting internal state of the search. There is no need
             to understand what they represent, it's simply a value
             that is supposed to be copied from one response to the
-            next query. However, if you are curious, next field
+            next query. However, if you are curious, from field
             represents a 64 bits representation of host identifier
             used by a host backend. The source-index represents
             internal representation of multiple host backends: 0 is
@@ -1769,7 +1770,7 @@ An example result returned when the query was malformed:<screen>
         "limit": 10</userinput>
      }
 }
-</screen> Since this is the first call, source-index and next should
+</screen> Since this is the first call, source-index and from should
 not be specified. They will default to their zero default values.
           </para>
 
@@ -1801,35 +1802,36 @@ not be specified. They will default to their zero default values.
                 "server-hostname": "server-hostname.example.org"
             }
         ],
-        "next": 1234567,
-        "source-index": 0
+        "next": {
+            "from": 1234567,
+            "source-index": 1
+        }
     },
     "result": 0,
     "text": "72 IPv4 host(s) found."
 }
-</screen> Note that next and source-index fields were specified in the
-response. Those two must be copied to the next command, so Kea
-continues from the place where the last command finished. To get the
-next page the following command can be sent:
+</screen> Note that from and source-index fields were specified in the
+response in the next map. Those two must be copied to the next
+command, so Kea continues from the place where the last command
+finished. To get the next page the following command can be sent:
 <screen>
 {
     "command": "reservation-get-page",
     "arguments": {
         <userinput>"subnet-id": 1,
         "source-index": 1,
-        "next": 1234567,
+        "from": 1234567,
         "limit": 10</userinput>
      }
 }
 </screen>. The response will contain a list of hosts with updated
-source-index and next fields. Continue calling the command until you
+source-index and from fields. Continue calling the command until you
 get the last page. Its response will look like this:
 <screen>
 {
     "arguments": {
         "count": 0,
         "hosts": [ ],
-        "source-index": 2,
     },
     "result": 3,
     "0 IPv4 host(s) found."
