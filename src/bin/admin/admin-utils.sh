@@ -62,11 +62,11 @@ pgsql_execute() {
     QUERY=$1
     shift
     if [ $# -gt 0 ]; then
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q "$@"
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q "$@"
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}"
+        echo "${QUERY}" | psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}"
         retcode=$?
     fi
     return $retcode
@@ -86,11 +86,11 @@ pgsql_execute_script() {
     file=$1
     shift
     if [ $# -gt 0 ]; then
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -f "${file}" "$@"
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -f "${file}" "$@"
         retcode=$?
     else
         export PGPASSWORD=$db_password
-        psql --set ON_ERROR_STOP=1 -A -t -h localhost -q -U "${db_user}" -d "${db_name}" -f "${file}"
+        psql --set ON_ERROR_STOP=1 -A -t -h "${db_host}" -q -U "${db_user}" -d "${db_name}" -f "${file}"
         retcode=$?
     fi
     return $retcode
