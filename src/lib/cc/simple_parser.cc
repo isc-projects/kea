@@ -94,10 +94,10 @@ SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& na
                          int64_t min, int64_t max) {
     int64_t tmp = getInteger(scope, name);
     if (tmp < min || tmp > max) {
-        isc_throw(DhcpConfigError,
+        isc_throw(OutOfRange,
                   "The '" << name << "' value (" << tmp
                   << ") is not within expected range: (" << min << " - " << max
-                  << ");");
+                  << ")");
     }
     return (tmp);
 }

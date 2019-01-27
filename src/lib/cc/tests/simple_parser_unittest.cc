@@ -10,6 +10,7 @@
 #include <cc/simple_parser.h>
 #include <gtest/gtest.h>
 
+using namespace isc;
 using namespace isc::data;
 using namespace isc::asiolink;
 using isc::dhcp::DhcpConfigError;
@@ -259,8 +260,8 @@ TEST_F(SimpleParserTest, getInteger) {
     EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 1, 100));
 
     // Out of expected range. Should throw.
-    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 101, 200), DhcpConfigError);
-    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 1, 99), DhcpConfigError);
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 101, 200), OutOfRange);
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 1, 99), OutOfRange);
 }
 
 // This test exercises the getAndConvert template
