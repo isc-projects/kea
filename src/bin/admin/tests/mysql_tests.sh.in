@@ -598,7 +598,7 @@ EOF
 
     # Test that createAuditRevisionDHCP4 exists and creates entry in
     # the dhcp4_audit_revision table.
-    qry="CALL createAuditRevisionDHCP4('all', 'some log message', 0)"
+    qry="CALL createAuditRevisionDHCP4('2019-01-28 23:59:11', 'all', 'some log message', 0)"
     run_statement "createAuditRevisionDHCP4" "$qry"
 
     qry="SELECT COUNT(*) from dhcp4_audit_revision"
@@ -610,7 +610,7 @@ EOF
     # Test that createAuditEntryDHCP4 exists and creates entry in
     # the dhcp4_audit table.
     qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); CALL createAuditEntryDHCP4('dhcp4_subnet', 1, 'create')"
-    run_statement "createAuditRevisionDHCP4" "$qry"
+    run_statement "createAuditEntryDHCP4" "$qry"
 
     qry="SELECT COUNT(*) FROM dhcp4_audit"
     run_statement "dhcp4_audit count" "$qry" 1
