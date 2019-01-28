@@ -526,7 +526,7 @@ Please make sure that your compilation has the following:
     </para>
 <para>
   For example, to specify a single access server available on localhost that
-  uses "secret" as a secret and tell Kea to send three additional attributes
+  uses "sekret" as a secret and tell Kea to send three additional attributes
   (Password, Connect-Info and Configuration-Token), the following snipped could
   be used:
   <screen>
@@ -542,7 +542,7 @@ Please make sure that your compilation has the following:
             // These are parameters for the first (and only) access server
             "name": "127.0.0.1",
             "port": 1812,
-            "secret": "secret"
+            "secret": "sekret"
         }
         // Additional access servers could be specified here
         ],
@@ -584,7 +584,7 @@ Please make sure that your compilation has the following:
             // These are parameters for the first (and only) accounting server
             "name": "127.0.0.1",
             "port": 1813,
-            "secret": "secret"
+            "secret": "sekret"
         }
         // Additional accounting servers could be specified here
         ]
