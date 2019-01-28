@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,12 +10,12 @@ namespace isc {
 namespace data {
 
 StampedElement::StampedElement()
-    : timestamp_(boost::posix_time::microsecond_clock::universal_time()) {
+    : timestamp_(boost::posix_time::microsec_clock::universal_time()) {
 }
 
 void
 StampedElement::updateModificationTime() {
-    setModificationTime(boost::posix_time::microsecond_clock::universal_time());
+    setModificationTime(boost::posix_time::microsec_clock::universal_time());
 }
 
 } // end of namespace isc::data
