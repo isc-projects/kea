@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -17,6 +17,8 @@ import datetime
 import platform
 import binascii
 import argparse
+import textwrap
+import functools
 import subprocess
 import multiprocessing
 import xml.etree.ElementTree as ET
@@ -420,7 +422,7 @@ class VagrantEnv(object):
         log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
         log.info('Prepare log file stored to %s', log_file_path)
 
-        cmd = "{python} hammer.py prepare-deps {features} {nofeatures} {check_times}"
+        cmd = "{python} hammer.py prepare-system {features} {nofeatures} {check_times}"
         cmd = cmd.format(features=self.features_arg,
                          nofeatures=self.nofeatures_arg,
                          python=self.python,
@@ -1009,18 +1011,65 @@ def ensure_hammer_deps():
         execute('vagrant plugin install vagrant-lxc')
 
 
+class CollectCommaSeparatedArgsAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print('%r %r %r' % (namespace, values, option_string))
+        values2 = []
+        for v1 in values:
+            for v2 in v1.split():
+                values2.extend(v2.split(','))
+
+        for v in values2:
+            if v not in ALL_FEATURES:
+                raise argparse.ArgumentError(self, "feature '%s' is not supported. List of supported features: %s." % (v, ", ".join(ALL_FEATURES)))
+
+        setattr(namespace, self.dest, values2)
+
+
+
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
 ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
 
 def parse_args():
-    main_parser = argparse.ArgumentParser(description='Hammer - Kea develepment environment management tool.')
+    fl = functools.partial(lambda w, t: textwrap.fill(t, w), 80)  # used lambda to change args order and able to substitute width
+    description = [
+        "Hammer - Kea develepment environment management tool.\n",
+        fl("At first it is required to install Hammer dependencies which is Vagrant and either "
+           "VirtualBox or LXC. To make life easier Hammer can install Vagrant and required "
+           "Vagrant plugins using the command:"),
+        "\n  ./hammer.py ensure-hammer-deps\n",
+        "Still VirtualBox and LXC need to be installed manually.",
+        fl("Basic functionality provided by Hammer is preparing building environment and "
+           "performing actual build and running unit tests locally, in current system. "
+           "This can be achieved by running the command:"),
+        "\n  ./hammer.py build -p local\n",
+        fl("The scope of the process can be defined using --with (-w) and --without (-x) options. "
+           "By default the build command will build Kea with documentation, install it locally "
+           "and run unit tests."),
+        "To exclude installation and generating docs do:",
+        "\n  ./hammer.py build -p local -x install docs\n",
+        fl("The whole list of available features is: %s." % ", ".join(ALL_FEATURES)),
+        fl("Hammer can be told to set up a new virtual machine with specified operating system "
+           "and not running the build:"),
+        "\n  ./hammer.py prepare-system -p virtualbox -s freebsd -r 12.0\n",
+        fl("This way we can prepare a system for our own use. To get to such system using SSH invoke:"),
+        "\n  ./hammer.py ssh -p virtualbox -s freebsd -r 12.0\n",
+        "To list all created system on a host invoke:",
+        "\n  ./hammer.py created-systems\n",
+        "And then to destroy a given system run:",
+        "\n  ./hammer.py destroy -d /path/to/dir/with/Vagrantfile\n",
+    ]
+    description = "\n".join(description)
+    main_parser = argparse.ArgumentParser(description=description,
+                                          formatter_class=argparse.RawDescriptionHelpFormatter)
+
     main_parser.add_argument('-v', '--verbose', action='store_true', help='Enable verbose mode.')
     main_parser.add_argument('-q', '--quiet', action='store_true', help='Enable quiet mode.')
 
     subparsers = main_parser.add_subparsers(dest='command',
                                             title="Hammer commands",
-                                            description="The following commands are provided by Hammer. "
-                                            "To get more information about particular command invoke: ./hammer.py <command> -h.")
+                                            description=fl("The following commands are provided by Hammer. "
+                                                           "To get more information about particular command invoke: ./hammer.py <command> -h."))
 
     parent_parser1 = argparse.ArgumentParser(add_help=False)
     parent_parser1.add_argument('-p', '--provider', default='virtualbox', choices=['lxc', 'virtualbox', 'local', 'all'],
@@ -1035,10 +1084,11 @@ def parse_args():
                                 "Default is 'all'.")
 
     parent_parser2 = argparse.ArgumentParser(add_help=False)
-    parent_parser2.add_argument('-w', '--with', nargs='+', default=set(), choices=ALL_FEATURES,
-                                help="Enabled, comma-separated features. Default is '%s'." % ' '.join(DEFAULT_FEATURES))
-    parent_parser2.add_argument('-x', '--without', nargs='+', default=set(), choices=ALL_FEATURES,
-                                help="Disabled, comma-separated features. Default is ''.")
+    parent_parser2.add_argument('-w', '--with', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction,
+                                help="Enable features. Separate them by space or comma. List of available features: %s. Default is '%s'." % (", ".join(ALL_FEATURES),
+                                                                                                                                             ' '.join(DEFAULT_FEATURES)))
+    parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction,
+                                help="Disable features. Separate them by space or comma. List of available features: %s. Default is ''." % ", ".join(ALL_FEATURES))
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is destroing the system.')
     parent_parser2.add_argument('-c', '--clean-start', action='store_true', help='If there is pre-existing system then it is destroyed first.')
@@ -1051,7 +1101,7 @@ def parse_args():
     parser = subparsers.add_parser('build', help="Prepare system and run Kea build in indicated system.",
                                    parents=[parent_parser1, parent_parser2])
     parser.add_argument('-j', '--jobs', default=0, help='Number of processes used in compilation. Override make -j default value.')
-    parser.add_argument('-t', '--from-tarball',
+    parser.add_argument('-t', '--from-tarball', metavar='TARBALL_PATH',
                         help='Instead of building sources in current folder use provided tarball package (e.g. tar.gz).')
     parser = subparsers.add_parser('prepare-system',
                                    help="Prepare system for doing Kea development i.e. install all required dependencies "
@@ -1179,7 +1229,7 @@ def main():
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
 
     elif args.command == "prepare-system":
-        if args.system == 'all' or args.revision == 'all':
+        if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
             print('Please provide required system and its version.')
             print('Example: ./hammer.py prepare-system -s fedora -r 28.')
             print('To get list of supported systems run: ./hammer.py supported-systems.')
