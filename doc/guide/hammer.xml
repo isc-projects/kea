@@ -13,33 +13,32 @@
 ]>
 
 <section xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hammer">
-    <title>Hammer Building Tool</title>
-    <para>
-      An optionl building tool called hammer was introduced with Kea 1.6.0. It
-      is a Python 3 script that lets users automate tasks related to building
-      Kea, such as setting up virtual machines, installing Kea dependencies,
-      compiling Kea with various options, running unit-tests and more. This tool
-      was created primarily for internal QA purposes at ISC, but since it was
-      proven to be quite powerful, it is now part of the Kea distribution.
-    </para>
+  <title>Hammer Building Tool</title>
+  <para>
+    An optionl building tool called Hammer was introduced with Kea 1.6.0. It
+    is a Python 3 script that lets users automate tasks related to building
+    Kea, such as setting up virtual machines, installing Kea dependencies,
+    compiling Kea with various options, running unit-tests and more. This tool
+    was created primarily for internal QA purposes at ISC, but since it was
+    proven to be quite powerful, it is now part of the Kea distribution.
+  </para>
 
-    <note>
-      <simpara>Use of this tool is completely optional. Everything it does can
-      be done manually.</simpara>
-    </note>
+  <note>
+    <simpara>Use of this tool is completely optional. Everything it does can
+    be done manually.</simpara>
+  </note>
 
+  <para>
+    The first time user is strongly encouraged to look at Hammer's built in
+    help: <screen><userinput>./hammer.py --help</userinput></screen> It will
+    list available parameters.
+  </para>
 
-    <para>
-      The first time user is strongly encouraged to look at hammer's built in
-      help: <screen><userinput>./hammer.py --help</userinput></screen> It will
-      list available parameters.
-    </para>
-
-    <para>
-      Hammer is able to set up various operating systems running in LXC of
-      virtualbox. To list of supported systems, use
-      <command>list-systems</command> command:
-      <screen>
+  <para>
+    Hammer is able to set up various operating systems running eiter in LXC
+    or in VirtualBox. To list of supported systems, use
+    <command>supported-systems</command> command:
+    <screen>
 $<userinput>./hammer.py list-systems</userinput>
 fedora:
   - 27: lxc, virtualbox
@@ -59,27 +58,58 @@ debian:
 freebsd:
   - 11.2: virtualbox
   - 12.0: virtualbox
-</screen>
-</para>
+    </screen>
 
-<!-- @todo: explain how to install deps (hammer ensure-hammer-deps), explain
-     what is installed -->
+    It is also possible to run build locally, in current system (still if supported).
+  </para>
 
-<!-- @todo: explain how to install deps and kea on host system, without setting
-     up any VMs (is ensure-hammer-deps needed for this? if not, make a note
-     about it above) -->
+  <!-- @todo: explain how to install deps (hammer ensure-hammer-deps), explain
+       what is installed -->
+  <para>
+    At first it is required to install Hammer dependencies which is Vagrant and either
+    VirtualBox or LXC. To make life easier Hammer can install Vagrant and required
+    Vagrant plugins using the command:
+    <screen><userinput>./hammer.py ensure-hammer-deps</userinput></screen>
 
-<para>
-  Hammer can be told to set up a new virtual machine and install specified OS on
-  it:
-  <screen>
-    ./hammer.py -p virtualbox -s freebsd -r 12.0 prepare-system
-  </screen>
-</para>
+    Still VirtualBox and LXC need to be installed manually.
+  </para>
 
-<!-- @todo: describe how to install kea on a system,
+  <para>
+    Basic functionality provided by Hammer is preparing building environment and
+    performing actual build and running unit tests locally, in current system.
+    This can be achieved by running the command:
+    <screen><userinput>./hammer.py build -p local</userinput></screen>
+  </para>
 
-This didn't work (why?)
-./hammer.py -p virtualbox -s freebsd -r 12.0 -w install,unittest,docs,mysql build -->
+  <para>
+    The scope of the process can be defined using --with (-w) and --without (-x) options.
+    By default the build command will build Kea with documentation, install it locally
+    and run unit tests.
+  </para>
+
+  <para>
+    To exclude installation and generating docs do:
+    <screen><userinput>./hammer.py build -p local -x install docs</userinput></screen>
+  </para>
+
+  <para>
+    The basic scope can be extended by: mysql, pgsql, cql, native-pkg, radius, shell, forge.
+  </para>
+
+  <note>
+    <simpara>For build Kea locally installing Hammer dependencies like Vagrant is not needed.</simpara>
+  </note>
+
+  <para>
+    Hammer can be told to set up a new virtual machine with specified operating system
+    and not running the build:
+    <screen><userinput>./hammer.py prepare-system -p virtualbox -s freebsd -r 12.0</userinput></screen>
+    This way we can prepare a system for our own use. To get to such system using SSH invoke:
+    <screen><userinput>./hammer.py ssh -p virtualbox -s freebsd -r 12.0</userinput></screen>
+  </para>
+
+  <para>
+    For more information check: <screen><userinput>./hammer.py --help</userinput></screen>
+  </para>
 
 </section>
