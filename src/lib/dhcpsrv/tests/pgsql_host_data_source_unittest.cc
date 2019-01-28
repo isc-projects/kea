@@ -298,24 +298,24 @@ TEST_F(PgSqlHostDataSourceTest, maxSubnetId6) {
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
 TEST_F(PgSqlHostDataSourceTest, getAll4BySubnet) {
-    testGetAll4(Host::IDENT_HWADDR);
+    testGetAll4();
 }
 
 // Verifies that IPv6 host reservations in the same subnet can be retrieved
 TEST_F(PgSqlHostDataSourceTest, getAll6BySubnet) {
-    testGetAll6(Host::IDENT_DUID);
+    testGetAll6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
 // by pages.
 TEST_F(PgSqlHostDataSourceTest, getPage4) {
-    testGetPage4(Host::IDENT_DUID);
+    testGetPage4();
 }
 
 // Verifies that IPv6 host reservations in the same subnet can be retrieved
 // by pages.
 TEST_F(PgSqlHostDataSourceTest, getPage6) {
-    testGetPage6(Host::IDENT_HWADDR);
+    testGetPage6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved

@@ -1529,7 +1529,7 @@ public:
     /// @brief Implementation of @ref CqlHostDataSource::getPage4()
     ///
     /// Not implemented.
-    /// @todo: implement it.
+    /// @todo: implement it (#427).
     ///
     /// See @ref CqlHostDataSource::getPage4() for parameter details.
     ///
@@ -1545,7 +1545,7 @@ public:
     /// @brief Implementation of @ref CqlHostDataSource::getPage6()
     ///
     /// Not implemented.
-    /// @todo: implement it.
+    /// @todo: implement it (#427).
     ///
     /// See @ref CqlHostDataSource::getPage6() for parameter details.
     ///
