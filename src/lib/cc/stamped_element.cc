@@ -10,12 +10,12 @@ namespace isc {
 namespace data {
 
 StampedElement::StampedElement()
-    : timestamp_(boost::posix_time::second_clock::universal_time()) {
+    : timestamp_(boost::posix_time::microsecond_clock::universal_time()) {
 }
 
 void
 StampedElement::updateModificationTime() {
-    setModificationTime(boost::posix_time::second_clock::universal_time());
+    setModificationTime(boost::posix_time::microsecond_clock::universal_time());
 }
 
 } // end of namespace isc::data
