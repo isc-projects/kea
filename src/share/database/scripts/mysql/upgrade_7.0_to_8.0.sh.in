@@ -24,89 +24,89 @@ mysql "$@" <<EOF
 -- -----------------------------------------------------
 
 ALTER TABLE dhcp4_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_audit
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_global_parameter
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_global_parameter_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_option_def
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_option_def_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_shared_network
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_shared_network_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_subnet
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_pool
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_subnet_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_options
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_options_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_audit
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_global_parameter
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_global_parameter_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_option_def
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_option_def_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_shared_network
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_shared_network_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_subnet
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_pool
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_subnet_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_options
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_options_server
-    MODIFY COLUMN modification_ts TIMESTAMP(3) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 # -----------------------------------------------------
 # Table dhcp4_audit_revision
 # -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    modification_ts TIMESTAMP NOT NULL,
+    modification_ts TIMESTAMP(6) NOT NULL,
     log_message TEXT,
     server_id BIGINT(10) UNSIGNED,
     PRIMARY KEY (id),
