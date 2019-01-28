@@ -296,6 +296,9 @@ public:
         timestamps_["tomorrow"] = timestamps_["today"] + boost::posix_time::hours(24);
     }
 
+    /// @brief Logs audit entries in the @c audit_entries_ member.
+    ///
+    /// This function is called in case of an error.
     std::string logExistingAuditEntries() {
         std::ostringstream s;
 

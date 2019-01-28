@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -80,7 +80,7 @@ public:
     OptionDescriptor(const OptionPtr& opt, bool persist,
                      const std::string& formatted_value = "",
                      data::ConstElementPtr user_context = data::ConstElementPtr())
-        : option_(opt), persistent_(persist),
+        : data::StampedElement(), option_(opt), persistent_(persist),
           formatted_value_(formatted_value),
           space_name_() {
         setContext(user_context);
@@ -90,14 +90,15 @@ public:
     ///
     /// @param persist if true option is always sent.
     OptionDescriptor(bool persist)
-        : option_(OptionPtr()), persistent_(persist),
+        : data::StampedElement(), option_(OptionPtr()), persistent_(persist),
           formatted_value_(), space_name_() {};
 
     /// @brief Constructor.
     ///
     /// @param desc descriptor
     OptionDescriptor(const OptionDescriptor& desc)
-        : option_(desc.option_), persistent_(desc.persistent_),
+        : data::StampedElement(), option_(desc.option_),
+          persistent_(desc.persistent_),
           formatted_value_(desc.formatted_value_),
           space_name_(desc.space_name_) {
         setContext(desc.getContext());
