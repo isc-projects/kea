@@ -32,7 +32,9 @@ ScopedAuditRevision::ScopedAuditRevision(MySqlConfigBackendImpl* impl,
                                          const std::string& log_message,
                                          bool cascade_transaction)
     : impl_(impl) {
-    impl_->createAuditRevision(index, server_selector, log_message,
+    impl_->createAuditRevision(index, server_selector,
+                               boost::posix_time::microsec_clock::local_time(),
+                               log_message,
                                cascade_transaction);
 }
 
@@ -86,6 +88,7 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
 void
 MySqlConfigBackendImpl::createAuditRevision(const int index,
                                             const ServerSelector& server_selector,
+                                            const boost::posix_time::ptime& audit_ts,
                                             const std::string& log_message,
                                             const bool cascade_transaction) {
     // Do not touch existing audit revision in case of the cascade update.
@@ -97,6 +100,7 @@ MySqlConfigBackendImpl::createAuditRevision(const int index,
                             "audit revision");
 
     MySqlBindingCollection in_bindings = {
+        MySqlBinding::createTimestamp(audit_ts),
         MySqlBinding::createString(tag),
         MySqlBinding::createString(log_message),
         MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(cascade_transaction))

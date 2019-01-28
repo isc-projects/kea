@@ -1459,6 +1459,8 @@ ALTER TABLE dhcp4_audit
 -- data in the database, e.g. when new subnet is added.
 --
 -- Parameters:
+-- - audit_ts timestamp to be associated with the audit
+--   revision.
 -- - server_tag is used to retrieve the server_id which
 --   associates the changes applied with the particular
 --   server or all servers.
@@ -1478,14 +1480,15 @@ ALTER TABLE dhcp4_audit
 -- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DELIMITER $$
-CREATE PROCEDURE createAuditRevisionDHCP4(IN server_tag VARCHAR(256),
+CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP(6),
+                                          IN server_tag VARCHAR(256),
                                           IN audit_log_message TEXT,
                                           IN cascade_transaction TINYINT(1))
 BEGIN
     DECLARE srv_id BIGINT(20);
     SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
     INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
-       VALUES (NOW(), srv_id, audit_log_message);
+       VALUES (audit_ts, srv_id, audit_log_message);
     SET @audit_revision_id = LAST_INSERT_ID();
     SET @cascade_transaction = cascade_transaction;
 END $$

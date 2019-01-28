@@ -171,6 +171,8 @@ public:
     ///
     /// @param index query index.
     /// @param server_selector Server selector.
+    /// @param audit_ts Timestamp to be associated with the audit
+    /// revision.
     /// @param log_message log message to be used for the audit revision.
     /// @param cascade_transaction Boolean value indicating whether the
     /// configuration modification is performed as part of the ownining
@@ -179,6 +181,7 @@ public:
     /// audit entry for the owning element should be created.
     void createAuditRevision(const int index,
                              const db::ServerSelector& server_selector,
+                             const boost::posix_time::ptime& audit_ts,
                              const std::string& log_message,
                              const bool cascade_transaction);
 
