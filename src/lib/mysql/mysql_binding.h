@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -421,6 +421,14 @@ public:
     static void convertToDatabaseTime(const time_t input_time,
                                       MYSQL_TIME& output_time);
 
+    /// @brief Converts posix time value to database time.
+    ///
+    /// @param input_time A posix time value representing local time.
+    /// @param output_time Reference to MYSQL_TIME object where converted time
+    ///        will be put.
+    static void convertToDatabaseTime(const boost::posix_time::ptime& input_time,
+                                      MYSQL_TIME& output_time);
+
     /// @brief Converts Lease Time to Database Times
     ///
     /// Within the DHCP servers, times are stored as client last transmit time
@@ -470,7 +478,7 @@ public:
     /// @param database_time Reference to MYSQL_TIME object where database
     /// time is stored.
     ///
-    /// @return Database time converted to posix time.
+    /// @return Database time converted to local posix time.
     static boost::posix_time::ptime
     convertFromDatabaseTime(const MYSQL_TIME& database_time);
 

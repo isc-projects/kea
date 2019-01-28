@@ -23,7 +23,7 @@ TEST(StampedElementTest, create) {
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
     boost::posix_time::time_duration delta =
-        boost::posix_time::second_clock::universal_time() -
+        boost::posix_time::second_clock::local_time() -
         element.getModificationTime();
     EXPECT_LT(delta.seconds(), 5);
 }
@@ -52,7 +52,7 @@ TEST(StampedElementTest, update) {
     // Checking that the delta between now and the timestamp is within
     // 5s range should be sufficient.
     boost::posix_time::time_duration delta =
-        boost::posix_time::second_clock::universal_time() -
+        boost::posix_time::second_clock::local_time() -
         element.getModificationTime();
     EXPECT_LT(delta.seconds(), 5);
 }
