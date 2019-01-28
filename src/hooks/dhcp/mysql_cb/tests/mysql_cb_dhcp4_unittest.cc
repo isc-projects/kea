@@ -286,7 +286,7 @@ public:
     /// @brief Initialize posix time values used in tests.
     void initTimestamps() {
         // Current time minus 1 hour to make sure it is in the past.
-        timestamps_["today"] = boost::posix_time::second_clock::universal_time()
+        timestamps_["today"] = boost::posix_time::second_clock::local_time()
             - boost::posix_time::hours(1);
         // Yesterday.
         timestamps_["yesterday"] = timestamps_["today"] - boost::posix_time::hours(24);

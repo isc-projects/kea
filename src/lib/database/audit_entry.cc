@@ -31,7 +31,7 @@ AuditEntry::AuditEntry(const std::string& object_type,
     : object_type_(object_type),
       object_id_(object_id),
       modification_type_(modification_type),
-      modification_time_(boost::posix_time::microsec_clock::universal_time()),
+      modification_time_(boost::posix_time::microsec_clock::local_time()),
       log_message_(log_message) {
     // Check if the provided values are sane.
     validate();

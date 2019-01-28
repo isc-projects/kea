@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -105,7 +105,7 @@ public:
                  "bigint_value BIGINT NULL,"
                  "string_value TEXT NULL,"
                  "blob_value BLOB NULL,"
-                 "timestamp_value TIMESTAMP NULL"
+                 "timestamp_value TIMESTAMP(6) NULL"
                  ")");
     }
 
@@ -236,7 +236,7 @@ TEST_F(MySqlConnectionTest, select) {
         MySqlBinding::createInteger<int64_t>(-4096),
         MySqlBinding::createString("shellfish"),
         MySqlBinding::createBlob(blob.begin(), blob.end()),
-        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::universal_time())
+        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::local_time())
     };
 
     testInsertSelect(in_bindings);
@@ -252,7 +252,7 @@ TEST_F(MySqlConnectionTest, selectNullInteger) {
         MySqlBinding::createInteger<int64_t>(-4096),
         MySqlBinding::createString("shellfish"),
         MySqlBinding::createBlob(blob.begin(), blob.end()),
-        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::universal_time())
+        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::local_time())
     };
 
     testInsertSelect(in_bindings);
@@ -269,7 +269,7 @@ TEST_F(MySqlConnectionTest, selectNullString) {
         MySqlBinding::createInteger<int64_t>(-4096),
         MySqlBinding::createNull(),
         MySqlBinding::createBlob(blob.begin(), blob.end()),
-        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::universal_time())
+        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::local_time())
     };
 
     testInsertSelect(in_bindings);
@@ -284,7 +284,7 @@ TEST_F(MySqlConnectionTest, selectNullBlob) {
         MySqlBinding::createInteger<int64_t>(-4096),
         MySqlBinding::createString("shellfish"),
         MySqlBinding::createNull(),
-        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::universal_time())
+        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::local_time())
     };
 
     testInsertSelect(in_bindings);
@@ -315,7 +315,7 @@ TEST_F(MySqlConnectionTest, selectEmptyStringBlob) {
         MySqlBinding::createInteger<int64_t>(-4096),
         MySqlBinding::createString(""),
         MySqlBinding::createBlob(blob.begin(), blob.end()),
-        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::universal_time())
+        MySqlBinding::createTimestamp(boost::posix_time::microsec_clock::local_time())
     };
 
     testInsertSelect(in_bindings);

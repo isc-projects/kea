@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 
 #include <mysql/mysql_binding.h>
+#include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
@@ -83,7 +84,7 @@ TEST(MySqlBindingTest, conditionalInteger) {
 
 // This test verifies that default timestamp is returned if binding is null.
 TEST(MySqlBindingTest, defaultTimestamp) {
-    boost::posix_time::ptime current_time = boost::posix_time::second_clock::universal_time();
+    boost::posix_time::ptime current_time = boost::posix_time::second_clock::local_time();
     boost::posix_time::ptime past_time = current_time - boost::posix_time::hours(1);
 
     auto binding = MySqlBinding::createNull();
@@ -91,6 +92,24 @@ TEST(MySqlBindingTest, defaultTimestamp) {
 
     binding = MySqlBinding::createTimestamp(current_time);
     EXPECT_TRUE(current_time == binding->getTimestampOrDefault(past_time));
+}
+
+// This test verifies that the binding preserves fractional seconds in
+// millisecond precision.
+TEST(MySqlBindingTest, millisecondTimestampPrecision) {
+    // Set timestamp of 2019-01-28 01:12:10.123
+
+    // Fractional part depends on the clock resolution.
+    long fractional = 123*(boost::posix_time::time_duration::ticks_per_second()/1000);
+    boost::posix_time::ptime
+        test_time(boost::gregorian::date(2019, boost::gregorian::Jan, 28),
+                  boost::posix_time::time_duration(1, 12, 10, fractional));
+
+    auto binding = MySqlBinding::createTimestamp(test_time);
+
+    boost::posix_time::ptime returned_test_time = binding->getTimestamp();
+
+    EXPECT_EQ(returned_test_time, test_time);
 }
 
 }

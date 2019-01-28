@@ -28,7 +28,7 @@ public:
 
     /// @brief Returns current time.
     static boost::posix_time::ptime now() {
-        return (boost::posix_time::microsec_clock::universal_time());
+        return (boost::posix_time::microsec_clock::local_time());
     }
 
     /// @brief Returns always the same time value.
