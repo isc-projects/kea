@@ -182,29 +182,25 @@ public:
     /// same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id Identifier type (hwaddr or duid).
-    void testGetAll4(const Host::IdentifierType& id);
+    void testGetAll4();
 
     /// @brief Test that Verifies that IPv6 host reservations in the
     /// same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id Identifier type (hwaddr or duid).
-    void testGetAll6(const Host::IdentifierType& id);
+    void testGetAll6();
 
     /// @brief Test that Verifies that pages of host reservations in the
     /// same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id Identifier type (hwaddr or duid).
-    void testGetPage4(const Host::IdentifierType& id);
+    void testGetPage4();
 
     /// @brief Test that Verifies that pages of host reservations in the
     /// same subnet can be retrieved properly.
     ///
     /// Uses gtest macros to report failures.
-    /// @param id Identifier type (hwaddr or duid).
-    void testGetPage6(const Host::IdentifierType& id);
+    void testGetPage6();
 
     /// @brief Test that Verifies that pages of complex host reservations
     /// are not truncated, i.e. the limit applies on the number of hosts

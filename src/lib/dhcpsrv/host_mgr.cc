@@ -136,55 +136,63 @@ HostMgr::getPage4(const SubnetID& subnet_id,
                   size_t& source_index,
                   uint64_t lower_host_id,
                   const HostPageSize& page_size) const {
-    for (;;) {
-        if (source_index > alternate_sources_.size()) {
-            return (ConstHostCollection());
-        }
-        ConstHostCollection hosts;
-        if (source_index == 0) {
-            hosts = getCfgHosts()->
-                getPage4(subnet_id, source_index, lower_host_id, page_size);
-        } else {
-            hosts = alternate_sources_[source_index - 1]->
-                getPage4(subnet_id, source_index, lower_host_id, page_size);
-        }
-        if (!hosts.empty()) {
-            return (hosts);
-        } else {
-            ++source_index;
-            lower_host_id = 0;
-            continue;
-        }
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
     }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage4(subnet_id, source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage4(subnet_id, source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage4(subnet_id, source_index, 0UL, page_size));
 }
-        
+
 ConstHostCollection
 HostMgr::getPage6(const SubnetID& subnet_id,
                   size_t& source_index,
                   uint64_t lower_host_id,
                   const HostPageSize& page_size) const {
-    for (;;) {
-        if (source_index > alternate_sources_.size()) {
-            return (ConstHostCollection());
-        }
-        ConstHostCollection hosts;
-        if (source_index == 0) {
-            hosts = getCfgHosts()->
-                getPage6(subnet_id, source_index, lower_host_id, page_size);
-        } else {
-            hosts = alternate_sources_[source_index - 1]->
-                getPage6(subnet_id, source_index, lower_host_id, page_size);
-        }
-        if (!hosts.empty()) {
-            return (hosts);
-        } else {
-            ++source_index;
-            lower_host_id = 0;
-            continue;
-        }
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
     }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage6(subnet_id, source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage6(subnet_id, source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage6(subnet_id, source_index, 0UL, page_size));
 }
-        
+
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
     ConstHostCollection hosts = getCfgHosts()->getAll4(address);

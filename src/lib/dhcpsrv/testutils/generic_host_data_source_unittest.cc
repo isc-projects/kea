@@ -357,11 +357,12 @@ void GenericHostDataSourceTest::testMaxSubnetId6() {
 }
 
 void
-GenericHostDataSourceTest::testGetAll4(const Host::IdentifierType& id) {
+GenericHostDataSourceTest::testGetAll4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
+    const Host::IdentifierType& id = Host::IDENT_HWADDR;
     HostPtr host1 = HostDataSourceUtils::initializeHost4("192.0.2.1", id);
     HostPtr host2 = HostDataSourceUtils::initializeHost4("192.0.2.2", id);
     HostPtr host3 = HostDataSourceUtils::initializeHost4("192.0.2.3", id);
@@ -400,11 +401,12 @@ GenericHostDataSourceTest::testGetAll4(const Host::IdentifierType& id) {
 }
 
 void
-GenericHostDataSourceTest::testGetAll6(const Host::IdentifierType& id) {
+GenericHostDataSourceTest::testGetAll6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
     // Let's create a couple of hosts...
+    const Host::IdentifierType& id = Host::IDENT_DUID;
     HostPtr host1 = HostDataSourceUtils::initializeHost6("2001:db8::1", id, false);
     HostPtr host2 = HostDataSourceUtils::initializeHost6("2001:db8::2", id, false);
     HostPtr host3 = HostDataSourceUtils::initializeHost6("2001:db8::3", id, false);
@@ -443,7 +445,7 @@ GenericHostDataSourceTest::testGetAll6(const Host::IdentifierType& id) {
 }
 
 void
-GenericHostDataSourceTest::testGetPage4(const Host::IdentifierType& id) {
+GenericHostDataSourceTest::testGetPage4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -451,6 +453,7 @@ GenericHostDataSourceTest::testGetPage4(const Host::IdentifierType& id) {
     IOAddress addr("192.0.2.0");
     SubnetID subnet4(4);
     SubnetID subnet6(6);
+    const Host::IdentifierType& id = Host::IDENT_DUID;
     for (unsigned i = 0; i < 25; ++i) {
         addr = IOAddress::increase(addr);
 
@@ -490,7 +493,7 @@ GenericHostDataSourceTest::testGetPage4(const Host::IdentifierType& id) {
 }
 
 void
-GenericHostDataSourceTest::testGetPage6(const Host::IdentifierType& id) {
+GenericHostDataSourceTest::testGetPage6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -498,6 +501,7 @@ GenericHostDataSourceTest::testGetPage6(const Host::IdentifierType& id) {
     IOAddress addr("2001:db8:1::");
     SubnetID subnet4(4);
     SubnetID subnet6(6);
+    const Host::IdentifierType& id = Host::IDENT_HWADDR;
     for (unsigned i = 0; i < 25; ++i) {
         addr = IOAddress::increase(addr);
 

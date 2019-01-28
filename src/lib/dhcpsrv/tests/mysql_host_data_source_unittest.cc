@@ -313,24 +313,24 @@ TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
 TEST_F(MySqlHostDataSourceTest, getAll4BySubnet) {
-    testGetAll4(Host::IDENT_HWADDR);
+    testGetAll4();
 }
 
 // Verifies that IPv6 host reservations in the same subnet can be retrieved
 TEST_F(MySqlHostDataSourceTest, getAll6BySubnet) {
-    testGetAll6(Host::IDENT_DUID);
+    testGetAll6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
 // by pages.
 TEST_F(MySqlHostDataSourceTest, getPage4) {
-    testGetPage4(Host::IDENT_DUID);
+    testGetPage4();
 }
 
 // Verifies that IPv6 host reservations in the same subnet can be retrieved
 // by pages.
 TEST_F(MySqlHostDataSourceTest, getPage6) {
-    testGetPage6(Host::IDENT_HWADDR);
+    testGetPage6();
 }
 
 // Verifies that IPv4 host reservations in the same subnet can be retrieved
