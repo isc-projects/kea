@@ -39,7 +39,7 @@
     or in VirtualBox. To list of supported systems, use
     <command>supported-systems</command> command:
     <screen>
-$<userinput>./hammer.py list-systems</userinput>
+$<userinput>./hammer.py supported-systems</userinput>
 fedora:
   - 27: lxc, virtualbox
   - 28: lxc, virtualbox
@@ -60,7 +60,8 @@ freebsd:
   - 12.0: virtualbox
     </screen>
 
-    It is also possible to run build locally, in current system (still if supported).
+    It is also possible to run build locally, in current system (if
+    the OS is supported).
   </para>
 
   <!-- @todo: explain how to install deps (hammer ensure-hammer-deps), explain
@@ -71,7 +72,7 @@ freebsd:
     Vagrant plugins using the command:
     <screen><userinput>./hammer.py ensure-hammer-deps</userinput></screen>
 
-    Still VirtualBox and LXC need to be installed manually.
+    VirtualBox and LXC need to be installed manually.
   </para>
 
   <para>
