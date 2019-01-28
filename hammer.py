@@ -422,7 +422,7 @@ class VagrantEnv(object):
         log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
         log.info('Prepare log file stored to %s', log_file_path)
 
-        cmd = "{python} hammer.py prepare-system {features} {nofeatures} {check_times}"
+        cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times}"
         cmd = cmd.format(features=self.features_arg,
                          nofeatures=self.nofeatures_arg,
                          python=self.python,
@@ -1207,6 +1207,15 @@ def _print_summary(results, features):
     print("+=========================================================================+")
 
 
+def _check_system_revision(system, revision):
+    revs = SYSTEMS[system]
+    if revision not in revs:
+        msg = "hammer.py error: argument -r/--revision: invalid choice: '%s' (choose from '%s')"
+        msg = msg % (revision, "', '".join(revs))
+        print(msg)
+        sys.exit(1)
+
+
 def main():
     args = parse_args()
 
@@ -1224,11 +1233,13 @@ def main():
         list_created_systems()
 
     elif args.command == "package-box":
+        _check_system_revision(args.system, args.revision)
         features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
 
     elif args.command == "prepare-system":
+        _check_system_revision(args.system, args.revision)
         if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
             print('Please provide required system and its version.')
             print('Example: ./hammer.py prepare-system -s fedora -r 28.')
@@ -1245,6 +1256,7 @@ def main():
         prepare_system_in_vagrant(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
 
     elif args.command == "build":
+        _check_system_revision(args.system, args.revision)
         features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
         if args.provider == 'local':
@@ -1297,6 +1309,7 @@ def main():
             sys.exit(1)
 
     elif args.command == "ssh":
+        _check_system_revision(args.system, args.revision)
         ssh(args.provider, args.system, args.revision)
 
     elif args.command == "ensure-hammer-deps":
