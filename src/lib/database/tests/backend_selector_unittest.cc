@@ -170,7 +170,8 @@ TEST(BackendSelectorTest, backendTypeToString) {
 }
 
 // Tests toElement from backend selectors.
-// Can't be use runToElementTest because it is defined in a later library...
+// Can't be use runToElementTest because it is defined in a library built
+// at a later stage.
 TEST(BackendSelectorTest, backendToElement) {
     // Unspecified.
     boost::scoped_ptr<BackendSelector> sel(new BackendSelector());
