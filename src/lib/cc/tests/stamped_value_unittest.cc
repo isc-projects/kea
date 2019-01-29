@@ -88,6 +88,14 @@ TEST(StampedValueTest, toElement) {
     ASSERT_THROW(value->toElement(Element::integer), BadValue);
     ASSERT_THROW(value->toElement(Element::real), BadValue);
 
+    // Make sure only lower case "true" and "false" works for Booleans.
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "TRUE")));
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo", "FALSE")));
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+    ASSERT_NO_THROW(value.reset(new StampedValue("foo","nonsens")));
+    ASSERT_THROW(value->toElement(Element::boolean), BadValue);
+
     // Make sure we can create a DoubleElement.
     ASSERT_NO_THROW(value.reset(new StampedValue("foo", "45.0")));
     ASSERT_NO_THROW(elem = value->toElement(Element::real));

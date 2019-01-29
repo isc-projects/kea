@@ -74,7 +74,7 @@ protected:
                         }
                     }
 
-                    // Apparently we're looking for on that does not prexist.
+                    // Apparently we're looking for one that does not prexist.
                     return (TestConfigBackendDHCPv4Ptr(new TestConfigBackendDHCPv4(params)));
                 });
     }
@@ -451,6 +451,7 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
+// @todo enable test when SrvConfig can merge shared networks.
 TEST_F(Dhcp4CBTest, DISABLED_mergeSharedNetworks) {
     string base_config =
         "{ \n"
