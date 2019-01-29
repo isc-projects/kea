@@ -30,7 +30,6 @@ libdatabase_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES)
 libdatabase_unittests_LDFLAGS = $(AM_LDFLAGS) $(GTEST_LDFLAGS)
 
 libdatabase_unittests_LDADD  = $(top_builddir)/src/lib/database/libkea-database.la
-libdatabase_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 libdatabase_unittests_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
