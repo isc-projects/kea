@@ -28,6 +28,9 @@ namespace dhcp {
 ///
 /// This class contains common methods for manipulating data in the
 /// MySQL database, used by all servers.
+///
+/// All POSIX times specified in the methods belonging to this
+/// class must be local times.
 class MySqlConfigBackendImpl {
 protected:
 
