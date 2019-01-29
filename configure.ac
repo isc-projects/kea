@@ -695,7 +695,7 @@ fi
 
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-mysql should point to a mysql_config program])
+        AC_MSG_ERROR([MySQL dependencies cannot be found. Please install MySQL libraries or point --with-mysql to mysql_config program if it is located in non-default directory, eg. --with-mysql=/opt/mysql/bin/mysql_config.])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
