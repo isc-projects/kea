@@ -154,7 +154,7 @@ class ExecutionError(Exception):
 
 
 def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None, quiet=False, check_times=False, capture=False,
-            interactive=False):
+            interactive=False, attempts=1, sleep_time_after_attempt=None):
     """Execute a command in shell.
 
     :param str cmd: a command to be executed
@@ -168,6 +168,8 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     :param bool check_times: if True then timeout is taken into account
     :param bool capture: if True then the command's traces are captured and returned by the function
     :param bool interactive: if True then stdin and stdout are not redirected, traces handling is disabled, used for e.g. SSH
+    :param int attemts: number of attempts to run the command if it fails
+    :param int sleep_time_after_attempt: number of seconds to sleep before taking next attempt
     """
     log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
@@ -175,42 +177,58 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     if dry_run:
         return 0
 
-    if interactive:
-        p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
-        exitcode = p.wait()
+    if 'sudo' in cmd and env:
+        # if sudo is used and env is overridden then to preserve env add -E to sudo
+        cmd = cmd.replace('sudo', 'sudo -E')
 
-    else:
-        if log_file_path:
-            log_file = open(log_file_path, "wb")
+    if log_file_path:
+        log_file = open(log_file_path, "wb")
 
-        p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+    for attempt in range(attempts):
+        if interactive:
+            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
+            exitcode = p.wait()
 
-        if capture:
-            output = ''
-        t0 = time.time()
-        t1 = time.time()
-        # repeat until process is running or timeout not occured
-        while p.poll() is None and (timeout is None or t1 - t0 < timeout):
-            line = p.stdout.readline()
-            if line:
-                line_decoded = line.decode(errors='ignore').rstrip() + '\r'
-                if not quiet:
-                    print(line_decoded)
-                if capture:
-                    output += line_decoded
-                if log_file_path:
-                    log_file.write(line)
+        else:
+            p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            if capture:
+                output = ''
+            t0 = time.time()
             t1 = time.time()
+            # repeat until process is running or timeout not occured
+            while p.poll() is None and (timeout is None or t1 - t0 < timeout):
+                line = p.stdout.readline()
+                if line:
+                    line_decoded = line.decode(errors='ignore').rstrip() + '\r'
+                    if not quiet:
+                        print(line_decoded)
+                    if capture:
+                        output += line_decoded
+                    if log_file_path:
+                        log_file.write(line)
+                t1 = time.time()
 
-        if log_file_path:
-            log_file.close()
+            # If no exitcode yet, ie. process is still running then it means that timeout occured.
+            # In such case terminate the process and raise an exception.
+            if p.poll() is None:
+                p.terminate()
+                raise ExecutionError('Execution timeout')
+            exitcode = p.returncode
 
-        # If no exitcode yet, ie. process is still running then it means that timeout occured.
-        # In such case terminate the process and raise an exception.
-        if p.poll() is None:
-            p.terminate()
-            raise ExecutionError('Execution timeout')
-        exitcode = p.returncode
+        if exitcode == 0:
+            break
+        elif attempt < attempts - 1:
+            txt = 'command failed, retry, attempt %d/%d' % (attempt, attempts)
+            if log_file_path:
+                txt_to_file = '\n\n[HAMMER] %s\n\n\n' % txt
+                log_file.write(txt_to_file.encode('ascii'))
+            log.info(txt)
+            if sleep_time_after_attempt:
+                time.sleep(sleep_time_after_attempt)
+
+    if log_file_path:
+        log_file.close()
 
     if exitcode != 0 and raise_error:
         raise ExecutionError("The command return non-zero exitcode %s, cmd: '%s'" % (exitcode, cmd))
@@ -220,13 +238,29 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
     return exitcode
 
 
-def install_yum(pkgs, env=None, check_times=False):
+def install_pkgs(pkgs, timeout=60, env=None, check_times=False):
+    system, revision = get_system_revision()
+
+    if system in ['centos', 'rhel'] and revision == '7':
+        # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
+        # but we want an error
+        cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False'
+    elif system == 'fedora' or (system in ['centos', 'rhel'] and revision == '8'):
+        cmd = 'sudo dnf -y install'
+    elif system in ['debian', 'ubuntu']:
+        if not env:
+            env = os.environ.copy()
+        env['DEBIAN_FRONTEND'] = 'noninteractive'
+        cmd = 'sudo apt install --no-install-recommends -y'
+    elif system == 'freebsd':
+        cmd = 'sudo pkg install -y'
+
     if isinstance(pkgs, list):
         pkgs = ' '.join(pkgs)
-    # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
-    # but we want an error
-    cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False %s' % pkgs
-    execute(cmd, env=env, check_times=check_times)
+
+    cmd += ' ' + pkgs
+
+    execute(cmd, timeout=timeout, env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
 
 class VagrantEnv(object):
@@ -566,9 +600,9 @@ def _install_cassandra_deb(env, check_times):
     if not os.path.exists('/usr/sbin/cassandra'):
         execute('echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list',
                 env=env, check_times=check_times)
-        execute('curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -', env=env, check_times=check_times)
+        execute('wget -qO- https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -', env=env, check_times=check_times)
         execute('sudo apt update', env=env, check_times=check_times)
-        execute('sudo apt install -y cassandra libuv1 pkgconf', env=env, check_times=check_times)
+        install_pkgs('cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
         execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
@@ -594,11 +628,7 @@ def _install_cassandra_rpm(system, env, check_times):
     if not os.path.exists('/usr/bin/cassandra'):
         #execute('sudo dnf config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
         #execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
-        if system == 'fedora':
-            install_yum('cassandra cassandra-server libuv libuv-devel', env=env, check_times=check_times)
-        #elif system == 'centos':
-        else:
-            raise NotImplementedError
+        install_pkgs('cassandra cassandra-server libuv libuv-devel', env=env, check_times=check_times)
 
     execute('sudo systemctl start cassandra')
 
@@ -636,8 +666,7 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
-        cmd = 'sudo dnf -y install %s' % ' '.join(packages)
-        execute(cmd, env=env, timeout=300, check_times=check_times)
+        install_pkgs(packages, timeout=300, env=env, check_times=check_times)
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -649,7 +678,7 @@ def prepare_system_local(features, check_times):
 
     # prepare centos
     elif system == 'centos':
-        install_yum('epel-release', env=env, check_times=check_times)
+        install_pkgs('epel-release', env=env, check_times=check_times)
 
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'boost-devel',
                     'mariadb-devel', 'postgresql-devel']
@@ -666,7 +695,7 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
-        install_yum(packages, env=env, check_times=check_times)
+        install_pkgs(packages, env=env, check_times=check_times)
 
         if 'unittest' in features:
             _install_gtest_sources()
@@ -693,8 +722,7 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
-        install_cmd = 'sudo dnf -y install %s'
-        execute(install_cmd % ' '.join(packages), env=env, timeout=120, check_times=check_times)
+        install_pkgs(packages, env=env, timeout=120, check_times=check_times)
 
         # prepare lib4cplus as epel repos are not available for rhel 8 yet
         if revision == '8' and not os.path.exists('/usr/include/log4cplus/logger.h'):
@@ -717,7 +745,7 @@ def prepare_system_local(features, check_times):
 
     # prepare ubuntu
     elif system == 'ubuntu':
-        execute('sudo apt update', env=env, check_times=check_times)
+        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev', 'libboost-system-dev']
 
@@ -736,7 +764,10 @@ def prepare_system_local(features, check_times):
                              'libpq-dev', 'postgresql-server-dev-all', 'python3-dev'])
 
         if 'mysql' in features:
-            packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+            if revision == '16.04':
+                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+            else:
+                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
         if 'pgsql' in features:
             packages.extend(['postgresql-client', 'libpq-dev', 'postgresql-all'])
@@ -744,21 +775,14 @@ def prepare_system_local(features, check_times):
         if 'radius' in features:
             packages.extend(['git'])
 
-        done = False
-        while not done:
-            try:
-                execute('sudo apt install --no-install-recommends -y %s' % ' '.join(packages), env=env, timeout=240, check_times=check_times)
-                done = True
-            except:  # pylint: disable=bare-except
-                log.exception('ble')
-                time.sleep(20)
+        install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
             _install_cassandra_deb(env, check_times)
 
     # prepare debian
     elif system == 'debian':
-        execute('sudo apt update', env=env, check_times=check_times)
+        execute('sudo apt update', env=env, check_times=check_times, attempts=3, sleep_time_after_attempt=10)
 
         packages = ['gcc', 'g++', 'make', 'autoconf', 'automake', 'libtool', 'libssl-dev', 'liblog4cplus-dev', 'libboost-system-dev']
 
@@ -773,14 +797,18 @@ def prepare_system_local(features, check_times):
                 packages.append('googletest')
 
         if 'mysql' in features:
-            packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
+            if revision == '8':
+                packages.extend(['mysql-client', 'libmysqlclient-dev', 'mysql-server'])
+            else:
+                packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
         if 'radius' in features:
             packages.extend(['git'])
 
-        execute('sudo apt install --no-install-recommends -y %s' % ' '.join(packages), env=env, timeout=240, check_times=check_times)
+        install_pkgs(packages, env=env, timeout=240, check_times=check_times)
 
-        if 'cql' in features:
+        if 'cql' in features and revision != '8':
+            # there is no libuv1 package in case of debian 8
             _install_cassandra_deb(env, check_times)
 
     # prepare freebsd
@@ -801,7 +829,7 @@ def prepare_system_local(features, check_times):
         if 'unittest' in features:
             _install_gtest_sources()
 
-        execute('sudo pkg install -y %s' % ' '.join(packages), env=env, timeout=6 * 60, check_times=check_times)
+        install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
 
     else:
         raise NotImplementedError
@@ -847,7 +875,8 @@ def _build_just_binaries(distro, revision, features, tarball_path, env, check_ti
         cmd += ' --with-mysql'
     if 'pgsql' in features:
         cmd += ' --with-pgsql'
-    if 'cql' in features:
+    if 'cql' in features and not (system == 'debian' and revision == '8'):
+        # debian 8 does not have all deps required
         cmd += ' --with-cql=/usr/bin/pkg-config'
     if 'unittest' in features:
         # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
@@ -886,7 +915,7 @@ def _build_just_binaries(distro, revision, features, tarball_path, env, check_ti
 
     # do build
     cmd = 'make -j%s' % cpus
-    execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times, dry_run=dry_run)
+    execute(cmd, cwd=src_path, env=env, timeout=150 * 60, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
         results_dir = os.path.abspath(os.path.join(src_path, 'tests_result'))
