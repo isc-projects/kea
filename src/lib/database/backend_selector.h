@@ -174,7 +174,7 @@ public:
 
     /// @brief Unparse a backend selector object.
     ///
-    /// The caller must check if the type is specified before.
+    /// The caller must ensure that the selector type is specified.
     ///
     /// @return A pointer to unparsed backend selector configuration.
     /// @throw BadValue If the backend selector type is unspecified.
