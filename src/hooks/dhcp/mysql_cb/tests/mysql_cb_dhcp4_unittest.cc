@@ -547,7 +547,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
 
     const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
-    // It should be the one modified "tomorrow". 
+    // It should be the one modified "tomorrow".
     ASSERT_EQ(1, parameters_index.size());
 
     auto parameter = parameters_index.find("name3");
@@ -819,12 +819,12 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
                           AuditEntry::ModificationType::CREATE,
                           "shared network set");
     }
-    
+
     // Update shared network in the database.
     SharedNetwork4Ptr shared_network2 = test_networks_[1];
     cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network2);
 
-    // Fetch updated shared betwork and see if it matches.
+    // Fetch updated shared network and see if it matches.
     returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
                                                  test_networks_[1]->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
