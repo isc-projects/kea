@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,7 +124,7 @@ public:
                          other_it->second->begin();
                      other_items_it != other_it->second->end();
                      ++other_items_it) {
-                    if (items_it->equals(*other_items_it)) {
+                    if ((*items_it)->equals(*other_items_it)) {
                         match_found = true;
                         break;
                     }
