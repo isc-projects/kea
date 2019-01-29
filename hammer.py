@@ -5,6 +5,7 @@
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
+"""Hammer - Kea development environment management tool."""
 
 from __future__ import print_function
 import os
@@ -41,6 +42,7 @@ SYSTEMS = {
     'freebsd': ['11.2', '12.0'],
 }
 
+# pylint: disable=C0326
 IMAGE_TEMPLATES = {
     'fedora-27-lxc':           {'bare': 'lxc-fedora-27',               'kea': 'godfryd/kea-fedora-27'},
     'fedora-27-virtualbox':    {'bare': 'generic/fedora27',            'kea': 'godfryd/kea-fedora-27'},
@@ -114,27 +116,24 @@ log = logging.getLogger()
 def red(txt):
     if sys.stdout.isatty():
         return '\033[1;31m%s\033[0;0m' % txt
-    else:
-        return txt
+    return txt
 
 def green(txt):
     if sys.stdout.isatty():
         return '\033[0;32m%s\033[0;0m' % txt
-    else:
-        return txt
+    return txt
 
 def blue(txt):
     if sys.stdout.isatty():
         return '\033[0;34m%s\033[0;0m' % txt
-    else:
-        return txt
+    return txt
 
 
 def get_system_revision():
     """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
-        system, revision, _ = platform.dist()
+        system, revision, _ = platform.dist()  # pylit: disable=deprecated-method
         if system == 'debian':
             if revision.startswith('8.'):
                 revision = '8'
@@ -150,7 +149,9 @@ def get_system_revision():
     return system.lower(), revision
 
 
-class ExecutionError(Exception): pass
+class ExecutionError(Exception):
+    pass
+
 
 def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None, quiet=False, check_times=False, capture=False,
             interactive=False):
@@ -176,7 +177,6 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
     if interactive:
         p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
-        ver = platform.python_version()
         exitcode = p.wait()
 
     else:
@@ -217,8 +217,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
     if capture:
         return exitcode, output
-    else:
-        return exitcode
+    return exitcode
 
 
 def install_yum(pkgs, env=None, check_times=False):
@@ -246,6 +245,11 @@ class VagrantEnv(object):
         self.dry_run = dry_run
         self.quiet = quiet
         self.check_times = check_times
+
+        # set properly later
+        self.features_arg = None
+        self.nofeatures_arg = None
+        self.python = None
 
         if provider == "virtualbox":
             vagrantfile_tpl = VBOX_VAGRANTFILE_TPL
@@ -307,8 +311,13 @@ class VagrantEnv(object):
                 execute('sudo rm -rf %s' % lxc_box_dir)
             os.mkdir(lxc_box_dir)
             lxc_container_path = os.path.join('/var/lib/lxc', self.name)
-            execute('sudo bash -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2MWZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEgE98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key" > %s/rootfs/home/vagrant/.ssh/authorized_keys\'' % lxc_container_path)
-            execute('sudo bash -c "cd %s && tar --numeric-owner --anchored --exclude=./rootfs/dev/log -czf %s/rootfs.tar.gz ./rootfs/*"' % (lxc_container_path, lxc_box_dir))
+            execute('sudo bash -c \'echo "ssh-rsa AAAAB3NzaC1yc2EAAAABIwAAAQEA6NF8iallvQVp22WDkTkyrtvp9eWW6A8YVr+'
+                    'kz4TjGYe7gHzIw+niNltGEFHzD8+v1I2YJ6oXevct1YeS0o9HZyN1Q9qgCgzUFtdOKLv6IedplqoPkcmF0aYet2PkEDo'
+                    '3MlTBckFXPITAMzF8dJSIFo9D8HfdOV0IAdx4O7PtixWKn5y2hMNG0zQPyUecp4pzC6kivAIhyfHilFR61RGL+GPXQ2M'
+                    'WZWFYbAGjyiYJnAmCP3NOTd0jMZEnDkbUvxhMmBYSdETk1rRgm+R4LOzFUGaHqHDLKLX+FIPKcF96hrucXzcWyLbIbEg'
+                    'E98OHlnVYCzRdK8jlqm8tehUc9c9WhQ== vagrant insecure public key" > %s/rootfs/home/vagrant/.ssh/authorized_keys\'' % lxc_container_path)
+            cmd = 'sudo bash -c "cd %s && tar --numeric-owner --anchored --exclude=./rootfs/dev/log -czf %s/rootfs.tar.gz ./rootfs/*"'
+            execute(cmd % (lxc_container_path, lxc_box_dir))
             execute('sudo cp %s/config %s/lxc-config' % (lxc_container_path, lxc_box_dir))
             execute('sudo chown `id -un`:`id -gn` *', cwd=lxc_box_dir)
             with open(os.path.join(lxc_box_dir, 'metadata.json'), 'w') as f:
@@ -323,6 +332,7 @@ class VagrantEnv(object):
             execute('sudo rm -rf %s' % lxc_box_dir)
 
     def upload(self, src):
+        """Upload src to Vagrant system, home folder."""
         attempt = 4
         while attempt > 0:
             exitcode = execute('vagrant upload %s' % src, cwd=self.vagrant_dir, dry_run=self.dry_run, raise_error=False)
@@ -390,7 +400,7 @@ class VagrantEnv(object):
                         results = json.loads(txt)
                         total = results['grand_total']
                         passed = results['grand_passed']
-        except:
+        except:  # pylint: disable=bare-except
             log.exception('ignored issue with parsing unit test results')
 
         return total, passed
@@ -692,7 +702,8 @@ def prepare_system_local(features, check_times):
                 execute('mkdir srpms')
             execute('rm -rf srpms/*')
             execute('rm -rf rpmbuild')
-            execute('wget --no-verbose -O srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm https://rpmfind.net/linux/epel/7/SRPMS/Packages/l/log4cplus-1.1.3-0.4.rc3.el7.src.rpm',
+            execute('wget --no-verbose -O srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm '
+                    'https://rpmfind.net/linux/epel/7/SRPMS/Packages/l/log4cplus-1.1.3-0.4.rc3.el7.src.rpm',
                     check_times=check_times)
             execute('rpmbuild --rebuild srpms/log4cplus-1.1.3-0.4.rc3.el7.src.rpm', env=env, timeout=120, check_times=check_times)
             execute('sudo rpm -i rpmbuild/RPMS/x86_64/log4cplus-1.1.3-0.4.rc3.el8.x86_64.rpm', env=env, check_times=check_times)
@@ -738,7 +749,7 @@ def prepare_system_local(features, check_times):
             try:
                 execute('sudo apt install --no-install-recommends -y %s' % ' '.join(packages), env=env, timeout=240, check_times=check_times)
                 done = True
-            except:
+            except:  # pylint: disable=bare-except
                 log.exception('ble')
                 time.sleep(20)
 
@@ -818,6 +829,167 @@ def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run,
     ve.prepare_system()
 
 
+def _build_just_binaries(distro, revision, features, tarball_path, env, check_times, jobs, dry_run):
+    if tarball_path:
+        # unpack tarball with sources
+        execute('rm -rf kea-src')
+        os.mkdir('kea-src')
+        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
+        src_path = glob.glob('kea-src/*')[0]
+    else:
+        src_path = '.'
+
+    execute('autoreconf -f -i', cwd=src_path, env=env, dry_run=dry_run)
+
+    # prepare switches for ./configure
+    cmd = './configure'
+    if 'mysql' in features:
+        cmd += ' --with-mysql'
+    if 'pgsql' in features:
+        cmd += ' --with-pgsql'
+    if 'cql' in features:
+        cmd += ' --with-cql=/usr/bin/pkg-config'
+    if 'unittest' in features:
+        # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
+        if distro in ['centos', 'fedora', 'rhel', 'freebsd']:
+            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+        elif distro == 'debian' and revision == '8':
+            cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+        elif distro == 'debian':
+            cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
+        elif distro == 'ubuntu':
+            if revision.startswith('16.'):
+                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
+            else:
+                cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
+        else:
+            raise NotImplementedError
+    if 'docs' in features and not (distro == 'rhel' and revision == '8'):
+        cmd += ' --enable-generate-docs'
+    if 'radius' in features:
+        cmd += ' --with-freeradius=/usr/local'
+    if 'shell' in features:
+        cmd += ' --enable-shell'
+
+    # do ./configure
+    execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
+
+    # estimate number of processes (jobs) to use in compilation if jobs are not provided
+    if jobs == 0:
+        cpus = multiprocessing.cpu_count() - 1
+        if distro == 'centos':
+            cpus = cpus // 2
+        if cpus == 0:
+            cpus = 1
+    else:
+        cpus = jobs
+
+    # do build
+    cmd = 'make -j%s' % cpus
+    execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times, dry_run=dry_run)
+
+    if 'unittest' in features:
+        results_dir = os.path.abspath(os.path.join(src_path, 'tests_result'))
+        execute('rm -rf %s' % results_dir, dry_run=dry_run)
+        if not os.path.exists(results_dir):
+            os.mkdir(results_dir)
+        env['GTEST_OUTPUT'] = 'xml:%s/' % results_dir
+        env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
+        # run unit tests
+        execute('make check -k', cwd=src_path, env=env, timeout=60 * 60, raise_error=False, check_times=check_times, dry_run=dry_run)
+
+        # parse unit tests results
+        results = {}
+        grand_total = 0
+        grand_not_passed = 0
+        for fn in os.listdir(results_dir):
+            if not fn.endswith('.xml'):
+                continue
+            fp = os.path.join(results_dir, fn)
+            tree = ET.parse(fp)
+            root = tree.getroot()
+            total = int(root.get('tests'))
+            failures = int(root.get('failures'))
+            disabled = int(root.get('disabled'))
+            errors = int(root.get('errors'))
+            results[fn] = dict(total=total, failures=failures, disabled=disabled, errors=errors)
+            grand_total += total
+            grand_not_passed += failures + errors
+
+        grand_passed = grand_total - grand_not_passed
+        results['grand_passed'] = grand_total - grand_not_passed
+        results['grand_total'] = grand_total
+
+        result = '%s/%s passed' % (grand_passed, grand_total)
+        if grand_not_passed > 0 or grand_total == 0:
+            result = red(result)
+        else:
+            result = green(result)
+        log.info('Unit test results: %s', result)
+
+        with open('unit-test-results.json', 'w') as f:
+            f.write(json.dumps(results))
+
+    if 'install' in features:
+        execute('sudo make install', cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
+        execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
+
+        if 'forge' in features:
+            if 'mysql' in features:
+                execute('kea-admin lease-init mysql -u keauser -p keapass -n keadb', dry_run=dry_run)
+            if 'pgsql' in features:
+                execute('kea-admin lease-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
+
+
+def _build_native_pkg(distro, features, tarball_path, env, check_times, dry_run):
+    if distro in ['fedora', 'centos', 'rhel']:
+        # prepare RPM environment
+        execute('rm -rf rpm-root', dry_run=dry_run)
+        os.mkdir('rpm-root')
+        os.mkdir('rpm-root/BUILD')
+        os.mkdir('rpm-root/BUILDROOT')
+        os.mkdir('rpm-root/RPMS')
+        os.mkdir('rpm-root/SOURCES')
+        os.mkdir('rpm-root/SPECS')
+        os.mkdir('rpm-root/SRPMS')
+
+        # get rpm.spec from tarball
+        execute('rm -rf kea-src', dry_run=dry_run)
+        os.mkdir('kea-src')
+        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
+        src_path = glob.glob('kea-src/*')[0]
+        rpm_dir = os.path.join(src_path, 'rpm')
+        for f in os.listdir(rpm_dir):
+            if f == 'kea.spec':
+                continue
+            execute('cp %s rpm-root/SOURCES' % os.path.join(rpm_dir, f), check_times=check_times, dry_run=dry_run)
+        execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times, dry_run=dry_run)
+        execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times, dry_run=dry_run)
+
+        # do rpm build
+        cmd = "rpmbuild -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
+        execute(cmd, env=env, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+
+        if 'install' in features:
+            execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times, dry_run=dry_run)
+
+    elif distro in ['ubuntu', 'debian']:
+        # unpack tarball
+        execute('rm -rf kea-src', check_times=check_times, dry_run=dry_run)
+        os.mkdir('kea-src')
+        execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
+        src_path = glob.glob('kea-src/*')[0]
+
+        # do deb build
+        execute('debuild -i -us -uc -b', env=env, cwd=src_path, timeout=60 * 40, check_times=check_times, dry_run=dry_run)
+
+        if 'install' in features:
+            execute('sudo dpkg -i kea-src/*deb', check_times=check_times, dry_run=dry_run)
+
+    else:
+        raise NotImplementedError
+
+
 def build_local(features, tarball_path, check_times, jobs, dry_run):
     """Prepare local system for Kea development based on requested features.
 
@@ -836,166 +1008,10 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
 
     if 'native-pkg' in features:
         # native pkg build
-
-        if distro in ['fedora', 'centos', 'rhel']:
-            # prepare RPM environment
-            execute('rm -rf rpm-root')
-            os.mkdir('rpm-root')
-            os.mkdir('rpm-root/BUILD')
-            os.mkdir('rpm-root/BUILDROOT')
-            os.mkdir('rpm-root/RPMS')
-            os.mkdir('rpm-root/SOURCES')
-            os.mkdir('rpm-root/SPECS')
-            os.mkdir('rpm-root/SRPMS')
-
-            # get rpm.spec from tarball
-            execute('rm -rf kea-src')
-            os.mkdir('kea-src')
-            execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
-            src_path = glob.glob('kea-src/*')[0]
-            rpm_dir = os.path.join(src_path, 'rpm')
-            for f in os.listdir(rpm_dir):
-                if f == 'kea.spec':
-                    continue
-                execute('cp %s rpm-root/SOURCES' % os.path.join(rpm_dir, f), check_times=check_times)
-            execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times)
-            execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times)
-
-            # do rpm build
-            cmd = "rpmbuild -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
-            execute(cmd, env=env, timeout=60 * 40, check_times=check_times)
-
-            if 'install' in features:
-                execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times)
-
-        elif distro in ['ubuntu', 'debian']:
-            # unpack tarball
-            execute('rm -rf kea-src', check_times=check_times)
-            os.mkdir('kea-src')
-            execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
-            src_path = glob.glob('kea-src/*')[0]
-
-            # do deb build
-            execute('debuild -i -us -uc -b', env=env, cwd=src_path, timeout=60 * 40, check_times=check_times)
-
-            if 'install' in features:
-                execute('sudo dpkg -i kea-src/*deb', check_times=check_times)
-
-        else:
-            raise NotImplementedError
-
+        _build_native_pkg(distro, features, tarball_path, env, check_times, dry_run)
     else:
         # build straight from sources
-
-        if tarball_path:
-            # unpack tarball with sources
-            execute('rm -rf kea-src')
-            os.mkdir('kea-src')
-            execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
-            src_path = glob.glob('kea-src/*')[0]
-        else:
-            src_path = '.'
-
-        execute('autoreconf -f -i', cwd=src_path, env=env, dry_run=dry_run)
-
-        # prepare switches for ./configure
-        cmd = './configure'
-        if 'mysql' in features:
-            cmd += ' --with-mysql'
-        if 'pgsql' in features:
-            cmd += ' --with-pgsql'
-        if 'cql' in features:
-            cmd += ' --with-cql=/usr/bin/pkg-config'
-        if 'unittest' in features:
-            # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
-            if distro in ['centos', 'fedora', 'rhel', 'freebsd']:
-                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
-            elif distro == 'debian' and revision == '8':
-                cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
-            elif distro == 'debian':
-                cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
-            elif distro == 'ubuntu':
-                if revision.startswith('16.'):
-                    cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
-                else:
-                    cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
-            else:
-                raise NotImplementedError
-        if 'docs' in features and not (distro == 'rhel' and revision == '8'):
-            cmd += ' --enable-generate-docs'
-        if 'radius' in features:
-            cmd += ' --with-freeradius=/usr/local'
-        if 'shell' in features:
-            cmd += ' --enable-shell'
-
-        # do ./configure
-        execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
-
-        # estimate number of processes (jobs) to use in compilation if jobs are not provided
-        if jobs == 0:
-            cpus = multiprocessing.cpu_count() - 1
-            if distro == 'centos':
-                cpus = cpus // 2
-            if cpus == 0:
-                cpus = 1
-        else:
-            cpus = jobs
-
-        # do build
-        cmd = 'make -j%s' % cpus
-        execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times, dry_run=dry_run)
-
-        if 'unittest' in features:
-            results_dir = os.path.abspath(os.path.join(src_path, 'tests_result'))
-            execute('rm -rf %s' % results_dir, dry_run=dry_run)
-            if not os.path.exists(results_dir):
-                os.mkdir(results_dir)
-            env['GTEST_OUTPUT'] = 'xml:%s/' % results_dir
-            env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
-            # run unit tests
-            execute('make check -k', cwd=src_path, env=env, timeout=60 * 60, raise_error=False, check_times=check_times, dry_run=dry_run)
-
-            # parse unit tests results
-            results = {}
-            grand_total = 0
-            grand_not_passed = 0
-            for fn in os.listdir(results_dir):
-                if not fn.endswith('.xml'):
-                    continue
-                fp = os.path.join(results_dir, fn)
-                tree = ET.parse(fp)
-                root = tree.getroot()
-                total = int(root.get('tests'))
-                failures = int(root.get('failures'))
-                disabled = int(root.get('disabled'))
-                errors = int(root.get('errors'))
-                results[fn] = dict(total=total, failures=failures, disabled=disabled, errors=errors)
-                grand_total += total
-                grand_not_passed += failures + errors
-
-            grand_passed = grand_total - grand_not_passed
-            results['grand_passed'] = grand_total - grand_not_passed
-            results['grand_total'] = grand_total
-
-            result = '%s/%s passed' % (grand_passed, grand_total)
-            if grand_not_passed > 0 or grand_total == 0:
-                result = red(result)
-            else:
-                result = green(result)
-            log.info('Unit test results: %s', result)
-
-            with open('unit-test-results.json', 'w') as f:
-                f.write(json.dumps(results))
-
-        if 'install' in features:
-            execute('sudo make install', cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
-            execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
-
-            if 'forge' in features:
-                if 'mysql' in features:
-                    execute('kea-admin lease-init mysql -u keauser -p keapass -n keadb', dry_run=dry_run)
-                if 'pgsql' in features:
-                    execute('kea-admin lease-init pgsql -u keauser -p keapass -n keadb', dry_run=dry_run)
+        _build_just_binaries(distro, revision, features, tarball_path, env, check_times, jobs, dry_run)
 
     execute('df -h', dry_run=dry_run)
 
@@ -1003,7 +1019,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
 def build_in_vagrant(provider, system, sys_revision, features, leave_system, tarball_path, dry_run, quiet, clean_start, check_times, jobs):
     """Build Kea via Vagrant in specified system with specified features."""
     log.info('')
-    log.info(">>> Building %s, %s, %s" % (provider, system, sys_revision))
+    log.info(">>> Building %s, %s, %s", provider, system, sys_revision)
     log.info('')
 
     t0 = time.time()
@@ -1026,7 +1042,7 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
     except ExecutionError as e:
         error = e
         msg = ' - ' + red(str(e))
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-except
         log.exception('Building erred')
         error = e
         msg = ' - ' + red(str(e))
@@ -1061,6 +1077,7 @@ def ssh(provider, system, sys_revision):
 
 
 def ensure_hammer_deps():
+    """Install Hammer dependencies onto current, host system."""
     distro, _ = get_system_revision()
 
     exitcode = execute('vagrant version', raise_error=False)
@@ -1101,10 +1118,11 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
 ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
 
+
 def parse_args():
     fl = functools.partial(lambda w, t: textwrap.fill(t, w), 80)  # used lambda to change args order and able to substitute width
     description = [
-        "Hammer - Kea develepment environment management tool.\n",
+        "Hammer - Kea development environment management tool.\n",
         fl("At first it is required to install Hammer dependencies which is Vagrant and either "
            "VirtualBox or LXC. To make life easier Hammer can install Vagrant and required "
            "Vagrant plugins using the command:"),
@@ -1155,11 +1173,11 @@ def parse_args():
                                 "Default is 'all'.")
 
     parent_parser2 = argparse.ArgumentParser(add_help=False)
-    parent_parser2.add_argument('-w', '--with', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction,
-                                help="Enable features. Separate them by space or comma. List of available features: %s. Default is '%s'." % (", ".join(ALL_FEATURES),
-                                                                                                                                             ' '.join(DEFAULT_FEATURES)))
-    parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction,
-                                help="Disable features. Separate them by space or comma. List of available features: %s. Default is ''." % ", ".join(ALL_FEATURES))
+    hlp = "Enable features. Separate them by space or comma. List of available features: %s. Default is '%s'."
+    hlp = hlp % (", ".join(ALL_FEATURES), ' '.join(DEFAULT_FEATURES))
+    parent_parser2.add_argument('-w', '--with', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction, help=hlp)
+    hlp = "Disable features. Separate them by space or comma. List of available features: %s. Default is ''." % ", ".join(ALL_FEATURES)
+    parent_parser2.add_argument('-x', '--without', metavar='FEATURE', nargs='+', default=set(), action=CollectCommaSeparatedArgsAction, help=hlp)
     parent_parser2.add_argument('-l', '--leave-system', action='store_true',
                                 help='At the end of the command do not destroy vagrant system. Default behavior is destroing the system.')
     parent_parser2.add_argument('-c', '--clean-start', action='store_true', help='If there is pre-existing system then it is destroyed first.')
@@ -1190,7 +1208,8 @@ def parse_args():
                                    description="Destroys system indicated by a path to directory with Vagrantfile. "
                                    "To get the list of created systems run: ./hammer.py created-systems.")
     parser.add_argument('-d', '--directory', help='Path to directory with Vagrantfile.')
-    parser = subparsers.add_parser('package-box', help="Package currently running system into Vagrant Box. Prepared box can be later deployed to Vagrant Cloud.",
+    parser = subparsers.add_parser('package-box',
+                                   help="Package currently running system into Vagrant Box. Prepared box can be later deployed to Vagrant Cloud.",
                                    parents=[parent_parser1, parent_parser2])
 
     args = main_parser.parse_args()
@@ -1212,7 +1231,7 @@ def list_supported_systems():
 
 
 def list_created_systems():
-    exitcode, output = execute('vagrant global-status', quiet=True, capture=True)
+    _, output = execute('vagrant global-status', quiet=True, capture=True)
     systems = []
     for line in output.splitlines():
         if 'hammer' not in line:
@@ -1289,16 +1308,92 @@ def _check_system_revision(system, revision):
         sys.exit(1)
 
 
+def prepare_system_cmd(args):
+    if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
+        print('Please provide required system and its version.')
+        print('Example: ./hammer.py prepare-system -s fedora -r 28.')
+        print('To get list of supported systems run: ./hammer.py supported-systems.')
+        sys.exit(1)
+
+    _check_system_revision(args.system, args.revision)
+
+    features = _what_features(args)
+    log.info('Enabled features: %s', ' '.join(features))
+
+    if args.provider == 'local':
+        prepare_system_local(features, args.check_times)
+        return
+
+    prepare_system_in_vagrant(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
+
+
+def build_cmd(args):
+    features = _what_features(args)
+    log.info('Enabled features: %s', ' '.join(features))
+    if args.provider == 'local':
+        build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
+        return
+
+    _check_system_revision(args.system, args.revision)
+
+    if args.provider == 'all':
+        providers = ['lxc', 'virtualbox']
+    else:
+        providers = [args.provider]
+
+    if args.system == 'all':
+        systems = SYSTEMS.keys()
+    else:
+        systems = [args.system]
+
+    plan = []
+    results = {}
+    log.info('Build plan:')
+    for provider in providers:
+        for system in systems:
+            if args.revision == 'all':
+                revisions = SYSTEMS[system]
+            else:
+                revisions = [args.revision]
+
+            for revision in revisions:
+                if args.revision == 'all':
+                    key = '%s-%s-%s' % (system, revision, provider)
+                    if key not in IMAGE_TEMPLATES:
+                        continue
+                plan.append((provider, system, revision))
+                log.info(' - %s, %s, %s', provider, system, revision)
+                results[(provider, system, revision)] = (0, 'not run')
+
+    fail = False
+    for provider, system, revision in plan:
+        result = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
+                                  args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs))
+        results[(provider, system, revision)] = result
+
+        error = result[1]
+        if error:
+            fail = True
+            if isinstance(error, KeyboardInterrupt):
+                break
+
+    _print_summary(results, features)
+
+    if fail:
+        sys.exit(1)
+
+
 def main():
     args = parse_args()
 
+    # prepare logging
     level = logging.INFO
     if args.verbose:
         level = logging.DEBUG
+    fmt = '[HAMMER]  %(asctime)-15s  %(message)s'
+    logging.basicConfig(format=fmt, level=level)
 
-    format = '[HAMMER]  %(asctime)-15s  %(message)s'
-    logging.basicConfig(format=format, level=level)
-
+    # dispatch command
     if args.command == 'supported-systems':
         list_supported_systems()
 
@@ -1312,76 +1407,10 @@ def main():
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
 
     elif args.command == "prepare-system":
-        if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
-            print('Please provide required system and its version.')
-            print('Example: ./hammer.py prepare-system -s fedora -r 28.')
-            print('To get list of supported systems run: ./hammer.py supported-systems.')
-            sys.exit(1)
-
-        _check_system_revision(args.system, args.revision)
-
-        features = _what_features(args)
-        log.info('Enabled features: %s', ' '.join(features))
-
-        if args.provider == 'local':
-            prepare_system_local(features, args.check_times)
-            return
-
-        prepare_system_in_vagrant(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
+        prepare_system_cmd(args)
 
     elif args.command == "build":
-        features = _what_features(args)
-        log.info('Enabled features: %s', ' '.join(features))
-        if args.provider == 'local':
-            build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
-            return
-
-        _check_system_revision(args.system, args.revision)
-
-        if args.provider == 'all':
-            providers = ['lxc', 'virtualbox']
-        else:
-            providers = [args.provider]
-
-        if args.system == 'all':
-            systems = SYSTEMS.keys()
-        else:
-            systems = [args.system]
-
-        plan = []
-        results = {}
-        log.info('Build plan:')
-        for provider in providers:
-            for system in systems:
-                if args.revision == 'all':
-                    revisions = SYSTEMS[system]
-                else:
-                    revisions = [args.revision]
-
-                for revision in revisions:
-                    if args.revision == 'all':
-                        key = '%s-%s-%s' % (system, revision, provider)
-                        if key not in IMAGE_TEMPLATES:
-                            continue
-                    plan.append((provider, system, revision))
-                    log.info(' - %s, %s, %s', provider, system, revision)
-                    results[(provider, system, revision)] = (0, 'not run')
-
-        fail = False
-        for provider, system, revision in plan:
-            duration, error, total, passed = build_in_vagrant(provider, system, revision, features, args.leave_system, args.from_tarball,
-                                                              args.dry_run, args.quiet, args.clean_start, args.check_times, int(args.jobs))
-            results[(provider, system, revision)] = (duration, error, total, passed)
-
-            if error:
-                fail = True
-                if isinstance(error, KeyboardInterrupt):
-                    break
-
-        _print_summary(results, features)
-
-        if fail:
-            sys.exit(1)
+        build_cmd(args)
 
     elif args.command == "ssh":
         _check_system_revision(args.system, args.revision)
