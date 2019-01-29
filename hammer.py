@@ -35,11 +35,9 @@ import xml.etree.ElementTree as ET
 SYSTEMS = {
     'fedora': ['27', '28', '29'],
     'centos': ['7'],
-    #'rhel': ['7', '8'],
     'rhel': ['8'],
     'ubuntu': ['16.04', '18.04', '18.10'],
     'debian': ['8', '9'],
-    #'freebsd': ['11.0', '11.1', '11.2', '12.0'],
     'freebsd': ['11.2', '12.0'],
 }
 
@@ -52,7 +50,6 @@ IMAGE_TEMPLATES = {
     'fedora-29-virtualbox':    {'bare': 'generic/fedora29',            'kea': 'godfryd/kea-fedora-29'},
     'centos-7-lxc':            {'bare': 'godfryd/lxc-centos-7',        'kea': 'godfryd/kea-centos-7'},
     'centos-7-virtualbox':     {'bare': 'generic/centos7',             'kea': 'godfryd/kea-centos-7'},
-#    'rhel-7-virtualbox':       {'bare': 'generic/rhel7',               'kea': 'generic/rhel7'},   # TODO: subsciption needed
     'rhel-8-virtualbox':       {'bare': 'generic/rhel8',               'kea': 'generic/rhel8'},
     'ubuntu-16.04-lxc':        {'bare': 'godfryd/lxc-ubuntu-16.04',    'kea': 'godfryd/kea-ubuntu-16.04'},
     'ubuntu-16.04-virtualbox': {'bare': 'ubuntu/xenial64',             'kea': 'godfryd/kea-ubuntu-16.04'},
@@ -134,6 +131,7 @@ def blue(txt):
 
 
 def get_system_revision():
+    """Return tuple containing system name and its revision."""
     system = platform.system()
     if system == 'Linux':
         system, revision, _ = platform.dist()
@@ -156,6 +154,20 @@ class ExecutionError(Exception): pass
 
 def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False, log_file_path=None, quiet=False, check_times=False, capture=False,
             interactive=False):
+    """Execute a command in shell.
+
+    :param str cmd: a command to be executed
+    :param int timeout: timeout in number of seconds, after that time the command is terminated but only if check_times is True
+    :param str cwd: current working directory for the command
+    :param dict env: dictionary with environment variables
+    :param bool raise_error: if False then in case of error exception is not raised, default: True ie exception is raise
+    :param bool dry_run: if True then the command is not executed
+    :param str log_file_path: if provided then all traces from the command are stored in indicated file
+    :param bool quiet: if True then the command's traces are not printed to stdout
+    :param bool check_times: if True then timeout is taken into account
+    :param bool capture: if True then the command's traces are captured and returned by the function
+    :param bool interactive: if True then stdin and stdout are not redirected, traces handling is disabled, used for e.g. SSH
+    """
     log.info('>>>>> Executing %s in %s', cmd, cwd if cwd else os.getcwd())
     if not check_times:
         timeout = None
@@ -166,6 +178,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         p = subprocess.Popen(cmd, cwd=cwd, env=env, shell=True)
         ver = platform.python_version()
         exitcode = p.wait()
+
     else:
         if log_file_path:
             log_file = open(log_file_path, "wb")
@@ -176,6 +189,7 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
             output = ''
         t0 = time.time()
         t1 = time.time()
+        # repeat until process is running or timeout not occured
         while p.poll() is None and (timeout is None or t1 - t0 < timeout):
             line = p.stdout.readline()
             if line:
@@ -191,7 +205,10 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
         if log_file_path:
             log_file.close()
 
+        # If no exitcode yet, ie. process is still running then it means that timeout occured.
+        # In such case terminate the process and raise an exception.
         if p.poll() is None:
+            p.terminate()
             raise ExecutionError('Execution timeout')
         exitcode = p.returncode
 
@@ -207,12 +224,20 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 def install_yum(pkgs, env=None, check_times=False):
     if isinstance(pkgs, list):
         pkgs = ' '.join(pkgs)
-    # skip.... to detect case when one packet is not found and no error is returned
+    # skip_missing_names_on_install used to detect case when one packet is not found and no error is returned
+    # but we want an error
     cmd = 'sudo yum install -y --setopt=skip_missing_names_on_install=False %s' % pkgs
     execute(cmd, env=env, check_times=check_times)
 
 
 class VagrantEnv(object):
+    """Helper class that makes interacting with Vagrant easier.
+
+    It creates Vagrantfile according to specified system. It exposes basic Vagrant functions
+    like up, upload, destro, ssh. It also provides more complex function for preparing system
+    for Kea build and building Kea.
+    """
+
     def __init__(self, provider, system, sys_revision, features, image_template_variant, dry_run, quiet=False, check_times=False):
         self.provider = provider
         self.system = system
@@ -264,6 +289,8 @@ class VagrantEnv(object):
         execute("vagrant up --no-provision --provider %s" % self.provider, cwd=self.vagrant_dir, timeout=15 * 60, dry_run=self.dry_run)
 
     def package(self):
+        """Package Vagrant system into Vagrant box."""
+
         if self.provider == 'virtualbox':
             cmd = "vagrant package --output kea-%s-%s.box" % (self.system, self.sys_revision)
             execute(cmd, cwd=self.vagrant_dir, timeout=4 * 60, dry_run=self.dry_run)
@@ -308,9 +335,11 @@ class VagrantEnv(object):
             raise ExecutionError(msg)
 
     def run_build_and_test(self, tarball_path, jobs):
+        """Run build and unit tests inside Vagrant system."""
         if self.dry_run:
             return 0, 0
 
+        # prepare tarball if needed and upload it to vagrant system
         if not tarball_path:
             name_ver = 'kea-1.5.0'
             cmd = 'tar --transform "flags=r;s|^|%s/|" --exclude hammer ' % name_ver
@@ -325,6 +354,7 @@ class VagrantEnv(object):
 
         t0 = time.time()
 
+        # run build command
         bld_cmd = "%s hammer.py build -p local -t %s.tar.gz -j %d" % (self.python, name_ver, jobs)
         if self.features_arg:
             bld_cmd += ' ' + self.features_arg
@@ -347,6 +377,7 @@ class VagrantEnv(object):
         log.info(">>>>>> Build time %s:%s", dt // 60, dt % 60)
         log.info("")
 
+        # run unit tests if requested
         total = 0
         passed = 0
         try:
@@ -372,11 +403,13 @@ class VagrantEnv(object):
         execute('vagrant ssh', cwd=self.vagrant_dir, timeout=None, dry_run=self.dry_run, interactive=True)
 
     def dump_ssh_config(self):
+        """Dump ssh config that allows getting into Vagrant system via SSH."""
         ssh_cfg_path = os.path.join(self.vagrant_dir, 'ssh.cfg')
         execute('vagrant ssh-config > %s' % ssh_cfg_path, cwd=self.vagrant_dir)
         return ssh_cfg_path
 
     def execute(self, cmd, timeout=None, raise_error=True, log_file_path=None, quiet=False, env=None):
+        """Execute provided command inside Vagrant system."""
         if not env:
             env = os.environ.copy()
         env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
@@ -385,6 +418,7 @@ class VagrantEnv(object):
                        dry_run=self.dry_run, log_file_path=log_file_path, quiet=quiet, check_times=self.check_times)
 
     def prepare_system(self):
+        """Prepare Vagrant system for building Kea."""
         if self.features:
             self.features_arg = '--with ' + ' '.join(self.features)
         else:
@@ -396,6 +430,7 @@ class VagrantEnv(object):
         else:
             self.nofeatures_arg = ''
 
+        # select proper python version for running Hammer inside Vagrant system
         if self.system == 'centos' and self.sys_revision == '7' or (self.system == 'debian' and self.sys_revision == '8' and self.provider != 'lxc'):
             self.python = 'python'
         elif self.system == 'freebsd':
@@ -403,6 +438,7 @@ class VagrantEnv(object):
         else:
             self.python = 'python3'
 
+        # to get python in RHEL 8 beta it is required first register machine in RHEL account
         if self.system == 'rhel' and self.sys_revision == '8':
             exitcode = self.execute("sudo subscription-manager repos --list-enabled | grep rhel-8-for-x86_64-baseos-beta-rpms", raise_error=False)
             if exitcode != 0:
@@ -416,12 +452,14 @@ class VagrantEnv(object):
                 self.execute("sudo subscription-manager repos --enable rhel-8-for-x86_64-baseos-beta-rpms")
                 self.execute("sudo dnf install -y python36")
 
+        # upload Hammer to Vagrant system
         hmr_py_path = os.path.join(self.repo_dir, 'hammer.py')
         self.upload(hmr_py_path)
 
         log_file_path = os.path.join(self.vagrant_dir, 'prepare.log')
         log.info('Prepare log file stored to %s', log_file_path)
 
+        # run prepare-system inside Vagrant system
         cmd = "{python} hammer.py prepare-system -p local {features} {nofeatures} {check_times}"
         cmd = cmd.format(features=self.features_arg,
                          nofeatures=self.nofeatures_arg,
@@ -431,6 +469,7 @@ class VagrantEnv(object):
 
 
 def _install_gtest_sources():
+    # download gtest sources only if it is not present as native package
     if not os.path.exists('/usr/src/googletest-release-1.8.0/googletest'):
         execute('wget --no-verbose -O /tmp/gtest.tar.gz https://github.com/google/googletest/archive/release-1.8.0.tar.gz')
         execute('sudo tar -C /usr/src -zxf /tmp/gtest.tar.gz')
@@ -513,37 +552,40 @@ def _configure_pgsql(system, features):
         execute(cmd)
 
 
-def _install_cassandra_deb():
+def _install_cassandra_deb(env, check_times):
     if not os.path.exists('/usr/sbin/cassandra'):
-        execute('echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list')
-        execute('curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -')
-        execute('sudo apt update')
-        execute('sudo apt install -y cassandra libuv1 pkgconf')
+        execute('echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list',
+                env=env, check_times=check_times)
+        execute('curl https://www.apache.org/dist/cassandra/KEYS | sudo apt-key add -', env=env, check_times=check_times)
+        execute('sudo apt update', env=env, check_times=check_times)
+        execute('sudo apt install -y cassandra libuv1 pkgconf', env=env, check_times=check_times)
 
     if not os.path.exists('/usr/include/cassandra.h'):
-        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb')
-        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb')
-        execute('sudo dpkg -i cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb')
-        execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb')
+        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver-dev_2.11.0-1_amd64.deb',
+                env=env, check_times=check_times)
+        execute('wget http://downloads.datastax.com/cpp-driver/ubuntu/18.04/cassandra/v2.11.0/cassandra-cpp-driver_2.11.0-1_amd64.deb',
+                env=env, check_times=check_times)
+        execute('sudo dpkg -i cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb', env=env, check_times=check_times)
+        execute('rm -rf cassandra-cpp-driver-dev_2.11.0-1_amd64.deb cassandra-cpp-driver_2.11.0-1_amd64.deb', env=env, check_times=check_times)
 
 
-def _install_freeradius_client():
+def _install_freeradius_client(env, check_times):
     execute('rm -rf freeradius-client')
-    execute('git clone https://github.com/fxdupont/freeradius-client.git')
-    execute('git checkout iscdev', cwd='freeradius-client')
-    execute('./configure', cwd='freeradius-client')
-    execute('make', cwd='freeradius-client')
-    execute('sudo make install', cwd='freeradius-client')
-    execute('sudo ldconfig')
+    execute('git clone https://github.com/fxdupont/freeradius-client.git', env=env, check_times=check_times)
+    execute('git checkout iscdev', cwd='freeradius-client', env=env, check_times=check_times)
+    execute('./configure', cwd='freeradius-client', env=env, check_times=check_times)
+    execute('make', cwd='freeradius-client', env=env, check_times=check_times)
+    execute('sudo make install', cwd='freeradius-client', env=env, check_times=check_times)
+    execute('sudo ldconfig', env=env, check_times=check_times)
     execute('rm -rf freeradius-client')
 
 
-def _install_cassandra_rpm(system):
+def _install_cassandra_rpm(system, env, check_times):
     if not os.path.exists('/usr/bin/cassandra'):
         #execute('sudo dnf config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
         #execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
         if system == 'fedora':
-            install_yum('cassandra cassandra-server libuv libuv-devel')
+            install_yum('cassandra cassandra-server libuv libuv-devel', env=env, check_times=check_times)
         #elif system == 'centos':
         else:
             raise NotImplementedError
@@ -558,12 +600,14 @@ def _install_cassandra_rpm(system):
 
 
 def prepare_system_local(features, check_times):
+    """Prepare local system for Kea development based on requested features."""
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
     system, revision = get_system_revision()
     log.info('Preparing deps for %s %s', system, revision)
 
+    # prepare fedora
     if system == 'fedora':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel', 'log4cplus-devel', 'boost-devel']
 
@@ -591,8 +635,9 @@ def prepare_system_local(features, check_times):
         execute('sudo dnf clean packages', env=env, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_rpm(system)
+            _install_cassandra_rpm(system, env, check_times)
 
+    # prepare centos
     elif system == 'centos':
         install_yum('epel-release', env=env, check_times=check_times)
 
@@ -617,8 +662,9 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system)
+            _install_cassandra_rpm(system, env, check_times)
 
+    # prepare rhel
     elif system == 'rhel':
         packages = ['make', 'autoconf', 'automake', 'libtool', 'gcc-c++', 'openssl-devel', 'boost-devel',
                     'mariadb-devel', 'postgresql-devel']
@@ -627,6 +673,7 @@ def prepare_system_local(features, check_times):
         if 'docs' in features and not revision == '8':
             packages.extend(['libxslt', 'elinks', 'docbook-style-xsl'])
 
+        # TODO:
         # if 'mysql' in features:
         #     packages.extend(['default-mysql-client-core', 'default-libmysqlclient-dev', 'mysql-server'])
 
@@ -655,8 +702,9 @@ def prepare_system_local(features, check_times):
             _install_gtest_sources()
 
         if 'cql' in features:
-            _install_cassandra_rpm(system)
+            _install_cassandra_rpm(system, env, check_times)
 
+    # prepare ubuntu
     elif system == 'ubuntu':
         execute('sudo apt update', env=env, check_times=check_times)
 
@@ -695,8 +743,9 @@ def prepare_system_local(features, check_times):
                 time.sleep(20)
 
         if 'cql' in features:
-            _install_cassandra_deb()
+            _install_cassandra_deb(env, check_times)
 
+    # prepare debian
     elif system == 'debian':
         execute('sudo apt update', env=env, check_times=check_times)
 
@@ -707,8 +756,8 @@ def prepare_system_local(features, check_times):
 
         if 'unittest' in features:
             if revision == '8':
+                # libgtest-dev does not work and googletest is not available
                 _install_gtest_sources()
-                #packages.append('libgtest-dev') # it does not work
             else:
                 packages.append('googletest')
 
@@ -721,14 +770,15 @@ def prepare_system_local(features, check_times):
         execute('sudo apt install --no-install-recommends -y %s' % ' '.join(packages), env=env, timeout=240, check_times=check_times)
 
         if 'cql' in features:
-            _install_cassandra_deb()
+            _install_cassandra_deb(env, check_times)
 
+    # prepare freebsd
     elif system == 'freebsd':
         packages = ['autoconf', 'automake', 'libtool', 'openssl', 'log4cplus', 'boost-libs']
 
+        # TODO:
         #execute('sudo portsnap --interactive fetch', timeout=240, check_times=check_times)
         #execute('sudo portsnap extract /usr/ports/devel/log4cplus', timeout=240, check_times=check_times)
-
         #execute('sudo make -C /usr/ports/devel/log4cplus install clean BATCH=yes', timeout=240, check_times=check_times)
 
         if 'docs' in features:
@@ -752,14 +802,28 @@ def prepare_system_local(features, check_times):
         _configure_pgsql(system, features)
 
     if 'radius' in features:
-        _install_freeradius_client()
+        _install_freeradius_client(env, check_times)
 
     #execute('sudo rm -rf /usr/share/doc')
 
     log.info('Preparing deps completed successfully.')
 
 
+def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run, check_times, clean_start):
+    """Prepare specified system in Vagrant according to specified features."""
+    ve = VagrantEnv(provider, system, sys_revision, features, 'kea', dry_run, check_times=check_times)
+    if clean_start:
+        ve.destroy()
+    ve.up()
+    ve.prepare_system()
+
+
 def build_local(features, tarball_path, check_times, jobs, dry_run):
+    """Prepare local system for Kea development based on requested features.
+
+    If tarball_path is provided then instead of Kea sources from current directory
+    use provided tarball.
+    """
     env = os.environ.copy()
     env['LANGUAGE'] = env['LANG'] = env['LC_ALL'] = 'C'
 
@@ -774,6 +838,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
         # native pkg build
 
         if distro in ['fedora', 'centos', 'rhel']:
+            # prepare RPM environment
             execute('rm -rf rpm-root')
             os.mkdir('rpm-root')
             os.mkdir('rpm-root/BUILD')
@@ -783,6 +848,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
             os.mkdir('rpm-root/SPECS')
             os.mkdir('rpm-root/SRPMS')
 
+            # get rpm.spec from tarball
             execute('rm -rf kea-src')
             os.mkdir('kea-src')
             execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
@@ -795,6 +861,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
             execute('cp %s rpm-root/SPECS' % os.path.join(rpm_dir, 'kea.spec'), check_times=check_times)
             execute('cp %s rpm-root/SOURCES' % tarball_path, check_times=check_times)
 
+            # do rpm build
             cmd = "rpmbuild -ba rpm-root/SPECS/kea.spec -D'_topdir /home/vagrant/rpm-root'"
             execute(cmd, env=env, timeout=60 * 40, check_times=check_times)
 
@@ -802,11 +869,13 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
                 execute('sudo rpm -i rpm-root/RPMS/x86_64/*rpm', check_times=check_times)
 
         elif distro in ['ubuntu', 'debian']:
+            # unpack tarball
             execute('rm -rf kea-src', check_times=check_times)
             os.mkdir('kea-src')
             execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
             src_path = glob.glob('kea-src/*')[0]
 
+            # do deb build
             execute('debuild -i -us -uc -b', env=env, cwd=src_path, timeout=60 * 40, check_times=check_times)
 
             if 'install' in features:
@@ -819,6 +888,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
         # build straight from sources
 
         if tarball_path:
+            # unpack tarball with sources
             execute('rm -rf kea-src')
             os.mkdir('kea-src')
             execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
@@ -828,6 +898,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
 
         execute('autoreconf -f -i', cwd=src_path, env=env, dry_run=dry_run)
 
+        # prepare switches for ./configure
         cmd = './configure'
         if 'mysql' in features:
             cmd += ' --with-mysql'
@@ -836,10 +907,10 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
         if 'cql' in features:
             cmd += ' --with-cql=/usr/bin/pkg-config'
         if 'unittest' in features:
+            # prepare gtest switch - use downloaded gtest sources only if it is not present as native package
             if distro in ['centos', 'fedora', 'rhel', 'freebsd']:
                 cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
             elif distro == 'debian' and revision == '8':
-                #cmd += ' --with-gtest-source=/usr/src/gtest' # it does not work
                 cmd += ' --with-gtest-source=/usr/src/googletest-release-1.8.0/googletest/'
             elif distro == 'debian':
                 cmd += ' --with-gtest-source=/usr/src/googletest/googletest'
@@ -857,8 +928,10 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
         if 'shell' in features:
             cmd += ' --enable-shell'
 
+        # do ./configure
         execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
 
+        # estimate number of processes (jobs) to use in compilation if jobs are not provided
         if jobs == 0:
             cpus = multiprocessing.cpu_count() - 1
             if distro == 'centos':
@@ -867,6 +940,8 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
                 cpus = 1
         else:
             cpus = jobs
+
+        # do build
         cmd = 'make -j%s' % cpus
         execute(cmd, cwd=src_path, env=env, timeout=40 * 60, check_times=check_times, dry_run=dry_run)
 
@@ -877,8 +952,10 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
                 os.mkdir(results_dir)
             env['GTEST_OUTPUT'] = 'xml:%s/' % results_dir
             env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
+            # run unit tests
             execute('make check -k', cwd=src_path, env=env, timeout=60 * 60, raise_error=False, check_times=check_times, dry_run=dry_run)
 
+            # parse unit tests results
             results = {}
             grand_total = 0
             grand_not_passed = 0
@@ -924,6 +1001,7 @@ def build_local(features, tarball_path, check_times, jobs, dry_run):
 
 
 def build_in_vagrant(provider, system, sys_revision, features, leave_system, tarball_path, dry_run, quiet, clean_start, check_times, jobs):
+    """Build Kea via Vagrant in specified system with specified features."""
     log.info('')
     log.info(">>> Building %s, %s, %s" % (provider, system, sys_revision))
     log.info('')
@@ -967,20 +1045,13 @@ def build_in_vagrant(provider, system, sys_revision, features, leave_system, tar
 
 
 def package_box(provider, system, sys_revision, features, dry_run, check_times):
+    """Prepare Vagrant box of specified system."""
     ve = VagrantEnv(provider, system, sys_revision, features, 'bare', dry_run, check_times=check_times)
     ve.destroy()
     ve.up()
     ve.prepare_system()
     # TODO cleanup
     ve.package()
-
-
-def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run, check_times, clean_start):
-    ve = VagrantEnv(provider, system, sys_revision, features, 'kea', dry_run, check_times=check_times)
-    if clean_start:
-        ve.destroy()
-    ve.up()
-    ve.prepare_system()
 
 
 def ssh(provider, system, sys_revision):
@@ -1012,8 +1083,9 @@ def ensure_hammer_deps():
 
 
 class CollectCommaSeparatedArgsAction(argparse.Action):
+    """Helper argparse action class that can split multi-argument options by space and by comma."""
+
     def __call__(self, parser, namespace, values, option_string=None):
-        print('%r %r %r' % (namespace, values, option_string))
         values2 = []
         for v1 in values:
             for v2 in v1.split():
@@ -1024,7 +1096,6 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
                 raise argparse.ArgumentError(self, "feature '%s' is not supported. List of supported features: %s." % (v, ", ".join(ALL_FEATURES)))
 
         setattr(namespace, self.dest, values2)
-
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
@@ -1208,6 +1279,8 @@ def _print_summary(results, features):
 
 
 def _check_system_revision(system, revision):
+    if revision == 'all':
+        return
     revs = SYSTEMS[system]
     if revision not in revs:
         msg = "hammer.py error: argument -r/--revision: invalid choice: '%s' (choose from '%s')"
@@ -1239,12 +1312,13 @@ def main():
         package_box(args.provider, args.system, args.revision, features, args.dry_run, args.check_times)
 
     elif args.command == "prepare-system":
-        _check_system_revision(args.system, args.revision)
         if args.provider != 'local' and (args.system == 'all' or args.revision == 'all'):
             print('Please provide required system and its version.')
             print('Example: ./hammer.py prepare-system -s fedora -r 28.')
             print('To get list of supported systems run: ./hammer.py supported-systems.')
             sys.exit(1)
+
+        _check_system_revision(args.system, args.revision)
 
         features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
@@ -1256,12 +1330,13 @@ def main():
         prepare_system_in_vagrant(args.provider, args.system, args.revision, features, args.dry_run, args.check_times, args.clean_start)
 
     elif args.command == "build":
-        _check_system_revision(args.system, args.revision)
         features = _what_features(args)
         log.info('Enabled features: %s', ' '.join(features))
         if args.provider == 'local':
             build_local(features, args.from_tarball, args.check_times, int(args.jobs), args.dry_run)
             return
+
+        _check_system_revision(args.system, args.revision)
 
         if args.provider == 'all':
             providers = ['lxc', 'virtualbox']
@@ -1320,10 +1395,4 @@ def main():
 
 
 if __name__ == '__main__':
-    # results = {
-    #     ('virtualbox', 'centos', '7'): (920, False),
-    #     ('lxc', 'fedora', '29'): (120, False),
-    # }
-    # _print_summary(results)
-
     main()
