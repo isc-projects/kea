@@ -20,7 +20,7 @@ mysql "$@" <<EOF
 -- -----------------------------------------------------
 -- Modify timestamps in the Configuration Backend
 -- specific tables to use fractional seconds with
--- 3 decimal places precision.
+-- 6 decimal places precision.
 -- -----------------------------------------------------
 
 ALTER TABLE dhcp4_server
@@ -123,7 +123,7 @@ ALTER TABLE dhcp4_audit
 
 # -----------------------------------------------------
 # Add column revision_id and the foreign key with a
-# refrence to the dhcp4_audit_revision table.
+# reference to the dhcp4_audit_revision table.
 # -----------------------------------------------------
 ALTER TABLE dhcp4_audit
     ADD COLUMN revision_id BIGINT(20) UNSIGNED NOT NULL;
