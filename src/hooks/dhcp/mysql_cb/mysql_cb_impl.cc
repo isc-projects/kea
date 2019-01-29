@@ -121,12 +121,12 @@ MySqlConfigBackendImpl::getRecentAuditEntries(const int index,
                                               AuditEntryCollection& audit_entries) {
     // Create the output bindings for receiving the data.
     MySqlBindingCollection out_bindings = {
-        MySqlBinding::createInteger<uint64_t>(),
-        MySqlBinding::createString(AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH),
-        MySqlBinding::createInteger<uint64_t>(),
-        MySqlBinding::createInteger<uint8_t>(),
-        MySqlBinding::createTimestamp(),
-        MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH)
+        MySqlBinding::createInteger<uint64_t>(), // id
+        MySqlBinding::createString(AUDIT_ENTRY_OBJECT_TYPE_BUF_LENGTH), // object_type
+        MySqlBinding::createInteger<uint64_t>(), // object_id
+        MySqlBinding::createInteger<uint8_t>(), // modification_type
+        MySqlBinding::createTimestamp(), // modification_time
+        MySqlBinding::createString(AUDIT_ENTRY_LOG_MESSAGE_BUF_LENGTH) // log_message
     };
 
     auto tags = getServerTags(server_selector);
