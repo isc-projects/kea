@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,6 +24,9 @@ namespace isc {
 namespace dhcp {
 
 /// @brief Implementation of the Configuration Backend Pool for DHCPv4.
+///
+/// All POSIX times specified in the methods belonging to this
+/// class must be local times.
 class ConfigBackendPoolDHCPv4 : public cb::BaseConfigBackendPool<ConfigBackendDHCPv4> {
 public:
 
