@@ -278,7 +278,7 @@ public:
     /// @throw InvalidOperation if the value is NULL or the binding
     /// type is not @c MYSQL_TYPE_TIMESTAMP.
     ///
-    /// @return Timestamp converted to posix time.
+    /// @return Timestamp converted to POSIX time.
     boost::posix_time::ptime getTimestamp() const;
 
     /// @brief Returns timestamp value held in the binding.
@@ -289,7 +289,7 @@ public:
     ///
     /// @throw InvalidOperation if the binding type is not @c MYSQL_TYPE_TIMESTAMP.
     ///
-    /// @return Timestamp converted to posix time.
+    /// @return Timestamp converted to POSIX time.
     boost::posix_time::ptime
     getTimestampOrDefault(const boost::posix_time::ptime& default_value) const;
 
@@ -421,9 +421,9 @@ public:
     static void convertToDatabaseTime(const time_t input_time,
                                       MYSQL_TIME& output_time);
 
-    /// @brief Converts posix time value to database time.
+    /// @brief Converts POSIX time value to database time.
     ///
-    /// @param input_time A posix time value representing local time.
+    /// @param input_time A POSIX time value representing local time.
     /// @param output_time Reference to MYSQL_TIME object where converted time
     ///        will be put.
     static void convertToDatabaseTime(const boost::posix_time::ptime& input_time,
@@ -473,12 +473,12 @@ public:
                                         uint32_t valid_lifetime,
                                         time_t& cltt);
 
-    /// @brief Converts database time to posix time.
+    /// @brief Converts database time to POSIX time.
     ///
     /// @param database_time Reference to MYSQL_TIME object where database
     /// time is stored.
     ///
-    /// @return Database time converted to local posix time.
+    /// @return Database time converted to local POSIX time.
     static boost::posix_time::ptime
     convertFromDatabaseTime(const MYSQL_TIME& database_time);
 
@@ -540,7 +540,7 @@ private:
     /// @brief Converts timestamp to database time value and copies it to
     /// the buffer.
     ///
-    /// @param timestamp Timestamp value as posix time.
+    /// @param timestamp Timestamp value as POSIX time.
     void setTimestampValue(const boost::posix_time::ptime& timestamp);
 
     /// @brief Checks if the data accessor called is matching the type
