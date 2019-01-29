@@ -65,7 +65,7 @@ StampedValue::toElement(Element::types elem_type) {
     }
     case Element::integer: {
         try {
-            int int_value = boost::lexical_cast<int>(value_);
+            int64_t int_value = boost::lexical_cast<int64_t>(value_);
             element.reset(new IntElement(int_value));
         } catch (const std::exception& ex) {
             isc_throw(BadValue, "StampedValue::toElement:  integer value expected for: "
