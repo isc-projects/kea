@@ -1,3 +1,9 @@
+1515.	[func]		fdupont
+	Changes required for new host commands that retrieve all host
+	reservations from a given subnet (reservation-get-all, 
+        reservation-get-page) added. Also added documentation.
+	(Gitlab #313,!199, git 991b2fadcb9e8171a78e27f95e4bfba6393d7824)
+
 1514.	[func]		fdupont
 	Control Agent and DHCP-DDNS daemons now support config-reload
 	command, that instruct a given server to load again its
