@@ -8,6 +8,8 @@
 
 #include <cc/command_interpreter.h>
 #include <database/dbaccess_parser.h>
+#include <database/backend_selector.h>
+#include <database/server_selector.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
 #include <dhcp4/json_config_parser.h>
@@ -54,6 +56,7 @@ using namespace isc::asiolink;
 using namespace isc::hooks;
 using namespace isc::process;
 using namespace isc::config;
+using namespace isc::db;
 
 namespace {
 
@@ -290,6 +293,7 @@ void configureCommandChannel() {
         }
     }
 }
+
 
 isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
@@ -618,10 +622,8 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
 
-#ifdef CONFIG_BACKEND // Disabled until we restart CB work
             // If there are config backends, fetch and merge into staging config
-            databaseConfigFetch(srv_cfg, mutable_cfg);
-#endif
+            databaseConfigFetch(srv_cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
@@ -654,6 +656,64 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     return (answer);
 }
 
+void databaseConfigFetch(const SrvConfigPtr& srv_cfg) {
+
+    ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+    // Close any existing CB databasess, then open all in srv_cfg (if any)
+    if (!databaseConfigConnect(srv_cfg)) {
+        // There are no CB databases so we're done
+        return;
+    }
+
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_FETCH);
+
+    // For now we find data based on first backend that has it.
+    BackendSelector backend_selector(BackendSelector::Type::UNSPEC);
+
+    // Use the server_tag if set, otherwise use ALL.
+    std::string server_tag = srv_cfg->getServerTag();
+    ServerSelector& server_selector = (server_tag.empty()? ServerSelector::ALL()
+                                                         : ServerSelector::ONE(server_tag));
+    // Create the external config into which we'll fetch backend config data.
+    SrvConfigPtr external_cfg = CfgMgr::instance().createExternalCfg();
+
+    // First let's fetch the globals and add them to external config.
+    data::StampedValueCollection globals;
+    globals = mgr.getPool()->getAllGlobalParameters4(backend_selector, server_selector);
+    addGlobalsToConfig(external_cfg, globals);
+
+    // Now we fetch the option definitions and add them.
+    OptionDefContainer option_defs = mgr.getPool()->getAllOptionDefs4(backend_selector,
+                                                                      server_selector);
+    for (auto option_def = option_defs.begin(); option_def != option_defs.end(); ++option_def) {
+        external_cfg->getCfgOptionDef()->add((*option_def), (*option_def)->getOptionSpaceName());
+    }
+
+    // Next fetch the options. They are returned as a container of OptionDescriptors.
+    OptionContainer options = mgr.getPool()->getAllOptions4(backend_selector, server_selector);
+    for (auto option = options.begin(); option != options.end(); ++option) {
+        external_cfg->getCfgOption()->add((*option), (*option).space_name_);
+    }
+
+    // Now fetch the shared networks.
+    SharedNetwork4Collection networks = mgr.getPool()->getAllSharedNetworks4(backend_selector,
+                                                                             server_selector);
+    for (auto network = networks.begin(); network != networks.end(); ++network) {
+        external_cfg->getCfgSharedNetworks4()->add((*network));
+    }
+
+    // Next we fetch subnets.
+    Subnet4Collection subnets = mgr.getPool()->getAllSubnets4(backend_selector, server_selector);
+    for (auto subnet = subnets.begin(); subnet != subnets.end(); ++subnet) {
+        external_cfg->getCfgSubnets4()->add((*subnet));
+    }
+
+    // Now we merge the fecthed configuration into the staging configuration.
+    CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_MERGED);
+}
+
 bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
     // We need to get rid of any existing backends.  These would be any
     // opened by previous configuration cycle.
@@ -678,25 +738,72 @@ bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
     return (true);
 }
 
-void databaseConfigFetch(const SrvConfigPtr& srv_cfg, ElementPtr /* mutable_cfg */) {
 
-    // Close any existing CB databasess, then open all in srv_cfg (if any)
-    if (!databaseConfigConnect(srv_cfg)) {
-        // There are no CB databases so we're done
-        return;
+void addGlobalsToConfig(SrvConfigPtr external_cfg, data::StampedValueCollection& cb_globals) {
+
+    const auto& index = cb_globals.get<StampedValueNameIndexTag>();
+
+    for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
+        // If the global is an explicit member of SrvConfig handle it that way.
+        if (handleExplicitGlobal(external_cfg, (*cb_global))) {
+            continue;
+        }
+
+        // Otherwise it must be added to the implicitly configured globals
+        if (handleImplicitGlobal(external_cfg, (*cb_global))) {
+            continue;
+        }
+
+        isc_throw (DhcpConfigError, "Config backend supplied unsupported global: "  <<
+                             (*cb_global)->getName() << " = " << (*cb_global)->getValue());
     }
-
-    // @todo Fetching and merging the configuration falls under #99
-    // ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
-    // Next we have to fetch the pieces we care about it and merge them
-    // probably in this order?
-    // globals
-    // option defs
-    // options
-    // shared networks
-    // subnets
 }
 
+
+bool handleExplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
+    bool was_handled = true;
+    try {
+        const std::string& name = cb_global->getName();
+        if (name == "decline-probation-period") {
+            external_cfg->setDeclinePeriod(cb_global->getSignedIntegerValue());
+        }
+        else if (name == "echo-client-id") {
+            external_cfg->setEchoClientId(cb_global->getValue() == "true" ? true : false);
+        } else {
+            was_handled = false;
+        }
+    } catch(const std::exception& ex) {
+       isc_throw (BadValue, "Invalid value:" << cb_global->getValue()
+                             << " explict global:" << cb_global->getName());
+    }
+
+    return (was_handled);
+}
+
+bool handleImplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
+
+    // @todo One day we convert it based on the type stored in StampedValue, but
+    // that day is not today. For now, if we find it in the global defaults use
+    // the element type there.
+    for (auto global_default : SimpleParser4::GLOBAL4_DEFAULTS) {
+        if (global_default.name_ == cb_global->getName()) {
+            ElementPtr element = cb_global->toElement(global_default.type_);
+            external_cfg->addConfiguredGlobal(cb_global->getName(), element);
+            return (true);
+        }
+    }
+
+    // We didn't find it in the default list, so is it an optional implicit?
+    const std::string& name = cb_global->getName();
+    if ((name == "renew-timer") ||
+        (name == "rebind-timer")) {
+        ElementPtr element = cb_global->toElement(Element::integer);
+        external_cfg->addConfiguredGlobal(cb_global->getName(), element);
+        return (true);
+    }
+
+    return (false);
+}
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
