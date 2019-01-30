@@ -7,6 +7,7 @@
 #ifndef STAMPED_VALUE_H
 #define STAMPED_VALUE_H
 
+#include <cc/data.h>
 #include <cc/stamped_element.h>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -82,6 +83,18 @@ public:
     ///
     /// @throw BadValue if the value can't be converted to an integer.
     int64_t getSignedIntegerValue() const;
+
+    /// @brief Creates an Element with the appropriate value
+    ///
+    /// @param etype type of Element to create
+    /// @todo If StampedValue is extended to contain the Element::type
+    /// this parameter can be done away with.
+    ///
+    /// @return A pointer to the new Element
+    /// @throw BadValue if the current value is invalid for the
+    /// requested element type. InvalidOperation if the requested
+    /// type is unsupported.
+    ElementPtr toElement(const Element::types etype);
 
 private:
 
