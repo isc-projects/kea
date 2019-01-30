@@ -101,9 +101,106 @@ ALTER TABLE dhcp6_options
 ALTER TABLE dhcp6_options_server
     MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
-# -----------------------------------------------------
-# Table dhcp4_audit_revision
-# -----------------------------------------------------
+-- -----------------------------------------------------
+-- Make sure that constraints on the 7.0 schema tables
+-- have appropriate referential actions. All tables
+-- which join the configuration elements with the
+-- servers should perform cascade deletion.
+-- -----------------------------------------------------
+
+ALTER TABLE dhcp4_global_parameter_server
+    DROP FOREIGN KEY fk_dhcp4_global_parameter_server_server_id;
+
+ALTER TABLE dhcp4_global_parameter_server
+    ADD CONSTRAINT fk_dhcp4_global_parameter_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_option_def_server
+    DROP FOREIGN KEY fk_dhcp4_option_def_server_server_id;
+
+ALTER TABLE dhcp4_option_def_server
+    ADD CONSTRAINT fk_dhcp4_option_def_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_shared_network_server
+    DROP FOREIGN KEY fk_dhcp4_shared_network_server_server_id;
+
+ALTER TABLE dhcp4_shared_network_server
+    ADD CONSTRAINT fk_dhcp4_shared_network_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_subnet_server
+    DROP FOREIGN KEY fk_dhcp4_subnet_server_server_id;
+
+ALTER TABLE dhcp4_subnet_server
+    ADD CONSTRAINT fk_dhcp4_subnet_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_options_server
+    DROP FOREIGN KEY fk_dhcp4_options_server_server_id;
+
+ALTER TABLE dhcp4_options_server
+    ADD CONSTRAINT fk_dhcp4_options_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_global_parameter_server
+    DROP FOREIGN KEY fk_dhcp6_global_parameter_server_server_id;
+
+ALTER TABLE dhcp6_global_parameter_server
+    ADD CONSTRAINT fk_dhcp6_global_parameter_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_option_def_server
+    DROP FOREIGN KEY fk_dhcp6_option_def_server_server_id;
+
+ALTER TABLE dhcp6_option_def_server
+    ADD CONSTRAINT fk_dhcp6_option_def_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_shared_network_server
+    DROP FOREIGN KEY fk_dhcp6_shared_network_server_server_id;
+
+ALTER TABLE dhcp6_shared_network_server
+    ADD CONSTRAINT fk_dhcp6_shared_network_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_subnet_server
+    DROP FOREIGN KEY fk_dhcp6_subnet_server_server_id;
+
+ALTER TABLE dhcp6_subnet_server
+    ADD CONSTRAINT fk_dhcp6_subnet_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_options_server
+    DROP FOREIGN KEY fk_dhcp6_options_server_option_id;
+
+ALTER TABLE dhcp6_options_server
+    ADD CONSTRAINT fk_dhcp6_options_server_option_id
+        FOREIGN KEY (option_id)
+    REFERENCES dhcp6_options (option_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- -----------------------------------------------------
+-- Table dhcp4_audit_revision
+-- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
     modification_ts TIMESTAMP(6) NOT NULL,
@@ -113,18 +210,18 @@ CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
     KEY key_dhcp4_audit_revision_by_modification_ts (modification_ts)
 ) ENGINE=InnoDB;
 
-# -----------------------------------------------------
-# Drop columns from the dhcp4_audit table which now
-# belong to the dhcp4_audit_revision.
-# -----------------------------------------------------
+-- -----------------------------------------------------
+-- Drop columns from the dhcp4_audit table which now
+-- belong to the dhcp4_audit_revision.
+--  -----------------------------------------------------
 ALTER TABLE dhcp4_audit
     DROP COLUMN modification_ts,
     DROP COLUMN log_message;
 
-# -----------------------------------------------------
-# Add column revision_id and the foreign key with a
-# reference to the dhcp4_audit_revision table.
-# -----------------------------------------------------
+-- -----------------------------------------------------
+-- Add column revision_id and the foreign key with a
+-- reference to the dhcp4_audit_revision table.
+-- -----------------------------------------------------
 ALTER TABLE dhcp4_audit
     ADD COLUMN revision_id BIGINT(20) UNSIGNED NOT NULL;
 
@@ -133,34 +230,34 @@ ALTER TABLE dhcp4_audit
         REFERENCES dhcp4_audit_revision (id)
         ON DELETE NO ACTION ON UPDATE CASCADE;
 
-# -----------------------------------------------------
-# Stored procedure which creates a new entry in the
-# dhcp4_audit_revision table and sets appropriate session
-# variables to be used while creating the audit entries
-# by triggers. This procedure should be called at the
-# beginning of a transaction which modifies configuration
-# data in the database, e.g. when new subnet is added.
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp4_audit_revision table and sets appropriate session
+-- variables to be used while creating the audit entries
+-- by triggers. This procedure should be called at the
+-- beginning of a transaction which modifies configuration
+-- data in the database, e.g. when new subnet is added.
 --
-# Parameters:
-# - audit_ts timestamp to be associated with the audit
-#   revision.
-# - server_tag is used to retrieve the server_id which
-#   associates the changes applied with the particular
-#   server or all servers.
-# - audit_log_message is a log message associates with
-#   the audit revision.
-# - cascade_transaction is assigned to a session
-#   variable which is used in some triggers to determine
-#   if the audit entry should be created for them or
-#   not. Specifically, this is used when DHCP options
-#   are inserted, updated or deleted. If such modification
-#   is a part of the larger change (e.g. change in the
-#   subnet the options belong to) the dedicated audit
-#   entry for options must not be created. On the other
-#   hand, if the global option is being added, the
-#   audit entry for the option must be created because
-#   it is the sole object modified in that case.
-# -----------------------------------------------------
+-- Parameters:
+-- - audit_ts timestamp to be associated with the audit
+--   revision.
+-- - server_tag is used to retrieve the server_id which
+--   associates the changes applied with the particular
+--   server or all servers.
+-- - audit_log_message is a log message associates with
+--   the audit revision.
+-- - cascade_transaction is assigned to a session
+--   variable which is used in some triggers to determine
+--   if the audit entry should be created for them or
+--   not. Specifically, this is used when DHCP options
+--   are inserted, updated or deleted. If such modification
+--   is a part of the larger change (e.g. change in the
+--   subnet the options belong to) the dedicated audit
+--   entry for options must not be created. On the other
+--   hand, if the global option is being added, the
+--   audit entry for the option must be created because
+--   it is the sole object modified in that case.
+-- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DELIMITER $$
 CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP(6),
@@ -177,22 +274,22 @@ BEGIN
 END $$
 DELIMITER ;
 
-# -----------------------------------------------------
-# Stored procedure which creates a new entry in the
-# dhcp4_audit table. It should be called from the
-# triggers of the tables where the config modifications
-# are applied. The @audit_revision_id variable contains
-# the revision id to be placed in the audit entries.
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp4_audit table. It should be called from the
+-- triggers of the tables where the config modifications
+-- are applied. The @audit_revision_id variable contains
+-- the revision id to be placed in the audit entries.
 --
-# The following parameters are passed to this procedure:
-# - object_type_val: name of the table to be associated
-#   with the applied changes.
-# - object_id_val: identifier of the modified object in
-#   that table.
-# - modification_type_val: string value indicating the
-#   type of the change, i.e. "create", "update" or
-#   "delete".
-# ----------------------------------------------------
+-- The following parameters are passed to this procedure:
+-- - object_type_val: name of the table to be associated
+--   with the applied changes.
+-- - object_id_val: identifier of the modified object in
+--   that table.
+-- - modification_type_val: string value indicating the
+--   type of the change, i.e. "create", "update" or
+--   "delete".
+-- ----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
 DELIMITER $$
 CREATE PROCEDURE createAuditEntryDHCP4(IN object_type_val VARCHAR(256),
@@ -206,11 +303,11 @@ BEGIN
 END $$
 DELIMITER ;
 
-# -----------------------------------------------------
-# Triggers used to create entries in the audit
-# tables upon insertion, update or deletion of the
-# configuration entries.
-# -----------------------------------------------------
+-- -----------------------------------------------------
+-- Triggers used to create entries in the audit
+-- tables upon insertion, update or deletion of the
+-- configuration entries.
+-- -----------------------------------------------------
 
 # Create dhcp4_global_parameter insert trigger
 DELIMITER $$
@@ -320,35 +417,35 @@ CREATE TRIGGER dhcp4_option_def_ADEL AFTER DELETE ON dhcp4_option_def
     END $$
 DELIMITER ;
 
-# -----------------------------------------------------
-# Stored procedure which creates an audit entry for a
-# DHCPv4 option. Depending on the scope of the option
-# the audit entry can be created for various levels
-# of configuration hierarchy. If this is a global
-# option the audit entry is created for this option
-# for CREATE, UPDATE or DELETE. If the option is being
-# added for an owning option, e.g. for a subnet, the
-# audit entry is created as an UPDATE to this object.
-# From the Kea perspective such option addition will
-# be seen as a subnet update and the server will fetch
-# the whole subnet and merge it into its configuration.
-# The audit entry is not created if it was already
-# created as part of the current transaction.
-#
-# The following parameters are passed to the procedure:
-# - modification_type: "create", "update" or "delete"
-# - scope_id: identifier of the option scope, e.g.
-#   global, subnet specific etc.
-# - option_id: identifier of the option.
-# - subnet_id: identifier of the subnet if the option
-#   belongs to the subnet.
-# - host_id: identifier of the host if the option
-# - belongs to the host.
-# - network_name: shared network name if the option
-#   belongs to the shared network.
-# - pool_id: identifier of the pool if the option
-#   belongs to the pool.
-# -----------------------------------------------------
+-- -----------------------------------------------------
+-- Stored procedure which creates an audit entry for a
+-- DHCPv4 option. Depending on the scope of the option
+-- the audit entry can be created for various levels
+-- of configuration hierarchy. If this is a global
+-- option the audit entry is created for this option
+-- for CREATE, UPDATE or DELETE. If the option is being
+-- added for an owning option, e.g. for a subnet, the
+-- audit entry is created as an UPDATE to this object.
+-- From the Kea perspective such option addition will
+-- be seen as a subnet update and the server will fetch
+-- the whole subnet and merge it into its configuration.
+-- The audit entry is not created if it was already
+-- created as part of the current transaction.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createOptionAuditDHCP4;
 DELIMITER $$
 CREATE PROCEDURE createOptionAuditDHCP4(IN modification_type VARCHAR(32),
