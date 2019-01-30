@@ -1,3 +1,9 @@
+1517.	[func]		tmark
+	kea-dhcp4 will now connect to and fetch configuration data from
+	configured backends. At this point, only fetched subnet data is
+	merged and used.  
+	(Gitlab #101,!202, git c572f8aea94349ff5fb4afee13a88ba811cc6459)
+
 1516.	[func]		marcin
 	Implemented audit trail for MySQL Configuration Backend. It allows
 	for tracking incremental changes in the servers' configurations.
@@ -8,7 +14,7 @@
 1515.	[func]		fdupont
 	Changes required for new host commands that retrieve all host
 	reservations from a given subnet (reservation-get-all,
-        reservation-get-page) added. Also added documentation.
+	reservation-get-page) added. Also added documentation.
 	(Gitlab #313,!199, git 991b2fadcb9e8171a78e27f95e4bfba6393d7824)
 
 1514.	[func]		fdupont
