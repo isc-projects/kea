@@ -135,14 +135,12 @@ def get_system_revision():
     if system == 'Linux':
         system, revision, _ = platform.dist()  # pylit: disable=deprecated-method
         if system == 'debian':
-            if revision.startswith('8.'):
-                revision = '8'
-            if revision.startswith('9.'):
-                revision = '9'
+            revision = revision[0]
         elif system == 'redhat':
             system = 'rhel'
-            if revision.startswith('8.'):
-                revision = '8'
+            revision = revision[0]
+        elif system == 'centos':
+            revision = revision[0]
     elif system == 'FreeBSD':
         system = system.lower()
         revision = platform.release()
@@ -406,7 +404,8 @@ class VagrantEnv(object):
             bld_cmd += ' ' + self.nofeatures_arg
         if self.check_times:
             bld_cmd += ' -i'
-        self.execute(bld_cmd, timeout=40 * 60, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
+        timeout = _calculate_build_timeout(self.features) + 5 * 60
+        self.execute(bld_cmd, timeout=timeout, log_file_path=log_file_path, quiet=self.quiet)  # timeout: 40 minutes
 
         ssh_cfg_path = self.dump_ssh_config()
 
@@ -525,6 +524,11 @@ def _configure_mysql(system, revision, features):
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl start mariadb.service')
         time.sleep(5)
+
+    if system == 'freebsd':
+        cmd = "echo 'SET PASSWORD = \"\";' | sudo mysql -u root --password=\"$(sudo cat /root/.mysql_secret | grep -v '#')\" --connect-expired-password"
+        execute(cmd, raise_error=False)
+
     cmd = "echo 'DROP DATABASE IF EXISTS keatest;' | sudo mysql -u root"
     execute(cmd)
     cmd = "echo 'DROP USER 'keatest'@'localhost';' | sudo mysql -u root"
@@ -823,13 +827,20 @@ def prepare_system_local(features, check_times):
         if 'docs' in features:
             packages.extend(['libxslt', 'elinks', 'docbook-xsl'])
 
-        if 'radius' in features:
-            packages.extend(['git'])
-
         if 'unittest' in features:
             _install_gtest_sources()
 
+        if 'mysql' in features:
+            packages.extend(['mysql57-server', 'mysql57-client'])
+
+        if 'radius' in features:
+            packages.extend(['git'])
+
         install_pkgs(packages, env=env, timeout=6 * 60, check_times=check_times)
+
+        if 'mysql' in features:
+            execute('sudo sysrc mysql_enable="yes"', env=env, check_times=check_times)
+            execute('sudo service mysql-server start', env=env, check_times=check_times, raise_error=False)
 
     else:
         raise NotImplementedError
@@ -857,10 +868,18 @@ def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run,
     ve.prepare_system()
 
 
+def _calculate_build_timeout(features):
+    timeout = 60
+    if 'mysql' in features:
+        timeout += 60
+    timeout *= 60
+    return timeout
+
+
 def _build_just_binaries(distro, revision, features, tarball_path, env, check_times, jobs, dry_run):
     if tarball_path:
         # unpack tarball with sources
-        execute('rm -rf kea-src')
+        execute('sudo rm -rf kea-src')
         os.mkdir('kea-src')
         execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times)
         src_path = glob.glob('kea-src/*')[0]
@@ -913,9 +932,14 @@ def _build_just_binaries(distro, revision, features, tarball_path, env, check_ti
     else:
         cpus = jobs
 
+
     # do build
-    cmd = 'make -j%s' % cpus
-    execute(cmd, cwd=src_path, env=env, timeout=150 * 60, check_times=check_times, dry_run=dry_run)
+    timeout = _calculate_build_timeout(features)
+    if 'distcheck' in features:
+        cmd = 'make distcheck'
+    else:
+        cmd = 'make -j%s' % cpus
+    execute(cmd, cwd=src_path, env=env, timeout=timeout, check_times=check_times, dry_run=dry_run)
 
     if 'unittest' in features:
         results_dir = os.path.abspath(os.path.join(src_path, 'tests_result'))
@@ -983,7 +1007,7 @@ def _build_native_pkg(distro, features, tarball_path, env, check_times, dry_run)
         os.mkdir('rpm-root/SRPMS')
 
         # get rpm.spec from tarball
-        execute('rm -rf kea-src', dry_run=dry_run)
+        execute('sudo rm -rf kea-src', dry_run=dry_run)
         os.mkdir('kea-src')
         execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
         src_path = glob.glob('kea-src/*')[0]
@@ -1004,7 +1028,7 @@ def _build_native_pkg(distro, features, tarball_path, env, check_times, dry_run)
 
     elif distro in ['ubuntu', 'debian']:
         # unpack tarball
-        execute('rm -rf kea-src', check_times=check_times, dry_run=dry_run)
+        execute('sudo rm -rf kea-src', check_times=check_times, dry_run=dry_run)
         os.mkdir('kea-src')
         execute('tar -zxf %s' % tarball_path, cwd='kea-src', check_times=check_times, dry_run=dry_run)
         src_path = glob.glob('kea-src/*')[0]
@@ -1145,7 +1169,7 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
 
 
 DEFAULT_FEATURES = ['install', 'unittest', 'docs']
-ALL_FEATURES = ['install', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
+ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg', 'radius', 'shell', 'forge']
 
 
 def parse_args():
@@ -1286,10 +1310,11 @@ def destroy_system(path):
 
 def _what_features(args):
     features = set(vars(args)['with'])
-    features = features.union(DEFAULT_FEATURES)
+    # distcheck is not compatible with defaults so do not add them
+    if 'distcheck' not in features:
+        features = features.union(DEFAULT_FEATURES)
     nofeatures = set(args.without)
     features = features.difference(nofeatures)
-
     return features
 
 
