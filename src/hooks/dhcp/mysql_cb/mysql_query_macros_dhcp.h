@@ -35,6 +35,7 @@ namespace {
     "  g.id," \
     "  g.name," \
     "  g.value," \
+    "  g.parameter_type," \
     "  g.modification_ts " \
     "FROM " #table_prefix "_global_parameter AS g " \
     "INNER JOIN " #table_prefix "_global_parameter_server AS a " \
@@ -217,8 +218,9 @@ namespace {
     "INSERT INTO " #table_prefix "_global_parameter(" \
     "  name," \
     "  value," \
+    "  parameter_type," \
     "  modification_ts" \
-    ") VALUES (?, ?, ?)"
+    ") VALUES (?, ?, ?, ?)"
 #endif
 
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER_SERVER
@@ -322,6 +324,7 @@ namespace {
     "SET" \
     "  g.name = ?," \
     "  g.value = ?," \
+    "  g.parameter_type = ?," \
     "  g.modification_ts = ? " \
     "WHERE s.tag = ? AND g.name = ?"
 #endif

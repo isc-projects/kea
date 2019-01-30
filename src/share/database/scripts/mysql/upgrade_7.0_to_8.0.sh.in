@@ -532,6 +532,38 @@ CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
     END $$
 DELIMITER ;
 
+-- -----------------------------------------------------
+-- Table parameter_data_type
+-- Reflects an enum used by Kea to define supported
+-- data types for the simple configuration parameters,
+-- e.g. global parameters used by DHCP servers.
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS parameter_data_type (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    name VARCHAR(32) NOT NULL
+) ENGINE = InnoDB;
+
+START TRANSACTION;
+INSERT INTO parameter_data_type VALUES (0, 'integer');
+INSERT INTO parameter_data_type VALUES (1, 'real');
+INSERT INTO parameter_data_type VALUES (2, 'boolean');
+INSERT INTO parameter_data_type VALUES (4, 'string');
+COMMIT;
+
+ALTER TABLE dhcp4_global_parameter
+    ADD COLUMN parameter_type TINYINT UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp4_global_parameter
+    ADD CONSTRAINT fk_dhcp4_global_parameter_type FOREIGN KEY (parameter_type)
+        REFERENCES parameter_data_type (id);
+
+ALTER TABLE dhcp6_global_parameter
+    ADD COLUMN parameter_type TINYINT UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_global_parameter
+    ADD CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type)
+        REFERENCES parameter_data_type (id);
+
 
 # Update the schema version number
 UPDATE schema_version

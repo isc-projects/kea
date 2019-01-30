@@ -152,6 +152,7 @@ public:
             MySqlBinding::createInteger<uint64_t>(), // id
             MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
             MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
+            MySqlBinding::createInteger<uint8_t>(), // parameter_type
             MySqlBinding::createTimestamp() // modification_ts
         };
 
@@ -159,9 +160,44 @@ public:
                           [&parameters]
                           (MySqlBindingCollection& out_bindings) {
             if (!out_bindings[1]->getString().empty()) {
-                StampedValuePtr stamped_value(new StampedValue(out_bindings[1]->getString(),
-                                                               out_bindings[2]->getString()));
-                stamped_value->setModificationTime(out_bindings[3]->getTimestamp());
+                std::string name = out_bindings[1]->getString();
+                std::string value = out_bindings[2]->getString();
+                uint8_t parameter_type = out_bindings[3]->getInteger<uint8_t>();
+
+                StampedValuePtr stamped_value;
+
+                try {
+                    switch (static_cast<Element::types>(parameter_type)) {
+                    case Element::string:
+                        stamped_value = StampedValue::create(name, value);
+                        break;
+
+                    case Element::integer:
+                        stamped_value = StampedValue::create(name,
+                            Element::create(boost::lexical_cast<int64_t>(value)));
+                        break;
+
+                    case Element::boolean:
+                        stamped_value = StampedValue::create(name,
+                            Element::create((value == "1") ? true : false));
+                        break;
+
+                    case Element::real:
+                        stamped_value = StampedValue::create(name,
+                            Element::create(boost::lexical_cast<double>(value)));
+                        break;
+
+                    default:
+                        isc_throw(TypeError, "invalid type of the parameter '"
+                                  << name << "' fetched from the database");
+                    }
+
+                } catch (const boost::bad_lexical_cast& ex) {
+                    isc_throw(BadValue, "actual type of the value '" << name
+                              << "' is different than marked in the database");
+                }
+
+                stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
                 parameters.insert(stamped_value);
             }
         });
@@ -209,6 +245,7 @@ public:
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(value->getName()),
             MySqlBinding::createString(value->getValue()),
+            MySqlBinding::createInteger<uint8_t>(value->getType()),
             MySqlBinding::createTimestamp(value->getModificationTime()),
             MySqlBinding::createString(tag),
             MySqlBinding::createString(value->getName())
