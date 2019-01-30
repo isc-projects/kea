@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,24 +16,87 @@ using namespace isc::data;
 
 namespace {
 
+// Tests that the stamped value can be created with a NULL value.
+TEST(StampedValueTest, createNull) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar"));
+
+    EXPECT_TRUE(value->amNull());
+
+    EXPECT_THROW(value->getType(), InvalidOperation);
+    EXPECT_THROW(value->getValue(), InvalidOperation);
+    EXPECT_THROW(value->getSignedIntegerValue(), InvalidOperation);
+    EXPECT_THROW(value->getBoolValue(), InvalidOperation);
+    EXPECT_THROW(value->getDoubleValue(), InvalidOperation);
+}
+
 // Tests that stamped value from string can be created.
 TEST(StampedValueTest, createFromString) {
-    boost::scoped_ptr<StampedValue> value;
-    ASSERT_NO_THROW(value.reset(new StampedValue("bar", "foo")));
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", Element::create("foo")));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::string, value->getType());
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("foo", value->getValue());
-    EXPECT_THROW(value->getSignedIntegerValue(), BadValue);
+
+    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getBoolValue(), TypeError);
+    EXPECT_THROW(value->getDoubleValue(), TypeError);
 }
 
 // Tests that stamped value from integer can be created.
 TEST(StampedValueTest, createFromInteger) {
-    boost::scoped_ptr<StampedValue> value;
-    ASSERT_NO_THROW(value.reset(new StampedValue("bar", 5)));
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", Element::create(static_cast<int64_t>(5))));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::integer, value->getType());
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("5", value->getValue());
     int64_t signed_integer;
     ASSERT_NO_THROW(signed_integer = value->getSignedIntegerValue());
     EXPECT_EQ(5, signed_integer);
+
+    EXPECT_THROW(value->getBoolValue(), TypeError);
+    EXPECT_THROW(value->getDoubleValue(), TypeError);
+}
+
+// Tests that stamped value from bool can be created.
+TEST(StampedValueTest, createFromBool) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", Element::create(static_cast<bool>(true))));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::boolean, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ("1", value->getValue());
+    bool bool_value = false;
+    ASSERT_NO_THROW(bool_value = value->getBoolValue());
+    EXPECT_TRUE(bool_value);
+
+    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getDoubleValue(), TypeError);
+}
+
+// Tests that stamped value from real can be created.
+TEST(StampedValueTest, createFromDouble) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", Element::create(static_cast<double>(1.45))));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::real, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ("1.45", value->getValue());
+    double double_value = 0;
+    ASSERT_NO_THROW(double_value = value->getDoubleValue());
+    EXPECT_EQ(1.45, double_value);
+
+    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getBoolValue(), TypeError);
+}
+
+// Tests that the value must have an allowed type.
+TEST(StampedValueTest, createFailures) {
+    EXPECT_THROW(StampedValue::create("bar", ElementPtr()), BadValue);
+    EXPECT_THROW(StampedValue::create("bar", Element::createMap()), TypeError);
+    EXPECT_THROW(StampedValue::create("bar", Element::createList()), TypeError);
 }
 
 // Tests that Elements can be created from stamped values.

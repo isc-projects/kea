@@ -492,7 +492,8 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          StampedValue::create("name1", "value1"));
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
-                                         StampedValue::create("name2", 65));
+                                         StampedValue::create("name2",
+                                                              Element::create(static_cast<int64_t>(65))));
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          StampedValue::create("name3", "value3"));
 
@@ -531,7 +532,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedGlobalParameters4) {
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          value);
 
-    value = StampedValue::create("name2", 65);
+    value = StampedValue::create("name2", Element::create(static_cast<int64_t>(65)));
     value->setModificationTime(timestamps_["today"]);
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
                                          value);
