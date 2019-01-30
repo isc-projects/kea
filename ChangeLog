@@ -1,6 +1,13 @@
+1516.	[func]		marcin
+	Implemented audit trail for MySQL Configuration Backend. It allows
+	for tracking incremental changes in the servers' configurations.
+	Both mysql_cb hooks library and the MySQL schema have been updated
+	to facilitate this feature.
+	(Gitlab #396,!205, git 6d40db07ef641eef29405c42e718979e7a1e8675)
+
 1515.	[func]		fdupont
 	Changes required for new host commands that retrieve all host
-	reservations from a given subnet (reservation-get-all, 
+	reservations from a given subnet (reservation-get-all,
         reservation-get-page) added. Also added documentation.
 	(Gitlab #313,!199, git 991b2fadcb9e8171a78e27f95e4bfba6393d7824)
 
