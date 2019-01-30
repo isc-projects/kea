@@ -114,16 +114,19 @@ log = logging.getLogger()
 
 
 def red(txt):
+    """Return colorized (if the terminal supports it) or plain text"""
     if sys.stdout.isatty():
         return '\033[1;31m%s\033[0;0m' % txt
     return txt
 
 def green(txt):
+    """Return colorized (if the terminal supports it) or plain text"""
     if sys.stdout.isatty():
         return '\033[0;32m%s\033[0;0m' % txt
     return txt
 
 def blue(txt):
+    """Return colorized (if the terminal supports it) or plain text"""
     if sys.stdout.isatty():
         return '\033[0;34m%s\033[0;0m' % txt
     return txt
@@ -148,6 +151,7 @@ def get_system_revision():
 
 
 class ExecutionError(Exception):
+    """Exception thrown when execution encountered an error."""
     pass
 
 
@@ -237,6 +241,14 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
 
 
 def install_pkgs(pkgs, timeout=60, env=None, check_times=False):
+    """Installs native packages in a system.
+
+    :param dict pkgs: specifies a list of packages to be installed
+    :param int timeout: timeout in number of seconds, after that time the command
+                        is terminated but only if check_times is True
+    :param dict env: dictionary with environment variables (optional)
+    :param bool check_times: specifies if timeouts should be enabled (optional)
+    """
     system, revision = get_system_revision()
 
     if system in ['centos', 'rhel'] and revision == '7':
@@ -439,10 +451,12 @@ class VagrantEnv(object):
         return total, passed
 
     def destroy(self):
+        """Removes the VM completely."""
         cmd = 'vagrant destroy --force'
         execute(cmd, cwd=self.vagrant_dir, timeout=3 * 60, dry_run=self.dry_run)  # timeout: 3 minutes
 
     def ssh(self):
+        """Open interactive session to the VM."""
         execute('vagrant ssh', cwd=self.vagrant_dir, timeout=None, dry_run=self.dry_run, interactive=True)
 
     def dump_ssh_config(self):
@@ -512,6 +526,7 @@ class VagrantEnv(object):
 
 
 def _install_gtest_sources():
+    """Install gtest sources."""
     # download gtest sources only if it is not present as native package
     if not os.path.exists('/usr/src/googletest-release-1.8.0/googletest'):
         execute('wget --no-verbose -O /tmp/gtest.tar.gz https://github.com/google/googletest/archive/release-1.8.0.tar.gz')
@@ -520,6 +535,7 @@ def _install_gtest_sources():
 
 
 def _configure_mysql(system, revision, features):
+    """Configures MySQL database."""
     if system in ['fedora', 'centos']:
         execute('sudo systemctl enable mariadb.service')
         execute('sudo systemctl start mariadb.service')
@@ -601,6 +617,7 @@ def _configure_pgsql(system, features):
 
 
 def _install_cassandra_deb(env, check_times):
+    """Installs Cassandra and cpp-driver using DEB package."""
     if not os.path.exists('/usr/sbin/cassandra'):
         execute('echo "deb http://www.apache.org/dist/cassandra/debian 311x main" | sudo tee /etc/apt/sources.list.d/cassandra.sources.list',
                 env=env, check_times=check_times)
@@ -618,6 +635,7 @@ def _install_cassandra_deb(env, check_times):
 
 
 def _install_freeradius_client(env, check_times):
+    """Install FreeRADIUS-client with necessary patches from Francis Dupont."""
     execute('rm -rf freeradius-client')
     execute('git clone https://github.com/fxdupont/freeradius-client.git', env=env, check_times=check_times)
     execute('git checkout iscdev', cwd='freeradius-client', env=env, check_times=check_times)
@@ -629,6 +647,7 @@ def _install_freeradius_client(env, check_times):
 
 
 def _install_cassandra_rpm(system, env, check_times):
+    """Installs Cassandra and cpp-driver using RPM package."""
     if not os.path.exists('/usr/bin/cassandra'):
         #execute('sudo dnf config-manager --add-repo https://www.apache.org/dist/cassandra/redhat/311x/')
         #execute('sudo rpm --import https://www.apache.org/dist/cassandra/KEYS')
@@ -869,6 +888,7 @@ def prepare_system_in_vagrant(provider, system, sys_revision, features, dry_run,
 
 
 def _calculate_build_timeout(features):
+    """Returns maximum allowed time for build (in seconds)"""
     timeout = 60
     if 'mysql' in features:
         timeout += 60
@@ -995,6 +1015,7 @@ def _build_just_binaries(distro, revision, features, tarball_path, env, check_ti
 
 
 def _build_native_pkg(distro, features, tarball_path, env, check_times, dry_run):
+    """Builds native (RPM or DEB) packages."""
     if distro in ['fedora', 'centos', 'rhel']:
         # prepare RPM environment
         execute('rm -rf rpm-root', dry_run=dry_run)
@@ -1271,6 +1292,7 @@ def parse_args():
 
 
 def list_supported_systems():
+    """Lists systems hammer can support (with supported providers)"""
     for system, revisions in SYSTEMS.items():
         print('%s:' % system)
         for r in revisions:
@@ -1284,6 +1306,7 @@ def list_supported_systems():
 
 
 def list_created_systems():
+    """List VMs that are created on this host by hammer"""
     _, output = execute('vagrant global-status', quiet=True, capture=True)
     systems = []
     for line in output.splitlines():
@@ -1319,6 +1342,7 @@ def _what_features(args):
 
 
 def _print_summary(results, features):
+    """Prints summart of build times and unit-test results"""
     print("")
     print("+===== Hammer Summary ====================================================+")
     print("|   provider |     system | revision |  duration |  status |   unit tests |")
