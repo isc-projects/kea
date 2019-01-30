@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 8.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -491,7 +491,7 @@ EOF
     run_statement "dhcp4_audit" "$qry"
 
     # table: dhcp4_global_parameter
-    qry="select id, name, value, modification_ts from dhcp4_global_parameter"
+    qry="select id, name, value, parameter_type, modification_ts from dhcp4_global_parameter"
     run_statement "dhcp4_global_parameter" "$qry"
 
     # table: dhcp4_global_parameter_server
@@ -547,7 +547,7 @@ EOF
     run_statement "dhcp6_audit" "$qry"
 
     # table: dhcp6_global_parameter
-    qry="select id, name, value, modification_ts from dhcp6_global_parameter"
+    qry="select id, name, value, parameter_type, modification_ts from dhcp6_global_parameter"
     run_statement "dhcp6_global_parameter" "$qry"
 
     # table: dhcp6_global_parameter_server
@@ -641,6 +641,10 @@ EOF
 
     # New triggers aren't tested here because the extensive tests are
     # provided with the backend implementations.
+
+    # parameter_data_type must exist and must have 4 rows.
+    qry="SELECT COUNT(*) FROM parameter_data_type";
+    run_statement "parameter_data_type count" "$qry" 4;
 
     # Verify upgraded schema reports version 8.0
     version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
