@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,21 +25,38 @@ class StampedValue;
 /// @brief Pointer to the stamped value.
 typedef boost::shared_ptr<StampedValue> StampedValuePtr;
 
-/// @brief This class represents string or signed integer configuration
-/// element associated with the modification timestamp.
+/// @brief This class represents a named configuration parameter,
+/// e.g. global parameter of the DHCP server.
 ///
 /// Global configuration elements having simple types, e.g. DHCP
 /// timers, need to be associatied with modification timestamps.
 /// This association is made by deriving from @c StampedElement.
-/// Values can be both integers and strings. Because strings are
-/// more flexible, configuration elements are always held as strings
-/// in the configuration backends. This class reflects a single value
-/// held in the database. The value can be converted to an integer or
-/// can be returned as a string.
+/// The values can be strings, integers, booleans or real numbers.
+///
+/// Because the strings are more flexible, configuration elements
+/// are always held as strings in the configuration backends. This
+/// class reflects a single value held in the database. The value
+/// can be return in its orginal type or can be returned as a
+/// string. Also the null values are allowed.
 class StampedValue : public StampedElement {
 public:
 
-    /// @brief Constructor.
+    /// @brief Constructor creating a null value.
+    ///
+    /// @param name Name of the value.
+    StampedValue(const std::string& name);
+
+    /// @brief Constructor creating a value from the @c Element.
+    ///
+    /// @param name Name of the value.
+    /// @param value Value encapsulated in the @c Element object.
+    ///
+    /// @throw BadValue if the value is null.
+    /// @throw TypeError if the value is neither a string, integer,
+    /// bool nor real.
+    StampedValue(const std::string& name, const ElementPtr& value);
+
+    /// @brief Constructor creating a string value.
     ///
     /// Creates stamped value from a string.
     ///
@@ -47,41 +64,68 @@ public:
     /// @param value Value to be set.
     StampedValue(const std::string& name, const std::string& value);
 
-    /// @brief Constructor.
+    /// @brief Factory function creating a null value.
     ///
-    /// Creates stamped value from the signed integer.
+    /// @param name Name of the value.
+    static StampedValuePtr create(const std::string& name);
+
+    /// @brief Factory function creating a value from the @c Element.
+    ///
+    /// @param name Name of the value.
+    /// @param value Value encapsulated in the @c Element object.
+    ///
+    /// @throw BadValue if the value is null.
+    /// @throw TypeError if the value is neither a string, integer,
+    /// bool nor real.
+    static StampedValuePtr create(const std::string& name,
+                                  const ElementPtr& value);
+
+    /// @brief Factory function creating a string value.
+    ///
+    /// Creates stamped value from a string.
     ///
     /// @param name Name of the value.
     /// @param value Value to be set.
-    explicit StampedValue(const std::string& name, const int64_t value);
-
-    /// @brief Convenience function creating shared pointer to the object.
-    ///
-    /// @param name Name of the value.
-    /// @param value String value to be encapsulated by this object.
     static StampedValuePtr create(const std::string& name,
                                   const std::string& value);
 
-    /// @brief Convenience function creating shared Pointer to the object.
+    /// @brief Returns a type of the value.
     ///
-    /// @param name Name of the value.
-    /// @param value Integer value to be encapsulated by this object.
-    static StampedValuePtr create(const std::string& name,
-                                  const int64_t value);
+    /// @return Type of the value as integer. It can be compared
+    /// with the @c Element::getType() output.
+    /// @throw InvalidOperation if the value is null.
+    int getType() const;
 
     /// @brief Returns value name.
+    ///
+    /// @return Value name.
     std::string getName() const {
         return (name_);
     }
 
     /// @brief Returns value as string.
-    std::string getValue() const {
-        return (value_);
+    ///
+    /// It is allowed to call this function for all supported data
+    /// types. They are converted to a string. For example, a real
+    /// number of 1.4 will be returned as "1.4". The boolean true
+    /// value will be returned as "1" etc.
+    ///
+    /// @return Stored value as string.
+    /// @throw InvalidOperation if the value is null.
+    std::string getValue() const;
+
+    /// @brief Checks if the value is null.
+    ///
+    /// @return true if the value is null, false otherwise.
+    bool amNull() const {
+        return (!value_);
     }
 
     /// @brief Returns value as signed integer.
     ///
-    /// @throw BadValue if the value can't be converted to an integer.
+    /// @return Stored value as a signed integer.
+    /// @throw TypeError if the value is not of @c Element::integer
+    /// type.
     int64_t getSignedIntegerValue() const;
 
     /// @brief Creates an Element with the appropriate value
@@ -96,13 +140,49 @@ public:
     /// type is unsupported.
     ElementPtr toElement(const Element::types etype);
 
+    /// @brief Returns value as a boolean.
+    ///
+    /// @return Stored value as a boolean.
+    /// @throw TypeError if the value is not of @c Element::boolean
+    /// type.
+    bool getBoolValue() const;
+
+    /// @brief Returns value as a real number.
+    ///
+    /// @return Stored value as a real number.
+    /// @throw TypeError if the value is not of @c Element::real
+    /// type.
+    double getDoubleValue() const;
+
 private:
+
+    /// @brief Checks if the values passed to the constructors
+    /// were correct.
+    ///
+    /// This is called from the constructors.
+    ///
+    /// @throw BadValue if the value is null.
+    /// @throw TypeError if the value type is neither a string,
+    /// integer, boolean nor real.
+    void validateConstruct() const;
+
+    /// @brief Checks if the value is accessed correctly.
+    ///
+    /// This is called from the accessors of this class.
+    ///
+    /// @param type Type of the value expected by the accessor
+    /// function.
+    ///
+    /// @throw InvalidOperation if the accessed value is null.
+    /// @throw TypeError if the expected type is not a string
+    /// and it doesn't match the value type.
+    void validateAccess(Element::types type) const;
 
     /// @brief Name of the value.
     std::string name_;
 
-    /// @brief Holds value as a string.
-    std::string value_;
+    /// @brief Stored value.
+    ElementPtr value_;
 };
 
 /// @name Definition of the multi index container for @c StampedValue.
