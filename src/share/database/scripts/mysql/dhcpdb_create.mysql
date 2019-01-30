@@ -1788,7 +1788,7 @@ BEGIN
     # scope the audit entry will contain the object_type value
     # of the parent object to cause the server to replace the
     # entire subnet. The only case when the object_type will be
-    # set to 'dhcp4_options' is when the global option is added.
+    # set to 'dhcp4_options' is when a global option is added.
     # Global options do not have the owner.
     IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
         # todo: host manager hasn't been updated to use audit
