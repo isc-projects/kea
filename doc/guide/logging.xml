@@ -231,7 +231,7 @@
 
         <para>
           Note that user-defined hook libraries should not use any of the loggers
-          mentioned above, but should define new loggers with names that correspond to
+          mentioned above, but should instead define new loggers with names that correspond to
           the libraries using them. Suppose that the user created the library
           called <quote>libdhcp-packet-capture</quote> to dump packets received and
           transmitted by the server to the file. An appropriate name for the
