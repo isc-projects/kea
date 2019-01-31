@@ -141,7 +141,7 @@ public:
     /// @return Stored value as a signed integer.
     /// @throw TypeError if the value is not of @c Element::integer
     /// type.
-    int64_t getSignedIntegerValue() const;
+    int64_t getIntegerValue() const;
 
     /// @brief Returns value as a boolean.
     ///
