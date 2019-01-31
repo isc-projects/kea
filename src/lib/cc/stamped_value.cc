@@ -40,6 +40,56 @@ StampedValue::create(const std::string& name, const std::string& value) {
     return (StampedValuePtr(new StampedValue(name, value)));
 }
 
+StampedValuePtr
+StampedValue::create(const std::string& name, const std::string& value,
+                     Element::types parameter_type) {
+    StampedValuePtr stamped_value;
+
+    try {
+        switch (parameter_type) {
+        case Element::string:
+            stamped_value = StampedValue::create(name, value);
+            break;
+
+        case Element::integer:
+            stamped_value = StampedValue::create(name,
+                Element::create(boost::lexical_cast<int64_t>(value)));
+            break;
+
+        case Element::boolean:
+            // We only allow "1" and "0" as input to this function.
+            if ((value != "0") && (value != "1")) {
+                isc_throw(BadValue, "StampedValue: invalid value " << value
+                          << " specified as boolean. Expected \"0\" or \"1\"");
+            }
+            stamped_value = StampedValue::create(name,
+                Element::create((value == "0") ? false : true));
+            break;
+
+        case Element::real:
+            stamped_value = StampedValue::create(name,
+                Element::create(boost::lexical_cast<double>(value)));
+            break;
+
+        default:
+            // Invalid data type provided as argument.
+            isc_throw(TypeError, "StampedValue: unsupported type '"
+                      << Element::typeToName(parameter_type)
+                      << " of the parameter '" << name);
+        }
+
+    } catch (const boost::bad_lexical_cast& ex) {
+        // Failed to cast the value to a given type.
+        isc_throw(BadValue, "StampedValue: the value of the parameter '"
+                  << Element::typeToName(parameter_type)
+                  << "' can't be converted to "
+                  << Element::typeToName(parameter_type)
+                  << " type");
+    }
+
+    return (stamped_value);
+}
+
 int
 StampedValue::getType() const {
     if (!value_) {
