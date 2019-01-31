@@ -50,7 +50,7 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
         <simpara>
           <command>--path <replaceable>path</replaceable></command> specifies
           the path in the URL to connect to. If not specified, an
-          empty path is used. As CA listens at the empty path,
+          empty path is used. As the CA listens at the empty path,
           this parameter is useful only with a reverse proxy.
         </simpara>
       </listitem>
@@ -65,7 +65,7 @@ kea-shell [--host hostname] [--port number] [--path path] [--timeout seconds] [-
       <listitem>
         <simpara>
           <command>--service <replaceable>service-name</replaceable></command> specifies the
-          target of a command. If not given, CA will be used as the target. May be used more
+          target of a command. If not given, the CA will be used as the target. May be used more
           than once to specify multiple targets.
         </simpara>
       </listitem>
