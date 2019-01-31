@@ -207,67 +207,6 @@ public:
     TestConfigBackendDHCPv4Ptr db2_; ///< Second configuration backend instance
 };
 
-// This test verifies that an implicit global whose data value
-// does not match the expected type is detected.
-TEST_F(Dhcp4CBTest, implicitGlobalWrongType) {
-    string base_config =
-        "{ \n"
-        "    \"config-control\": { \n"
-        "       \"config-databases\": [ { \n"
-        "               \"type\": \"memfile\", \n"
-        "               \"host\": \"db1\" \n"
-        "           },{ \n"
-        "               \"type\": \"memfile\", \n"
-        "               \"host\": \"db2\" \n"
-        "           } \n"
-        "       ] \n"
-        "   } \n"
-        "} \n";
-
-    extractConfig(base_config);
-
-    // Make some globals:
-    // @todo StampedValue is going to be extended to hold type.
-    StampedValuePtr badGlobal(new StampedValue("valid-lifetime", "not an int"));
-    db1_->createUpdateGlobalParameter4(ServerSelector::ALL(), badGlobal);
-
-    // Should fail to merge with an error.
-    configure(base_config, CONTROL_RESULT_ERROR,
-              "StampedValue::toElement:  integer value expected for:"
-              " valid-lifetime, value is: not an int");
-}
-
-// This test verifies that unknown externally configured
-// globals is detected.
-TEST_F(Dhcp4CBTest, unknownGlobal) {
-    string base_config =
-        "{ \n"
-        "    \"config-control\": { \n"
-        "       \"config-databases\": [ { \n"
-        "               \"type\": \"memfile\", \n"
-        "               \"host\": \"db1\" \n"
-        "           },{ \n"
-        "               \"type\": \"memfile\", \n"
-        "               \"host\": \"db2\" \n"
-        "           } \n"
-        "       ] \n"
-        "   } \n"
-        "} \n";
-
-    extractConfig(base_config);
-
-    // Make some globals:
-    // @todo StampedValue is going to be extended to hold type.
-    StampedValuePtr badGlobal(new StampedValue("bogus-global", "some value"));
-    db1_->createUpdateGlobalParameter4(ServerSelector::ALL(), badGlobal);
-
-    // Should fail to merge with an error.
-    configure(base_config, CONTROL_RESULT_ERROR,
-              "Config backend supplied unsupported global:"
-              " bogus-global = some value");
-}
-
-
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
 // @todo enable test when SrvConfig can merge globals.

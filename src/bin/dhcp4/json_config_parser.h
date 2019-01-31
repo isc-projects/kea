@@ -129,12 +129,7 @@ bool handleExplicitGlobal(SrvConfigPtr external_cfg,
 ///
 /// @param external_cfg SrvConfig instance to update
 /// @param cb_global global parameter supplied by configuration backend
-///
-/// @return true if the global is recognized as a supported global, false
-/// otherwise
-///
-/// @throw BadValue if the global's value is not the expected data type
-bool handleImplicitGlobal(SrvConfigPtr external_cfg,
+void handleImplicitGlobal(SrvConfigPtr external_cfg,
                           const data::StampedValuePtr& cb_global);
 
 }; // end of isc::dhcp namespace
