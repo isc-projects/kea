@@ -490,16 +490,19 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteGlobalParameter4) {
 TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     // Create 3 parameters and put them into the database.
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
-                                         StampedValue::create("name1", "value1"));
+        StampedValue::create("name1", "value1"));
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
-                                         StampedValue::create("name2",
-                                                              Element::create(static_cast<int64_t>(65))));
+        StampedValue::create("name2", Element::create(static_cast<int64_t>(65))));
     cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
-                                         StampedValue::create("name3", "value3"));
+        StampedValue::create("name3", "value3"));
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
+        StampedValue::create("name4", Element::create(static_cast<bool>(true))));
+    cbptr_->createUpdateGlobalParameter4(ServerSelector::ALL(),
+        StampedValue::create("name5", Element::create(static_cast<double>(1.65))));
 
     // Fetch all parameters.
     auto parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
-    ASSERT_EQ(3, parameters.size());
+    ASSERT_EQ(5, parameters.size());
 
     const auto& parameters_index = parameters.get<StampedValueNameIndexTag>();
 
@@ -507,18 +510,20 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
     EXPECT_EQ(65, (*parameters_index.find("name2"))->getSignedIntegerValue());
     EXPECT_EQ("value3", (*parameters_index.find("name3"))->getValue());
+    EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
+    EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());
 
-    // Should be able to fetct these parameters when explicitly providing
+    // Should be able to fetch these parameters when explicitly providing
     // the server tag.
     parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ONE("server1"));
-    EXPECT_EQ(3, parameters.size());
+    EXPECT_EQ(5, parameters.size());
 
     // Deleting global parameters with non-matching server selector
     // should fail.
     EXPECT_EQ(0, cbptr_->deleteAllGlobalParameters4(ServerSelector::ONE("server1")));
 
     // Delete all parameters and make sure they are gone.
-    EXPECT_EQ(3, cbptr_->deleteAllGlobalParameters4(ServerSelector::ALL()));
+    EXPECT_EQ(5, cbptr_->deleteAllGlobalParameters4(ServerSelector::ALL()));
     parameters = cbptr_->getAllGlobalParameters4(ServerSelector::ALL());
     EXPECT_TRUE(parameters.empty());
 }
