@@ -25,7 +25,7 @@ TEST(StampedValueTest, createNull) {
 
     EXPECT_THROW(value->getType(), InvalidOperation);
     EXPECT_THROW(value->getValue(), InvalidOperation);
-    EXPECT_THROW(value->getSignedIntegerValue(), InvalidOperation);
+    EXPECT_THROW(value->getIntegerValue(), InvalidOperation);
     EXPECT_THROW(value->getBoolValue(), InvalidOperation);
     EXPECT_THROW(value->getDoubleValue(), InvalidOperation);
 }
@@ -39,7 +39,7 @@ TEST(StampedValueTest, createFromString) {
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("foo", value->getValue());
 
-    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getIntegerValue(), TypeError);
     EXPECT_THROW(value->getBoolValue(), TypeError);
     EXPECT_THROW(value->getDoubleValue(), TypeError);
 }
@@ -64,7 +64,7 @@ TEST(StampedValueTest, createFromInteger) {
     EXPECT_EQ("bar", value->getName());
     EXPECT_EQ("5", value->getValue());
     int64_t signed_integer;
-    ASSERT_NO_THROW(signed_integer = value->getSignedIntegerValue());
+    ASSERT_NO_THROW(signed_integer = value->getIntegerValue());
     EXPECT_EQ(5, signed_integer);
 
     EXPECT_THROW(value->getBoolValue(), TypeError);
@@ -78,7 +78,7 @@ TEST(StampedValueTest, convertStringToInteger) {
     EXPECT_FALSE(value->amNull());
     EXPECT_EQ(Element::integer, value->getType());
     EXPECT_EQ("bar", value->getName());
-    EXPECT_EQ(123, value->getSignedIntegerValue());
+    EXPECT_EQ(123, value->getIntegerValue());
 
     EXPECT_THROW(StampedValue::create("bar", "hoho", Element::integer), BadValue);
 }
@@ -95,7 +95,7 @@ TEST(StampedValueTest, createFromBool) {
     ASSERT_NO_THROW(bool_value = value->getBoolValue());
     EXPECT_TRUE(bool_value);
 
-    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getIntegerValue(), TypeError);
     EXPECT_THROW(value->getDoubleValue(), TypeError);
 }
 
@@ -129,7 +129,7 @@ TEST(StampedValueTest, createFromDouble) {
     ASSERT_NO_THROW(double_value = value->getDoubleValue());
     EXPECT_EQ(1.45, double_value);
 
-    EXPECT_THROW(value->getSignedIntegerValue(), TypeError);
+    EXPECT_THROW(value->getIntegerValue(), TypeError);
     EXPECT_THROW(value->getBoolValue(), TypeError);
 }
 

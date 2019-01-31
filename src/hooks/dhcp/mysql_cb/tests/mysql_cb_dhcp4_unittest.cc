@@ -508,7 +508,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllGlobalParameters4) {
 
     // Verify their values.
     EXPECT_EQ("value1", (*parameters_index.find("name1"))->getValue());
-    EXPECT_EQ(65, (*parameters_index.find("name2"))->getSignedIntegerValue());
+    EXPECT_EQ(65, (*parameters_index.find("name2"))->getIntegerValue());
     EXPECT_EQ("value3", (*parameters_index.find("name3"))->getValue());
     EXPECT_TRUE((*parameters_index.find("name4"))->getBoolValue());
     EXPECT_EQ(1.65, (*parameters_index.find("name5"))->getDoubleValue());

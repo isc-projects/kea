@@ -129,7 +129,7 @@ StampedValue::getValue() const {
 }
 
 int64_t
-StampedValue::getSignedIntegerValue() const {
+StampedValue::getIntegerValue() const {
     validateAccess(Element::integer);
     return (value_->intValue());
 }

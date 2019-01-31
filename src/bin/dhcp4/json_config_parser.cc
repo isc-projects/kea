@@ -766,7 +766,7 @@ bool handleExplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr
     try {
         const std::string& name = cb_global->getName();
         if (name == "decline-probation-period") {
-            external_cfg->setDeclinePeriod(cb_global->getSignedIntegerValue());
+            external_cfg->setDeclinePeriod(cb_global->getIntegerValue());
         }
         else if (name == "echo-client-id") {
             external_cfg->setEchoClientId(cb_global->getValue() == "true" ? true : false);
