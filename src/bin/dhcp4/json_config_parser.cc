@@ -744,18 +744,19 @@ void addGlobalsToConfig(SrvConfigPtr external_cfg, data::StampedValueCollection&
     const auto& index = cb_globals.get<StampedValueNameIndexTag>();
 
     for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
+
+        if ((*cb_global)->amNull()) {
+            continue;
+        }
+
         // If the global is an explicit member of SrvConfig handle it that way.
         if (handleExplicitGlobal(external_cfg, (*cb_global))) {
             continue;
-        }
 
-        // Otherwise it must be added to the implicitly configured globals
-        if (handleImplicitGlobal(external_cfg, (*cb_global))) {
-            continue;
+        } else {
+            // Otherwise it must be added to the implicitly configured globals
+            handleImplicitGlobal(external_cfg, (*cb_global));
         }
-
-        isc_throw (DhcpConfigError, "Config backend supplied unsupported global: "  <<
-                             (*cb_global)->getName() << " = " << (*cb_global)->getValue());
     }
 }
 
@@ -780,29 +781,8 @@ bool handleExplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr
     return (was_handled);
 }
 
-bool handleImplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
-
-    // @todo One day we convert it based on the type stored in StampedValue, but
-    // that day is not today. For now, if we find it in the global defaults use
-    // the element type there.
-    for (auto global_default : SimpleParser4::GLOBAL4_DEFAULTS) {
-        if (global_default.name_ == cb_global->getName()) {
-            ElementPtr element = cb_global->toElement(global_default.type_);
-            external_cfg->addConfiguredGlobal(cb_global->getName(), element);
-            return (true);
-        }
-    }
-
-    // We didn't find it in the default list, so is it an optional implicit?
-    const std::string& name = cb_global->getName();
-    if ((name == "renew-timer") ||
-        (name == "rebind-timer")) {
-        ElementPtr element = cb_global->toElement(Element::integer);
-        external_cfg->addConfiguredGlobal(cb_global->getName(), element);
-        return (true);
-    }
-
-    return (false);
+void handleImplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
+    external_cfg->addConfiguredGlobal(cb_global->getName(), cb_global->getElementValue());
 }
 
 }; // end of isc::dhcp namespace

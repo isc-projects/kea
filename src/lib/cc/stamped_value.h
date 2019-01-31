@@ -143,18 +143,6 @@ public:
     /// type.
     int64_t getSignedIntegerValue() const;
 
-    /// @brief Creates an Element with the appropriate value
-    ///
-    /// @param etype type of Element to create
-    /// @todo If StampedValue is extended to contain the Element::type
-    /// this parameter can be done away with.
-    ///
-    /// @return A pointer to the new Element
-    /// @throw BadValue if the current value is invalid for the
-    /// requested element type. InvalidOperation if the requested
-    /// type is unsupported.
-    ElementPtr toElement(const Element::types etype);
-
     /// @brief Returns value as a boolean.
     ///
     /// @return Stored value as a boolean.
@@ -168,6 +156,11 @@ public:
     /// @throw TypeError if the value is not of @c Element::real
     /// type.
     double getDoubleValue() const;
+
+    /// @brief Returns the value as @c Element.
+    ConstElementPtr getElementValue() const {
+        return (value_);
+    }
 
 private:
 
