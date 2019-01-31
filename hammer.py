@@ -1364,7 +1364,7 @@ def parse_args():
 
     args = main_parser.parse_args()
 
-    return args
+    return args, main_parser
 
 
 def list_supported_systems():
@@ -1547,7 +1547,7 @@ def build_cmd(args):
 
 def main():
     """Main function - parse args and invoke proper command."""
-    args = parse_args()
+    args, parser = parse_args()
 
     # prepare logging
     level = logging.INFO
@@ -1584,6 +1584,9 @@ def main():
 
     elif args.command == "destroy":
         destroy_system(args.directory)
+
+    else:
+        parser.print_help()
 
 
 if __name__ == '__main__':
