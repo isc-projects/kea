@@ -44,6 +44,17 @@ TEST(StampedValueTest, createFromString) {
     EXPECT_THROW(value->getDoubleValue(), TypeError);
 }
 
+// Tests that the stamped value can be created from string using the
+// factory function variant that takes parameter type as an argument.
+TEST(StampedValueTest, convertStringToString) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", "foo", Element::string));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::string, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ("foo", value->getValue());
+}
+
 // Tests that stamped value from integer can be created.
 TEST(StampedValueTest, createFromInteger) {
     StampedValuePtr value;
@@ -58,6 +69,18 @@ TEST(StampedValueTest, createFromInteger) {
 
     EXPECT_THROW(value->getBoolValue(), TypeError);
     EXPECT_THROW(value->getDoubleValue(), TypeError);
+}
+
+// Tests that stamped value can be converted from string to integer.
+TEST(StampedValueTest, convertStringToInteger) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", "123", Element::integer));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::integer, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ(123, value->getSignedIntegerValue());
+
+    EXPECT_THROW(StampedValue::create("bar", "hoho", Element::integer), BadValue);
 }
 
 // Tests that stamped value from bool can be created.
@@ -76,6 +99,24 @@ TEST(StampedValueTest, createFromBool) {
     EXPECT_THROW(value->getDoubleValue(), TypeError);
 }
 
+// Tests that stamped value can be converted from string to boolean.
+TEST(StampedValueTest, convertStringToBoolean) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", "1", Element::boolean));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::boolean, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_TRUE(value->getBoolValue());
+
+    ASSERT_NO_THROW(value = StampedValue::create("foo", "0", Element::boolean));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::boolean, value->getType());
+    EXPECT_EQ("foo", value->getName());
+    EXPECT_FALSE(value->getBoolValue());
+
+    EXPECT_THROW(StampedValue::create("bar", "888", Element::boolean), BadValue);
+}
+
 // Tests that stamped value from real can be created.
 TEST(StampedValueTest, createFromDouble) {
     StampedValuePtr value;
@@ -92,11 +133,27 @@ TEST(StampedValueTest, createFromDouble) {
     EXPECT_THROW(value->getBoolValue(), TypeError);
 }
 
+// Tests that stamped value can be converted from string to real.
+TEST(StampedValueTest, convertStringToDouble) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", "1.67", Element::real));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::real, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ(1.67, value->getDoubleValue());
+
+    EXPECT_THROW(StampedValue::create("bar", "hoho", Element::real), BadValue);
+}
+
 // Tests that the value must have an allowed type.
 TEST(StampedValueTest, createFailures) {
     EXPECT_THROW(StampedValue::create("bar", ElementPtr()), BadValue);
     EXPECT_THROW(StampedValue::create("bar", Element::createMap()), TypeError);
     EXPECT_THROW(StampedValue::create("bar", Element::createList()), TypeError);
+
+    EXPECT_THROW(StampedValue::create("bar", "1", Element::map), TypeError);
+    EXPECT_THROW(StampedValue::create("bar", "1", Element::list), TypeError);
+    EXPECT_THROW(StampedValue::create("bar", "1", Element::null), TypeError);
 }
 
 // Tests that Elements can be created from stamped values.

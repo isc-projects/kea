@@ -89,6 +89,21 @@ public:
     static StampedValuePtr create(const std::string& name,
                                   const std::string& value);
 
+    /// @brief Factory function which attempts to convert provided
+    /// string value to a given type.
+    ///
+    /// This factory function is useful in cases when the value is
+    /// read as a string from a database. The string value has to
+    /// be converted to the appropriate data type. The type is also
+    /// known from the database.
+    ///
+    /// @param name Name of the value.
+    /// @param value Value given as string to be converted.
+    /// @param type Type of the value to convert to.
+    static StampedValuePtr create(const std::string& name,
+                                  const std::string& value,
+                                  Element::types type);
+
     /// @brief Returns a type of the value.
     ///
     /// @return Type of the value as integer. It can be compared
