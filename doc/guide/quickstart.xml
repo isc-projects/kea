@@ -38,7 +38,7 @@
 
         <listitem>
           <para>
-            Download Kea source tarball from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/">ISC.org downloads page</link> or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">ISC FTP server</link>.
+            Download the Kea source tarball from the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/downloads/">ISC.org downloads page</link> or the <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://ftp.isc.org/isc/kea/">ISC FTP server</link>.
           </para>
         </listitem>
 
