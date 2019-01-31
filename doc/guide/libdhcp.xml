@@ -14,7 +14,7 @@
       many DHCP-related tasks, including:
       <itemizedlist>
         <listitem>
-          <simpara>DHCPv4 and DHCPv6 packets parsing, manipulation, and assembly</simpara>
+          <simpara>DHCPv4 and DHCPv6 packet parsing, manipulation, and assembly</simpara>
         </listitem>
         <listitem>
           <simpara>Option parsing, manipulation, and assembly</simpara>
@@ -23,7 +23,7 @@
           <simpara>Network interface detection</simpara>
         </listitem>
         <listitem>
-          <simpara>Socket operations such as creation, data transmission and reception, and socket closing.</simpara>
+          <simpara>Socket operations such as creation, data transmission and reception, and socket closing</simpara>
         </listitem>
       </itemizedlist>
     </para>
