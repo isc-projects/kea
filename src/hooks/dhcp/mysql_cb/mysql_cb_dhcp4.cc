@@ -160,42 +160,14 @@ public:
                           [&parameters]
                           (MySqlBindingCollection& out_bindings) {
             if (!out_bindings[1]->getString().empty()) {
-                std::string name = out_bindings[1]->getString();
-                std::string value = out_bindings[2]->getString();
-                uint8_t parameter_type = out_bindings[3]->getInteger<uint8_t>();
 
-                StampedValuePtr stamped_value;
-
-                try {
-                    switch (static_cast<Element::types>(parameter_type)) {
-                    case Element::string:
-                        stamped_value = StampedValue::create(name, value);
-                        break;
-
-                    case Element::integer:
-                        stamped_value = StampedValue::create(name,
-                            Element::create(boost::lexical_cast<int64_t>(value)));
-                        break;
-
-                    case Element::boolean:
-                        stamped_value = StampedValue::create(name,
-                            Element::create((value == "1") ? true : false));
-                        break;
-
-                    case Element::real:
-                        stamped_value = StampedValue::create(name,
-                            Element::create(boost::lexical_cast<double>(value)));
-                        break;
-
-                    default:
-                        isc_throw(TypeError, "invalid type of the parameter '"
-                                  << name << "' fetched from the database");
-                    }
-
-                } catch (const boost::bad_lexical_cast& ex) {
-                    isc_throw(BadValue, "actual type of the value '" << name
-                              << "' is different than marked in the database");
-                }
+                // Convert value read as string from the database to the actual
+                // data type known from the database as binding #3.
+                StampedValuePtr stamped_value =
+                    StampedValue::create(out_bindings[1]->getString(),
+                                         out_bindings[2]->getString(),
+                                         static_cast<Element::types>
+                                         (out_bindings[3]->getInteger<uint8_t>()));
 
                 stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
                 parameters.insert(stamped_value);
