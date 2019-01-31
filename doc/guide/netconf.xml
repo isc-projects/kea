@@ -23,8 +23,8 @@
   <section xml:id="netconf-install">
     <title>Installing NETCONF</title>
 
-    <para>Note that to get its NETCONF capabilities Kea uses Sysrepo
-    software, which has many dependencies. Unfortunately, some of them
+    <para>Note that to get its NETCONF capabilities, Kea uses Sysrepo,
+    which has many dependencies. Unfortunately, some of them
     are not available as packages and need to be compiled
     manually.</para>
 
@@ -316,7 +316,7 @@ done in dependency order and reverse dependency order accordingly.
         <listitem>
           <simpara>
             The <command>validate-changes</command> command controls how Kea monitors
-            the changes in Sysrepo configuration. Sysrepo offers two
+            changes in the Sysrepo configuration. Sysrepo offers two
             stages where Kea could interact: validation and
             application. At the validation (or
             SR_EV_VERIFY event, in the Sysrepo naming convention) stage,
@@ -422,7 +422,7 @@ done in dependency order and reverse dependency order accordingly.
         </listitem>
       </orderedlist>
       The first case is handled by Sysrepo. The second and third cases
-      are handled by NETCONF in the validation phase (if not disabled
+      are handled by kea-netconf in the validation phase (if not disabled
       by setting <command>validate-changes</command> to true). The last
       case causes the application phase to fail without a sensible report
       to Sysrepo.
@@ -509,16 +509,16 @@ done in dependency order and reverse dependency order accordingly.
 
     <para>
       Hooks libraries can be loaded by the NETCONF agent just as with
-      other servers or agents. However, Kea currently supports no hook point.
+      other servers or agents; however, currently no hook points are defined.
       The <command>hooks-libraries</command> list
-      contains the list of hooks libraries that should be loaded by NETCONF,
+      contains the list of hooks libraries that should be loaded by kea-netconf,
       along with their configuration information specified with
       <command>parameters</command>.
     </para>
 
     <para>
       Please consult <xref linkend="logging"/> for the details on how to
-      configure logging. The NETCONF root logger's name is
+      configure logging. The NETCONF agent's root logger's name is
       <command>kea-netconf</command>, as given in the example above.
     </para>
   </section>
@@ -528,11 +528,11 @@ done in dependency order and reverse dependency order accordingly.
     <para>
       The following example demonstrates the basic NETCONF configuration.
       More examples are available in the <command>doc/examples/netconf</command>
-      directory in Kea sources.
+      directory in the Kea sources.
     </para>
     <para>
 <screen>
-// This is a simple example of a configuration for NETCONF.
+// This is a simple example of a configuration for the NETCONF agent.
 // This server provides a YANG interface for all Kea servers and the agent.
 {
     "Netconf":
@@ -550,13 +550,13 @@ done in dependency order and reverse dependency order accordingly.
         //
         // Currently three control channel types are supported:
         // "stdout" which outputs the configuration on the standard output,
-        // "unix" which uses the local control channel supported by
+        // "unix" which uses the local control channel supported by the
         // "dhcp4" and "dhcp6" servers ("d2" support is not yet available),
         // and "http" which uses the Control agent "ca" to manage itself or
         // to forward commands to "dhcp4" or "dhcp6".
         "managed-servers":
         {
-            // This is how NETCONF can communicate with the DHCPv4 server.
+            // This is how kea-netconf can communicate with the DHCPv4 server.
             "dhcp4":
             {
                 "comment": "DHCP4 server",
@@ -580,7 +580,7 @@ done in dependency order and reverse dependency order accordingly.
             },
 
             // Currently the DHCP-DDNS (nicknamed D2) server does not support
-            // command channel.
+            // a command channel.
             "d2":
             {
                 "model": "kea-dhcp-ddns",
@@ -603,11 +603,11 @@ done in dependency order and reverse dependency order accordingly.
             }
         },
 
-        // NETCONF is able to load hook libraries that augment its operation.
+        // kea-netconf is able to load hooks libraries that augment its operation.
         // Currently there are no hook points defined in kea-netconf
         // processing.
         "hooks-libraries": [
-            // The hook libraries list may contain more than one library.
+            // The hooks libraries list may contain more than one library.
             {
                 // The only necessary parameter is the library filename.
                 "library": "/opt/local/netconf-commands.so",
@@ -623,7 +623,7 @@ done in dependency order and reverse dependency order accordingly.
 
     },
 
-    // Similar to other Kea components, NETCONF also uses logging.
+    // Similar to other Kea components, kea-netconf also uses logging.
     "Logging":
     {
         "loggers": [
@@ -659,7 +659,7 @@ done in dependency order and reverse dependency order accordingly.
     <title>Starting and Stopping the NETCONF Agent</title>
     <para>
 <!-- no keactrl yet -->
-      NETCONF accepts the following command-line switches:
+      kea-netconf accepts the following command-line switches:
     </para>
     <itemizedlist>
       <listitem>
@@ -697,14 +697,14 @@ done in dependency order and reverse dependency order accordingly.
 
       <listitem>
         <simpara>
-          <command>-v</command> - displays the Kea version and exits.
+          <command>-v</command> - displays the version of kea-netconf and exits.
         </simpara>
       </listitem>
 
       <listitem>
         <simpara>
-          <command>-V</command> - displays the Kea extended version
-          with additional parameters and exits. The listing includes
+          <command>-V</command> - displays the extended version information for
+          kea-netconf and exits. The listing includes
           the versions of the libraries dynamically linked to Kea.
         </simpara>
       </listitem>
@@ -722,7 +722,7 @@ done in dependency order and reverse dependency order accordingly.
   </section>
 
   <section xml:id="operation-example">
-    <title>Step-by-Step NETCONF Operation Example</title>
+    <title>Step-by-Step NETCONF Agent Operation Example</title>
     <note><para>Copies of example configurations presented within this section
     can be found in the Kea source code, under
     <filename>doc/examples/netconf/kea-dhcp6-operations</filename>.
@@ -730,7 +730,7 @@ done in dependency order and reverse dependency order accordingly.
 
  
    <section xml:id="operation-example-setup">
-      <title>Setup of NETCONF Operation Example</title>
+      <title>Setup of NETCONF Agent Operation Example</title>
       <para>
         The test box has an Ethernet interface named eth1.
         On some systems it is possible to rename interfaces,
