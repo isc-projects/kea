@@ -170,7 +170,7 @@ TEST(BackendSelectorTest, backendTypeToString) {
 }
 
 // Tests toElement from backend selectors.
-// Can't be use runToElementTest because it is defined in a library built
+// Can't use runToElementTest because it is defined in a library built
 // at a later stage.
 TEST(BackendSelectorTest, backendToElement) {
     // Unspecified.
