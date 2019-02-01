@@ -1,7 +1,15 @@
+1518.	[func]		marcin
+	Extended MySQL schema to include the types of the global DHCP
+	parameters in the database. The Kea servers will use this
+	information to cast the values fetched from the database into
+	their actual types. The supported types are: string, integer,
+	boolean and real.
+	(Gitlab #429,!217, git edd745c507ce5a888461df1489311de0c22cd312)
+
 1517.	[func]		tmark
 	kea-dhcp4 will now connect to and fetch configuration data from
 	configured backends. At this point, only fetched subnet data is
-	merged and used.  
+	merged and used.
 	(Gitlab #101,!202, git c572f8aea94349ff5fb4afee13a88ba811cc6459)
 
 1516.	[func]		marcin
