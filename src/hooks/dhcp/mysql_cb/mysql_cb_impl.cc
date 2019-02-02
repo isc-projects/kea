@@ -4,6 +4,7 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+#include <config.h>
 #include <mysql_cb_impl.h>
 #include <asiolink/io_address.h>
 #include <config_backend/constants.h>
@@ -67,10 +68,17 @@ MySqlConfigBackendImpl(const DatabaseConnection::ParameterMap& parameters)
     // caused issues for some unit tests which were unable to cleanup
     // the database after the test because of pending transactions.
     // Use of autocommit will eliminate this problem.
+#ifdef HAVE_MYSQL_MY_BOOL
     my_bool result = mysql_autocommit(conn_.mysql_, 1);
     if (result != 0) {
         isc_throw(DbOperationError, mysql_error(conn_.mysql_));
     }
+#else
+    bool result = mysql_autocommit(conn_.mysql_, 1);
+    if (!result) {
+        isc_throw(DbOperationError, mysql_error(conn_.mysql_));
+    }
+#endif
 }
 
 MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
