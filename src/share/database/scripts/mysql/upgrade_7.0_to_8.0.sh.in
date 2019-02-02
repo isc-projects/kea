@@ -57,7 +57,8 @@ ALTER TABLE dhcp4_subnet_server
     MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_options
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL
+    DEFAULT CURRENT_TIMESTAMP(6);
 
 ALTER TABLE dhcp4_options_server
     MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
@@ -96,7 +97,8 @@ ALTER TABLE dhcp6_subnet_server
     MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp6_options
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL
+    DEFAULT CURRENT_TIMESTAMP(6);
 
 ALTER TABLE dhcp6_options_server
     MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
