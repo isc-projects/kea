@@ -254,18 +254,21 @@ SharedNetwork4::add(const Subnet4Ptr& subnet) {
     Impl::add(subnets_, subnet);
     // Associate the subnet with this network.
     setSharedNetwork(subnet);
+    subnet->setSharedNetworkName(name_);
 }
 
 void
 SharedNetwork4::del(const SubnetID& subnet_id) {
     Subnet4Ptr subnet = Impl::del<Subnet4Ptr>(subnets_, subnet_id);
     clearSharedNetwork(subnet);
+    subnet->setSharedNetworkName("");
 }
 
 void
 SharedNetwork4::delAll() {
     for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
         clearSharedNetwork(*subnet);
+        (*subnet)->setSharedNetworkName("");
     }
     subnets_.clear();
 }

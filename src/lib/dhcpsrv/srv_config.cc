@@ -39,7 +39,7 @@ SrvConfig::SrvConfig()
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
-      cfg_consist_(new CfgConsistency()), 
+      cfg_consist_(new CfgConsistency()),
       server_tag_("") {
 }
 
@@ -162,10 +162,18 @@ SrvConfig::merge(const ConfigBase& other) {
     ConfigBase::merge(other);
 
     try {
-        /// @todo merge other parts of the configuration here.
-
         const SrvConfig& other_srv_config = dynamic_cast<const SrvConfig&>(other);
-        cfg_subnets4_->merge(*other_srv_config.getCfgSubnets4());
+
+        /// We merge objects in order of dependency (real or theoretical).
+        /// @todo merge globals
+        /// @todo merge option defs
+        /// @todo merge options
+
+        // Merge shared networks.
+        cfg_shared_networks4_->merge(*(other_srv_config.getCfgSharedNetworks4()));
+
+        /// Merge subnets.
+        cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other_srv_config.getCfgSubnets4()));
 
         /// @todo merge other parts of the configuration here.
 

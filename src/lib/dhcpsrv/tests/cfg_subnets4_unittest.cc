@@ -13,6 +13,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
@@ -31,6 +32,31 @@ using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
+
+void checkMergedSubnet(CfgSubnets4& cfg_subnets,
+                       const SubnetID exp_subnet_id,
+                       const std::string& prefix,
+                       int exp_valid,
+                       SharedNetwork4Ptr exp_network) {
+
+    // The subnet1 should be replaced by subnet4 but the shared network
+    // should not be affected.
+    auto subnet = cfg_subnets.getByPrefix(prefix);
+    ASSERT_TRUE(subnet) << "subnet: " << prefix << " not found";
+    ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
+    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnet valid time is wrong";
+
+    SharedNetwork4Ptr shared_network;
+    subnet->getSharedNetwork(shared_network);
+    if (exp_network) {
+        ASSERT_TRUE(shared_network)
+            << " expected network: " << exp_network->getName() << " not found";
+        ASSERT_TRUE(shared_network == exp_network) << " networks do no match";
+    } else {
+        ASSERT_FALSE(shared_network) << " unexpected network assignment: "
+            << shared_network->getName();
+    }
+}
 
 // This test verifies that specific subnet can be retrieved by specifying
 // subnet identifier or subnet prefix.
@@ -111,110 +137,109 @@ TEST(CfgSubnets4Test, deleteSubnet) {
     EXPECT_FALSE(cfg.getByPrefix("192.0.3.0/26"));
 }
 
-// This test verifies that the subnets configuration is properly merged.
+// This test verifies that subnets configuration is properly merged.
 TEST(CfgSubnets4Test, mergeSubnets) {
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 1, 2, 100, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 100, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 100, SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 1, 2, 100, SubnetID(4)));
+
+
+    // Create the "existing" list of shared networks
+    CfgSharedNetworks4Ptr networks(new CfgSharedNetworks4());
+    SharedNetwork4Ptr shared_network1(new SharedNetwork4("shared-network1"));
+    networks->add(shared_network1);
+    SharedNetwork4Ptr shared_network2(new SharedNetwork4("shared-network2"));
+    networks->add(shared_network2);
+
+    // Empty network pointer.
+    SharedNetwork4Ptr no_network;
+
+    // Add Subnets1,2, and 4 to shared networks.
+    ASSERT_NO_THROW(shared_network1->add(subnet1));
+    ASSERT_NO_THROW(shared_network2->add(subnet2));
+    ASSERT_NO_THROW(shared_network2->add(subnet4));
+
+    // Create our "existing" configured subnets.
     CfgSubnets4 cfg_to;
-    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"),
-                                   26, 1, 2, 3, SubnetID(5)));
-    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.3.0"),
-                                   26, 1, 2, 3, SubnetID(8)));
-    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.4.0"),
-                                   26, 1, 2, 3, SubnetID(10)));
     ASSERT_NO_THROW(cfg_to.add(subnet1));
     ASSERT_NO_THROW(cfg_to.add(subnet2));
     ASSERT_NO_THROW(cfg_to.add(subnet3));
+    ASSERT_NO_THROW(cfg_to.add(subnet4));
 
-    SharedNetwork4Ptr shared_network1(new SharedNetwork4("shared-network1"));
-    ASSERT_NO_THROW(shared_network1->add(subnet1));
 
-    SharedNetwork4Ptr shared_network2(new SharedNetwork4("shared-network2"));
-    ASSERT_NO_THROW(shared_network2->add(subnet2));
-
+    // Merge in an "empty" config. Should have the original config,
+    // still intact.
     CfgSubnets4 cfg_from;
+    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
 
-    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
-    ASSERT_EQ(3, cfg_to.getAll()->size());
-
-    SharedNetwork4Ptr returned_network;
-
-    // The subnet1 should not be modified and should still belong
-    // to the same shared network.
-    auto returned_subnet1 = cfg_to.getByPrefix("192.0.2.0/26");
-    ASSERT_TRUE(returned_subnet1);
-    returned_subnet1->getSharedNetwork(returned_network);
-    EXPECT_TRUE(shared_network1 == returned_network);
-
-    // The subnet2 should not be modified and should still belong
-    // to the same shared network.
-    auto returned_subnet2 = cfg_to.getByPrefix("192.0.3.0/26");
-    ASSERT_TRUE(returned_subnet2);
-    returned_subnet2->getSharedNetwork(returned_network);
-    EXPECT_TRUE(shared_network2 == returned_network);
-
-    // The subnet3 should not be modified.
-    auto returned_subnet3 = cfg_to.getByPrefix("192.0.4.0/26");
-    ASSERT_TRUE(returned_subnet3);
-    returned_subnet3->getSharedNetwork(returned_network);
-    EXPECT_FALSE(returned_network);
-
-    // Fill cfg_from configuration with subnets.
-    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.2.0"),
-                                   26, 2, 3, 4, SubnetID(5)));
-    Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.6.0"),
-                                   26, 1, 2, 3, SubnetID(32)));
-    Subnet4Ptr subnet6(new Subnet4(IOAddress("192.0.4.0"),
-                                   26, 3, 4, 5, SubnetID(10)));
-    ASSERT_NO_THROW(cfg_from.add(subnet4));
-    ASSERT_NO_THROW(cfg_from.add(subnet5));
-    ASSERT_NO_THROW(cfg_from.add(subnet6));
-
-    // First two subnets belong to shared networks.
-    SharedNetwork4Ptr shared_network3(new SharedNetwork4("shared-network3"));
-    ASSERT_NO_THROW(shared_network3->add(subnet4));
-
-    SharedNetwork4Ptr shared_network4(new SharedNetwork4("shared-network4"));
-    ASSERT_NO_THROW(shared_network4->add(subnet5));
-
-    SharedNetwork4Ptr shared_network5(new SharedNetwork4("shared-network5"));
-    ASSERT_NO_THROW(shared_network5->add(subnet6));
-
-    // Merge again. The subnet4 and subnet6 should replace the subnet1 and
-    // subnet3.
-    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+    // We should have all four subnets, with no changes.
     ASSERT_EQ(4, cfg_to.getAll()->size());
 
-    returned_subnet1 = cfg_to.getByPrefix("192.0.2.0/26");
-    ASSERT_TRUE(returned_subnet1);
-    EXPECT_EQ(4, returned_subnet1->getValid());
-    // The subnet1 should be replaced by subnet4 but the shared network
-    // should not be affected.
-    returned_subnet1->getSharedNetwork(returned_network);
-    EXPECT_TRUE(shared_network1 == returned_network);
 
-    // The subnet2 should not be affected because it was not present
-    // in the cfg_from.
-    returned_subnet2 = cfg_to.getByPrefix("192.0.3.0/26");
-    ASSERT_TRUE(returned_subnet2);
-    EXPECT_EQ(3, returned_subnet2->getValid());
-    returned_subnet2->getSharedNetwork(returned_network);
-    EXPECT_TRUE(shared_network2 == returned_network);
+    // Should be no changes to the configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
+                                              "192.0.1.0/26", 100, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
+                                              "192.0.2.0/26", 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
+                                              "192.0.3.0/26", 100, no_network));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
+                                              "192.0.4.0/26", 100, shared_network2));
 
-    returned_subnet3 = cfg_to.getByPrefix("192.0.4.0/26");
-    ASSERT_TRUE(returned_subnet3);
-    EXPECT_EQ(5, returned_subnet3->getValid());
-    // subnet3 should be replaced by subnet6 but the shared network
-    // should not be assigned (regardless if the subnet6 belongs to
-    // a shared network or not).
-    returned_subnet3->getSharedNetwork(returned_network);
-    EXPECT_FALSE(returned_network);
+    // Fill cfg_from configuration with subnets.
+    // subnet 1b updates subnet 1 but leaves it in network 1
+    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 2, 3, 400, SubnetID(1)));
+    subnet1b->setSharedNetworkName("shared-network1");
 
-    // subnet5 should be merged to the configuration.
-    auto returned_subnet5 = cfg_to.getByPrefix("192.0.6.0/26");
-    ASSERT_TRUE(returned_subnet5);
-    EXPECT_EQ(3, returned_subnet5->getValid());
-    // subnet5 shared network should be preserved.
-    returned_subnet5->getSharedNetwork(returned_network);
-    EXPECT_TRUE(shared_network4 == returned_network);
+    // subnet 3b updates subnet 3 and removes it from network 2
+    Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 3, 4, 500, SubnetID(3)));
+
+    // subnet 4b updates subnet 4 and moves it from network2 to network 1
+    Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 3, 4, 500, SubnetID(4)));
+    subnet4b->setSharedNetworkName("shared-network1");
+
+    // subnet 5 is new and belongs to network 2
+    Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.5.0"),
+                                   26, 1, 2, 300, SubnetID(5)));
+    subnet5->setSharedNetworkName("shared-network2");
+
+    // Add subnets to the merge from config.
+    ASSERT_NO_THROW(cfg_from.add(subnet1b));
+    ASSERT_NO_THROW(cfg_from.add(subnet3b));
+    ASSERT_NO_THROW(cfg_from.add(subnet4b));
+    ASSERT_NO_THROW(cfg_from.add(subnet5));
+
+    // Merge again.
+    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
+    ASSERT_EQ(5, cfg_to.getAll()->size());
+
+    // The subnet1 should be replaced by subnet1b.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
+                                              "192.0.1.0/26", 400, shared_network1));
+
+    // The subnet2 should not be affected because it was not present.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
+                                              "192.0.2.0/26", 100, shared_network2));
+
+    // subnet3 should be replaced by subnet3b and no longer assigned to a network.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
+                                              "192.0.3.0/26", 500, no_network));
+
+    // subnet4 should be replaced by subnet4b and moved to network1.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
+                                              "192.0.4.0/26", 500, shared_network1));
+
+    // subnet5 should have been added to configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(5),
+                                              "192.0.5.0/26", 300, shared_network2));
 }
 
 // This test verifies that it is possible to retrieve a subnet using an
