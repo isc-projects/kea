@@ -133,6 +133,22 @@ TEST(StampedValueTest, createFromDouble) {
     EXPECT_THROW(value->getBoolValue(), TypeError);
 }
 
+// Tests that stamped value from real can handle a round value.
+TEST(StampedValueTest, createFromDoubleRound) {
+    StampedValuePtr value;
+    ASSERT_NO_THROW(value = StampedValue::create("bar", Element::create(static_cast<double>(7.0))));
+    EXPECT_FALSE(value->amNull());
+    EXPECT_EQ(Element::real, value->getType());
+    EXPECT_EQ("bar", value->getName());
+    EXPECT_EQ("7.0", value->getValue());
+    double double_value = 0;
+    ASSERT_NO_THROW(double_value = value->getDoubleValue());
+    EXPECT_EQ(7.0, double_value);
+
+    EXPECT_THROW(value->getIntegerValue(), TypeError);
+    EXPECT_THROW(value->getBoolValue(), TypeError);
+}
+
 // Tests that stamped value can be converted from string to real.
 TEST(StampedValueTest, convertStringToDouble) {
     StampedValuePtr value;
