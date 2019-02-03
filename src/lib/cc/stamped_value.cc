@@ -114,7 +114,14 @@ StampedValue::getValue() const {
         case Element::boolean:
             return (value_->boolValue() ? "1" : "0");
         case Element::real:
-            return (boost::lexical_cast<std::string>(value_->doubleValue()));
+            {
+                std::string repr =
+                    boost::lexical_cast<std::string>(value_->doubleValue());
+                if (repr.find_first_of('.') == std::string::npos) {
+                    repr += ".0";
+                }
+                return (repr);
+            }
         default:
             // Impossible condition.
             isc_throw(TypeError, "StampedValue: invalid type of the '"
@@ -125,6 +132,7 @@ StampedValue::getValue() const {
         isc_throw(BadValue, "StampedValue: unable to convert the value of "
                   "the parameter '" << name_ << "' to string");
     }
+    // unreachable
     return (value_->stringValue());
 }
 
