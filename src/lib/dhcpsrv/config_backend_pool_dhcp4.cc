@@ -57,6 +57,17 @@ ConfigBackendPoolDHCPv4::getModifiedSubnets4(const BackendSelector& backend_sele
     return (subnets);
 }
 
+Subnet4Collection
+ConfigBackendPoolDHCPv4::getSharedNetworkSubnets4(const db::BackendSelector& backend_selector,
+                                                  const db::ServerSelector& server_selector,
+                                                  const std::string& shared_network_name) const {
+    Subnet4Collection subnets;
+    getMultiplePropertiesConst<Subnet4Collection, const std::string&>
+        (&ConfigBackendDHCPv4::getSharedNetworkSubnets4, backend_selector, server_selector,
+         subnets, shared_network_name);
+    return (subnets);
+}
+
 SharedNetwork4Ptr
 ConfigBackendPoolDHCPv4::getSharedNetwork4(const BackendSelector& backend_selector,
                                            const ServerSelector& server_selector,

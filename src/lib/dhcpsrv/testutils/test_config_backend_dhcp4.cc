@@ -66,6 +66,31 @@ TestConfigBackendDHCPv4::getModifiedSubnets4(const db::ServerSelector& /* server
     return (subnets);
 }
 
+Subnet4Collection
+TestConfigBackendDHCPv4::getSharedNetworkSubnets4(const db::ServerSelector& /* server_selector */,
+                                                  const std::string& shared_network_name) const {
+    Subnet4Collection subnets;
+
+    // Subnet collection does not include the index by shared network name.
+    // We need to iterate over the subnets and pick those that are associated
+    // with a shared network.
+    for (auto subnet = subnets_.begin(); subnet != subnets_.end();
+         ++subnet) {
+        // The subnet can be associated with a shared network instance or
+        // it may just point to the shared network name. The former is
+        // the case when the subnet belongs to the server configuration.
+        // The latter is the case when the subnet is fetched from the
+        // database.
+        SharedNetwork4Ptr network;
+        (*subnet)->getSharedNetwork(network);
+        if (((network && (network->getName() == shared_network_name)) ||
+             ((*subnet)->getSharedNetworkName() == shared_network_name))) {
+            subnets.push_back(*subnet);
+        }
+    }
+    return (subnets);
+}
+
 SharedNetwork4Ptr
 TestConfigBackendDHCPv4::getSharedNetwork4(const db::ServerSelector& /* server_selector */,
                                            const std::string& name) const {
