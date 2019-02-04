@@ -410,20 +410,6 @@ Debian and Ubuntu:
           <variablelist>
 
             <varlistentry>
-              <term>--enable-generate-docs</term>
-              <listitem>
-                <simpara>Enable the rebuilding Kea documentation. ISC publishes
-                Kea documentation for each release. However, in some cases you
-                may want to rebuild it. For example, if you want to change
-                something in the docs, or want to generate new one from git
-                sources that are not released yet.
-                <!-- @todo: describe what's needed here (xsltproc, also describe
-                     nonet variable -->
-                </simpara>
-              </listitem>
-            </varlistentry>
-
-            <varlistentry>
               <term>--with-gtest, --with-gtest-source</term>
               <listitem>
                 <simpara>Enable the building of the C++ Unit Tests using the
@@ -444,8 +430,12 @@ Debian and Ubuntu:
                 may want to rebuild it. For example, if you want to change
                 something in the docs, or want to generate new one from git
                 sources that are not released yet.
-                <!-- @todo: describe what's needed here (xsltproc, also describe
-                     nonet variable -->
+
+                The build procedure uses the xsltproc tool with the
+                nonet argument which disables fetching missing sources, e.g
+                docbook.xsl, from the Internet. If you want anyway to use
+                the Internet please set the XSLTPROC_NET environment variable
+                in configure.
                 </simpara>
               </listitem>
             </varlistentry>
@@ -453,13 +443,13 @@ Debian and Ubuntu:
             <varlistentry>
               <term>--enable-generate-parser</term>
               <listitem>
-                <simpara>Many Kea components have parsers implemented using Flex
-                (.ll files) and Bison (.yy files). Kea sources have C++/h files
-                generated out from them. By default Kea does not use Flex or
-                Bison to avoid requiring installation of unnecessary
+                <simpara>Many Kea components have parsers implemented using flex
+                (.ll files) and bison (.yy files). Kea sources have C++/h files
+                generated out from them. By default Kea does not use flex or
+                bison to avoid requiring installation of unnecessary
                 dependencies for users. However, if you change anything in the
-                parses (such as add new parameter), you will need to use Flex
-                and Bison to regenerate parsers. This option lets you do that.
+                parses (such as add new parameter), you will need to use flex
+                and bison to regenerate parsers. This option lets you do that.
                 </simpara>
               </listitem>
             </varlistentry>
