@@ -958,7 +958,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     }
 
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    return (packet_filter6_->send(*iface, getSocket(*pkt), pkt));
+    // The packet filter returns an int but in fact it either returns 0 or throws.
+    return (packet_filter6_->send(*iface, getSocket(*pkt), pkt) == 0);
 }
 
 bool
@@ -971,7 +972,8 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
     }
 
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt));
+    // The packet filter returns an int but in fact it either returns 0 or throws.
+    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt) == 0);
 }
 
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {

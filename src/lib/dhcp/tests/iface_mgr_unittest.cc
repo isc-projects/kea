@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -608,7 +608,9 @@ public:
         );
 
         // OK, Send the PACKET!
-        EXPECT_NO_THROW(ifacemgr->send(sendPkt));
+        bool result = false;
+        EXPECT_NO_THROW(result = ifacemgr->send(sendPkt));
+        EXPECT_TRUE(result);
 
         // Now let's try and receive it.
         boost::shared_ptr<Pkt4> rcvPkt;
