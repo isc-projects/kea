@@ -65,6 +65,16 @@ public:
     getModifiedSubnets4(const db::ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) const;
 
+    /// @brief Retrieves all subnets belonging to a specified shared network.
+    ///
+    /// @param server_selector Server selector.
+    /// @param shared_network_name Name of the shared network for which the
+    /// subnets should be retrieved.
+    /// @return Collection of subnets or empty collection if no subnet found.
+    virtual Subnet4Collection
+    getSharedNetworkSubnets4(const db::ServerSelector& server_selector,
+                             const std::string& shared_network_name) const;
+
     /// @brief Retrieves shared network by name.
     ///
     /// @param server_selector Server selector.

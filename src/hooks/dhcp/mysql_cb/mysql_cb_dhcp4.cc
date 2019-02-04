@@ -60,6 +60,7 @@ public:
         GET_SUBNET4_PREFIX,
         GET_ALL_SUBNETS4,
         GET_MODIFIED_SUBNETS4,
+        GET_SHARED_NETWORK_SUBNETS4,
         GET_POOL4_RANGE,
         GET_SHARED_NETWORK4_NAME,
         GET_ALL_SHARED_NETWORKS4,
@@ -587,6 +588,28 @@ public:
         }
     }
 
+    /// @brief Sends query to retrieve all subnets belonging to a shared network.
+    ///
+    /// @param server_selector Server selector.
+    /// @param shared_network_name Name of the shared network for which the
+    /// subnets should be retrieved.
+    /// @param [out] subnets Reference to the subnet collection structure where
+    /// subnets should be inserted.
+    void getSharedNetworkSubnets4(const ServerSelector& server_selector,
+                                  const std::string& shared_network_name,
+                                  Subnet4Collection& subnets) {
+        auto tags = getServerTags(server_selector);
+
+        for (auto tag : tags) {
+            MySqlBindingCollection in_bindings = {
+                MySqlBinding::createString(tag),
+                MySqlBinding::createString(shared_network_name)
+            };
+
+            getSubnets4(GET_SHARED_NETWORK_SUBNETS4, in_bindings, subnets);
+        }
+    }
+
     /// @brief Sends query to retrieve multiple pools.
     ///
     /// Query should order pools by id.
@@ -728,11 +751,31 @@ public:
 
         // Create binding with shared network name if the subnet belongs to a
         // shared network.
+        MySqlBindingPtr shared_network_binding;
+
         SharedNetwork4Ptr shared_network;
         subnet->getSharedNetwork(shared_network);
-        MySqlBindingPtr shared_network_binding =
-            (shared_network ? MySqlBinding::createString(shared_network->getName()) :
-             MySqlBinding::createNull());
+
+        // Check if the subnet is associated with a shared network instance.
+        // If it is, create the binding using the name of the shared network
+        // returned by this instance.
+        if (shared_network) {
+            shared_network_binding = MySqlBinding::createString(shared_network->getName());
+
+        // If the subnet is associated with a shared network by name (no
+        // shared network instance), use this name to create the binding.
+        // This may be the case if the subnet is added as a result of
+        // receiving a control command that merely specifies shared
+        // network name. In that case, it is expected that the shared
+        // network data is already stored in the database.
+        } else if (!subnet->getSharedNetworkName().empty()) {
+            shared_network_binding = MySqlBinding::createString(subnet->getSharedNetworkName());
+
+        // If the subnet is not associated with a shared network, create
+        // null binding.
+        } else {
+             shared_network_binding = MySqlBinding::createNull();
+        }
 
         // Create input bindings.
         MySqlBindingCollection in_bindings = {
@@ -2094,6 +2137,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_GET_SUBNET4(AND s.modification_ts > ?)
     },
 
+    // Select subnets belonging to a shared network.
+    { MySqlConfigBackendDHCPv4Impl::GET_SHARED_NETWORK_SUBNETS4,
+      MYSQL_GET_SUBNET4(AND s.shared_network_name = ?)
+    },
+
     // Select pool by address range.
     { MySqlConfigBackendDHCPv4Impl::GET_POOL4_RANGE,
       "SELECT"
@@ -2472,6 +2520,14 @@ MySqlConfigBackendDHCPv4::getModifiedSubnets4(const ServerSelector& server_selec
                                               const boost::posix_time::ptime& modification_time) const {
     Subnet4Collection subnets;
     impl_->getModifiedSubnets4(server_selector, modification_time, subnets);
+    return (subnets);
+}
+
+Subnet4Collection
+MySqlConfigBackendDHCPv4::getSharedNetworkSubnets4(const ServerSelector& server_selector,
+                                                   const std::string& shared_network_name) const {
+    Subnet4Collection subnets;
+    impl_->getSharedNetworkSubnets4(server_selector, shared_network_name, subnets);
     return (subnets);
 }
 
