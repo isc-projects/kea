@@ -435,7 +435,8 @@ Debian and Ubuntu:
                 nonet argument which disables fetching missing sources, e.g
                 docbook.xsl, from the Internet. If you want anyway to use
                 the Internet please set the XSLTPROC_NET environment variable
-                in configure.
+                in configure to any non-empty value, e.g.
+                <screen>$ <replaceable>XSLTPROC_NET=yes ./configure --enable-generate-docs</replaceable></screen>
                 </simpara>
               </listitem>
             </varlistentry>
