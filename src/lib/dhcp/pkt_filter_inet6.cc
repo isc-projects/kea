@@ -319,12 +319,12 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     pkt->updateTimestamp();
 
     int result = sendmsg(sockfd, &m, 0);
-    if  (result < 0) {
+    if (result < 0) {
         isc_throw(SocketWriteError, "pkt6 send failed: sendmsg() returned"
                   " with an error: " << strerror(errno));
     }
 
-    return (result);
+    return (0);
 }
 
 
