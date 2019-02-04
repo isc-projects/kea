@@ -7,6 +7,7 @@
 
 #include <config.h>
 #include <database/backend_selector.h>
+#include <testutils/test_to_element.h>
 #include <boost/scoped_ptr.hpp>
 #include <gtest/gtest.h>
 
@@ -170,8 +171,6 @@ TEST(BackendSelectorTest, backendTypeToString) {
 }
 
 // Tests toElement from backend selectors.
-// Can't use runToElementTest because it is defined in a library built
-// at a later stage.
 TEST(BackendSelectorTest, backendToElement) {
     // Unspecified.
     boost::scoped_ptr<BackendSelector> sel(new BackendSelector());
@@ -185,24 +184,17 @@ TEST(BackendSelectorTest, backendToElement) {
     EXPECT_NO_THROW(sel.reset(new BackendSelector(BackendSelector::Type::MYSQL)));
     ElementPtr expected = Element::createMap();
     expected->set("type", Element::create("mysql"));
-    ConstElementPtr unparsed;
-    ASSERT_NO_THROW(unparsed = sel->toElement());
-    ASSERT_TRUE(unparsed);
-    EXPECT_TRUE(isEquivalent(expected, unparsed));
+    test::runToElementTest<BackendSelector>(expected, *sel);
 
     // Add host.
     expected->set("host", Element::create("myhost"));
     EXPECT_NO_THROW(sel.reset(new BackendSelector(expected)));
-    ASSERT_NO_THROW(unparsed = sel->toElement());
-    ASSERT_TRUE(unparsed);
-    EXPECT_TRUE(isEquivalent(expected, unparsed));
+    test::runToElementTest<BackendSelector>(expected, *sel);
 
     // Add port.
     expected->set("port", Element::create(1234L));
     EXPECT_NO_THROW(sel.reset(new BackendSelector(expected)));
-    ASSERT_NO_THROW(unparsed = sel->toElement());
-    ASSERT_TRUE(unparsed);
-    EXPECT_TRUE(isEquivalent(expected, unparsed));
+    test::runToElementTest<BackendSelector>(expected, *sel);
 }
 
 }

@@ -1,5 +1,5 @@
 # The following build order must be maintained.
-SUBDIRS = exceptions util log cryptolink dns asiolink cc database
+SUBDIRS = exceptions util log cryptolink dns asiolink cc testutils database
 
 if HAVE_MYSQL
 SUBDIRS += mysql
@@ -13,7 +13,7 @@ if HAVE_CQL
 SUBDIRS += cql
 endif
 
-SUBDIRS += config_backend testutils hooks dhcp config stats
+SUBDIRS += config_backend hooks dhcp config stats
 
 if HAVE_SYSREPO
 SUBDIRS += yang
