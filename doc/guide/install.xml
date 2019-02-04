@@ -185,12 +185,12 @@ Debian and Ubuntu:
         <listitem>
         <para>
           Cpp-driver from DataStax is needed when using the --with-cql
-	  configuration flag to build Kea with Cassandra database backend.
+          configuration flag to build Kea with Cassandra database backend.
           In this case an instance of the Cassandra server running locally
           or on some other machine, reachable over the network from the
           machine running Kea, is required. Note that running the unit
           tests requires a local Cassandra server.
-	</para>
+        </para>
         </listitem>
 
         <listitem>
@@ -374,31 +374,6 @@ Debian and Ubuntu:
           </varlistentry>
 
           <varlistentry>
-            <term>--with-gtest, --with-gtest-source</term>
-            <listitem>
-              <simpara>Enable the building of the C++ Unit Tests using the
-                Google Test framework. This option specifies the path to the
-                gtest source. (If the framework
-                is not installed on your system, it can be downloaded
-                from <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/google/googletest">https://github.com/google/googletest</uri>.)
-                from <ulink url="https://github.com/google/googletest"/>.)
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
-            <term>--with-benchmark, --with-benchmark-source</term>
-            <listitem>
-              <simpara>Enable the building of the database backend
-              benchmarks using the Google Benchmark framework. This
-              option specifies the path to the gtest source. (If the
-              framework is not installed on your system, it can be downloaded
-              from <ulink url="https://github.com/google/benchmark"/>.)
-              </simpara>
-            </listitem>
-          </varlistentry>
-
-          <varlistentry>
             <term>--with-log4cplus</term>
             <listitem>
               <simpara>Define the path to find the Log4cplus headers
@@ -426,7 +401,85 @@ Debian and Ubuntu:
             </para>
           </note>
         </para>
-  <!-- TODO: lcov -->
+        <!-- TODO: lcov -->
+
+        <para>
+          There are also many additional options that are typically not used by
+          regular users. However, they may be useful for package maintainers,
+          developers or people who want to extend Kea code or send patches:
+          <variablelist>
+
+            <varlistentry>
+              <term>--enable-generate-docs</term>
+              <listitem>
+                <simpara>Enable the rebuilding Kea documentation. ISC publishes
+                Kea documentation for each release. However, in some cases you
+                may want to rebuild it. For example, if you want to change
+                something in the docs, or want to generate new one from git
+                sources that are not released yet.
+                <!-- @todo: describe what's needed here (xsltproc, also describe
+                     nonet variable -->
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>--with-gtest, --with-gtest-source</term>
+              <listitem>
+                <simpara>Enable the building of the C++ Unit Tests using the
+                Google Test framework. This option specifies the path to the
+                gtest source. (If the framework
+                is not installed on your system, it can be downloaded
+                from <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://github.com/google/googletest">https://github.com/google/googletest</uri>.)
+                from <ulink url="https://github.com/google/googletest"/>.)
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>--enable-generate-docs</term>
+              <listitem>
+                <simpara>Enable the rebuilding Kea documentation. ISC publishes
+                Kea documentation for each release. However, in some cases you
+                may want to rebuild it. For example, if you want to change
+                something in the docs, or want to generate new one from git
+                sources that are not released yet.
+                <!-- @todo: describe what's needed here (xsltproc, also describe
+                     nonet variable -->
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>--enable-generate-parser</term>
+              <listitem>
+                <simpara>Many Kea components have parsers implemented using Flex
+                (.ll files) and Bison (.yy files). Kea sources have C++/h files
+                generated out from them. By default Kea does not use Flex or
+                Bison to avoid requiring installation of unnecessary
+                dependencies for users. However, if you change anything in the
+                parses (such as add new parameter), you will need to use Flex
+                and Bison to regenerate parsers. This option lets you do that.
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
+              <term>--with-benchmark, --with-benchmark-source</term>
+              <listitem>
+                <simpara>Enable the building of the database backend
+                benchmarks using the Google Benchmark framework. This
+                option specifies the path to the gtest source. (If the
+                framework is not installed on your system, it can be downloaded
+                from <ulink url="https://github.com/google/benchmark"/>.)
+                This support is experimental.
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+          </variablelist>
+        </para>
+
 
         <para>
           For example, the following command configures Kea to find the
