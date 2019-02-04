@@ -436,6 +436,20 @@ case "$host" in
         ;;
 esac
 
+# Made perfdhcp optional.
+AC_ARG_ENABLE(perfdhcp, [AC_HELP_STRING([--enable-perfdhcp],
+  [enable perfdhcp, a DHCP benchmarking tool [defaulno]])],
+  enable_perfdhcp=$enableval, enable_perfdhcp=no)
+
+DISTCHECK_KEA_PERFDHCP_CONFIGURE_FLAG=
+if test "x$enable_perfdhcp" != xno ; then
+  DISTCHECK_KEA_PERFDHCP_CONFIGURE_FLAG="--enable-perfdhcp"
+fi
+
+# Export to makefiles the info whether we have perfdhcp enabled or not
+AM_CONDITIONAL(PERFDHCP, test x$enable_perfdhcp != xno)
+AC_SUBST(DISTCHECK_KEA_PERFDHCP_CONFIGURE_FLAG)
+
 # Kea-shell is written in python. It can work with python 2.7 or any 3.x.
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
 # it with. We require python only if kea-shell was enabled. It is disabled
@@ -1932,6 +1946,7 @@ Developer:
   Logger checks:          $enable_logger_checks
   Generate Documentation: $enable_generate_docs
   Parser Generation:      $enable_generate_parser
+  Perfdhcp:               $enable_perfdhcp
   Kea-shell:              $enable_shell
 
 END
