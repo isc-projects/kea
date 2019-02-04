@@ -35,24 +35,24 @@
       </listitem>
       <listitem>
         <simpara><emphasis>floating point</emphasis> - this type is intended to
-        store floating-point precision. It is implemented as double C++ type.
+        store floating-point precision. It is implemented as a C++ double type.
         </simpara>
       </listitem>
       <listitem>
         <simpara><emphasis>duration</emphasis> - this type is intended for
-        recording time periods. It uses boost::posix_time::time_duration type,
+        recording time periods. It uses the `boost::posix_time::time_duration type,
         which stores hours, minutes, seconds, and microseconds.</simpara>
       </listitem>
       <listitem>
         <simpara><emphasis>string</emphasis> - this type is intended for
-        recording statistics in textual form. It uses std::string C++ type.
+        recording statistics in textual form. It uses the C++ std::string type.
         </simpara>
       </listitem>
     </itemizedlist>
     </para>
 
     <para>
-      During normal operation, DHCPv4 and DHCPv6 servers gather statistics.
+      During normal operation, the DHCPv4 and DHCPv6 servers gather statistics.
       For a list of DHCPv4 and DHCPv6 statistics, see <xref linkend="dhcp4-stats"/> and <xref linkend="dhcp6-stats"/>, respectively.
     </para>
 
