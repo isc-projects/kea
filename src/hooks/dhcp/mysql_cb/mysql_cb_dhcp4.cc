@@ -757,8 +757,7 @@ public:
         subnet->getSharedNetwork(shared_network);
 
         // Check if the subnet is associated with a shared network instance.
-        // If it is, create the binding using the name of the shared network
-        // returned by this instance.
+        // If it is, create the binding using the name of the shared network.
         if (shared_network) {
             shared_network_binding = MySqlBinding::createString(shared_network->getName());
 

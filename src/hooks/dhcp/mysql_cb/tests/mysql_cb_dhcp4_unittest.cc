@@ -803,7 +803,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedSubnets4) {
 
 // Test that subnets belonging to a shared network can be retrieved.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
-    // Assign test subnets into shared networks level1 and level2.
+    // Assign test subnets to shared networks level1 and level2.
     test_subnets_[1]->setSharedNetworkName("level1");
     test_subnets_[2]->setSharedNetworkName("level2");
     test_subnets_[3]->setSharedNetworkName("level2");
@@ -824,30 +824,40 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetworkSubnets4) {
     ASSERT_EQ(1, subnets.size());
 
     // Returned subnet should match test subnet #1.
-    EXPECT_EQ(test_subnets_[1]->toElement()->str(), subnets[0]->toElement()->str());
+    EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
+                             subnets[0]->toElement()));
 
     // All subnets should also be returned for explicitly specified server tag.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ONE("server1"), "level1");
     ASSERT_EQ(1, subnets.size());
 
     // Returned subnet should match test subnet #1.
-    EXPECT_EQ(test_subnets_[1]->toElement()->str(), subnets[0]->toElement()->str());
+    EXPECT_TRUE(isEquivalent(test_subnets_[1]->toElement(),
+                             subnets[0]->toElement()));
 
     // Fetch all subnets belonging to shared network level2.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ALL(), "level2");
     ASSERT_EQ(2, subnets.size());
 
-    // Verify the subnets. It is safe to assume the order in which they have
-    // been returned, because the SELECT statement orders by subnet id.
-    EXPECT_EQ(test_subnets_[2]->toElement()->str(), subnets[0]->toElement()->str());
-    EXPECT_EQ(test_subnets_[3]->toElement()->str(), subnets[1]->toElement()->str());
+    ElementPtr test_list = Element::createList();
+    test_list->add(test_subnets_[2]->toElement());
+    test_list->add(test_subnets_[3]->toElement());
+
+    ElementPtr returned_list = Element::createList();
+    returned_list->add(subnets[0]->toElement());
+    returned_list->add(subnets[1]->toElement());
+
+    EXPECT_TRUE(isEquivalent(returned_list, test_list));
 
     // All subnets should also be returned for explicitly specified server tag.
     subnets = cbptr_->getSharedNetworkSubnets4(ServerSelector::ONE("server1"), "level2");
     ASSERT_EQ(2, subnets.size());
 
-    EXPECT_EQ(test_subnets_[2]->toElement()->str(), subnets[0]->toElement()->str());
-    EXPECT_EQ(test_subnets_[3]->toElement()->str(), subnets[1]->toElement()->str());
+    returned_list = Element::createList();
+    returned_list->add(subnets[0]->toElement());
+    returned_list->add(subnets[1]->toElement());
+
+    EXPECT_TRUE(isEquivalent(returned_list, test_list));
 }
 
 // Test that shared network can be inserted, fetched, updated and then
