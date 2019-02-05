@@ -1,3 +1,8 @@
+1520.	[build]		fdupont
+	Made perfdhcp build optional and off by default: to build it
+	please use the new --enable-perfdhcp configure flag.
+	(Gitlab #340,!220, git b2d9a5559c348e82d6730809ccf1429097a9872c)
+
 1519.	[bug]		Brent Bloxam
 	A bug in kea-admin that always assumed the PostgreSQL database is
 	always local has been fixed. Thank you to Brent Bloxam from
