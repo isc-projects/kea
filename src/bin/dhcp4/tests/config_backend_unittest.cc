@@ -390,7 +390,6 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
-// @todo enable test when SrvConfig can merge shared networks.
 TEST_F(Dhcp4CBTest, mergeSharedNetworks) {
     string base_config =
         "{ \n"
