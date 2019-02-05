@@ -60,7 +60,7 @@ configureDhcp4Server(Dhcpv4Srv&,
                      isc::data::ConstElementPtr config_set,
                      bool check_only = false);
 
-/// @param Fetch and merge data from config backends into the staging config
+/// @brief Fetch and merge data from config backends into the staging config
 ///
 /// If the given SrvConfig specifies one or more config backends it calls
 /// @c databaseConfigConnect() to open connections to them, otherwise it

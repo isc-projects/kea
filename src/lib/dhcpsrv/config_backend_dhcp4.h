@@ -186,7 +186,7 @@ public:
 
     /// @brief Retrieves the most recent audit entries.
     ///
-    /// @param selector Server selector.
+    /// @param server_selector Server selector.
     /// @param modification_time Timestamp being a lower limit for the returned
     /// result set, i.e. entries later than specified time are returned.
     /// @return Collection of audit entries.
