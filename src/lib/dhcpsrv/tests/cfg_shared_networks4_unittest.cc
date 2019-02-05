@@ -193,7 +193,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     SharedNetwork4Ptr network2(new SharedNetwork4("network2"));
     network2->setValid(Triplet<uint32_t>(200));
 
-    // Create network3 with one subnets.
+    // Create network3 with one subnet.
     SharedNetwork4Ptr network3(new SharedNetwork4("network3"));
     network3->setValid(Triplet<uint32_t>(300));
     ASSERT_NO_THROW(network3->add(subnet3));
@@ -240,7 +240,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
 
     // Should still have 3 networks.
 
-    // Network1 should have doubled its valid life time but still only have
+    // Network1 should have doubled its valid lifetime but still only have
     // the orignal two subnets.  Merge should discard assocations on CB
     // subnets and preserve the associations from existing config.
     ASSERT_EQ(3, cfg_to.getAll()->size());
@@ -251,7 +251,7 @@ TEST(CfgSharedNetworks4Test, mergeNetworks) {
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
                                                std::vector<SubnetID>()));
 
-    // Network1 should have doubled its valid life time and still subnet3.
+    // Network1 should have doubled its valid lifetime and still subnet3.
     ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network3", Triplet<uint32_t>(600),
                                                std::vector<SubnetID>{SubnetID(3)}));
 }

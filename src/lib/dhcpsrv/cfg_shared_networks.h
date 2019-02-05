@@ -124,7 +124,8 @@ public:
     /// @return true if there is a network with a specified server identifier.
     bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
 
-    /// @brief Merges specified shared network configuration into this configuration.
+    /// @brief Merges specified shared network configuration into this
+    /// configuration.
     ///
     /// This method merges networks from the @c other configuration into this
     /// configuration. The general rule is that existing networks are replaced
@@ -132,14 +133,14 @@ public:
     ///
     /// For each network in @c other, do the following:
     ///
-    /// - Any associated subnets are removed.  Shared networks retreived from
-    /// config backends, do not carry their associated subnets (if any) with them.
-    /// Subnet assignments are maintained by subnet merges.
-    /// - If a shared network of the same name,  already exists in this
+    /// - Any associated subnets are removed.  Shared networks retrieved from
+    /// config backends, do not carry their associated subnets (if any) with
+    /// them. (Subnet assignments are maintained by subnet merges).
+    /// - If a shared network of the same name already exists in this
     /// configuration:
-    ///     - All of its associated subnets are movde to the "other" network
-    ///     - The existing network is removed from this configuration
-    /// - The "other" network is added
+    ///     - All of its associated subnets are moved to the "other" network.
+    ///     - The existing network is removed from this configuration.
+    /// - The "other" network is added to this configuration.
     ///
     /// @warning The merge operation may affect the @c other configuration.
     /// Therefore, the caller must not rely on the data held in the @c other

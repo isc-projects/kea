@@ -441,8 +441,10 @@ TEST_F(Dhcp4CBTest, mergeSharedNetworks) {
     staged_network = networks->getByName("two");
     ASSERT_TRUE(staged_network);
 
-    // Subnet3, which is in db2 should not have been merged, since it is
-    // backend data is first found, first used.
+    // Subnet3, which is in db2 should not have been merged.
+    // We queried db1 first and the query returned data. In
+    // other words, we iterate over the backends, asking for
+    // data.  We use the first data, we find.
     staged_network = networks->getByName("three");
     ASSERT_FALSE(staged_network);
 }
