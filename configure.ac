@@ -1706,6 +1706,34 @@ AC_CONFIG_COMMANDS([permissions], [
            chmod +x src/lib/util/python/gen_wiredata.py
            chmod +x src/lib/util/tests/process_spawn_app.sh
            chmod +x tools/path_replacer.sh
+           chmod +x fix-distdir.sh
+])
+
+AC_CONFIG_COMMANDS([fix-distdir], [
+           $srcdir/fix-distdir.sh src/bin/agent/Makefile
+           $srcdir/fix-distdir.sh src/bin/d2/Makefile
+           $srcdir/fix-distdir.sh src/bin/dhcp4/Makefile
+           $srcdir/fix-distdir.sh src/bin/dhcp6/Makefile
+           $srcdir/fix-distdir.sh src/bin/keactrl/Makefile
+           $srcdir/fix-distdir.sh src/bin/lfc/Makefile
+           $srcdir/fix-distdir.sh src/bin/netconf/Makefile
+           $srcdir/fix-distdir.sh src/hooks/dhcp/high_availability/Makefile
+           $srcdir/fix-distdir.sh src/hooks/dhcp/lease_cmds/Makefile
+           $srcdir/fix-distdir.sh src/hooks/dhcp/mysql_cb/Makefile
+           $srcdir/fix-distdir.sh src/hooks/dhcp/stat_cmds/Makefile
+           $srcdir/fix-distdir.sh src/hooks/dhcp/user_chk/Makefile
+           $srcdir/fix-distdir.sh src/lib/asiodns/Makefile
+           $srcdir/fix-distdir.sh src/lib/cfgrpt/Makefile
+           $srcdir/fix-distdir.sh src/lib/config/Makefile
+           $srcdir/fix-distdir.sh src/lib/database/Makefile
+           $srcdir/fix-distdir.sh src/lib/dhcp_ddns/Makefile
+           $srcdir/fix-distdir.sh src/lib/dhcpsrv/Makefile
+           $srcdir/fix-distdir.sh src/lib/dns/Makefile
+           $srcdir/fix-distdir.sh src/lib/eval/Makefile
+           $srcdir/fix-distdir.sh src/lib/hooks/Makefile
+           $srcdir/fix-distdir.sh src/lib/http/Makefile
+           $srcdir/fix-distdir.sh src/lib/log/tests/Makefile
+           $srcdir/fix-distdir.sh src/lib/process/Makefile
 ])
 
 AC_OUTPUT
