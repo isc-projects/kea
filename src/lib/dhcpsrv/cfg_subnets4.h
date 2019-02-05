@@ -60,9 +60,9 @@ public:
     /// are the authority on their shared network assignments. It is also
     /// assumed that @ networks is the list of shared networks that should be
     /// used in making assignments.  The general concept is that the overarching
-    /// merge process will first merge shared networks and then pass that list of
-    /// networks into this method. Subnets from @c other are then merged into this
-    /// configuration as follows:
+    /// merge process will first merge shared networks and then pass that list
+    /// of networks into this method. Subnets from @c other are then merged
+    /// into this configuration as follows:
     ///
     /// For each subnet in @c other:
     ///
@@ -70,7 +70,7 @@ public:
     ///    -# If it belongs to a shared network, remove it from that network
     ///    -# Remove the subnet from this configuration and discard it
     ///
-    /// - Add the subnet from other to this configuration.
+    /// - Add the subnet from @c other to this configuration.
     /// - If that subnet is associated to shared network, find that network
     ///   in @ networks and add that subnet to it.
     ///
@@ -81,7 +81,7 @@ public:
     /// merged configuration.
     ///
     /// @param networks collection of shared networks that to which assignments
-    /// should be added.  In other words, the list of shared networks that belong
+    /// should be added. In other words, the list of shared networks that belong
     /// to the same SrvConfig instance we are merging into.
     /// @param other the subnet configuration to be merged into this
     /// configuration.

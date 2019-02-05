@@ -24,8 +24,8 @@ CfgSharedNetworks4::merge(const CfgSharedNetworks4& other) {
     auto& index = networks_.get<SharedNetworkNameIndexTag>();
 
     // Iterate over the subnets to be merged. They will replace the existing
-    // subnets with the same id. All new subnets will be inserted into the
-    // configuration into which we're merging.
+    // subnets with the same id. All new subnets will be inserted into this
+    // configuration.
     auto other_networks = other.getAll();
     for (auto other_network = other_networks->begin();
          other_network != other_networks->end(); ++other_network) {

@@ -159,7 +159,7 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     // Empty network pointer.
     SharedNetwork4Ptr no_network;
 
-    // Add Subnets1,2, and 4 to shared networks.
+    // Add Subnets 1, 2 and 4 to shared networks.
     ASSERT_NO_THROW(shared_network1->add(subnet1));
     ASSERT_NO_THROW(shared_network2->add(subnet2));
     ASSERT_NO_THROW(shared_network2->add(subnet4));

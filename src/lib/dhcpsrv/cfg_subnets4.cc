@@ -64,7 +64,8 @@ CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
     // subnets with the same id. All new subnets will be inserted into the
     // configuration into which we're merging.
     auto other_subnets = other.getAll();
-    for (auto other_subnet = other_subnets->begin(); other_subnet != other_subnets->end();
+    for (auto other_subnet = other_subnets->begin();
+         other_subnet != other_subnets->end();
          ++other_subnet) {
 
         // Check if there is a subnet with the same ID.
@@ -74,7 +75,7 @@ CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
             // Subnet found.
             auto existing_subnet = *subnet_it;
 
-            // Continue if the existing subnet and other subnet
+            // If the existing subnet and other subnet
             // are the same instance skip it.
             if (existing_subnet == *other_subnet) {
                 continue;
@@ -106,7 +107,7 @@ CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
             } else {
                 // This implies the shared-network collection we were given
                 // is out of sync with the subnets we were given.
-                isc_throw(InvalidOperation, "Cannot assign subnet ID of '"
+                isc_throw(InvalidOperation, "Cannot assign subnet ID of "
                           << (*other_subnet)->getID()
                           << " to shared network: " << network_name
                           << ", network does not exist");
