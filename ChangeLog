@@ -1,3 +1,9 @@
+1519.	[bug]		Brent Bloxam
+	A bug in kea-admin that always assumed the PostgreSQL database is
+	always local has been fixed. Thank you to Brent Bloxam from
+	Beanfield Metroconnect for submiting a patch!
+	(Gitlab #423,!216, git d14e2f34c7d544aeb5e1e219f305fac9ab18c498)
+
 1518.	[func]		marcin
 	Extended MySQL schema to include the types of the global DHCP
 	parameters in the database. The Kea servers will use this
