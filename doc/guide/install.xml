@@ -184,8 +184,8 @@ Debian and Ubuntu:
 
         <listitem>
         <para>
-          Cpp-driver from DataStax is needed when using the --with-cql
-          configuration flag to build Kea with the Cassandra database backend.
+          The cpp-driver from DataStax is needed when using the --with-cql
+	  configuration flag to build Kea with the Cassandra database backend.
           In this case, an instance of the Cassandra server running locally
           or on some other machine, reachable over the network from the
           machine running Kea, is required. Note that running the unit
