@@ -122,7 +122,7 @@ public:
     /// @brief Sends query to insert an audit entry.
     ///
     /// @param in_bindings Collection of bindings representing an option.
-    void insertAuditEntry4(const MySqlBindingCollection& in_bindings) {
+    void insertAuditEntry4(const MySqlBindingCollection& /* in_bindings */) {
         // Fetch unique identifier of the inserted option.
         uint64_t id = mysql_insert_id(conn_.mysql_);
 
@@ -2048,6 +2048,8 @@ public:
     }
 };
 
+namespace {
+
 /// @brief Array of tagged statements.
 typedef std::array<TaggedStatement, MySqlConfigBackendDHCPv4Impl::NUM_STATEMENTS>
 TaggedStatementArray;
@@ -2431,6 +2433,8 @@ TaggedStatementArray tagged_statements = { {
     }
 }
 };
+
+}; // end anonymous namespace
 
 MySqlConfigBackendDHCPv4Impl::
 MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap& parameters)
