@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <string>
 #include <pgsql/testutils/pgsql_schema.h>
+#include <exceptions/exceptions.h>
 
 #include <libpq-fe.h>
 
@@ -56,6 +57,7 @@ void runPgSQLScript(const std::string& path, const std::string& script_name,
     int retval = ::system(cmd.str().c_str());
     if (retval) {
         std::cerr << "runPgSQLSchema failed:" << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runPgSQLSchema failed:" << cmd.str());
     }
 }
 

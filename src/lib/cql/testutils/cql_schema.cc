@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 
 #include <cql/cql_connection.h>
 #include <cql/testutils/cql_schema.h>
+#include <exceptions/exceptions.h>
 
 #include <stdlib.h>
 
@@ -79,6 +80,7 @@ runCqlScript(const std::string& path,
     int32_t retval = ::system(cmd.str().c_str());
     if (retval) {
         std::cerr << "runCqlSchema failed:" << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runCqlSchema failed:" << cmd.str());
     }
 }
 

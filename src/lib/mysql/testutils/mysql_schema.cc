@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 #include <mysql.h>
 #include <mysql/testutils/mysql_schema.h>
 #include <mysql/mysql_connection.h>
+#include <exceptions/exceptions.h>
 
 #include <fstream>
 #include <iostream>
@@ -54,6 +55,7 @@ void runMySQLScript(const std::string& path, const std::string& script_name,
     int retval = ::system(cmd.str().c_str());
     if (retval) {
         std::cerr << "runMySQLSchema failed:" << cmd.str() << std::endl;
+        isc_throw(Unexpected, "runMySQLSchema failed:" << cmd.str());
     }
 }
 

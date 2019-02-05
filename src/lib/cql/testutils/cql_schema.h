@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -57,11 +57,12 @@ void createCqlSchema(bool force_wipe, bool show_err = false);
 /// Submits the given CQL script to CQL via cqlsh CLI. The output of
 /// stderr is suppressed unless the parameter, show_err is true. The is done
 /// to suppress warnings that might otherwise make test output needlessly
-/// noisy. A gtest assertion occurs if the script fails to execute.
+/// noisy.  An exception is thrown if the script fails to execute.
 ///
 /// @param path - path (if not blank) of the script to execute
 /// @param script_name - file name of the path to execute
 /// @param show_err flag which governs whether or not stderr is suppressed.
+/// @throw Unexpected when the script returns an error.
 void runCqlScript(const std::string& path, const std::string& script_name,
                     bool show_err);
 
