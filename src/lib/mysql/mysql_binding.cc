@@ -106,7 +106,7 @@ MySqlBinding::createBlob(const unsigned long length) {
 }
 
 MySqlBindingPtr
-MySqlBinding::createTimestamp(const ptime& timestamp) {
+MySqlBinding::createTimestamp(const boost::posix_time::ptime& timestamp) {
     MySqlBindingPtr binding(new MySqlBinding(MySqlBindingTraits<ptime>::column_type,
                                    MySqlBindingTraits<ptime>::length));
     binding->setTimestampValue(timestamp);
@@ -146,7 +146,7 @@ MySqlBinding::convertToDatabaseTime(const time_t input_time,
 }
 
 void
-MySqlBinding::convertToDatabaseTime(const ptime& input_time,
+MySqlBinding::convertToDatabaseTime(const boost::posix_time::ptime& input_time,
                                     MYSQL_TIME& output_time) {
     if (input_time.is_not_a_date_time()) {
         isc_throw(BadValue, "Time value is not a valid posix time");

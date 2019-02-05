@@ -460,7 +460,7 @@ public:
         return (equals(other));
     }
 
-    /// @param other An object to be compared with this object.
+    /// @brief other An object to be compared with this object.
     ///
     /// It ignores the configuration sequence number when checking for
     /// inequality of objects.
