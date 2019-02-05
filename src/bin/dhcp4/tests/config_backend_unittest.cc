@@ -390,8 +390,7 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptions) {
 
 // This test verifies that externally configured shared-networks are
 // merged correctly into staging configuration.
-// @todo enable test when SrvConfig can merge shared networks.
-TEST_F(Dhcp4CBTest, DISABLED_mergeSharedNetworks) {
+TEST_F(Dhcp4CBTest, mergeSharedNetworks) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
@@ -441,8 +440,10 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeSharedNetworks) {
     staged_network = networks->getByName("two");
     ASSERT_TRUE(staged_network);
 
-    // Subnet3, which is in db2 should not have been merged, since it is
-    // first found, first used?
+    // Subnet3, which is in db2 should not have been merged.
+    // We queried db1 first and the query returned data. In
+    // other words, we iterate over the backends, asking for
+    // data.  We use the first data, we find.
     staged_network = networks->getByName("three");
     ASSERT_FALSE(staged_network);
 }

@@ -17,6 +17,20 @@ using namespace asiolink;
 
 namespace {
 
+void checkMergedNetwork(const CfgSharedNetworks4& networks, const std::string& name,
+                       const Triplet<uint32_t>& exp_valid,
+                       const std::vector<SubnetID>& exp_subnets) {
+    auto network = networks.getByName(name);
+    ASSERT_TRUE(network) << "expected network: " << name << " not found";
+    ASSERT_EQ(exp_valid, network->getValid()) << " network valid lifetime wrong";
+    const Subnet4Collection* subnets = network->getAllSubnets();
+    ASSERT_EQ(exp_subnets.size(), subnets->size()) << " wrong number of subnets";
+    for (auto exp_id : exp_subnets) {
+        ASSERT_TRUE(network->getSubnet(exp_id))
+                    << " did not find expected subnet: " << exp_id;
+    }
+}
+
 // This test verifies that shared networks can be added to the configruation
 // and retrieved by name.
 TEST(CfgSharedNetworks4Test, getByName) {
@@ -156,6 +170,90 @@ TEST(CfgSharedNetworks4Test, unparse) {
         "]\n";
 
     test::runToElementTest<CfgSharedNetworks4>(expected, cfg);
+}
+
+// This test verifies that shared-network configurations are properly merged.
+TEST(CfgSharedNetworks4Test, mergeNetworks) {
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 1, 2, 100, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 100, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 100, SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 1, 2, 100, SubnetID(4)));
+
+    // Create network1 and add two subnets to it
+    SharedNetwork4Ptr network1(new SharedNetwork4("network1"));
+    network1->setValid(Triplet<uint32_t>(100));
+    ASSERT_NO_THROW(network1->add(subnet1));
+    ASSERT_NO_THROW(network1->add(subnet2));
+
+    // Create network2 with no subnets.
+    SharedNetwork4Ptr network2(new SharedNetwork4("network2"));
+    network2->setValid(Triplet<uint32_t>(200));
+
+    // Create network3 with one subnet.
+    SharedNetwork4Ptr network3(new SharedNetwork4("network3"));
+    network3->setValid(Triplet<uint32_t>(300));
+    ASSERT_NO_THROW(network3->add(subnet3));
+
+    // Create our "existing" configured networks.
+    // Add all three networks to the existing config.
+    CfgSharedNetworks4 cfg_to;
+    ASSERT_NO_THROW(cfg_to.add(network1));
+    ASSERT_NO_THROW(cfg_to.add(network2));
+    ASSERT_NO_THROW(cfg_to.add(network3));
+
+    // Merge in an "empty" config. Should have the original config, still intact.
+    CfgSharedNetworks4 cfg_from;
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    ASSERT_EQ(3, cfg_to.getAll()->size());
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(100),
+                                               std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
+
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
+                                               std::vector<SubnetID>()));
+
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network3", Triplet<uint32_t>(300),
+                                               std::vector<SubnetID>{SubnetID(3)}));
+
+    // Create network1b, this is an "update" of network1
+    // We'll double the valid time and add subnet4 to it
+    SharedNetwork4Ptr network1b(new SharedNetwork4("network1"));
+    network1b->setValid(Triplet<uint32_t>(200));
+    ASSERT_NO_THROW(network1b->add(subnet4));
+
+    // Network2 we will not touch.
+
+    // Create network3b, this is an "update" of network3.
+    // We'll double it's valid time, but leave off the subnet.
+    SharedNetwork4Ptr network3b(new SharedNetwork4("network3"));
+    network3b->setValid(Triplet<uint32_t>(600));
+
+    // Create our "existing" configured networks.
+    ASSERT_NO_THROW(cfg_from.add(network1b));
+    ASSERT_NO_THROW(cfg_from.add(network3b));
+
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    // Should still have 3 networks.
+
+    // Network1 should have doubled its valid lifetime but still only have
+    // the orignal two subnets.  Merge should discard assocations on CB
+    // subnets and preserve the associations from existing config.
+    ASSERT_EQ(3, cfg_to.getAll()->size());
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network1", Triplet<uint32_t>(200),
+                                               std::vector<SubnetID>{SubnetID(1), SubnetID(2)}));
+
+    // No changes to network2.
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network2", Triplet<uint32_t>(200),
+                                               std::vector<SubnetID>()));
+
+    // Network1 should have doubled its valid lifetime and still subnet3.
+    ASSERT_NO_FATAL_FAILURE(checkMergedNetwork(cfg_to, "network3", Triplet<uint32_t>(600),
+                                               std::vector<SubnetID>{SubnetID(3)}));
 }
 
 } // end of anonymous namespace

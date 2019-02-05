@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -254,18 +254,21 @@ SharedNetwork4::add(const Subnet4Ptr& subnet) {
     Impl::add(subnets_, subnet);
     // Associate the subnet with this network.
     setSharedNetwork(subnet);
+    subnet->setSharedNetworkName(name_);
 }
 
 void
 SharedNetwork4::del(const SubnetID& subnet_id) {
     Subnet4Ptr subnet = Impl::del<Subnet4Ptr>(subnets_, subnet_id);
     clearSharedNetwork(subnet);
+    subnet->setSharedNetworkName("");
 }
 
 void
 SharedNetwork4::delAll() {
     for (auto subnet = subnets_.cbegin(); subnet != subnets_.cend(); ++subnet) {
         clearSharedNetwork(*subnet);
+        (*subnet)->setSharedNetworkName("");
     }
     subnets_.clear();
 }
@@ -316,12 +319,14 @@ SharedNetwork6::add(const Subnet6Ptr& subnet) {
     Impl::add(subnets_, subnet);
     // Associate the subnet with this network.
     setSharedNetwork(subnet);
+    subnet->setSharedNetworkName(name_);
 }
 
 void
 SharedNetwork6::del(const SubnetID& subnet_id) {
     Subnet6Ptr subnet = Impl::del<Subnet6Ptr>(subnets_, subnet_id);
     clearSharedNetwork(subnet);
+    subnet->setSharedNetworkName("");
 }
 
 void
