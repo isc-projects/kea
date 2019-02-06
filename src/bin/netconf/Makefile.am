@@ -104,7 +104,9 @@ parser: netconf_lexer.cc location.hh position.hh stack.hh netconf_parser.cc netc
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh netconf_parser.cc netconf_parser.h: netconf_parser.yy
-	$(YACC) --defines=netconf_parser.h --report=all --report-file=netconf_parser.report -o netconf_parser.cc netconf_parser.yy
+	$(YACC) -Wno-yacc --defines=netconf_parser.h --report=all \
+	--report-file=netconf_parser.report -o netconf_parser.cc \
+	netconf_parser.yy
 
 netconf_lexer.cc: netconf_lexer.ll
 	$(LEX) --prefix netconf_ -o netconf_lexer.cc netconf_lexer.ll

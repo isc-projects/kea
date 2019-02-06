@@ -7,7 +7,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {Dhcp4Parser}
+%define api.parser.class {Dhcp4Parser}
 %define api.prefix {parser4_}
 %define api.token.constructor
 %define api.value.type variant

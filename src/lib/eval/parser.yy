@@ -1,4 +1,4 @@
-/* Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,7 +7,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {EvalParser}
+%define api.parser.class {EvalParser}
 %define api.prefix {eval}
 %define api.token.constructor
 %define api.value.type variant

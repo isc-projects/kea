@@ -103,7 +103,8 @@ parser: agent_lexer.cc location.hh position.hh stack.hh agent_parser.cc agent_pa
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh agent_parser.cc agent_parser.h: agent_parser.yy
-	$(YACC) --defines=agent_parser.h --report=all --report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
+	$(YACC) -Wno-yacc --defines=agent_parser.h --report=all \
+	--report-file=agent_parser.report -o agent_parser.cc agent_parser.yy
 
 agent_lexer.cc: agent_lexer.ll
 	$(LEX) --prefix agent_ -o agent_lexer.cc agent_lexer.ll

@@ -117,7 +117,8 @@ parser: d2_lexer.cc location.hh position.hh stack.hh d2_parser.cc d2_parser.h
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh d2_parser.cc d2_parser.h: d2_parser.yy
-	$(YACC) --defines=d2_parser.h --report=all --report-file=d2_parser.report -o d2_parser.cc d2_parser.yy
+	$(YACC) -Wno-yacc --defines=d2_parser.h --report=all \
+	--report-file=d2_parser.report -o d2_parser.cc d2_parser.yy
 
 d2_lexer.cc: d2_lexer.ll
 	$(LEX) --prefix d2_parser_ -o d2_lexer.cc d2_lexer.ll

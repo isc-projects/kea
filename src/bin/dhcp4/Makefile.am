@@ -131,7 +131,8 @@ parser: dhcp4_lexer.cc location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_pa
 # Call bison with -W to get warnings like unmarked empty rules
 # Note C++11 deprecated register still used by flex < 2.6.0
 location.hh position.hh stack.hh dhcp4_parser.cc dhcp4_parser.h: dhcp4_parser.yy
-	$(YACC) --defines=dhcp4_parser.h --report=all --report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
+	$(YACC) -Wno-yacc --defines=dhcp4_parser.h --report=all \
+	--report-file=dhcp4_parser.report -o dhcp4_parser.cc dhcp4_parser.yy
 
 dhcp4_lexer.cc: dhcp4_lexer.ll
 	$(LEX) --prefix parser4_ -o dhcp4_lexer.cc dhcp4_lexer.ll
