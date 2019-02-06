@@ -152,6 +152,10 @@ public:
         test_subnets_.push_back(subnet);
 
         subnet.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 20, 30, 40, 2048));
+        Triplet<uint32_t> null_timer;
+        subnet->setT1(null_timer);
+        subnet->setT2(null_timer);
+        subnet->setValid(null_timer);
         test_subnets_.push_back(subnet);
 
         subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 24, 30, 40, 60, 4096));
@@ -200,6 +204,10 @@ public:
 
         // Add more shared networks.
         shared_network.reset(new SharedNetwork4("level2"));
+        Triplet<uint32_t> null_timer;
+        shared_network->setT1(null_timer);
+        shared_network->setT2(null_timer);
+        shared_network->setValid(null_timer);
         test_networks_.push_back(shared_network);
 
         shared_network.reset(new SharedNetwork4("level3"));

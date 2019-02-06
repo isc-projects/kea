@@ -86,6 +86,28 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
     }
 }
 
+MySqlBindingPtr
+MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) const {
+    if (triplet.unspecified()) {
+        return (MySqlBinding::createNull());
+    }
+    return (MySqlBinding::createInteger<uint32_t>(triplet.get()));
+}
+
+Triplet<uint32_t>
+MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) const {
+    if (!binding) {
+        isc_throw(Unexpected, "MySQL configuration backend internal error: "
+                  "binding is NULL when creating a triplet value");
+    }
+
+    if (binding->amNull()) {
+        return (Triplet<uint32_t>());
+    }
+
+    return (Triplet<uint32_t>(binding->getInteger<uint32_t>()));
+}
+
 void
 MySqlConfigBackendImpl::createAuditRevision(const int index,
                                             const ServerSelector& server_selector,

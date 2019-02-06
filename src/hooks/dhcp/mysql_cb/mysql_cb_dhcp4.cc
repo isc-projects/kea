@@ -356,11 +356,11 @@ public:
                 std::string subnet_prefix = out_bindings[1]->getString();
                 auto prefix_pair = Subnet4::parsePrefix(subnet_prefix);
                 // renew_timer
-                uint32_t renew_timer = out_bindings[13]->getIntegerOrDefault<uint32_t>(0);
+                auto renew_timer = createTriplet(out_bindings[13]);
                 // rebind_timer
-                uint32_t rebind_timer = out_bindings[11]->getIntegerOrDefault<uint32_t>(0);
+                auto rebind_timer = createTriplet(out_bindings[11]);
                 // valid_lifetime
-                uint32_t valid_lifetime = out_bindings[19]->getIntegerOrDefault<uint32_t>(0);
+                auto valid_lifetime = createTriplet(out_bindings[19]);
 
                 // Create subnet with basic settings.
                 last_subnet.reset(new Subnet4(prefix_pair.first, prefix_pair.second,
@@ -778,15 +778,15 @@ public:
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getMatchClientId())),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
             MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().toUint32()),
-            MySqlBinding::createInteger<uint32_t>(subnet->getT2()),
+            createBinding(subnet->getT2()),
             createInputRelayBinding(subnet),
-            MySqlBinding::createInteger<uint32_t>(subnet->getT1()),
+            createBinding(subnet->getT1()),
             createInputRequiredClassesBinding(subnet),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
             MySqlBinding::condCreateString(subnet->getSname()),
             shared_network_binding,
             createInputContextBinding(subnet),
-            MySqlBinding::createInteger<uint32_t>(subnet->getValid())
+            createBinding(subnet->getValid())
         };
 
         MySqlTransaction transaction(conn_);
@@ -1027,7 +1027,7 @@ public:
 
                 // rebind_timer
                 if (!out_bindings[6]->amNull()) {
-                    last_network->setT2(out_bindings[6]->getInteger<uint32_t>());
+                    last_network->setT2(createTriplet(out_bindings[6]));
                 }
 
                 // relay
@@ -1048,7 +1048,7 @@ public:
 
                 // renew_timer
                 if (!out_bindings[8]->amNull()) {
-                    last_network->setT1(out_bindings[8]->getInteger<uint32_t>());
+                    last_network->setT1(createTriplet(out_bindings[8]));
                 }
 
                 // require_client_classes
@@ -1080,7 +1080,7 @@ public:
 
                 // valid_lifetime
                 if (!out_bindings[12]->amNull()) {
-                    last_network->setValid(out_bindings[12]->getInteger<uint32_t>());
+                    last_network->setValid(createTriplet(out_bindings[12]));
                 }
 
                 shared_networks.push_back(last_network);
@@ -1187,14 +1187,14 @@ public:
             MySqlBinding::condCreateString(shared_network->getIface()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(shared_network->getMatchClientId())),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
-            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getT2()),
+            createBinding(shared_network->getT2()),
             createInputRelayBinding(shared_network),
-            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getT1()),
+            createBinding(shared_network->getT1()),
             createInputRequiredClassesBinding(shared_network),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
                                                  (shared_network->getHostReservationMode())),
             createInputContextBinding(shared_network),
-            MySqlBinding::condCreateInteger<uint32_t>(shared_network->getValid())
+            createBinding(shared_network->getValid())
         };
 
         MySqlTransaction transaction(conn_);
