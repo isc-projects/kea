@@ -43,7 +43,8 @@ SimpleParser::checkKeywords(const SimpleKeywords& keywords,
             continue;
         }
         Element::types expected = keywords.at(entry.first);
-        if (entry.second->getType() == expected) {
+        if ((expected == Element::any) ||
+            (entry.second->getType() == expected)) {
             continue;
         }
         isc_throw(DhcpConfigError, "'" << entry.first << "' parameter is not "
