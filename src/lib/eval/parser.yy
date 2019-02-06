@@ -7,7 +7,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {EvalParser}
+%define api.parser.class {EvalParser}
 %define api.prefix {eval}
 %define api.token.constructor
 %define api.value.type variant

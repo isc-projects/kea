@@ -7,7 +7,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {NetconfParser}
+%define api.parser.class {NetconfParser}
 %define api.prefix {netconf_}
 %define api.token.constructor
 %define api.value.type variant

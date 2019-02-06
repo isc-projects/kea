@@ -7,7 +7,7 @@
 %skeleton "lalr1.cc" /* -*- C++ -*- */
 %require "3.0.0"
 %defines
-%define parser_class_name {D2Parser}
+%define api.parser.class {D2Parser}
 %define api.prefix {d2_parser_}
 %define api.token.constructor
 %define api.value.type variant
