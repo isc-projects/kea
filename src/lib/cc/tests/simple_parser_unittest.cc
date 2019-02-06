@@ -22,7 +22,8 @@ const SimpleRequiredKeywords REQUIRED_KEYWORDS = { "foobar" };
 const SimpleKeywords KEYWORDS = {
     { "id",     Element::integer },
     { "prefix", Element::string },
-    { "map",    Element::map }
+    { "map",    Element::map },
+    { "any",    Element::any }
 };
 
 /// This table defines sample default values. Although these are DHCPv6
@@ -115,6 +116,8 @@ TEST_F(SimpleParserTest, checkKeywords) {
     EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, empty));
     ConstElementPtr id = Element::fromJSON("{ \"id\": 1 }");
     EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, id));
+    ConstElementPtr any = Element::fromJSON("{ \"any\": 1 }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, any));
     ConstElementPtr bad_id = Element::fromJSON("{ \"id\": true }");
     EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_id),
                  DhcpConfigError);
