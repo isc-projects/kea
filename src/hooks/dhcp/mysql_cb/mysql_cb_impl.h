@@ -106,6 +106,25 @@ public:
     /// @brief Destructor.
     ~MySqlConfigBackendImpl();
 
+    /// @brief Creates MySQL binding from a @c Triplet.
+    ///
+    /// @param triplet Triplet value from which the binding should be created.
+    /// @return Pointer to a null binding if the triplet is "unspecified" or
+    /// a pointer to a binding representing 32-bit unsigned integer value
+    /// otherwise.
+    db::MySqlBindingPtr createBinding(const Triplet<uint32_t>& triplet) const;
+
+    /// @brief Creates @c Triplet object from MySQL binding.
+    ///
+    /// @param binding Pointer to the MySQL binding.
+    /// @return Triplet value set to "unspecified" if the MySQL binding
+    /// represents a NULL value or a Triplet value encapsulating 32-bit
+    /// unsigned integer if the MySQL represents an integer.
+    /// @throw isc::Unexpected if the provided binding pointer is NULL.
+    /// @throw isc::InvalidOperation if the binding does not represent
+    /// a 32-bit unsigned integer.
+    Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& binding) const;
+
     /// @brief Returns server tags associated with the particular selector.
     ///
     /// @param server_selector Server selector.
