@@ -1032,40 +1032,6 @@ AC_SUBST(DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG)
 AC_SUBST(LOG4CPLUS_LIBS)
 AC_SUBST(LOG4CPLUS_INCLUDES)
 
-CPPFLAGS_SAVED=$CPPFLAGS
-CPPFLAGS="$LOG4CPLUS_INCLUDES $CPPFLAGS"
-LIBS_SAVED="$LIBS"
-LIBS="$LOG4CPLUS_LIBS $MULTITHREADING_FLAG $LIBS"
-
-AC_CHECK_HEADERS([log4cplus/logger.h],,AC_MSG_ERROR([Missing required header files.]))
-AC_LINK_IFELSE(
-        [AC_LANG_PROGRAM([#include <log4cplus/logger.h>
-                         ],
-                         [using namespace log4cplus;
-                          Logger logger = Logger::getInstance("main");
-                         ])],
-        [AC_MSG_RESULT([checking for log4cplus library... yes])],
-        [AC_MSG_RESULT([checking for log4cplus library... no])
-         AC_MSG_ERROR([Needs log4cplus library])]
-)
-
-dnl Determine the log4cplus version, used mainly for config.report.
-AC_MSG_CHECKING([log4cplus version])
-cat > conftest.cpp << EOF
-#include <log4cplus/version.h>
-AUTOCONF_LOG4CPLUS_VERSION=LOG4CPLUS_VERSION_STR
-EOF
-
-LOG4CPLUS_VERSION=`$CPPP $CPPFLAGS conftest.cpp | grep '^AUTOCONF_LOG4CPLUS_VERSION=' | $SED -e 's/^AUTOCONF_LOG4CPLUS_VERSION=//' -e 's/[[ 	]]//g' -e 's/"//g' 2> /dev/null`
-if test -z "$LOG4CPLUS_VERSION"; then
-  LOG4CPLUS_VERSION="unknown"
-fi
-$RM -f conftest.cpp
-AC_MSG_RESULT([$LOG4CPLUS_VERSION])
-
-CPPFLAGS=$CPPFLAGS_SAVED
-LIBS=$LIBS_SAVED
-
 #
 # Configure Boost header path
 #
