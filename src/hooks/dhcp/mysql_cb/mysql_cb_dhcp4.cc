@@ -119,17 +119,6 @@ public:
     explicit MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap&
                                           parameters);
 
-    /// @brief Sends query to insert an audit entry.
-    ///
-    /// @param in_bindings Collection of bindings representing an option.
-    void insertAuditEntry4(const MySqlBindingCollection& /* in_bindings */) {
-        // Fetch unique identifier of the inserted option.
-        uint64_t id = mysql_insert_id(conn_.mysql_);
-
-        // Create bindings needed to insert association of that option with
-        // a server into the dhcp4_options_server table.
-    }
-
     /// @brief Sends query to retrieve multiple global parameters.
     ///
     /// @param index Index of the query to be used.
