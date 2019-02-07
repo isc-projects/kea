@@ -96,7 +96,9 @@ TEST(MySqlBindingTest, defaultTimestamp) {
 
 // This test verifies that the binding preserves fractional seconds in
 // millisecond precision.
-TEST(MySqlBindingTest, millisecondTimestampPrecision) {
+/// @todo This test is disabled until we decide that the minimum
+/// supported MySQL version has a fractional seconds precision.
+TEST(MySqlBindingTest, DISABLED_millisecondTimestampPrecision) {
     // Set timestamp of 2019-01-28 01:12:10.123
 
     // Fractional part depends on the clock resolution.

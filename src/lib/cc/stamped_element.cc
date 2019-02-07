@@ -10,12 +10,16 @@ namespace isc {
 namespace data {
 
 StampedElement::StampedElement()
-    : timestamp_(boost::posix_time::microsec_clock::local_time()) {
+    /// @todo Change it to microsec_clock once we transition to subsecond
+    /// precision.
+    : timestamp_(boost::posix_time::second_clock::local_time()) {
 }
 
 void
 StampedElement::updateModificationTime() {
-    setModificationTime(boost::posix_time::microsec_clock::local_time());
+    /// @todo Change it to microsec_clock once we transition to subsecond
+    /// precision.
+    setModificationTime(boost::posix_time::second_clock::local_time());
 }
 
 } // end of namespace isc::data
