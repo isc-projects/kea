@@ -2132,6 +2132,8 @@ public:
     bool is_readonly_;
 };
 
+namespace {
+
 /// @brief Array of tagged statements.
 typedef boost::array<TaggedStatement, MySqlHostDataSourceImpl::NUM_STATEMENTS>
 TaggedStatementArray;
@@ -2429,6 +2431,8 @@ TaggedStatementArray tagged_statements = { {
             "ORDER BY h.host_id, o.option_id, r.reservation_id"}
     }
 };
+
+}; // anonymous namespace
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
