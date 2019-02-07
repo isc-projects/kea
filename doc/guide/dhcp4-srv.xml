@@ -56,14 +56,12 @@
           <listitem>
             <simpara>
             <command>-t <replaceable>file</replaceable></command> -
-            specifies the configuration file to be tested. Kea-dhcp4
-            will attempt to load it and will conduct sanity
-            checks. Note that certain checks are possible only while
-            running the actual server. The actual status is reported
-            with an exit code (0 = configuration looks ok, 1 = error
-            encountered). Kea prints out log messages to standard
-            output and errors to standard error when testing the
-            configuration.</simpara>
+            specifies a configuration file to be tested. Kea-dhcp4
+            will load it, check it, and exit. During the test, log messages are
+            printed to standard output and error messages to standard error. The
+            result of the test is reported through the exit code (0 = configuration
+            looks ok, 1 = error encountered). The check is not comprehensive; certain
+            checks are possible only when running the server.</simpara>
           </listitem>
           <listitem>
             <simpara>
@@ -89,18 +87,6 @@
       </itemizedlist>
 
       <para>
-        The <filename>config.report</filename> may also be accessed more
-        directly, via the following command. The binary <userinput>path</userinput> may be found
-        in the install directory or in the <filename>.libs</filename>
-        subdirectory in the source tree. For example:
-        <filename>kea/src/bin/dhcp4/.libs/kea-dhcp4</filename>.
-
-<screen>
-strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
-</screen>
-      </para>
-
-      <para>
         On startup, the server will detect available network interfaces
         and will attempt to open UDP sockets on all interfaces
         mentioned in the configuration file.
@@ -116,7 +102,7 @@ strings <userinput>path</userinput>/kea-dhcp4 | sed -n 's/;;;; //p'
             <simpara><command>localstatedir</command>: The value as passed into the
             build configure script; it defaults to "/usr/local/var". Note
             that this value may be overridden at runtime by setting the environment
-            variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
+            variable KEA_PIDFILE_DIR, although this is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
@@ -209,8 +195,8 @@ In the example above this object is called <command>Dhcp4</command>.
   of multiple modules within a single configuration file, but this is not
   recommended. The
   only object, besides the one specifying module configuration, which can be
-  (and usually is) included in the same file, is the <command>Logging</command>.
-  However, we don't include this object in the example above for clarity.
+  (and usually is) included in the same file, is the <command>Logging</command> object.
+  However, we don't include this one in the example above for clarity.
   </para>
 </note>
 
@@ -398,14 +384,14 @@ by a comma and another object definition.</para>
     This configuration selects the <filename>/tmp/kea-leases4.csv</filename> as
     the storage for lease information and enables persistence (writing lease updates
     to this file). It also configures the backend to perform a periodic cleanup
-    of the lease files, executed every 30 minutes.
+    of the lease file every 30 minutes.
   </para>
 
   <para>It is important to know how the lease file contents are organized
   to understand why the periodic lease file cleanup is needed. Every time
   the server updates a lease or creates a new lease for the client, the new
   lease information must be recorded in the lease file. For performance reasons,
-  the server does not update the existing client's lease in the file, as it would
+  the server does not update the existing client's lease in the file, as this would
   potentially require rewriting the entire file. Instead, it simply appends the new lease
   information to the end of the file; the previous lease entries for the
   client are not removed. When the server loads leases from the lease file, e.g.
@@ -423,9 +409,9 @@ by a comma and another object definition.</para>
   is configurable, and it should be selected according to the frequency of lease
   renewals initiated by the clients. The more frequent the renewals, the smaller
   the value of <command>lfc-interval</command> should be. Note, however, that the
-  LFC takes time and thus it is possible (although unlikely) that a new cleanup
-  may be started while the previous cleanup instance is still running, if the
-  <command>lfc-interval</command> is too short. The server would recover from
+  LFC takes time and thus it is possible (although unlikely) that, if the
+  <command>lfc-interval</command> is too short, a new cleanup
+  may be started while the previous one is still running. The server would recover from
   this by skipping the new cleanup when it detects that the previous cleanup
   is still in progress. But it implies that the actual cleanups will be
   triggered more rarely than configured. Moreover, triggering a new cleanup
@@ -526,7 +512,7 @@ The default value for Cassandra is 2000 ms.
 
     <note>
       <para>
-        Automatic reconnect to database backends is configured individually per backend.
+        Automatic reconnection to database backends is configured individually per backend.
         This allows you to tailor the recovery parameters to each backend you use.
         We do suggest that you enable it either for all backends or no backends so you
         have consistent behavior. Losing connectivity to a backend for which reconnect
@@ -594,7 +580,7 @@ The default value for Cassandra is 2000 ms.
       </simpara></listitem>
 
       <listitem><simpara>
-        <command>tcp-nodelay</command> - enables/disabled Nagle's
+        <command>tcp-nodelay</command> - enables/disables Nagle's
         algorithm on connections. The default is true.
       </simpara></listitem>
 
@@ -645,11 +631,11 @@ Similar parameters can be specified for the hosts database.
     from the configuration file are checked first and external storage is checked
     later, if necessary.</para>
 
-    <para>Kea extends the host storage to multiple storages. Operations
-    are performed on host storages in the configuration order with a special
-    case for addition; read-only storages must be configured after a
-    required read-write storage, or host reservation addition will
-    always fail.</para>
+    <para>In fact, host information can be placed in multiple stores. Operations
+    are performed on the stores in the order they are defined in the configuration
+    file, although this leads to is a restriction in ordering in the case of a host
+    reservation addition; read-only stores must be configured after a (required)
+    read-write store, or the addition will fail.</para>
 
 <section xml:id="hosts-databases-configuration4">
   <title>DHCPv4 Hosts Database Configuration</title>
@@ -706,7 +692,7 @@ The default value for Cassandra is 2000 ms.
 
     <note>
       <para>
-        Automatic reconnect to database backends is configured individually per backend.
+        Automatic reconnection to database backends is configured individually per backend.
         This allows you to tailor the recovery parameters to each backend you use.
         We do suggest that you enable it either for all backends or no backends so you
         have consistent behavior. Losing connectivity to a backend for which reconnect
@@ -811,7 +797,7 @@ It is anticipated that this form of usage will only be used when it is desired t
 temporarily override a list of interface names and listen on all interfaces.
   </para>
   <para>Some deployments of DHCP servers require that the servers listen
-  on the interfaces with multiple IPv4 addresses configured. In these situations,
+  on interfaces with multiple IPv4 addresses configured. In these situations,
   the address to use can be selected by appending an IPv4 address to the interface
   name in the following manner:
   <screen>
@@ -843,7 +829,7 @@ temporarily override a list of interface names and listen on all interfaces.
   <para>Kea supports responding to directly connected clients which don't have
   an address configured. This requires the server to
   inject the hardware address of the destination into the data link layer
-  of the packet being sent to the client. The DHCPv4 server uses the
+  of the packet being sent to the client. The DHCPv4 server uses
   raw sockets to achieve this, and builds the entire IP/UDP stack for the
   outgoing packets. The downside of raw socket use, however, is that incoming
   and outgoing packets bypass the firewalls (e.g. iptables). It is also
@@ -876,10 +862,10 @@ temporarily override a list of interface names and listen on all interfaces.
   </para>
 
   <para>Using UDP sockets automatically disables the reception of broadcast
-  packets from directly connected clients. This effectively means that the
-  UDP sockets can be used for relayed traffic only. When using the raw sockets,
+  packets from directly connected clients. This effectively means that
+  UDP sockets can be used for relayed traffic only. When using raw sockets,
   both the traffic from the directly connected clients and the relayed traffic
-  will be handled. Caution should be taken when configuring the server to open
+  are handled. Caution should be taken when configuring the server to open
   multiple raw sockets on the interface with several IPv4 addresses assigned.
   If the directly connected client sends the message to the broadcast address,
   all sockets on this link will receive this message and multiple responses
@@ -944,8 +930,8 @@ temporarily override a list of interface names and listen on all interfaces.
   and IP/UDP sockets are specified, the loopback interface is accepted.
   </para>
 
-  <para>It can be used, for instance, to run Kea in a FreeBSD jail having
-  only a loopback interface, servicing a relayed DHCP request:
+  <para>For example, it can be used to run Kea in a FreeBSD jail having
+  only a loopback interface, to service a relayed DHCP request:
 
   <screen>
 "Dhcp4": {
@@ -1263,7 +1249,7 @@ temporarily override a list of interface names and listen on all interfaces.
         specify both. Space has a default value of "dhcp4", so you can skip this
         as well if you define a regular (not encapsulated) DHCPv4 option.
         Finally, csv-format defaults to true, so it too can be skipped, unless
-        you want to specify the option value as hexstring. Therefore, the
+        you want to specify the option value as a hexadecimal string. Therefore, the
         above example can be simplified to:
         <screen>
 "Dhcp4": {
@@ -1379,9 +1365,8 @@ temporarily override a list of interface names and listen on all interfaces.
         same values of a given option, you should use global options; you
         can then override specific values for a small number of subnets.
         On the other hand, if you use different values in each subnet,
-        it does not make sense to specify global option values
-        (Dhcp4/option-data); rather, you should set only subnet-specific values
-        (Dhcp4/subnet[X]/option-data[Y]).
+        it does not make sense to specify global option values; rather, you should
+        set only subnet-specific ones.
       </para>
       <para>
         The following commands override the global
@@ -1416,7 +1401,7 @@ temporarily override a list of interface names and listen on all interfaces.
         specific option values override subnet-specific and global
         option values. The server's administrator must not try to
         prioritize assignment of pool-specific options by trying to
-        order pools declarations in the server configuration.
+        order pool declarations in the server configuration.
       </para>
 
      <para>
@@ -1450,7 +1435,7 @@ temporarily override a list of interface names and listen on all interfaces.
 </screen>
       </para>
      <para>
-       Options can also be specified in class of host reservation scope.
+       Options can also be specified in class or host reservation scope.
        The current Kea options precedence order is (from most important):
        host reservation, pool, subnet, shared network, class, global.
      </para>
@@ -1459,14 +1444,14 @@ temporarily override a list of interface names and listen on all interfaces.
         The currently supported standard DHCPv4 options are
         listed in <xref linkend="dhcp4-std-options-list"/>.
         "Name" and "Code"
-        are the values that should be used as a name in the option-data
+        are the values that should be used as a name/code in the option-data
         structures. "Type" designates the format of the data; the meanings of
         the various types is given in <xref linkend="dhcp-types"/>.
       </para>
 
-      <para>When a data field is a string, and that string contains the comma
-      (,; U+002C) character, the comma must be escaped with a double reverse solidus
-      character (\; U+005C). This double escape is required, because both the
+      <para>When a data field is a string and that string contains the comma
+      (,; U+002C) character, the comma must be escaped with two backslashes
+      (\; U+005C). This double escape is required because both the
       routine splitting CSV data into fields and JSON use the same escape
       character; a single escape (\,) would make the JSON invalid.
       For example, the string "foo,bar" would be represented as:
@@ -1496,7 +1481,7 @@ temporarily override a list of interface names and listen on all interfaces.
       <para>
         Some options are designated as arrays, which means that more than one
         value is allowed in such an option. For example, the option time-servers
-        allows the specification of more than one IPv4 address, so it allows
+        allows the specification of more than one IPv4 address, enabling
         clients to obtain the addresses of multiple NTP servers.
       </para>
       <!-- @todo: describe record types -->
@@ -1504,8 +1489,8 @@ temporarily override a list of interface names and listen on all interfaces.
 
       <para>
         <xref linkend="dhcp4-custom-options"/> describes the configuration
-        syntax to create custom option definitions (formats). It is generally not
-        allowed to create custom definitions for standard options, even if the
+        syntax to create custom option definitions (formats). Creation of custom
+        definitions for standard options is generally not permitted, even if the
         definition being created matches the actual option format defined in the
         RFCs. There is an exception to this rule for standard options for which
         Kea currently does not provide a definition. In order to use such options,
@@ -1745,8 +1730,8 @@ It is merely echoed by the server.
       "record"; otherwise it must be left blank. The latter parameter specifies
       the name of the option space being encapsulated by the particular
       option. If the particular option does not encapsulate any option space, it
-      should be left blank. Note that the above set of comments only defines the
-      format of the new option and does not set its values.
+      should be left blank. Note that the <command>option-def</command> configuration statement only defines the
+      format of an option and does not set its value(s).
       </para>
 
       <para>The <command>name</command>, <command>code</command>, and
@@ -1867,7 +1852,7 @@ It is merely echoed by the server.
     <section id="dhcp4-private-opts">
       <title>DHCPv4 Private Options</title>
       <para>
-      Options with code between 224 and 254 are reserved for private use.
+      Options with a code between 224 and 254 are reserved for private use.
       They can be defined at the global scope or at the client-class local
       scope; this allows option definitions to be used depending on context
       and option data to be set accordingly. For instance, to configure
@@ -2318,13 +2303,13 @@ It is merely echoed by the server.
           using an 'option-def' structure), as the option definition associates an
           option with a particular name. It is possible to configure an option
           for which there is no definition (unspecified option format).
-          Configuration of such options requires the use of option code.
+          Configuration of such options requires the use of the option code.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara><command>space</command> - if the option space is unspecified it
-          will default to 'dhcp4', which is an option space holding DHCPv4 standard
+          will default to 'dhcp4', which is an option space holding the standard DHCPv4
           options.
           </simpara>
         </listitem>
@@ -2633,8 +2618,8 @@ It is merely echoed by the server.
         <para>
         In some cases it is useful to limit the scope of a class to
         a shared-network, subnet, or pool. There are two parameters
-        which are used to limit the scope of the class by instructing
-        the server to perform evaluation of test expressions when
+        for this, which instruct
+        the server to evaluate test expressions when
         required.
         </para>
 
@@ -2693,7 +2678,7 @@ It is merely echoed by the server.
          <para>
          Required evaluation is also available at shared-network and
          pool levels. The order in which required classes are considered is:
-         shared-network, subnet, and pool, i.e. the opposite order that
+         shared-network, subnet, and pool, i.e. in the opposite order in which
          option-data is processed.
          </para>
 
@@ -2705,7 +2690,7 @@ It is merely echoed by the server.
       <para>
       As mentioned earlier, kea-dhcp4 can be configured to generate requests to the
       DHCP-DDNS server (referred to here as "D2") to update DNS entries. These requests are known as
-      NameChangeRequests or NCRs. Each NCR contains the following information:
+      Name Change Requests or NCRs. Each NCR contains the following information:
       <orderedlist>
       <listitem><para>
       Whether it is a request to add (update) or remove DNS entries
@@ -2715,7 +2700,8 @@ It is merely echoed by the server.
       DNS updates (PTR records), or both
       </para></listitem>
       <listitem><para>
-      The FQDN, lease address, and DHCID
+      The Fully Qualified Domain Name (FQDN), lease address, and DHCID (information
+      identifying the client associated with the FQDN)
       </para></listitem>
       </orderedlist>
       The parameters for controlling the generation of NCRs for submission to D2
@@ -3245,7 +3231,7 @@ It is merely echoed by the server.
       which updated
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2131">RFC 2131</link>.
       That update states that the server must
-      send client-id if the client sent it. That is Kea's default behavior.
+      send the client-id if the client sent it. That is Kea's default behavior.
       However, in some cases older devices that do not support
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc6842">RFC 6842</link>
       may refuse to accept responses that include the
@@ -3565,12 +3551,12 @@ It is merely echoed by the server.
          </para>
 
        <para>
-         Kea now supports a new configuration scope called
+         Kea supports a configuration scope called
          <command>sanity-checks</command>. It currently allows only a
          single parameter called <command>lease-checks</command>. It
          governs the verification that is done when a new lease is
-         loaded from a lease file. With the introduction of the
-         sanity-checks mechanism, it is now possible to tell Kea to
+         loaded from a lease file. With the
+         sanity-checks mechanism, it is possible to tell Kea to
          try to correct inconsistent data.
        </para>
 
@@ -3630,17 +3616,6 @@ It is merely echoed by the server.
 <screen>
 "Dhcp4": {
     "sanity-checks": {
-        // This parameter determines what to do when a new lease appears in the
-        // system (i.e. either is read from disk during memfile startup or is
-        // added via lease commands). There are five modes supported:
-        // none - do nothing, accept them as is
-        // warn - if subnet-id problems are detected, print a warning, but
-        //        otherwise load the lease as is. This is the default value.
-        // fix - attempt to fix the lease by finding appropriate subnet-id value.
-        //       if there is no suitable subnet, the lease is loaded as is.
-        // fix-del - attempt to fix the lease by findind appropriate subnet-id
-        //           value. If there is no suitable subnet, the lease is deleted.
-        // del - delete leases that have incorrect subnet-id values.
         <userinput>"lease-checks": "fix-del"</userinput>
     },
     ...
@@ -3660,9 +3635,7 @@ It is merely echoed by the server.
     a per-host basis. The most obvious one is to reserve a specific, static
     address for exclusive use by a given client (host); the returning client will
     receive the same address from the server every time, and other clients will
-    generally not receive that address.</para>
-    
-    <para>Note that there may be cases when a
+    generally not receive that address. Note that there may be cases when a
     new reservation has been made for a client for an address currently
     in use by another client. We call this situation a "conflict." These conflicts
     get resolved automatically over time as described in subsequent sections.
@@ -3722,7 +3695,7 @@ It is merely echoed by the server.
     0a:0b:0c:0d:0e:0f. (Note that if you plan to do DNS updates, it
     is strongly recommended for the hostnames to be unique.) The third
     example reserves address 192.0.3.203 for a client whose request
-    would be relayed by a relay agent that inserts a circuit-it option
+    would be relayed by a relay agent that inserts a circuit-id option
     with the value 'charter950'. The fourth entry reserves address
     192.0.2.204 for a client that uses a client identifier with value
     01:11:22:33:44:55:66.</para>
@@ -3845,18 +3818,18 @@ It is merely echoed by the server.
       address (when responding to DHCPDISCOVER) or send DHCPNAK
       (when responding to DHCPREQUEST).</para>
 
-      <para>This recovery mechanism allows the server to fully recover from a
+      <para>The recovery mechanism allows the server to fully recover from a
       case where reservations conflict with existing leases. This procedure
       takes time and will roughly take as long as the value set for renew-timer.
       The best way to avoid such recovery is not to define new reservations that
       conflict with existing leases. Another recommendation is to use
       out-of-pool reservations. If the reserved address does not belong to a
-      pool, there is no way that other clients can get this address.
+      pool, there is no way that other clients can get it.
       </para>
 
     <note>
      <para>The conflict-resolution mechanism does not work for global
-     reservations. As of Kea 1.5.0, it is generally recommended not to use
+     reservations. As of Kea 1.5.0, it is generally recommended that you not use
      global reservations for addresses. If you choose to use them anyway,
      you must manually ensure that the reserved addresses are not
      in the dynamic pools.</para>
@@ -3872,7 +3845,7 @@ It is merely echoed by the server.
       FQDN option only if the client has included Client FQDN option in its
       message to the server. The server will respond with the Hostname option
       if the client included Hostname option in its message to the server
-      or when the client requested Hostname option using the Parameter Request
+      or when the client requested the Hostname option using the Parameter Request
       List option. The server will return the Hostname option even if it is not
       configured to perform DNS updates. The reserved hostname always takes
       precedence over the hostname supplied by the client or the autogenerated
@@ -4224,7 +4197,7 @@ It is merely echoed by the server.
       slower.</para>
 
       <para>To address this problem, a parameter called
-      <command>host-reservation-identifiers</command> has been introduced. It
+      <command>host-reservation-identifiers</command> is available. It
       takes a list of identifier types as a parameter. Kea will check only those
       identifier types enumerated in host-reservation-identifiers. From a
       performance perspective, the number of identifier types should be kept to a
@@ -4264,7 +4237,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     the client's current location. To facilitate such a need, a global
     reservation mechanism has been implemented. The idea behind it is that
     regular host reservations are tied to specific subnets, by using a specific
-    subnet-id. Kea can now specify a global
+    subnet-id. Kea can specify a global
     reservation that can be used in every subnet that has global reservations
     enabled.</para>
 
@@ -4287,7 +4260,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
 
 <screen>
 "Dhcp4:" {
-    // This specify global reservations. They will apply to all subnets that
+    // This specifies global reservations. They will apply to all subnets that
     // have global reservations enabled.
     <userinput>
     "reservations": [
@@ -4388,9 +4361,9 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     </para>
 
     <note>
-    <para>It is strongly discouraged for Kea deployments to assume that the
-      server doesn't allocate addresses from other subnets until it uses all
-      the addresses from the first subnet in the shared network.</para>
+    <para>Deployments should not assume that Kea waits until it has allocated
+    all the addresses from the first subnet in a shared network before allocating
+    addresses from other subnets.</para>
     </note>
 
     <para>In order to define a shared network an additional configuration scope
@@ -4404,7 +4377,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             // and it must be unique among all shared networks.
             "name": "my-secret-lair-level-1",
 
-            // Subnet selector can be specifed at the shared network level.
+            // The subnet selector can be specifed at the shared network level.
             // Subnets from this shared network will be selected for directly
             // connected clients sending requests to server's "eth0" interface.
             "interface": "eth0",
@@ -4423,9 +4396,9 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
             ],
         } ]</userinput>, // end of shared-networks
 
-    // It is likely that in your network you'll have a mix of regular,
+    // It is likely that in your network you will have a mix of regular,
     // "plain" subnets and shared networks. It is perfectly valid to mix
-    // them in the same config file.
+    // them in the same configuration file.
     //
     // This is regular subnet. It's not part of any shared-network.
     "subnet4": [
@@ -4442,12 +4415,12 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
     </para>
     <para>As you see in the example, it is possible to mix shared and regular
     ("plain") subnets. Each shared network must have a unique name. This is
-    similar to the ID for subnets, but gives administrators more flexibility. This is used
+    similar to the ID for subnets, but gives administrators more flexibility. It is used
     for logging, but also internally for identifying shared networks.</para>
 
     <para>In principle it makes sense to define only shared networks that
-    consist of two or more subnets. However, for testing purposes it is allowed
-    to define a shared network with just one subnet or even an empty one. This
+    consist of two or more subnets. However, for testing purposes, an empty subnet
+    or a network with just a single subnet is allowed. This
     is not a recommended practice in production networks, as the shared network
     logic requires additional processing and thus lowers the server's performance.
     To avoid unnecessary performance degradation, the shared subnets should only
@@ -4508,7 +4481,7 @@ src/lib/dhcpsrv/cfg_host_operations.cc -->
         ]
     } ]</screen>
     In this example, there is a log-servers option defined that is available to
-    clients in both subnets in this shared network. Also, a valid lifetime is
+    clients in both subnets in this shared network. Also, the valid lifetime is
     set to 10 minutes (600s). However, the first subnet overrides some of the values
     (valid lifetime is 20 minutes, different IP address for log-servers), but
     also adds its own option (router address). Assuming a client asking for
@@ -4767,7 +4740,7 @@ subnets belonging to the same shared network.</para>
 
 <para>While not strictly mandatory, it is strongly recommended to use explicit
 "id" values for subnets if you plan to use database storage for host
-reservations. If ID is not specified, the values for it are autogenerated,
+reservations. If an ID is not specified, the values for it are autogenerated,
 i.e. it assigns increasing integer values starting from 1. Thus, the
 autogenerated IDs are not stable across configuration changes.</para>
     </section>
@@ -5448,7 +5421,7 @@ autogenerated IDs are not stable across configuration changes.</para>
             "pools": [ {
                 "pool": "192.0.2.10 - 192.0.2.20",
                 // This is pool specific user context
-                <userinput>"user-context": { "colour": "red" }</userinput>
+                <userinput>"user-context": { "color": "red" }</userinput>
             } ],
 
             // This is a subnet specific user context. You can put whatever type
