@@ -158,8 +158,11 @@ MySqlBinding::convertToDatabaseTime(const boost::posix_time::ptime& input_time,
     output_time.hour = input_time.time_of_day().hours();
     output_time.minute = input_time.time_of_day().minutes();
     output_time.second = input_time.time_of_day().seconds();
-    output_time.second_part = input_time.time_of_day().fractional_seconds()
-        *1000000/time_duration::ticks_per_second();
+    /// @todo Use fractional seconds instead of 0 when minimum supported
+    /// MySQL version has it.
+    output_time.second_part = 0;
+/*    output_time.second_part = input_time.time_of_day().fractional_seconds()
+        *1000000/time_duration::ticks_per_second(); */
     output_time.neg = my_bool(0);
 }
 
@@ -218,7 +221,10 @@ MySqlBinding::convertFromDatabaseTime(const MYSQL_TIME& expire,
 
 ptime
 MySqlBinding::convertFromDatabaseTime(const MYSQL_TIME& database_time) {
-    long fractional = database_time.second_part * time_duration::ticks_per_second()/1000000;
+    /// @todo Use fractional seconds instead of 0 when minimum supported
+    /// MySQL version has it.
+    long fractional = 0;
+    // long fractional = database_time.second_part * time_duration::ticks_per_second()/1000000;
     ptime pt(boost::gregorian::date(database_time.year,
                                     boost::gregorian::greg_month(database_time.month),
                                     database_time.day),

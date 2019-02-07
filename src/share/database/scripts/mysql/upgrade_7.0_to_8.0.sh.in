@@ -17,91 +17,14 @@ fi
 
 mysql "$@" <<EOF
 
--- -----------------------------------------------------
--- Modify timestamps in the Configuration Backend
--- specific tables to use fractional seconds with
--- 6 decimal places precision.
--- -----------------------------------------------------
-
-ALTER TABLE dhcp4_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_audit
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_global_parameter
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_global_parameter_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_option_def
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_option_def_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_shared_network
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_shared_network_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_subnet
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_pool
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp4_subnet_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
 
 ALTER TABLE dhcp4_options
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL
-    DEFAULT CURRENT_TIMESTAMP(6);
-
-ALTER TABLE dhcp4_options_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_audit
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_global_parameter
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_global_parameter_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_option_def
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_option_def_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_shared_network
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_shared_network_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_subnet
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_pool
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
-
-ALTER TABLE dhcp6_subnet_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE dhcp6_options
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL
-    DEFAULT CURRENT_TIMESTAMP(6);
-
-ALTER TABLE dhcp6_options_server
-    MODIFY COLUMN modification_ts TIMESTAMP(6) NOT NULL;
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    DEFAULT CURRENT_TIMESTAMP;
 
 -- -----------------------------------------------------
 -- Make sure that constraints on the 7.0 schema tables
@@ -205,7 +128,7 @@ ALTER TABLE dhcp6_options_server
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
     id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
-    modification_ts TIMESTAMP(6) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
     log_message TEXT,
     server_id BIGINT(10) UNSIGNED,
     PRIMARY KEY (id),
@@ -262,7 +185,7 @@ ALTER TABLE dhcp4_audit
 -- -----------------------------------------------------
 DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
 DELIMITER $$
-CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP(6),
+CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP,
                                           IN server_tag VARCHAR(256),
                                           IN audit_log_message TEXT,
                                           IN cascade_transaction TINYINT(1))
