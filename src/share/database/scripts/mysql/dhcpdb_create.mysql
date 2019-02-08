@@ -1336,11 +1336,11 @@ SET version = '7', minor = '0';
 
 
 ALTER TABLE dhcp4_options
-        MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE dhcp6_options
-        MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
 
 -- -----------------------------------------------------
@@ -1805,6 +1805,12 @@ ALTER TABLE dhcp6_global_parameter
 ALTER TABLE dhcp6_global_parameter
     ADD CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type)
         REFERENCES parameter_data_type (id);
+
+
+-- Rename dhcp6_subnet_id column of dhcp6_pool
+
+ALTER TABLE dhcp6_pool
+    CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
 
 
 # Update the schema version number
