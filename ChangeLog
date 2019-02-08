@@ -1,3 +1,9 @@
+1521.	[func]		marcin
+	Removed subsecond precision for the timestamps in MySQL config
+	backend. It caused issues on systems with MySQL version prior
+	to 5.6.4 which don't support subsecond timestamp values.
+	(Gitlab #444,!229, git 71200e98f5a862908240a0d2e269b5da23290af9)
+
 1520.	[build]		fdupont
 	Made perfdhcp build optional and off by default: to build it
 	please use the new --enable-perfdhcp configure flag.
