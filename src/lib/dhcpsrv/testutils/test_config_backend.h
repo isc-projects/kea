@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 
 #include <database/database_connection.h>
 #include <dhcpsrv/config_backend_dhcp4_mgr.h>
+#include <dhcpsrv/config_backend_dhcp6_mgr.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/lexical_cast.hpp>
 
