@@ -87,7 +87,7 @@ MySqlConfigBackendImpl::~MySqlConfigBackendImpl() {
 }
 
 MySqlBindingPtr
-MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) const {
+MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) {
     if (triplet.unspecified()) {
         return (MySqlBinding::createNull());
     }
@@ -95,7 +95,7 @@ MySqlConfigBackendImpl::createBinding(const Triplet<uint32_t>& triplet) const {
 }
 
 Triplet<uint32_t>
-MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) const {
+MySqlConfigBackendImpl::createTriplet(const MySqlBindingPtr& binding) {
     if (!binding) {
         isc_throw(Unexpected, "MySQL configuration backend internal error: "
                   "binding pointer is NULL when creating a triplet value");

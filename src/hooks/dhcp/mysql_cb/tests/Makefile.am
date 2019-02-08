@@ -2,7 +2,7 @@ SUBDIRS = .
 
 AM_CPPFLAGS = -I$(top_builddir)/src/lib -I$(top_srcdir)/src/lib
 AM_CPPFLAGS += -I$(top_builddir)/src/hooks/dhcp/mysql_cb -I$(top_srcdir)/src/hooks/dhcp/mysql_cb
-AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += $(BOOST_INCLUDES) $(MYSQL_CPPFLAGS)
 AM_CPPFLAGS += -DINSTALL_PROG=\"$(abs_top_srcdir)/install-sh\"
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
@@ -25,6 +25,7 @@ TESTS += mysql_cb_unittests
 
 mysql_cb_unittests_SOURCES  = mysql_cb_dhcp4_unittest.cc
 mysql_cb_unittests_SOURCES += mysql_cb_dhcp4_mgr_unittest.cc
+mysql_cb_unittests_SOURCES += mysql_cb_impl_unittest.cc
 mysql_cb_unittests_SOURCES += run_unittests.cc
 
 mysql_cb_unittests_CPPFLAGS = $(AM_CPPFLAGS) $(GTEST_INCLUDES) $(LOG4CPLUS_INCLUDES)
