@@ -438,7 +438,7 @@ esac
 
 # Made perfdhcp optional.
 AC_ARG_ENABLE(perfdhcp, [AC_HELP_STRING([--enable-perfdhcp],
-  [enable perfdhcp, a DHCP benchmarking tool [defaulno]])],
+  [enable perfdhcp, a DHCP benchmarking tool [default=no]])],
   enable_perfdhcp=$enableval, enable_perfdhcp=no)
 
 DISTCHECK_PERFDHCP_CONFIGURE_FLAG=
