@@ -1338,6 +1338,7 @@ SET version = '7', minor = '0';
 ALTER TABLE dhcp4_options
         MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
+
 ALTER TABLE dhcp6_options
         MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
