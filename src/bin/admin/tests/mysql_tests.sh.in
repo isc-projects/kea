@@ -583,7 +583,7 @@ EOF
     run_statement "dhcp6_pd_pool" "$qry"
 
     # table: dhcp6_pool
-    qry="select id, start_address, end_address, dhcp6_subnet_id, modification_ts from dhcp6_pool"
+    qry="select id, start_address, end_address, subnet_id, modification_ts from dhcp6_pool"
     run_statement "dhcp6_pool" "$qry"
 
     # table: dhcp6_options (should include four new columns)
