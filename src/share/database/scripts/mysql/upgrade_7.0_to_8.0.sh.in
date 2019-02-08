@@ -138,7 +138,7 @@ CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
 -- -----------------------------------------------------
 -- Drop columns from the dhcp4_audit table which now
 -- belong to the dhcp4_audit_revision.
---  -----------------------------------------------------
+-- -----------------------------------------------------
 ALTER TABLE dhcp4_audit
     DROP COLUMN modification_ts,
     DROP COLUMN log_message;
@@ -458,7 +458,7 @@ CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table parameter_data_type
+-- Table `parameter_data_type`
 -- Reflects an enum used by Kea to define supported
 -- data types for the simple configuration parameters,
 -- e.g. global parameters used by DHCP servers.
@@ -488,6 +488,12 @@ ALTER TABLE dhcp6_global_parameter
 ALTER TABLE dhcp6_global_parameter
     ADD CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type)
         REFERENCES parameter_data_type (id);
+
+
+-- Rename dhcp6_subnet_id column of dhcp6_pool
+
+ALTER TABLE dhcp6_pool
+    CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
 
 
 # Update the schema version number
