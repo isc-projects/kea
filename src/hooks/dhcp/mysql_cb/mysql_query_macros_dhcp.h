@@ -210,7 +210,7 @@ namespace {
     "INNER JOIN " #table_prefix "_server AS s" \
     "  ON r.server_id = s.id " \
     "WHERE (s.tag = ? OR s.id = 1) AND (r.modification_ts > ?) " \
-    "ORDER BY r.modification_ts"
+    "ORDER BY r.modification_ts, r.id"
 #endif
 
 #ifndef MYSQL_INSERT_GLOBAL_PARAMETER
