@@ -1,3 +1,11 @@
+1522.	[bug]		marcin
+	The "unspecified" DHCP timer values (e.g. renew-timer) are
+	represented as NULL values in the database. This corrects
+	a bug whereby the unspecified timers defaulted to 0 which
+	prevented the DHCP server from calculating the timers to
+	be sent to the client. Instead a value of 0 was sent.
+	(Gitlab #451,!227, git 5ec9a55528fbcfff4e0c808f9a745b9fd3a5dfae)
+
 1521.	[func]		marcin
 	Removed subsecond precision for the timestamps in MySQL config
 	backend. It caused issues on systems with MySQL version prior
