@@ -112,7 +112,7 @@ public:
     /// @return Pointer to a null binding if the triplet is "unspecified" or
     /// a pointer to a binding representing 32-bit unsigned integer value
     /// otherwise.
-    db::MySqlBindingPtr createBinding(const Triplet<uint32_t>& triplet) const;
+    static db::MySqlBindingPtr createBinding(const Triplet<uint32_t>& triplet);
 
     /// @brief Creates @c Triplet object from MySQL binding.
     ///
@@ -123,7 +123,7 @@ public:
     /// @throw isc::Unexpected if the provided binding pointer is NULL.
     /// @throw isc::InvalidOperation if the binding does not represent
     /// a 32-bit unsigned integer.
-    Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& binding) const;
+    static Triplet<uint32_t> createTriplet(const db::MySqlBindingPtr& binding);
 
     /// @brief Returns server tags associated with the particular selector.
     ///
