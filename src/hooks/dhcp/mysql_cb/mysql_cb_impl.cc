@@ -287,18 +287,34 @@ MySqlConfigBackendImpl::getOptions(const int index,
     // statement.
     MySqlBindingCollection out_bindings = {
         MySqlBinding::createInteger<uint64_t>(), // option_id
-        MySqlBinding::createInteger<uint8_t>(), // code
+        // code will go here.
         MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // value
         MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // formatted_value
         MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // space
         MySqlBinding::createInteger<uint8_t>(), // persistent
-        MySqlBinding::createInteger<uint32_t>(), // dhcp4_subnet_id
+        MySqlBinding::createInteger<uint32_t>(), // dhcp[46]_subnet_id
         MySqlBinding::createInteger<uint8_t>(), // scope_id
         MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
         MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
         MySqlBinding::createInteger<uint64_t>(), // pool_id
-        MySqlBinding::createTimestamp() //modification_ts
+        // pd_pool_id in DHCPv6
+        MySqlBinding::createTimestamp() // modification_ts
     };
+
+    // Insert code in the second position.
+    if (universe == Option::V4) {
+        out_bindings.insert(out_bindings.begin() + 1,
+                            MySqlBinding::createInteger<uint8_t>());
+    } else {
+        out_bindings.insert(out_bindings.begin() + 1,
+                            MySqlBinding::createInteger<uint16_t>());
+    }
+
+    // Insert pd_pool_id before the modification_ts / last field
+    if (universe == Option::V6) {
+        out_bindings.insert(out_bindings.end() - 1,
+                            MySqlBinding::createInteger<uint64_t>());
+    }
 
     uint64_t last_option_id = 0;
 
@@ -328,7 +344,12 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // first thing to do is to see if there is a definition for our
     // parsed option. The option code and space is needed for it.
     std::string space = (*(first_binding + 4))->getString();
-    uint16_t code = (*(first_binding + 1))->getInteger<uint8_t>();
+    uint16_t code;
+    if (universe == Option::V4) {
+        code = (*(first_binding + 1))->getInteger<uint8_t>();
+    } else {
+        code = (*(first_binding + 1))->getInteger<uint16_t>();
+    }
 
     // See if the option has standard definition.
     OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
@@ -385,7 +406,10 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // its option space and timestamp.
     OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
     desc->space_name_ = space;
-    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
+    // In DHCPv6 the pd_pool_id field shifts the position of the
+    // modification_ts field by one.
+    size_t ts_idx = (universe == Option::V4 ? 11 : 12);
+    desc->setModificationTime((*(first_binding + ts_idx))->getTimestamp());
 
     return (desc);
 }

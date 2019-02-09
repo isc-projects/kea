@@ -57,5 +57,5 @@ TEST(MySqlConfigBackendImplTest, createTripletFromBinding) {
 }
 
 
-} 
+}
 

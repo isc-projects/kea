@@ -316,6 +316,9 @@ public:
     ///
     /// Query should order by option_id.
     ///
+    /// @note The universe is reused to switch between DHCPv4 and DHCPv6
+    /// option layouts.
+    /// @param family Address family (either AF_INET or AF_INET6).
     /// @param index Index of the query to be used.
     /// @param in_bindings Input bindings specifying selection criteria. The
     /// size of the bindings collection must match the number of placeholders
@@ -339,13 +342,16 @@ public:
     /// - formatted_value,
     /// - space,
     /// - persistent,
-    /// - dhcp4_subnet_id,
+    /// - dhcp4_subnet_id/dhcp6_subnet_id,
     /// - scope_id,
     /// - user_context,
     /// - shared_network_name,
     /// - pool_id,
+    /// - [pd_pool_id,]
     /// - modification_ts
     ///
+    /// @note The universe is reused to switch between DHCPv4 and DHCPv6
+    /// option layouts.
     /// @param universe V4 or V6.
     /// @param first_binding Iterator of the output binding containing
     /// option_id.

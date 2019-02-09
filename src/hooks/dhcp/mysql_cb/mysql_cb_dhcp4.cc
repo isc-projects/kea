@@ -32,6 +32,17 @@
 #include <utility>
 #include <vector>
 
+// Specialize macros for DHCPv4
+
+#define MYSQL_GET_OPTION(table_prefix, ...) \
+    MYSQL_GET_OPTION_COMMON(table_prefix, "", __VA_ARGS__)
+
+#define MYSQL_INSERT_OPTION(table_prefix) \
+    MYSQL_INSERT_OPTION_COMMON(table_prefix, "", "")
+
+#define MYSQL_UPDATE_OPTION(table_prefix, ...) \
+    MYSQL_UPDATE_OPTION_COMMON(table_prefix, "", __VA_ARGS__)
+
 using namespace isc::cb;
 using namespace isc::db;
 using namespace isc::data;
@@ -273,7 +284,7 @@ public:
         // statement.
         MySqlBindingCollection out_bindings = {
             MySqlBinding::createInteger<uint32_t>(), // subnet_id
-            MySqlBinding::createString(SUBNET_PREFIX_BUF_LENGTH), // subnet_prefix
+            MySqlBinding::createString(SUBNET4_PREFIX_BUF_LENGTH), // subnet_prefix
             MySqlBinding::createString(DHCP4O6_INTERFACE_BUF_LENGTH), // 4o6_interface
             MySqlBinding::createString(DHCP4O6_INTERFACE_ID_BUF_LENGTH), // 4o6_interface_id
             MySqlBinding::createString(DHCP4O6_SUBNET_BUF_LENGTH), // 4o6_subnet
@@ -1056,7 +1067,7 @@ public:
                 if (require_element) {
                     if (require_element->getType() != Element::list) {
                         isc_throw(BadValue, "invalid require_client_classes value "
-                              << out_bindings[14]->getString());
+                              << out_bindings[9]->getString());
                     }
                     for (auto i = 0; i < require_element->size(); ++i) {
                         auto require_item = require_element->get(i);
@@ -1918,7 +1929,7 @@ public:
                               const std::string& space) {
 
         MySqlBindingCollection in_bindings = {
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
+            MySqlBinding::createInteger<uint16_t>(code),
             MySqlBinding::createString(space)
         };
 
