@@ -53,33 +53,11 @@ EXTRA_DIST += parsers/dhcp_queue_control_parser.h
 # Devel guide diagrams
 EXTRA_DIST += images/pgsql_host_data_source.svg
 
-# Define rule to build logging source files from message file
-alloc_engine_messages.h alloc_engine_messages.cc dhcpsrv_messages.h \
-dhcpsrv_messages.cc hosts_messages.h hosts_messages.cc: s-messages
-s-messages: alloc_engine_messages.mes dhcpsrv_messages.mes hosts_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/alloc_engine_messages.mes
-	touch $@
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
-	touch $@
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
-	touch $@
-
-# Tell Automake that the {alloc_engine,dhcpsrv,hosts}_messages.{cc,h} source files
-# are created in the build process, so it must create these before doing anything
-# else. Although they are a dependency of the library (so will be created from the
-# message file anyway), there is no guarantee as to exactly _when_ in the build
-# they will be created.  As the .h file is included in other sources file (so
-# must be present when they are compiled), the safest option is to create it
-# first.
 BUILT_SOURCES = alloc_engine_messages.h alloc_engine_messages.cc
 BUILT_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 BUILT_SOURCES += hosts_messages.h hosts_messages.cc
 
-# Make sure the generated files are deleted in a "clean" operation
 CLEANFILES = *.gcno *.gcda
-CLEANFILES += alloc_engine_messages.h alloc_engine_messages.cc
-CLEANFILES += dhcpsrv_messages.h dhcpsrv_messages.cc
-CLEANFILES += hosts_messages.h hosts_messages.cc s-messages
 # Remove CSV files created by the CSVLeaseFile6 and CSVLeaseFile4 unit tests.
 CLEANFILES += *.csv
 
@@ -198,10 +176,9 @@ libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.h
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
 
-nodist_libkea_dhcpsrv_la_SOURCES = alloc_engine_messages.h
-nodist_libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.cc
-nodist_libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
-nodist_libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
+libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
+libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
+libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -251,6 +228,51 @@ EXTRA_DIST += alloc_engine_messages.mes
 EXTRA_DIST += dhcpsrv_messages.mes
 EXTRA_DIST += hosts_messages.mes
 
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+maintainer-clean-local:
+	rm -f alloc_engine_messages.h alloc_engine_messages.cc
+	rm -f dhcpsrv_messages.h dhcpsrv_messages.cc
+	rm -f hosts_messages.h hosts_messages.cc
+
+# To regenerate messages files, one can do:
+#
+# make messages-clean
+# make messages
+#
+# This is needed only when a .mes file is modified.
+messages-clean: maintainer-clean-local
+
+if GENERATE_MESSAGES
+
+# Define rule to build logging source files from message file
+messages: alloc_engine_messages.h alloc_engine_messages.cc \
+	  dhcpsrv_messages.h dhcpsrv_messages.cc \
+	  hosts_messages.h hosts_messages.cc
+	@echo Message files regenerated
+
+alloc_engine_messages.h alloc_engine_messages.cc: alloc_engine_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/alloc_engine/dhcpsrv_messages.mes
+
+dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
+
+hosts_messages.h hosts_messages.cc: hosts_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hosts/hosts_messages.mes
+
+else
+
+messages: alloc_engine_messages.h alloc_engine_messages.cc \
+	  dhcpsrv_messages.h dhcpsrv_messages.cc \
+	  hosts_messages.h hosts_messages.cc
+	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+
+endif
+
 # Distribute backend documentation
 # Database schema creation script moved to src/bin/admin
 EXTRA_DIST += database_backends.dox libdhcpsrv.dox
@@ -260,6 +282,7 @@ libkea_dhcpsrv_includedir = $(pkgincludedir)/dhcpsrv
 libkea_dhcpsrv_include_HEADERS = \
 	alloc_engine.h \
 	alloc_engine_log.h \
+	alloc_engine_messages.h \
 	assignable_network.h \
 	base_host_data_source.h \
 	cache_host_data_source.h \
@@ -291,6 +314,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	csv_lease_file4.h \
 	csv_lease_file6.h \
 	dhcpsrv_exceptions.h \
+	dhcpsrv_messages.h \
 	d2_client_cfg.h \
 	d2_client_mgr.h \
 	db_type.h \
@@ -299,6 +323,7 @@ libkea_dhcpsrv_include_HEADERS = \
 	host.h \
 	host_container.h \
 	host_data_source_factory.h \
+	hosts_messages.h \
 	host_mgr.h \
 	hosts_log.h \
 	key_from_key.h \
