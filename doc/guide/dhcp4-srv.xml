@@ -1610,7 +1610,7 @@ This rather belong to the DDNS configuration
 <row><entry>dhcp-renewal-time</entry><entry>58</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 <row><entry>dhcp-rebinding-time</entry><entry>59</entry><entry>uint32</entry><entry>false</entry><entry>true</entry></row>
 -->
-<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>binary</entry><entry>false</entry><entry>false</entry></row>
+<row><entry>vendor-class-identifier</entry><entry>60</entry><entry>string</entry><entry>false</entry><entry>false</entry></row>
 <!-- Client identifier should not be configured by a user.
 <row><entry>dhcp-client-identifier</entry><entry>61</entry><entry>binary</entry><entry>false</entry><entry>true</entry></row>
 -->
