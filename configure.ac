@@ -1370,6 +1370,12 @@ AC_SUBST(PERL)
 AC_PATH_PROGS(AWK, gawk awk)
 AC_SUBST(AWK)
 
+AC_ARG_ENABLE(generate_messages, [AC_HELP_STRING([--enable-generate-messages],
+  [indicates that the messages files will be regenerated. [default=no]])],
+  enable_generate_messages=$enableval, enable_generate_messages=no)
+
+AM_CONDITIONAL([GENERATE_MESSAGES], [test x$enable_generate_messages != xno])
+
 AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
   [indicates that the parsers will be regenerated. This implies that the
    bison and flex are required [default=no]])],
