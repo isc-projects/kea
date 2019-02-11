@@ -537,7 +537,7 @@ namespace {
 #ifndef MYSQL_DELETE_PD_POOLS
 #define MYSQL_DELETE_PD_POOLS() \
     "DELETE FROM dhcp6_pd_pool " \
-    "WHERE subnet_id = ?"
+    "WHERE dhcp6_subnet_id = ?"
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK
