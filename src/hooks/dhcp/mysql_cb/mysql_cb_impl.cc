@@ -365,6 +365,161 @@ MySqlConfigBackendImpl::getOptionDefs(const int index,
     });
 }
 
+OptionDescriptorPtr
+MySqlConfigBackendImpl::getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const ServerSelector& server_selector,
+                                  const uint16_t code,
+                                  const std::string& space) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "fetching global option");
+
+    OptionContainer options;
+    MySqlBindingCollection in_bindings;
+    in_bindings.push_back(MySqlBinding::createString(tag));
+    if (universe == Option::V4) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+    } else {
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
+    }
+    in_bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in_bindings, universe, options);
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+}
+
+OptionContainer
+MySqlConfigBackendImpl::getAllOptions(const int index,
+                                      const Option::Universe& universe,
+                                      const ServerSelector& server_selector) {
+    OptionContainer options;
+
+    auto tags = getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag)
+        };
+        getOptions(index, in_bindings, universe, options);
+    }
+
+    return (options);
+}
+
+OptionContainer
+MySqlConfigBackendImpl::getModifiedOptions(const int index,
+                                           const Option::Universe& universe,
+                                           const ServerSelector& server_selector,
+                                           const boost::posix_time::ptime& modification_time) {
+    OptionContainer options;
+
+    auto tags = getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
+            MySqlBinding::createTimestamp(modification_time)
+        };
+        getOptions(index, in_bindings, universe, options);
+    }
+
+    return (options);
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const ServerSelector& server_selector,
+                                  const SubnetID& subnet_id,
+                                  const uint16_t code,
+                                  const std::string& space) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "fetching subnet level option");
+
+    OptionContainer options;
+    MySqlBindingCollection in_bindings;
+    in_bindings.push_back(MySqlBinding::createString(tag));
+    uint32_t id = static_cast<uint32_t>(subnet_id);
+    in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(id));
+    if (universe == Option::V4) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+    } else {
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
+    }
+    in_bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in_bindings, universe, options);
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const ServerSelector& server_selector,
+                                  const uint64_t pool_id,
+                                  const uint16_t code,
+                                  const std::string& space) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "fetching [pd] pool level option");
+
+    OptionContainer options;
+    MySqlBindingCollection in_bindings;
+    in_bindings.push_back(MySqlBinding::createString(tag));
+    in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
+    if (universe == Option::V4) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+    } else {
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
+    }
+    in_bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in_bindings, universe, options);
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+}
+
+OptionDescriptorPtr
+MySqlConfigBackendImpl::getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const ServerSelector& server_selector,
+                                  const std::string& shared_network_name,
+                                  const uint16_t code,
+                                  const std::string& space) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "fetching shared network level option");
+
+    OptionContainer options;
+    MySqlBindingCollection in_bindings;
+    in_bindings.push_back(MySqlBinding::createString(tag));
+    in_bindings.push_back(MySqlBinding::createString(shared_network_name));
+    if (universe == Option::V4) {
+        in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
+    } else {
+        in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
+    }
+    in_bindings.push_back(MySqlBinding::createString(space));
+    getOptions(index, in_bindings, universe, options);
+    return (options.empty() ? OptionDescriptorPtr() :
+            OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+}
+
 void
 MySqlConfigBackendImpl::getOptions(const int index,
                                    const db::MySqlBindingCollection& in_bindings,
@@ -577,8 +732,6 @@ MySqlConfigBackendImpl::getPort() const {
     }
     return (0);
 }
-
-
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

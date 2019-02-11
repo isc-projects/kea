@@ -1588,23 +1588,8 @@ public:
     OptionDescriptorPtr
     getOption4(const ServerSelector& server_selector, const uint16_t code,
                const std::string& space) {
-
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "fetching global option");
-
-        OptionContainer options;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
-            MySqlBinding::createString(space)
-        };
-        getOptions(GET_OPTION4_CODE_SPACE, in_bindings, Option::V4, options);
-        return (options.empty() ? OptionDescriptorPtr() :
-                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+        return (getOption(GET_OPTION4_CODE_SPACE, Option::V4,
+                          server_selector, code, space));;
     }
 
     /// @brief Sends query to retrieve all global options.
@@ -1613,18 +1598,8 @@ public:
     /// @return Container holding returned options.
     OptionContainer
     getAllOptions4(const ServerSelector& server_selector) {
-        OptionContainer options;
-
-        auto tags = getServerTags(server_selector);
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag)
-            };
-            getOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-                       in_bindings, Option::V4, options);
-        }
-
-        return (options);
+        return (getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
+                              Option::V4, server_selector));
     }
 
     /// @brief Sends query to retrieve global options with modification
@@ -1635,23 +1610,12 @@ public:
     OptionContainer
     getModifiedOptions4(const ServerSelector& server_selector,
                         const boost::posix_time::ptime& modification_time) {
-        OptionContainer options;
-
-        auto tags = getServerTags(server_selector);
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
-                MySqlBinding::createTimestamp(modification_time)
-            };
-            getOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-                       in_bindings, Option::V4, options);
-        }
-
-        return (options);
+        return (getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+                                   Option::V4, server_selector, modification_time));
     }
 
     /// @brief Sends query to retrieve single option by code and option space
-    /// for a giben subnet id.
+    /// for a given subnet id.
     ///
     /// @param server_selector Server selector.
     /// @param subnet_id Subnet identifier.
@@ -1664,25 +1628,8 @@ public:
                                    const SubnetID& subnet_id,
                                    const uint16_t code,
                                    const std::string& space) {
-
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "fetching subnet level option");
-
-        OptionContainer options;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
-            MySqlBinding::createString(space)
-        };
-        getOptions(GET_OPTION4_SUBNET_ID_CODE_SPACE, in_bindings, Option::V4,
-                   options);
-        return (options.empty() ? OptionDescriptorPtr() :
-                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+        return (getOption(GET_OPTION4_SUBNET_ID_CODE_SPACE, Option::V4,
+                          server_selector, subnet_id, code, space));
     }
 
     /// @brief Sends query to retrieve single option by code and option space
@@ -1699,25 +1646,8 @@ public:
                                    const uint64_t pool_id,
                                    const uint16_t code,
                                    const std::string& space) {
-
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "fetching pool level option");
-
-        OptionContainer options;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createInteger<uint64_t>(pool_id),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
-            MySqlBinding::createString(space)
-        };
-        getOptions(GET_OPTION4_POOL_ID_CODE_SPACE, in_bindings, Option::V4,
-                   options);
-        return (options.empty() ? OptionDescriptorPtr() :
-                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+        return (getOption(GET_OPTION4_POOL_ID_CODE_SPACE, Option::V4,
+                          server_selector, pool_id, code, space));
     }
 
     /// @brief Sends query to retrieve single option by code and option space
@@ -1734,26 +1664,8 @@ public:
                                    const std::string& shared_network_name,
                                    const uint16_t code,
                                    const std::string& space) {
-
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "fetching shared network"
-                                " level option");
-
-        OptionContainer options;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createString(shared_network_name),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
-            MySqlBinding::createString(space)
-        };
-        getOptions(GET_OPTION4_SHARED_NETWORK_CODE_SPACE, in_bindings, Option::V4,
-                   options);
-        return (options.empty() ? OptionDescriptorPtr() :
-                OptionDescriptorPtr(new OptionDescriptor(*options.begin())));
+        return (getOption(GET_OPTION4_SHARED_NETWORK_CODE_SPACE, Option::V4,
+                          server_selector, shared_network_name, code, space));
     }
 
     /// @brief Sends query to insert or update option definition.
