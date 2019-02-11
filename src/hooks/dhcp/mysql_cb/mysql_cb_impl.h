@@ -15,6 +15,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/network.h>
+#include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
 #include <mysql/mysql_connection.h>
@@ -363,6 +364,101 @@ public:
     void getOptionDefs(const int index,
                        const db::MySqlBindingCollection& in_bindings,
                        OptionDefContainer& option_defs);
+
+    /// @brief Sends query to retrieve single global option by code and
+    /// option space.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option or NULL if such option
+    /// doesn't exist.
+    OptionDescriptorPtr
+    getOption(const int index, const Option::Universe& universe,
+              const db::ServerSelector& server_selector, const uint16_t code,
+              const std::string& space);
+
+    /// @brief Sends query to retrieve all global options.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @return Container holding returned options.
+    OptionContainer
+    getAllOptions(const int index, const Option::Universe& universe,
+                  const db::ServerSelector& server_selector);
+
+    /// @brief Sends query to retrieve global options with modification
+    /// time later than specified timestamp.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @return Container holding returned options.
+    OptionContainer
+    getModifiedOptions(const int index, const Option::Universe& universe,
+                       const db::ServerSelector& server_selector,
+                       const boost::posix_time::ptime& modification_time);
+
+    /// @brief Sends query to retrieve single option by code and option space
+    /// for a given subnet id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @param subnet_id Subnet identifier.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option descriptor or NULL if such
+    /// option doesn't exist.
+    OptionDescriptorPtr getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector,
+                                  const dhcp::SubnetID& subnet_id,
+                                  const uint16_t code,
+                                  const std::string& space);
+
+    /// @brief Sends query to retrieve single option by code and option space
+    /// for a given [pd] pool id.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @param pool_id Pool identifier in the database.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option descriptor or NULL if such
+    /// option doesn't exist.
+    OptionDescriptorPtr getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector,
+                                  const uint64_t pool_id,
+                                  const uint16_t code,
+                                  const std::string& space);
+
+    /// @brief Sends query to retrieve single option by code and option space
+    /// for a given shared network.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param universe Option universe, i.e. V4 or V6.
+    /// @param server_selector Server selector.
+    /// @param shared_network_name Shared network name.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option descriptor or NULL if such
+    /// option doesn't exist.
+    OptionDescriptorPtr getOption(const int index,
+                                  const Option::Universe& universe,
+                                  const db::ServerSelector& server_selector,
+                                  const std::string& shared_network_name,
+                                  const uint16_t code,
+                                  const std::string& space);
 
     /// @brief Sends query to the database to retrieve multiple options.
     ///
