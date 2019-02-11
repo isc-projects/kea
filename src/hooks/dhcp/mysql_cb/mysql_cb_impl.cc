@@ -190,6 +190,42 @@ MySqlConfigBackendImpl::deleteFromTable(const int index,
 }
 
 void
+MySqlConfigBackendImpl::getGlobalParameters(const int index,
+                                            const MySqlBindingCollection& in_bindings,
+                                            StampedValueCollection& parameters) {
+    // The following parameters from the dhcp[46]_global_parameter table are
+    // returned:
+    // - id
+    // - name - parameter name
+    // - value - parameter value
+    // - modification_ts - modification timestamp.
+    MySqlBindingCollection out_bindings = {
+        MySqlBinding::createInteger<uint64_t>(), // id
+        MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
+        MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
+        MySqlBinding::createInteger<uint8_t>(), // parameter_type
+        MySqlBinding::createTimestamp() // modification_ts
+    };
+
+    conn_.selectQuery(index, in_bindings, out_bindings,
+                      [&parameters] (MySqlBindingCollection& out_bindings) {
+        if (!out_bindings[1]->getString().empty()) {
+
+            // Convert value read as string from the database to the actual
+            // data type known from the database as binding #3.
+            StampedValuePtr stamped_value =
+                StampedValue::create(out_bindings[1]->getString(),
+                                     out_bindings[2]->getString(),
+                                     static_cast<Element::types>
+                                     (out_bindings[3]->getInteger<uint8_t>()));
+
+            stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
+            parameters.insert(stamped_value);
+        }
+    });
+}
+
+void
 MySqlConfigBackendImpl::getOptionDefs(const int index,
                                       const MySqlBindingCollection& in_bindings,
                                       OptionDefContainer& option_defs) {
