@@ -7,6 +7,7 @@
 #ifndef MYSQL_CONFIG_BACKEND_IMPL_H
 #define MYSQL_CONFIG_BACKEND_IMPL_H
 
+#include <cc/stamped_value.h>
 #include <database/audit_entry.h>
 #include <database/database_connection.h>
 #include <database/server_selector.h>
@@ -295,6 +296,19 @@ public:
 
         return (deleteFromTable(index, server_selector, operation, in_bindings));
     }
+
+    /// @brief Sends query to retrieve multiple global parameters.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param in_bindings Input bindings specifying selection criteria. The
+    /// size of the bindings collection must match the number of placeholders
+    /// in the prepared statement. The input bindings collection must be empty
+    /// if the query contains no WHERE clause.
+    /// @param [out] subnets Reference to the container where fetched parameters
+    /// will be inserted.
+    void getGlobalParameters(const int index,
+                             const db::MySqlBindingCollection& in_bindings,
+                             data::StampedValueCollection& parameters);
 
     /// @brief Sends query to the database to retrieve multiple option
     /// definitions.

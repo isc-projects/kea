@@ -131,51 +131,6 @@ public:
     explicit MySqlConfigBackendDHCPv4Impl(const DatabaseConnection::ParameterMap&
                                           parameters);
 
-    /// @brief Sends query to retrieve multiple global parameters.
-    ///
-    /// @param index Index of the query to be used.
-    /// @param in_bindings Input bindings specifying selection criteria. The
-    /// size of the bindings collection must match the number of placeholders
-    /// in the prepared statement. The input bindings collection must be empty
-    /// if the query contains no WHERE clause.
-    /// @param [out] subnets Reference to the container where fetched parameters
-    /// will be inserted.
-    void getGlobalParameters4(const StatementIndex& index,
-                              const MySqlBindingCollection& in_bindings,
-                              StampedValueCollection& parameters) {
-        // The following parameters from the dhcp4_global_parameter table are
-        // returned:
-        // - id
-        // - name - parameter name
-        // - value - parameter value
-        // - modification_ts - modification timestamp.
-        MySqlBindingCollection out_bindings = {
-            MySqlBinding::createInteger<uint64_t>(), // id
-            MySqlBinding::createString(GLOBAL_PARAMETER_NAME_BUF_LENGTH), // name
-            MySqlBinding::createString(GLOBAL_PARAMETER_VALUE_BUF_LENGTH), // value
-            MySqlBinding::createInteger<uint8_t>(), // parameter_type
-            MySqlBinding::createTimestamp() // modification_ts
-        };
-
-        conn_.selectQuery(index, in_bindings, out_bindings,
-                          [&parameters]
-                          (MySqlBindingCollection& out_bindings) {
-            if (!out_bindings[1]->getString().empty()) {
-
-                // Convert value read as string from the database to the actual
-                // data type known from the database as binding #3.
-                StampedValuePtr stamped_value =
-                    StampedValue::create(out_bindings[1]->getString(),
-                                         out_bindings[2]->getString(),
-                                         static_cast<Element::types>
-                                         (out_bindings[3]->getInteger<uint8_t>()));
-
-                stamped_value->setModificationTime(out_bindings[4]->getTimestamp());
-                parameters.insert(stamped_value);
-            }
-        });
-    }
-
     /// @brief Sends query to retrieve global parameter.
     ///
     /// @param server_selector Server selector.
@@ -194,7 +149,7 @@ public:
                 MySqlBinding::createString(name)
             };
 
-            getGlobalParameters4(GET_GLOBAL_PARAMETER4, in_bindings, parameters);
+            getGlobalParameters(GET_GLOBAL_PARAMETER4, in_bindings, parameters);
         }
 
         return (parameters.empty() ? StampedValuePtr() : *parameters.begin());
@@ -2611,8 +2566,8 @@ MySqlConfigBackendDHCPv4::getAllGlobalParameters4(const ServerSelector& server_s
     auto tags = impl_->getServerTags(server_selector);
     for (auto tag : tags) {
         MySqlBindingCollection in_bindings = { MySqlBinding::createString(tag) };
-        impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
-                                    in_bindings, parameters);
+        impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_ALL_GLOBAL_PARAMETERS4,
+                                   in_bindings, parameters);
     }
     return (parameters);
 }
@@ -2629,8 +2584,8 @@ getModifiedGlobalParameters4(const db::ServerSelector& server_selector,
             MySqlBinding::createString(tag),
             MySqlBinding::createTimestamp(modification_time)
         };
-        impl_->getGlobalParameters4(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
-                                    in_bindings, parameters);
+        impl_->getGlobalParameters(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_GLOBAL_PARAMETERS4,
+                                   in_bindings, parameters);
     }
 
     return (parameters);
