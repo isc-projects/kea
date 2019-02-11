@@ -225,6 +225,57 @@ MySqlConfigBackendImpl::getGlobalParameters(const int index,
     });
 }
 
+OptionDefinitionPtr
+MySqlConfigBackendImpl::getOptionDef(const int index,
+                                     const ServerSelector& server_selector,
+                                     const uint16_t code,
+                                     const std::string& space) {
+
+    if (server_selector.amUnassigned()) {
+        isc_throw(NotImplemented, "managing configuration for no particular server"
+                  " (unassigned) is unsupported at the moment");
+    }
+
+    auto tag = getServerTag(server_selector, "fetching option definition");
+
+    OptionDefContainer option_defs;
+    MySqlBindingCollection in_bindings = {
+        MySqlBinding::createString(tag),
+        MySqlBinding::createInteger<uint16_t>(code),
+        MySqlBinding::createString(space)
+    };
+    getOptionDefs(index, in_bindings, option_defs);
+    return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
+}
+
+void
+MySqlConfigBackendImpl::getAllOptionDefs(const int index,
+                     const ServerSelector& server_selector,
+                     OptionDefContainer& option_defs) {
+    auto tags = getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag)
+        };
+        getOptionDefs(index, in_bindings, option_defs);
+    }
+}
+
+void
+MySqlConfigBackendImpl::getModifiedOptionDefs(const int index,
+                                              const ServerSelector& server_selector,
+                                              const boost::posix_time::ptime& modification_time,
+                                              OptionDefContainer& option_defs) {
+    auto tags = getServerTags(server_selector);
+    for (auto tag : tags) {
+        MySqlBindingCollection in_bindings = {
+            MySqlBinding::createString(tag),
+            MySqlBinding::createTimestamp(modification_time)
+        };
+        getOptionDefs(index, in_bindings, option_defs);
+    }
+}
+
 void
 MySqlConfigBackendImpl::getOptionDefs(const int index,
                                       const MySqlBindingCollection& in_bindings,

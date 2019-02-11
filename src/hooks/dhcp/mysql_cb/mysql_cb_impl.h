@@ -310,6 +310,44 @@ public:
                              const db::MySqlBindingCollection& in_bindings,
                              data::StampedValueCollection& parameters);
 
+    /// @brief Sends query to retrieve single option definition by code and
+    /// option space.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
+    /// @param code Option code.
+    /// @param space Option space name.
+    ///
+    /// @return Pointer to the returned option definition or NULL if such
+    /// option definition doesn't exist.
+    OptionDefinitionPtr getOptionDef(const int index,
+                                     const db::ServerSelector& server_selector,
+                                     const uint16_t code,
+                                     const std::string& space);
+
+    /// @brief Sends query to retrieve all option definitions.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
+    /// @param [out] option_defs Reference to the container where option
+    /// definitions are to be stored.
+    void getAllOptionDefs(const int index,
+                          const db::ServerSelector& server_selector,
+                          OptionDefContainer& option_defs);
+
+    /// @brief Sends query to retrieve option definitions with modification
+    /// time later than specified timestamp.
+    ///
+    /// @param index Index of the query to be used.
+    /// @param server_selector Server selector.
+    /// @param modification_time Lower bound subnet modification time.
+    /// @param [out] option_defs Reference to the container where option
+    /// definitions are to be stored.
+    void getModifiedOptionDefs(const int index,
+                               const db::ServerSelector& server_selector,
+                               const boost::posix_time::ptime& modification_time,
+                               OptionDefContainer& option_defs);
+
     /// @brief Sends query to the database to retrieve multiple option
     /// definitions.
     ///

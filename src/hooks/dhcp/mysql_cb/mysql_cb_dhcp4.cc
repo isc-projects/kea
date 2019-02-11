@@ -1546,22 +1546,7 @@ public:
     OptionDefinitionPtr getOptionDef4(const ServerSelector& server_selector,
                                       const uint16_t code,
                                       const std::string& space) {
-
-        if (server_selector.amUnassigned()) {
-            isc_throw(NotImplemented, "managing configuration for no particular server"
-                      " (unassigned) is unsupported at the moment");
-        }
-
-        auto tag = getServerTag(server_selector, "fetching option definition");
-
-        OptionDefContainer option_defs;
-        MySqlBindingCollection in_bindings = {
-            MySqlBinding::createString(tag),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)),
-            MySqlBinding::createString(space)
-        };
-        getOptionDefs(GET_OPTION_DEF4_CODE_SPACE, in_bindings, option_defs);
-        return (option_defs.empty() ? OptionDefinitionPtr() : *option_defs.begin());
+        return (getOptionDef(GET_OPTION_DEF4_CODE_SPACE, server_selector, code, space));
     }
 
     /// @brief Sends query to retrieve all option definitions.
@@ -1572,14 +1557,8 @@ public:
     void
     getAllOptionDefs4(const ServerSelector& server_selector,
                       OptionDefContainer& option_defs) {
-        auto tags = getServerTags(server_selector);
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag)
-            };
-            getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-                          in_bindings, option_defs);
-        }
+        getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
+                         server_selector, option_defs);
     }
 
     /// @brief Sends query to retrieve option definitions with modification
@@ -1593,15 +1572,8 @@ public:
     getModifiedOptionDefs4(const ServerSelector& server_selector,
                            const boost::posix_time::ptime& modification_time,
                            OptionDefContainer& option_defs) {
-        auto tags = getServerTags(server_selector);
-        for (auto tag : tags) {
-            MySqlBindingCollection in_bindings = {
-                MySqlBinding::createString(tag),
-                MySqlBinding::createTimestamp(modification_time)
-            };
-            getOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-                          in_bindings, option_defs);
-        }
+        getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
+                              server_selector, modification_time, option_defs);
     }
 
     /// @brief Sends query to retrieve single global option by code and
