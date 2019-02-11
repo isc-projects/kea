@@ -285,36 +285,39 @@ MySqlConfigBackendImpl::getOptions(const int index,
                                    OptionContainer& options) {
     // Create output bindings. The order must match that in the prepared
     // statement.
-    MySqlBindingCollection out_bindings = {
-        MySqlBinding::createInteger<uint64_t>(), // option_id
-        // code will go here.
-        MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH), // value
-        MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH), // formatted_value
-        MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH), // space
-        MySqlBinding::createInteger<uint8_t>(), // persistent
-        MySqlBinding::createInteger<uint32_t>(), // dhcp[46]_subnet_id
-        MySqlBinding::createInteger<uint8_t>(), // scope_id
-        MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // user_context
-        MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // shared_network_name
-        MySqlBinding::createInteger<uint64_t>(), // pool_id
-        // pd_pool_id in DHCPv6
-        MySqlBinding::createTimestamp() // modification_ts
-    };
-
-    // Insert code in the second position.
+    MySqlBindingCollection out_bindings;
+    // option_id
+    out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
+    // code
     if (universe == Option::V4) {
-        out_bindings.insert(out_bindings.begin() + 1,
-                            MySqlBinding::createInteger<uint8_t>());
+        out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
     } else {
-        out_bindings.insert(out_bindings.begin() + 1,
-                            MySqlBinding::createInteger<uint16_t>());
+        out_bindings.push_back(MySqlBinding::createInteger<uint16_t>());
     }
-
-    // Insert pd_pool_id before the modification_ts / last field
+    // value
+    out_bindings.push_back(MySqlBinding::createBlob(OPTION_VALUE_BUF_LENGTH));
+    // forma\tted_value
+    out_bindings.push_back(MySqlBinding::createString(FORMATTED_OPTION_VALUE_BUF_LENGTH));
+    // space
+    out_bindings.push_back(MySqlBinding::createString(OPTION_SPACE_BUF_LENGTH));
+    // persistent
+    out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
+    // dhcp[46]_subnet_id
+    out_bindings.push_back(MySqlBinding::createInteger<uint32_t>());
+    // scope_id
+    out_bindings.push_back(MySqlBinding::createInteger<uint8_t>());
+    // user_context
+    out_bindings.push_back(MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH));
+    // shared_network_name
+    out_bindings.push_back(MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH));
+    // pool_id
+    out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
+    // pd_pool_id
     if (universe == Option::V6) {
-        out_bindings.insert(out_bindings.end() - 1,
-                            MySqlBinding::createInteger<uint64_t>());
+        out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     }
+    // modification_ts
+    out_bindings.push_back(MySqlBinding::createTimestamp());
 
     uint64_t last_option_id = 0;
 
