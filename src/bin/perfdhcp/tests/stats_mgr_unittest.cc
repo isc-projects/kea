@@ -368,24 +368,6 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
               stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_RR));
 }
 
-TEST_F(StatsMgrTest, ExchangeToString) {
-    // Test DHCPv4 specific exchange names.
-    EXPECT_EQ("DISCOVER-OFFER",
-              StatsMgr4::exchangeToString(StatsMgr4::XCHG_DO));
-    EXPECT_EQ("REQUEST-ACK", StatsMgr4::exchangeToString(StatsMgr4::XCHG_RA));
-    EXPECT_EQ("REQUEST-ACK (renewal)",
-              StatsMgr4::exchangeToString(StatsMgr4::XCHG_RNA));
-
-
-    // Test DHCPv6 specific exchange names.
-    EXPECT_EQ("SOLICIT-ADVERTISE",
-              StatsMgr6::exchangeToString(StatsMgr6::XCHG_SA));
-    EXPECT_EQ("REQUEST-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RR));
-    EXPECT_EQ("RENEW-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RN));
-    EXPECT_EQ("RELEASE-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RL));
-
-}
-
 TEST_F(StatsMgrTest, SendReceiveSimple) {
     boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
     boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,

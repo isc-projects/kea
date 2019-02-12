@@ -6,7 +6,8 @@
 
 #include <config.h>
 
-#include <perfdhcp/test_control.h>
+#include <perfdhcp/avalanche_scen.h>
+#include <perfdhcp/basic_scen.h>
 #include <perfdhcp/command_options.h>
 
 #include <exceptions/exceptions.h>
@@ -43,8 +44,14 @@ main(int argc, char* argv[]) {
         return (ret_code);
     }
     try{
-        TestControl& test_control = TestControl::instance();
-        ret_code =  test_control.run();
+        auto scenario = command_options.getScenario();
+        if (scenario == Scenario::BASIC) {
+            BasicScen scen;
+            ret_code = scen.run();
+        } else if (scenario == Scenario::AVALANCHE) {
+            AvalancheScen scen;
+            ret_code = scen.run();
+        }
     } catch (std::exception& e) {
         ret_code = 1;
         std::cerr << "Error running perfdhcp: " << e.what() << std::endl;

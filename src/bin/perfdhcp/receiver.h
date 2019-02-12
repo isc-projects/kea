@@ -33,10 +33,6 @@ namespace perfdhcp {
 /// in main thread packets can be consumed from the queue using getPkt
 /// method.
 class Receiver {
-public:
-    /// \brief Socket for receiving.
-    const PerfSocket& socket_;
-
 private:
     /// \brief Flag indicating if thread should run (true) or not (false).
     boost::atomic_flag run_flag_;
@@ -57,8 +53,7 @@ public:
     /// \brief Receiver constructor.
     ///
     /// \param socket A socket for receiving packets.
-    Receiver(const PerfSocket& socket) :
-        socket_(socket),
+    Receiver() :
         single_threaded_(CommandOptions::instance().isSingleThreaded()) {
     }
 

@@ -13,7 +13,6 @@
 #include <perfdhcp/perf_pkt6.h>
 
 #include <exceptions/exceptions.h>
-#include <asiolink/io_address.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp4.h>
@@ -42,19 +41,6 @@ namespace perfdhcp {
 
 bool TestControl::interrupted_ = false;
 
-
-/// \brief Find if diagnostic flag has been set.
-///
-/// \param diag diagnostic flag (a,e,i,s,r,t,T).
-/// \return true if diagnostics flag has been set.
-bool
-testDiags(const char diag) {
-    std::string diags(CommandOptions::instance().getDiags());
-    if (diags.find(diag) != std::string::npos) {
-        return (true);
-    }
-    return (false);
-}
 
 bool
 TestControl::waitToExit() const {
@@ -97,25 +83,14 @@ TestControl::haveAllPacketsBeenReceived() const {
     }
 
     if (ipversion == 4) {
-        responses = stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
-                    stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_RA);
+        responses = stats_mgr_.getRcvdPacketsNum(ExchangeType::DO) +
+                    stats_mgr_.getRcvdPacketsNum(ExchangeType::RA);
     } else {
-        responses = stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) +
-                    stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_RR);
+        responses = stats_mgr_.getRcvdPacketsNum(ExchangeType::SA) +
+                    stats_mgr_.getRcvdPacketsNum(ExchangeType::RR);
     }
 
     return (responses == requests);
-}
-
-TestControl&
-TestControl::instance() {
-    static TestControl test_control;
-    return (test_control);
-}
-
-TestControl::TestControl()
-    : number_generator_(0, CommandOptions::instance().getMacsFromFile().size()) {
-  reset();
 }
 
 void
@@ -185,161 +160,6 @@ TestControl::byte2Hex(const uint8_t b) const {
     ostringstream stream;
     stream << std::hex << b1 << b0 << std::dec;
     return (stream.str());
-}
-
-bool
-TestControl::checkExitConditions() const {
-    if (interrupted_) {
-        return (true);
-    }
-    CommandOptions& options = CommandOptions::instance();
-    bool test_period_reached = false;
-    // Check if test period passed.
-    if (options.getPeriod() != 0) {
-        if (options.getIpVersion() == 4) {
-            time_period period(stats_mgr4_->getTestPeriod());
-            if (period.length().total_seconds() >= options.getPeriod()) {
-                test_period_reached = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            time_period period = stats_mgr6_->getTestPeriod();
-            if (period.length().total_seconds() >= options.getPeriod()) {
-                test_period_reached = true;
-            }
-        }
-    }
-    if (test_period_reached) {
-        if (testDiags('e')) {
-            std::cout << "reached test-period." << std::endl;
-        }
-        if (!waitToExit()) {
-            return true;
-        }
-    }
-
-    bool max_requests = false;
-    // Check if we reached maximum number of DISCOVER/SOLICIT sent.
-    if (options.getNumRequests().size() > 0) {
-        if (options.getIpVersion() == 4) {
-            if (getSentPacketsNum(StatsMgr4::XCHG_DO) >=
-                options.getNumRequests()[0]) {
-                max_requests = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            if (stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA) >=
-                options.getNumRequests()[0]) {
-                max_requests = true;
-            }
-        }
-    }
-    // Check if we reached maximum number REQUEST packets.
-    if (options.getNumRequests().size() > 1) {
-        if (options.getIpVersion() == 4) {
-            if (stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) >=
-                options.getNumRequests()[1]) {
-                max_requests = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            if (stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR) >=
-                options.getNumRequests()[1]) {
-                max_requests = true;
-            }
-        }
-    }
-    if (max_requests) {
-        if (testDiags('e')) {
-            std::cout << "Reached max requests limit." << std::endl;
-        }
-        if (!waitToExit()) {
-            return true;
-        }
-    }
-
-    // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
-    bool max_drops = false;
-    if (options.getMaxDrop().size() > 0) {
-        if (options.getIpVersion() == 4) {
-            if (stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_DO) >=
-                options.getMaxDrop()[0]) {
-                max_drops = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            if (stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_SA) >=
-                options.getMaxDrop()[0]) {
-                max_drops = true;
-            }
-        }
-    }
-    // Check if we reached maximum number of drops of ACK/REPLY packets.
-    if (options.getMaxDrop().size() > 1) {
-        if (options.getIpVersion() == 4) {
-            if (stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) >=
-                options.getMaxDrop()[1]) {
-                max_drops = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            if (stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_RR) >=
-                options.getMaxDrop()[1]) {
-                max_drops = true;
-            }
-        }
-    }
-    if (max_drops) {
-        if (testDiags('e')) {
-            std::cout << "Reached maximum drops number." << std::endl;
-        }
-        if (!waitToExit()) {
-            return true;
-        }
-    }
-
-    // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
-    bool max_pdrops = false;
-    if (options.getMaxDropPercentage().size() > 0) {
-        if (options.getIpVersion() == 4) {
-            if ((stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_DO) > 10) &&
-                ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_DO) /
-                 stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_DO)) >=
-                 options.getMaxDropPercentage()[0])) {
-                max_pdrops = true;
-
-            }
-        } else if (options.getIpVersion() == 6) {
-            if ((stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA) > 10) &&
-                ((100. * stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_SA) /
-                  stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_SA)) >=
-                 options.getMaxDropPercentage()[0])) {
-                max_pdrops = true;
-            }
-        }
-    }
-    // Check if we reached maximum drops percentage of ACK/REPLY packets.
-    if (options.getMaxDropPercentage().size() > 1) {
-        if (options.getIpVersion() == 4) {
-            if ((stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA) > 10) &&
-                ((100. * stats_mgr4_->getDroppedPacketsNum(StatsMgr4::XCHG_RA) /
-                 stats_mgr4_->getSentPacketsNum(StatsMgr4::XCHG_RA)) >=
-                 options.getMaxDropPercentage()[1])) {
-                max_pdrops = true;
-            }
-        } else if (options.getIpVersion() == 6) {
-            if ((stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR) > 10) &&
-                ((100. * stats_mgr6_->getDroppedPacketsNum(StatsMgr6::XCHG_RR) /
-                  stats_mgr6_->getSentPacketsNum(StatsMgr6::XCHG_RR)) >=
-                 options.getMaxDropPercentage()[1])) {
-                max_pdrops = true;
-            }
-        }
-    }
-    if (max_pdrops) {
-        if (testDiags('e')) {
-            std::cout << "Reached maximum percentage of drops." << std::endl;
-        }
-        if (!waitToExit()) {
-            return true;
-        }
-    }
-    return (false);
 }
 
 Pkt4Ptr
@@ -638,26 +458,6 @@ TestControl::getRequestedIpOffset() const {
     return (rip_offset);
 }
 
-uint64_t
-TestControl::getRcvdPacketsNum(ExchangeType xchg_type) const {
-    uint8_t ip_version = CommandOptions::instance().getIpVersion();
-    if (ip_version == 4) {
-        return (stats_mgr4_->getRcvdPacketsNum(xchg_type));
-    }
-    return (stats_mgr6_->
-            getRcvdPacketsNum(static_cast<StatsMgr6::ExchangeType>(xchg_type)));
-}
-
-uint64_t
-TestControl::getSentPacketsNum(ExchangeType xchg_type) const {
-    uint8_t ip_version = CommandOptions::instance().getIpVersion();
-    if (ip_version == 4) {
-        return (stats_mgr4_->getSentPacketsNum(xchg_type));
-    }
-    return (stats_mgr6_->
-            getSentPacketsNum(static_cast<StatsMgr6::ExchangeType>(xchg_type)));
-}
-
 int
 TestControl::getServerIdOffset() const {
     int srvid_offset = CommandOptions::instance().getIpVersion() == 4 ?
@@ -713,153 +513,7 @@ TestControl::initPacketTemplates() {
 }
 
 void
-TestControl::initializeStatsMgr() {
-    CommandOptions& options = CommandOptions::instance();
-    // Check if packet archive mode is required. If user
-    // requested diagnostics option -x t we have to enable
-    // it so as StatsMgr preserves all packets.
-    const bool archive_mode = testDiags('t') ? true : false;
-    if (options.getIpVersion() == 4) {
-        stats_mgr4_.reset();
-        stats_mgr4_ = StatsMgr4Ptr(new StatsMgr4(archive_mode));
-        stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_DO,
-                                      options.getDropTime()[0]);
-        if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RA,
-                                          options.getDropTime()[1]);
-        }
-        if (options.getRenewRate() != 0) {
-            stats_mgr4_->addExchangeStats(StatsMgr4::XCHG_RNA);
-        }
-
-    } else if (options.getIpVersion() == 6) {
-        stats_mgr6_.reset();
-        stats_mgr6_ = StatsMgr6Ptr(new StatsMgr6(archive_mode));
-        stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_SA,
-                                      options.getDropTime()[0]);
-        if (options.getExchangeMode() == CommandOptions::DORA_SARR) {
-            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RR,
-                                          options.getDropTime()[1]);
-        }
-        if (options.getRenewRate() != 0) {
-            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RN);
-        }
-        if (options.getReleaseRate() != 0) {
-            stats_mgr6_->addExchangeStats(StatsMgr6::XCHG_RL);
-        }
-    }
-    if (testDiags('i')) {
-        if (options.getIpVersion() == 4) {
-            stats_mgr4_->addCustomCounter("shortwait", "Short waits for packets");
-        } else if (options.getIpVersion() == 6) {
-            stats_mgr6_->addCustomCounter("shortwait", "Short waits for packets");
-        }
-    }
-}
-
-int
-TestControl::openSocket() const {
-    CommandOptions& options = CommandOptions::instance();
-    std::string localname = options.getLocalName();
-    std::string servername = options.getServerName();
-    uint16_t port = options.getLocalPort();
-    int sock = 0;
-
-    uint8_t family = (options.getIpVersion() == 6) ? AF_INET6 : AF_INET;
-    IOAddress remoteaddr(servername);
-
-    // Check for mismatch between IP option and server address
-    if (family != remoteaddr.getFamily()) {
-        isc_throw(InvalidParameter,
-                  "Values for IP version: " <<
-                  static_cast<unsigned int>(options.getIpVersion()) <<
-                  " and server address: " << servername << " are mismatched.");
-    }
-
-    if (port == 0) {
-        if (family == AF_INET6) {
-            // need server port (547) because the server is acting as a relay agent
-            port = DHCP6_CLIENT_PORT;
-            // if acting as a relay agent change port.
-            if (options.isUseRelayedV6()) {
-              port = DHCP6_SERVER_PORT;
-            }
-        } else if (options.getIpVersion() == 4) {
-            port = 67; /// @todo: find out why port 68 is wrong here.
-        }
-    }
-
-    // Local name is specified along with '-l' option.
-    // It may point to interface name or local address.
-    if (!localname.empty()) {
-        // CommandOptions should be already aware whether local name
-        // is interface name or address because it uses IfaceMgr to
-        // scan interfaces and get's their names.
-        if (options.isInterface()) {
-            sock = IfaceMgr::instance().openSocketFromIface(localname,
-                                                            port,
-                                                            family);
-        } else {
-            IOAddress localaddr(localname);
-            sock = IfaceMgr::instance().openSocketFromAddress(localaddr,
-                                                              port);
-        }
-    } else if (!servername.empty()) {
-        // If only server name is given we will need to try to resolve
-        // the local address to bind socket to based on remote address.
-        sock = IfaceMgr::instance().openSocketFromRemoteAddress(remoteaddr,
-                                                                port);
-    }
-    if (sock <= 0) {
-        isc_throw(BadValue, "unable to open socket to communicate with "
-                  "DHCP server");
-    }
-
-    // IfaceMgr does not set broadcast option on the socket. We rely
-    // on CommandOptions object to find out if socket has to have
-    // broadcast enabled.
-    if ((options.getIpVersion() == 4) && options.isBroadcast()) {
-        int broadcast_enable = 1;
-        int ret = setsockopt(sock, SOL_SOCKET, SO_BROADCAST,
-                             &broadcast_enable, sizeof(broadcast_enable));
-        if (ret < 0) {
-            isc_throw(InvalidOperation,
-                      "unable to set broadcast option on the socket");
-        }
-    } else if (options.getIpVersion() == 6) {
-        // If remote address is multicast we need to enable it on
-        // the socket that has been created.
-        if (remoteaddr.isV6Multicast()) {
-            int hops = 1;
-            int ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_HOPS,
-                                 &hops, sizeof(hops));
-            // If user specified interface name with '-l' the
-            // IPV6_MULTICAST_IF has to be set.
-            if ((ret >= 0)  && options.isInterface()) {
-                IfacePtr iface =
-                    IfaceMgr::instance().getIface(options.getLocalName());
-                if (iface == NULL) {
-                    isc_throw(Unexpected, "unknown interface "
-                              << options.getLocalName());
-                }
-                int idx = iface->getIndex();
-                ret = setsockopt(sock, IPPROTO_IPV6, IPV6_MULTICAST_IF,
-                                     &idx, sizeof(idx));
-            }
-            if (ret < 0) {
-                isc_throw(InvalidOperation,
-                          "unable to enable multicast on socket " <<  sock
-                          << ". errno = " << errno);
-            }
-        }
-    }
-
-    return (sock);
-}
-
-void
-TestControl::sendPackets(const PerfSocket& socket,
-                         const uint64_t packets_num,
+TestControl::sendPackets(const uint64_t packets_num,
                          const bool preload /* = false */) {
     CommandOptions& options = CommandOptions::instance();
     for (uint64_t i = packets_num; i > 0; --i) {
@@ -867,31 +521,30 @@ TestControl::sendPackets(const PerfSocket& socket,
             // No template packets means that no -T option was specified.
             // We have to build packets ourselves.
             if (template_buffers_.empty()) {
-                sendDiscover4(socket, preload);
+                sendDiscover4(preload);
             } else {
                 /// @todo add defines for packet type index that can be
                 /// used to access template_buffers_.
-                sendDiscover4(socket, template_buffers_[0], preload);
+                sendDiscover4(template_buffers_[0], preload);
             }
         } else {
             // No template packets means that no -T option was specified.
             // We have to build packets ourselves.
             if (template_buffers_.empty()) {
-                sendSolicit6(socket, preload);
+                sendSolicit6(preload);
             } else {
                 /// @todo add defines for packet type index that can be
                 /// used to access template_buffers_.
-                sendSolicit6(socket, template_buffers_[0], preload);
+                sendSolicit6(template_buffers_[0], preload);
             }
         }
     }
 }
 
 uint64_t
-TestControl::sendMultipleRequests(const PerfSocket& socket,
-                                  const uint64_t msg_num) {
+TestControl::sendMultipleRequests(const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
-        if (!sendRequestFromAck(socket)) {
+        if (!sendRequestFromAck()) {
             return (i);
         }
     }
@@ -899,11 +552,10 @@ TestControl::sendMultipleRequests(const PerfSocket& socket,
 }
 
 uint64_t
-TestControl::sendMultipleMessages6(const PerfSocket& socket,
-                                   const uint32_t msg_type,
+TestControl::sendMultipleMessages6(const uint32_t msg_type,
                                    const uint64_t msg_num) {
     for (uint64_t i = 0; i < msg_num; ++i) {
-        if (!sendMessageFromReply(msg_type, socket)) {
+        if (!sendMessageFromReply(msg_type)) {
             return (i);
         }
     }
@@ -999,28 +651,26 @@ TestControl::printRate() const {
     double rate = 0;
     CommandOptions& options = CommandOptions::instance();
     std::string exchange_name = "4-way exchanges";
+    ExchangeType xchg_type = ExchangeType::DO;
     if (options.getIpVersion() == 4) {
-        StatsMgr4::ExchangeType xchg_type =
+        xchg_type =
             options.getExchangeMode() == CommandOptions::DO_SA ?
-            StatsMgr4::XCHG_DO : StatsMgr4::XCHG_RA;
-        if (xchg_type == StatsMgr4::XCHG_DO) {
+            ExchangeType::DO : ExchangeType::RA;
+        if (xchg_type == ExchangeType::DO) {
             exchange_name = "DISCOVER-OFFER";
         }
-        double duration =
-            stats_mgr4_->getTestPeriod().length().total_nanoseconds() / 1e9;
-        rate = stats_mgr4_->getRcvdPacketsNum(xchg_type) / duration;
     } else if (options.getIpVersion() == 6) {
-        StatsMgr6::ExchangeType xchg_type =
+        xchg_type =
             options.getExchangeMode() == CommandOptions::DO_SA ?
-            StatsMgr6::XCHG_SA : StatsMgr6::XCHG_RR;
-        if (xchg_type == StatsMgr6::XCHG_SA) {
+            ExchangeType::SA : ExchangeType::RR;
+        if (xchg_type == ExchangeType::SA) {
             exchange_name = options.isRapidCommit() ? "Solicit-Reply" :
                 "Solicit-Advertise";
         }
-        double duration =
-            stats_mgr6_->getTestPeriod().length().total_nanoseconds() / 1e9;
-        rate = stats_mgr6_->getRcvdPacketsNum(xchg_type) / duration;
     }
+    double duration =
+        stats_mgr_.getTestPeriod().length().total_nanoseconds() / 1e9;
+    rate = stats_mgr_.getRcvdPacketsNum(xchg_type) / duration;
     std::ostringstream s;
     s << "***Rate statistics***" << std::endl;
     s << "Rate: " << rate << " " << exchange_name << "/second";
@@ -1038,11 +688,7 @@ TestControl::printIntermediateStats() {
     ptime now = microsec_clock::universal_time();
     time_period time_since_report(last_report_, now);
     if (time_since_report.length().total_seconds() >= delay) {
-        if (options.getIpVersion() == 4) {
-            stats_mgr4_->printIntermediateStats();
-        } else if (options.getIpVersion() == 6) {
-            stats_mgr6_->printIntermediateStats();
-        }
+        stats_mgr_.printIntermediateStats();
         last_report_ = now;
     }
 }
@@ -1050,25 +696,9 @@ TestControl::printIntermediateStats() {
 void
 TestControl::printStats() const {
     printRate();
-    CommandOptions& options = CommandOptions::instance();
-    if (options.getIpVersion() == 4) {
-        if (!stats_mgr4_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
-                      "hasn't been initialized");
-        }
-        stats_mgr4_->printStats();
-        if (testDiags('i')) {
-            stats_mgr4_->printCustomCounters();
-        }
-    } else if (options.getIpVersion() == 6) {
-        if (!stats_mgr6_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                      "hasn't been initialized");
-        }
-        stats_mgr6_->printStats();
-        if (testDiags('i')) {
-            stats_mgr6_->printCustomCounters();
-        }
+    stats_mgr_.printStats();
+    if (testDiags('i')) {
+        stats_mgr_.printCustomCounters();
     }
 }
 
@@ -1137,32 +767,31 @@ TestControl::readPacketTemplate(const std::string& file_name) {
 }
 
 void
-TestControl::processReceivedPacket4(const PerfSocket& socket,
-                            const Pkt4Ptr& pkt4) {
+TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
-        Pkt4Ptr discover_pkt4(stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_DO,
-                                                          pkt4));
+        PktPtr pkt = stats_mgr_.passRcvdPacket(ExchangeType::DO, pkt4);
+        Pkt4Ptr discover_pkt4(boost::dynamic_pointer_cast<Pkt4>(pkt));
         CommandOptions::ExchangeMode xchg_mode =
             CommandOptions::instance().getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && discover_pkt4) {
             if (template_buffers_.size() < 2) {
-                sendRequest4(socket, discover_pkt4, pkt4);
+                sendRequest4(discover_pkt4, pkt4);
             } else {
                 /// @todo add defines for packet type index that can be
                 /// used to access template_buffers_.
-                sendRequest4(socket, template_buffers_[1], discover_pkt4, pkt4);
+                sendRequest4(template_buffers_[1], discover_pkt4, pkt4);
             }
         }
     } else if (pkt4->getType() == DHCPACK) {
         // If received message is DHCPACK, we have to check if this is
         // a response to 4-way exchange. We'll match this packet with
         // a DHCPREQUEST sent as part of the 4-way exchanges.
-        if (stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RA, pkt4)) {
+        if (stats_mgr_.passRcvdPacket(ExchangeType::RA, pkt4)) {
             // The DHCPACK belongs to DHCPREQUEST-DHCPACK exchange type.
             // So, we may need to keep this DHCPACK in the storage if renews.
             // Note that, DHCPACK messages hold the information about
             // leases assigned. We use this information to renew.
-            if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
+            if (stats_mgr_.hasExchangeStats(ExchangeType::RNA)) {
                 // Renew messages are sent, because StatsMgr has the
                 // specific exchange type specified. Let's append the DHCPACK.
                 // message to a storage
@@ -1173,19 +802,18 @@ TestControl::processReceivedPacket4(const PerfSocket& socket,
         // renewal. In this case we first check if StatsMgr has exchange type
         // for renew specified, and if it has, if there is a corresponding
         // renew message for the received DHCPACK.
-        } else if (stats_mgr4_->hasExchangeStats(StatsMgr4::XCHG_RNA)) {
-            stats_mgr4_->passRcvdPacket(StatsMgr4::XCHG_RNA, pkt4);
+        } else if (stats_mgr_.hasExchangeStats(ExchangeType::RNA)) {
+            stats_mgr_.passRcvdPacket(ExchangeType::RNA, pkt4);
         }
     }
 }
 
 void
-TestControl::processReceivedPacket6(const PerfSocket& socket,
-                            const Pkt6Ptr& pkt6) {
+TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
     uint8_t packet_type = pkt6->getType();
     if (packet_type == DHCPV6_ADVERTISE) {
-        Pkt6Ptr solicit_pkt6(stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_SA,
-                                                         pkt6));
+        PktPtr pkt = stats_mgr_.passRcvdPacket(ExchangeType::SA, pkt6);
+        Pkt6Ptr solicit_pkt6(boost::dynamic_pointer_cast<Pkt6>(pkt));
         CommandOptions::ExchangeMode xchg_mode =
             CommandOptions::instance().getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
@@ -1193,11 +821,11 @@ TestControl::processReceivedPacket6(const PerfSocket& socket,
             /// We might want to check if STATUS_CODE option is non-zero
             /// and if there is IAADR option in IA_NA.
             if (template_buffers_.size() < 2) {
-                sendRequest6(socket, pkt6);
+                sendRequest6(pkt6);
             } else {
                 /// @todo add defines for packet type index that can be
                 /// used to access template_buffers_.
-                sendRequest6(socket, template_buffers_[1], pkt6);
+                sendRequest6(template_buffers_[1], pkt6);
             }
         }
     } else if (packet_type == DHCPV6_REPLY) {
@@ -1205,14 +833,14 @@ TestControl::processReceivedPacket6(const PerfSocket& socket,
         // type the Reply message belongs to. It is doable by matching the Reply
         // transaction id with the transaction id of the sent Request, Renew
         // or Release. First we start with the Request.
-        if (stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RR, pkt6)) {
+        if (stats_mgr_.passRcvdPacket(ExchangeType::RR, pkt6)) {
             // The Reply belongs to Request-Reply exchange type. So, we may need
             // to keep this Reply in the storage if Renews or/and Releases are
             // being sent. Note that, Reply messages hold the information about
             // leases assigned. We use this information to construct Renew and
             // Release messages.
-            if (stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) ||
-                stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+            if (stats_mgr_.hasExchangeStats(ExchangeType::RN) ||
+                stats_mgr_.hasExchangeStats(ExchangeType::RL)) {
                 // Renew or Release messages are sent, because StatsMgr has the
                 // specific exchange type specified. Let's append the Reply
                 // message to a storage.
@@ -1225,28 +853,28 @@ TestControl::processReceivedPacket6(const PerfSocket& socket,
         // a corresponding Renew message for the received Reply. If not,
         // we check that StatsMgr has exchange type for Release specified,
         // as possibly the Reply has been sent in response to Release.
-        } else if (!(stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RN) &&
-                     stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RN, pkt6)) &&
-                   stats_mgr6_->hasExchangeStats(StatsMgr6::XCHG_RL)) {
+        } else if (!(stats_mgr_.hasExchangeStats(ExchangeType::RN) &&
+                     stats_mgr_.passRcvdPacket(ExchangeType::RN, pkt6)) &&
+                   stats_mgr_.hasExchangeStats(ExchangeType::RL)) {
             // At this point, it is only possible that the Reply has been sent
             // in response to a Release. Try to match the Reply with Release.
-            stats_mgr6_->passRcvdPacket(StatsMgr6::XCHG_RL, pkt6);
+            stats_mgr_.passRcvdPacket(ExchangeType::RL, pkt6);
         }
     }
 }
 
 unsigned int
-TestControl::consumeReceivedPackets(Receiver& receiver, const PerfSocket& socket) {
+TestControl::consumeReceivedPackets() {
     unsigned int pkt_count = 0;
     PktPtr pkt;
-    while ((pkt = receiver.getPkt())) {
+    while ((pkt = receiver_.getPkt())) {
         pkt_count += 1;
         if (CommandOptions::instance().getIpVersion() == 4) {
             Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
-            processReceivedPacket4(socket, pkt4);
+            processReceivedPacket4(pkt4);
         } else {
             Pkt6Ptr pkt6 = boost::dynamic_pointer_cast<Pkt6>(pkt);
-            processReceivedPacket6(socket, pkt6);
+            processReceivedPacket6(pkt6);
         }
     }
     return pkt_count;
@@ -1328,11 +956,6 @@ TestControl::registerOptionFactories() const {
 
 void
 TestControl::reset() {
-    CommandOptions& options = CommandOptions::instance();
-    basic_rate_control_.setRate(options.getRate());
-    renew_rate_control_.setRate(options.getRenewRate());
-    release_rate_control_.setRate(options.getReleaseRate());
-
     transid_gen_.reset();
     last_report_ = microsec_clock::universal_time();
     // Actual generators will have to be set later on because we need to
@@ -1343,8 +966,10 @@ TestControl::reset() {
     interrupted_ = false;
 }
 
-int
-TestControl::run() {
+TestControl::TestControl(bool ignore_timestamp_reorder) :
+    number_generator_(0, CommandOptions::instance().getMacsFromFile().size()),
+    stats_mgr_(ignore_timestamp_reorder)
+{
     // Reset singleton state before test starts.
     reset();
 
@@ -1374,10 +999,6 @@ TestControl::run() {
     printDiagnostics();
     // Option factories have to be registered.
     registerOptionFactories();
-    PerfSocket socket(openSocket());
-    if (!socket.valid_) {
-        isc_throw(Unexpected, "invalid socket descriptor");
-    }
     // Initialize packet templates.
     initPacketTemplates();
     // Initialize randomization seed.
@@ -1392,138 +1013,6 @@ TestControl::run() {
     }
     // If user interrupts the program we will exit gracefully.
     signal(SIGINT, TestControl::handleInterrupt);
-
-    // Initialize Statistics Manager. Release previous if any.
-    initializeStatsMgr();
-
-    Receiver receiver(socket);
-
-    // Preload server with the number of packets.
-    if (options.getPreload() > 0) {
-        sendPackets(socket, options.getPreload(), true);
-    }
-
-    // Fork and run command specified with -w<wrapped-command>
-    if (!options.getWrapped().empty()) {
-        runWrapped();
-    }
-
-    receiver.start();
-
-    for (;;) {
-        // Calculate number of packets to be sent to stay
-        // catch up with rate.
-        uint64_t packets_due = basic_rate_control_.getOutboundMessageCount();
-        if ((packets_due == 0) && testDiags('i')) {
-            if (options.getIpVersion() == 4) {
-                stats_mgr4_->incrementCounter("shortwait");
-            } else if (options.getIpVersion() == 6) {
-                stats_mgr6_->incrementCounter("shortwait");
-            }
-        }
-
-        // Pull some packets from receiver thread, process them, update some stats
-        // and respond to the server if needed.
-        auto pkt_count = consumeReceivedPackets(receiver, socket);
-
-        // If there is nothing to do in this loop iteration then do some sleep to make
-        // CPU idle for a moment, to not consume 100% CPU all the time
-        // but only if it is not that high request rate expected.
-        if (options.getRate() < 10000 && packets_due == 0 && pkt_count == 0) {
-            /// @todo: need to implement adaptive time here, so the sleep time
-            /// is not fixed, but adjusts to current situation.
-            usleep(1);
-        }
-
-        // If test period finished, maximum number of packet drops
-        // has been reached or test has been interrupted we have to
-        // finish the test.
-        if (checkExitConditions()) {
-            break;
-        }
-
-        // Initiate new DHCP packet exchanges.
-        sendPackets(socket, packets_due);
-
-        // If -f<renew-rate> option was specified we have to check how many
-        // Renew packets should be sent to catch up with a desired rate.
-        if (options.getRenewRate() != 0) {
-            uint64_t renew_packets_due =
-                renew_rate_control_.getOutboundMessageCount();
-
-            // Send multiple renews to satisfy the desired rate.
-            if (options.getIpVersion() == 4) {
-                sendMultipleRequests(socket, renew_packets_due);
-            } else {
-                sendMultipleMessages6(socket, DHCPV6_RENEW, renew_packets_due);
-            }
-        }
-
-        // If -F<release-rate> option was specified we have to check how many
-        // Release messages should be sent to catch up with a desired rate.
-        if ((options.getIpVersion() == 6) && (options.getReleaseRate() != 0)) {
-            uint64_t release_packets_due =
-                release_rate_control_.getOutboundMessageCount();
-            // Send Release messages.
-            sendMultipleMessages6(socket, DHCPV6_RELEASE, release_packets_due);
-        }
-
-        // Report delay means that user requested printing number
-        // of sent/received/dropped packets repeatedly.
-        if (options.getReportDelay() > 0) {
-            printIntermediateStats();
-        }
-
-        // If we are sending Renews to the server, the Reply packets are cached
-        // so as leases for which we send Renews can be identified. The major
-        // issue with this approach is that most of the time we are caching
-        // more packets than we actually need. This function removes excessive
-        // Reply messages to reduce the memory and CPU utilization. Note that
-        // searches in the long list of Reply packets increases CPU utilization.
-        cleanCachedPackets();
-    }
-
-    receiver.stop();
-
-    printStats();
-
-    if (!options.getWrapped().empty()) {
-        // true means that we execute wrapped command with 'stop' argument.
-        runWrapped(true);
-    }
-
-    // Print packet timestamps
-    if (testDiags('t')) {
-        if (options.getIpVersion() == 4) {
-            stats_mgr4_->printTimestamps();
-        } else if (options.getIpVersion() == 6) {
-            stats_mgr6_->printTimestamps();
-        }
-    }
-
-    // Print server id.
-    if (testDiags('s') && (first_packet_serverid_.size() > 0)) {
-        std::cout << "Server id: " << vector2Hex(first_packet_serverid_) << std::endl;
-    }
-
-    // Diagnostics flag 'e' means show exit reason.
-    if (testDiags('e')) {
-        std::cout << "Interrupted" << std::endl;
-    }
-    // Print packet templates. Even if -T options have not been specified the
-    // dynamically build packet will be printed if at least one has been sent.
-    if (testDiags('T')) {
-        printTemplates();
-    }
-
-    int ret_code = 0;
-    // Check if any packet drops occurred.
-    if (options.getIpVersion() == 4) {
-        ret_code = stats_mgr4_->droppedPackets() ? 3 : 0;
-    } else if (options.getIpVersion() == 6)  {
-        ret_code = stats_mgr6_->droppedPackets() ? 3 : 0;
-    }
-    return (ret_code);
 }
 
 void
@@ -1562,8 +1051,7 @@ TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
 }
 
 void
-TestControl::sendDiscover4(const PerfSocket& socket,
-                           const bool preload /*= false*/) {
+TestControl::sendDiscover4(const bool preload /*= false*/) {
     // Generate the MAC address to be passed in the packet.
     uint8_t randomized = 0;
     std::vector<uint8_t> mac_address = generateMacAddress(randomized);
@@ -1587,7 +1075,7 @@ TestControl::sendDiscover4(const PerfSocket& socket,
 
     // Set client's and server's ports as well as server's address,
     // and local (relay) address.
-    setDefaults4(socket, pkt4);
+    setDefaults4(pkt4);
 
     // Set hardware address
     pkt4->setHWAddr(HTYPE_ETHER, mac_address.size(), mac_address);
@@ -1601,18 +1089,13 @@ TestControl::sendDiscover4(const PerfSocket& socket,
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
     if (!preload) {
-        if (!stats_mgr4_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
-                      "hasn't been initialized");
-        }
-        stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO, pkt4);
+        stats_mgr_.passSentPacket(ExchangeType::DO, pkt4);
     }
     saveFirstPacket(pkt4);
 }
 
 void
-TestControl::sendDiscover4(const PerfSocket& socket,
-                           const std::vector<uint8_t>& template_buf,
+TestControl::sendDiscover4(const std::vector<uint8_t>& template_buf,
                            const bool preload /* = false */) {
     // Get the first argument if multiple the same arguments specified
     // in the command line. First one refers to DISCOVER packets.
@@ -1644,25 +1127,21 @@ TestControl::sendDiscover4(const PerfSocket& socket,
     // Replace MAC address in the template with actual MAC address.
     pkt4->writeAt(rand_offset, mac_address.begin(), mac_address.end());
     // Create a packet from the temporary buffer.
-    setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
+    setDefaults4(boost::static_pointer_cast<Pkt4>(pkt4));
     // Pack the input packet buffer to output buffer so as it can
     // be sent to server.
     pkt4->rawPack();
     IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
     if (!preload) {
-        if (!stats_mgr4_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
-                      "hasn't been initialized");
-        }
         // Update packet stats.
-        stats_mgr4_->passSentPacket(StatsMgr4::XCHG_DO,
+        stats_mgr_.passSentPacket(ExchangeType::DO,
                                     boost::static_pointer_cast<Pkt4>(pkt4));
     }
     saveFirstPacket(pkt4);
 }
 
 bool
-TestControl::sendRequestFromAck(const PerfSocket& socket) {
+TestControl::sendRequestFromAck() {
     // Get one of the recorded DHCPACK messages.
     Pkt4Ptr ack = ack_storage_.getRandom();
     if (!ack) {
@@ -1671,7 +1150,7 @@ TestControl::sendRequestFromAck(const PerfSocket& socket) {
 
     // Create message of the specified type.
     Pkt4Ptr msg = createRequestFromAck(ack);
-    setDefaults4(socket, msg);
+    setDefaults4(msg);
 
     // Add any extra options that user may have specified.
     addExtraOpts(msg);
@@ -1679,18 +1158,13 @@ TestControl::sendRequestFromAck(const PerfSocket& socket) {
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
-    if (!stats_mgr4_) {
-        isc_throw(Unexpected, "Statistics Manager for DHCPv4 "
-                  "hasn't been initialized");
-    }
-    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RNA, msg);
+    stats_mgr_.passSentPacket(ExchangeType::RNA, msg);
     return (true);
 }
 
 
 bool
-TestControl::sendMessageFromReply(const uint16_t msg_type,
-                                  const PerfSocket& socket) {
+TestControl::sendMessageFromReply(const uint16_t msg_type) {
     // We only permit Release or Renew messages to be sent using this function.
     if (msg_type != DHCPV6_RENEW && msg_type != DHCPV6_RELEASE) {
         isc_throw(isc::BadValue, "invalid message type " << msg_type
@@ -1702,7 +1176,7 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
     }
     // Prepare the message of the specified type.
     Pkt6Ptr msg = createMessageFromReply(msg_type, reply);
-    setDefaults6(socket, msg);
+    setDefaults6(msg);
 
     // Add any extra options that user may have specified.
     addExtraOpts(msg);
@@ -1710,18 +1184,13 @@ TestControl::sendMessageFromReply(const uint16_t msg_type,
     msg->pack();
     // And send it.
     IfaceMgr::instance().send(msg);
-    if (!stats_mgr6_) {
-        isc_throw(Unexpected, "Statistics Manager for DHCPv6 "
-                  "hasn't been initialized");
-    }
-    stats_mgr6_->passSentPacket((msg_type == DHCPV6_RENEW ? StatsMgr6::XCHG_RN
-                                 : StatsMgr6::XCHG_RL), msg);
+    stats_mgr_.passSentPacket((msg_type == DHCPV6_RENEW ? ExchangeType::RN
+                                : ExchangeType::RL), msg);
     return (true);
 }
 
 void
-TestControl::sendRequest4(const PerfSocket& socket,
-                          const dhcp::Pkt4Ptr& discover_pkt4,
+TestControl::sendRequest4(const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     // Use the same transaction id as the one used in the discovery packet.
     const uint32_t transid = discover_pkt4->getTransid();
@@ -1740,7 +1209,7 @@ TestControl::sendRequest4(const PerfSocket& socket,
             isc_throw(BadValue, "there is no SERVER_IDENTIFIER option "
                       << "in OFFER message");
         }
-        if (stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) == 1) {
+        if (stats_mgr_.getRcvdPacketsNum(ExchangeType::DO) == 1) {
             first_packet_serverid_ = opt_serverid->getData();
         }
         pkt4->addOption(opt_serverid);
@@ -1762,7 +1231,7 @@ TestControl::sendRequest4(const PerfSocket& socket,
     pkt4->addOption(opt_parameter_list);
     // Set client's and server's ports as well as server's address,
     // and local (relay) address.
-    setDefaults4(socket, pkt4);
+    setDefaults4(pkt4);
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt4);
@@ -1777,17 +1246,12 @@ TestControl::sendRequest4(const PerfSocket& socket,
     // Prepare on wire data to send.
     pkt4->pack();
     IfaceMgr::instance().send(pkt4);
-    if (!stats_mgr4_) {
-        isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
-                  "hasn't been initialized");
-    }
-    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA, pkt4);
+    stats_mgr_.passSentPacket(ExchangeType::RA, pkt4);
     saveFirstPacket(pkt4);
 }
 
 void
-TestControl::sendRequest4(const PerfSocket& socket,
-                          const std::vector<uint8_t>& template_buf,
+TestControl::sendRequest4(const std::vector<uint8_t>& template_buf,
                           const dhcp::Pkt4Ptr& discover_pkt4,
                           const dhcp::Pkt4Ptr& offer_pkt4) {
     // Get the second argument if multiple the same arguments specified
@@ -1857,7 +1321,7 @@ TestControl::sendRequest4(const PerfSocket& socket,
                                              opt_serverid_offer->getData(),
                                              sid_offset));
         pkt4->addOption(opt_serverid);
-        if (stats_mgr4_->getRcvdPacketsNum(StatsMgr4::XCHG_DO) == 1) {
+        if (stats_mgr_.getRcvdPacketsNum(ExchangeType::DO) == 1) {
             first_packet_serverid_ = opt_serverid_offer->getData();
         }
     }
@@ -1881,7 +1345,7 @@ TestControl::sendRequest4(const PerfSocket& socket,
     opt_requested_ip->setUint32(yiaddr.toUint32());
     pkt4->addOption(opt_requested_ip);
 
-    setDefaults4(socket, boost::static_pointer_cast<Pkt4>(pkt4));
+    setDefaults4(boost::static_pointer_cast<Pkt4>(pkt4));
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt4);
@@ -1889,19 +1353,14 @@ TestControl::sendRequest4(const PerfSocket& socket,
     // Prepare on-wire data.
     pkt4->rawPack();
     IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
-    if (!stats_mgr4_) {
-        isc_throw(InvalidOperation, "Statistics Manager for DHCPv4 "
-                  "hasn't been initialized");
-    }
     // Update packet stats.
-    stats_mgr4_->passSentPacket(StatsMgr4::XCHG_RA,
-                                boost::static_pointer_cast<Pkt4>(pkt4));
+    stats_mgr_.passSentPacket(ExchangeType::RA,
+                               boost::static_pointer_cast<Pkt4>(pkt4));
     saveFirstPacket(pkt4);
 }
 
 void
-TestControl::sendRequest6(const PerfSocket& socket,
-                          const Pkt6Ptr& advertise_pkt6) {
+TestControl::sendRequest6(const Pkt6Ptr& advertise_pkt6) {
     const uint32_t transid = generateTransid();
     Pkt6Ptr pkt6(new Pkt6(DHCPV6_REQUEST, transid));
     // Set elapsed time.
@@ -1926,7 +1385,7 @@ TestControl::sendRequest6(const PerfSocket& socket,
         if (!opt_serverid) {
             isc_throw(Unexpected, "server id not found in received packet");
         }
-        if (stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) == 1) {
+        if (stats_mgr_.getRcvdPacketsNum(ExchangeType::SA) == 1) {
             first_packet_serverid_ = opt_serverid->getData();
         }
         pkt6->addOption(opt_serverid);
@@ -1940,7 +1399,7 @@ TestControl::sendRequest6(const PerfSocket& socket,
     copyIaOptions(advertise_pkt6, pkt6);
 
     // Set default packet data.
-    setDefaults6(socket, pkt6);
+    setDefaults6(pkt6);
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt6);
@@ -1948,17 +1407,12 @@ TestControl::sendRequest6(const PerfSocket& socket,
     // Prepare on-wire data.
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
-    if (!stats_mgr6_) {
-        isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                  "hasn't been initialized");
-    }
-    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
+    stats_mgr_.passSentPacket(ExchangeType::RR, pkt6);
     saveFirstPacket(pkt6);
 }
 
 void
-TestControl::sendRequest6(const PerfSocket& socket,
-                          const std::vector<uint8_t>& template_buf,
+TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
                           const Pkt6Ptr& advertise_pkt6) {
     // Get the second argument if multiple the same arguments specified
     // in the command line. Second one refers to REQUEST packets.
@@ -2004,7 +1458,7 @@ TestControl::sendRequest6(const PerfSocket& socket,
                                              opt_serverid_advertise->getData(),
                                              sid_offset));
         pkt6->addOption(opt_serverid);
-        if (stats_mgr6_->getRcvdPacketsNum(StatsMgr6::XCHG_SA) == 1) {
+        if (stats_mgr_.getRcvdPacketsNum(ExchangeType::SA) == 1) {
             first_packet_serverid_ = opt_serverid_advertise->getData();
         }
     }
@@ -2048,7 +1502,7 @@ TestControl::sendRequest6(const PerfSocket& socket,
                                          rand_offset));
     pkt6->addOption(opt_clientid);
     // Set default packet data.
-    setDefaults6(socket, pkt6);
+    setDefaults6(pkt6);
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt6);
@@ -2057,12 +1511,8 @@ TestControl::sendRequest6(const PerfSocket& socket,
     pkt6->rawPack();
     // Send packet.
     IfaceMgr::instance().send(pkt6);
-    if (!stats_mgr6_) {
-        isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                  "hasn't been initialized");
-    }
     // Update packet stats.
-    stats_mgr6_->passSentPacket(StatsMgr6::XCHG_RR, pkt6);
+    stats_mgr_.passSentPacket(ExchangeType::RR, pkt6);
 
     // When 'T' diagnostics flag is specified it means that user requested
     // printing packet contents. It will be just one (first) packet which
@@ -2076,8 +1526,7 @@ TestControl::sendRequest6(const PerfSocket& socket,
 }
 
 void
-TestControl::sendSolicit6(const PerfSocket& socket,
-                          const bool preload /*= false*/) {
+TestControl::sendSolicit6(const bool preload /*= false*/) {
     // Generate DUID to be passed to the packet
     uint8_t randomized = 0;
     std::vector<uint8_t> duid = generateDuid(randomized);
@@ -2108,7 +1557,7 @@ TestControl::sendSolicit6(const PerfSocket& socket,
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
     }
 
-    setDefaults6(socket, pkt6);
+    setDefaults6(pkt6);
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt6);
@@ -2116,19 +1565,14 @@ TestControl::sendSolicit6(const PerfSocket& socket,
     pkt6->pack();
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
-        if (!stats_mgr6_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                      "hasn't been initialized");
-        }
-        stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        stats_mgr_.passSentPacket(ExchangeType::SA, pkt6);
     }
 
     saveFirstPacket(pkt6);
 }
 
 void
-TestControl::sendSolicit6(const PerfSocket& socket,
-                          const std::vector<uint8_t>& template_buf,
+TestControl::sendSolicit6(const std::vector<uint8_t>& template_buf,
                           const bool preload /*= false*/) {
     const int arg_idx = 0;
     // Get transaction id offset.
@@ -2156,7 +1600,7 @@ TestControl::sendSolicit6(const PerfSocket& socket,
 
     // Prepare on-wire data.
     pkt6->rawPack();
-    setDefaults6(socket, pkt6);
+    setDefaults6(pkt6);
 
     // Add any extra options that user may have specified.
     addExtraOpts(pkt6);
@@ -2164,29 +1608,24 @@ TestControl::sendSolicit6(const PerfSocket& socket,
     // Send solicit packet.
     IfaceMgr::instance().send(pkt6);
     if (!preload) {
-        if (!stats_mgr6_) {
-            isc_throw(InvalidOperation, "Statistics Manager for DHCPv6 "
-                      "hasn't been initialized");
-        }
         // Update packet stats.
-        stats_mgr6_->passSentPacket(StatsMgr6::XCHG_SA, pkt6);
+        stats_mgr_.passSentPacket(ExchangeType::SA, pkt6);
     }
     saveFirstPacket(pkt6);
 }
 
 
 void
-TestControl::setDefaults4(const PerfSocket& socket,
-                          const Pkt4Ptr& pkt) {
+TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket_.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
     pkt->setIface(iface->getName());
     // Interface index.
-    pkt->setIndex(socket.ifindex_);
+    pkt->setIndex(socket_.ifindex_);
     // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
     // Server's port (67)
@@ -2198,25 +1637,24 @@ TestControl::setDefaults4(const PerfSocket& socket,
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
     // Set local address.
-    pkt->setLocalAddr(IOAddress(socket.addr_));
+    pkt->setLocalAddr(IOAddress(socket_.addr_));
     // Set relay (GIADDR) address to local address.
-    pkt->setGiaddr(IOAddress(socket.addr_));
+    pkt->setGiaddr(IOAddress(socket_.addr_));
     // Pretend that we have one relay (which is us).
     pkt->setHops(1);
 }
 
 void
-TestControl::setDefaults6(const PerfSocket& socket,
-                          const Pkt6Ptr& pkt) {
+TestControl::setDefaults6(const Pkt6Ptr& pkt) {
     CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfacePtr iface = IfaceMgr::instance().getIface(socket.ifindex_);
+    IfacePtr iface = IfaceMgr::instance().getIface(socket_.ifindex_);
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
     pkt->setIface(iface->getName());
     // Interface index.
-    pkt->setIndex(socket.ifindex_);
+    pkt->setIndex(socket_.ifindex_);
     // Local client's port (547)
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
@@ -2226,7 +1664,7 @@ TestControl::setDefaults6(const PerfSocket& socket,
         pkt->setRemotePort(DHCP6_SERVER_PORT);
     }
     // Set local address.
-    pkt->setLocalAddr(socket.addr_);
+    pkt->setLocalAddr(socket_.addr_);
     // The remote server's name or IP.
     pkt->setRemoteAddr(IOAddress(options.getServerName()));
 
@@ -2237,8 +1675,8 @@ TestControl::setDefaults6(const PerfSocket& socket,
       Pkt6::RelayInfo relay_info;
       relay_info.msg_type_ = DHCPV6_RELAY_FORW;
       relay_info.hop_count_ = 1;
-      relay_info.linkaddr_ = IOAddress(socket.addr_);
-      relay_info.peeraddr_ = IOAddress(socket.addr_);
+      relay_info.linkaddr_ = IOAddress(socket_.addr_);
+      relay_info.peeraddr_ = IOAddress(socket_.addr_);
       pkt->addRelayInfo(relay_info);
     }
 }

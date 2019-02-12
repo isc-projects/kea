@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <fstream>
 #include <thread>
+#include <getopt.h>
 
 #ifdef HAVE_OPTRESET
 extern int optreset;
@@ -161,6 +162,7 @@ CommandOptions::reset() {
     } else {
         single_thread_mode_ = false;
     }
+    scenario_ = Scenario::BASIC;
 }
 
 bool
@@ -209,6 +211,8 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
     return (help_or_version_mode);
 }
 
+const int LONG_OPT_SCENARIO = 300;
+
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     int opt = 0;                // Subsequent options returned by getopt()
@@ -225,10 +229,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     stream << "perfdhcp";
     int num_mac_list_files = 0;
 
+    struct option long_options[] = {
+        {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
+        {0,          0,                 0, 0}
+    };
+
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:"
-                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:g:")) != -1) {
+    while((opt = getopt_long(argc, argv,
+                             "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
+                             "T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
+                             long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -544,6 +555,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             xid_offset_.push_back(offset_arg);
             break;
 
+        case LONG_OPT_SCENARIO: {
+            auto optarg_text = std::string(optarg);
+            if (optarg_text == "basic") {
+                scenario_ = Scenario::BASIC;
+            } else if (optarg_text == "avalanche") {
+                scenario_ = Scenario::AVALANCHE;
+            } else {
+                isc_throw(InvalidParameter, "scenario value '" << optarg << "' is wrong - should be 'basic' or 'avalanche'");
+            }
+            break;
+        }
         default:
             isc_throw(isc::InvalidParameter, "wrong command line option");
         }
@@ -592,6 +614,12 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     if (print_cmd_line) {
         std::cout << "Running: " << stream.str() << std::endl;
+    }
+
+    if (scenario_ == Scenario::BASIC) {
+        std::cout << "Scenario: basic." << std::endl;
+    } else if (scenario_ == Scenario::AVALANCHE) {
+        std::cout << "Scenario: avalanche." << std::endl;
     }
 
     if (!isSingleThreaded()) {
@@ -1230,6 +1258,16 @@ void
 CommandOptions::version() const {
     std::cout << "VERSION: " << VERSION << std::endl;
 }
+
+bool
+testDiags(const char diag) {
+    std::string diags(CommandOptions::instance().getDiags());
+    if (diags.find(diag) != std::string::npos) {
+        return (true);
+    }
+    return (false);
+}
+
 
 }  // namespace perfdhcp
 }  // namespace isc
