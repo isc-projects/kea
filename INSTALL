@@ -36,7 +36,8 @@ OpenSSL or Botan) for compilation.  Optional backends (MySQL, PostgreSQL and
 Cassandra) have additional dependencies. For detailed installation directions,
 see the guide at doc/guide/kea-guide.txt or doc/guide/kea-guide.html or on
 the Kea wiki: https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#installation
+Other optional dependencies are FreeRADIUS client (this requires a subscriber
+only RADIUS hook) and Sysrepo, a system for providing YANG/NETCONF interface.
 
 You can find current OS-specific build/installation
 instructions in our knowledge base at https://kb.isc.org/docs/installing-kea
-
