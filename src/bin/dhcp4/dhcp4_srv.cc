@@ -1470,21 +1470,41 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // Try to get the vendor option
+    uint32_t vendor_id = 0;
+
+    // Try to get the vendor option from the client packet. This is how it's supposed to be
+    // done. Client sends vivso, we look at the vendor-id and then send back the vendor
+    // options specific to that client.
     boost::shared_ptr<OptionVendor> vendor_req = boost::dynamic_pointer_cast<
         OptionVendor>(ex.getQuery()->getOption(DHO_VIVSO_SUBOPTIONS));
-    if (!vendor_req) {
+    if (vendor_req) {
+        vendor_id = vendor_req->getVendorId();
+    }
+
+    // Something is fishy. Client was supposed to send vivso, but didn't. Let's try an
+    // alternative. It's possible that the server already inserted vivso in the response
+    // message, (e.g. by using client classification or perhaps a hook inserted it).
+    boost::shared_ptr<OptionVendor> vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>
+        (ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (vendor_rsp) {
+        vendor_id = vendor_rsp->getVendorId();
+    }
+
+    if (!vendor_req && !vendor_rsp) {
+        // Ok, we're out of luck today. Neither client nor server packets have vivso.
+        // There is no way to figure out vendor-id here. We give up.
         return;
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
     std::vector<uint8_t> requested_opts;
 
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other
     /// vendors may have different policies.
-    OptionUint8ArrayPtr oro =
-        boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    OptionUint8ArrayPtr oro;
+    if (vendor_req) {
+        oro = boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    }
     // Get the list of options that client requested.
     if (oro) {
         requested_opts = oro->getValues();
@@ -1496,6 +1516,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         if (!opts) {
             continue;
         }
+
         // Get persistent options
         const OptionContainerPersistIndex& idx = opts->get<2>();
         const OptionContainerPersistRange& range = idx.equal_range(true);
@@ -1514,7 +1535,11 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
-    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V4, vendor_id));
+    if (!vendor_rsp) {
+        // It's possible that vivso was inserted already by client class or a hook. If that is so,
+        // let's use it.
+        vendor_rsp.reset(new OptionVendor(Option::V4, vendor_id));
+    }
 
     // Get the list of options that client requested.
     bool added = false;
@@ -1532,7 +1557,9 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             }
         }
 
-        if (added) {
+        // If we added some sub-options and the vivso option is not in the response
+        // already, then add it.
+        if (added && !ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS)) {
             ex.getResponse()->addOption(vendor_rsp);
         }
     }
