@@ -79,13 +79,19 @@ AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync
 
 AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
 
-# Verify that the path does not capture standard headers.
+# Verify that the path does not include standard headers by mistake.
+# There are two regex.h headers: one is a standard system header (usually
+# in /usr/include) and the second one is provided by boost. If you specify the
+# path to boost in a way that specifies the actual directory, this will mess up
+# the code and we'll end up using the system header rather than the boost. For
+# example, if your boost headers are in /usr/local/include/boost, you should
+# use --with-boost-include=/usr/local/include
 AC_TRY_COMPILE([
 #include <regex.h>
 #ifdef BOOST_RE_REGEX_H
 #error "boost/regex.h"
 #endif],,,
-[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: please remove the extra boost at the end of the include path.])])
+[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
