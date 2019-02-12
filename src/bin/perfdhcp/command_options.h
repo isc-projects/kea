@@ -17,6 +17,11 @@
 namespace isc {
 namespace perfdhcp {
 
+enum class Scenario {
+    BASIC,
+    AVALANCHE
+};
+
 /// \brief Command Options.
 ///
 /// This class is responsible for parsing the command-line and storing the
@@ -348,6 +353,8 @@ public:
     /// \return true if single-threaded mode is enabled.
     bool isSingleThreaded() const { return single_thread_mode_; }
 
+    Scenario getScenario() const { return scenario_; }
+
     /// \brief Returns server name.
     ///
     /// \return server name.
@@ -654,7 +661,17 @@ private:
 
     /// @brief Option to switch modes between single-threaded and multi-threaded.
     bool single_thread_mode_;
+
+    /// @brief Selected performance scenario. Default is basic.
+    Scenario scenario_;
 };
+
+/// \brief Find if diagnostic flag has been set.
+///
+/// \param diag diagnostic flag (a,e,i,s,r,t,T).
+/// \return true if diagnostics flag has been set.
+bool
+testDiags(const char diag);
 
 }  // namespace perfdhcp
 }  // namespace isc
