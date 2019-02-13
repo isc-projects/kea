@@ -260,14 +260,10 @@ public:
     /// \param archive_enabled if true packets archive mode is enabled.
     /// In this mode all packets are stored throughout the test execution.
     /// \param boot_time Holds the timestamp when perfdhcp has been started.
-    /// \param ignore_timestamp_reorder if true then while matching
-    /// response packets to request ones negative time difference is ignored
-    /// otherwise exception is raised.
     ExchangeStats(const ExchangeType xchg_type,
                   const double drop_time,
                   const bool archive_enabled,
-                  const boost::posix_time::ptime boot_time,
-                  bool ignore_timestamp_reorder);
+                  const boost::posix_time::ptime boot_time);
 
     /// \brief Add new packet to list of sent packets.
     ///
@@ -614,11 +610,6 @@ private:
     uint64_t sent_packets_num_;    ///< Total number of sent packets.
     uint64_t rcvd_packets_num_;    ///< Total number of received packets.
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
-
-    /// If true then while matching
-    /// response packets to request ones negative time difference is ignored
-    /// otherwise exception is raised.
-    bool ignore_timestamp_reorder_;
 };
 
 /// Pointer to ExchangeStats.
@@ -658,10 +649,7 @@ public:
     /// the test. If this is not selected archiving should be disabled
     /// for performance reasons and to avoid waste of memory for storing
     /// large list of archived packets.
-    /// \param ignore_timestamp_reorder if true then while matching
-    /// response packets to request ones negative time difference is ignored
-    /// otherwise exception is raised.
-    StatsMgr(bool ignore_timestamp_reorder);
+    StatsMgr();
 
     /// \brief Specify new exchange type.
     ///
@@ -682,8 +670,7 @@ public:
             ExchangeStatsPtr(new ExchangeStats(xchg_type,
                                                drop_time,
                                                archive_enabled_,
-                                               boot_time_,
-                                               ignore_timestamp_reorder_));
+                                               boot_time_));
     }
 
     /// \brief Check if the exchange type has been specified.
@@ -1122,11 +1109,6 @@ private:
     bool archive_enabled_;
 
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
-
-    /// If true then while matching
-    /// response packets to request ones negative time difference is ignored
-    /// otherwise exception is raised.
-    bool ignore_timestamp_reorder_;
 };
 
 /// Pointer to Statistics Manager;

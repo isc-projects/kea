@@ -37,8 +37,7 @@ std::ostream& operator<<(std::ostream& os, ExchangeType xchg_type)
 ExchangeStats::ExchangeStats(const ExchangeType xchg_type,
                              const double drop_time,
                              const bool archive_enabled,
-                             const boost::posix_time::ptime boot_time,
-                             bool ignore_timestamp_reorder)
+                             const boost::posix_time::ptime boot_time)
     : xchg_type_(xchg_type),
       sent_packets_(),
       rcvd_packets_(),
@@ -56,8 +55,7 @@ ExchangeStats::ExchangeStats(const ExchangeType xchg_type,
       ordered_lookups_(0),
       sent_packets_num_(0),
       rcvd_packets_num_(0),
-      boot_time_(boot_time),
-      ignore_timestamp_reorder_(ignore_timestamp_reorder)
+      boot_time_(boot_time)
 {
     next_sent_ = sent_packets_.begin();
 }
@@ -89,7 +87,7 @@ ExchangeStats::updateDelays(const dhcp::PktPtr& sent_packet,
     double delta =
         static_cast<double>(period.length().total_nanoseconds()) / 1e9;
 
-    if (!ignore_timestamp_reorder_ && delta < 0) {
+    if (delta < 0) {
         isc_throw(Unexpected, "Sent packet's timestamp must not be "
                   "greater than received packet's timestamp in "
                   << xchg_type_ << ".\nTime difference: "
@@ -315,10 +313,9 @@ ExchangeStats::printTimestamps() {
     }
 }
 
-StatsMgr::StatsMgr(bool ignore_timestamp_reorder) :
+StatsMgr::StatsMgr() :
     exchanges_(),
-    boot_time_(boost::posix_time::microsec_clock::universal_time()),
-    ignore_timestamp_reorder_(ignore_timestamp_reorder)
+    boot_time_(boost::posix_time::microsec_clock::universal_time())
 {
     CommandOptions& options = CommandOptions::instance();
 

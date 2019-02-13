@@ -966,9 +966,8 @@ TestControl::reset() {
     interrupted_ = false;
 }
 
-TestControl::TestControl(bool ignore_timestamp_reorder) :
-    number_generator_(0, CommandOptions::instance().getMacsFromFile().size()),
-    stats_mgr_(ignore_timestamp_reorder)
+TestControl::TestControl() :
+    number_generator_(0, CommandOptions::instance().getMacsFromFile().size())
 {
     // Reset singleton state before test starts.
     reset();

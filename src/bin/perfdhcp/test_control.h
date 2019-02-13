@@ -124,11 +124,7 @@ public:
 class TestControl : public boost::noncopyable {
 public:
     /// \brief Default constructor.
-    ///
-    /// \param ignore_timestamp_reorder if true then while matching
-    /// response packets to request ones negative time difference is ignored
-    /// otherwise exception is raised.
-    TestControl(bool ignore_timestamp_reorder);
+    TestControl();
 
     /// Packet template buffer.
     typedef std::vector<uint8_t> TemplateBuffer;
