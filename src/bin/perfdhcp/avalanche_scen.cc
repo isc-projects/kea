@@ -48,9 +48,6 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
         delay += random() % 2000 - 1000;  // adjust by random from -1000..1000 range
         auto now = microsec_clock::universal_time();
         if (now - pkt->getTimestamp() > milliseconds(delay)) {
-            //if (rx_times > 2) {
-            //    std::cout << xchg_type << " RX " << trans_id << ", times " << rx_times << ", delay " << delay << std::endl;
-            //}
             resent_cnt++;
             total_resent_++;
 
@@ -61,7 +58,6 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
                 Pkt6Ptr pkt6 = boost::dynamic_pointer_cast<Pkt6>(pkt);
                 IfaceMgr::instance().send(pkt6);
             }
-            //std::cout << "resent " << xchg_type << " " << pkt->getTransid() << " @ " << pkt->getTimestamp() << std::endl;
 
             rx_times++;
             retrans[trans_id] = rx_times;
@@ -69,7 +65,9 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
     }
     if (resent_cnt > 0) {
         auto now = microsec_clock::universal_time();
-        std::cout << now << " " << xchg_type << ": still waiting for " << still_left_cnt << " answers, resent " << resent_cnt << ", retrying " << retrans.size() << std::endl;
+        std::cout << now << " " << xchg_type << ": still waiting for "
+                  << still_left_cnt << " answers, resent " << resent_cnt
+                  << ", retrying " << retrans.size() << std::endl;
     }
     return still_left_cnt;
 }
@@ -83,7 +81,7 @@ AvalancheScen::run() {
     uint32_t clients_num = options.getClientsNum() == 0 ?
         1 : options.getClientsNum();
 
-    // StatsMgr& stats_mgr(tc_.getStatsMgr());
+    StatsMgr& stats_mgr(tc_.getStatsMgr());
 
     tc_.start();
 
@@ -98,6 +96,7 @@ AvalancheScen::run() {
         // Pull some packets from receiver thread, process them, update some stats
         // and respond to the server if needed.
         tc_.consumeReceivedPackets();
+
         usleep(100);
 
         now = microsec_clock::universal_time();
@@ -109,14 +108,6 @@ AvalancheScen::run() {
                 break;
             }
         }
-
-        // If we are sending Renews to the server, the Reply packets are cached
-        // so as leases for which we send Renews can be identified. The major
-        // issue with this approach is that most of the time we are caching
-        // more packets than we actually need. This function removes excessive
-        // Reply messages to reduce the memory and CPU utilization. Note that
-        // searches in the long list of Reply packets increases CPU utilization.
-        //tc_.cleanCachedPackets();
     }
 
     auto stop = microsec_clock::universal_time();
@@ -126,10 +117,10 @@ AvalancheScen::run() {
 
     tc_.printStats();
 
-    // // Print packet timestamps
-    // if (testDiags('t')) {
-    //     stats_mgr.printTimestamps();
-    // }
+    // Print packet timestamps
+    if (testDiags('t')) {
+        stats_mgr.printTimestamps();
+    }
 
     // Print server id.
     if (testDiags('s') && tc_.serverIdReceived()) {
@@ -147,10 +138,7 @@ AvalancheScen::run() {
               << " retransmissions needed, received " << (clients_num * 2)
               << " responses." << std::endl;
 
-    int ret_code = 0;
-    // // Check if any packet drops occurred.
-    // ret_code = stats_mgr.droppedPackets() ? 3 : 0;
-    return (ret_code);
+    return (0);
 }
 
 }
