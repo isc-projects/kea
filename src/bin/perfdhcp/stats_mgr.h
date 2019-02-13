@@ -213,7 +213,7 @@ public:
     /// }
     /// \endcode
     typedef boost::multi_index_container<
-        // Container holds shared_ptr<Pkt4> or shared_ptr<Pkt6> objects.
+        // Container holds PktPtr objects.
         dhcp::PktPtr,
         // List container indexes.
         boost::multi_index::indexed_by<
@@ -229,8 +229,7 @@ public:
                 // transaction id. This product is obtained by calling
                 // hashTransid() function.
                 boost::multi_index::global_fun<
-                    // Hashing function takes shared_ptr<Pkt4> or
-                    // shared_ptr<Pkt6> as argument.
+                    // Hashing function takes PktPtr as argument.
                     const dhcp::PktPtr&,
                     // ... and returns uint32 value.
                     uint32_t,
@@ -261,6 +260,9 @@ public:
     /// \param archive_enabled if true packets archive mode is enabled.
     /// In this mode all packets are stored throughout the test execution.
     /// \param boot_time Holds the timestamp when perfdhcp has been started.
+    /// \param ignore_timestamp_reorder if true then while matching
+    /// response packets to request ones negative time difference is ignored
+    /// otherwise exception is raised.
     ExchangeStats(const ExchangeType xchg_type,
                   const double drop_time,
                   const bool archive_enabled,
@@ -613,6 +615,9 @@ private:
     uint64_t rcvd_packets_num_;    ///< Total number of received packets.
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
 
+    /// If true then while matching
+    /// response packets to request ones negative time difference is ignored
+    /// otherwise exception is raised.
     bool ignore_timestamp_reorder_;
 };
 
@@ -653,6 +658,9 @@ public:
     /// the test. If this is not selected archiving should be disabled
     /// for performance reasons and to avoid waste of memory for storing
     /// large list of archived packets.
+    /// \param ignore_timestamp_reorder if true then while matching
+    /// response packets to request ones negative time difference is ignored
+    /// otherwise exception is raised.
     StatsMgr(bool ignore_timestamp_reorder);
 
     /// \brief Specify new exchange type.
@@ -1115,10 +1123,13 @@ private:
 
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
 
+    /// If true then while matching
+    /// response packets to request ones negative time difference is ignored
+    /// otherwise exception is raised.
     bool ignore_timestamp_reorder_;
 };
 
-/// Pointer to Statistics Manager for DHCPv4;
+/// Pointer to Statistics Manager;
 typedef boost::shared_ptr<StatsMgr> StatsMgrPtr;
 
 

@@ -124,6 +124,10 @@ public:
 class TestControl : public boost::noncopyable {
 public:
     /// \brief Default constructor.
+    ///
+    /// \param ignore_timestamp_reorder if true then while matching
+    /// response packets to request ones negative time difference is ignored
+    /// otherwise exception is raised.
     TestControl(bool ignore_timestamp_reorder);
 
     /// Packet template buffer.
@@ -214,15 +218,6 @@ public:
         macaddr_gen_ = generator;
     }
 
-    // We would really like following methods and members to be private but
-    // they have to be accessible for unit-testing. Another, possibly better,
-    // solution is to make this class friend of test class but this is not
-    // what's followed in other classes.
-//protected:
-public: // TODO clean up what should be and what should not be protected
-    /// Generate uniformly distributed integers in range of [min, max]
-    isc::util::random::UniformRandomIntegerGenerator number_generator_;
-
     /// \brief Removes cached DHCPv6 Reply packets every second.
     ///
     /// This function wipes cached Reply packets from the storage.
@@ -235,6 +230,93 @@ public: // TODO clean up what should be and what should not be protected
     /// just stop adding new packets when the certain threshold
     /// has been reached.
     void cleanCachedPackets();
+
+    bool interrupted() const { return interrupted_; }
+
+    StatsMgr& getStatsMgr() { return stats_mgr_; };
+
+    void start() { receiver_.start(); }
+    void stop() { receiver_.stop(); }
+
+    /// \brief Run wrapped command.
+    ///
+    /// \param do_stop execute wrapped command with "stop" argument.
+    void runWrapped(bool do_stop = false) const;
+
+    bool serverIdReceived() const { return first_packet_serverid_.size() > 0; }
+    std::string getServerId() const { return vector2Hex(first_packet_serverid_); }
+
+    /// \brief Send number of packets to initiate new exchanges.
+    ///
+    /// Method initiates the new DHCP exchanges by sending number
+    /// of DISCOVER (DHCPv4) or SOLICIT (DHCPv6) packets. If preload
+    /// mode was requested sent packets will not be counted in
+    /// the statistics. The responses from the server will be
+    /// received and counted as orphans because corresponding sent
+    /// packets are not included in StatsMgr for match.
+    /// When preload mode is disabled and diagnostics flag 'i' is
+    /// specified then function will be trying to receive late packets
+    /// before new packets are sent to the server. Statistics of
+    /// late received packets is updated accordingly.
+    ///
+    /// \todo do not count responses in preload mode as orphans.
+    ///
+    /// \param packets_num number of packets to be sent.
+    /// \param preload preload mode, packets not included in statistics.
+    /// \throw isc::Unexpected if thrown by packet sending method.
+    /// \throw isc::InvalidOperation if thrown by packet sending method.
+    /// \throw isc::OutOfRange if thrown by packet sending method.
+    void sendPackets(const uint64_t packets_num,
+                     const bool preload = false);
+
+    /// \brief Send number of DHCPREQUEST (renew) messages to a server.
+    ///
+    /// \param msg_num A number of messages to be sent.
+    ///
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleRequests(const uint64_t msg_num);
+
+    /// \brief Send number of DHCPv6 Renew or Release messages to the server.
+    ///
+    /// \param msg_type A type of the messages to be sent (DHCPV6_RENEW or
+    /// DHCPV6_RELEASE).
+    /// \param msg_num A number of messages to be sent.
+    ///
+    /// \return A number of messages actually sent.
+    uint64_t sendMultipleMessages6(const uint32_t msg_type,
+                                   const uint64_t msg_num);
+
+    /// \brief Pull packets from receiver and process them.
+    ///
+    /// It runs in a loop until there are no packets in receiver.
+    unsigned int consumeReceivedPackets();
+
+    /// \brief Print intermediate statistics.
+    ///
+    /// Print brief statistics regarding number of sent packets,
+    /// received packets and dropped packets so far.
+    void printIntermediateStats();
+
+    /// \brief Print performance statistics.
+    ///
+    /// Method prints performance statistics.
+    /// \throws isc::InvalidOperation if Statistics Manager was
+    /// not initialized.
+    void printStats() const;
+
+    /// \brief Print templates information.
+    ///
+    /// Method prints information about data offsets
+    /// in packet templates and their contents.
+    void printTemplates() const;
+
+    // We would really like following methods and members to be private but
+    // they have to be accessible for unit-testing. Another, possibly better,
+    // solution is to make this class friend of test class but this is not
+    // what's followed in other classes.
+protected:
+    /// Generate uniformly distributed integers in range of [min, max]
+    isc::util::random::UniformRandomIntegerGenerator number_generator_;
 
     /// \brief Creates DHCPREQUEST from a DHCPACK message.
     ///
@@ -444,28 +526,10 @@ public: // TODO clean up what should be and what should not be protected
     /// odd number of hexadecimal digits.
     void initPacketTemplates();
 
-    /// \brief Print intermediate statistics.
-    ///
-    /// Print brief statistics regarding number of sent packets,
-    /// received packets and dropped packets so far.
-    void printIntermediateStats();
-
     /// \brief Print rate statistics.
     ///
     /// Method print packet exchange rate statistics.
     void printRate() const;
-
-    /// \brief Print performance statistics.
-    ///
-    /// Method prints performance statistics.
-    /// \throws isc::InvalidOperation if Statistics Manager was
-    /// not initialized.
-    void printStats() const;
-
-    /// \brief Pull packets from receiver and process them.
-
-    /// It runs in a loop until there are no packets in receiver.
-    unsigned int consumeReceivedPackets();
 
     /// \brief Process received DHCPv4 packet.
     ///
@@ -591,46 +655,6 @@ public: // TODO clean up what should be and what should not be protected
     /// \throw isc::dhcp::SocketWriteError if failed to send the packet.
     void sendDiscover4(const std::vector<uint8_t>& template_buf,
                        const bool preload = false);
-
-    /// \brief Send number of packets to initiate new exchanges.
-    ///
-    /// Method initiates the new DHCP exchanges by sending number
-    /// of DISCOVER (DHCPv4) or SOLICIT (DHCPv6) packets. If preload
-    /// mode was requested sent packets will not be counted in
-    /// the statistics. The responses from the server will be
-    /// received and counted as orphans because corresponding sent
-    /// packets are not included in StatsMgr for match.
-    /// When preload mode is disabled and diagnostics flag 'i' is
-    /// specified then function will be trying to receive late packets
-    /// before new packets are sent to the server. Statistics of
-    /// late received packets is updated accordingly.
-    ///
-    /// \todo do not count responses in preload mode as orphans.
-    ///
-    /// \param packets_num number of packets to be sent.
-    /// \param preload preload mode, packets not included in statistics.
-    /// \throw isc::Unexpected if thrown by packet sending method.
-    /// \throw isc::InvalidOperation if thrown by packet sending method.
-    /// \throw isc::OutOfRange if thrown by packet sending method.
-    void sendPackets(const uint64_t packets_num,
-                     const bool preload = false);
-
-    /// \brief Send number of DHCPREQUEST (renew) messages to a server.
-    ///
-    /// \param msg_num A number of messages to be sent.
-    ///
-    /// \return A number of messages actually sent.
-    uint64_t sendMultipleRequests(const uint64_t msg_num);
-
-    /// \brief Send number of DHCPv6 Renew or Release messages to the server.
-    ///
-    /// \param msg_type A type of the messages to be sent (DHCPV6_RENEW or
-    /// DHCPV6_RELEASE).
-    /// \param msg_num A number of messages to be sent.
-    ///
-    /// \return A number of messages actually sent.
-    uint64_t sendMultipleMessages6(const uint32_t msg_type,
-                                   const uint64_t msg_num);
 
     /// \brief Send DHCPv4 renew (DHCPREQUEST).
     ///
@@ -787,29 +811,6 @@ public: // TODO clean up what should be and what should not be protected
     ///
     /// @param pkt6 options will be added here
     void addExtraOpts(const dhcp::Pkt6Ptr& pkt6);
-
-    StatsMgr& getStatsMgr() { return stats_mgr_; };
-
-    void start() { receiver_.start(); }
-    void stop() { receiver_.stop(); }
-
-    /// \brief Print templates information.
-    ///
-    /// Method prints information about data offsets
-    /// in packet templates and their contents.
-    void printTemplates() const;
-
-    /// \brief Run wrapped command.
-    ///
-    /// \param do_stop execute wrapped command with "stop" argument.
-    void runWrapped(bool do_stop = false) const;
-
-    bool serverIdReceived() const { return first_packet_serverid_.size() > 0; }
-    std::string getServerId() const { return vector2Hex(first_packet_serverid_); }
-
-    bool interrupted() const { return interrupted_; }
-
-protected:
 
     /// \brief Copies IA_NA or IA_PD option from one packet to another.
     ///
