@@ -18,7 +18,7 @@ namespace perfdhcp {
 
 class BasicScen : public boost::noncopyable {
 public:
-    BasicScen() : tc_(false) {};
+    BasicScen() {};
 
     /// \brief Check if test exit conditions fulfilled.
     ///

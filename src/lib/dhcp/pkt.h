@@ -396,6 +396,14 @@ public:
         return timestamp_;
     }
 
+    /// @brief Set packet timestamp.
+    ///
+    /// Sets packet timestamp to arbitrary value.
+    /// It is used by perfdhcp tool and should be used elsewhere.
+    void setTimestamp(boost::posix_time::ptime& timestamp) {
+        timestamp_ = timestamp;
+    }
+
     /// @brief Copies content of input buffer to output buffer.
     ///
     /// This is mostly a diagnostic function. It is being used for sending

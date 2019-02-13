@@ -18,7 +18,7 @@ namespace perfdhcp {
 
 class AvalancheScen : public boost::noncopyable {
 public:
-    AvalancheScen(): tc_(true), total_resent_(0) {};
+    AvalancheScen(): total_resent_(0) {};
 
     /// brief\ Run performance test.
     ///
@@ -36,6 +36,7 @@ private:
     TestControl tc_;
 
     std::unordered_map<ExchangeType, std::unordered_map<uint32_t, int>> retransmissions_;
+    std::unordered_map<ExchangeType, std::unordered_map<uint32_t, boost::posix_time::ptime>> start_times_;
     int total_resent_;
 
     int resendPackets(ExchangeType xchg_type);
