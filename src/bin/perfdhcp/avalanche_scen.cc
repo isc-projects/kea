@@ -102,11 +102,22 @@ AvalancheScen::run() {
         now = microsec_clock::universal_time();
         if (now - prev_cycle_time > milliseconds(200)) { // check if 0.2s elapsed
             prev_cycle_time = now;
-            auto still_left_cnt_do = resendPackets(ExchangeType::DO);
-            auto still_left_cnt_ra = resendPackets(ExchangeType::RA);
-            if (still_left_cnt_do + still_left_cnt_ra == 0) {
+            int still_left_cnt = 0;
+            if (options.getIpVersion() == 4) {
+                still_left_cnt += resendPackets(ExchangeType::DO);
+                still_left_cnt += resendPackets(ExchangeType::RA);
+            } else {
+                still_left_cnt += resendPackets(ExchangeType::SA);
+                still_left_cnt += resendPackets(ExchangeType::RR);
+            }
+
+            if (still_left_cnt == 0) {
                 break;
             }
+        }
+
+        if (tc_.interrupted()) {
+            break;
         }
     }
 
