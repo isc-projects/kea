@@ -353,6 +353,9 @@ public:
     /// \return true if single-threaded mode is enabled.
     bool isSingleThreaded() const { return single_thread_mode_; }
 
+    /// \brief Returns selected scenario.
+    ///
+    /// \return enum Scenario.
     Scenario getScenario() const { return scenario_; }
 
     /// \brief Returns server name.
