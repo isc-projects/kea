@@ -22,6 +22,8 @@ int
 AvalancheScen::resendPackets(ExchangeType xchg_type) {
     CommandOptions& options = CommandOptions::instance();
     const StatsMgr& stats_mgr(tc_.getStatsMgr());
+
+    // get list of sent packets that potentially need to be resent
     auto sent_packets_its = stats_mgr.getSentPackets(xchg_type);
     auto begin_it = std::get<0>(sent_packets_its);
     auto end_it = std::get<1>(sent_packets_its);
@@ -33,34 +35,42 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
     int resent_cnt = 0;
     for (auto it = begin_it; it != end_it; ++it) {
         still_left_cnt++;
+
         dhcp::PktPtr pkt = *it;
         auto trans_id = pkt->getTransid();
-        bool first_resend = false;
+
+        // get some things from previous retransmissions
+        bool first_resend = true;
         auto start_time = pkt->getTimestamp();
-        int rx_times = 0;
+        int retransmissions_count = 0;
         auto r_it = retrans.find(trans_id);
         if (r_it != retrans.end()) {
-            rx_times = (*r_it).second;
+            first_resend = false;
             start_time = (*start_times.find(trans_id)).second;
-        } else {
-            first_resend = true;
+            retransmissions_count = (*r_it).second;
         }
 
-        int delay = (1 << rx_times); // in seconds
+        // estimate back off time for resending this packet
+        int delay = (1 << retransmissions_count); // in seconds
         if (delay > 64) {
             delay = 64;
         }
         delay *= 1000;  // to miliseconds
         delay += random() % 2000 - 1000;  // adjust by random from -1000..1000 range
+
+        // if back-off time passed then resend
         auto now = microsec_clock::universal_time();
         if (now - start_time > milliseconds(delay)) {
             resent_cnt++;
             total_resent_++;
 
+            // remember sending time of original packet
             boost::posix_time::ptime original_timestamp;
             if (!first_resend) {
                 original_timestamp = pkt->getTimestamp();
             }
+
+            // do resend packet
             if (options.getIpVersion() == 4) {
                 Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
                 IfaceMgr::instance().send(pkt4);
@@ -68,14 +78,16 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
                 Pkt6Ptr pkt6 = boost::dynamic_pointer_cast<Pkt6>(pkt);
                 IfaceMgr::instance().send(pkt6);
             }
+
+            // restore sending time of original packet
             if (first_resend) {
                 start_times[trans_id] = pkt->getTimestamp();
             } else {
                 pkt->setTimestamp(original_timestamp);
             }
 
-            rx_times++;
-            retrans[trans_id] = rx_times;
+            retransmissions_count++;
+            retrans[trans_id] = retransmissions_count;
         }
     }
     if (resent_cnt > 0) {
