@@ -62,7 +62,7 @@ public:
 
 /// \brief Test Control class.
 ///
-/// This singleton class is used to run the performance test with
+/// This class is used to run the performance test with
 /// with \ref TestControl::run function. This function can be executed
 /// multiple times if desired because it resets TestControl's internal
 /// state every time it is executed. Prior to running \ref TestControl::run,

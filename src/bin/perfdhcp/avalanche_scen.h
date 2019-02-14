@@ -9,36 +9,41 @@
 
 #include <config.h>
 
-#include <perfdhcp/test_control.h>
+#include <perfdhcp/abstract_scen.h>
 
 
 namespace isc {
 namespace perfdhcp {
 
 
-class AvalancheScen : public boost::noncopyable {
+/// \brief Avalanche Scenario class.
+///
+/// This class is used to run the performance test where DHCP server
+/// is first loaded with indicated bumer of Discover or Solicit messages
+/// and then the class is waiting till receiving all required responses.
+/// Full DORA and SARR message sequences are expected.
+class AvalancheScen : public AbstractScen {
 public:
+    /// Default and the only constructor of AvalancheScen.
     AvalancheScen(): total_resent_(0) {};
 
     /// brief\ Run performance test.
     ///
-    /// Method runs whole performance test. Command line options must
-    /// be parsed prior to running this function. Otherwise function will
-    /// throw exception.
-    ///
-    /// \throw isc::InvalidOperation if command line options are not parsed.
-    /// \throw isc::Unexpected if internal Test Controller error occurred.
-    /// \return error_code, 3 if number of received packets is not equal
-    /// to number of sent packets, 0 if everything is ok.
+    /// Method runs whole performance test.
     int run();
 
 private:
-    TestControl tc_;
 
+    /// A map xchg type -> (a map of trans id -> retransmissions count.
     std::unordered_map<ExchangeType, std::unordered_map<uint32_t, int>> retransmissions_;
+    /// A map xchg type -> (a map of trans id -> time of sending first packet.
     std::unordered_map<ExchangeType, std::unordered_map<uint32_t, boost::posix_time::ptime>> start_times_;
+
+    /// Total number of resent packets.
     int total_resent_;
 
+    /// Resend packets for given exchange type that did not receive
+    /// a response yet.
     int resendPackets(ExchangeType xchg_type);
 
 };
