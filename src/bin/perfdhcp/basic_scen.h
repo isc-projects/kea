@@ -9,28 +9,21 @@
 
 #include <config.h>
 
-#include <perfdhcp/test_control.h>
+#include <perfdhcp/abstract_scen.h>
 
 
 namespace isc {
 namespace perfdhcp {
 
 
-class BasicScen : public boost::noncopyable {
+/// \brief Basic Scenario class.
+///
+/// This class is used to run the performance test where DHCP server
+/// is continuously loaded with DHCP messages according to given rate.
+class BasicScen : public AbstractScen {
 public:
+    /// Default and the only constructor of BasicScen.
     BasicScen() {};
-
-    /// \brief Check if test exit conditions fulfilled.
-    ///
-    /// Method checks if the test exit conditions are fulfilled.
-    /// Exit conditions are checked periodically from the
-    /// main loop. Program should break the main loop when
-    /// this method returns true. It is calling function
-    /// responsibility to break main loop gracefully and
-    /// cleanup after test execution.
-    ///
-    /// \return true if any of the exit conditions is fulfilled.
-    bool checkExitConditions();
 
     /// brief\ Run performance test.
     ///
@@ -45,8 +38,6 @@ public:
     int run();
 
 private:
-    TestControl tc_;
-
     /// \brief A rate control class for Discover and Solicit messages.
     RateControl basic_rate_control_;
     /// \brief A rate control class for Renew messages.
@@ -54,8 +45,17 @@ private:
     /// \brief A rate control class for Release messages.
     RateControl release_rate_control_;
 
-    int resendPackets(ExchangeType xchg_type);
-
+    /// \brief Check if test exit conditions fulfilled.
+    ///
+    /// Method checks if the test exit conditions are fulfilled.
+    /// Exit conditions are checked periodically from the
+    /// main loop. Program should break the main loop when
+    /// this method returns true. It is calling function
+    /// responsibility to break main loop gracefully and
+    /// cleanup after test execution.
+    ///
+    /// \return true if any of the exit conditions is fulfilled.
+    bool checkExitConditions();
 };
 
 }

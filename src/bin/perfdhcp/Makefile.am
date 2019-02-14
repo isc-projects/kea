@@ -27,6 +27,7 @@ libperfdhcp_la_SOURCES += stats_mgr.cc stats_mgr.h
 libperfdhcp_la_SOURCES += test_control.cc test_control.h
 libperfdhcp_la_SOURCES += receiver.cc receiver.h
 libperfdhcp_la_SOURCES += perf_socket.cc perf_socket.h
+libperfdhcp_la_SOURCES += abstract_scen.h
 libperfdhcp_la_SOURCES += avalanche_scen.cc avalanche_scen.h
 libperfdhcp_la_SOURCES += basic_scen.cc basic_scen.h
 

@@ -32,7 +32,7 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
     auto& start_times = start_times_[xchg_type];
 
     int still_left_cnt = 0;
-    int resent_cnt = 0;
+    int current_cycle_resent_cnt = 0;
     for (auto it = begin_it; it != end_it; ++it) {
         still_left_cnt++;
 
@@ -40,18 +40,18 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
         auto trans_id = pkt->getTransid();
 
         // get some things from previous retransmissions
-        bool first_resend = true;
         auto start_time = pkt->getTimestamp();
-        int retransmissions_count = 0;
+        int current_pkt_resent_cnt = 0;
         auto r_it = retrans.find(trans_id);
         if (r_it != retrans.end()) {
-            first_resend = false;
             start_time = (*start_times.find(trans_id)).second;
-            retransmissions_count = (*r_it).second;
+            current_pkt_resent_cnt = (*r_it).second;
+        } else {
+            start_times[trans_id] = start_time;
         }
 
         // estimate back off time for resending this packet
-        int delay = (1 << retransmissions_count); // in seconds
+        int delay = (1 << current_pkt_resent_cnt); // in seconds
         if (delay > 64) {
             delay = 64;
         }
@@ -61,14 +61,8 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
         // if back-off time passed then resend
         auto now = microsec_clock::universal_time();
         if (now - start_time > milliseconds(delay)) {
-            resent_cnt++;
+            current_cycle_resent_cnt++;
             total_resent_++;
-
-            // remember sending time of original packet
-            boost::posix_time::ptime original_timestamp;
-            if (!first_resend) {
-                original_timestamp = pkt->getTimestamp();
-            }
 
             // do resend packet
             if (options.getIpVersion() == 4) {
@@ -80,20 +74,16 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
             }
 
             // restore sending time of original packet
-            if (first_resend) {
-                start_times[trans_id] = pkt->getTimestamp();
-            } else {
-                pkt->setTimestamp(original_timestamp);
-            }
+            pkt->setTimestamp(start_time);
 
-            retransmissions_count++;
-            retrans[trans_id] = retransmissions_count;
+            current_pkt_resent_cnt++;
+            retrans[trans_id] = current_pkt_resent_cnt;
         }
     }
-    if (resent_cnt > 0) {
+    if (current_cycle_resent_cnt > 0) {
         auto now = microsec_clock::universal_time();
         std::cout << now << " " << xchg_type << ": still waiting for "
-                  << still_left_cnt << " answers, resent " << resent_cnt
+                  << still_left_cnt << " answers, resent " << current_cycle_resent_cnt
                   << ", retrying " << retrans.size() << std::endl;
     }
     return still_left_cnt;
@@ -103,6 +93,17 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
 
 int
 AvalancheScen::run() {
+    // First indicated number of DISCOVER packets eg. 4000 are sent.
+    // Then in a loop responses to received packets (this is
+    // consumeReceivedPackets()) are sent and then for every 200ms it is checked
+    // if reponses to sent packets were received. If not packets are resent.
+    // This happens in resendPackets() method. For each packet it is checked
+    // how many times it was already resent and then back off time is calculated:
+    // 1, 2, 4, 8, 16, 64 (max) seconds. If estimated time has elapsed
+    // from previous sending then the packet is resent. Some stats are collected
+    // and printed during runtime. The whole procedure is stopeed when
+    // all packets got reponses.
+
     CommandOptions& options = CommandOptions::instance();
 
     uint32_t clients_num = options.getClientsNum() == 0 ?
