@@ -41,12 +41,21 @@ using namespace isc::dhcp;
 using namespace isc::config;
 using namespace isc::dhcp::test;
 
+/// @brief Class dedicated to testing vendor options in DHCPv4
+///
+/// For the time being it does not provide any additional functionality, but it
+/// groups all vendor related tests under a single name. There were too many
+/// tests in Dhcpv4SrvTest class anyway.
+class VendorOptsTest : public Dhcpv4SrvTest {
+
+};
+
 /// @todo Add more extensive vendor options tests, including multiple
 ///       vendor options
 
 // Checks if vendor options are parsed correctly and requested vendor options
 // are echoed back.
-TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
+TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -132,7 +141,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsis) {
 }
 
 // Checks if server is able to handle a relayed traffic from DOCSIS3.0 modems
-TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
+TEST_F(VendorOptsTest, docsisVendorOptionsParse) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
@@ -156,7 +165,7 @@ TEST_F(Dhcpv4SrvTest, docsisVendorOptionsParse) {
 }
 
 // Checks if server is able to parse incoming docsis option and extract suboption 1 (docsis ORO)
-TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
+TEST_F(VendorOptsTest, docsisVendorORO) {
 
     // Let's get a traffic capture from DOCSIS3.0 modem
     Pkt4Ptr dis = PktCaptures::captureRelayedDiscover();
@@ -178,7 +187,7 @@ TEST_F(Dhcpv4SrvTest, docsisVendorORO) {
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and the requested options are actually assigned.
-TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
+TEST_F(VendorOptsTest, vendorOptionsORO) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -273,7 +282,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsORO) {
 
 // This test checks if Option Request Option (ORO) in docsis (vendor-id=4491)
 // vendor options is parsed correctly and persistent options are actually assigned.
-TEST_F(Dhcpv4SrvTest, vendorPersistentOptions) {
+TEST_F(VendorOptsTest, vendorPersistentOptions) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -356,7 +365,7 @@ TEST_F(Dhcpv4SrvTest, vendorPersistentOptions) {
 
 // Test checks whether it is possible to use option definitions defined in
 // src/lib/dhcp/docsis3_option_defs.h.
-TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
+TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
     ConstElementPtr x;
     string config_prefix = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ ]"
@@ -415,7 +424,7 @@ TEST_F(Dhcpv4SrvTest, vendorOptionsDocsisDefinitions) {
 /// code was removed and replaced with generic classification. One day
 /// we should rewrite this test to use classes. It would check that the
 /// classification system can be used for docsis packets.
-TEST_F(Dhcpv4SrvTest, DISABLED_docsisClientClassification) {
+TEST_F(VendorOptsTest, DISABLED_docsisClientClassification) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -443,7 +452,7 @@ TEST_F(Dhcpv4SrvTest, DISABLED_docsisClientClassification) {
 }
 
 // Verifies last resort option 43 is backward compatible
-TEST_F(Dhcpv4SrvTest, option43LastResort) {
+TEST_F(VendorOptsTest, option43LastResort) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -525,7 +534,7 @@ TEST_F(Dhcpv4SrvTest, option43LastResort) {
 }
 
 // Checks effect of raw not compatible option 43 (no failure)
-TEST_F(Dhcpv4SrvTest, option43BadRaw) {
+TEST_F(VendorOptsTest, option43BadRaw) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -613,7 +622,7 @@ TEST_F(Dhcpv4SrvTest, option43BadRaw) {
 }
 
 // Checks effect of raw not compatible option 43 (failure)
-TEST_F(Dhcpv4SrvTest, option43FailRaw) {
+TEST_F(VendorOptsTest, option43FailRaw) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -687,7 +696,7 @@ TEST_F(Dhcpv4SrvTest, option43FailRaw) {
 }
 
 // Verifies raw option 43 can be handled (global)
-TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
+TEST_F(VendorOptsTest, option43RawGlobal) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -779,7 +788,7 @@ TEST_F(Dhcpv4SrvTest, option43RawGlobal) {
 }
 
 // Verifies raw option 43 can be handled (catch-all class)
-TEST_F(Dhcpv4SrvTest, option43RawClass) {
+TEST_F(VendorOptsTest, option43RawClass) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -874,7 +883,7 @@ TEST_F(Dhcpv4SrvTest, option43RawClass) {
 }
 
 // Verifies option 43 deferred processing (one class)
-TEST_F(Dhcpv4SrvTest, option43Class) {
+TEST_F(VendorOptsTest, option43Class) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -991,7 +1000,7 @@ TEST_F(Dhcpv4SrvTest, option43Class) {
 }
 
 // Verifies option 43 priority
-TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
+TEST_F(VendorOptsTest, option43ClassPriority) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -1129,7 +1138,7 @@ TEST_F(Dhcpv4SrvTest, option43ClassPriority) {
 }
 
 // Verifies option 43 deferred processing (two classes)
-TEST_F(Dhcpv4SrvTest, option43Classes) {
+TEST_F(VendorOptsTest, option43Classes) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
@@ -1269,7 +1278,7 @@ TEST_F(Dhcpv4SrvTest, option43Classes) {
 }
 
 // Checks effect of raw not compatible option 43 sent by a client (failure)
-TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
+TEST_F(VendorOptsTest, clientOption43FailRaw) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
@@ -1311,7 +1320,7 @@ TEST_F(Dhcpv4SrvTest, clientOption43FailRaw) {
 }
 
 // Verifies raw option 43 sent by a client can be handled (global)
-TEST_F(Dhcpv4SrvTest, clientOption43RawGlobal) {
+TEST_F(VendorOptsTest, clientOption43RawGlobal) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
@@ -1359,7 +1368,7 @@ TEST_F(Dhcpv4SrvTest, clientOption43RawGlobal) {
 }
 
 // Verifies raw option 43 sent by a client can be handled (catch-all class)
-TEST_F(Dhcpv4SrvTest, clientOption43RawClass) {
+TEST_F(VendorOptsTest, clientOption43RawClass) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
