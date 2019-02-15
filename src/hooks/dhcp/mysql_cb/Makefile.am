@@ -35,8 +35,8 @@ nodist_libmysqlcb_la_SOURCES = mysql_cb_messages.cc mysql_cb_messages.h
 libmysqlcb_la_CXXFLAGS = $(AM_CXXFLAGS)
 libmysqlcb_la_CPPFLAGS = $(AM_CPPFLAGS)
 
-# install the shared object into $(libdir)/hooks
-lib_hooksdir = $(libdir)/hooks
+# install the shared object into $(libdir)/kea/hooks
+lib_hooksdir = $(libdir)/kea/hooks
 lib_hooks_LTLIBRARIES = libdhcp_mysql_cb.la
 
 libdhcp_mysql_cb_la_SOURCES  =
