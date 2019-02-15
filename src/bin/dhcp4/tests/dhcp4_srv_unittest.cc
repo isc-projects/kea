@@ -21,7 +21,6 @@
 #include <dhcp/option4_addrlst.h>
 #include <dhcp/option_custom.h>
 #include <dhcp/option_int_array.h>
-#include <dhcp/option_vendor.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter_inet.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
@@ -3280,63 +3279,6 @@ TEST_F(Dhcpv4SrvTest, userContext) {
     ASSERT_TRUE(pools[0]);
     ASSERT_TRUE(pools[0]->getContext());
     EXPECT_EQ("{ \"value\": 42 }", pools[0]->getContext()->str());
-}
-
-// Verifies that an a client query with a truncated length in
-// vendor option (125) will still be processed by the server.
-TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
-    IfaceMgrTestConfig test_config(true);
-    IfaceMgr::instance().openSockets4();
-
-    NakedDhcpv4Srv srv(0);
-
-    string config = "{ \"interfaces-config\": {"
-        "    \"interfaces\": [ \"*\" ]"
-        "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"subnet4\": [ { "
-        "    \"pools\": [ { \"pool\": \"10.206.80.0/25\" } ],"
-        "    \"subnet\": \"10.206.80.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
-        "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
-
-    ConstElementPtr json;
-    ASSERT_NO_THROW(json = parseDHCP4(config));
-    ConstElementPtr status;
-
-    // Configure the server and make sure the config is accepted
-    EXPECT_NO_THROW(status = configureDhcp4Server(srv, json));
-    ASSERT_TRUE(status);
-    comment_ = config::parseAnswer(rcode_, status);
-    ASSERT_EQ(0, rcode_);
-
-    CfgMgr::instance().commit();
-
-    // Create a DISCOVER with a VIVSO option whose length is
-    // too short.
-    Pkt4Ptr dis;
-    ASSERT_NO_THROW(dis = PktCaptures::discoverWithTruncatedVIVSO());
-
-    // Simulate that we have received that traffic
-    srv.fakeReceive(dis);
-
-    // Server will now process to run its normal loop, but instead of calling
-    // IfaceMgr::receive4(), it will read all packets from the list set by
-    // fakeReceive()
-    // In particular, it should call registered buffer4_receive callback.
-    srv.run();
-
-    // Check that the server did send a response
-    ASSERT_EQ(1, srv.fake_sent_.size());
-
-    // Make sure that we received an response and it was an offer
-    Pkt4Ptr offer = srv.fake_sent_.front();
-    ASSERT_TRUE(offer);
 }
 
 /// @todo: Implement proper tests for MySQL lease/host database,
