@@ -65,8 +65,6 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
         "          \"name\": \"tftp-servers\","
         "          \"space\": \"vendor-4491\","
@@ -77,9 +75,6 @@ TEST_F(VendorOptsTest, vendorOptionsDocsis) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.254.226.0/25\" } ],"
         "    \"subnet\": \"10.254.226.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
         " } ],"
         "\"valid-lifetime\": 4000 }";
@@ -198,8 +193,6 @@ TEST_F(VendorOptsTest, vendorOptionsORO) {
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
         "          \"name\": \"tftp-servers\","
         "          \"space\": \"vendor-4491\","
@@ -210,12 +203,9 @@ TEST_F(VendorOptsTest, vendorOptionsORO) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        " } ]"
+        "}";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -293,8 +283,6 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
         "          \"name\": \"tftp-servers\","
         "          \"space\": \"vendor-4491\","
@@ -306,12 +294,9 @@ TEST_F(VendorOptsTest, vendorPersistentOptions) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        " } ]"
+        "}";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
@@ -371,8 +356,6 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
     string config_prefix = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ ]"
         "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
         "    \"option-data\": [ {"
         "          \"name\": \"tftp-servers\","
         "          \"space\": \"vendor-4491\","
@@ -384,12 +367,9 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\":  \"192.0.2.1 - 192.0.2.50\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"renew-timer\": 1000, "
-        "    \"rebind-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"\""
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        " } ]"
+        "}";
 
     // There is docsis3 (vendor-id=4491) vendor option 2, which is a
     // tftp-server. Its format is list of IPv4 addresses.
@@ -542,9 +522,6 @@ TEST_F(VendorOptsTest, option43LastResort) {
     // so should be backward compatible.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -625,9 +602,6 @@ TEST_F(VendorOptsTest, option43BadRaw) {
     // an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -713,9 +687,6 @@ TEST_F(VendorOptsTest, option43FailRaw) {
     // raises an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -785,9 +756,6 @@ TEST_F(VendorOptsTest, option43RawGlobal) {
     // in a global definition.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -877,9 +845,6 @@ TEST_F(VendorOptsTest, option43RawClass) {
     // in a class definition.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"192.0.2.1 - 192.0.2.100\" } ], "
         "    \"subnet\": \"192.0.2.0/24\" } ],"
@@ -972,9 +937,6 @@ TEST_F(VendorOptsTest, option43Class) {
     // and data for it and its sub-option.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"option-def\": [ "
         "{   \"code\": 1, "
         "    \"name\": \"foo\", "
@@ -1091,9 +1053,6 @@ TEST_F(VendorOptsTest, option43ClassPriority) {
     // option-data in the client-class.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"option-def\": [ "
         "{   \"code\": 1, "
         "    \"name\": \"foo\", "
@@ -1228,9 +1187,6 @@ TEST_F(VendorOptsTest, option43Classes) {
     // (from a set?) applies.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"option-def\": [ "
         "{   \"code\": 1, "
         "    \"name\": \"foo\", "
@@ -1368,9 +1324,6 @@ TEST_F(VendorOptsTest, clientOption43FailRaw) {
     // raises an exception.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
         "    \"subnet\": \"10.0.0.0/24\" } ],"
@@ -1408,9 +1361,6 @@ TEST_F(VendorOptsTest, clientOption43RawGlobal) {
     // in a global definition.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
         "    \"subnet\": \"10.0.0.0/24\" } ],"
@@ -1456,9 +1406,6 @@ TEST_F(VendorOptsTest, clientOption43RawClass) {
     // in a class definition.
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ] }, "
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
-        "\"valid-lifetime\": 4000, "
         "\"subnet4\": [ "
         "{   \"pools\": [ { \"pool\": \"10.0.0.10 - 10.0.0.100\" } ], "
         "    \"subnet\": \"10.0.0.0/24\" } ],"
@@ -1509,8 +1456,6 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
     string config = "{ \"interfaces-config\": {"
         "    \"interfaces\": [ \"*\" ]"
         "},"
-        "\"rebind-timer\": 2000, "
-        "\"renew-timer\": 1000, "
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"10.206.80.0/25\" } ],"
         "    \"subnet\": \"10.206.80.0/24\", "
@@ -1518,8 +1463,8 @@ TEST_F(Dhcpv4SrvTest, truncatedVIVSOOption) {
         "    \"renew-timer\": 1000, "
         "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        " } ]"
+        "}";
 
     ConstElementPtr json;
     ASSERT_NO_THROW(json = parseDHCP4(config));
