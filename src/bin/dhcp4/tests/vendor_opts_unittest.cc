@@ -420,11 +420,9 @@ TEST_F(VendorOptsTest, vendorOptionsDocsisDefinitions) {
 
 /// Checks if DOCSIS client packets are classified properly
 ///
-/// @todo: With the change in #4626 the vendorClassSpecificProcessing
-/// code was removed and replaced with generic classification. One day
-/// we should rewrite this test to use classes. It would check that the
-/// classification system can be used for docsis packets.
-TEST_F(VendorOptsTest, DISABLED_docsisClientClassification) {
+/// The test has been updated to work with the updated generic
+/// vendor options handling code.
+TEST_F(VendorOptsTest, docsisClientClassification) {
 
     NakedDhcpv4Srv srv(0);
 
@@ -434,9 +432,11 @@ TEST_F(VendorOptsTest, DISABLED_docsisClientClassification) {
     ASSERT_NO_THROW(dis1 = PktCaptures::captureRelayedDiscover());
     ASSERT_NO_THROW(dis1->unpack());
 
+    std::cout << dis1->toText() << std::endl;
+
     srv.classifyPacket(dis1);
 
-    EXPECT_TRUE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
+    EXPECT_TRUE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
     EXPECT_FALSE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
 
     // Let's create a relayed DISCOVER. This particular relayed DISCOVER has
@@ -448,7 +448,7 @@ TEST_F(VendorOptsTest, DISABLED_docsisClientClassification) {
     srv.classifyPacket(dis2);
 
     EXPECT_TRUE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
-    EXPECT_FALSE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0"));
+    EXPECT_FALSE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
 }
 
 // Verifies last resort option 43 is backward compatible
