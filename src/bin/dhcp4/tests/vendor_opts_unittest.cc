@@ -453,7 +453,7 @@ TEST_F(VendorOptsTest, docsisClientClassification) {
 // Checks that it's possible to have a vivso (125) option in the response
 // only. Once specific client (Genexis) sends only vendor-class info and
 // expects the server to include vivso in the response.
-TEST_F(VendorOptsTest, vendorInResponseOnly) {
+TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
     Dhcp4Client client;
@@ -469,8 +469,6 @@ TEST_F(VendorOptsTest, vendorInResponseOnly) {
         "    \"interfaces-config\": {"
         "        \"interfaces\": [ \"*\" ]"
         "    },"
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
         "    \"option-def\": ["
         "        {"
         "            \"name\": \"tftp\","
@@ -498,12 +496,9 @@ TEST_F(VendorOptsTest, vendorInResponseOnly) {
         "\"subnet4\": [ { "
         "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
         "    \"subnet\": \"192.0.2.0/24\", "
-        "    \"rebind-timer\": 2000, "
-        "    \"renew-timer\": 1000, "
-        "    \"valid-lifetime\": 4000,"
         "    \"interface\": \"eth0\" "
-        " } ],"
-        "\"valid-lifetime\": 4000 }";
+        " } ]"
+        "}";
 
     EXPECT_NO_THROW(configure(config, *client.getServer()));
 
@@ -511,18 +506,29 @@ TEST_F(VendorOptsTest, vendorInResponseOnly) {
     OptionPtr vopt(new OptionString(Option::V4, DHO_VENDOR_CLASS_IDENTIFIER,
                                     "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
     client.addExtraOption(vopt);
+    client.requestOptions(DHO_VIVSO_SUBOPTIONS);
 
     // Let's check whether the server is not able to process this packet
-    // and raises an exception so the response is empty.
+    // and include vivso with appropriate sub-options
     EXPECT_NO_THROW(client.doDiscover());
     ASSERT_TRUE(client.getContext().response_);
 
-    OptionPtr rsp = client.getContext().response_->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    // Check there's a response.
+    OptionPtr rsp = client.getContext().response_->getOption(DHO_VIVSO_SUBOPTIONS);
     ASSERT_TRUE(rsp);
-    EXPECT_EQ("HMC1000.v1.3.0-R,Element-P1090,genexis.eu",
-              rsp->toText());
-}
 
+    // Check that it includes vivso with vendor-id = 25167
+    OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
+    ASSERT_TRUE(rsp_vivso);
+    EXPECT_EQ(25167, rsp_vivso->getVendorId());
+
+    // Now check that it contains suboption 2 with appropriate content.
+    OptionPtr subopt2 = rsp_vivso->getOption(2);
+    ASSERT_TRUE(subopt2);
+    vector<uint8_t> subopt2bin = subopt2->toBinary(false);
+    string txt(subopt2bin.begin(), subopt2bin.end());
+    EXPECT_EQ("tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img", txt);
+}
 
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
