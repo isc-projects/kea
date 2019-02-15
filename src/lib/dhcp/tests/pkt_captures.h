@@ -47,6 +47,13 @@ public:
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr discoverWithTruncatedVIVSO();
 
+    /// @brief returns captured DISCOVER from Genexis hardware.
+    ///
+    /// This device in uncommon, because it doesn't send VIVSO in Dicover, but
+    /// expects one in Offer.
+    /// @return DISCOVER.
+    static isc::dhcp::Pkt4Ptr discoverGenexis();
+
     // see pkt_captures6.cc for descriptions
     // The descriptions are too large and too closely related to the
     // code, so it is kept in .cc rather than traditionally in .h
