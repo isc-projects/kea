@@ -28,6 +28,7 @@
 #include <dhcp/tests/iface_mgr_test_config.h>
 #include <dhcp/option_int_array.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
 #include <dhcp/tests/pkt_captures.h>
 #include <dhcp/docsis3_option_defs.h>
@@ -432,8 +433,6 @@ TEST_F(VendorOptsTest, docsisClientClassification) {
     ASSERT_NO_THROW(dis1 = PktCaptures::captureRelayedDiscover());
     ASSERT_NO_THROW(dis1->unpack());
 
-    std::cout << dis1->toText() << std::endl;
-
     srv.classifyPacket(dis1);
 
     EXPECT_TRUE(dis1->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
@@ -450,6 +449,80 @@ TEST_F(VendorOptsTest, docsisClientClassification) {
     EXPECT_TRUE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "eRouter1.0"));
     EXPECT_FALSE(dis2->inClass(srv.VENDOR_CLASS_PREFIX + "docsis3.0:"));
 }
+
+// Checks that it's possible to have a vivso (125) option in the response
+// only. Once specific client (Genexis) sends only vendor-class info and
+// expects the server to include vivso in the response.
+TEST_F(VendorOptsTest, vendorInResponseOnly) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets4();
+    Dhcp4Client client;
+
+    // The config defines custom vendor 125 suboption 2 that conveys a TFTP URL.
+    // The client doesn't send vendor 125 option, so normal vendor option
+    // processing is impossible. However, since there's a class defined that
+    // matches client's packets and that class inserts vivso in the response,
+    // Kea should be able to figure out the vendor-id and then also insert
+    // suboption 2 with the TFTP URL.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ \"*\" ]"
+        "    },"
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"tftp\","
+        "            \"code\": 2,"
+        "            \"space\": \"vendor-25167\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "    {"
+        "        \"name\": \"cpe_genexis\","
+        "        \"test\": \"substring(option[60].hex,0,7) == 'HMC1000'\","
+        "        \"option-data\": ["
+        "        {"
+        "            \"name\": \"vivso-suboptions\","
+        "            \"data\": \"25167\""
+        "        },"
+        "        {"
+        "            \"name\": \"tftp\","
+        "            \"space\": \"vendor-25167\","
+        "            \"data\": \"tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img\","
+        "            \"always-send\": true"
+        "        } ]"
+        "    } ],"
+        "\"subnet4\": [ { "
+        "    \"pools\": [ { \"pool\": \"192.0.2.0/25\" } ],"
+        "    \"subnet\": \"192.0.2.0/24\", "
+        "    \"rebind-timer\": 2000, "
+        "    \"renew-timer\": 1000, "
+        "    \"valid-lifetime\": 4000,"
+        "    \"interface\": \"eth0\" "
+        " } ],"
+        "\"valid-lifetime\": 4000 }";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // A a vendor-class identifier (this matches what Genexis hardware sends)
+    OptionPtr vopt(new OptionString(Option::V4, DHO_VENDOR_CLASS_IDENTIFIER,
+                                    "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
+    client.addExtraOption(vopt);
+
+    // Let's check whether the server is not able to process this packet
+    // and raises an exception so the response is empty.
+    EXPECT_NO_THROW(client.doDiscover());
+    ASSERT_TRUE(client.getContext().response_);
+
+    OptionPtr rsp = client.getContext().response_->getOption(DHO_VENDOR_ENCAPSULATED_OPTIONS);
+    ASSERT_TRUE(rsp);
+    EXPECT_EQ("HMC1000.v1.3.0-R,Element-P1090,genexis.eu",
+              rsp->toText());
+}
+
 
 // Verifies last resort option 43 is backward compatible
 TEST_F(VendorOptsTest, option43LastResort) {
