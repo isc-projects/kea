@@ -1472,27 +1472,29 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
 
     uint32_t vendor_id = 0;
 
-    // Try to get the vendor option from the client packet. This is how it's supposed to be
-    // done. Client sends vivso, we look at the vendor-id and then send back the vendor
-    // options specific to that client.
+    // Try to get the vendor option from the client packet. This is how it's
+    // supposed to be done. Client sends vivso, we look at the vendor-id and
+    // then send back the vendor options specific to that client.
     boost::shared_ptr<OptionVendor> vendor_req = boost::dynamic_pointer_cast<
         OptionVendor>(ex.getQuery()->getOption(DHO_VIVSO_SUBOPTIONS));
     if (vendor_req) {
         vendor_id = vendor_req->getVendorId();
     }
 
-    // Something is fishy. Client was supposed to send vivso, but didn't. Let's try an
-    // alternative. It's possible that the server already inserted vivso in the response
-    // message, (e.g. by using client classification or perhaps a hook inserted it).
-    boost::shared_ptr<OptionVendor> vendor_rsp = boost::dynamic_pointer_cast<OptionVendor>
-        (ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS));
+    // Something is fishy. Client was supposed to send vivso, but didn't.
+    // Let's try an alternative. It's possible that the server already
+    // inserted vivso in the response message, (e.g. by using client
+    // classification or perhaps a hook inserted it).
+    boost::shared_ptr<OptionVendor> vendor_rsp = boost::dynamic_pointer_cast<
+        OptionVendor>(ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS));
     if (vendor_rsp) {
         vendor_id = vendor_rsp->getVendorId();
     }
 
     if (!vendor_req && !vendor_rsp) {
-        // Ok, we're out of luck today. Neither client nor server packets have vivso.
-        // There is no way to figure out vendor-id here. We give up.
+        // Ok, we're out of luck today. Neither client nor server packets
+        // have vivso.  There is no way to figure out vendor-id here.
+        // We give up.
         return;
     }
 
@@ -1536,8 +1538,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
     }
 
     if (!vendor_rsp) {
-        // It's possible that vivso was inserted already by client class or a hook. If that is so,
-        // let's use it.
+        // It's possible that vivso was inserted already by client class or
+        // a hook. If that is so, let's use it.
         vendor_rsp.reset(new OptionVendor(Option::V4, vendor_id));
     }
 
@@ -1557,8 +1559,8 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             }
         }
 
-        // If we added some sub-options and the vivso option is not in the response
-        // already, then add it.
+        // If we added some sub-options and the vivso option is not in
+        // the response already, then add it.
         if (added && !ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS)) {
             ex.getResponse()->addOption(vendor_rsp);
         }
