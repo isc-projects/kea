@@ -482,7 +482,7 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
 
     EXPECT_NO_THROW(configure(config, *client.getServer()));
 
-    // A a vendor-class identifier (this matches what Genexis hardware sends)
+    // Add a vendor-class identifier (this matches what Genexis hardware sends)
     OptionPtr vopt(new OptionString(Option::V4, DHO_VENDOR_CLASS_IDENTIFIER,
                                     "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
     client.addExtraOption(vopt);
