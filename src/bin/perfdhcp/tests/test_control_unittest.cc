@@ -31,6 +31,62 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::perfdhcp;
 
+/// \brief FakePerfSocket class that mocks PerfSocket.
+///
+/// It stubs send and receive operations and collects statistics.
+class FakePerfSocket: public BasePerfSocket {
+public:
+    /// \brief Default constructor for FakePerfSocket.
+    FakePerfSocket() :
+        iface_(boost::make_shared<Iface>("fake", 0)),
+        sent_cnt_(0),
+        recv_cnt_(0) {};
+
+    IfacePtr iface_;  ///< Local fake interface.
+
+    int sent_cnt_;  ///< Counter of sent packets
+    int recv_cnt_;  ///< Counter of received packets.
+
+    /// \brief Simulate receiving DHCPv4 packet.
+    virtual dhcp::Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec) override {
+        (void)timeout_sec; // silence compile 'unused parameter' warning;
+        (void)timeout_usec; // silence compile 'unused parameter' warning;
+        recv_cnt_++;
+        return(dhcp::Pkt4Ptr());
+    };
+
+    /// \brief Simulate receiving DHCPv6 packet.
+    virtual dhcp::Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec) override {
+        (void)timeout_sec; // silence compile 'unused parameter' warning;
+        (void)timeout_usec; // silence compile 'unused parameter' warning;
+        recv_cnt_++;
+        return(dhcp::Pkt6Ptr());
+    };
+
+    /// \brief Simulate sending DHCPv4 packet.
+    virtual bool send(const dhcp::Pkt4Ptr& pkt) override {
+        sent_cnt_++;
+        pkt->updateTimestamp();
+        return true;
+    };
+
+    /// \brief Simulate sending DHCPv6 packet.
+    virtual bool send(const dhcp::Pkt6Ptr& pkt) override {
+        sent_cnt_++;
+        pkt->updateTimestamp();
+        return true;
+    };
+
+    /// \brief Override getting interface.
+    virtual IfacePtr getIface() override { return iface_; }
+
+    void reset() {
+        sent_cnt_ = 0;
+        recv_cnt_ = 0;
+    }
+};
+
+
 /// \brief Test Control class with protected members made public.
 ///
 /// This class makes protected TestControl class's members public
@@ -74,7 +130,6 @@ public:
     /// \brief Pointer to incremental generator.
     typedef boost::shared_ptr<IncrementalGenerator> IncrementalGeneratorPtr;
 
-    using TestControl::checkExitConditions;
     using TestControl::createMessageFromReply;
     using TestControl::createRequestFromAck;
     using TestControl::factoryElapsedTime6;
@@ -88,8 +143,6 @@ public:
     using TestControl::generateMacAddress;
     using TestControl::getTemplateBuffer;
     using TestControl::initPacketTemplates;
-    using TestControl::initializeStatsMgr;
-    using TestControl::openSocket;
     using TestControl::processReceivedPacket4;
     using TestControl::processReceivedPacket6;
     using TestControl::registerOptionFactories;
@@ -103,9 +156,7 @@ public:
     using TestControl::sendSolicit6;
     using TestControl::setDefaults4;
     using TestControl::setDefaults6;
-    using TestControl::basic_rate_control_;
-    using TestControl::renew_rate_control_;
-    using TestControl::release_rate_control_;
+    using TestControl::socket_;
     using TestControl::last_report_;
     using TestControl::transid_gen_;
     using TestControl::macaddr_gen_;
@@ -115,14 +166,19 @@ public:
     using TestControl::template_packets_v6_;
     using TestControl::ack_storage_;
     using TestControl::sendRequestFromAck;
+    using TestControl::options_;
+    using TestControl::stats_mgr_;
 
-    NakedTestControl() : TestControl() {
-        uint32_t clients_num = CommandOptions::instance().getClientsNum() == 0 ?
-            1 : CommandOptions::instance().getClientsNum();
+    FakePerfSocket fake_sock_;
+
+    NakedTestControl(CommandOptions &opt) : TestControl(opt, fake_sock_) {
+        uint32_t clients_num = opt.getClientsNum() == 0 ?
+            1 : opt.getClientsNum();
         setMacAddrGenerator(NumberGeneratorPtr(new TestControl::SequentialGenerator(clients_num)));
     };
 
 };
+
 
 /// \brief Test Fixture Class
 ///
@@ -187,25 +243,6 @@ public:
         }
         temp_file.close();
         return (true);
-    }
-
-    /// \brief Get local loopback interface name.
-    ///
-    /// Scan available network interfaces for local loopback
-    /// interface and get its name. On Linux this interface is
-    /// usually called 'lo' but on other systems, e.g. BSD
-    /// it will have slightly different name. Local loopback
-    /// interface is required for unit tests that require
-    /// socket creation.
-    ///
-    /// \return local loopback interface name.
-    std::string getLocalLoopback() const {
-        BOOST_FOREACH(IfacePtr iface, IfaceMgr::instance().getIfaces()) {
-            if (iface->flag_loopback_) {
-                return (iface->getName());
-            }
-        }
-        return ("");
     }
 
     /// \brief Get full path to a file in testdata directory.
@@ -316,10 +353,10 @@ public:
     /// as the number of seconds since DUID time epoch. The parts
     /// of MAC address has to change if multiple clients are simulated
     /// and do not change if single client is simulated.
-    void testDuid() const {
-        int clients_num = CommandOptions::instance().getClientsNum();
+    void testDuid(CommandOptions &opt) const {
+        int clients_num = opt.getClientsNum();
         // Initialize Test Control class.
-        NakedTestControl tc;
+        NakedTestControl tc(opt);
         // The old duid will be holding the previously generated DUID.
         // It will be used to compare against the new one. If we have
         // multiple clients we want to make sure that duids differ.
@@ -439,21 +476,18 @@ public:
     ///
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
-    /// \param iterations_performed actual number of iterations.
     /// \param tc test control instance
     void testPkt4Exchange(int iterations_num,
                           int receive_num,
                           bool use_templates,
-                          int& iterations_performed,
                           NakedTestControl& tc) const {
-        int sock_handle = 0;
-        tc.initializeStatsMgr();
+        //int sock_handle = 0;
 
         // Use templates files to crate packets.
         if (use_templates) {
             tc.initPacketTemplates();
-            ASSERT_NO_THROW(tc.getTemplateBuffer(0));
-            ASSERT_NO_THROW(tc.getTemplateBuffer(1));
+            tc.getTemplateBuffer(0);
+            tc.getTemplateBuffer(1);
         }
 
         // Incremental transaction id generator will generate
@@ -464,17 +498,14 @@ public:
         NakedTestControl::IncrementalGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
-        // Socket is needed to send packets through the interface.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
         for (int i = 0; i < iterations_num; ++i) {
             // Get next transaction id, without actually using it. The same
             // id wll be used by the TestControl class for DHCPDISCOVER.
             uint32_t transid = generator->getNext();
             if (use_templates) {
-                ASSERT_NO_THROW(tc.sendDiscover4(sock, tc.getTemplateBuffer(0)));
+                tc.sendDiscover4(tc.getTemplateBuffer(0));
             } else {
-                ASSERT_NO_THROW(tc.sendDiscover4(sock));
+                tc.sendDiscover4();
             }
 
             // Do not simulate responses for packets later
@@ -482,13 +513,8 @@ public:
             // packet drops.
             if (i < receive_num) {
                 boost::shared_ptr<Pkt4> offer_pkt4(createOfferPkt4(transid));
-                ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer_pkt4));
+                tc.processReceivedPacket4(offer_pkt4);
             }
-            if (tc.checkExitConditions()) {
-                iterations_performed = i + 1;
-                break;
-            }
-            iterations_performed = i + 1;
         }
     }
 
@@ -504,21 +530,18 @@ public:
     ///
     /// \param iterations_num number of exchanges to simulate.
     /// \param receive_num number of received OFFER packets.
-    /// \param iterations_performed actual number of iterations.
     /// \param tc test control instance
     void testPkt6Exchange(int iterations_num,
                           int receive_num,
                           bool use_templates,
-                          int& iterations_performed,
                           NakedTestControl& tc) const {
-        int sock_handle = 0;
-        tc.initializeStatsMgr();
+        //int sock_handle = 0;
 
         // Use templates files to crate packets.
         if (use_templates) {
             tc.initPacketTemplates();
-            ASSERT_NO_THROW(tc.getTemplateBuffer(0));
-            ASSERT_NO_THROW(tc.getTemplateBuffer(1));
+            tc.getTemplateBuffer(0);
+            tc.getTemplateBuffer(1);
         }
 
         // Incremental transaction id generator will generate
@@ -529,33 +552,24 @@ public:
         TestControl::NumberGeneratorPtr
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
-        // Socket is needed to send packets through the interface.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
         uint32_t transid = 0;
         for (int i = 0; i < iterations_num; ++i) {
             // Do not simulate responses for packets later
             // that specified as receive_num. This simulates
             // packet drops.
             if (use_templates) {
-                ASSERT_NO_THROW(tc.sendSolicit6(sock, tc.getTemplateBuffer(0)));
+                tc.sendSolicit6(tc.getTemplateBuffer(0));
             } else {
-                ASSERT_NO_THROW(tc.sendSolicit6(sock));
+                tc.sendSolicit6();
             }
             ++transid;
             if (i < receive_num) {
                 boost::shared_ptr<Pkt6>
-                    advertise_pkt6(createAdvertisePkt6(transid));
+                    advertise_pkt6(createAdvertisePkt6(tc, transid));
                 // Receive ADVERTISE and send REQUEST.
-                ASSERT_NO_THROW(tc.processReceivedPacket6(sock,
-                                                          advertise_pkt6));
+                tc.processReceivedPacket6(advertise_pkt6);
                 ++transid;
             }
-            if (tc.checkExitConditions()) {
-                iterations_performed = i + 1;
-                break;
-            }
-            iterations_performed = i + 1;
         }
     }
 
@@ -567,13 +581,13 @@ public:
     /// addresses are generated if number of simulated clients is
     /// greater than 1. It also checks if the same MAC addresses is
     /// generated if only 1 client is simulated.
-    void testMacAddress() const {
-        int clients_num = CommandOptions::instance().getClientsNum();
+    void testMacAddress(CommandOptions &opt) const {
+        int clients_num = opt.getClientsNum();
         // The old_mac will be holding the value of previously generated
         // MAC address. We will be comparing the newly generated one with it
         // to see if it changes when multiple clients are simulated or if it
         // does not change when single client is simulated.
-        MacAddress old_mac(CommandOptions::instance().getMacTemplate());
+        MacAddress old_mac(opt.getMacTemplate());
         // Holds the position if the octet on which two MAC addresses can
         // be different. If number of clients is 256 or less it is last MAC
         // octet (except for single client when subsequent MAC addresses
@@ -583,7 +597,7 @@ public:
         // Number of unique MACs.
         size_t unique_macs = 0;
         // Initialize Test Controller.
-        NakedTestControl tc;
+        NakedTestControl tc(opt);
         size_t total_dist = 0;
         // Keep generated MACs in this container.
         std::list<std::vector<uint8_t> > macs;
@@ -650,34 +664,24 @@ public:
     /// attempt to send more renew messages than the number of leases acquired
     /// will fail.
     void testSendRenew4() {
-        std::string loopback_iface(getLocalLoopback());
-        if (loopback_iface.empty()) {
-            std::cout << "Skipping the test because loopback interface could"
-                " not be detected" << std::endl;
-            return;
-        }
         // Build a command line. Depending on the message type, we will use
         // -f<renew-rate> or -F<release-rate> parameter.
+        CommandOptions opt;
         std::ostringstream s;
-        s << "perfdhcp -4 -l " << loopback_iface << " -r 10 -f";
+        s << "perfdhcp -4 -l fake -r 10 -f";
         s << " 10 -R 10 -L 10067 -n 10 127.0.0.1";
-        ASSERT_NO_THROW(processCmdLine(s.str()));
+        processCmdLine(opt, s.str());
         // Create a test controller class.
-        NakedTestControl tc;
-        tc.initializeStatsMgr();
+        NakedTestControl tc(opt);
         // Set the transaction id generator to sequential to control to
         // guarantee that transaction ids are predictable.
         boost::shared_ptr<NakedTestControl::IncrementalGenerator>
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
-        // Socket has to be created so as we can actually send packets.
-        int sock_handle = 0;
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
 
         // Send a number of DHCPDISCOVER messages. Each generated message will
         // be assigned a different transaction id, starting from 1 to 10.
-        tc.sendPackets(sock, 10);
+        tc.sendPackets(10);
 
         // Simulate DHCPOFFER responses from the server. Each DHCPOFFER is
         // assigned a transaction id from the range of 1 to 10, so as they
@@ -689,7 +693,7 @@ public:
             // will trigger a corresponding DHCPREQUEST. They will be assigned
             // transaction ids from the range from 11 to 20 (the range of
             // 1 to 10 has been used by DHCPDISCOVER-DHCPOFFER).
-            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, offer));
+            tc.processReceivedPacket4(offer);
     }
 
         // Requests have been sent, so now let's simulate responses from the
@@ -702,32 +706,26 @@ public:
             // -f<renew-rate> option has been specified, received Reply
             // messages are held so as renew messages can be sent for
             // existing leases.
-            ASSERT_NO_THROW(tc.processReceivedPacket4(sock, ack));
+            tc.processReceivedPacket4(ack);
         }
 
         uint64_t msg_num;
         // Try to send 5 messages. It should be successful because 10
         // DHCPREQUEST messages has been received. For each of them we
         // should be able to send renewal.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
-        );
+        msg_num = tc.sendMultipleRequests(5);
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which renews haven't been sent yet.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
-        );
+        msg_num = tc.sendMultipleRequests(5);
         EXPECT_EQ(5, msg_num);
 
         // We used all the DHCPACK packets (we sent renew or release for each of
         // them already). Therefore, no further renew messages should be sent
         // before we acquire new leases.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleRequests(sock, 5)
-        );
+        msg_num = tc.sendMultipleRequests(5);
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
     }
@@ -737,12 +735,13 @@ public:
     void testCreateRequest() {
         // This command line specifies that the Release/Renew messages should
         // be sent with the same rate as the Solicit messages.
+        CommandOptions opt;
         std::ostringstream s;
         s << "perfdhcp -4 -l lo -r 10 -f 10";
         s << " -R 10 -L 10067 -n 10 127.0.0.1";
-        ASSERT_NO_THROW(processCmdLine(s.str()));
+        processCmdLine(opt, s.str());
         // Create a test controller class.
-        NakedTestControl tc;
+        NakedTestControl tc(opt);
         // Set the transaction id generator which will be used by the
         // createRenew or createRelease function to generate transaction id.
         boost::shared_ptr<NakedTestControl::IncrementalGenerator>
@@ -753,7 +752,7 @@ public:
 
         // Create DHCPREQUEST from DHCPACK.
         Pkt4Ptr request;
-        ASSERT_NO_THROW(request = tc.createRequestFromAck(ack));
+        request = tc.createRequestFromAck(ack);
 
         // Make sure that the DHCPACK has been successfully created and that
         // it holds expected data.
@@ -785,13 +784,14 @@ public:
     void testCreateRenewRelease(const uint16_t msg_type) {
         // This command line specifies that the Release/Renew messages should
         // be sent with the same rate as the Solicit messages.
+        CommandOptions opt;
         std::ostringstream s;
         s << "perfdhcp -6 -l lo -r 10 ";
         s << (msg_type == DHCPV6_RELEASE ? "-F" : "-f") << " 10 ";
         s << "-R 10 -L 10547 -n 10 -e address-and-prefix ::1";
-        ASSERT_NO_THROW(processCmdLine(s.str()));
+        processCmdLine(opt, s.str());
         // Create a test controller class.
-        NakedTestControl tc;
+        NakedTestControl tc(opt);
         // Set the transaction id generator which will be used by the
         // createRenew or createRelease function to generate transaction id.
         boost::shared_ptr<NakedTestControl::IncrementalGenerator>
@@ -800,11 +800,11 @@ public:
 
         // Create a Reply packet. The createRelease or createReply function will
         // need Reply packet to create a corresponding Release or Reply.
-        Pkt6Ptr reply = createReplyPkt6(1);
+        Pkt6Ptr reply = createReplyPkt6(tc, 1);
 
         Pkt6Ptr msg;
         // Check that the message is created.
-        ASSERT_NO_THROW(msg = tc.createMessageFromReply(msg_type, reply));
+        msg = tc.createMessageFromReply(msg_type, reply);
 
         ASSERT_TRUE(msg);
         // Check that the message type and transaction id is correct.
@@ -856,47 +856,37 @@ public:
     /// \param msg_type A type of the message which is simulated to be sent
     /// (DHCPV6_RENEW or DHCPV6_RELEASE).
     void testSendRenewRelease(const uint16_t msg_type) {
-        std::string loopback_iface(getLocalLoopback());
-        if (loopback_iface.empty()) {
-            std::cout << "Skipping the test because loopback interface could"
-                " not be detected" << std::endl;
-            return;
-        }
         // Build a command line. Depending on the message type, we will use
         // -f<renew-rate> or -F<release-rate> parameter.
+        CommandOptions opt;
         std::ostringstream s;
-        s << "perfdhcp -6 -l " << loopback_iface << " -r 10 ";
+        s << "perfdhcp -6 -l fake -r 10 ";
         s << (msg_type == DHCPV6_RENEW ? "-f" : "-F");
         s << " 10 -R 10 -L 10547 -n 10 ::1";
-        ASSERT_NO_THROW(processCmdLine(s.str()));
+        processCmdLine(opt, s.str());
         // Create a test controller class.
-        NakedTestControl tc;
-        tc.initializeStatsMgr();
+        NakedTestControl tc(opt);
         // Set the transaction id generator to sequential to control to
         // guarantee that transaction ids are predictable.
         boost::shared_ptr<NakedTestControl::IncrementalGenerator>
             generator(new NakedTestControl::IncrementalGenerator());
         tc.setTransidGenerator(generator);
-        // Socket has to be created so as we can actually send packets.
-        int sock_handle = 0;
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
 
         // Send a number of Solicit messages. Each generated Solicit will be
         // assigned a different transaction id, starting from 1 to 10.
-        tc.sendPackets(sock, 10);
+        tc.sendPackets(10);
 
         // Simulate Advertise responses from the server. Each advertise is
         // assigned a transaction id from the range of 1 to 10, so as they
         // match the transaction ids from the Solicit messages.
         for (unsigned i = generator->getNext() - 10;
              i < generator->getNext(); ++i) {
-            Pkt6Ptr advertise(createAdvertisePkt6(i));
+            Pkt6Ptr advertise(createAdvertisePkt6(tc, i));
             // If Advertise is matched with the Solicit the call below will
             // trigger a corresponding Request. They will be assigned
             // transaction ids from the range from 11 to 20 (the range of
             // 1 to 10 has been used by Solicit-Advertise).
-            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, advertise));
+            tc.processReceivedPacket6(advertise);
     }
 
         // Requests have been sent, so now let's simulate responses from the
@@ -904,37 +894,31 @@ public:
         // ids from the range from 11 to 20.
         for (unsigned i = generator->getNext() - 10;
              i < generator->getNext(); ++i) {
-            Pkt6Ptr reply(createReplyPkt6(i));
+            Pkt6Ptr reply(createReplyPkt6(tc, i));
             // Each Reply packet corresponds to the new lease acquired. Since
             // -f<renew-rate> option has been specified, received Reply
             // messages are held so as Renew messages can be sent for
             // existing leases.
-            ASSERT_NO_THROW(tc.processReceivedPacket6(sock, reply));
+            tc.processReceivedPacket6(reply);
         }
 
         uint64_t msg_num;
         // Try to send 5 messages. It should be successful because 10 Reply
         // messages has been received. For each of them we should be able to
         // send Renew or Release.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
-        );
+        msg_num = tc.sendMultipleMessages6(msg_type, 5);
         // Make sure that we have sent 5 messages.
         EXPECT_EQ(5, msg_num);
 
         // Try to do it again. We should still have 5 Reply packets for
         // which Renews or Releases haven't been sent yet.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
-        );
+        msg_num = tc.sendMultipleMessages6(msg_type, 5);
         EXPECT_EQ(5, msg_num);
 
         // We used all the Reply packets (we sent Renew or Release for each of
         // them already). Therefore, no further Renew or Release messages should
         // be sent before we acquire new leases.
-        ASSERT_NO_THROW(
-            msg_num = tc.sendMultipleMessages6(sock, msg_type, 5)
-        );
+        msg_num = tc.sendMultipleMessages6(msg_type, 5);
         // Make sure that no message has been sent.
         EXPECT_EQ(0, msg_num);
 
@@ -945,8 +929,8 @@ public:
     /// \param cmdline command line string to be parsed.
     /// \throw isc::Unexpected if unexpected error occurred.
     /// \throw isc::InvalidParameter if command line is invalid.
-    void processCmdLine(const std::string& cmdline) const {
-        CommandOptionsHelper::process(cmdline);
+    void processCmdLine(CommandOptions &opt, const std::string& cmdline) const {
+        CommandOptionsHelper::process(opt, cmdline);
     }
 
     /// \brief Create DHCPOFFER or DHCPACK packet.
@@ -991,22 +975,19 @@ public:
     /// \param transid transaction id.
     /// \return instance of the packet.
     Pkt6Ptr
-    createAdvertisePkt6(const uint32_t transid) const {
+    createAdvertisePkt6(NakedTestControl &tc, const uint32_t transid) const {
         boost::shared_ptr<Pkt6> advertise(new Pkt6(DHCPV6_ADVERTISE, transid));
         // Add IA_NA if requested by the client.
-        if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::ADDRESS)) {
+        if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
             advertise->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
-        if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::PREFIX)) {
+        if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
             advertise->addOption(opt_ia_pd);
         }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
-        NakedTestControl tc;
         uint8_t randomized = 0;
         std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
@@ -1017,22 +998,19 @@ public:
     }
 
     Pkt6Ptr
-    createReplyPkt6(const uint32_t transid) const {
+    createReplyPkt6(NakedTestControl &tc, const uint32_t transid) const {
         Pkt6Ptr reply(new Pkt6(DHCPV6_REPLY, transid));
         // Add IA_NA if requested by the client.
-        if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::ADDRESS)) {
+        if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
             OptionPtr opt_ia_na = Option::factory(Option::V6, D6O_IA_NA);
             reply->addOption(opt_ia_na);
         }
         // Add IA_PD if requested by the client.
-        if (CommandOptions::instance().getLeaseType()
-            .includes(CommandOptions::LeaseType::PREFIX)) {
+        if (tc.options_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
             OptionPtr opt_ia_pd = Option::factory(Option::V6, D6O_IA_PD);
             reply->addOption(opt_ia_pd);
         }
         OptionPtr opt_serverid(new Option(Option::V6, D6O_SERVERID));
-        NakedTestControl tc;
         uint8_t randomized = 0;
         std::vector<uint8_t> duid(tc.generateDuid(randomized));
         OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
@@ -1079,12 +1057,10 @@ public:
 
 // This test verifies that the class members are reset to expected values.
 TEST_F(TestControlTest, reset) {
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l ethx -r 50 -f 30 -F 10 all"));
-    NakedTestControl tc;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -4 127.0.0.1");
+    NakedTestControl tc(opt);
     tc.reset();
-    EXPECT_EQ(50, tc.basic_rate_control_.getRate());
-    EXPECT_EQ(30, tc.renew_rate_control_.getRate());
-    EXPECT_EQ(10, tc.release_rate_control_.getRate());
     EXPECT_FALSE(tc.last_report_.is_not_a_date_time());
     EXPECT_FALSE(tc.transid_gen_);
     EXPECT_FALSE(tc.macaddr_gen_);
@@ -1103,9 +1079,11 @@ TEST_F(TestControlTest, generateClientId) {
     HWAddrPtr hwaddr_ptr(new HWAddr(hwaddr, 5));
 
     // Use generated HW address to generate client id.
-    NakedTestControl tc;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -4 127.0.0.1");
+    NakedTestControl tc(opt);
     OptionPtr opt_client_id;
-    ASSERT_NO_THROW(opt_client_id = tc.generateClientId(hwaddr_ptr));
+    opt_client_id = tc.generateClientId(hwaddr_ptr);
     ASSERT_TRUE(opt_client_id);
 
     // Extract the client id data.
@@ -1124,21 +1102,22 @@ TEST_F(TestControlTest, generateClientId) {
 TEST_F(TestControlTest, GenerateDuid) {
     // Simple command line that simulates one client only. Always the
     // same DUID will be generated.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 all"));
-    testDuid();
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 all");
+    testDuid(opt);
 
     // Simulate 50 clients. Different DUID will be generated.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -R 50 all"));
-    testDuid();
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 -R 50 all");
+    testDuid(opt);
 
     // Checks that the random mac address returned by generateDuid
     // is in the list of mac addresses in the mac-list.txt data file
     std::string mac_list_full_path = getFullPath("mac-list.txt");
     std::ostringstream cmd;
-    cmd << "perfdhcp -M " << mac_list_full_path << " abc";
-    ASSERT_NO_THROW(processCmdLine(cmd.str()));
+    cmd << "perfdhcp -M " << mac_list_full_path << " 127.0.0.1";
+    processCmdLine(opt, cmd.str());
     // Initialize Test Controller.
-    NakedTestControl tc;
+    NakedTestControl tc(opt);
     uint8_t randomized = 0;
     std::vector<uint8_t> generated_duid = tc.generateDuid(randomized);
 
@@ -1148,8 +1127,7 @@ TEST_F(TestControlTest, GenerateDuid) {
     ASSERT_EQ(duid->getType(), DUID::DUID_LL);
 
     // Make sure it's on the list
-    CommandOptions& options = CommandOptions::instance();
-    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    const CommandOptions::MacAddrsVector& macs = opt.getMacsFromFile();
     // DUID LL comprises 2 bytes of duid type, 2 bytes of hardware type,
     // then 6 bytes of HW address.
     vector<uint8_t> mac(6);
@@ -1159,50 +1137,40 @@ TEST_F(TestControlTest, GenerateDuid) {
     ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) != macs.end());
 }
 
-TEST_F(TestControlTest, MisMatchVersionServer) {
-    NakedTestControl tc;
-
-    // make sure we catch -6 paired with v4 address
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -6 192.168.1.1"));
-    EXPECT_THROW(tc.openSocket(), isc::InvalidParameter);
-
-    // make sure we catch -4 paired with v6 address
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -4 ff02::1:2"));
-    EXPECT_THROW(tc.openSocket(), isc::InvalidParameter);
-}
-
 TEST_F(TestControlTest, GenerateMacAddress) {
+    CommandOptions opt;
     // Simulate one client only. Always the same MAC address will be
     // generated.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 all"));
-    testMacAddress();
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 all");
+    testMacAddress(opt);
 
     // Simulate 50 clients. Different MAC addresses will be generated.
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -R 50 all"));
-    testMacAddress();
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 -R 50 all");
+    testMacAddress(opt);
 
     // Checks that the random mac address returned by generateMacAddress
     // is in the list of mac addresses in the mac-list.txt data file
     std::string mac_list_full_path = getFullPath("mac-list.txt");
     std::ostringstream cmd;
-    cmd << "perfdhcp -M " << mac_list_full_path << " abc";
-    ASSERT_NO_THROW(processCmdLine(cmd.str()));
+    cmd << "perfdhcp -M " << mac_list_full_path << " 127.0.0.1";
+    processCmdLine(opt, cmd.str());
     // Initialize Test Controller.
-    NakedTestControl tc;
+    NakedTestControl tc(opt);
     uint8_t randomized = 0;
     // Generate MAC address and sanity check its size.
     std::vector<uint8_t> mac = tc.generateMacAddress(randomized);
     ASSERT_EQ(6, mac.size());
     // Make sure that the generated MAC address belongs to the MAC addresses
     // read from a file.
-    CommandOptions& options = CommandOptions::instance();
-    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    const CommandOptions::MacAddrsVector& macs = opt.getMacsFromFile();
     ASSERT_TRUE(std::find(macs.begin(), macs.end(), mac) !=  macs.end());
 }
 
 TEST_F(TestControlTest, Options4) {
     using namespace isc::dhcp;
-    NakedTestControl tc;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -4 127.0.0.1");
+    NakedTestControl tc(opt);
     // By default the IP version mode is V4 so there is no need to
     // parse command line to override the IP version. Note that
     // registerOptionFactories is used for both V4 and V6.
@@ -1216,7 +1184,7 @@ TEST_F(TestControlTest, Options4) {
     EXPECT_EQ(DHO_DHCP_MESSAGE_TYPE, opt_msg_type->getType());
     // Validate the message type from the option we have now created.
     uint8_t msg_type = 0;
-    ASSERT_NO_THROW(msg_type = opt_msg_type->getUint8());
+    msg_type = opt_msg_type->getUint8();
     EXPECT_EQ(DHCPDISCOVER, msg_type);
 
     // Create another option: DHCP_PARAMETER_REQUEST_LIST
@@ -1254,11 +1222,12 @@ TEST_F(TestControlTest, Options4) {
 
 TEST_F(TestControlTest, Options6) {
     using namespace isc::dhcp;
+    CommandOptions opt;
 
     // Lets override the IP version to test V6 options (-6 parameter)
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -l 127.0.0.1 -6 all"));
+    processCmdLine(opt, "perfdhcp -l lo -6 ::1");
 
-    NakedTestControl tc;
+    NakedTestControl tc(opt);
     tc.registerOptionFactories();
 
     // Validate the D6O_ELAPSED_TIME option.
@@ -1268,7 +1237,7 @@ TEST_F(TestControlTest, Options6) {
     EXPECT_EQ(D6O_ELAPSED_TIME, opt_elapsed_time->getType());
     // The default value of elapsed time is zero.
     uint16_t elapsed_time;
-    ASSERT_NO_THROW(elapsed_time = opt_elapsed_time->getUint16());
+    elapsed_time = opt_elapsed_time->getUint16();
     EXPECT_EQ(0, elapsed_time);
 
     // With the factory function we may also specify the actual
@@ -1295,7 +1264,7 @@ TEST_F(TestControlTest, Options6) {
     EXPECT_EQ(D6O_ELAPSED_TIME, opt_elapsed_time2->getType());
     // Make sure the getUint16 does not throw exception. It wile throw
     // buffer is shorter than 2 octets.
-    ASSERT_NO_THROW(elapsed_time = opt_elapsed_time2->getUint16());
+    elapsed_time = opt_elapsed_time2->getUint16();
     // Check the expected value of elapsed time.
     EXPECT_EQ(0x0101, elapsed_time);
 
@@ -1308,7 +1277,7 @@ TEST_F(TestControlTest, Options6) {
     EXPECT_THROW(opt_rapid_commit->getUint8(), isc::OutOfRange);
 
     // Validate the D6O_CLIENTID option.
-    OptionBuffer duid(CommandOptions::instance().getDuidTemplate());
+    OptionBuffer duid(opt.getDuidTemplate());
     OptionPtr opt_clientid(Option::factory(Option::V6, D6O_CLIENTID, duid));
     EXPECT_EQ(Option::V6, opt_clientid->getUniverse());
     EXPECT_EQ(D6O_CLIENTID, opt_clientid->getType());
@@ -1362,182 +1331,125 @@ TEST_F(TestControlTest, Options6) {
 }
 
 TEST_F(TestControlTest, Packet4) {
-    // Use Interface Manager to get the local loopback interface.
-    // If interface can't be found we don't want to fail test.
-    std::string loopback_iface(getLocalLoopback());
-    if (!loopback_iface.empty()) {
-        ASSERT_NO_THROW(processCmdLine("perfdhcp -l " + loopback_iface +
-                                       " -L 10547 all"));
-        NakedTestControl tc;
-        int sock_handle = 0;
-        // We have to create the socket to setup some parameters of
-        // outgoing packet.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
-        uint32_t transid = 123;
-        boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
-        // Set parameters on outgoing packet.
-        ASSERT_NO_THROW(tc.setDefaults4(sock, pkt4));
-        // Validate that packet has been setup correctly.
-        EXPECT_EQ(loopback_iface, pkt4->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt4->getIndex());
-        EXPECT_EQ(DHCP4_CLIENT_PORT, pkt4->getLocalPort());
-        EXPECT_EQ(DHCP4_SERVER_PORT, pkt4->getRemotePort());
-        EXPECT_EQ(1, pkt4->getHops());
-        EXPECT_EQ(asiolink::IOAddress("255.255.255.255"),
-                  pkt4->getRemoteAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getLocalAddr());
-        EXPECT_EQ(asiolink::IOAddress(sock.addr_), pkt4->getGiaddr());
-    } else {
-        std::cout << "Unable to find the loopback interface. Skip test. "
-                  << std::endl;
-    }
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -L 10547 all");
+    NakedTestControl tc(opt);
+    uint32_t transid = 123;
+    boost::shared_ptr<Pkt4> pkt4(new Pkt4(DHCPDISCOVER, transid));
+    // Set parameters on outgoing packet.
+    tc.setDefaults4(pkt4);
+    // Validate that packet has been setup correctly.
+    EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt4->getIface());
+    EXPECT_EQ(tc.fake_sock_.ifindex_, pkt4->getIndex());
+    EXPECT_EQ(DHCP4_CLIENT_PORT, pkt4->getLocalPort());
+    EXPECT_EQ(DHCP4_SERVER_PORT, pkt4->getRemotePort());
+    EXPECT_EQ(1, pkt4->getHops());
+    EXPECT_EQ(asiolink::IOAddress("255.255.255.255"),
+              pkt4->getRemoteAddr());
+    EXPECT_EQ(asiolink::IOAddress(tc.socket_.addr_), pkt4->getLocalAddr());
+    EXPECT_EQ(asiolink::IOAddress(tc.socket_.addr_), pkt4->getGiaddr());
 }
 
 TEST_F(TestControlTest, Packet6) {
-    // Use Interface Manager to get the local loopback interface.
-    // If the interface can't be found we don't want to fail test.
-    std::string loopback_iface(getLocalLoopback());
-    if (!loopback_iface.empty()) {
-        ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
-                                       " -L 10547 servers"));
-        NakedTestControl tc;
-        int sock_handle = 0;
-        // Create the socket. It will be needed to set packet's
-        // parameters.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
-        uint32_t transid = 123;
-        boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
-        // Set packet's parameters.
-        ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
-        // Validate if parameters have been set correctly.
-        EXPECT_EQ(loopback_iface, pkt6->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
-        EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
-        EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
-        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
-        EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
-        // Packet must not be relayed.
-        EXPECT_TRUE(pkt6->relay_info_.empty());
-
-    } else {
-        std::cout << "Unable to find the loopback interface. Skip test. "
-                  << std::endl;
-    }
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -6 -l fake -L 10547 servers");
+    NakedTestControl tc(opt);
+    uint32_t transid = 123;
+    boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
+    // Set packet's parameters.
+    tc.setDefaults6(pkt6);
+    // Validate if parameters have been set correctly.
+    EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
+    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
+    EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
+    EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
+    EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+    // Packet must not be relayed.
+    EXPECT_TRUE(pkt6->relay_info_.empty());
 }
 
 TEST_F(TestControlTest, Packet6Relayed) {
-    // Use Interface Manager to get the local loopback interface.
-    // If the interface can't be found we don't want to fail test.
-    std::string loopback_iface(getLocalLoopback());
-    if (!loopback_iface.empty()) {
-        ASSERT_NO_THROW(processCmdLine("perfdhcp -6 -l " + loopback_iface +
-                                       " -A1 -L 10547 servers"));
-        NakedTestControl tc;
-        int sock_handle = 0;
-        // Create the socket. It will be needed to set packet's
-        // parameters.
-        ASSERT_NO_THROW(sock_handle = tc.openSocket());
-        PerfSocket sock(sock_handle);
-        uint32_t transid = 123;
-        boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
-        // Set packet's parameters.
-        ASSERT_NO_THROW(tc.setDefaults6(sock, pkt6));
-        // Validate if parameters have been set correctly.
-        EXPECT_EQ(loopback_iface, pkt6->getIface());
-        EXPECT_EQ(sock.ifindex_, pkt6->getIndex());
-        EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
-        EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
-        EXPECT_EQ(sock.addr_, pkt6->getLocalAddr());
-        EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
-        // Packet should be relayed.
-        EXPECT_EQ(pkt6->relay_info_.size(), 1);
-        EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
-        EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
-        EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, sock.addr_);
-        EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, sock.addr_);
-    } else {
-        std::cout << "Unable to find the loopback interface. Skip test. "
-                  << std::endl;
-    }
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -6 -l fake -A1 -L 10547 servers");
+    NakedTestControl tc(opt);
+    uint32_t transid = 123;
+    boost::shared_ptr<Pkt6> pkt6(new Pkt6(DHCPV6_SOLICIT, transid));
+    // Set packet's parameters.
+    tc.setDefaults6(pkt6);
+    // Validate if parameters have been set correctly.
+    EXPECT_EQ(tc.fake_sock_.iface_->getName(), pkt6->getIface());
+    EXPECT_EQ(tc.socket_.ifindex_, pkt6->getIndex());
+    EXPECT_EQ(DHCP6_CLIENT_PORT, pkt6->getLocalPort());
+    EXPECT_EQ(DHCP6_SERVER_PORT, pkt6->getRemotePort());
+    EXPECT_EQ(tc.socket_.addr_, pkt6->getLocalAddr());
+    EXPECT_EQ(asiolink::IOAddress("FF05::1:3"), pkt6->getRemoteAddr());
+    // Packet should be relayed.
+    EXPECT_EQ(pkt6->relay_info_.size(), 1);
+    EXPECT_EQ(pkt6->relay_info_[0].hop_count_, 1);
+    EXPECT_EQ(pkt6->relay_info_[0].msg_type_, DHCPV6_RELAY_FORW);
+    EXPECT_EQ(pkt6->relay_info_[0].linkaddr_, tc.socket_.addr_);
+    EXPECT_EQ(pkt6->relay_info_[0].peeraddr_, tc.socket_.addr_);
 }
 
 TEST_F(TestControlTest, Packet4Exchange) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
-    // Set number of iterations to some high value.
     const int iterations_num = 100;
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -r 100 -n 10 -R 20 -L 10547 127.0.0.1");
-    // The actual number of iterations will be stored in the
-    // following variable.
-    int iterations_performed = 0;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -r 100 -n 10 -R 20 -L 10547 127.0.0.1");
     bool use_templates = false;
-    NakedTestControl tc;
-    testPkt4Exchange(iterations_num, iterations_num, use_templates, iterations_performed, tc);
-    // The command line restricts the number of iterations to 10
-    // with -n 10 parameter.
-    EXPECT_EQ(10, iterations_performed);
+    NakedTestControl tc(opt);
+    testPkt4Exchange(iterations_num, iterations_num, use_templates, tc);
 
-    // With the following command line we restrict the maximum
-    // number of dropped packets to 10% of all.
-    // Use templates for this test.
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -r 100 -R 20 -n 20 -D 10% -L 10547"
-                   + " -T " + getFullPath("discover-example.hex")
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Discovery + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
+}
+
+TEST_F(TestControlTest, Packet4ExchangeFromTemplate) {
+    const int iterations_num = 100;
+    CommandOptions opt;
+
+    processCmdLine(opt, "perfdhcp -l fake -r 100 -R 20 -n 20 -L 10547"
+                   " -T " + getFullPath("discover-example.hex")
                    + " -T " + getFullPath("request4-example.hex")
                    + " 127.0.0.1");
-    // The number iterations is restricted by the percentage of
-    // dropped packets (-D 10%). We also have to bump up the number
-    // of iterations because the percentage limitation checks starts
-    // at packet #10. We expect that at packet #12 the 10% threshold
-    // will be reached.
     const int received_num = 10;
-    use_templates = true;
-    testPkt4Exchange(iterations_num, received_num, use_templates, iterations_performed, tc);
-    EXPECT_EQ(12, iterations_performed);
+    bool use_templates = true;
+    NakedTestControl tc(opt);
+    testPkt4Exchange(iterations_num, received_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num + received_num);  // Discovery + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), received_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), received_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
+}
+
+TEST_F(TestControlTest, Packet6Exchange) {
+    const int iterations_num = 100;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -6 -r 100 -n 10 -R 20 -L 10547 ::1");
+    bool use_templates = false;
+    NakedTestControl tc(opt);
+    testPkt6Exchange(iterations_num, iterations_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Solicit + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
     const int iterations_num = 100;
-    // Set number of iterations to 10.
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
-    int iterations_performed = 0;
-    // Set number of received packets equal to number of iterations.
-    // This simulates no packet drops.
-    bool use_templates = false;
-    NakedTestControl tc;
-    testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed, tc);
-    // Actual number of iterations should be 10.
-    EXPECT_EQ(10, iterations_performed);
-
-    // The maximum number of dropped packets is 3 (because of -D 3).
-    use_templates = true;
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -6 -r 100 -n 10 -R 20 -D 3 -L 10547"
-                   + " -T " + getFullPath("solicit-example.hex")
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -6 -r 100 -n 10 -R 20 -L 10547"
+                   " -T " + getFullPath("solicit-example.hex")
                    + " -T " + getFullPath("request6-example.hex ::1"));
+    NakedTestControl tc(opt);
+
     // For the first 3 packets we are simulating responses from server.
     // For other packets we don't so packet as 4,5,6 will be dropped and
     // then test should be interrupted and actual number of iterations will
@@ -1545,127 +1457,89 @@ TEST_F(TestControlTest, Packet6ExchangeFromTemplate) {
     const int received_num = 3;
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
-    // TestControl class methods for processing. The number of exchanges
-    // actually performed is returned in 'iterations_performed' argument. If
-    // processing is successful, the number of performed iterations should be
-    // equal to the number of exchanges specified with the '-n' command line
-    // parameter (10 in this case). All exchanged packets carry the IA_NA option
-    // to simulate the IPv6 address acquisition and to verify that the
-    // IA_NA options returned by the server are processed correctly.
-    testPkt6Exchange(iterations_num, received_num, use_templates,
-                     iterations_performed, tc);
-    EXPECT_EQ(6, iterations_performed);
+    // TestControl class methods for processing. All exchanged packets carry
+    // the IA_NA option to simulate the IPv6 address acquisition and to verify
+    // that the IA_NA options returned by the server are processed correctly.
+    bool use_templates = true;
+    testPkt6Exchange(iterations_num, received_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num + received_num); // Solicit + Advertise
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), received_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), received_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 }
 
-TEST_F(TestControlTest, Packet6Exchange) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
+TEST_F(TestControlTest, Packet6ExchangeAddressOnly) {
     const int iterations_num = 100;
-    // Set number of iterations to 10.
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -e address-only"
-                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
-    int iterations_performed = 0;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -e address-only"
+                   " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
 
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
-    // TestControl class methods for processing. The number of exchanges
-    // actually performed is returned in 'iterations_performed' argument. If
-    // processing is successful, the number of performed iterations should be
-    // equal to the number of exchanges specified with the '-n' command line
-    // parameter (10 in this case). All exchanged packets carry the IA_NA option
-    // to simulate the IPv6 address acquisition and to verify that the IA_NA
-    // options returned by the server are processed correctly.
-    NakedTestControl tc;
-    testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed, tc);
-    // Actual number of iterations should be 10.
-    EXPECT_EQ(10, iterations_performed);
+    // TestControl class methods for processing. All exchanged packets carry
+    // the IA_NA option to simulate the IPv6 address acquisition and to verify
+    // that the IA_NA options returned by the server are processed correctly.
+    NakedTestControl tc(opt);
+    testPkt6Exchange(iterations_num, iterations_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Solicit + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 }
 
 TEST_F(TestControlTest, Packet6ExchangePrefixDelegation) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
     const int iterations_num = 100;
-    // Set number of iterations to 10.
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -e prefix-only"
-                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
-    int iterations_performed = 0;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -e prefix-only"
+                   " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
 
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
-    // TestControl class methods for processing. The number of exchanges
-    // actually performed is returned in 'iterations_performed' argument. If
-    // processing is successful, the number of performed iterations should be
-    // equal to the number of exchanges specified with the '-n' command line
-    // parameter (10 in this case). All exchanged packets carry the IA_PD option
-    // to simulate the Prefix Delegation and to verify that the IA_PD options
-    // returned by the server are processed correctly.
-    NakedTestControl tc;
-    testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed, tc);
-    // Actual number of iterations should be 10.
-    EXPECT_EQ(10, iterations_performed);
+    // TestControl class methods for processing. All exchanged packets carry
+    // the IA_PD option to simulate the Prefix Delegation and to verify that
+    // the IA_PD options returned by the server are processed correctly.
+    NakedTestControl tc(opt);
+    testPkt6Exchange(iterations_num, iterations_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Discovery + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 }
 
 TEST_F(TestControlTest, Packet6ExchangeAddressAndPrefix) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback_iface(getLocalLoopback());
-    if (loopback_iface.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
     const int iterations_num = 100;
-    // Set number of iterations to 10.
-    processCmdLine("perfdhcp -l " + loopback_iface
-                   + " -e address-and-prefix"
-                   + " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
-    int iterations_performed = 0;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -e address-and-prefix"
+                   " -6 -r 100 -n 10 -R 20 -L 10547 ::1");
     // Set number of received packets equal to number of iterations.
     // This simulates no packet drops.
     bool use_templates = false;
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
-    // TestControl class methods for processing. The number of exchanges
-    // actually performed is returned in 'iterations_performed' argument. If
-    // processing is successful, the number of performed iterations should be
-    // equal to the number of exchanges specified with the '-n' command line
-    // parameter (10 in this case).  All exchanged packets carry either IA_NA
-    // or IA_PD options to simulate the address and prefix acquisition with
-    // the single message and to verify that the IA_NA and IA_PD options
-    // returned by the server are processed correctly.
-    NakedTestControl tc;
-    testPkt6Exchange(iterations_num, iterations_num, use_templates,
-                     iterations_performed, tc);
-    // Actual number of iterations should be 10.
-    EXPECT_EQ(10, iterations_performed);
+    // TestControl class methods for processing. All exchanged packets carry
+    // either IA_NA or IA_PD options to simulate the address and prefix
+    // acquisition with the single message and to verify that the IA_NA
+    // and IA_PD options returned by the server are processed correctly.
+    NakedTestControl tc(opt);
+    testPkt6Exchange(iterations_num, iterations_num, use_templates, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Solicit + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 }
 
 TEST_F(TestControlTest, PacketTemplates) {
@@ -1683,17 +1557,16 @@ TEST_F(TestControlTest, PacketTemplates) {
     ASSERT_TRUE(createTemplateFile(file1, template1, template1.size() * 2));
     ASSERT_TRUE(createTemplateFile(file2, template2, template2.size() * 2));
 
-    NakedTestControl tc;
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1"
+                   " -T " + file1 + " -T " + file2 + " all");
+    NakedTestControl tc(opt);
 
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1"
-                       " -T " + file1 + " -T " + file2 + " all")
-    );
-    ASSERT_NO_THROW(tc.initPacketTemplates());
+    tc.initPacketTemplates();
     TestControl::TemplateBuffer buf1;
     TestControl::TemplateBuffer buf2;
-    ASSERT_NO_THROW(buf1 = tc.getTemplateBuffer(0));
-    ASSERT_NO_THROW(buf2 = tc.getTemplateBuffer(1));
+    buf1 = tc.getTemplateBuffer(0);
+    buf2 = tc.getTemplateBuffer(1);
     ASSERT_EQ(template1.size(), buf1.size());
     ASSERT_EQ(template2.size(), buf2.size());
     EXPECT_TRUE(std::equal(template1.begin(), template1.end(), buf1.begin()));
@@ -1704,25 +1577,19 @@ TEST_F(TestControlTest, PacketTemplates) {
     // Size of the file is 2 times larger than binary data size and it is always
     // even number. Substracting 1 makes file size odd.
     ASSERT_TRUE(createTemplateFile(file3, template1, template1.size() * 2 - 1));
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file3 + " all")
-    );
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 -T " + file3 + " all");
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try to read empty file.
     std::string file4("test4.hex");
     ASSERT_TRUE(createTemplateFile(file4, template2, 0));
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file4 + " all")
-    );
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 -T " + file4 + " all");
     EXPECT_THROW(tc.initPacketTemplates(), isc::OutOfRange);
 
     // Try reading file with non hexadecimal characters.
     std::string file5("test5.hex");
     ASSERT_TRUE(createTemplateFile(file5, template1, template1.size() * 2, true));
-    ASSERT_NO_THROW(
-        processCmdLine("perfdhcp -l 127.0.0.1 -T " + file5 + " all")
-    );
+    processCmdLine(opt, "perfdhcp -l 127.0.0.1 -T " + file5 + " all");
     EXPECT_THROW(tc.initPacketTemplates(), isc::BadValue);
 }
 
@@ -1769,24 +1636,18 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
-    std::string loopback(getLocalLoopback());
-    ASSERT_NO_THROW(processCmdLine("perfdhcp -4 -l " + loopback
-                    + " -xT -L 10068 -o 200,abcdef1234 -o 201,00 -r 1 127.0.0.1"));
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -4 -l fake -xT -L 10068"
+                   " -o 200,abcdef1234 -o 201,00 -r 1 127.0.0.1");
 
     // Create test control and set up some basic defaults.
-    NakedTestControl tc;
-    tc.initializeStatsMgr();
+    NakedTestControl tc(opt);
     tc.registerOptionFactories();
     NakedTestControl::IncrementalGeneratorPtr gen(new NakedTestControl::IncrementalGenerator());
     tc.setTransidGenerator(gen);
 
-    // Socket is needed to send packets through the interface.
-    int sock_handle = 0;
-    ASSERT_NO_THROW(sock_handle = tc.openSocket());
-    PerfSocket sock(sock_handle);
-
     // Make tc send the packet. The first packet of each type is saved in templates.
-    ASSERT_NO_THROW(tc.sendDiscover4(sock));
+    tc.sendDiscover4();
 
     // Let's find the packet and see if it includes the right option.
     auto pkt_it = tc.template_packets_v4_.find(DHCPDISCOVER);
@@ -1798,32 +1659,26 @@ TEST_F(TestControlTest, sendDiscoverExtraOpts) {
 // Test checks if regular packet exchange inserts the extra v4 options
 // specified on command line.
 TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
-
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback(getLocalLoopback());
-    if (loopback.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test." << std::endl;
-        return;
-    }
-
     // Important paramters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
     const int iterations_num = 1;
-    processCmdLine("perfdhcp -l " + loopback + " -4 " +
-                   "-o 200,abcdef1234 -o 201,00 " +
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -4 -o 200,abcdef1234 -o 201,00 "
                    "-r 100 -n 10 -R 20 -xT -L 10547 127.0.0.1");
 
-    int iterations_performed = 0;
-    NakedTestControl tc;
+    NakedTestControl tc(opt);
     tc.registerOptionFactories();
 
     // Do the actual exchange.
-    testPkt4Exchange(iterations_num, iterations_num, false, iterations_performed, tc);
-    EXPECT_EQ(1, iterations_performed);
+    testPkt4Exchange(iterations_num, iterations_num, false, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Discovery + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::DO), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::DO), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RA), 0);
 
     // Check if Discover was recored and if it contains options 200 and 201.
     auto disc = tc.template_packets_v4_.find(DHCPDISCOVER);
@@ -1839,38 +1694,30 @@ TEST_F(TestControlTest, Packet4ExchangeExtraOpts) {
 // Test checks if regular packet exchange inserts the extra v6 options
 // specified on command line.
 TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
-    // Get the local loopback interface to open socket on
-    // it and test packets exchanges. We don't want to fail
-    // the test if interface is not available.
-    std::string loopback(getLocalLoopback());
-    if (loopback.empty()) {
-        std::cout << "Unable to find the loopback interface. Skip test."
-                  << std::endl;
-        return;
-    }
-
     // Important paramters here:
     // -xT - save first packet of each type for templates (useful for packet inspection)
     // -o 200,abcdef1234 - send option 200 with hex content: ab:cd:ef:12:34
     // -o 201,00 - send option 201 with hex content: 00
     const int iterations_num = 1;
-    processCmdLine("perfdhcp -l " + loopback
-                   + " -6 -e address-only"
-                   + " -xT -o 200,abcdef1234 -o 201,00 "
-                   + " -r 100 -n 10 -R 20 -L 10547 ::1");
-    int iterations_performed = 0;
-    // Set number of received packets equal to number of iterations.
-    // This simulates no packet drops.
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake"
+                   " -6 -e address-only"
+                   " -xT -o 200,abcdef1234 -o 201,00 "
+                   " -r 100 -n 10 -R 20 -L 10547 ::1");
 
     // Simulate the number of Solicit-Advertise-Request-Reply (SARR) exchanges.
     // The test function generates server's responses and passes it to the
-    // TestControl class methods for processing. The number of exchanges
-    // actually performed is returned in 'iterations_performed' argument.
+    // TestControl class methods for processing.
     // First packet of each type is recorded as a template packet. The check
     // inspects this template to see if the expected options are really there.
-    NakedTestControl tc;
-    testPkt6Exchange(iterations_num, iterations_num, false,
-                     iterations_performed, tc);
+    NakedTestControl tc(opt);
+    testPkt6Exchange(iterations_num, iterations_num, false, tc);
+
+    EXPECT_EQ(tc.fake_sock_.sent_cnt_, iterations_num * 2); // Solicit + Request
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::SA), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getSentPacketsNum(ExchangeType::RR), iterations_num);
+    EXPECT_EQ(tc.stats_mgr_.getRcvdPacketsNum(ExchangeType::RR), 0);
 
     // Check if Solicit was recored and if it contains options 200 and 201.
     auto sol = tc.template_packets_v6_.find(DHCPV6_SOLICIT);
@@ -1881,5 +1728,4 @@ TEST_F(TestControlTest, Packet6ExchangeExtraOpts) {
     auto req = tc.template_packets_v6_.find(DHCPV6_REQUEST);
     ASSERT_TRUE(req != tc.template_packets_v6_.end());
     checkOptions20x(req->second);
-
 }

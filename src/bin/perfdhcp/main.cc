@@ -19,7 +19,7 @@ using namespace isc::perfdhcp;
 
 int
 main(int argc, char* argv[]) {
-    CommandOptions& command_options = CommandOptions::instance();
+    CommandOptions command_options;
     std::string diags(command_options.getDiags());
     int ret_code = 0;
     try {
@@ -36,7 +36,7 @@ main(int argc, char* argv[]) {
     } catch(isc::Exception& e) {
         ret_code = 1;
         command_options.usage();
-        std::cerr << "Error parsing command line options: "
+        std::cerr << "\nERROR: parsing command line options: "
                   << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
@@ -45,16 +45,17 @@ main(int argc, char* argv[]) {
     }
     try{
         auto scenario = command_options.getScenario();
+        PerfSocket socket(command_options);
         if (scenario == Scenario::BASIC) {
-            BasicScen scen;
+            BasicScen scen(command_options, socket);
             ret_code = scen.run();
         } else if (scenario == Scenario::AVALANCHE) {
-            AvalancheScen scen;
+            AvalancheScen scen(command_options, socket);
             ret_code = scen.run();
         }
     } catch (std::exception& e) {
         ret_code = 1;
-        std::cerr << "Error running perfdhcp: " << e.what() << std::endl;
+        std::cerr << "\nERROR: running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }

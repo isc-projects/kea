@@ -399,7 +399,7 @@ public:
     /// @brief Set packet timestamp.
     ///
     /// Sets packet timestamp to arbitrary value.
-    /// It is used by perfdhcp tool and should be used elsewhere.
+    /// It is used by perfdhcp tool and should not be used elsewhere.
     void setTimestamp(boost::posix_time::ptime& timestamp) {
         timestamp_ = timestamp;
     }

@@ -20,7 +20,6 @@ namespace perfdhcp {
 
 int
 AvalancheScen::resendPackets(ExchangeType xchg_type) {
-    CommandOptions& options = CommandOptions::instance();
     const StatsMgr& stats_mgr(tc_.getStatsMgr());
 
     // get list of sent packets that potentially need to be resent
@@ -65,12 +64,12 @@ AvalancheScen::resendPackets(ExchangeType xchg_type) {
             total_resent_++;
 
             // do resend packet
-            if (options.getIpVersion() == 4) {
+            if (options_.getIpVersion() == 4) {
                 Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
-                IfaceMgr::instance().send(pkt4);
+                socket_.send(pkt4);
             } else {
                 Pkt6Ptr pkt6 = boost::dynamic_pointer_cast<Pkt6>(pkt);
-                IfaceMgr::instance().send(pkt6);
+                socket_.send(pkt6);
             }
 
             // restore sending time of original packet
@@ -104,10 +103,8 @@ AvalancheScen::run() {
     // and printed during runtime. The whole procedure is stopeed when
     // all packets got reponses.
 
-    CommandOptions& options = CommandOptions::instance();
-
-    uint32_t clients_num = options.getClientsNum() == 0 ?
-        1 : options.getClientsNum();
+    uint32_t clients_num = options_.getClientsNum() == 0 ?
+        1 : options_.getClientsNum();
 
     StatsMgr& stats_mgr(tc_.getStatsMgr());
 
@@ -131,12 +128,16 @@ AvalancheScen::run() {
         if (now - prev_cycle_time > milliseconds(200)) { // check if 0.2s elapsed
             prev_cycle_time = now;
             int still_left_cnt = 0;
-            if (options.getIpVersion() == 4) {
+            if (options_.getIpVersion() == 4) {
                 still_left_cnt += resendPackets(ExchangeType::DO);
-                still_left_cnt += resendPackets(ExchangeType::RA);
+                if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+                    still_left_cnt += resendPackets(ExchangeType::RA);
+                }
             } else {
                 still_left_cnt += resendPackets(ExchangeType::SA);
-                still_left_cnt += resendPackets(ExchangeType::RR);
+                if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+                    still_left_cnt += resendPackets(ExchangeType::RR);
+                }
             }
 
             if (still_left_cnt == 0) {
@@ -157,25 +158,44 @@ AvalancheScen::run() {
     tc_.printStats();
 
     // Print packet timestamps
-    if (testDiags('t')) {
+    if (options_.testDiags('t')) {
         stats_mgr.printTimestamps();
     }
 
     // Print server id.
-    if (testDiags('s') && tc_.serverIdReceived()) {
+    if (options_.testDiags('s') && tc_.serverIdReceived()) {
         std::cout << "Server id: " << tc_.getServerId() << std::endl;
     }
 
     // Diagnostics flag 'e' means show exit reason.
-    if (testDiags('e')) {
+    if (options_.testDiags('e')) {
         std::cout << "Interrupted" << std::endl;
     }
 
+    // Calculate total stats.
+    int total_sent_pkts = total_resent_;
+    int total_rcvd_pkts = 0;
+    if (options_.getIpVersion() == 4) {
+        total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO);
+        total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO);
+        if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+            total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA);
+            total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA);
+        }
+    } else {
+        total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA);
+        total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA);
+        if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+            total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR);
+            total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR);
+        }
+    }
+
     std::cout << "It took " << duration.length() << " to provision " << clients_num
-              << " clients. " << (clients_num * 2 + total_resent_)
-              << " packets were sent, " << total_resent_
-              << " retransmissions needed, received " << (clients_num * 2)
-              << " responses." << std::endl;
+              << " clients. " << std::endl
+              << "Requests sent + resent: " << total_sent_pkts << std::endl
+              << "Requests resent: " << total_resent_ << std::endl
+              << "Responses received: " << total_rcvd_pkts << std::endl;
 
     return (0);
 }

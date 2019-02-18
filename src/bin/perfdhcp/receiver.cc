@@ -61,7 +61,7 @@ Receiver::getPkt() {
         // In multi thread mode read packet from the queue which is feed by Receiver thread.
         util::thread::Mutex::Locker lock(pkt_queue_mutex_);
         if (pkt_queue_.empty()) {
-            if (CommandOptions::instance().getIpVersion() == 4) {
+            if (ip_version_ == 4) {
                 return Pkt4Ptr();
             } else {
                 return Pkt6Ptr();
@@ -109,19 +109,13 @@ Receiver::readPktFromSocket() {
         timeout = 1000;
     }
     try {
-        if (CommandOptions::instance().getIpVersion() == 4) {
-            pkt = IfaceMgr::instance().receive4(0, timeout);
+        if (ip_version_ == 4) {
+            pkt = socket_.receive4(0, timeout);
         } else {
-            pkt = IfaceMgr::instance().receive6(0, timeout);
+            pkt = socket_.receive6(0, timeout);
         }
     } catch (const Exception& e) {
         cerr << "Failed to receive DHCP packet: " << e.what() << endl;
-    }
-
-    if (pkt) {
-        /// @todo: Add packet exception handling here. Right now any
-        /// malformed packet will cause perfdhcp to abort.
-        pkt->unpack();
     }
 
     return (pkt);

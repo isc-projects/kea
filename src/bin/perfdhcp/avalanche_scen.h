@@ -24,15 +24,26 @@ namespace perfdhcp {
 /// Full DORA and SARR message sequences are expected.
 class AvalancheScen : public AbstractScen {
 public:
-    /// Default and the only constructor of AvalancheScen.
-    AvalancheScen(): total_resent_(0) {};
+    /// \brief Default and the only constructor of AvalancheScen.
+    ///
+    /// \param options reference to command options,
+    /// \param socket reference to a socket.
+    AvalancheScen(CommandOptions& options, BasePerfSocket &socket):
+        AbstractScen(options, socket),
+        socket_(socket),
+        total_resent_(0) {};
 
     /// brief\ Run performance test.
     ///
     /// Method runs whole performance test.
-    int run();
+    ///
+    /// \return execution status.
+    int run() override;
 
 private:
+
+    // A reference to socket;
+    BasePerfSocket &socket_;
 
     /// A map xchg type -> (a map of trans id -> retransmissions count.
     std::unordered_map<ExchangeType, std::unordered_map<uint32_t, int>> retransmissions_;
@@ -42,8 +53,13 @@ private:
     /// Total number of resent packets.
     int total_resent_;
 
-    /// Resend packets for given exchange type that did not receive
+    /// \\brief Resend packets.
+    ///
+    /// It resends packets for given exchange type that did not receive
     /// a response yet.
+    ///
+    /// \param xchg_type exchange type that should be looked for.
+    /// \return number of packets still waiting for resending.
     int resendPackets(ExchangeType xchg_type);
 
 };

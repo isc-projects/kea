@@ -5,7 +5,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <perfdhcp/stats_mgr.h>
-#include <perfdhcp/command_options.h>
 
 
 namespace isc {
@@ -78,7 +77,9 @@ ExchangeStats::updateDelays(const dhcp::PktPtr& sent_packet,
         rcvd_time.is_not_a_date_time()) {
         isc_throw(Unexpected,
                   "Timestamp must be set for sent and "
-                  "received packet to measure RTT");
+                  "received packet to measure RTT,"
+                  << " sent: " << sent_time
+                  << " recv: " << rcvd_time);
     }
     boost::posix_time::time_period period(sent_time, rcvd_time);
     // We don't bother calculating deltas in nanoseconds. It is much
@@ -313,16 +314,15 @@ ExchangeStats::printTimestamps() {
     }
 }
 
-StatsMgr::StatsMgr() :
+StatsMgr::StatsMgr(CommandOptions& options) :
     exchanges_(),
-    boot_time_(boost::posix_time::microsec_clock::universal_time())
+    boot_time_(boost::posix_time::microsec_clock::universal_time()),
+    options_(options)
 {
-    CommandOptions& options = CommandOptions::instance();
-
     // Check if packet archive mode is required. If user
     // requested diagnostics option -x t we have to enable
     // it so as StatsMgr preserves all packets.
-    archive_enabled_ = testDiags('t') ? true : false;
+    archive_enabled_ = options.testDiags('t') ? true : false;
 
     if (options.getIpVersion() == 4) {
         addExchangeStats(ExchangeType::DO, options.getDropTime()[0]);
@@ -345,7 +345,7 @@ StatsMgr::StatsMgr() :
             addExchangeStats(ExchangeType::RL);
         }
     }
-    if (testDiags('i')) {
+    if (options.testDiags('i')) {
         addCustomCounter("shortwait", "Short waits for packets");
     }
 }

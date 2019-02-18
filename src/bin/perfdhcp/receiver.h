@@ -46,15 +46,23 @@ private:
     /// \brief Mutex for controlling access to the queue.
     util::thread::Mutex pkt_queue_mutex_;
 
+    BasePerfSocket &socket_;
+
     /// \brief Single- or thread-mode indicator.
     bool single_threaded_;
+
+    uint8_t ip_version_;
 
 public:
     /// \brief Receiver constructor.
     ///
     /// \param socket A socket for receiving packets.
-    Receiver() :
-        single_threaded_(CommandOptions::instance().isSingleThreaded()) {
+    /// \param single_threaded A flag indicating running mode.
+    /// \param ip_version An IP version: 4 or 6
+    Receiver(BasePerfSocket &socket, bool single_threaded, uint8_t ip_version) :
+        socket_(socket),
+        single_threaded_(single_threaded),
+        ip_version_(ip_version) {
     }
 
     /// \brief Destructor.
