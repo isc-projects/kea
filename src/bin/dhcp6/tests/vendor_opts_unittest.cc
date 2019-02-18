@@ -351,3 +351,83 @@ TEST_F(VendorOptsTest, cableLabsShortVendorClass) {
     EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
 }
 
+// Checks that it's possible to have a vivso (125) option in the response
+// only. Once specific client (Genexis) sends only vendor-class info and
+// expects the server to include vivso in the response.
+TEST_F(VendorOptsTest, vivsoInResponseOnly) {
+    IfaceMgrTestConfig test_config(true);
+    IfaceMgr::instance().openSockets6();
+    Dhcp6Client client;
+
+    // The config defines custom vendor (17) suboption 2 that conveys a TFTP URL.
+    // The client doesn't send vendor class (16) or vendor info (17) option, so
+    // normal vendor option processing is impossible. However, since there's a
+    // class defined that
+    // matches client's packets and that class inserts vivso in the response,
+    // Kea should be able to figure out the vendor-id and then also insert
+    // suboption 2 with the TFTP URL.
+    string config =
+        "{"
+        "    \"interfaces-config\": {"
+        "        \"interfaces\": [ ]"
+        "    },"
+        "    \"option-def\": ["
+        "        {"
+        "            \"name\": \"tftp\","
+        "            \"code\": 2,"
+        "            \"space\": \"vendor-25167\","
+        "            \"type\": \"string\""
+        "        }"
+        "    ],"
+        "    \"client-classes\": ["
+        "    {"
+        "        \"name\": \"cpe_genexis\","
+        "        \"test\": \"substring(option[15].hex,0,7) == 'HMC1000'\","
+        "        \"option-data\": ["
+        "        {"
+        "            \"name\": \"vendor-opts\","
+        "            \"data\": \"25167\""
+        "        },"
+        "        {"
+        "            \"name\": \"tftp\","
+        "            \"space\": \"vendor-25167\","
+        "            \"data\": \"tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img\","
+        "            \"always-send\": true"
+        "        } ]"
+        "    } ],"
+        "\"subnet6\": [ { "
+        "    \"pools\": [ { \"pool\": \"2001:db8::/64\" } ],"
+        "    \"subnet\": \"2001:db8::/64\", "
+        "    \"interface\": \"eth0\" "
+        " } ]"
+        "}";
+
+    EXPECT_NO_THROW(configure(config, *client.getServer()));
+
+    // A a vendor-class identifier (this matches what Genexis hardware sends)
+    OptionPtr vopt(new OptionString(Option::V6, D6O_USER_CLASS,
+                                    "HMC1000.v1.3.0-R,Element-P1090,genexis.eu"));
+    client.addExtraOption(vopt);
+    client.requestOption(D6O_VENDOR_OPTS);
+
+    // Let's check whether the server is not able to process this packet
+    // and include vivso with appropriate sub-options
+    EXPECT_NO_THROW(client.doSolicit());
+    ASSERT_TRUE(client.getContext().response_);
+
+    // Check there's a response.
+    OptionPtr rsp = client.getContext().response_->getOption(D6O_VENDOR_OPTS);
+    ASSERT_TRUE(rsp);
+
+    // Check that it includes vivso with vendor-id = 25167
+    OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
+    ASSERT_TRUE(rsp_vivso);
+    EXPECT_EQ(25167, rsp_vivso->getVendorId());
+
+    // Now check that it contains suboption 2 with appropriate content.
+    OptionPtr subopt2 = rsp_vivso->getOption(2);
+    ASSERT_TRUE(subopt2);
+    vector<uint8_t> subopt2bin = subopt2->toBinary(false);
+    string txt(subopt2bin.begin(), subopt2bin.end());
+    EXPECT_EQ("tftp://192.0.2.1/genexis/HMC1000.v1.3.0-R.img", txt);
+}
