@@ -11,6 +11,8 @@
 #include <perfdhcp/rate_control.h>
 #include <perfdhcp/stats_mgr.h>
 #include <perfdhcp/receiver.h>
+#include <perfdhcp/command_options.h>
+#include <perfdhcp/perf_socket.h>
 
 #include <dhcp/iface_mgr.h>
 #include <dhcp/dhcp6.h>
@@ -124,7 +126,7 @@ public:
 class TestControl : public boost::noncopyable {
 public:
     /// \brief Default constructor.
-    TestControl();
+    TestControl(CommandOptions& options, BasePerfSocket &socket);
 
     /// Packet template buffer.
     typedef std::vector<uint8_t> TemplateBuffer;
@@ -925,7 +927,7 @@ protected:
     /// spaces or hexadecimal digits.
     void readPacketTemplate(const std::string& file_name);
 
-    PerfSocket socket_;
+    BasePerfSocket &socket_;
     Receiver receiver_;
 
     boost::posix_time::ptime last_report_; ///< Last intermediate report time.
@@ -950,6 +952,8 @@ protected:
     std::map<uint8_t, dhcp::Pkt6Ptr> template_packets_v6_;
 
     static bool interrupted_;  ///< Is program interrupted.
+
+    CommandOptions& options_;
 };
 
 }  // namespace perfdhcp

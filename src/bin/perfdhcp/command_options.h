@@ -30,6 +30,14 @@ enum class Scenario {
 class CommandOptions : public boost::noncopyable {
 public:
 
+    /// \brief Default Constructor.
+    ///
+    /// Private constructor as this is a singleton class.
+    /// Use CommandOptions::instance() to get instance of it.
+    CommandOptions() {
+        reset();
+    }
+
     /// @brief A vector holding MAC addresses.
     typedef std::vector<std::vector<uint8_t> > MacAddrsVector;
 
@@ -110,12 +118,6 @@ public:
         DO_SA,
         DORA_SARR
     };
-
-    /// CommandOptions is a singleton class. This method returns reference
-    /// to its sole instance.
-    ///
-    /// \return the only existing instance of command options
-    static CommandOptions& instance();
 
     /// \brief Reset to defaults
     ///
@@ -363,6 +365,18 @@ public:
     /// \return server name.
     std::string getServerName() const { return server_name_; }
 
+
+    /// \brief Find if diagnostic flag has been set.
+    ///
+    /// \param diag diagnostic flag (a,e,i,s,r,t,T).
+    /// \return true if diagnostics flag has been set.
+    bool testDiags(const char diag) {
+        if (getDiags().find(diag) != std::string::npos) {
+            return (true);
+        }
+        return (false);
+    }
+
     /// \brief Print command line arguments.
     void printCommandLine() const;
 
@@ -377,15 +391,6 @@ public:
     void version() const;
 
 private:
-
-    /// \brief Default Constructor.
-    ///
-    /// Private constructor as this is a singleton class.
-    /// Use CommandOptions::instance() to get instance of it.
-    CommandOptions() {
-        reset();
-    }
-
     /// \brief Initializes class members based on the command line.
     ///
     /// Reads each command line parameter and sets class member values.
@@ -400,7 +405,7 @@ private:
     /// \brief Validates initialized options.
     ///
     /// \throws isc::InvalidParameter if command line validation fails.
-    void validate() const;
+    void validate();
 
     /// \brief Throws !InvalidParameter exception if condition is true.
     ///
@@ -668,13 +673,6 @@ private:
     /// @brief Selected performance scenario. Default is basic.
     Scenario scenario_;
 };
-
-/// \brief Find if diagnostic flag has been set.
-///
-/// \param diag diagnostic flag (a,e,i,s,r,t,T).
-/// \return true if diagnostics flag has been set.
-bool
-testDiags(const char diag);
 
 }  // namespace perfdhcp
 }  // namespace isc

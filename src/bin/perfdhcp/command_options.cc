@@ -97,12 +97,6 @@ CommandOptions::LeaseType::toText() const {
     }
 }
 
-CommandOptions&
-CommandOptions::instance() {
-    static CommandOptions options;
-    return (options);
-}
-
 void
 CommandOptions::reset() {
     // Default mac address used in DHCP messages
@@ -854,7 +848,7 @@ bool CommandOptions::decodeMacString(const std::string& line) {
 }
 
 void
-CommandOptions::validate() const {
+CommandOptions::validate() {
     check((getIpVersion() != 4) && (isBroadcast() != 0),
           "-B is not compatible with IPv6 (-6)");
     check((getIpVersion() != 6) && (isRapidCommit() != 0),
@@ -930,6 +924,19 @@ CommandOptions::validate() const {
         std::cout << "WARNING: Currently system can run more than 1 thread in parallel." << std::endl
                   << "WARNING: Better results are achieved when run in multi-threaded mode." << std::endl
                   << "WARNING: To switch use -g multi option." << std::endl;
+    }
+
+    if (scenario_ == Scenario::AVALANCHE) {
+        check(getClientsNum() <= 0,
+              "in case of avalanche scenario number\nof clients must be specified"
+              " using -R option explicitly");
+
+        // in case of AVALANCHE drops ie. long responses should not be observed by perfdhcp
+        double dt[2] = { 1000.0, 1000.0 };
+        drop_time_.assign(dt, dt + 2);
+        if (drop_time_set_) {
+            std::cout << "INFO: in avalanche scenario drop time is ignored" << std::endl;
+        }
     }
 }
 
@@ -1263,15 +1270,6 @@ CommandOptions::usage() const {
 void
 CommandOptions::version() const {
     std::cout << "VERSION: " << VERSION << std::endl;
-}
-
-bool
-testDiags(const char diag) {
-    std::string diags(CommandOptions::instance().getDiags());
-    if (diags.find(diag) != std::string::npos) {
-        return (true);
-    }
-    return (false);
 }
 
 

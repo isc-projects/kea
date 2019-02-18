@@ -9,6 +9,7 @@
 
 #include <dhcp/pkt.h>
 #include <exceptions/exceptions.h>
+#include <perfdhcp/command_options.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -649,7 +650,7 @@ public:
     /// the test. If this is not selected archiving should be disabled
     /// for performance reasons and to avoid waste of memory for storing
     /// large list of archived packets.
-    StatsMgr();
+    StatsMgr(CommandOptions& options);
 
     /// \brief Specify new exchange type.
     ///
@@ -1109,6 +1110,8 @@ private:
     bool archive_enabled_;
 
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
+
+    CommandOptions& options_;
 };
 
 /// Pointer to Statistics Manager;

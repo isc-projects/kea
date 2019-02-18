@@ -45,8 +45,7 @@ bool TestControl::interrupted_ = false;
 bool
 TestControl::waitToExit() const {
     static ptime exit_time = ptime(not_a_date_time);
-    CommandOptions& options = CommandOptions::instance();
-    uint32_t wait_time = options.getExitWaitTime();
+    uint32_t wait_time = options_.getExitWaitTime();
 
     // If we care and not all packets are in yet
     if (wait_time && !haveAllPacketsBeenReceived()) {
@@ -67,9 +66,8 @@ TestControl::waitToExit() const {
 
 bool
 TestControl::haveAllPacketsBeenReceived() const {
-    const CommandOptions& options = CommandOptions::instance();
-    const uint8_t& ipversion = options.getIpVersion();
-    const std::vector<int>& num_request = options.getNumRequests();
+    const uint8_t& ipversion = options_.getIpVersion();
+    const std::vector<int>& num_request = options_.getNumRequests();
     const size_t& num_request_size = num_request.size();
 
     if (num_request_size == 0) {
@@ -95,10 +93,9 @@ TestControl::haveAllPacketsBeenReceived() const {
 
 void
 TestControl::cleanCachedPackets() {
-    CommandOptions& options = CommandOptions::instance();
     // When Renews are not sent, Reply packets are not cached so there
     // is nothing to do.
-    if (options.getRenewRate() == 0) {
+    if (options_.getRenewRate() == 0) {
         return;
     }
 
@@ -115,9 +112,9 @@ TestControl::cleanCachedPackets() {
         // since we want to randomize leases to be renewed so leave 5
         // times more packets to randomize from.
         /// @todo The cache size might be controlled from the command line.
-        if (reply_storage_.size() > 5 * options.getRenewRate()) {
+        if (reply_storage_.size() > 5 * options_.getRenewRate()) {
             reply_storage_.clear(reply_storage_.size() -
-                                 5 * options.getRenewRate());
+                                 5 * options_.getRenewRate());
         }
         // Remember when we performed a cleanup for the last time.
         // We want to do the next cleanup not earlier than in one second.
@@ -132,7 +129,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
                   " for the copyIaOptions function");
     }
     // IA_NA
-    if (CommandOptions::instance().getLeaseType()
+    if (options_.getLeaseType()
         .includes(CommandOptions::LeaseType::ADDRESS)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_NA);
         if (!option) {
@@ -142,7 +139,7 @@ TestControl::copyIaOptions(const Pkt6Ptr& pkt_from, Pkt6Ptr& pkt_to) {
         pkt_to->addOption(option);
     }
     // IA_PD
-    if (CommandOptions::instance().getLeaseType()
+    if (options_.getLeaseType()
         .includes(CommandOptions::LeaseType::PREFIX)) {
         OptionPtr option = pkt_from->getOption(D6O_IA_PD);
         if (!option) {
@@ -311,9 +308,7 @@ TestControl::factoryRequestList4(Option::Universe u,
 
 std::vector<uint8_t>
 TestControl::generateMacAddress(uint8_t& randomized) {
-    CommandOptions& options = CommandOptions::instance();
-
-    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // if we are using the -M option return a random one from the list...
     if (macs.size() > 0) {
       uint16_t r = number_generator_();
@@ -324,12 +319,12 @@ TestControl::generateMacAddress(uint8_t& randomized) {
 
     } else {
       // ... otherwise use the standard behavior
-      uint32_t clients_num = options.getClientsNum();
+      uint32_t clients_num = options_.getClientsNum();
       if (clients_num < 2) {
-          return (options.getMacTemplate());
+          return (options_.getMacTemplate());
       }
       // Get the base MAC address. We are going to randomize part of it.
-      std::vector<uint8_t> mac_addr(options.getMacTemplate());
+      std::vector<uint8_t> mac_addr(options_.getMacTemplate());
       if (mac_addr.size() != HW_ETHER_LEN) {
           isc_throw(BadValue, "invalid MAC address template specified");
       }
@@ -368,9 +363,8 @@ TestControl::generateClientId(const dhcp::HWAddrPtr& hwaddr) const {
 
 std::vector<uint8_t>
 TestControl::generateDuid(uint8_t& randomized) {
-    CommandOptions& options = CommandOptions::instance();
     std::vector<uint8_t> mac_addr(generateMacAddress(randomized));
-    const CommandOptions::MacAddrsVector& macs = options.getMacsFromFile();
+    const CommandOptions::MacAddrsVector& macs = options_.getMacsFromFile();
     // pick a random mac address if we are using option -M..
     if (macs.size() > 0) {
       uint16_t r = number_generator_();
@@ -399,12 +393,12 @@ TestControl::generateDuid(uint8_t& randomized) {
       std::copy(mac.begin(), mac.end(), duid.begin() + 4);
       return (duid);
     } else {
-      uint32_t clients_num = options.getClientsNum();
+      uint32_t clients_num = options_.getClientsNum();
       if ((clients_num == 0) || (clients_num == 1)) {
-          return (options.getDuidTemplate());
+          return (options_.getDuidTemplate());
       }
       // Get the base DUID. We are going to randomize part of it.
-      std::vector<uint8_t> duid(options.getDuidTemplate());
+      std::vector<uint8_t> duid(options_.getDuidTemplate());
       /// @todo: add support for DUIDs of different sizes.
       duid.resize(duid.size());
       std::copy(mac_addr.begin(), mac_addr.end(),
@@ -415,10 +409,10 @@ TestControl::generateDuid(uint8_t& randomized) {
 
 int
 TestControl::getElapsedTimeOffset() const {
-    int elp_offset = CommandOptions::instance().getIpVersion() == 4 ?
+    int elp_offset = options_.getIpVersion() == 4 ?
         DHCPV4_ELAPSED_TIME_OFFSET : DHCPV6_ELAPSED_TIME_OFFSET;
-    if (CommandOptions::instance().getElapsedTimeOffset() > 0) {
-        elp_offset = CommandOptions::instance().getElapsedTimeOffset();
+    if (options_.getElapsedTimeOffset() > 0) {
+        elp_offset = options_.getElapsedTimeOffset();
     }
     return (elp_offset);
 }
@@ -440,30 +434,30 @@ TestControl::getElapsedTime(const T& pkt1, const T& pkt2) {
 
 int
 TestControl::getRandomOffset(const int arg_idx) const {
-    int rand_offset = CommandOptions::instance().getIpVersion() == 4 ?
+    int rand_offset = options_.getIpVersion() == 4 ?
         DHCPV4_RANDOMIZATION_OFFSET : DHCPV6_RANDOMIZATION_OFFSET;
-    if (CommandOptions::instance().getRandomOffset().size() > arg_idx) {
-        rand_offset = CommandOptions::instance().getRandomOffset()[arg_idx];
+    if (options_.getRandomOffset().size() > arg_idx) {
+        rand_offset = options_.getRandomOffset()[arg_idx];
     }
     return (rand_offset);
 }
 
 int
 TestControl::getRequestedIpOffset() const {
-    int rip_offset = CommandOptions::instance().getIpVersion() == 4 ?
+    int rip_offset = options_.getIpVersion() == 4 ?
         DHCPV4_REQUESTED_IP_OFFSET : DHCPV6_IA_NA_OFFSET;
-    if (CommandOptions::instance().getRequestedIpOffset() > 0) {
-        rip_offset = CommandOptions::instance().getRequestedIpOffset();
+    if (options_.getRequestedIpOffset() > 0) {
+        rip_offset = options_.getRequestedIpOffset();
     }
     return (rip_offset);
 }
 
 int
 TestControl::getServerIdOffset() const {
-    int srvid_offset = CommandOptions::instance().getIpVersion() == 4 ?
+    int srvid_offset = options_.getIpVersion() == 4 ?
         DHCPV4_SERVERID_OFFSET : DHCPV6_SERVERID_OFFSET;
-    if (CommandOptions::instance().getServerIdOffset() > 0) {
-        srvid_offset = CommandOptions::instance().getServerIdOffset();
+    if (options_.getServerIdOffset() > 0) {
+        srvid_offset = options_.getServerIdOffset();
     }
     return (srvid_offset);
 }
@@ -478,10 +472,10 @@ TestControl::getTemplateBuffer(const size_t idx) const {
 
 int
 TestControl::getTransactionIdOffset(const int arg_idx) const {
-    int xid_offset = CommandOptions::instance().getIpVersion() == 4 ?
+    int xid_offset = options_.getIpVersion() == 4 ?
         DHCPV4_TRANSID_OFFSET : DHCPV6_TRANSID_OFFSET;
-    if (CommandOptions::instance().getTransactionIdOffset().size() > arg_idx) {
-        xid_offset = CommandOptions::instance().getTransactionIdOffset()[arg_idx];
+    if (options_.getTransactionIdOffset().size() > arg_idx) {
+        xid_offset = options_.getTransactionIdOffset()[arg_idx];
     }
     return (xid_offset);
 }
@@ -504,8 +498,7 @@ TestControl::initPacketTemplates() {
     template_packets_v4_.clear();
     template_packets_v6_.clear();
     template_buffers_.clear();
-    CommandOptions& options = CommandOptions::instance();
-    std::vector<std::string> template_files = options.getTemplateFiles();
+    std::vector<std::string> template_files = options_.getTemplateFiles();
     for (std::vector<std::string>::const_iterator it = template_files.begin();
          it != template_files.end(); ++it) {
         readPacketTemplate(*it);
@@ -515,9 +508,8 @@ TestControl::initPacketTemplates() {
 void
 TestControl::sendPackets(const uint64_t packets_num,
                          const bool preload /* = false */) {
-    CommandOptions& options = CommandOptions::instance();
     for (uint64_t i = packets_num; i > 0; --i) {
-        if (options.getIpVersion() == 4) {
+        if (options_.getIpVersion() == 4) {
             // No template packets means that no -T option was specified.
             // We have to build packets ourselves.
             if (template_buffers_.empty()) {
@@ -564,15 +556,14 @@ TestControl::sendMultipleMessages6(const uint32_t msg_type,
 
 void
 TestControl::printDiagnostics() const {
-    CommandOptions& options = CommandOptions::instance();
-    if (testDiags('a')) {
+    if (options_.testDiags('a')) {
         // Print all command line parameters.
-        options.printCommandLine();
+        options_.printCommandLine();
         // Print MAC and DUID.
-        std::cout << "Set MAC to " << vector2Hex(options.getMacTemplate(), "::")
+        std::cout << "Set MAC to " << vector2Hex(options_.getMacTemplate(), "::")
                   << std::endl;
-        if (options.getDuidTemplate().size() > 0) {
-            std::cout << "Set DUID to " << vector2Hex(options.getDuidTemplate()) << std::endl;
+        if (options_.getDuidTemplate().size() > 0) {
+            std::cout << "Set DUID to " << vector2Hex(options_.getDuidTemplate()) << std::endl;
         }
     }
 }
@@ -581,7 +572,7 @@ void
 TestControl::printTemplate(const uint8_t packet_type) const {
     std::string hex_buf;
     int arg_idx = 0;
-    if (CommandOptions::instance().getIpVersion() == 4) {
+    if (options_.getIpVersion() == 4) {
         if (packet_type == DHCPREQUEST) {
             arg_idx = 1;
         }
@@ -595,7 +586,7 @@ TestControl::printTemplate(const uint8_t packet_type) const {
             std::vector<uint8_t> buf(out_buf_data, out_buf_data + out_buf.getLength());
             hex_buf = vector2Hex(buf);
         }
-    } else if (CommandOptions::instance().getIpVersion() == 6) {
+    } else if (options_.getIpVersion() == 6) {
         if (packet_type == DHCPV6_REQUEST) {
             arg_idx = 1;
         }
@@ -636,11 +627,10 @@ TestControl::printTemplate(const uint8_t packet_type) const {
 
 void
 TestControl::printTemplates() const {
-    CommandOptions& options = CommandOptions::instance();
-    if (options.getIpVersion() == 4) {
+    if (options_.getIpVersion() == 4) {
         printTemplate(DHCPDISCOVER);
         printTemplate(DHCPREQUEST);
-    } else if (options.getIpVersion() == 6) {
+    } else if (options_.getIpVersion() == 6) {
         printTemplate(DHCPV6_SOLICIT);
         printTemplate(DHCPV6_REQUEST);
     }
@@ -649,22 +639,21 @@ TestControl::printTemplates() const {
 void
 TestControl::printRate() const {
     double rate = 0;
-    CommandOptions& options = CommandOptions::instance();
     std::string exchange_name = "4-way exchanges";
     ExchangeType xchg_type = ExchangeType::DO;
-    if (options.getIpVersion() == 4) {
+    if (options_.getIpVersion() == 4) {
         xchg_type =
-            options.getExchangeMode() == CommandOptions::DO_SA ?
+            options_.getExchangeMode() == CommandOptions::DO_SA ?
             ExchangeType::DO : ExchangeType::RA;
         if (xchg_type == ExchangeType::DO) {
             exchange_name = "DISCOVER-OFFER";
         }
-    } else if (options.getIpVersion() == 6) {
+    } else if (options_.getIpVersion() == 6) {
         xchg_type =
-            options.getExchangeMode() == CommandOptions::DO_SA ?
+            options_.getExchangeMode() == CommandOptions::DO_SA ?
             ExchangeType::SA : ExchangeType::RR;
         if (xchg_type == ExchangeType::SA) {
-            exchange_name = options.isRapidCommit() ? "Solicit-Reply" :
+            exchange_name = options_.isRapidCommit() ? "Solicit-Reply" :
                 "Solicit-Advertise";
         }
     }
@@ -674,8 +663,8 @@ TestControl::printRate() const {
     std::ostringstream s;
     s << "***Rate statistics***" << std::endl;
     s << "Rate: " << rate << " " << exchange_name << "/second";
-    if (options.getRate() > 0) {
-        s << ", expected rate: " << options.getRate() << std::endl;
+    if (options_.getRate() > 0) {
+        s << ", expected rate: " << options_.getRate() << std::endl;
     }
 
     std::cout << s.str() << std::endl;
@@ -683,8 +672,7 @@ TestControl::printRate() const {
 
 void
 TestControl::printIntermediateStats() {
-    CommandOptions& options = CommandOptions::instance();
-    int delay = options.getReportDelay();
+    int delay = options_.getReportDelay();
     ptime now = microsec_clock::universal_time();
     time_period time_since_report(last_report_, now);
     if (time_since_report.length().total_seconds() >= delay) {
@@ -697,7 +685,7 @@ void
 TestControl::printStats() const {
     printRate();
     stats_mgr_.printStats();
-    if (testDiags('i')) {
+    if (options_.testDiags('i')) {
         stats_mgr_.printCustomCounters();
     }
 }
@@ -771,8 +759,7 @@ TestControl::processReceivedPacket4(const Pkt4Ptr& pkt4) {
     if (pkt4->getType() == DHCPOFFER) {
         PktPtr pkt = stats_mgr_.passRcvdPacket(ExchangeType::DO, pkt4);
         Pkt4Ptr discover_pkt4(boost::dynamic_pointer_cast<Pkt4>(pkt));
-        CommandOptions::ExchangeMode xchg_mode =
-            CommandOptions::instance().getExchangeMode();
+        CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && discover_pkt4) {
             if (template_buffers_.size() < 2) {
                 sendRequest4(discover_pkt4, pkt4);
@@ -814,8 +801,7 @@ TestControl::processReceivedPacket6(const Pkt6Ptr& pkt6) {
     if (packet_type == DHCPV6_ADVERTISE) {
         PktPtr pkt = stats_mgr_.passRcvdPacket(ExchangeType::SA, pkt6);
         Pkt6Ptr solicit_pkt6(boost::dynamic_pointer_cast<Pkt6>(pkt));
-        CommandOptions::ExchangeMode xchg_mode =
-            CommandOptions::instance().getExchangeMode();
+        CommandOptions::ExchangeMode xchg_mode = options_.getExchangeMode();
         if ((xchg_mode == CommandOptions::DORA_SARR) && solicit_pkt6) {
             /// @todo check whether received ADVERTISE packet is sane.
             /// We might want to check if STATUS_CODE option is non-zero
@@ -869,7 +855,7 @@ TestControl::consumeReceivedPackets() {
     PktPtr pkt;
     while ((pkt = receiver_.getPkt())) {
         pkt_count += 1;
-        if (CommandOptions::instance().getIpVersion() == 4) {
+        if (options_.getIpVersion() == 4) {
             Pkt4Ptr pkt4 = boost::dynamic_pointer_cast<Pkt4>(pkt);
             processReceivedPacket4(pkt4);
         } else {
@@ -940,8 +926,7 @@ TestControl::registerOptionFactories6() const {
 
 void
 TestControl::registerOptionFactories() const {
-    CommandOptions& options = CommandOptions::instance();
-    switch(options.getIpVersion()) {
+    switch(options_.getIpVersion()) {
     case 4:
         registerOptionFactories4();
         break;
@@ -966,21 +951,24 @@ TestControl::reset() {
     interrupted_ = false;
 }
 
-TestControl::TestControl() :
-    number_generator_(0, CommandOptions::instance().getMacsFromFile().size())
+TestControl::TestControl(CommandOptions& options, BasePerfSocket &socket) :
+    number_generator_(0, options.getMacsFromFile().size()),
+    socket_(socket),
+    receiver_(socket, options.isSingleThreaded(), options.getIpVersion()),
+    stats_mgr_(options),
+    options_(options)
 {
     // Reset singleton state before test starts.
     reset();
 
-    CommandOptions& options = CommandOptions::instance();
     // Ip version is not set ONLY in case the command options
     // were not parsed. This surely means that parse() function
     // was not called prior to starting the test. This is fatal
     // error.
-    if (options.getIpVersion() == 0) {
+    if (options_.getIpVersion() == 0) {
         isc_throw(InvalidOperation,
                   "command options must be parsed before running a test");
-    } else if (options.getIpVersion() == 4) {
+    } else if (options_.getIpVersion() == 4) {
         // Turn off packet queueing.
         IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, data::ElementPtr());
         setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator()));
@@ -990,8 +978,8 @@ TestControl::TestControl() :
         setTransidGenerator(NumberGeneratorPtr(new SequentialGenerator(0x00FFFFFF)));
     }
 
-    uint32_t clients_num = options.getClientsNum() == 0 ?
-        1 : options.getClientsNum();
+    uint32_t clients_num = options_.getClientsNum() == 0 ?
+        1 : options_.getClientsNum();
     setMacAddrGenerator(NumberGeneratorPtr(new SequentialGenerator(clients_num)));
 
     // Diagnostics are command line options mainly.
@@ -1001,8 +989,8 @@ TestControl::TestControl() :
     // Initialize packet templates.
     initPacketTemplates();
     // Initialize randomization seed.
-    if (options.isSeeded()) {
-        srandom(options.getSeed());
+    if (options_.isSeeded()) {
+        srandom(options_.getSeed());
     } else {
         // Seed with current time.
         time_period duration(from_iso_string("20111231T235959"),
@@ -1016,15 +1004,14 @@ TestControl::TestControl() :
 
 void
 TestControl::runWrapped(bool do_stop /*= false */) const {
-    CommandOptions& options = CommandOptions::instance();
-    if (!options.getWrapped().empty()) {
+    if (!options_.getWrapped().empty()) {
         pid_t pid = 0;
         signal(SIGCHLD, handleChild);
         pid = fork();
         if (pid < 0) {
             isc_throw(Unexpected, "unable to fork");
         } else if (pid == 0) {
-            execlp(options.getWrapped().c_str(),
+            execlp(options_.getWrapped().c_str(),
                    do_stop ? "stop" : "start",
                    NULL);
         }
@@ -1033,7 +1020,7 @@ TestControl::runWrapped(bool do_stop /*= false */) const {
 
 void
 TestControl::saveFirstPacket(const Pkt4Ptr& pkt) {
-    if (testDiags('T')) {
+    if (options_.testDiags('T')) {
         if (template_packets_v4_.find(pkt->getType()) == template_packets_v4_.end()) {
             template_packets_v4_[pkt->getType()] = pkt;
         }
@@ -1042,7 +1029,7 @@ TestControl::saveFirstPacket(const Pkt4Ptr& pkt) {
 
 void
 TestControl::saveFirstPacket(const Pkt6Ptr& pkt) {
-    if (testDiags('T')) {
+    if (options_.testDiags('T')) {
         if (template_packets_v6_.find(pkt->getType()) == template_packets_v6_.end()) {
             template_packets_v6_[pkt->getType()] = pkt;
         }
@@ -1086,7 +1073,7 @@ TestControl::sendDiscover4(const bool preload /*= false*/) {
     addExtraOpts(pkt4);
 
     pkt4->pack();
-    IfaceMgr::instance().send(pkt4);
+    socket_.send(pkt4);
     if (!preload) {
         stats_mgr_.passSentPacket(ExchangeType::DO, pkt4);
     }
@@ -1130,7 +1117,7 @@ TestControl::sendDiscover4(const std::vector<uint8_t>& template_buf,
     // Pack the input packet buffer to output buffer so as it can
     // be sent to server.
     pkt4->rawPack();
-    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
+    socket_.send(boost::static_pointer_cast<Pkt4>(pkt4));
     if (!preload) {
         // Update packet stats.
         stats_mgr_.passSentPacket(ExchangeType::DO,
@@ -1156,7 +1143,7 @@ TestControl::sendRequestFromAck() {
 
     msg->pack();
     // And send it.
-    IfaceMgr::instance().send(msg);
+    socket_.send(msg);
     stats_mgr_.passSentPacket(ExchangeType::RNA, msg);
     return (true);
 }
@@ -1182,7 +1169,7 @@ TestControl::sendMessageFromReply(const uint16_t msg_type) {
 
     msg->pack();
     // And send it.
-    IfaceMgr::instance().send(msg);
+    socket_.send(msg);
     stats_mgr_.passSentPacket((msg_type == DHCPV6_RENEW ? ExchangeType::RN
                                 : ExchangeType::RL), msg);
     return (true);
@@ -1197,7 +1184,7 @@ TestControl::sendRequest4(const dhcp::Pkt4Ptr& discover_pkt4,
 
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
-    if (CommandOptions::instance().isUseFirst() &&
+    if (options_.isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt4->addOption(Option::factory(Option::V4, DHO_DHCP_SERVER_IDENTIFIER,
                                         first_packet_serverid_));
@@ -1244,7 +1231,7 @@ TestControl::sendRequest4(const dhcp::Pkt4Ptr& discover_pkt4,
     pkt4->setSecs(static_cast<uint16_t>(elapsed_time / 1000));
     // Prepare on wire data to send.
     pkt4->pack();
-    IfaceMgr::instance().send(pkt4);
+    socket_.send(pkt4);
     stats_mgr_.passSentPacket(ExchangeType::RA, pkt4);
     saveFirstPacket(pkt4);
 }
@@ -1297,7 +1284,7 @@ TestControl::sendRequest4(const std::vector<uint8_t>& template_buf,
     size_t sid_offset = getServerIdOffset();
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
-    if (CommandOptions::instance().isUseFirst() &&
+    if (options_.isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
             opt_serverid(new LocalizedOption(Option::V4,
@@ -1351,7 +1338,7 @@ TestControl::sendRequest4(const std::vector<uint8_t>& template_buf,
 
     // Prepare on-wire data.
     pkt4->rawPack();
-    IfaceMgr::instance().send(boost::static_pointer_cast<Pkt4>(pkt4));
+    socket_.send(boost::static_pointer_cast<Pkt4>(pkt4));
     // Update packet stats.
     stats_mgr_.passSentPacket(ExchangeType::RA,
                                boost::static_pointer_cast<Pkt4>(pkt4));
@@ -1375,7 +1362,7 @@ TestControl::sendRequest6(const Pkt6Ptr& advertise_pkt6) {
 
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
-    if (CommandOptions::instance().isUseFirst() &&
+    if (options_.isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_SERVERID,
                                         first_packet_serverid_));
@@ -1405,7 +1392,7 @@ TestControl::sendRequest6(const Pkt6Ptr& advertise_pkt6) {
 
     // Prepare on-wire data.
     pkt6->pack();
-    IfaceMgr::instance().send(pkt6);
+    socket_.send(pkt6);
     stats_mgr_.passSentPacket(ExchangeType::RR, pkt6);
     saveFirstPacket(pkt6);
 }
@@ -1433,7 +1420,7 @@ TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
     size_t sid_offset = getServerIdOffset();
     // Use first flags indicates that we want to use the server
     // id captured in first packet.
-    if (CommandOptions::instance().isUseFirst() &&
+    if (options_.isUseFirst() &&
         (first_packet_serverid_.size() > 0)) {
         boost::shared_ptr<LocalizedOption>
             opt_serverid(new LocalizedOption(Option::V6,
@@ -1509,7 +1496,7 @@ TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
     // Prepare on wire data.
     pkt6->rawPack();
     // Send packet.
-    IfaceMgr::instance().send(pkt6);
+    socket_.send(pkt6);
     // Update packet stats.
     stats_mgr_.passSentPacket(ExchangeType::RR, pkt6);
 
@@ -1518,7 +1505,7 @@ TestControl::sendRequest6(const std::vector<uint8_t>& template_buf,
     // contents will be printed. Here we check if this packet has been already
     // collected. If it hasn't we save this packet so as we can print its
     // contents when test is finished.
-    if (testDiags('T') &&
+    if (options_.testDiags('T') &&
         (template_packets_v6_.find(DHCPV6_REQUEST) == template_packets_v6_.end())) {
         template_packets_v6_[DHCPV6_REQUEST] = pkt6;
     }
@@ -1536,7 +1523,7 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
         isc_throw(Unexpected, "failed to create SOLICIT packet");
     }
     pkt6->addOption(Option::factory(Option::V6, D6O_ELAPSED_TIME));
-    if (CommandOptions::instance().isRapidCommit()) {
+    if (options_.isRapidCommit()) {
         pkt6->addOption(Option::factory(Option::V6, D6O_RAPID_COMMIT));
     }
     pkt6->addOption(Option::factory(Option::V6, D6O_CLIENTID, duid));
@@ -1546,13 +1533,11 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
     // IPv6 address (with IA_NA) or IPv6 prefix (IA_PD) or both.
 
     // IA_NA
-    if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::ADDRESS)) {
+    if (options_.getLeaseType().includes(CommandOptions::LeaseType::ADDRESS)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_NA));
     }
     // IA_PD
-    if (CommandOptions::instance().getLeaseType()
-        .includes(CommandOptions::LeaseType::PREFIX)) {
+    if (options_.getLeaseType().includes(CommandOptions::LeaseType::PREFIX)) {
         pkt6->addOption(Option::factory(Option::V6, D6O_IA_PD));
     }
 
@@ -1562,7 +1547,7 @@ TestControl::sendSolicit6(const bool preload /*= false*/) {
     addExtraOpts(pkt6);
 
     pkt6->pack();
-    IfaceMgr::instance().send(pkt6);
+    socket_.send(pkt6);
     if (!preload) {
         stats_mgr_.passSentPacket(ExchangeType::SA, pkt6);
     }
@@ -1605,7 +1590,7 @@ TestControl::sendSolicit6(const std::vector<uint8_t>& template_buf,
     addExtraOpts(pkt6);
 
     // Send solicit packet.
-    IfaceMgr::instance().send(pkt6);
+    socket_.send(pkt6);
     if (!preload) {
         // Update packet stats.
         stats_mgr_.passSentPacket(ExchangeType::SA, pkt6);
@@ -1616,9 +1601,8 @@ TestControl::sendSolicit6(const std::vector<uint8_t>& template_buf,
 
 void
 TestControl::setDefaults4(const Pkt4Ptr& pkt) {
-    CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfacePtr iface = IfaceMgr::instance().getIface(socket_.ifindex_);
+    IfacePtr iface = socket_.getIface();
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -1628,13 +1612,13 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
     // Local client's port (68)
     pkt->setLocalPort(DHCP4_CLIENT_PORT);
     // Server's port (67)
-    if (options.getRemotePort()) {
-        pkt->setRemotePort(options.getRemotePort());
+    if (options_.getRemotePort()) {
+        pkt->setRemotePort(options_.getRemotePort());
     } else {
         pkt->setRemotePort(DHCP4_SERVER_PORT);
     }
     // The remote server's name or IP.
-    pkt->setRemoteAddr(IOAddress(options.getServerName()));
+    pkt->setRemoteAddr(IOAddress(options_.getServerName()));
     // Set local address.
     pkt->setLocalAddr(IOAddress(socket_.addr_));
     // Set relay (GIADDR) address to local address.
@@ -1645,9 +1629,8 @@ TestControl::setDefaults4(const Pkt4Ptr& pkt) {
 
 void
 TestControl::setDefaults6(const Pkt6Ptr& pkt) {
-    CommandOptions& options = CommandOptions::instance();
     // Interface name.
-    IfacePtr iface = IfaceMgr::instance().getIface(socket_.ifindex_);
+    IfacePtr iface = socket_.getIface();
     if (iface == NULL) {
         isc_throw(BadValue, "unable to find interface with given index");
     }
@@ -1657,20 +1640,20 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
     // Local client's port (547)
     pkt->setLocalPort(DHCP6_CLIENT_PORT);
     // Server's port (548)
-    if (options.getRemotePort()) {
-        pkt->setRemotePort(options.getRemotePort());
+    if (options_.getRemotePort()) {
+        pkt->setRemotePort(options_.getRemotePort());
     } else {
         pkt->setRemotePort(DHCP6_SERVER_PORT);
     }
     // Set local address.
     pkt->setLocalAddr(socket_.addr_);
     // The remote server's name or IP.
-    pkt->setRemoteAddr(IOAddress(options.getServerName()));
+    pkt->setRemoteAddr(IOAddress(options_.getServerName()));
 
     // only act as a relay agent when told so.
     /// @todo: support more level of encapsulation, at the moment we only support
     /// one, via -A1 option.
-    if (options.isUseRelayedV6()) {
+    if (options_.isUseRelayedV6()) {
       Pkt6::RelayInfo relay_info;
       relay_info.msg_type_ = DHCPV6_RELAY_FORW;
       relay_info.hop_count_ = 1;
@@ -1683,8 +1666,7 @@ TestControl::setDefaults6(const Pkt6Ptr& pkt) {
 void
 TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
     // All all extra options that the user may have specified
-    CommandOptions& options = CommandOptions::instance();
-    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
     for (auto entry : extra_opts) {
         pkt->addOption(entry.second);
     }
@@ -1693,8 +1675,7 @@ TestControl::addExtraOpts(const Pkt4Ptr& pkt) {
 void
 TestControl::addExtraOpts(const Pkt6Ptr& pkt) {
     // All all extra options that the user may have specified
-    CommandOptions& options = CommandOptions::instance();
-    const dhcp::OptionCollection& extra_opts = options.getExtraOpts();
+    const dhcp::OptionCollection& extra_opts = options_.getExtraOpts();
     for (auto entry : extra_opts) {
         pkt->addOption(entry.second);
     }

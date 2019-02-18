@@ -20,17 +20,14 @@ using namespace isc::asiolink;
 namespace isc {
 namespace perfdhcp {
 
-PerfSocket::PerfSocket() :
-    SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, openSocket()),
-    ifindex_(0)
-{
+PerfSocket::PerfSocket(CommandOptions& options) {
+    sockfd_ = openSocket(options);
     initSocketData();
 }
 
 
 int
-PerfSocket::openSocket() const {
-    CommandOptions& options = CommandOptions::instance();
+PerfSocket::openSocket(CommandOptions& options) const {
     std::string localname = options.getLocalName();
     std::string servername = options.getServerName();
     uint16_t port = options.getLocalPort();
@@ -147,6 +144,43 @@ PerfSocket::initSocketData() {
         }
     }
     isc_throw(BadValue, "interface for specified socket descriptor not found");
+}
+
+Pkt4Ptr
+PerfSocket::receive4(uint32_t timeout_sec, uint32_t timeout_usec) {
+    Pkt4Ptr pkt = IfaceMgr::instance().receive4(timeout_sec, timeout_usec);
+    if (pkt) {
+        /// @todo: Add packet exception handling here. Right now any
+        /// malformed packet will cause perfdhcp to abort.
+        pkt->unpack();
+    }
+    return (pkt);
+}
+
+Pkt6Ptr
+PerfSocket::receive6(uint32_t timeout_sec, uint32_t timeout_usec) {
+    Pkt6Ptr pkt = IfaceMgr::instance().receive6(timeout_sec, timeout_usec);
+    if (pkt) {
+        /// @todo: Add packet exception handling here. Right now any
+        /// malformed packet will cause perfdhcp to abort.
+        pkt->unpack();
+    }
+    return (pkt);
+}
+
+bool
+PerfSocket::send(const Pkt4Ptr& pkt) {
+    return IfaceMgr::instance().send(pkt);
+}
+
+bool
+PerfSocket::send(const Pkt6Ptr& pkt) {
+    return IfaceMgr::instance().send(pkt);
+}
+
+IfacePtr
+PerfSocket::getIface() {
+    return (IfaceMgr::instance().getIface(ifindex_));
 }
 
 }

@@ -84,8 +84,7 @@ public:
     ///
     /// \param cmdline command line provided as single string.
     /// \return true if program has been run in help or version mode ('h' or 'v' flag).
-    static bool process(const std::string& cmdline) {
-        CommandOptions& opt = CommandOptions::instance();
+    static bool process(CommandOptions& opt, const std::string& cmdline) {
         int argc = 0;
         char** argv = tokenizeString(cmdline, argc);
         ArgvPtr args(argv, argc);

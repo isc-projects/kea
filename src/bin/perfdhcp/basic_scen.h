@@ -22,8 +22,17 @@ namespace perfdhcp {
 /// is continuously loaded with DHCP messages according to given rate.
 class BasicScen : public AbstractScen {
 public:
-    /// Default and the only constructor of BasicScen.
-    BasicScen() {};
+    /// \brief Default and the only constructor of BasicScen.
+    ///
+    /// \param options reference to command options,
+    /// \param socket reference to a socket.
+    BasicScen(CommandOptions& options, BasePerfSocket &socket):
+        AbstractScen(options, socket)
+    {
+        basic_rate_control_.setRate(options_.getRate());
+        renew_rate_control_.setRate(options_.getRenewRate());
+        release_rate_control_.setRate(options_.getReleaseRate());
+    };
 
     /// brief\ Run performance test.
     ///
@@ -33,11 +42,10 @@ public:
     ///
     /// \throw isc::InvalidOperation if command line options are not parsed.
     /// \throw isc::Unexpected if internal Test Controller error occurred.
-    /// \return error_code, 3 if number of received packets is not equal
-    /// to number of sent packets, 0 if everything is ok.
-    int run();
+    /// \return execution status.
+    int run() override;
 
-private:
+protected:
     /// \brief A rate control class for Discover and Solicit messages.
     RateControl basic_rate_control_;
     /// \brief A rate control class for Renew messages.
