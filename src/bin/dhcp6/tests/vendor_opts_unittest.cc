@@ -351,21 +351,21 @@ TEST_F(VendorOptsTest, cableLabsShortVendorClass) {
     EXPECT_EQ(DHCP6_CLIENT_PORT, adv->getRemotePort());
 }
 
-// Checks that it's possible to have a vivso (125) option in the response
+// Checks that it's possible to have a vendor opts (17) option in the response
 // only. Once specific client (Genexis) sends only vendor-class info and
-// expects the server to include vivso in the response.
-TEST_F(VendorOptsTest, vivsoInResponseOnly) {
+// expects the server to include vendor opts in the response.
+TEST_F(VendorOptsTest, vendorOpsInResponseOnly) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets6();
     Dhcp6Client client;
 
-    // The config defines custom vendor (17) suboption 2 that conveys a TFTP URL.
-    // The client doesn't send vendor class (16) or vendor info (17) option, so
-    // normal vendor option processing is impossible. However, since there's a
-    // class defined that
-    // matches client's packets and that class inserts vivso in the response,
-    // Kea should be able to figure out the vendor-id and then also insert
-    // suboption 2 with the TFTP URL.
+    // The config defines custom vendor (17) suboption 2 that conveys
+    // a TFTP URL.  The client doesn't send vendor class (16) or
+    // vendor opts (17) option, so normal vendor option processing is
+    // impossible. However, since there's a class defined that matches
+    // client's packets and that class inserts a vendor opts in the
+    // response, Kea should be able to figure out the vendor-id and
+    // then also insert the suboption 2 with the TFTP URL.
     string config =
         "{"
         "    \"interfaces-config\": {"
@@ -419,13 +419,13 @@ TEST_F(VendorOptsTest, vivsoInResponseOnly) {
     OptionPtr rsp = client.getContext().response_->getOption(D6O_VENDOR_OPTS);
     ASSERT_TRUE(rsp);
 
-    // Check that it includes vivso with vendor-id = 25167
-    OptionVendorPtr rsp_vivso = boost::dynamic_pointer_cast<OptionVendor>(rsp);
-    ASSERT_TRUE(rsp_vivso);
-    EXPECT_EQ(25167, rsp_vivso->getVendorId());
+    // Check that it includes vendor opts with vendor-id = 25167
+    OptionVendorPtr rsp_vopts = boost::dynamic_pointer_cast<OptionVendor>(rsp);
+    ASSERT_TRUE(rsp_vopts);
+    EXPECT_EQ(25167, rsp_vopts->getVendorId());
 
     // Now check that it contains suboption 2 with appropriate content.
-    OptionPtr subopt2 = rsp_vivso->getOption(2);
+    OptionPtr subopt2 = rsp_vopts->getOption(2);
     ASSERT_TRUE(subopt2);
     vector<uint8_t> subopt2bin = subopt2->toBinary(false);
     string txt(subopt2bin.begin(), subopt2bin.end());

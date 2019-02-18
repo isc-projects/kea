@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1257,8 +1257,8 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     }
 
     if (!vendor_rsp) {
-        // It's possible that vivso was inserted already by client class or
-        // a hook. If that is so, let's use it.
+        // It's possible that the vendor opts option was inserted already
+        // by client class or a hook. If that is so, let's use it.
         vendor_rsp.reset(new OptionVendor(Option::V6, vendor_id));
     }
 
