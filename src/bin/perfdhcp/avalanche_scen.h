@@ -40,7 +40,7 @@ public:
     /// \return execution status.
     int run() override;
 
-private:
+protected:
 
     // A reference to socket;
     BasePerfSocket &socket_;
