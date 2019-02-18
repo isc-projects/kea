@@ -1186,28 +1186,54 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
     // it will be logged in the assignLease() when it fails to
     // pick the suitable subnet. We don't want to duplicate
     // error messages in such case.
-    if (!ctx.subnet_) {
+    //
+    // Also, if there's no options to possibly assign, give up.
+    if (!ctx.subnet_ || co_list.empty()) {
         return;
     }
 
-    // Try to get the vendor option
+    uint32_t vendor_id = 0;
+
+    // Try to get the vendor option from a client. This is the usual way.
     boost::shared_ptr<OptionVendor> vendor_req =
         boost::dynamic_pointer_cast<OptionVendor>(question->getOption(D6O_VENDOR_OPTS));
-    if (!vendor_req || co_list.empty()) {
+    if (vendor_req) {
+        vendor_id = vendor_req->getVendorId();
+    }
+
+    /// @todo: We could get the vendor-id from vendor-class option (16).
+
+    // The alternative is that the server could have provided the option in some
+    // other way, either using client classification or hooks. If there's a
+    // vendor info option in the response already, use that.
+    boost::shared_ptr<OptionVendor> vendor_rsp =
+        boost::dynamic_pointer_cast<OptionVendor>(answer->getOption(D6O_VENDOR_OPTS));
+    if (vendor_rsp) {
+        vendor_id = vendor_rsp->getVendorId();
+    }
+
+    // If there's no vendor option in either request or response, then there's no way
+    // to figure out what the vendor-id value is and we give up.
+    if (!vendor_req && !vendor_rsp) {
         return;
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
     std::vector<uint16_t> requested_opts;
 
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other vendors
     /// may have different policies.
-    boost::shared_ptr<OptionUint16Array> oro =
-        boost::dynamic_pointer_cast<OptionUint16Array>(vendor_req->getOption(DOCSIS3_V6_ORO));
-    if (oro) {
-        requested_opts = oro->getValues();
+    boost::shared_ptr<OptionUint16Array> oro;
+    if (vendor_req) {
+        OptionPtr oro_generic = vendor_req->getOption(DOCSIS3_V6_ORO);
+        if (oro_generic) {
+            oro = boost::dynamic_pointer_cast<OptionUint16Array>(oro_generic);
+            if (oro) {
+                requested_opts = oro->getValues();
+            }
+        }
     }
+
     // Iterate on the configured option list to add persistent options
     for (CfgOptionList::const_iterator copts = co_list.begin();
          copts != co_list.end(); ++copts) {
@@ -1230,7 +1256,11 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         return;
     }
 
-    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V6, vendor_id));
+    if (!vendor_rsp) {
+        // It's possible that vivso was inserted already by client class or
+        // a hook. If that is so, let's use it.
+        vendor_rsp.reset(new OptionVendor(Option::V6, vendor_id));
+    }
 
     // Get the list of options that client requested.
     bool added = false;
@@ -1247,7 +1277,9 @@ Dhcpv6Srv::appendRequestedVendorOptions(const Pkt6Ptr& question,
         }
     }
 
-    if (added) {
+    // If we added some sub-options and the vendor opts option is not in
+    // the response already, then add it.
+    if (added && !answer->getOption(D6O_VENDOR_OPTS)) {
         answer->addOption(vendor_rsp);
     }
 }
