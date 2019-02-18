@@ -31,19 +31,20 @@ using namespace isc;
 using namespace isc::dhcp;
 using namespace isc::perfdhcp;
 
-/// \brief FakeScenPerfSocket class that mocks PerfSocket.
+/// \brief FakeAvalancheScenPerfSocket class that mocks PerfSocket.
 ///
 /// It stubs send and receive operations and collects statistics.
 /// Beside that it simulates DHCP server responses for received
 /// packets.
-class FakeScenPerfSocket: public BasePerfSocket {
+class FakeAvalancheScenPerfSocket: public BasePerfSocket {
 public:
-    /// \brief Default constructor for FakeScenPerfSocket.
-    FakeScenPerfSocket(CommandOptions &opt) :
+    /// \brief Default constructor for FakeAvalancheScenPerfSocket.
+    FakeAvalancheScenPerfSocket(CommandOptions &opt) :
         opt_(opt),
         iface_(boost::make_shared<Iface>("fake", 0)),
         sent_cnt_(0),
-        recv_cnt_(0) {};
+        recv_cnt_(0),
+        initial_drops_cnt_(0) {};
 
     CommandOptions &opt_;
 
@@ -51,6 +52,7 @@ public:
 
     int sent_cnt_;  ///< Counter of sent packets.
     int recv_cnt_;  ///< Counter of received packets.
+    int initial_drops_cnt_;
 
     /// List of pairs <msg_type, trans_id> containing responses
     /// planned to send to perfdhcp.
@@ -65,6 +67,15 @@ public:
         if (planned_responses_.empty()) {
             return Pkt4Ptr();
         }
+
+        // simulate initial drops
+        if (initial_drops_cnt_ > 0) {
+            planned_responses_.pop_front();
+            initial_drops_cnt_--;
+            return(Pkt4Ptr());
+        }
+
+        // prepare received packet
         auto msg = planned_responses_.front();
         planned_responses_.pop_front();
         auto msg_type = std::get<0>(msg);
@@ -87,6 +98,15 @@ public:
         if (planned_responses_.empty()) {
             return Pkt6Ptr();
         }
+
+        // simulate initial drops
+        if (initial_drops_cnt_ > 0) {
+            planned_responses_.pop_front();
+            initial_drops_cnt_--;
+            return(Pkt6Ptr());
+        }
+
+        // prepare received packet
         auto msg = planned_responses_.front();
         planned_responses_.pop_front();
         auto msg_type = std::get<0>(msg);
@@ -154,8 +174,9 @@ public:
 class NakedAvalancheScen: public AvalancheScen {
 public:
     using AvalancheScen::tc_;
+    using AvalancheScen::total_resent_;
 
-    FakeScenPerfSocket fake_sock_;
+    FakeAvalancheScenPerfSocket fake_sock_;
 
     NakedAvalancheScen(CommandOptions &opt) : AvalancheScen(opt, fake_sock_), fake_sock_(opt) {};
 
@@ -201,6 +222,8 @@ TEST_F(AvalancheScenTest, Packet4Exchange) {
 
     as.run();
 
+    // Check if basic exchange of packets happend. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 0);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 20); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
     EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 10);
@@ -216,21 +239,42 @@ TEST_F(AvalancheScenTest, Packet4ExchangeOnlyDO) {
 
     as.run();
 
+    // Check if DO exchange of packets happend only. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 0);
     EXPECT_EQ(as.fake_sock_.sent_cnt_, 10); // Discovery + Request
     EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
     EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 10);
-    EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 0);
-    EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 0);
+    EXPECT_THROW(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), isc::BadValue);
+}
+
+
+TEST_F(AvalancheScenTest, Packet4ExchangeWithRetransmissions) {
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -4 -R 10 --scenario avalanche -g single 127.0.0.1");
+    NakedAvalancheScen as(opt);
+
+    as.fake_sock_.initial_drops_cnt_ = 2;
+    as.run();
+
+    // Check if basic exchange of packets happend. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 2);
+    EXPECT_EQ(as.fake_sock_.sent_cnt_, 22); // Discovery + Request
+    EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA), 10);
 }
 
 
 TEST_F(AvalancheScenTest, Packet6Exchange) {
     CommandOptions opt;
-    processCmdLine(opt, "perfdhcp -l fake -6 -R 10 --scenario avalanche -g single -R 20 -L 10547 ::1");
+    processCmdLine(opt, "perfdhcp -l fake -6 -R 10 --scenario avalanche -g single ::1");
     NakedAvalancheScen as(opt);
 
     as.run();
 
+    // Check if basic exchange of packets happend. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 0);
     EXPECT_GE(as.fake_sock_.sent_cnt_, 20); // Solicit + Request
     EXPECT_GE(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
     EXPECT_GE(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 10);
@@ -241,14 +285,33 @@ TEST_F(AvalancheScenTest, Packet6Exchange) {
 
 TEST_F(AvalancheScenTest, Packet6ExchangeOnlySA) {
     CommandOptions opt;
-    processCmdLine(opt, "perfdhcp -l fake -6 -R 10 -i --scenario avalanche -g single -R 20 -L 10547 ::1");
+    processCmdLine(opt, "perfdhcp -l fake -6 -R 10 -i --scenario avalanche -g single ::1");
     NakedAvalancheScen as(opt);
 
     as.run();
 
+    // Check if SA exchange of packets happend only. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 0);
     EXPECT_GE(as.fake_sock_.sent_cnt_, 10); // Solicit + Request
     EXPECT_GE(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
     EXPECT_GE(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 10);
-    EXPECT_GE(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 0);
-    EXPECT_GE(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 0);
+    EXPECT_THROW(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), isc::BadValue);
+}
+
+
+TEST_F(AvalancheScenTest, Packet6ExchangeWithRetransmissions) {
+    CommandOptions opt;
+    processCmdLine(opt, "perfdhcp -l fake -6 -R 10 --scenario avalanche -g single ::1");
+    NakedAvalancheScen as(opt);
+
+    as.fake_sock_.initial_drops_cnt_ = 2;
+    as.run();
+
+    // Check if basic exchange of packets happend. No retransmissions expected.
+    EXPECT_EQ(as.total_resent_, 2);
+    EXPECT_EQ(as.fake_sock_.sent_cnt_, 22); // Discovery + Request
+    EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR), 10);
+    EXPECT_EQ(as.tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR), 10);
 }
