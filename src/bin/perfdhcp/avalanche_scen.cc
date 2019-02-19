@@ -125,6 +125,10 @@ AvalancheScen::run() {
         usleep(100);
 
         now = microsec_clock::universal_time();
+        // Wait for 200ms between subsequent check for resending.
+        // This time taken based on experiments. For times 10-30ms whole scenario
+        // time significantly grows. The same for times >200ms. The optimal times
+        // are between 50-200ms. \todo more research is needed.
         if (now - prev_cycle_time > milliseconds(200)) { // check if 0.2s elapsed
             prev_cycle_time = now;
             int still_left_cnt = 0;
