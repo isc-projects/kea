@@ -43,7 +43,9 @@ public:
 };
 
 
-TEST_F(PerfSocketTest, Basic) {
+TEST_F(PerfSocketTest, WrongCommandOptions) {
+    // Check if incorrect command options are casing failure during
+    // socket setup.
     CommandOptions opt;
 
     // make sure we catch -6 paired with v4 address

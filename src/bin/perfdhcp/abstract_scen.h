@@ -26,7 +26,16 @@ public:
     /// \param socket reference to a socket.
     AbstractScen(CommandOptions& options, BasePerfSocket &socket) :
         options_(options),
-        tc_(options, socket) {};
+        tc_(options, socket)
+    {
+        if (options_.getIpVersion() == 4) {
+            stage1_xchg_ = ExchangeType::DO;
+            stage2_xchg_ = ExchangeType::RA;
+        } else {
+            stage1_xchg_ = ExchangeType::SA;
+            stage2_xchg_ = ExchangeType::RR;
+        }
+    };
 
     /// \brief Run performance test.
     ///
@@ -39,8 +48,13 @@ public:
     virtual ~AbstractScen() {};
 
 protected:
-    CommandOptions& options_;
+    CommandOptions& options_; ///< Reference to commandline options.
     TestControl tc_;  ///< Object for controling sending and receiving packets.
+
+    // Helper fields to avoid checking IP version each time an exchange type
+    // is needed.
+    ExchangeType stage1_xchg_;
+    ExchangeType stage2_xchg_;
 };
 
 
