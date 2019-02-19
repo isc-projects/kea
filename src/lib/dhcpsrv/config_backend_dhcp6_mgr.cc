@@ -25,7 +25,7 @@ ConfigBackendDHCPv6Mgr::create() {
 
 void
 ConfigBackendDHCPv6Mgr::destroy() {
-    getConfigBackendDHCPv6MgrPtr().reset(new ConfigBackendDHCPv6Mgr());
+    getConfigBackendDHCPv6MgrPtr().reset();
 }
 
 ConfigBackendDHCPv6Mgr&

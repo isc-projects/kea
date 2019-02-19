@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -25,7 +25,7 @@ ConfigBackendDHCPv4Mgr::create() {
 
 void
 ConfigBackendDHCPv4Mgr::destroy() {
-    getConfigBackendDHCPv4MgrPtr().reset(new ConfigBackendDHCPv4Mgr());
+    getConfigBackendDHCPv4MgrPtr().reset();
 }
 
 ConfigBackendDHCPv4Mgr&
