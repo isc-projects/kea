@@ -1,3 +1,9 @@
+1523.	[bug]		fdupont
+	IfaceMgr::send method now returns proper status that matches
+	its documentation. Thanks to Matthias Stoeckl from Secunet
+	for reporting this issue.
+	(Gitlab #417,!221, git 4be58523f38097cea81ea06161aead58e00aeb2a)
+
 1522.	[bug]		marcin
 	The "unspecified" DHCP timer values (e.g. renew-timer) are
 	represented as NULL values in the database. This corrects
