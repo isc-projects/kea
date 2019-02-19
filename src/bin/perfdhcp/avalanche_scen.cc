@@ -128,16 +128,9 @@ AvalancheScen::run() {
         if (now - prev_cycle_time > milliseconds(200)) { // check if 0.2s elapsed
             prev_cycle_time = now;
             int still_left_cnt = 0;
-            if (options_.getIpVersion() == 4) {
-                still_left_cnt += resendPackets(ExchangeType::DO);
-                if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
-                    still_left_cnt += resendPackets(ExchangeType::RA);
-                }
-            } else {
-                still_left_cnt += resendPackets(ExchangeType::SA);
-                if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
-                    still_left_cnt += resendPackets(ExchangeType::RR);
-                }
+            still_left_cnt += resendPackets(stage1_xchg_);
+            if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+                still_left_cnt += resendPackets(stage2_xchg_);
             }
 
             if (still_left_cnt == 0) {
@@ -173,22 +166,16 @@ AvalancheScen::run() {
     }
 
     // Calculate total stats.
-    int total_sent_pkts = total_resent_;
-    int total_rcvd_pkts = 0;
-    if (options_.getIpVersion() == 4) {
-        total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::DO);
-        total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::DO);
-        if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
-            total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RA);
-            total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RA);
-        }
-    } else {
-        total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::SA);
-        total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::SA);
-        if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
-            total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(ExchangeType::RR);
-            total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(ExchangeType::RR);
-        }
+    int total_sent_pkts = total_resent_; // This holds sent + resent packets counts.
+    int total_rcvd_pkts = 0;  // This holds received packets count.
+    // Get sent and received counts for DO/SA (stage1) exchange from StatsMgr.
+    total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(stage1_xchg_);
+    total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(stage1_xchg_);
+    // Get sent and received counts for RA/RR (stage2) exchange from StatsMgr
+    // if RA/RR was not disabled.
+    if (options_.getExchangeMode() == CommandOptions::DORA_SARR) {
+        total_sent_pkts += tc_.getStatsMgr().getSentPacketsNum(stage2_xchg_);
+        total_rcvd_pkts += tc_.getStatsMgr().getRcvdPacketsNum(stage2_xchg_);
     }
 
     std::cout << "It took " << duration.length() << " to provision " << clients_num

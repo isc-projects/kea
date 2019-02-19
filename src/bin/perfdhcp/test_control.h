@@ -126,7 +126,7 @@ public:
 class TestControl : public boost::noncopyable {
 public:
     /// \brief Default constructor.
-    TestControl(CommandOptions& options, BasePerfSocket &socket);
+    TestControl(CommandOptions& options, BasePerfSocket& socket);
 
     /// Packet template buffer.
     typedef std::vector<uint8_t> TemplateBuffer;

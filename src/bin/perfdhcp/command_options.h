@@ -404,6 +404,9 @@ private:
 
     /// \brief Validates initialized options.
     ///
+    /// It checks provided options. If there are issues they are reported
+    /// and exception is raised. If possible some options are corrected
+    /// e.g. overriding drop_time in case of avalanche scenario.
     /// \throws isc::InvalidParameter if command line validation fails.
     void validate();
 

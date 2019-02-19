@@ -15,6 +15,17 @@
 namespace isc {
 namespace perfdhcp {
 
+// This class fixes an issue in older compilers
+// that cannot handle enum class as key in std::unordered_map.
+// See: https://stackoverflow.com/questions/18837857/cant-use-enum-class-as-unordered-map-key
+struct EnumClassHash
+{
+    template <typename T>
+    std::size_t operator()(T t) const
+    {
+        return static_cast<std::size_t>(t);
+    }
+};
 
 /// \brief Avalanche Scenario class.
 ///
@@ -46,9 +57,9 @@ protected:
     BasePerfSocket &socket_;
 
     /// A map xchg type -> (a map of trans id -> retransmissions count.
-    std::unordered_map<ExchangeType, std::unordered_map<uint32_t, int>> retransmissions_;
+    std::unordered_map<ExchangeType, std::unordered_map<uint32_t, int>, EnumClassHash> retransmissions_;
     /// A map xchg type -> (a map of trans id -> time of sending first packet.
-    std::unordered_map<ExchangeType, std::unordered_map<uint32_t, boost::posix_time::ptime>> start_times_;
+    std::unordered_map<ExchangeType, std::unordered_map<uint32_t, boost::posix_time::ptime>, EnumClassHash> start_times_;
 
     /// Total number of resent packets.
     int total_resent_;

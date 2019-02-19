@@ -17,11 +17,18 @@
 namespace isc {
 namespace perfdhcp {
 
+/// \brief Socket wrapper structure.
+///
+/// This is a base class that is inherited by PerfSocket
+/// and unit tests derived that. This way it allows mocking
+/// out socket operations and avoid using real network
+/// interfaces.
 class BasePerfSocket : public dhcp::SocketInfo {
 public:
     /// Interface index.
     uint16_t ifindex_;
 
+    /// \brief Default constructor of BasePerfSocket.
     BasePerfSocket() :
         SocketInfo(asiolink::IOAddress("127.0.0.1"), 0, 0),
         ifindex_(0) {}
@@ -29,10 +36,19 @@ public:
     /// \brief Destructor of the socket wrapper class.
     virtual ~BasePerfSocket() = default;
 
+    /// \brief See description of this method in PerfSocket class below.
     virtual dhcp::Pkt4Ptr receive4(uint32_t timeout_sec, uint32_t timeout_usec) = 0;
+
+    /// \brief See description of this method in PerfSocket class below.
     virtual dhcp::Pkt6Ptr receive6(uint32_t timeout_sec, uint32_t timeout_usec) = 0;
+
+    /// \brief See description of this method in PerfSocket class below.
     virtual bool send(const dhcp::Pkt4Ptr& pkt) = 0;
+
+    /// \brief See description of this method in PerfSocket class below.
     virtual bool send(const dhcp::Pkt6Ptr& pkt) = 0;
+
+    /// \brief See description of this method in PerfSocket class below.
     virtual dhcp::IfacePtr getIface() = 0;
 };
 

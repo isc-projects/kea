@@ -27,50 +27,32 @@ BasicScen::checkExitConditions() {
 
     const StatsMgr& stats_mgr(tc_.getStatsMgr());
 
-    bool test_period_reached = false;
     // Check if test period passed.
     if (options_.getPeriod() != 0) {
         time_period period(stats_mgr.getTestPeriod());
         if (period.length().total_seconds() >= options_.getPeriod()) {
-            test_period_reached = true;
-        }
-    }
-    if (test_period_reached) {
-        if (options_.testDiags('e')) {
-            std::cout << "reached test-period." << std::endl;
-        }
-        if (!tc_.waitToExit()) {
-            return true;
+            if (options_.testDiags('e')) {
+                std::cout << "reached test-period." << std::endl;
+            }
+            if (!tc_.waitToExit()) {
+                return true;
+            }
         }
     }
 
     bool max_requests = false;
     // Check if we reached maximum number of DISCOVER/SOLICIT sent.
     if (options_.getNumRequests().size() > 0) {
-        if (options_.getIpVersion() == 4) {
-            if (stats_mgr.getSentPacketsNum(ExchangeType::DO) >=
-                options_.getNumRequests()[0]) {
-                max_requests = true;
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if (stats_mgr.getSentPacketsNum(ExchangeType::SA) >=
-                options_.getNumRequests()[0]) {
-                max_requests = true;
-            }
+        if (stats_mgr.getSentPacketsNum(stage1_xchg_) >=
+            options_.getNumRequests()[0]) {
+            max_requests = true;
         }
     }
     // Check if we reached maximum number REQUEST packets.
     if (options_.getNumRequests().size() > 1) {
-        if (options_.getIpVersion() == 4) {
-            if (stats_mgr.getSentPacketsNum(ExchangeType::RA) >=
-                options_.getNumRequests()[1]) {
-                max_requests = true;
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if (stats_mgr.getSentPacketsNum(ExchangeType::RR) >=
-                options_.getNumRequests()[1]) {
-                max_requests = true;
-            }
+        if (stats_mgr.getSentPacketsNum(stage2_xchg_) >=
+            options_.getNumRequests()[1]) {
+            max_requests = true;
         }
     }
     if (max_requests) {
@@ -85,30 +67,16 @@ BasicScen::checkExitConditions() {
     // Check if we reached maximum number of drops of OFFER/ADVERTISE packets.
     bool max_drops = false;
     if (options_.getMaxDrop().size() > 0) {
-        if (options_.getIpVersion() == 4) {
-            if (stats_mgr.getDroppedPacketsNum(ExchangeType::DO) >=
-                options_.getMaxDrop()[0]) {
-                max_drops = true;
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if (stats_mgr.getDroppedPacketsNum(ExchangeType::SA) >=
-                options_.getMaxDrop()[0]) {
-                max_drops = true;
-            }
+        if (stats_mgr.getDroppedPacketsNum(stage1_xchg_) >=
+            options_.getMaxDrop()[0]) {
+            max_drops = true;
         }
     }
     // Check if we reached maximum number of drops of ACK/REPLY packets.
     if (options_.getMaxDrop().size() > 1) {
-        if (options_.getIpVersion() == 4) {
-            if (stats_mgr.getDroppedPacketsNum(ExchangeType::RA) >=
-                options_.getMaxDrop()[1]) {
-                max_drops = true;
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if (stats_mgr.getDroppedPacketsNum(ExchangeType::RR) >=
-                options_.getMaxDrop()[1]) {
-                max_drops = true;
-            }
+        if (stats_mgr.getDroppedPacketsNum(stage2_xchg_) >=
+            options_.getMaxDrop()[1]) {
+            max_drops = true;
         }
     }
     if (max_drops) {
@@ -123,39 +91,22 @@ BasicScen::checkExitConditions() {
     // Check if we reached maximum drops percentage of OFFER/ADVERTISE packets.
     bool max_pdrops = false;
     if (options_.getMaxDropPercentage().size() > 0) {
-        if (options_.getIpVersion() == 4) {
-            if ((stats_mgr.getSentPacketsNum(ExchangeType::DO) > 10) &&
-                ((100. * stats_mgr.getDroppedPacketsNum(ExchangeType::DO) /
-                 stats_mgr.getSentPacketsNum(ExchangeType::DO)) >=
-                 options_.getMaxDropPercentage()[0])) {
-                max_pdrops = true;
-
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if ((stats_mgr.getSentPacketsNum(ExchangeType::SA) > 10) &&
-                ((100. * stats_mgr.getDroppedPacketsNum(ExchangeType::SA) /
-                  stats_mgr.getSentPacketsNum(ExchangeType::SA)) >=
-                 options_.getMaxDropPercentage()[0])) {
-                max_pdrops = true;
-            }
+        if ((stats_mgr.getSentPacketsNum(stage1_xchg_) > 10) &&
+            ((100. * stats_mgr.getDroppedPacketsNum(stage1_xchg_) /
+              stats_mgr.getSentPacketsNum(stage1_xchg_)) >=
+             options_.getMaxDropPercentage()[0]))
+        {
+            max_pdrops = true;
         }
     }
     // Check if we reached maximum drops percentage of ACK/REPLY packets.
     if (options_.getMaxDropPercentage().size() > 1) {
-        if (options_.getIpVersion() == 4) {
-            if ((stats_mgr.getSentPacketsNum(ExchangeType::RA) > 10) &&
-                ((100. * stats_mgr.getDroppedPacketsNum(ExchangeType::RA) /
-                 stats_mgr.getSentPacketsNum(ExchangeType::RA)) >=
-                 options_.getMaxDropPercentage()[1])) {
-                max_pdrops = true;
-            }
-        } else if (options_.getIpVersion() == 6) {
-            if ((stats_mgr.getSentPacketsNum(ExchangeType::RR) > 10) &&
-                ((100. * stats_mgr.getDroppedPacketsNum(ExchangeType::RR) /
-                  stats_mgr.getSentPacketsNum(ExchangeType::RR)) >=
-                 options_.getMaxDropPercentage()[1])) {
-                max_pdrops = true;
-            }
+        if ((stats_mgr.getSentPacketsNum(stage2_xchg_) > 10) &&
+            ((100. * stats_mgr.getDroppedPacketsNum(stage2_xchg_) /
+              stats_mgr.getSentPacketsNum(stage2_xchg_)) >=
+             options_.getMaxDropPercentage()[1]))
+        {
+            max_pdrops = true;
         }
     }
     if (max_pdrops) {

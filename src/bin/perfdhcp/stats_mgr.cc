@@ -316,8 +316,7 @@ ExchangeStats::printTimestamps() {
 
 StatsMgr::StatsMgr(CommandOptions& options) :
     exchanges_(),
-    boot_time_(boost::posix_time::microsec_clock::universal_time()),
-    options_(options)
+    boot_time_(boost::posix_time::microsec_clock::universal_time())
 {
     // Check if packet archive mode is required. If user
     // requested diagnostics option -x t we have to enable

@@ -224,7 +224,9 @@ def execute(cmd, timeout=60, cwd=None, env=None, raise_error=True, dry_run=False
                 # if still running, kill harder
                 if p.poll() is None:
                     execute('sudo kill -s KILL %s' % p.pid)
-                raise ExecutionError('Execution timeout')
+                msg = "Execution timeout, %d > %d seconds elapsed (start: %d, stop %d), cmd: '%s'"
+                msg = msg % (t1 - t0, timeout, t0, t1, cmd)
+                raise ExecutionError(msg)
             exitcode = p.returncode
 
         if exitcode == 0:
@@ -984,6 +986,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         cmd += ' --with-freeradius=/usr/local'
     if 'shell' in features:
         cmd += ' --enable-shell'
+    if 'perfdhcp' in features:
+        cmd += ' --enable-perfdhcp'
 
     # do ./configure
     execute(cmd, cwd=src_path, env=env, timeout=120, check_times=check_times, dry_run=dry_run)
@@ -1016,7 +1020,7 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
         env['KEA_SOCKET_TEST_DIR'] = '/tmp/'
         # run unit tests
         execute('make check -k',
-                cwd=src_path, env=env, timeout=60 * 60, raise_error=False,
+                cwd=src_path, env=env, timeout=90 * 60, raise_error=False,
                 check_times=check_times, dry_run=dry_run)
 
         # parse unit tests results
@@ -1052,7 +1056,8 @@ def _build_binaries_and_run_ut(system, revision, features, tarball_path, env, ch
             f.write(json.dumps(results))
 
     if 'install' in features:
-        execute('sudo make install', cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
+        execute('sudo make install', timeout=2 * 60,
+                cwd=src_path, env=env, check_times=check_times, dry_run=dry_run)
         execute('sudo ldconfig', dry_run=dry_run)  # TODO: this shouldn't be needed
 
         if 'forge' in features:
@@ -1244,9 +1249,9 @@ class CollectCommaSeparatedArgsAction(argparse.Action):
         setattr(namespace, self.dest, values2)
 
 
-DEFAULT_FEATURES = ['install', 'unittest', 'docs']
+DEFAULT_FEATURES = ['install', 'unittest', 'docs', 'perfdhcp']
 ALL_FEATURES = ['install', 'distcheck', 'unittest', 'docs', 'mysql', 'pgsql', 'cql', 'native-pkg',
-                'radius', 'shell', 'forge']
+                'radius', 'shell', 'forge', 'perfdhcp']
 
 
 def parse_args():

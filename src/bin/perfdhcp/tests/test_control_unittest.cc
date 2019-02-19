@@ -34,10 +34,10 @@ using namespace isc::perfdhcp;
 /// \brief FakePerfSocket class that mocks PerfSocket.
 ///
 /// It stubs send and receive operations and collects statistics.
-class FakePerfSocket: public BasePerfSocket {
+class FakeTestControlPerfSocket: public BasePerfSocket {
 public:
     /// \brief Default constructor for FakePerfSocket.
-    FakePerfSocket() :
+    FakeTestControlPerfSocket() :
         iface_(boost::make_shared<Iface>("fake", 0)),
         sent_cnt_(0),
         recv_cnt_(0) {};
@@ -169,7 +169,7 @@ public:
     using TestControl::options_;
     using TestControl::stats_mgr_;
 
-    FakePerfSocket fake_sock_;
+    FakeTestControlPerfSocket fake_sock_;
 
     NakedTestControl(CommandOptions &opt) : TestControl(opt, fake_sock_) {
         uint32_t clients_num = opt.getClientsNum() == 0 ?

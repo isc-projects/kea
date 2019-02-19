@@ -1110,8 +1110,6 @@ private:
     bool archive_enabled_;
 
     boost::posix_time::ptime boot_time_; ///< Time when test is started.
-
-    CommandOptions& options_;
 };
 
 /// Pointer to Statistics Manager;
