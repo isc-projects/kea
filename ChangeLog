@@ -1,3 +1,10 @@
+1524.	[func]		tomek
+	Support for vendor options improved in DHCPv4 and DHCPv6. Kea is now
+	able to send back vendor suboptions, even if the client packet didn't
+	include DHCPv4 vivso (125) or DHCPv6 vendor (17) option. Usage of client
+	classification in such a case is required, though.
+	(Gitlab #464,!238, git 5c79da9358862657a631a9a8fc2ce79ae26b762e)
+
 1523.	[bug]		fdupont
 	IfaceMgr::send method now returns proper status that matches
 	its documentation. Thanks to Matthias Stoeckl from Secunet
