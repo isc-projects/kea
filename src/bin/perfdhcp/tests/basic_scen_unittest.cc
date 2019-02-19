@@ -243,7 +243,7 @@ TEST_F(BasicScenTest, Packet4ExchangeMaxDrop10Proc) {
     // Use templates for this test.
     processCmdLine(opt, "perfdhcp -l fake -r 100 -R 20 -n 100"
                    " -D 10% -L 10547  -g single"
-                   // TODO: seems to be broken as it crashes building pkt
+                   // \todo seems to be broken as it crashes building pkt
                    // " -T " + getFullPath("discover-example.hex")
                    // + " -T " + getFullPath("request4-example.hex")
                    " 127.0.0.1");
@@ -289,7 +289,7 @@ TEST_F(BasicScenTest, Packet6ExchangeMaxDrop3Pkt) {
     // The maximum number of dropped packets is 3 (because of -D 3).
     processCmdLine(opt, "perfdhcp -l fake"
                    " -6 -r 100 -n 100 -R 20 -D 3 -L 10547"
-                   // TODO: seems to be broken as it crashes building pkt
+                   // \todo seems to be broken as it crashes building pkt
                    // " -T " + getFullPath("solicit-example.hex")
                    // + " -T " + getFullPath("request6-example.hex")
                    " ::1");

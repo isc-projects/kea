@@ -597,7 +597,7 @@ TEST_F(CommandOptionsTest, Offsets) {
     EXPECT_THROW(process(opt, "perfdhcp -6 -I -4 -l ethx all"),
                  isc::InvalidParameter);
 
-    // TODO - other negative cases
+    // \todo other negative cases
 }
 
 TEST_F(CommandOptionsTest, LocalPort) {
