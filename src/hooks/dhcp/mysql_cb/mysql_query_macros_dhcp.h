@@ -138,7 +138,7 @@ namespace {
     "  d.prefix," \
     "  d.prefix_length," \
     "  d.delegated_prefix_length," \
-    "  d.dhcp6_subnet_id," \
+    "  d.subnet_id," \
     "  d.modification_ts," \
     "  x.option_id," \
     "  x.code," \
@@ -185,7 +185,7 @@ namespace {
     "INNER JOIN dhcp6_server AS srv " \
     "  ON (a.server_id = srv.id) OR (a.server_id = 1) " \
     "LEFT JOIN dhcp6_pool AS p ON s.subnet_id = p.subnet_id " \
-    "LEFT JOIN dhcp6_pd_pool AS d ON s.subnet_id = d.dhcp6_subnet_id " \
+    "LEFT JOIN dhcp6_pd_pool AS d ON s.subnet_id = d.subnet_id " \
     "LEFT JOIN dhcp6_options AS x ON x.scope_id = 5 AND p.id = x.pool_id " \
     "LEFT JOIN dhcp6_options AS y ON y.scope_id = 6 AND d.id = y.pd_pool_id " \
     "LEFT JOIN dhcp6_options AS o ON o.scope_id = 1 AND s.subnet_id = o.dhcp6_subnet_id " \
@@ -380,7 +380,7 @@ namespace {
     "  prefix," \
     "  prefix_length," \
     "  delegated_prefix_length," \
-    "  dhcp6_subnet_id," \
+    "  subnet_id," \
     "  modification_ts" \
     ") VALUES (?, ?, ?, ?, ?)"
 #endif
@@ -537,7 +537,7 @@ namespace {
 #ifndef MYSQL_DELETE_PD_POOLS
 #define MYSQL_DELETE_PD_POOLS() \
     "DELETE FROM dhcp6_pd_pool " \
-    "WHERE dhcp6_subnet_id = ?"
+    "WHERE subnet_id = ?"
 #endif
 
 #ifndef MYSQL_DELETE_SHARED_NETWORK
