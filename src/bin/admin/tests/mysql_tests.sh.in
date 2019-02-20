@@ -579,7 +579,7 @@ EOF
     run_statement "dhcp6_subnet_server" "$qry"
 
     # table: dhcp6_pd_pool
-    qry="select id, prefix_length, delegated_prefix_length, dhcp6_subnet_id, modification_ts from dhcp6_pd_pool"
+    qry="select id, prefix_length, delegated_prefix_length, subnet_id, modification_ts from dhcp6_pd_pool"
     run_statement "dhcp6_pd_pool" "$qry"
 
     # table: dhcp6_pool
