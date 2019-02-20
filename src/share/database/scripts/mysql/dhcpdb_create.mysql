@@ -1815,6 +1815,21 @@ ALTER TABLE dhcp6_pool
 ALTER TABLE dhcp6_pd_pool
     CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
 
+-- align dhcp6_shared_network_server indexes on dhcp4_shared_network_server
+
+ALTER TABLE dhcp6_shared_network_server
+    ADD PRIMARY KEY (shared_network_id, server_id);
+
+ALTER TABLE dhcp6_shared_network_server
+    DROP FOREIGN KEY fk_dhcp6_shared_network_server_shared_network_id;
+DROP INDEX fk_dhcp6_shared_network_server_shared_network_id
+    ON dhcp6_shared_network_server;
+ALTER TABLE dhcp6_shared_network_server
+    ADD CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id
+    FOREIGN KEY (shared_network_id)
+    REFERENCES dhcp6_shared_network (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
 # Update the schema version number
 UPDATE schema_version
 SET version = '8', minor = '0';
