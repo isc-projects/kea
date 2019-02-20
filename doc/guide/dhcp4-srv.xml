@@ -522,6 +522,16 @@ The default value for Cassandra is 2000 ms.
       </para>
     </note>
 
+  <para>
+    <note>Note that host parameter is used by MySQL and PostgreSQL
+    backends. Cassandra has a concept of contact points that could be
+    used to contact the cluster, instead of a single IP or
+    hostname. It takes a list of comma-separated IP addresses, which may be specified as:
+<screen>
+"Dhcp4": { "lease-database": { <userinput>"contact-points" : "192.0.2.1,192.0.2.2"</userinput>, ... }, ... }
+</screen>
+  </note></para>
+
   <para>Finally, the credentials of the account under which the server will
   access the database should be set:
 <screen>
