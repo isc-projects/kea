@@ -506,6 +506,9 @@ public:
     ///
     /// The @c other parameter must be a @c SrvConfig or its derivation.
     ///
+    /// This method calls either @c merge4 or @c merge6 based on
+    /// @c CfgMgr::family_.
+    ///
     /// Currently, the following parts of the configuration are merged:
     /// - IPv4 subnets
     ///
@@ -577,7 +580,7 @@ public:
     ///
     /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint16_t getDhcp4o6Port() {
+    uint16_t getDhcp4o6Port() const {
         return (dhcp4o6_port_);
     }
 
@@ -633,6 +636,49 @@ public:
     virtual isc::data::ElementPtr toElement() const;
 
 private:
+
+    /// @brief Merges the DHCPv4 configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// The general rule is that the configuration data from the @c other
+    /// object replaces configuration data held in this object instance.
+    /// The data that do not overlap between the two objects is simply
+    /// inserted into this configuration.
+    ///
+    /// @warning The call to @c merge may modify the data in the @c other
+    /// object. Therefore, the caller must not rely on the data held
+    /// in the @c other object after the call to @c merge. Also, the
+    /// data held in @c other must not be modified after the call to
+    /// @c merge because it may affect the merged configuration.
+    ///
+    /// The @c other parameter must be a @c SrvConfig or its derivation.
+    ///
+    /// Currently, the following parts of the v4 configuration are merged:
+    /// - globals
+    /// - shared-networks
+    /// - subnets
+    ///
+    /// @todo Add support for merging other configuration elements.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void merge4(const SrvConfig& other);
+
+
+    /// @brief Merges the DHCPv4 globals specified in the given configuration
+    /// into this configuration.
+    ///
+    /// This function iterates over the given config's explicitly
+    /// configured globals and either adds them to or updates the value
+    /// of this config's configured globals.
+    /// 
+    /// It then iterates over the merged list, setting all of the
+    /// corresponding configuration member values (e.g. c@ 
+    /// SrvConfig::echo_client_id_, @c SrvConfig::server_tag_).
+    /// 
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void mergeGlobals4(const SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
