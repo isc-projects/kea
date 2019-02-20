@@ -171,10 +171,9 @@ public:
     getGlobalParameter6(const db::ServerSelector& selector,
                         const std::string& name) const = 0;
 
-    /// @brief Retrieves all global parameters modified after specified time.
+    /// @brief Retrieves all global parameters.
     ///
     /// @param selector Server selector.
-    /// @param modification_time Lower bound parameter modification time.
     /// @return Collection of global parameters.
     virtual data::StampedValueCollection
     getAllGlobalParameters6(const db::ServerSelector& selector) const = 0;
