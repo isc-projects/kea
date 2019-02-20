@@ -458,7 +458,7 @@ CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
 DELIMITER ;
 
 -- -----------------------------------------------------
--- Table `parameter_data_type`
+-- Table parameter_data_type
 -- Reflects an enum used by Kea to define supported
 -- data types for the simple configuration parameters,
 -- e.g. global parameters used by DHCP servers.
