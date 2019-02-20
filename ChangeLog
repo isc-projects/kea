@@ -1,3 +1,7 @@
+1525.	[func]		fdupont
+	Defined API for the DHCPv6 Configuration Backend.
+	(Gitlab #458,!231, git f16e03d9bf1c10903c16b2614223b10880f73d50)
+
 1524.	[func]		tomek
 	Support for vendor options improved in DHCPv4 and DHCPv6. Kea is now
 	able to send back vendor suboptions, even if the client packet didn't
