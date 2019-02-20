@@ -1742,6 +1742,22 @@ if test "$KEA_SRCID" != ""; then
    EXTENDED_VERSION="${EXTENDED_VERSION} ($KEA_SRCID)"
 fi
 
+# By default the following variables are defined:
+# - prefix = /usr/local
+# - exec_prefix = ${prefix}
+# - libdir = ${exec_prefix}/lib
+# The exec_prefix and libdir variables contain unexpanded,literal ${prefix}.
+# This is done on purpose. The idea is to be able to make this expansion
+# late, so use can do:
+# make install prefix=/my/own/prefix
+#
+# Now, we want to print those directories in the config.report, but we
+# don't want to modify the actual variables. So we need to expand them.
+# Since libdir contains $exec_prefix and exec_prefix contains $prefix, then
+# to get the real value, we need to expand it twice.
+libdir_real="$(eval echo ${libdir})"
+libdir_real="$(eval echo ${libdir_real})"
+
 cat > config.report << END
 
        Kea source configure results:
@@ -1753,7 +1769,8 @@ Package:
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
 
-  Hooks directory:   ${prefix}/lib/kea/hooks
+  Prefix:            ${prefix}
+  Hooks directory:   ${libdir_real}/kea/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
