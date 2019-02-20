@@ -193,6 +193,9 @@ public:
     getGlobalParameter4(const db::ServerSelector& server_selector,
                         const std::string& name) const;
 
+    /// @brief Retrieves all global parameters.
+    ///
+    /// @param backend_selector Backend selector.
     /// @return Collection of global parameters.
     virtual data::StampedValueCollection
     getAllGlobalParameters4(const db::ServerSelector& server_selector) const;
