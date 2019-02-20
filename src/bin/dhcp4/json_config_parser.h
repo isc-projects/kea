@@ -92,45 +92,14 @@ databaseConfigConnect(const SrvConfigPtr& srv_cfg);
 
 /// @brief Adds globals fetched from config backend(s) to a SrvConfig instance
 ///
-/// Iterates over the given collection of global parameters and either uses them
-/// to set explicit members of the given SrvConfig or to it's list of configured
-/// (aka implicit) globals.
+/// Iterates over the given collection of global parameters and adds them to the
+/// given configuration's list of configured globals.
 ///
 /// @param external_cfg SrvConfig instance to update
 /// @param cb_globals collection of global parameters supplied by configuration
 /// backend
-///
-/// @throw DhcpConfigError if any of the globals is not recognized as a supported
-/// value.
 void addGlobalsToConfig(SrvConfigPtr external_cfg,
                         data::StampedValueCollection& cb_globals);
-
-/// @brief Sets the appropriate member of SrvConfig from a config backend
-/// global value
-///
-/// If the given global maps to a global parameter stored explicitly as member
-/// of SrvConfig, then it's value is used to set said member.
-///
-/// @param external_cfg SrvConfig instance to update
-/// @param cb_global global parameter supplied by configuration backend
-///
-/// @return True if the global mapped to an explicit member of SrvConfig,
-/// false otherwise
-///
-/// @throw BadValue if the global's value is not the expected data type
-bool handleExplicitGlobal(SrvConfigPtr external_cfg,
-                          const data::StampedValuePtr& cb_global);
-
-/// @brief Adds a config backend global value to a SrvConfig's list of
-/// configured globals
-///
-/// The given global is converted to an Element of the appropriate type and
-/// added to the SrvConfig's list of configured globals.
-///
-/// @param external_cfg SrvConfig instance to update
-/// @param cb_global global parameter supplied by configuration backend
-void handleImplicitGlobal(SrvConfigPtr external_cfg,
-                          const data::StampedValuePtr& cb_global);
 
 }; // end of isc::dhcp namespace
 }; // end of isc namespace
