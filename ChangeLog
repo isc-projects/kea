@@ -1,3 +1,8 @@
+1526.	[func]		tmark
+	In addition to subnets, when fetching configuration data from
+	configured backends, kea-dhcp4 will now merge shared-networks.
+	(Gitlab #399,!215, git 6b57b6b5d678c91b6b380fbe08beafd06b0e7b1d)
+
 1525.	[func]		fdupont
 	Defined API for the DHCPv6 Configuration Backend.
 	(Gitlab #458,!231, git f16e03d9bf1c10903c16b2614223b10880f73d50)
