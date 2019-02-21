@@ -217,19 +217,19 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     extractConfig(base_config);
 
     // Make some globals:
-    StampedValuePtr serverHostname(new StampedValue("server-hostname", "isc.example.org"));
-    StampedValuePtr declinePeriod(new StampedValue("decline-probation-period", Element::create(86400)));
-    StampedValuePtr calcTeeTimes(new StampedValue("calculate-tee-times", Element::create(bool(false))));
-    StampedValuePtr t2Percent(new StampedValue("t2-percent", Element::create(0.75)));
-    StampedValuePtr renewTimer(new StampedValue("renew-timer", Element::create(500)));
+    StampedValuePtr server_hostname(new StampedValue("server-hostname", "isc.example.org"));
+    StampedValuePtr decline_period(new StampedValue("decline-probation-period", Element::create(86400)));
+    StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
+    StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
+    StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), serverHostname);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), declinePeriod);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calcTeeTimes);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2Percent);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renewTimer);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), server_hostname);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), decline_period);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calc_tee_times);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2_percent);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renew_timer);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -251,10 +251,10 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
     ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("rebind-timer", Element::create(800)));
 
     // Verify that the implicit globals from the backend are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(serverHostname));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calcTeeTimes));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2Percent));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renewTimer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(server_hostname));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calc_tee_times));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2_percent));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renew_timer));
 }
 
 // This test verifies that externally configured option definitions
