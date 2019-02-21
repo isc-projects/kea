@@ -740,49 +740,16 @@ bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
 
 
 void addGlobalsToConfig(SrvConfigPtr external_cfg, data::StampedValueCollection& cb_globals) {
-
     const auto& index = cb_globals.get<StampedValueNameIndexTag>();
-
     for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
 
         if ((*cb_global)->amNull()) {
             continue;
         }
 
-        // If the global is an explicit member of SrvConfig handle it that way.
-        if (handleExplicitGlobal(external_cfg, (*cb_global))) {
-            continue;
-
-        } else {
-            // Otherwise it must be added to the implicitly configured globals
-            handleImplicitGlobal(external_cfg, (*cb_global));
-        }
+        external_cfg->addConfiguredGlobal((*cb_global)->getName(), 
+                                          (*cb_global)->getElementValue());
     }
-}
-
-
-bool handleExplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
-    bool was_handled = true;
-    try {
-        const std::string& name = cb_global->getName();
-        if (name == "decline-probation-period") {
-            external_cfg->setDeclinePeriod(cb_global->getIntegerValue());
-        }
-        else if (name == "echo-client-id") {
-            external_cfg->setEchoClientId(cb_global->getValue() == "true" ? true : false);
-        } else {
-            was_handled = false;
-        }
-    } catch(const std::exception& ex) {
-       isc_throw (BadValue, "Invalid value:" << cb_global->getValue()
-                             << " explict global:" << cb_global->getName());
-    }
-
-    return (was_handled);
-}
-
-void handleImplicitGlobal(SrvConfigPtr external_cfg, const data::StampedValuePtr& cb_global) {
-    external_cfg->addConfiguredGlobal(cb_global->getName(), cb_global->getElementValue());
 }
 
 }; // end of isc::dhcp namespace

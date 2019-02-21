@@ -152,48 +152,30 @@ public:
     /// @brief Tests that a given global is in the staged configured globals
     ///
     /// @param name name of the global parameter
-    /// @param exp_value expected string value of the global parameter
-    /// @param exp_type expected Element type of the global global parameter
+    /// @param exp_value expected value of the global paramter as an Element
     void checkConfiguredGlobal(const std::string &name,
-                               const std::string exp_value,
-                               const Element::types& exp_type) {
+                               ConstElementPtr exp_value) {
         SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
         ConstElementPtr globals = staging_cfg->getConfiguredGlobals();
         ConstElementPtr found_global = globals->get(name);
         ASSERT_TRUE(found_global) << "expected global: "
                     << name << " not found";
 
-        ASSERT_EQ(exp_type, found_global->getType())
-                  << "global" << name << "is wrong type";
+        ASSERT_EQ(exp_value->getType(), found_global->getType())
+                  << "expected global: " << name << " has wrong type";
 
-        switch (exp_type) {
-        case Element::integer:
-        case Element::real:
-        case Element::boolean:
-            ASSERT_EQ(exp_value, found_global->str())
-                      << "expected global: " << name << " has wrong value";
-            break;
-        case Element::string:
-            // We do it this way to avoid the embedded quotes
-            ASSERT_EQ(exp_value, found_global->stringValue())
-                      << "expected global: " << name << " has wrong value";
-            break;
-        default:
-            ADD_FAILURE() << "unsupported global type, test broken?";
-            return;
-        }
-
+        ASSERT_EQ(*exp_value, *found_global)
+                  << "expected global: " << name << " has wrong value";
     }
 
     /// @brief Tests that a given global is in the staged configured globals
     ///
     /// @param exp_global StampedValue representing the global value to verify
-    /// @param exp_type expected Element type of the global global parameter  -
     ///
     /// @todo At the point in time StampedVlaue carries type, exp_type should be
     /// replaced with exp_global->getType()
-    void checkConfiguredGlobal(StampedValuePtr& exp_global, const Element::types& exp_type ) {
-        checkConfiguredGlobal(exp_global->getName(), exp_global->getValue(), exp_type);
+    void checkConfiguredGlobal(StampedValuePtr& exp_global) {
+        checkConfiguredGlobal(exp_global->getName(), exp_global->getElementValue());
     }
 
     boost::scoped_ptr<Dhcpv4Srv> srv_;  ///< DHCP4 server under test
@@ -209,14 +191,14 @@ public:
 
 // This test verifies that externally configured globals are
 // merged correctly into staging configuration.
-// @todo enable test when SrvConfig can merge globals.
-TEST_F(Dhcp4CBTest, DISABLED_mergeGlobals) {
+TEST_F(Dhcp4CBTest, mergeGlobals) {
     string base_config =
         "{ \n"
         "    \"interfaces-config\": { \n"
         "        \"interfaces\": [\"*\" ] \n"
         "    }, \n"
-        "    \"echo-client-id\": true, \n"
+        "    \"echo-client-id\": false, \n"
+        "    \"decline-probation-period\": 7000, \n"
         "    \"valid-lifetime\": 1000, \n"
         "    \"rebind-timer\": 800, \n"
         "    \"server-hostname\": \"overwrite.me.com\", \n"
@@ -235,20 +217,19 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeGlobals) {
     extractConfig(base_config);
 
     // Make some globals:
-    // @todo StampedValue is going to be extended to hold type.
-    StampedValuePtr serverHostname(new StampedValue("server-hostname", "isc.example.org"));
-    StampedValuePtr declinePeriod(new StampedValue("decline-probation-period", "86400"));
-    StampedValuePtr calcTeeTimes(new StampedValue("calculate-tee-times", "false"));
-    StampedValuePtr t2Percent(new StampedValue("t2-percent", "0.75"));
-    StampedValuePtr renewTimer(new StampedValue("renew-timer", "500"));
+    StampedValuePtr server_hostname(new StampedValue("server-hostname", "isc.example.org"));
+    StampedValuePtr decline_period(new StampedValue("decline-probation-period", Element::create(86400)));
+    StampedValuePtr calc_tee_times(new StampedValue("calculate-tee-times", Element::create(bool(false))));
+    StampedValuePtr t2_percent(new StampedValue("t2-percent", Element::create(0.75)));
+    StampedValuePtr renew_timer(new StampedValue("renew-timer", Element::create(500)));
 
     // Let's add all of the globals to the second backend.  This will verify
     // we find them there.
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), serverHostname);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), declinePeriod);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calcTeeTimes);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2Percent);
-    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renewTimer);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), server_hostname);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), decline_period);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), calc_tee_times);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), t2_percent);
+    db2_->createUpdateGlobalParameter4(ServerSelector::ALL(), renew_timer);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
@@ -257,22 +238,23 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeGlobals) {
     // CfgMgr::instance().commit() hasn't been called)
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
 
-    // echo-client-id is an explicit member that should come from JSON.
-    EXPECT_TRUE(staging_cfg->getEchoClientId());
+    // echo-client-id is set explicitly in the original config, meanwhile
+    // the backend config does not set it, so the explicit value wins.
+    EXPECT_FALSE(staging_cfg->getEchoClientId());
 
-    // decline-probation-periodis an explicit member that should come
+    // decline-probation-period is an explicit member that should come
     // from the backend.
     EXPECT_EQ(86400, staging_cfg->getDeclinePeriod());
 
     // Verify that the implicit globals from JSON are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("valid-lifetime", "1000", Element::integer));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("rebind-timer", "800", Element::integer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("valid-lifetime", Element::create(1000)));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal("rebind-timer", Element::create(800)));
 
     // Verify that the implicit globals from the backend are there.
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(serverHostname, Element::string));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calcTeeTimes, Element::boolean));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2Percent, Element::real));
-    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renewTimer, Element::integer));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(server_hostname));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(calc_tee_times));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(t2_percent));
+    ASSERT_NO_FATAL_FAILURE(checkConfiguredGlobal(renew_timer));
 }
 
 // This test verifies that externally configured option definitions
