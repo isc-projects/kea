@@ -431,7 +431,7 @@ dhcp4=$( printf "%s" ${dhcp4} | tr '[:upper:]' '[:lower:]' )
 dhcp6=$( printf "%s" ${dhcp6} | tr '[:upper:]' '[:lower:]' )
 dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr '[:upper:]' '[:lower:]' )
 ctrl_agent=$( printf "%s" ${ctrl_agent} | tr '[:upper:]' '[:lower:]' )
-
+netconf=$( printf "%s" ${netconf} | tr '[:upper:]' '[:lower:]' )
 
 case ${command} in
     # Start the servers.
