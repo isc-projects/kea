@@ -1,3 +1,9 @@
+1528.	[func]		fdupont
+	Aligned DHCPv4 and DHCPv6 specific tables used by the MySQL Config
+	Backend. Extended MySQL schema to implement audit trail for the
+	DHCPv6 Config Backend.
+	(Gitlab #460,!232,!236, git 57f945f917db522773281c9e95ec8027afae6205)
+
 1527.	[build]		adwol,fdupont,tomek
 	Default Kea installation directory has been changed to
 	${prefix}/lib/kea/hooks.
