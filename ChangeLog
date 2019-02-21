@@ -1,3 +1,8 @@
+1527.	[build]		adwol,fdupont,tomek
+	Default Kea installation directory has been changed to
+	${prefix}/lib/kea/hooks.
+	(Gitlab #161,!240, git cfaf16cf02191bf5b7172cade3f58a626288b5f0)
+
 1526.	[func]		tmark
 	In addition to subnets, when fetching configuration data from
 	configured backends, kea-dhcp4 will now merge shared-networks.
