@@ -423,7 +423,7 @@ public:
                                   const std::string& space);
 
     /// @brief Sends query to retrieve single option by code and option space
-    /// for a given [pd] pool id.
+    /// for a given address or prefix delegation (v6) pool id.
     ///
     /// @param index Index of the query to be used.
     /// @param universe Option universe, i.e. V4 or V6.

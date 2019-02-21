@@ -151,8 +151,8 @@ namespace {
     "  x.user_context," \
     "  x.shared_network_name," \
     "  x.pool_id," \
-    "  x.pd_pool_id," \
     "  x.modification_ts," \
+    "  x.pd_pool_id," \
     "  y.option_id," \
     "  y.code," \
     "  y.value," \
@@ -164,8 +164,8 @@ namespace {
     "  y.user_context," \
     "  y.shared_network_name," \
     "  y.pool_id," \
-    "  y.pd_pool_id," \
     "  y.modification_ts," \
+    "  y.pd_pool_id," \
     "  o.option_id," \
     "  o.code," \
     "  o.value," \
@@ -177,8 +177,8 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  o.pd_pool_id," \
-    "  o.modification_ts " \
+    "  o.modification_ts," \
+    "  o.pd_pool_id " \
     "FROM dhcp6_subnet AS s " \
     "INNER JOIN dhcp6_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
@@ -259,8 +259,8 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  o.pd_pool_id," \
-    "  o.modification_ts " \
+    "  o.modification_ts," \
+    "  o.pd_pool_id " \
     "FROM dhcp6_shared_network AS n " \
     "INNER JOIN dhcp6_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
@@ -307,8 +307,8 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    pd_pool_id \
     "  o.modification_ts " \
+    pd_pool_id \
     "FROM " #table_prefix "_options AS o " \
     "INNER JOIN " #table_prefix "_options_server AS a" \
     "  ON o.option_id = a.option_id " \
@@ -435,8 +435,8 @@ namespace {
     "  user_context," \
     "  shared_network_name," \
     "  pool_id," \
-    pd_pool_id \
     "  modification_ts" \
+    pd_pool_id \
     ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
 #endif
 
@@ -503,8 +503,8 @@ namespace {
     "  o.user_context = ?," \
     "  o.shared_network_name = ?," \
     "  o.pool_id = ?," \
-    pd_pool_id \
     "  o.modification_ts = ? " \
+    pd_pool_id \
     "WHERE s.tag = ? " #__VA_ARGS__
 #endif
 
