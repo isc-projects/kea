@@ -7,6 +7,7 @@
 #include <config.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfg_hosts_util.h>
@@ -160,27 +161,70 @@ SrvConfig::equals(const SrvConfig& other) const {
 void
 SrvConfig::merge(const ConfigBase& other) {
     ConfigBase::merge(other);
-
     try {
         const SrvConfig& other_srv_config = dynamic_cast<const SrvConfig&>(other);
-
-        /// We merge objects in order of dependency (real or theoretical).
-        /// @todo merge globals
-        /// @todo merge option defs
-        /// @todo merge options
-
-        // Merge shared networks.
-        cfg_shared_networks4_->merge(*(other_srv_config.getCfgSharedNetworks4()));
-
-        /// Merge subnets.
-        cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other_srv_config.getCfgSubnets4()));
-
-        /// @todo merge other parts of the configuration here.
-
+        if (CfgMgr::instance().getFamily() == AF_INET) {
+            merge4(other_srv_config);
+        } else {
+            // @todo merge6();
+        }
     } catch (const std::bad_cast&) {
         isc_throw(InvalidOperation, "internal server error: must use derivation"
                   " of the SrvConfig as an argument of the call to"
                   " SrvConfig::merge()");
+    }
+}
+
+void
+SrvConfig::merge4(const SrvConfig& other) {
+    /// We merge objects in order of dependency (real or theoretical).
+
+    /// Merge globals.
+    mergeGlobals4(other);
+
+    /// @todo merge option defs
+
+    /// @todo merge options
+
+    // Merge shared networks.
+    cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
+
+    /// Merge subnets.
+    cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
+
+    /// @todo merge other parts of the configuration here.
+}
+
+void
+SrvConfig::mergeGlobals4(const SrvConfig& other) {
+    // Iterate over the "other" globals, adding/overwriting them into
+    // this config's list of globals.
+    for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
+        addConfiguredGlobal(other_global.first, other_global.second);
+    }
+
+    // A handful of values are stored as members in SrvConfig. So we'll 
+    // iterate over the merged globals, setting approprate members.
+    for (auto merged_global : getConfiguredGlobals()->mapValue()) {
+        std::string name = merged_global.first;
+        ConstElementPtr element = merged_global.second;
+        try {
+            if (name == "decline-probation-period") {
+                setDeclinePeriod(element->intValue());
+            }
+            else if (name == "echo-client-id") {
+                setEchoClientId(element->boolValue());
+            }
+            else if (name == "dhcp4o6port") {
+                setDhcp4o6Port(element->intValue());
+            }
+            else if (name == "server-tag") {
+                setServerTag(element->stringValue());
+            }
+        } catch(const std::exception& ex) {
+            isc_throw (BadValue, "Invalid value:" << element->str()
+                       << " explict global:" << name);
+        }
     }
 }
 
