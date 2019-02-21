@@ -639,6 +639,49 @@ EOF
     qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
     run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 1;
 
+    # Test that createAuditRevisionDHCP6 exists and creates entry in
+    # the dhcp6_audit_revision table.
+    qry="CALL createAuditRevisionDHCP6('2019-01-28 23:59:11', 'all', 'some log message', 0)"
+    run_statement "createAuditRevisionDHCP6" "$qry"
+
+    qry="SELECT COUNT(*) from dhcp6_audit_revision"
+    run_statement "dhcp6_audit_revision count" "$qry" 1
+
+    qry="SELECT id, modification_ts, server_id, log_message FROM dhcp6_audit_revision"
+    run_statement "dhcp6_audit_revision" "$qry"
+
+    # Test that createAuditEntryDHCP6 exists and creates entry in
+    # the dhcp6_audit table.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); CALL createAuditEntryDHCP6('dhcp6_subnet', 1, 'create')"
+    run_statement "createAuditEntryDHCP6" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp6_audit"
+    run_statement "dhcp6_audit count" "$qry" 1
+
+    qry="SELECT id, object_type, object_id, modification_type, revision_id FROM dhcp6_audit"
+    run_statement "dhcp6_audit" "$qry"
+
+    # Test that createOptionAuditDHCP6 exists can create an audit
+    # entry.
+
+    # First set the cascade_transaction session variable to check that
+    # the procedure won't create the audit entry for the option when
+    # this flag is set.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP6 cascade update" "$qry"
+
+    # The number of rows matching the audit entry should be 0.
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 0;
+
+    # This time set the cascade_update to 0 and expect that the
+    # audit entry will be created for the option.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP6 cascade update" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 1;
+
     # New triggers aren't tested here because the extensive tests are
     # provided with the backend implementations.
 
