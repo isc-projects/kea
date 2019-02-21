@@ -1589,7 +1589,7 @@ public:
     getOption4(const ServerSelector& server_selector, const uint16_t code,
                const std::string& space) {
         return (getOption(GET_OPTION4_CODE_SPACE, Option::V4,
-                          server_selector, code, space));;
+                          server_selector, code, space));
     }
 
     /// @brief Sends query to retrieve all global options.

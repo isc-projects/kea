@@ -554,12 +554,12 @@ MySqlConfigBackendImpl::getOptions(const int index,
     out_bindings.push_back(MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH));
     // pool_id
     out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
+    // modification_ts
+    out_bindings.push_back(MySqlBinding::createTimestamp());
     // pd_pool_id
     if (universe == Option::V6) {
         out_bindings.push_back(MySqlBinding::createInteger<uint64_t>());
     }
-    // modification_ts
-    out_bindings.push_back(MySqlBinding::createTimestamp());
 
     uint64_t last_option_id = 0;
 
@@ -651,10 +651,7 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
     // its option space and timestamp.
     OptionDescriptorPtr desc(new OptionDescriptor(option, persistent, formatted_value));
     desc->space_name_ = space;
-    // In DHCPv6 the pd_pool_id field shifts the position of the
-    // modification_ts field by one.
-    size_t ts_idx = (universe == Option::V4 ? 11 : 12);
-    desc->setModificationTime((*(first_binding + ts_idx))->getTimestamp());
+    desc->setModificationTime((*(first_binding + 11))->getTimestamp());
 
     return (desc);
 }
