@@ -1055,7 +1055,8 @@ TEST_F(SrvConfigTest, mergeGlobals4) {
     ASSERT_NO_THROW(expected_globals = Element::fromJSON(exp_globals))
                     << "exp_globals didn't parse, test is broken";
 
-    EXPECT_TRUE(expected_globals->equals(*(cfg_to.getConfiguredGlobals())));
+    EXPECT_TRUE(isEquivalent(expected_globals, cfg_to.getConfiguredGlobals()));
+
 }
 
 } // end of anonymous namespace

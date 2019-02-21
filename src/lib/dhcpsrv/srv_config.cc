@@ -262,7 +262,6 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     for (auto value = values.begin(); value != values.end(); ++value) {
         if (value->second->getType() != Element::list &&
             value->second->getType() != Element::map) {
-                std::cout << "adding config'd global: " << value->first << std::endl;
                 addConfiguredGlobal(value->first, value->second);
         }
     }
