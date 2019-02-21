@@ -86,8 +86,6 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ctrl-channel.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml"/>
-
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml"/>
