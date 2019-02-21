@@ -72,6 +72,7 @@ We have received the following contributions:
  - Adam Osuchowski, Silesian University of Technology
    2014-09: Examples corrected in Kea ARM
    2019-02: Hooks installation directory fixed.
+   2019-02: Possible syntax error in keactrl fixed.
 
  - Nicolas Chaigneau, Capgemini
    2014-09: Fix for interfaces with multiple addresses in perfdhcp
