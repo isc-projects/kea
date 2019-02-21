@@ -1,3 +1,8 @@
+1529.	[func]		tmark
+	When fetching configuration data from configured backends, 
+	kea-dhcp4 will now merge global parameters.
+	(Gitlab #402,!224, git dadaf76f8dd61b8bb3405aa5dc80029f09b2d4ec)
+
 1528.	[func]		fdupont
 	Aligned DHCPv4 and DHCPv6 specific tables used by the MySQL Config
 	Backend. Extended MySQL schema to implement audit trail for the
