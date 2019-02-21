@@ -26,7 +26,7 @@ constexpr size_t MIN_LEASE_COUNT = 512;
 /// @brief A maximum number of leases used in a benchmark
 constexpr size_t MAX_LEASE_COUNT = 0xfffd;
 
- /// @brief A minimum number of leases used in a benchmark
+/// @brief A minimum number of leases used in a benchmark
 constexpr size_t MIN_HOST_COUNT = 512;
 /// @brief A maximum number of leases used in a benchmark
 constexpr size_t MAX_HOST_COUNT = 0xfffd;
@@ -36,8 +36,8 @@ constexpr benchmark::TimeUnit UNIT = benchmark::kMicrosecond;
 
 /// @}
 
-}
-}
-}
+}  // namespace bench
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

@@ -1,5 +1,5 @@
 // Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
-// Copyright (C) 2017 Deutsche Telekom AG.
+// Copyright (C) 2017-2018 Deutsche Telekom AG.
 //
 // Authors: Andrei Pavel <andrei.pavel@qualitance.com>
 //
@@ -18,9 +18,7 @@
 #include <config.h>
 
 #include <dhcpsrv/benchmarks/generic_lease_mgr_benchmark.h>
-
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/testutils/cql_schema.h>
 
 #include <chrono>
 #include <iomanip>
@@ -29,7 +27,6 @@
 #include <vector>
 
 using namespace isc::asiolink;
-using namespace isc::dhcp::test;
 using namespace std;
 using namespace std::chrono;
 
@@ -37,24 +34,21 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-GenericLeaseMgrBenchmark::GenericLeaseMgrBenchmark()
-    : lmptr_(NULL) {
+GenericLeaseMgrBenchmark::GenericLeaseMgrBenchmark() : lmptr_(NULL) {
 }
 
 GenericLeaseMgrBenchmark::~GenericLeaseMgrBenchmark() {
 }
 
-void
-GenericLeaseMgrBenchmark::setUp4(::benchmark::State& state, size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::setUp4(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
     state.ResumeTiming();
 }
 
-void
-GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state,
-                                            size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state,
+                                                 size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases4(lease_count);
@@ -62,17 +56,15 @@ GenericLeaseMgrBenchmark::setUpWithInserts4(::benchmark::State& state,
     state.ResumeTiming();
 }
 
-void
-GenericLeaseMgrBenchmark::setUp6(::benchmark::State& state, size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::setUp6(::benchmark::State& state, size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
     state.ResumeTiming();
 }
 
-void
-GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state,
-                                            size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state,
+                                                 size_t const& lease_count) {
     state.PauseTiming();
     SetUp(state);
     prepareLeases6(lease_count);
@@ -80,8 +72,7 @@ GenericLeaseMgrBenchmark::setUpWithInserts6(::benchmark::State& state,
     state.ResumeTiming();
 }
 
-void
-GenericLeaseMgrBenchmark::prepareLeases4(size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::prepareLeases4(size_t const& lease_count) {
     leases4_.clear();
     for (size_t i = 0x0001u; i < 0x0001u + lease_count; ++i) {
         Lease4Ptr lease(new Lease4());
@@ -98,63 +89,54 @@ GenericLeaseMgrBenchmark::prepareLeases4(size_t const& lease_count) {
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchInsertLeases4() {
+void GenericLeaseMgrBenchmark::benchInsertLeases4() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->addLease(lease);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchUpdateLeases4() {
+void GenericLeaseMgrBenchmark::benchUpdateLeases4() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->updateLease4(lease);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease4_address() {
+void GenericLeaseMgrBenchmark::benchGetLease4_address() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(lease->addr_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease4_hwaddr() {
+void GenericLeaseMgrBenchmark::benchGetLease4_hwaddr() {
     for (Lease4Ptr const& lease : leases4_) {
         const Lease4Collection collection = lmptr_->getLease4(*lease->hwaddr_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease4_hwaddr_subnetid() {
+void GenericLeaseMgrBenchmark::benchGetLease4_hwaddr_subnetid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->hwaddr_, lease->subnet_id_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease4_clientid() {
+void GenericLeaseMgrBenchmark::benchGetLease4_clientid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->client_id_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease4_clientid_subnetid() {
+void GenericLeaseMgrBenchmark::benchGetLease4_clientid_subnetid() {
     for (Lease4Ptr const& lease : leases4_) {
         lmptr_->getLease4(*lease->client_id_, lease->subnet_id_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetExpiredLeases4() {
+void GenericLeaseMgrBenchmark::benchGetExpiredLeases4() {
     Lease4Collection expired_leases;
     lmptr_->getExpiredLeases4(expired_leases, leases4_.size());
 }
 
-void
-GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
+void GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
     if (lease_count > 0xfffdu) {
         cerr << "lease_count <= 0xfffd or change address generation in "
                 "GenericLeaseMgrBenchmark::prepareLeases6()"
@@ -186,44 +168,37 @@ GenericLeaseMgrBenchmark::prepareLeases6(size_t const& lease_count) {
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchInsertLeases6() {
+void GenericLeaseMgrBenchmark::benchInsertLeases6() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->addLease(lease);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchUpdateLeases6() {
+void GenericLeaseMgrBenchmark::benchUpdateLeases6() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->updateLease6(lease);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease6_type_address() {
+void GenericLeaseMgrBenchmark::benchGetLease6_type_address() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->getLease6(lease->type_, lease->addr_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid() {
+void GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid() {
     for (Lease6Ptr const& lease : leases6_) {
         lmptr_->getLeases6(lease->type_, *lease->duid_, lease->iaid_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid_subnetid() {
+void GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid_subnetid() {
     for (Lease6Ptr const& lease : leases6_) {
-        lmptr_->getLease6(lease->type_, *lease->duid_, lease->iaid_,
-                          lease->subnet_id_);
+        lmptr_->getLease6(lease->type_, *lease->duid_, lease->iaid_, lease->subnet_id_);
     }
 }
 
-void
-GenericLeaseMgrBenchmark::benchGetExpiredLeases6() {
+void GenericLeaseMgrBenchmark::benchGetExpiredLeases6() {
     Lease6Collection expired_leases;
     lmptr_->getExpiredLeases6(expired_leases, leases6_.size());
 }
