@@ -437,7 +437,7 @@ public:
     /// option doesn't exist.
     OptionDescriptorPtr getOption(const int index,
                                   const db::ServerSelector& server_selector,
-                                  const dhcp::Lease::Type pool_type,
+                                  const dhcp::Lease::Type& pool_type,
                                   const uint64_t pool_id,
                                   const uint16_t code,
                                   const std::string& space);
