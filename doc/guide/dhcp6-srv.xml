@@ -418,8 +418,7 @@ by a comma and another object definition.</para>
   file used by the server to record lease updates. There are also other files
   created as a side effect of the lease file cleanup. The detailed
   description of the LFC is located later in this Kea Administrator's Reference Manual:
-  <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc">https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html#kea-lfc</uri>.
-  </para>
+  <xref linkend="kea-lfc" />.</para>
 
 </section>
 
