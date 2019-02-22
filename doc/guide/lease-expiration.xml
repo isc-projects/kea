@@ -122,11 +122,12 @@
       </listitem>
       <listitem>
         <simpara><command>unwarned-reclaim-cycles</command> - If lease
-        reclaimation limits are specifed (max-reclaim-leases and/oor
-        max-reclaim-time), then under certain circumstances the server may not be
-        able to deal with leases to be reclaimed fast enough. This parameter
-        specifies how many consecutive clean up cycles must end with remaining
-        leases to be processed before a warning is printed. The default is 5 [cycles].
+        reclaimation limits are specifed (<command>max-reclaim-leases</command>
+        and/oor <command>max-reclaim-time</command>), then under certain
+        circumstances the server may not be able to deal with leases to be
+        reclaimed fast enough. This parameter specifies how many consecutive
+        clean up cycles must end with remaining leases to be processed before a
+        warning is printed. The default is 5 [cycles].
         </simpara>
       </listitem>
     </itemizedlist>
