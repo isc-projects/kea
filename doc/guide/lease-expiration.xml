@@ -242,7 +242,9 @@
     referred to as "lease affinity."
     </para>
 
-    <para>When lease affinity is enabled, the server will still
+    <para>When lease affinity is enabled (i.e. when
+    <command>hold-reclaimed-time</command> is configured to a value
+    greater than zero), the server will still
     reclaim leases according to the parameters described in
     <xref linkend="lease-reclaim-config"/>, but the reclaimed leases
     will be held in the database (rather than removed) for a specified
