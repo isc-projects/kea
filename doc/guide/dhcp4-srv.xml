@@ -496,7 +496,7 @@ the lease database after connectivity has been lost may be specified:
 If the server is unable to reconnect to the database after making the maximum number
 of attempts the server will exit. A value of zero (the default) disables automatic
 recovery and the server will exit immediately upon detecting a loss of connectivity
-(MySQL and Postgres only). For Cassandra, Kea uses Cassandra interface that
+(MySQL and Postgres only). For Cassandra, Kea uses a Cassandra interface that
 connects to all nodes in a cluster at the same time. Any connectivity
 issues should be handled by internal Cassandra mechanisms.
   </para>
