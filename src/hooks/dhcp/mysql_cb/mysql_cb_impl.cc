@@ -463,7 +463,7 @@ MySqlConfigBackendImpl::getOption(const int index,
 OptionDescriptorPtr
 MySqlConfigBackendImpl::getOption(const int index,
                                   const ServerSelector& server_selector,
-                                  const Lease::Type pool_type,
+                                  const Lease::Type& pool_type,
                                   const uint64_t pool_id,
                                   const uint16_t code,
                                   const std::string& space) {
