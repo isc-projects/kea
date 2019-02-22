@@ -491,7 +491,7 @@ MySqlConfigBackendImpl::getOption(const int index,
         in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
-        universe =Option::V6;
+        universe = Option::V6;
     }
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);
