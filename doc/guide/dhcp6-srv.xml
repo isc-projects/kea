@@ -557,6 +557,22 @@ linkend="cassandra-database-configuration4"/> for details.</para>
     supported hosts database types are MySQL and PostgreSQL; the Cassandra
     backend does not yet support host reservations.</para>
 
+    <para>For example, the following configuration can be used to
+    configure connection to MySQL:
+    <screen>
+"Dhcp6": {
+    <userinput>"hosts-database": {
+        "type": "mysql",
+        "name": "kea",
+        "user": "kea",
+        "password": "secret123",
+        "host": "localhost",
+        "port": 3306
+    }</userinput>
+}</screen> Note that depending on your database configuration, many of
+    the parameters may be optional.</para>
+
+
     <para>Please note that usage of hosts storage is optional. A user can define
     all host reservations in the configuration file, and that is the recommended way
     if the number of reservations is small. However, when the number of
