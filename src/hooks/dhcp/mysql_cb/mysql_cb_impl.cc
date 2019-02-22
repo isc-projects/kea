@@ -462,8 +462,8 @@ MySqlConfigBackendImpl::getOption(const int index,
 
 OptionDescriptorPtr
 MySqlConfigBackendImpl::getOption(const int index,
-                                  const Option::Universe& universe,
                                   const ServerSelector& server_selector,
+                                  const Lease::Type pool_type,
                                   const uint64_t pool_id,
                                   const uint16_t code,
                                   const std::string& space) {
@@ -473,16 +473,25 @@ MySqlConfigBackendImpl::getOption(const int index,
                   " (unassigned) is unsupported at the moment");
     }
 
-    auto tag = getServerTag(server_selector, "fetching [pd] pool level option");
+    std::string msg = "fetching ";
+    if (pool_type == Lease::TYPE_PD) {
+        msg += "prefix delegation";
+    } else {
+        msg += "address";
+    }
+    msg += " pool level option";
+    auto tag = getServerTag(server_selector, msg);
 
+    Option::Universe universe = Option::V4;
     OptionContainer options;
     MySqlBindingCollection in_bindings;
     in_bindings.push_back(MySqlBinding::createString(tag));
     in_bindings.push_back(MySqlBinding::createInteger<uint64_t>(pool_id));
-    if (universe == Option::V4) {
+    if (pool_type == Lease::TYPE_V4) {
         in_bindings.push_back(MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(code)));
     } else {
         in_bindings.push_back(MySqlBinding::createInteger<uint16_t>(code));
+        universe =Option::V6;
     }
     in_bindings.push_back(MySqlBinding::createString(space));
     getOptions(index, in_bindings, universe, options);

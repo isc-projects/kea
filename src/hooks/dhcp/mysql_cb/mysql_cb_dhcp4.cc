@@ -1426,10 +1426,9 @@ public:
         MySqlTransaction transaction(conn_);
 
         OptionDescriptorPtr existing_option =
-            getOption(GET_OPTION4_POOL_ID_CODE_SPACE, Option::V4,
-                      server_selector, pool_id,
-                      option->option_->getType(),
-                      option->space_name_);
+            getOption(GET_OPTION4_POOL_ID_CODE_SPACE,
+                      server_selector, Lease::TYPE_V4, pool_id,
+                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.

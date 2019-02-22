@@ -14,6 +14,7 @@
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
+#include <dhcpsrv/lease.h>
 #include <dhcpsrv/network.h>
 #include <dhcpsrv/subnet_id.h>
 #include <exceptions/exceptions.h>
@@ -426,8 +427,8 @@ public:
     /// for a given address or prefix delegation (v6) pool id.
     ///
     /// @param index Index of the query to be used.
-    /// @param universe Option universe, i.e. V4 or V6.
     /// @param server_selector Server selector.
+    /// @param pool_type Pool type (Lease::TYPE_V4, TYPE_NA or TYPE_PD).
     /// @param pool_id Pool identifier in the database.
     /// @param code Option code.
     /// @param space Option space name.
@@ -435,8 +436,8 @@ public:
     /// @return Pointer to the returned option descriptor or NULL if such
     /// option doesn't exist.
     OptionDescriptorPtr getOption(const int index,
-                                  const Option::Universe& universe,
                                   const db::ServerSelector& server_selector,
+                                  const dhcp::Lease::Type pool_type,
                                   const uint64_t pool_id,
                                   const uint16_t code,
                                   const std::string& space);
