@@ -1264,9 +1264,9 @@ public:
         };
 
         MySqlTransaction transaction(conn_);
-        OptionDescriptorPtr existing_option = getOption4(server_selector,
-                                                         option->option_->getType(),
-                                                         option->space_name_);
+        OptionDescriptorPtr existing_option =
+            getOption(GET_OPTION4_CODE_SPACE, Option::V4, server_selector,
+                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1334,9 +1334,11 @@ public:
             transaction.reset(new MySqlTransaction(conn_));
         }
 
-        OptionDescriptorPtr existing_option = getOption4(server_selector, subnet_id,
-                                                         option->option_->getType(),
-                                                         option->space_name_);
+        OptionDescriptorPtr existing_option =
+            getOption(GET_OPTION4_SUBNET_ID_CODE_SPACE, Option::V4,
+                      server_selector, subnet_id,
+                      option->option_->getType(),
+                      option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1423,9 +1425,11 @@ public:
 
         MySqlTransaction transaction(conn_);
 
-        OptionDescriptorPtr existing_option = getOption4(server_selector, pool_id,
-                                                         option->option_->getType(),
-                                                         option->space_name_);
+        OptionDescriptorPtr existing_option =
+            getOption(GET_OPTION4_POOL_ID_CODE_SPACE, Option::V4,
+                      server_selector, pool_id,
+                      option->option_->getType(),
+                      option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1494,9 +1498,10 @@ public:
             transaction.reset(new MySqlTransaction(conn_));
         }
 
-        OptionDescriptorPtr existing_option = getOption4(server_selector, shared_network_name,
-                                                         option->option_->getType(),
-                                                         option->space_name_);
+        OptionDescriptorPtr existing_option =
+            getOption(GET_OPTION4_SHARED_NETWORK_CODE_SPACE, Option::V4,
+                      server_selector, shared_network_name,
+                      option->option_->getType(), option->space_name_);
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -1521,98 +1526,6 @@ public:
         if (transaction) {
             transaction->commit();
         }
-    }
-
-    /// @brief Sends query to retrieve single global option by code and
-    /// option space.
-    ///
-    /// @param server_selector Server selector.
-    /// @param code Option code.
-    /// @param space Option space name.
-    ///
-    /// @return Pointer to the returned option or NULL if such option
-    /// doesn't exist.
-    OptionDescriptorPtr
-    getOption4(const ServerSelector& server_selector, const uint16_t code,
-               const std::string& space) {
-        return (getOption(GET_OPTION4_CODE_SPACE, Option::V4,
-                          server_selector, code, space));
-    }
-
-    /// @brief Sends query to retrieve all global options.
-    ///
-    /// @param server_selector Server selector.
-    /// @return Container holding returned options.
-    OptionContainer
-    getAllOptions4(const ServerSelector& server_selector) {
-        return (getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-                              Option::V4, server_selector));
-    }
-
-    /// @brief Sends query to retrieve global options with modification
-    /// time later than specified timestamp.
-    ///
-    /// @param server_selector Server selector.
-    /// @return Container holding returned options.
-    OptionContainer
-    getModifiedOptions4(const ServerSelector& server_selector,
-                        const boost::posix_time::ptime& modification_time) {
-        return (getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-                                   Option::V4, server_selector, modification_time));
-    }
-
-    /// @brief Sends query to retrieve single option by code and option space
-    /// for a given subnet id.
-    ///
-    /// @param server_selector Server selector.
-    /// @param subnet_id Subnet identifier.
-    /// @param code Option code.
-    /// @param space Option space name.
-    ///
-    /// @return Pointer to the returned option descriptor or NULL if such
-    /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
-                                   const SubnetID& subnet_id,
-                                   const uint16_t code,
-                                   const std::string& space) {
-        return (getOption(GET_OPTION4_SUBNET_ID_CODE_SPACE, Option::V4,
-                          server_selector, subnet_id, code, space));
-    }
-
-    /// @brief Sends query to retrieve single option by code and option space
-    /// for a given pool id.
-    ///
-    /// @param server_selector Server selector.
-    /// @param pool_id Pool identifier in the database.
-    /// @param code Option code.
-    /// @param space Option space name.
-    ///
-    /// @return Pointer to the returned option descriptor or NULL if such
-    /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
-                                   const uint64_t pool_id,
-                                   const uint16_t code,
-                                   const std::string& space) {
-        return (getOption(GET_OPTION4_POOL_ID_CODE_SPACE, Option::V4,
-                          server_selector, pool_id, code, space));
-    }
-
-    /// @brief Sends query to retrieve single option by code and option space
-    /// for a given shared network.
-    ///
-    /// @param server_selector Server selector.
-    /// @param shared_network_name Shared network name.
-    /// @param code Option code.
-    /// @param space Option space name.
-    ///
-    /// @return Pointer to the returned option descriptor or NULL if such
-    /// option doesn't exist.
-    OptionDescriptorPtr getOption4(const ServerSelector& server_selector,
-                                   const std::string& shared_network_name,
-                                   const uint16_t code,
-                                   const std::string& space) {
-        return (getOption(GET_OPTION4_SHARED_NETWORK_CODE_SPACE, Option::V4,
-                          server_selector, shared_network_name, code, space));
     }
 
     /// @brief Sends query to insert or update option definition.
@@ -2353,7 +2266,7 @@ OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
     OptionDefContainer option_defs;
     impl_->getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-			    server_selector, option_defs);
+                            server_selector, option_defs);
     return (option_defs);
 }
 
@@ -2363,7 +2276,7 @@ getModifiedOptionDefs4(const ServerSelector& server_selector,
                        const boost::posix_time::ptime& modification_time) const {
     OptionDefContainer option_defs;
     impl_->getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-				 server_selector, modification_time, option_defs);
+                                 server_selector, modification_time, option_defs);
     return (option_defs);
 }
 
@@ -2371,19 +2284,22 @@ OptionDescriptorPtr
 MySqlConfigBackendDHCPv4::getOption4(const ServerSelector& server_selector,
                                      const uint16_t code,
                                      const std::string& space) const {
-    return (impl_->getOption4(server_selector, code, space));
+    return (impl_->getOption(MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
+                             Option::V4, server_selector, code, space));
 }
 
 OptionContainer
 MySqlConfigBackendDHCPv4::getAllOptions4(const ServerSelector& server_selector) const {
-    return (impl_->getAllOptions4(server_selector));
+    return (impl_->getAllOptions(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
+                                 Option::V4, server_selector));
 }
 
 OptionContainer
 MySqlConfigBackendDHCPv4::
 getModifiedOptions4(const ServerSelector& server_selector,
                     const boost::posix_time::ptime& modification_time) const {
-    return (impl_->getModifiedOptions4(server_selector, modification_time));
+    return (impl_->getModifiedOptions(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
+                                      Option::V4, server_selector, modification_time));
 }
 
 StampedValuePtr
