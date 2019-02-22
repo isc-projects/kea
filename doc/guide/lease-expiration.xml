@@ -85,6 +85,64 @@
     hooks libraries.</para>
   </section>
 
+  <section xml:id="lease-reclamation-defaults">
+    <title>Lease Reclamation Configuration Parameters</title>
+    <para>The following list presents all configuration parameters
+    pertaining to processing expired leases with their default values:</para>
+
+    <itemizedlist>
+      <listitem>
+        <simpara><command>reclaim-timer-wait-time</command> - This parameter
+        governs intervals between completion of previous reclaimation cycle
+        and a start of the next one. Specified in seconds. The default value
+        is 10 [seconds].</simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>flush-reclaimed-timer-wait-time</command> - This
+        parameter controls how often the server initiates lease reclaimation
+        procedure. Expressed in seconds. The default value is 25 [seconds].</simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>hold-reclaimed-time</command> - This parameter governs
+        how long the lease should be kept after it was reclaimed. This enables
+        lease affinity when set to a non-zero value. Expressed in seconds. The
+        default value is 3600 [seconds].</simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>max-reclaim-leases</command> - This parameter
+        specifies the maximum number of reclaimed leases that can be processed
+        in one go. Zero means unlimited (i.e. process all reclaimed leases). The
+        default value is 100.</simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>max-reclaim-time</command> - This parameter specifies
+        an upper bound of how long a lease reclaimation procedure can
+        take. Zero means no time limit. Expressed in milliseconds. The default
+        value is 250 [milliseconds].</simpara>
+      </listitem>
+      <listitem>
+        <simpara><command>unwarned-reclaim-cycles</command> - If lease
+        reclaimation limits are specifed (max-reclaim-leases and/oor
+        max-reclaim-time), then under certain circumstances the server may not be
+        able to deal with leases to be reclaimed fast enough. This parameter
+        specifies how many consecutive clean up cycles must end with remaining
+        leases to be processed before a warning is printed. The default is 5 [cycles].
+        </simpara>
+      </listitem>
+    </itemizedlist>
+
+    <para>
+      The parameters are explained in more detail in the rest of this chapter.
+    </para>
+
+    <para>The default value for any parameter is used when this parameter is not
+    explicitly specified in the configuration. Also, the
+    <command>expired-leases-processing</command> map may be omitted entirely
+    in the configuration, in which case the default values are used for all
+    parameters listed above.</para>
+
+  </section>
+
   <section xml:id="lease-reclaim-config">
     <title>Configuring Lease Reclamation</title>
     <para>Kea can be configured to periodically detect and reclaim expired
@@ -170,9 +228,7 @@
     },
 
     ...
-}
-
-</screen>
+}</screen>
 
     </para>
 
@@ -298,40 +354,15 @@
     higher than the <command>reclaim-timer-wait-time</command>, as timely
     removal of expired-reclaimed leases is less critical than the removal
     process, which may impact server responsiveness.</para>
-  </section>
 
-  <section xml:id="lease-reclamation-defaults">
-    <title>Default Configuration Values for Lease Reclamation</title>
-    <para>The following list presents all configuration parameters
-    pertaining to processing expired leases with their default values:</para>
-
-    <itemizedlist>
-      <listitem>
-        <simpara><command>reclaim-timer-wait-time</command> = 10 [seconds]</simpara>
-      </listitem>
-      <listitem>
-        <simpara><command>flush-reclaimed-timer-wait-time</command> = 25 [seconds]</simpara>
-      </listitem>
-      <listitem>
-        <simpara><command>hold-reclaimed-time</command> = 3600 [seconds]</simpara>
-      </listitem>
-      <listitem>
-        <simpara><command>max-reclaim-leases</command> = 100</simpara>
-      </listitem>
-      <listitem>
-        <simpara><command>max-reclaim-time</command> = 250 [milliseconds]</simpara>
-      </listitem>
-      <listitem>
-        <simpara><command>unwarned-reclaim-cycles</command> = 5</simpara>
-      </listitem>
-    </itemizedlist>
-
-    <para>The default value for any parameter is used when this parameter is not
-    explicitly specified in the configuration. Also, the
-    <command>expired-leases-processing</command> map may be omitted entirely
-    in the configuration, in which case the default values are used for all
-    parameters listed above.</para>
-
+    <para>There is no guarantee that lease affinity will work every
+    time. If a server is running out of addresses, it will reassign
+    expired addresses to new clients. Also, clients can request
+    specific addresses and the server will try to honor such a request
+    if possible. If you want to ensure a client keeps its address,
+    even after periods of inactivity, consider using host reservations
+    or leases with very long lifetimes.</para>
+    
   </section>
 
   <section xml:id="leases-reclamation-using-command">
