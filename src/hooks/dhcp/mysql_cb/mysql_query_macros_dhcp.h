@@ -316,6 +316,9 @@ namespace {
     "  ON a.server_id = s.id " \
     "WHERE (s.tag = ? OR s.id = 1) " #__VA_ARGS__ \
     " ORDER BY o.option_id"
+
+#define MYSQL_GET_OPTION4(...) \
+    MYSQL_GET_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_GET_AUDIT_ENTRIES_TIME
@@ -438,6 +441,9 @@ namespace {
     "  modification_ts" \
     pd_pool_id \
     ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?" last ")"
+
+#define MYSQL_INSERT_OPTION4() \
+    MYSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
 #endif
 
 #ifndef MYSQL_INSERT_OPTION_SERVER
@@ -506,6 +512,9 @@ namespace {
     "  o.modification_ts = ? " \
     pd_pool_id \
     "WHERE s.tag = ? " #__VA_ARGS__
+
+#define MYSQL_UPDATE_OPTION4(...) \
+    MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_DELETE_GLOBAL_PARAMETER

@@ -32,17 +32,6 @@
 #include <utility>
 #include <vector>
 
-// Specialize macros for DHCPv4
-
-#define MYSQL_GET_OPTION(table_prefix, ...) \
-    MYSQL_GET_OPTION_COMMON(table_prefix, "", __VA_ARGS__)
-
-#define MYSQL_INSERT_OPTION(table_prefix) \
-    MYSQL_INSERT_OPTION_COMMON(table_prefix, "", "")
-
-#define MYSQL_UPDATE_OPTION(table_prefix, ...) \
-    MYSQL_UPDATE_OPTION_COMMON(table_prefix, "", __VA_ARGS__)
-
 using namespace isc::cb;
 using namespace isc::db;
 using namespace isc::data;
@@ -1534,48 +1523,6 @@ public:
         }
     }
 
-    /// @brief Sends query to retrieve single option definition by code and
-    /// option space.
-    ///
-    /// @param server_selector Server selector.
-    /// @param code Option code.
-    /// @param space Option space name.
-    ///
-    /// @return Pointer to the returned option definition or NULL if such
-    /// option definition doesn't exist.
-    OptionDefinitionPtr getOptionDef4(const ServerSelector& server_selector,
-                                      const uint16_t code,
-                                      const std::string& space) {
-        return (getOptionDef(GET_OPTION_DEF4_CODE_SPACE, server_selector, code, space));
-    }
-
-    /// @brief Sends query to retrieve all option definitions.
-    ///
-    /// @param server_selector Server selector.
-    /// @param [out] option_defs Reference to the container where option
-    /// definitions are to be stored.
-    void
-    getAllOptionDefs4(const ServerSelector& server_selector,
-                      OptionDefContainer& option_defs) {
-        getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
-                         server_selector, option_defs);
-    }
-
-    /// @brief Sends query to retrieve option definitions with modification
-    /// time later than specified timestamp.
-    ///
-    /// @param server_selector Server selector.
-    /// @param modification_time Lower bound subnet modification time.
-    /// @param [out] option_defs Reference to the container where option
-    /// definitions are to be stored.
-    void
-    getModifiedOptionDefs4(const ServerSelector& server_selector,
-                           const boost::posix_time::ptime& modification_time,
-                           OptionDefContainer& option_defs) {
-        getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
-                              server_selector, modification_time, option_defs);
-    }
-
     /// @brief Sends query to retrieve single global option by code and
     /// option space.
     ///
@@ -1713,9 +1660,11 @@ public:
         // option definition instance would be inserted successfully. Therefore,
         // we first fetch the option definition for the given server, code and
         // space name. If it exists, we simply update it.
-        OptionDefinitionPtr existing_definition = getOptionDef4(server_selector,
-                                                                option_def->getCode(),
-                                                                option_def->getOptionSpaceName());
+        OptionDefinitionPtr existing_definition =
+            getOptionDef(GET_OPTION_DEF4_CODE_SPACE,
+                         server_selector,
+                         option_def->getCode(),
+                         option_def->getOptionSpaceName());
 
         // Create scoped audit revision. As long as this instance exists
         // no new audit revisions are created in any subsequent calls.
@@ -2040,33 +1989,32 @@ TaggedStatementArray tagged_statements = { {
 
     // Retrieves global option by code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_CODE_SPACE,
-      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Retrieves all global options.
     { MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTIONS4,
-      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0)
+      MYSQL_GET_OPTION4(AND o.scope_id = 0)
     },
 
     // Retrieves modified options.
     { MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTIONS4,
-      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 0 AND o.modification_ts > ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 0 AND o.modification_ts > ?)
     },
 
     // Retrieves an option for a given subnet, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SUBNET_ID_CODE_SPACE,
-      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Retrieves an option for a given pool, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_POOL_ID_CODE_SPACE,
-      MYSQL_GET_OPTION(dhcp4, AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Retrieves an option for a given shared network, option code and space.
     { MySqlConfigBackendDHCPv4Impl::GET_OPTION4_SHARED_NETWORK_CODE_SPACE,
-      MYSQL_GET_OPTION(dhcp4,
-                       AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+      MYSQL_GET_OPTION4(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
     // Retrieves the most recent audit entries.
@@ -2154,7 +2102,7 @@ TaggedStatementArray tagged_statements = { {
 
     // Insert subnet specific option.
     { MySqlConfigBackendDHCPv4Impl::INSERT_OPTION4,
-      MYSQL_INSERT_OPTION(dhcp4)
+      MYSQL_INSERT_OPTION4()
     },
 
     // Insert association of the DHCP option with a server.
@@ -2216,24 +2164,22 @@ TaggedStatementArray tagged_statements = { {
 
     // Update existing global option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4,
-      MYSQL_UPDATE_OPTION(dhcp4, AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION4(AND o.scope_id = 0 AND o.code = ? AND o.space = ?)
     },
 
     // Update existing subnet level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SUBNET_ID,
-      MYSQL_UPDATE_OPTION(dhcp4,
-                          AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION4(AND o.scope_id = 1 AND o.dhcp4_subnet_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing pool level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_POOL_ID,
-      MYSQL_UPDATE_OPTION(dhcp4, AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION4(AND o.scope_id = 5 AND o.pool_id = ? AND o.code = ? AND o.space = ?)
     },
 
     // Update existing shared network level option.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_OPTION4_SHARED_NETWORK,
-      MYSQL_UPDATE_OPTION(dhcp4,
-                          AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
+      MYSQL_UPDATE_OPTION4(AND o.scope_id = 4 AND o.shared_network_name = ? AND o.code = ? AND o.space = ?)
     },
 
     // Delete global parameter by name.
@@ -2399,13 +2345,15 @@ OptionDefinitionPtr
 MySqlConfigBackendDHCPv4::getOptionDef4(const ServerSelector& server_selector,
                                         const uint16_t code,
                                         const std::string& space) const {
-    return (impl_->getOptionDef4(server_selector, code, space));
+    return (impl_->getOptionDef(MySqlConfigBackendDHCPv4Impl::GET_OPTION_DEF4_CODE_SPACE,
+                                server_selector, code, space));
 }
 
 OptionDefContainer
 MySqlConfigBackendDHCPv4::getAllOptionDefs4(const ServerSelector& server_selector) const {
     OptionDefContainer option_defs;
-    impl_->getAllOptionDefs4(server_selector, option_defs);
+    impl_->getAllOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_ALL_OPTION_DEFS4,
+			    server_selector, option_defs);
     return (option_defs);
 }
 
@@ -2414,7 +2362,8 @@ MySqlConfigBackendDHCPv4::
 getModifiedOptionDefs4(const ServerSelector& server_selector,
                        const boost::posix_time::ptime& modification_time) const {
     OptionDefContainer option_defs;
-    impl_->getModifiedOptionDefs4(server_selector, modification_time, option_defs);
+    impl_->getModifiedOptionDefs(MySqlConfigBackendDHCPv4Impl::GET_MODIFIED_OPTION_DEFS4,
+				 server_selector, modification_time, option_defs);
     return (option_defs);
 }
 
