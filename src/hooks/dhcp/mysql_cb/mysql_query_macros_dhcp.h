@@ -330,6 +330,8 @@ namespace {
 
 #define MYSQL_GET_OPTION4(...) \
     MYSQL_GET_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+#define MYSQL_GET_OPTION6(...) \
+    MYSQL_GET_OPTION_COMMON(dhcp6, ", o.pd_pool_id ", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_GET_AUDIT_ENTRIES_TIME
@@ -455,6 +457,8 @@ namespace {
 
 #define MYSQL_INSERT_OPTION4() \
     MYSQL_INSERT_OPTION_COMMON(dhcp4, "", "")
+#define MYSQL_INSERT_OPTION6() \
+    MYSQL_INSERT_OPTION_COMMON(dhcp6, ", pd_pool_id ", ", ?")
 #endif
 
 #ifndef MYSQL_INSERT_OPTION_SERVER
@@ -526,6 +530,8 @@ namespace {
 
 #define MYSQL_UPDATE_OPTION4(...) \
     MYSQL_UPDATE_OPTION_COMMON(dhcp4, "", __VA_ARGS__)
+#define MYSQL_UPDATE_OPTION6(...) \
+    MYSQL_UPDATE_OPTION_COMMON(dhcp6, ", o.pd_pool_id = ? ", __VA_ARGS__)
 #endif
 
 #ifndef MYSQL_DELETE_GLOBAL_PARAMETER

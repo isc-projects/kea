@@ -25,6 +25,8 @@ TESTS += mysql_cb_unittests
 
 mysql_cb_unittests_SOURCES  = mysql_cb_dhcp4_unittest.cc
 mysql_cb_unittests_SOURCES += mysql_cb_dhcp4_mgr_unittest.cc
+mysql_cb_unittests_SOURCES += mysql_cb_dhcp6_unittest.cc
+mysql_cb_unittests_SOURCES += mysql_cb_dhcp6_mgr_unittest.cc
 mysql_cb_unittests_SOURCES += mysql_cb_impl_unittest.cc
 mysql_cb_unittests_SOURCES += run_unittests.cc
 
