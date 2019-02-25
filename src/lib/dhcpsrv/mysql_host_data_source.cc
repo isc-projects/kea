@@ -15,7 +15,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <util/buffer.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>

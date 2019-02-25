@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -14,7 +14,7 @@
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <boost/shared_ptr.hpp>
 #include <string>
 

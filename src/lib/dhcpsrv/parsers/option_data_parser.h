@@ -12,7 +12,7 @@
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_option_def.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <cstdint>
 #include <string>
 #include <utility>
