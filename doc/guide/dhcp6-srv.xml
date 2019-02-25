@@ -775,7 +775,7 @@ temporarily override a list of interface names and listen on all interfaces.
   <screen>
 "Dhcp6": {
     "interfaces-config": {
-        "interfaces": [ <userinput>"lo/::1"</userinput> ]
+        "interfaces": [ <userinput>"enp0s2/2001:db8::1234:abcd"</userinput> ]
     },
     ...
 }
