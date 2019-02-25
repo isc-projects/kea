@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,7 +118,7 @@ public:
     static const unsigned int MAX_MAC_LEN = 20;
 
     /// @brief Address type.
-    typedef util::OptionalValue<asiolink::IOAddress> Address;
+    typedef util::Optional<asiolink::IOAddress> Address;
 
     /// Type that defines list of addresses
     typedef std::list<Address> AddressCollection;
@@ -227,7 +227,7 @@ public:
 
     /// @brief Returns all addresses available on an interface.
     ///
-    /// The returned addresses are encapsulated in the @c util::OptionalValue
+    /// The returned addresses are encapsulated in the @c util::Optional
     /// class to be able to selectively flag some of the addresses as active
     /// (when optional value is specified) or inactive (when optional value
     /// is specified). If the address is marked as active, the

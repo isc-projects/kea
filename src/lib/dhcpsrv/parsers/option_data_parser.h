@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -107,7 +107,7 @@ private:
     ///
     /// @return Option code, possibly unspecified.
     /// @throw DhcpConfigError if option code is invalid.
-    util::OptionalValue<uint32_t>
+    util::Optional<uint32_t>
     extractCode(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves parsed option name as an optional value.
@@ -116,13 +116,13 @@ private:
     ///
     /// @return Option name, possibly unspecified.
     /// @throw DhcpConfigError if option name is invalid.
-    util::OptionalValue<std::string>
+    util::Optional<std::string>
     extractName(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves csv-format parameter as an optional value.
     ///
     /// @return Value of the csv-format parameter, possibly unspecified.
-    util::OptionalValue<bool> extractCSVFormat(data::ConstElementPtr parent) const;
+    util::Optional<bool> extractCSVFormat(data::ConstElementPtr parent) const;
 
     /// @brief Retrieves option data as a string.
     ///
@@ -145,7 +145,7 @@ private:
     /// @brief Retrieves persistent/always-send parameter as an optional value.
     ///
     /// @return Value of the persistent parameter, possibly unspecified.
-    util::OptionalValue<bool> extractPersistent(data::ConstElementPtr parent) const;
+    util::Optional<bool> extractPersistent(data::ConstElementPtr parent) const;
 
     /// @brief Address family: @c AF_INET or @c AF_INET6.
     uint16_t address_family_;

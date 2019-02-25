@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1040,7 +1040,7 @@ TEST_F(DORATest, ciaddr) {
     // Configure DHCP server.
     configure(DORA_CONFIGS[0], *client.getServer());
     // Force ciaddr of Discover message to be non-zero.
-    client.ciaddr_.specify(IOAddress("10.0.0.50"));
+    client.ciaddr_ = IOAddress("10.0.0.50");
     // Obtain a lease from the server using the 4-way exchange.
     ASSERT_NO_THROW(client.doDiscover(boost::shared_ptr<
                                       IOAddress>(new IOAddress("10.0.0.50"))));
@@ -1076,7 +1076,7 @@ TEST_F(DORATest, ciaddr) {
     // Replace the address held by the client. The client will request
     // the assignment of this address but the server has a different
     // address for this client.
-    client.ciaddr_.specify(IOAddress("192.168.0.30"));
+    client.ciaddr_ = IOAddress("192.168.0.30");
     ASSERT_NO_THROW(client.doRequest());
     // The client is sending invalid ciaddr so the server should send a NAK.
     resp = client.getContext().response_;
