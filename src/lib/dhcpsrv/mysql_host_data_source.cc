@@ -1758,7 +1758,7 @@ public:
     std::vector<MYSQL_BIND>
     createBindForSend(const OptionDescriptor& opt_desc,
                       const std::string& opt_space,
-                      const OptionalValue<SubnetID>& subnet_id,
+                      const Optional<SubnetID>& subnet_id,
                       const HostID& host_id) {
 
         // Hold pointer to the option to make sure it remains valid until
@@ -1850,7 +1850,7 @@ public:
             bind_[7].length = &client_class_len_;
 
             // dhcp4_subnet_id: INT UNSIGNED NULL
-            if (subnet_id.isSpecified()) {
+            if (!subnet_id.unspecified()) {
                 subnet_id_ = subnet_id;
                 bind_[8].buffer_type = MYSQL_TYPE_LONG;
                 bind_[8].buffer = reinterpret_cast<char*>(subnet_id_);
@@ -2029,7 +2029,7 @@ public:
     void addOption(const MySqlHostDataSourceImpl::StatementIndex& stindex,
                    const OptionDescriptor& opt_desc,
                    const std::string& opt_space,
-                   const OptionalValue<SubnetID>& subnet_id,
+                   const Optional<SubnetID>& subnet_id,
                    const HostID& host_id);
 
     /// @brief Inserts multiple options into the database.
@@ -2624,7 +2624,7 @@ void
 MySqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const OptionDescriptor& opt_desc,
                                    const std::string& opt_space,
-                                   const OptionalValue<SubnetID>& subnet_id,
+                                   const Optional<SubnetID>& subnet_id,
                                    const HostID& id) {
     std::vector<MYSQL_BIND> bind =
         host_option_exchange_->createBindForSend(opt_desc, opt_space,
@@ -2652,7 +2652,7 @@ MySqlHostDataSourceImpl::addOptions(const StatementIndex& stindex,
         if (options && !options->empty()) {
             for (OptionContainer::const_iterator opt = options->begin();
                  opt != options->end(); ++opt) {
-                addOption(stindex, *opt, *space, OptionalValue<SubnetID>(),
+                addOption(stindex, *opt, *space, Optional<SubnetID>(),
                           host_id);
             }
         }

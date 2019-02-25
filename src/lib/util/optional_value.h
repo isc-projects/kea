@@ -1,139 +1,47 @@
-// Copyright (C) 2014-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#ifndef OPTIONAL_VALUE_H
-#define OPTIONAL_VALUE_H
+#ifndef OPTIONAL_H
+#define OPTIONAL_H
 
 #include <ostream>
+#include <string>
 
 namespace isc {
 namespace util {
 
-/// @brief Indicate if an @c OptionalValue is is specified or not.
+/// @brief A template representing an optional value.
 ///
-/// This is a simple wrapper class which holds a boolean value to indicate
-/// if the @c OptionalValue is specified or not. By using this class in the
-/// @c OptionalValue class constructor we avoid the ambiguity when the
-/// @c OptionalValue encapsulates a bool type.
-struct OptionalValueState {
-
-    /// @brief Constructor.
-    ///
-    /// @param specified A boolean value to be assigned.
-    OptionalValueState(const bool specified)
-        : specified_(specified) {
-    }
-    /// @brief A bool value encapsulated by this structure.
-    bool specified_;
-};
-
-/// @brief Simple class representing an optional value.
+/// This template class encapsulates an optional value. The default implementation
+/// encapsulates numeric values, but additional specializations are defined
+/// as neccessary to support other types od data.
 ///
-/// This template class encapsulates a value of any type. An additional flag
-/// held by this class indicates if the value is "specified" or "unspecified".
-/// For example, a configuration parser for DHCP server may use this class
-/// to represent the value of the configuration parameter which may appear
-/// in the configuration file, but is not mandatory. The value of the
-/// @c OptionalValue may be initialized to "unspecified" initially. When the
-/// configuration parser finds that the appropriate parameter exists in the
-/// configuration file, the default value can be overridden and the value may
-/// be marked as "specified". If the parameter is not found, the value remains
-/// "unspecified" and the appropriate actions may be taken, e.g. the default
-/// value may be used.
-///
-/// This is a generic class and may be used in all cases when there is a need
-/// for the additional information to be carried along with the value.
-/// Alternative approach is to use a pointer which is only initialized if the
-/// actual value needs to be specified, but this may not be feasible in all
-/// cases.
+/// This class includes a boolean flag which indicates if the encapsulated
+/// value is specified or unspecified. For example, a configuration parser
+/// for the DHCP server may use this class to represent a value of the
+/// configuration parameter which may appear in the configuration file, but
+/// is not mandatory. The value of the @c Optional may be initialized to
+/// "unspecified" initially. When the configuration parser finds that the
+/// particular parameter exists in the configuration file, the default value
+/// can be overriden and the value may be marked as "specified". If the
+/// parameter is not found, the value remains "unspecified" and the appropriate
+/// actions may be taken, e.g. the default value may be used.
 ///
 /// @tparam Type of the encapsulated value.
 template<typename T>
-class OptionalValue {
+class Optional {
 public:
 
-    /// @brief Default constructor.
+    /// @brief Assigns a new value value and marks it "specified".
     ///
-    /// Note that the type @c T must have a default constructor to use this
-    /// constructor.
-    OptionalValue()
-        : value_(T()), specified_(false) {
-    }
-
-    /// @brief Constructor
-    ///
-    /// Creates optional value. The value defaults to "unspecified".
-    ///
-    /// @param value Default explicit value.
-    /// @param state Specifies bool which determines if the value is initially
-    /// specified or not (default is false).
-    explicit OptionalValue(const T& value, const OptionalValueState& state =
-                           OptionalValueState(false))
-        : value_(value), specified_(state.specified_) {
-    }
-
-    /// @brief Retrieves the actual value.
-    T get() const {
-        return (value_);
-    }
-
-    /// @brief Sets the actual value.
-    ///
-    /// @param value New value.
-    void set(const T& value) {
-        value_ = value;
-    }
-
-    /// @brief Sets the new value and marks it specified.
-    ///
-    /// @param value New actual value.
-    void specify(const T& value) {
-        set(value);
-        specify(OptionalValueState(true));
-    }
-
-    /// @brief Sets the value to "specified" or "unspecified".
-    ///
-    /// It does not alter the actual value. It only marks it "specified" or
-    /// "unspecified".
-    /// @param state determines if a value is specified or not
-    void specify(const OptionalValueState& state) {
-        specified_ = state.specified_;
-    }
-
-    /// @brief Checks if the value is specified or unspecified.
-    ///
-    /// @return true if the value is specified, false otherwise.
-    bool isSpecified() const {
-        return (specified_);
-    }
-
-    /// @brief Specifies a new value value and marks it "specified".
-    ///
-    /// @param value New actual value.
-    void operator=(const T& value) {
-        specify(value);
-    }
-
-    /// @brief Equality operator.
-    ///
-    /// @param value Actual value to compare to.
-    ///
-    /// @return true if the value is specified and equals the argument.
-    bool operator==(const T& value) const {
-        return (specified_ && (value_ == value));
-    }
-
-    /// @brief Inequality operator.
-    ///
-    /// @param value Actual value to compare to.
-    ///
-    /// @return true if the value is unspecified or unequal.
-    bool operator!=(const T& value) const {
-        return (!operator==(value));
+    /// @param other new actual value.
+    Optional<T>& operator=(T other) {
+        default_ = other;
+        unspecified_ = false;
+        return (*this);
     }
 
     /// @brief Type cast operator.
@@ -143,28 +51,74 @@ public:
     ///
     /// @return Encapsulated value.
     operator T() const {
-        return (value_);
+        return (default_);
     }
 
-private:
-    T value_;         ///< Encapsulated value.
-    bool specified_;  ///< Flag which indicates if the value is specified.
+    /// @brief Default constructor.
+    ///
+    /// Sets the encapsulated value to 0.
+    Optional()
+        : default_(T(0)), unspecified_(true) {
+    }
+
+    /// @brief Constructor
+    ///
+    /// Creates optional value and marks it as "specified".
+    ///
+    /// @param value value to be assigned.
+    explicit Optional(T value)
+        : default_(value), unspecified_(false) {
+    }
+
+    /// @brief Retrieves the actual value.
+    T get() const {
+        return (default_);
+    }
+
+    /// @brief Modifies the flag that indicates whether the value is specified
+    /// or unspecified.
+    ///
+    /// @param unspecified new value of the flag. If it is @c true, the
+    /// value is marked as unspecified, otherwise it is marked as specified.
+    void unspecified(bool unspecified) {
+        unspecified_ = unspecified;
+    }
+
+    /// @brief Checks if the value has been specified or unspecified.
+    ///
+    /// @return true if the value hasn't been specified, false otherwise.
+    bool unspecified() const {
+        return (unspecified_);
+    }
+
+protected:
+    T default_;         ///< Encapsulated value.
+    bool unspecified_;  ///< Flag which indicates if the value is specified.
 };
+
+/// @brief Specialization of the default @c Optional constructor for
+/// strings.
+///
+/// It calls default string object constructor.
+template<>
+inline Optional<std::string>::Optional()
+    : default_(), unspecified_(true) {
+}
 
 /// @brief Inserts an optional value to a stream.
 ///
 /// This function overloads the global operator<< to behave as in
-/// @c ostream::operator<< but applied to @c OptionalValue objects.
+/// @c ostream::operator<< but applied to @c Optional objects.
 ///
 /// @param os A @c std::ostream object to which the value is inserted.
-/// @param optional_value An @c OptionalValue object to be inserted into
+/// @param optional_value An @c Optional object to be inserted into
 /// a stream.
-/// @tparam Type of the value encapsulated by the @c OptionalValue object.
+/// @tparam Type of the value encapsulated by the @c Optional object.
 ///
 /// @return A reference to the stream after insertion.
 template<typename T>
 std::ostream&
-operator<<(std::ostream& os, const OptionalValue<T>& optional_value) {
+operator<<(std::ostream& os, const Optional<T>& optional_value) {
     os << optional_value.get();
     return (os);
 }

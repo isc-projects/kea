@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -47,7 +47,7 @@ OptionDataParser::parse(isc::data::ConstElementPtr single_option) {
     return (opt);
 }
 
-OptionalValue<uint32_t>
+Optional<uint32_t>
 OptionDataParser::extractCode(ConstElementPtr parent) const {
     uint32_t code;
     try {
@@ -56,7 +56,7 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
     } catch (const std::exception&) {
         // The code parameter was not found. Return an unspecified
         // value.
-        return (OptionalValue<uint32_t>());
+        return (Optional<uint32_t>());
     }
 
     if (code == 0) {
@@ -81,17 +81,17 @@ OptionDataParser::extractCode(ConstElementPtr parent) const {
 
     }
 
-    return (OptionalValue<uint32_t>(code, OptionalValueState(true)));
+    return (Optional<uint32_t>(code));
 }
 
-OptionalValue<std::string>
+Optional<std::string>
 OptionDataParser::extractName(ConstElementPtr parent) const {
     std::string name;
     try {
         name = getString(parent, "name");
 
     } catch (...) {
-        return (OptionalValue<std::string>());
+        return (Optional<std::string>());
     }
 
     if (name.find(" ") != std::string::npos) {
@@ -100,7 +100,7 @@ OptionDataParser::extractName(ConstElementPtr parent) const {
                   << getPosition("name", parent) << ")");
     }
 
-    return (OptionalValue<std::string>(name, OptionalValueState(true)));
+    return (Optional<std::string>(name));
 }
 
 std::string
@@ -117,17 +117,17 @@ OptionDataParser::extractData(ConstElementPtr parent) const {
     return (data);
 }
 
-OptionalValue<bool>
+Optional<bool>
 OptionDataParser::extractCSVFormat(ConstElementPtr parent) const {
     bool csv_format = true;
     try {
         csv_format = getBoolean(parent, "csv-format");
 
     } catch (...) {
-        return (OptionalValue<bool>(csv_format));
+        return (Optional<bool>());
     }
 
-    return (OptionalValue<bool>(csv_format, OptionalValueState(true)));
+    return (Optional<bool>(csv_format));
 }
 
 std::string
@@ -166,17 +166,17 @@ OptionDataParser::extractSpace(ConstElementPtr parent) const {
     return (space);
 }
 
-OptionalValue<bool>
+Optional<bool>
 OptionDataParser::extractPersistent(ConstElementPtr parent) const {
     bool persist = false;
     try {
         persist = getBoolean(parent, "always-send");
 
     } catch (...) {
-        return (OptionalValue<bool>(persist));
+        return (Optional<bool>());
     }
 
-    return (OptionalValue<bool>(persist, OptionalValueState(true)));
+    return (Optional<bool>(persist));
 }
 
 template<typename SearchKey>
@@ -231,16 +231,16 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
     const Option::Universe universe = address_family_ == AF_INET ?
         Option::V4 : Option::V6;
 
-    OptionalValue<uint32_t> code_param =  extractCode(option_data);
-    OptionalValue<std::string> name_param = extractName(option_data);
-    OptionalValue<bool> csv_format_param = extractCSVFormat(option_data);
-    OptionalValue<bool> persist_param = extractPersistent(option_data);
+    Optional<uint32_t> code_param =  extractCode(option_data);
+    Optional<std::string> name_param = extractName(option_data);
+    Optional<bool> csv_format_param = extractCSVFormat(option_data);
+    Optional<bool> persist_param = extractPersistent(option_data);
     std::string data_param = extractData(option_data);
     std::string space_param = extractSpace(option_data);
     ConstElementPtr user_context = option_data->get("user-context");
 
     // Require that option code or option name is specified.
-    if (!code_param.isSpecified() && !name_param.isSpecified()) {
+    if (code_param.unspecified() && name_param.unspecified()) {
         isc_throw(DhcpConfigError, "option data configuration requires one of"
                   " 'code' or 'name' parameters to be specified"
                   << " (" << option_data->getPosition() << ")");
@@ -248,16 +248,16 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
     // Try to find a corresponding option definition using option code or
     // option name.
-    OptionDefinitionPtr def = code_param.isSpecified() ?
-        findOptionDefinition(space_param, code_param) :
-        findOptionDefinition(space_param, name_param);
+    OptionDefinitionPtr def = code_param.unspecified() ?
+        findOptionDefinition(space_param, name_param) :
+        findOptionDefinition(space_param, code_param);
 
     // If there is no definition, the user must not explicitly enable the
     // use of csv-format.
     if (!def) {
         // If explicitly requested that the CSV format is to be used,
         // the option definition is a must.
-        if (csv_format_param.isSpecified() && csv_format_param) {
+        if (!csv_format_param.unspecified() && csv_format_param) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << space_param << "." << name_param
                       << "' having code '" << code_param
@@ -267,7 +267,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
         // If there is no option definition and the option code is not specified
         // we have no means to find the option code.
-        } else if (name_param.isSpecified() && !code_param.isSpecified()) {
+        } else if (!name_param.unspecified() && code_param.unspecified()) {
             isc_throw(DhcpConfigError, "definition for the option '"
                       << space_param << "." << name_param
                       << "' does not exist ("
@@ -282,7 +282,7 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
 
     // If the definition is available and csv-format hasn't been explicitly
     // disabled, we will parse the data as comma separated values.
-    if (def && (!csv_format_param.isSpecified() || csv_format_param)) {
+    if (def && (csv_format_param.unspecified() || csv_format_param)) {
         // If the option data is specified as a string of comma
         // separated values then we need to split this string into
         // individual values - each value will be used to initialize
@@ -325,11 +325,11 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
                                     binary));
 
         desc.option_ = option;
-        desc.persistent_ = persist_param.isSpecified() && persist_param;
+        desc.persistent_ = !persist_param.unspecified() && persist_param;
     } else {
 
         // Option name is specified it should match the name in the definition.
-        if (name_param.isSpecified() && (def->getName() != name_param.get())) {
+        if (!name_param.unspecified() && (def->getName() != name_param.get())) {
             isc_throw(DhcpConfigError, "specified option name '"
                       << name_param << "' does not match the "
                       << "option definition: '" << space_param
@@ -341,12 +341,12 @@ OptionDataParser::createOption(ConstElementPtr option_data) {
         // Option definition has been found so let's use it to create
         // an instance of our option.
         try {
-            bool use_csv = !csv_format_param.isSpecified() || csv_format_param;
+            bool use_csv = csv_format_param.unspecified() || csv_format_param;
             OptionPtr option = use_csv ?
                 def->optionFactory(universe, def->getCode(), data_tokens) :
                 def->optionFactory(universe, def->getCode(), binary);
             desc.option_ = option;
-            desc.persistent_ = persist_param.isSpecified() && persist_param;
+            desc.persistent_ = !persist_param.unspecified() && persist_param;
             if (use_csv) {
                 desc.formatted_value_ = data_param;
             }

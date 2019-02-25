@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -213,7 +213,7 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
                       << " already defined on the " << name_ << " interface.");
         }
     }
-    unicasts_.push_back(OptionalValue<IOAddress>(addr, true));
+    unicasts_.push_back(Optional<IOAddress>(addr));
 }
 
 bool
@@ -244,7 +244,7 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
 
 void
 Iface::addAddress(const isc::asiolink::IOAddress& addr) {
-    addrs_.push_back(Address(addr, OptionalValueState(true)));
+    addrs_.push_back(Address(addr));
 }
 
 void
@@ -252,7 +252,7 @@ Iface::setActive(const IOAddress& address, const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
         if (address == addr_it->get()) {
-            addr_it->specify(OptionalValueState(active));
+            addr_it->unspecified(!active);
             return;
         }
     }
@@ -264,7 +264,7 @@ void
 Iface::setActive(const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
-        addr_it->specify(OptionalValueState(active));
+        addr_it->unspecified(!active);
     }
 }
 
@@ -272,7 +272,7 @@ unsigned int
 Iface::countActive4() const {
     uint16_t count = 0;
     BOOST_FOREACH(Address addr, addrs_) {
-        if (addr.get().isV4() && addr.isSpecified()) {
+        if (!addr.unspecified() && addr.get().isV4()) {
             ++count;
         }
     }
@@ -526,7 +526,7 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
         BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
-            if (!addr.get().isV4() || !addr.isSpecified()) {
+            if (addr.unspecified() || !addr.get().isV4()) {
                 continue;
             }
 
