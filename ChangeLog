@@ -1,5 +1,10 @@
+1530.	[bug] 		adwol
+	Potential syntax error in keactrl fixed. Thanks to Adam Osuchowski
+	from Silesian University of Technology for providing a patch.
+	(Gitlab #162,!241, git b1a1137f252432aa956ed6fea3da21c740857333)
+
 1529.	[func]		tmark
-	When fetching configuration data from configured backends, 
+	When fetching configuration data from configured backends,
 	kea-dhcp4 will now merge global parameters.
 	(Gitlab #402,!224, git dadaf76f8dd61b8bb3405aa5dc80029f09b2d4ec)
 
