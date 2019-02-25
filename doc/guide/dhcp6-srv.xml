@@ -1156,10 +1156,10 @@ temporarily override a list of interface names and listen on all interfaces.
 }
         </screen>
         Defined options are added to the response when the client requests them,
-        as well as some options required by a protocol. Administrator
+        as well as any options required by a protocol. An administrator
         can also specify that an option is always sent, even if a
-        client didn't specifically request it. To enforce the addition
-        of a particular option set the always-send flag to true as in:
+        client did not specifically request it. To enforce the addition
+        of a particular option, set the "always-send" flag to true as in:
         <screen>
 "Dhcp6": {
     "option-data": [
