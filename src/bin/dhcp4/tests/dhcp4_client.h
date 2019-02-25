@@ -12,7 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/pkt4.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>

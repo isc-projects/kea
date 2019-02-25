@@ -5,7 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <gtest/gtest.h>
 
 namespace {

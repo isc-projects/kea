@@ -16,7 +16,7 @@
 #include <dhcp/packet_queue_mgr6.h>
 #include <dhcp/pkt_filter.h>
 #include <dhcp/pkt_filter6.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <util/watch_socket.h>
 #include <util/threads/watched_thread.h>
 
