@@ -323,12 +323,12 @@ TEST_F(Dhcp4CBTest, mergeOptionDefs) {
     ASSERT_TRUE(found_def);
     EXPECT_EQ(2, found_def->getCode());
 
-    // Definition "three" from first backened should be there.
+    // Definition "three" from first backend should be there.
     found_def = option_defs->get("isc", "three");
     ASSERT_TRUE(found_def);
     EXPECT_EQ(3, found_def->getCode());
 
-    // Definition "four" from first backened should not be there.
+    // Definition "four" from first backend should not be there.
     found_def = option_defs->get("isc", "four");
     ASSERT_FALSE(found_def);
 }
