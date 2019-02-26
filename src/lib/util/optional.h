@@ -7,6 +7,7 @@
 #ifndef OPTIONAL_H
 #define OPTIONAL_H
 
+#include <exceptions/exceptions.h>
 #include <ostream>
 #include <string>
 
@@ -37,8 +38,11 @@ public:
 
     /// @brief Assigns a new value value and marks it "specified".
     ///
+    /// @tparam A Type of the value to be assigned. Typically this is @c T, but
+    /// may also be a type that can be cast to @c T.
     /// @param other new actual value.
-    Optional<T>& operator=(T other) {
+    template<typename A>
+    Optional<T>& operator=(A other) {
         default_ = other;
         unspecified_ = false;
         return (*this);
@@ -54,23 +58,40 @@ public:
         return (default_);
     }
 
+    /// @brief Equality operator.
+    ///
+    /// @param other value to be compared.
+    bool operator==(const T& other) const {
+        return (default_ == other);
+    }
+
+    /// @brief Inequality operator.
+    ///
+    /// @param other value to be compared.
+    bool operator!=(const T& other) const {
+        return (default_ != other);
+    }
+
     /// @brief Default constructor.
     ///
-    /// Sets the encapsulated value to 0.
+    /// Sets the encapsulated value to 0 and marks it as "unspecified".
     Optional()
         : default_(T(0)), unspecified_(true) {
     }
 
     /// @brief Constructor
     ///
-    /// Creates optional value and marks it as "specified".
+    /// Sets an explicit value and marks it as "specified".
     ///
+    /// @tparam A Type of the value to be assigned. Typically this is @c T, but
+    /// may also be a type that can be cast to @c T.
     /// @param value value to be assigned.
-    explicit Optional(T value)
+    template<typename A>
+    Optional(A value)
         : default_(value), unspecified_(false) {
     }
 
-    /// @brief Retrieves the actual value.
+    /// @brief Retrieves the encapsulated value.
     T get() const {
         return (default_);
     }
@@ -91,6 +112,16 @@ public:
         return (unspecified_);
     }
 
+    /// @brief Checks if the encapsulated value is empty.
+    ///
+    /// This method can be overloaded in the template specializations that
+    /// are dedicated to strings, vectors etc.
+    ///
+    /// @throw isc::InvalidOperation.
+    bool empty() const {
+        isc_throw(isc::InvalidOperation, "call to empty() not supported");
+    }
+
 protected:
     T default_;         ///< Encapsulated value.
     bool unspecified_;  ///< Flag which indicates if the value is specified.
@@ -103,6 +134,14 @@ protected:
 template<>
 inline Optional<std::string>::Optional()
     : default_(), unspecified_(true) {
+}
+
+/// @brief Specialization of the @c Optional::empty method for strings.
+///
+/// @return true if the value is empty, false otherwise.
+template<>
+inline bool Optional<std::string>::empty() const {
+    return (default_.empty());
 }
 
 /// @brief Inserts an optional value to a stream.

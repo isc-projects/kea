@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,6 +18,7 @@
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::util;
 
 namespace {
 
@@ -309,30 +310,30 @@ Subnet4::clientSupported(const isc::dhcp::ClientClasses& client_classes) const {
     return (Network4::clientSupported(client_classes));
 }
 
-void Subnet4::setSiaddr(const isc::asiolink::IOAddress& siaddr) {
-    if (!siaddr.isV4()) {
+void Subnet4::setSiaddr(const Optional<IOAddress>& siaddr) {
+    if (!siaddr.get().isV4()) {
         isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
                   << siaddr);
     }
     siaddr_ = siaddr;
 }
 
-isc::asiolink::IOAddress Subnet4::getSiaddr() const {
+Optional<IOAddress> Subnet4::getSiaddr() const {
     return (siaddr_);
 }
 
-void Subnet4::setSname(const std::string& sname) {
+void Subnet4::setSname(const Optional<std::string>& sname) {
     sname_ = sname;
 }
 
-const std::string& Subnet4::getSname() const {
+const Optional<std::string>& Subnet4::getSname() const {
     return (sname_);
 }
-void Subnet4::setFilename(const std::string& filename) {
+void Subnet4::setFilename(const Optional<std::string>& filename) {
     filename_ = filename;
 }
 
-const std::string& Subnet4::getFilename() const {
+const Optional<std::string>& Subnet4::getFilename() const {
     return (filename_);
 }
 
@@ -717,7 +718,7 @@ Subnet4::toElement() const {
     isc::data::merge(map, d4o6.toElement());
 
     // Set next-server
-    map->set("next-server", Element::create(getSiaddr().toText()));
+    map->set("next-server", Element::create(getSiaddr().get().toText()));
 
     // Set server-hostname
     map->set("server-hostname", Element::create(getSname()));

@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,13 +122,13 @@ TEST(Subnet4Test, siaddr) {
     Subnet4 subnet(IOAddress("192.0.2.1"), 24, 1000, 2000, 3000);
 
     // Check if the default is 0.0.0.0
-    EXPECT_EQ("0.0.0.0", subnet.getSiaddr().toText());
+    EXPECT_EQ("0.0.0.0", subnet.getSiaddr().get().toText());
 
     // Check that we can set it up
     EXPECT_NO_THROW(subnet.setSiaddr(IOAddress("1.2.3.4")));
 
     // Check that we can get it back
-    EXPECT_EQ("1.2.3.4", subnet.getSiaddr().toText());
+    EXPECT_EQ("1.2.3.4", subnet.getSiaddr().get().toText());
 
     // Check that only v4 addresses are supported
     EXPECT_THROW(subnet.setSiaddr(IOAddress("2001:db8::1")),
@@ -146,7 +146,7 @@ TEST(Subnet4Test, serverHostname) {
     EXPECT_NO_THROW(subnet.setSname("foobar"));
 
     // Check that we can get it back
-    EXPECT_EQ("foobar", subnet.getSname());
+    EXPECT_EQ("foobar", subnet.getSname().get());
 }
 
 // Checks whether boot-file-name field can be set and retrieved correctly.
@@ -160,7 +160,7 @@ TEST(Subnet4Test, bootFileName) {
     EXPECT_NO_THROW(subnet.setFilename("foobar"));
 
     // Check that we can get it back
-    EXPECT_EQ("foobar", subnet.getFilename());
+    EXPECT_EQ("foobar", subnet.getFilename().get());
 }
 
 // Checks if the match-client-id flag can be set and retrieved.
@@ -448,7 +448,7 @@ TEST(Subnet4Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ("bar", subnet->getClientClass());
+    EXPECT_EQ("bar", subnet->getClientClass().get());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -1032,7 +1032,7 @@ TEST(Subnet6Test, clientClass) {
 
     // Let's allow only clients belonging to "bar" class.
     subnet->allowClientClass("bar");
-    EXPECT_EQ("bar", subnet->getClientClass());
+    EXPECT_EQ("bar", subnet->getClientClass().get());
 
     EXPECT_FALSE(subnet->clientSupported(no_class));
     EXPECT_FALSE(subnet->clientSupported(foo_class));
@@ -1480,7 +1480,7 @@ TEST(Subnet6Test, iface) {
     EXPECT_TRUE(subnet.getIface().empty());
 
     subnet.setIface("en1");
-    EXPECT_EQ("en1", subnet.getIface());
+    EXPECT_EQ("en1", subnet.getIface().get());
 }
 
 // This trivial test checks if the interface-id option can be set and

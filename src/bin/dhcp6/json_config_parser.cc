@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -298,7 +298,7 @@ public:
                         continue;
                     }
 
-                    if (iface != (*subnet)->getIface()) {
+                    if ((*subnet)->getIface() != iface) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
                                   << " has specified interface " << (*subnet)->getIface()
                                   << ", but earlier subnet in the same shared-network"

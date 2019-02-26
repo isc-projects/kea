@@ -14,6 +14,7 @@
 
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace dhcp {

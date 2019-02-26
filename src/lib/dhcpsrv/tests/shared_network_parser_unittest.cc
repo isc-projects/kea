@@ -214,7 +214,7 @@ TEST_F(SharedNetwork4ParserTest, parse) {
 
     // Check basic parameters.
     EXPECT_EQ("bird", network->getName());
-    EXPECT_EQ("eth1", network->getIface());
+    EXPECT_EQ("eth1", network->getIface().get());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -275,7 +275,7 @@ TEST_F(SharedNetwork4ParserTest, clientClassMatchClientIdAuthoritative) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass());
+    EXPECT_EQ("alpha", network->getClientClass().get());
 
     EXPECT_FALSE(network->getMatchClientId());
 
@@ -449,7 +449,7 @@ TEST_F(SharedNetwork6ParserTest, parse) {
 
     // Check basic parameters.
     EXPECT_EQ("bird", network->getName());
-    EXPECT_EQ("eth1", network->getIface());
+    EXPECT_EQ("eth1", network->getIface().get());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -494,7 +494,7 @@ TEST_F(SharedNetwork6ParserTest, clientClass) {
     network = parser.parse(config_element);
     ASSERT_TRUE(network);
 
-    EXPECT_EQ("alpha", network->getClientClass());
+    EXPECT_EQ("alpha", network->getClientClass().get());
 }
 
 // This test verifies that it's possible to specify require-client-classes

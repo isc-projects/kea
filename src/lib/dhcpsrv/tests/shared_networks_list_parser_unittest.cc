@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -43,13 +43,13 @@ TEST(SharedNetworkListParserTest, parse) {
     SharedNetwork4Ptr network1 = cfg->getByName("bird");
     ASSERT_TRUE(network1);
     EXPECT_EQ("bird", network1->getName());
-    EXPECT_EQ("eth0", network1->getIface());
+    EXPECT_EQ("eth0", network1->getIface().get());
     EXPECT_FALSE(network1->getContext());
 
     SharedNetwork4Ptr network2 = cfg->getByName("monkey");
     ASSERT_TRUE(network2);
     EXPECT_EQ("monkey", network2->getName());
-    EXPECT_EQ("eth1", network2->getIface());
+    EXPECT_EQ("eth1", network2->getIface().get());
     ASSERT_TRUE(network2->getContext());
     EXPECT_EQ(1, network2->getContext()->size());
     EXPECT_TRUE(network2->getContext()->get("comment"));
