@@ -732,7 +732,7 @@ public:
             MySqlBinding::condCreateString(subnet->getIface()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getMatchClientId())),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
-            MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().toUint32()),
+            MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().get().toUint32()),
             createBinding(subnet->getT2()),
             createInputRelayBinding(subnet),
             createBinding(subnet->getT1()),

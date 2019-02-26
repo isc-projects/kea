@@ -210,14 +210,14 @@ public:
                         continue;
                     }
 
-                    if (iface != (*subnet)->getIface()) {
+                    if ((*subnet)->getIface() != iface) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
                                   << " has specified interface " << (*subnet)->getIface()
                                   << ", but earlier subnet in the same shared-network"
                                   << " or the shared-network itself used " << iface);
                     }
 
-                    if (authoritative != (*subnet)->getAuthoritative()) {
+                    if ((*subnet)->getAuthoritative() != authoritative) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
                                   << " has different authoritative setting "
                                   << (*subnet)->getAuthoritative()

@@ -1248,9 +1248,9 @@ TEST_F(Dhcp4ParserTest, nextServerGlobal) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
-    EXPECT_EQ("foo", subnet->getSname());
-    EXPECT_EQ("bar", subnet->getFilename());
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().get().toText());
+    EXPECT_EQ("foo", subnet->getSname().get());
+    EXPECT_EQ("bar", subnet->getFilename().get());
 }
 
 // Checks if the next-server and other fixed BOOTP fields defined as
@@ -1283,9 +1283,9 @@ TEST_F(Dhcp4ParserTest, nextServerSubnet) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
-    EXPECT_EQ("foo", subnet->getSname());
-    EXPECT_EQ("bar", subnet->getFilename());
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().get().toText());
+    EXPECT_EQ("foo", subnet->getSname().get());
+    EXPECT_EQ("bar", subnet->getFilename().get());
 }
 
 // Test checks several negative scenarios for next-server configuration: bogus
@@ -1431,9 +1431,9 @@ TEST_F(Dhcp4ParserTest, nextServerOverride) {
     Subnet4Ptr subnet = CfgMgr::instance().getStagingCfg()->
         getCfgSubnets4()->selectSubnet(IOAddress("192.0.2.200"));
     ASSERT_TRUE(subnet);
-    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().toText());
-    EXPECT_EQ("some-name.example.org", subnet->getSname());
-    EXPECT_EQ("bootfile.efi", subnet->getFilename());
+    EXPECT_EQ("1.2.3.4", subnet->getSiaddr().get().toText());
+    EXPECT_EQ("some-name.example.org", subnet->getSname().get());
+    EXPECT_EQ("bootfile.efi", subnet->getFilename().get());
 }
 
 // Check whether it is possible to configure echo-client-id
@@ -5902,12 +5902,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     ASSERT_TRUE(s);
 
     // These are values derived from shared network scope:
-    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ("eth0", s->getIface().get());
     EXPECT_FALSE(s->getMatchClientId());
     EXPECT_TRUE(s->getAuthoritative());
     EXPECT_EQ(IOAddress("1.2.3.4"), s->getSiaddr());
-    EXPECT_EQ("foo", s->getSname());
-    EXPECT_EQ("bar", s->getFilename());
+    EXPECT_EQ("foo", s->getSname().get());
+    EXPECT_EQ("bar", s->getFilename().get());
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("5.6.7.8")));
     EXPECT_EQ(Network::HR_OUT_OF_POOL, s->getHostReservationMode());
 
@@ -5918,12 +5918,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     s = checkSubnet(*subs, "192.0.2.0/24", 100, 200, 400);
 
     // These are values derived from shared network scope:
-    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ("eth0", s->getIface().get());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_TRUE(s->getAuthoritative());
-    EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr());
-    EXPECT_EQ("some-name.example.org", s->getSname());
-    EXPECT_EQ("bootfile.efi", s->getFilename());
+    EXPECT_EQ(IOAddress("11.22.33.44"), s->getSiaddr().get());
+    EXPECT_EQ("some-name.example.org", s->getSname().get());
+    EXPECT_EQ("bootfile.efi", s->getFilename().get());
     EXPECT_TRUE(s->hasRelayAddress(IOAddress("55.66.77.88")));
     EXPECT_EQ(Network::HR_DISABLED, s->getHostReservationMode());
 
@@ -5938,7 +5938,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDerive) {
     // This subnet should derive its renew-timer from global scope.
     // All other parameters should have default values.
     s = checkSubnet(*subs, "192.0.3.0/24", 1, 2, 4);
-    EXPECT_EQ("", s->getIface());
+    EXPECT_EQ("", s->getIface().get());
     EXPECT_TRUE(s->getMatchClientId());
     EXPECT_FALSE(s->getAuthoritative());
     EXPECT_EQ(IOAddress("0.0.0.0"), s->getSiaddr());
@@ -6000,7 +6000,7 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     SharedNetwork4Ptr net = nets->at(0);
     ASSERT_TRUE(net);
 
-    EXPECT_EQ("alpha", net->getClientClass());
+    EXPECT_EQ("alpha", net->getClientClass().get());
 
     // The first shared network has two subnets.
     const Subnet4Collection * subs = net->getAllSubnets();
@@ -6011,12 +6011,12 @@ TEST_F(Dhcp4ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet4Ptr s = checkSubnet(*subs, "192.0.1.0/24", 1, 2, 4);
     ASSERT_TRUE(s);
-    EXPECT_EQ("alpha", s->getClientClass());
+    EXPECT_EQ("alpha", s->getClientClass().get());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "192.0.2.0/24", 1, 2, 4);
-    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
+    EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have anything defined
     // on shared-network or subnet level, so everything should have default

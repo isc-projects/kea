@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -16,6 +16,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
+#include <util/optional.h>
 
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>
@@ -536,32 +537,32 @@ public:
     /// Will be used for siaddr field (the next server) that typically is used
     /// as TFTP server. If not specified, the default value of 0.0.0.0 is
     /// used.
-    void setSiaddr(const isc::asiolink::IOAddress& siaddr);
+    void setSiaddr(const util::Optional<asiolink::IOAddress>& siaddr);
 
     /// @brief Returns siaddr for this subnet
     ///
     /// @return siaddr value
-    isc::asiolink::IOAddress getSiaddr() const;
+    util::Optional<asiolink::IOAddress> getSiaddr() const;
 
     /// @brief Sets server hostname for the Subnet4 
     ///
     /// Will be used for server hostname field (may be empty if not defined)
-    void setSname(const std::string& sname);
+    void setSname(const util::Optional<std::string>& sname);
 
     /// @brief Returns server hostname for this subnet
     ///
     /// @return server hostname value
-    const std::string& getSname() const;
+    const util::Optional<std::string>& getSname() const;
 
     /// @brief Sets boot file name for the Subnet4 
     ///
     /// Will be used for boot file name (may be empty if not defined)
-    void setFilename(const std::string& filename);
+    void setFilename(const util::Optional<std::string>& filename);
 
     /// @brief Returns boot file name for this subnet
     ///
     /// @return boot file name value
-    const std::string& getFilename() const;
+    const util::Optional<std::string>& getFilename() const;
 
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
@@ -608,13 +609,13 @@ private:
     virtual void checkType(Lease::Type type) const;
 
     /// @brief siaddr value for this subnet
-    isc::asiolink::IOAddress siaddr_;
+    util::Optional<asiolink::IOAddress> siaddr_;
 
     /// @brief server hostname for this subnet
-    std::string sname_;
+    util::Optional<std::string> sname_;
 
     /// @brief boot file name for this subnet
-    std::string filename_;
+    util::Optional<std::string> filename_;
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;

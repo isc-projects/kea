@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1396,7 +1396,7 @@ TEST_F(Dhcp6ParserTest, subnetInterface) {
     Subnet6Ptr subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->
         selectSubnet(IOAddress("2001:db8:1::5"), classify_);
     ASSERT_TRUE(subnet);
-    EXPECT_EQ(valid_iface_, subnet->getIface());
+    EXPECT_EQ(valid_iface_, subnet->getIface().get());
 }
 
 // This test checks if invalid interface name will be rejected in
@@ -6304,14 +6304,14 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
     // subnet6 level.
     Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ("eth0", s->getIface().get());
 
     // For the second subnet, the renew-timer should be 100, because it
     // was specified explicitly. Other parameters a derived
     // from global scope to shared-network level and later again to
     // subnet6 level.
     checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
-    EXPECT_EQ("eth0", s->getIface());
+    EXPECT_EQ("eth0", s->getIface().get());
 
     // Ok, now check the second shared subnet.
     net = nets->at(1);
@@ -6323,7 +6323,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveInterfaces) {
 
     // This subnet should derive its renew-timer from global scope.
     s = checkSubnet(*subs, "2001:db3::/48", 900, 1800, 3600, 7200);
-    EXPECT_EQ("", s->getIface());
+    EXPECT_EQ("", s->getIface().get());
 }
 
 
@@ -6403,7 +6403,7 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // Let's check the first one.
     SharedNetwork6Ptr net = nets->at(0);
     ASSERT_TRUE(net);
-    EXPECT_EQ("alpha", net->getClientClass());
+    EXPECT_EQ("alpha", net->getClientClass().get());
 
     const Subnet6Collection * subs = net->getAllSubnets();
     ASSERT_TRUE(subs);
@@ -6413,13 +6413,13 @@ TEST_F(Dhcp6ParserTest, sharedNetworksDeriveClientClass) {
     // shared-network level.
     Subnet6Ptr s = checkSubnet(*subs, "2001:db1::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    EXPECT_EQ("alpha", s->getClientClass());
+    EXPECT_EQ("alpha", s->getClientClass().get());
 
     // For the second subnet, the values are overridden on subnet level.
     // The value should not be inherited.
     s = checkSubnet(*subs, "2001:db2::/48", 900, 1800, 3600, 7200);
     ASSERT_TRUE(s);
-    EXPECT_EQ("beta", s->getClientClass()); // beta defined on subnet level
+    EXPECT_EQ("beta", s->getClientClass().get()); // beta defined on subnet level
 
     // Ok, now check the second shared network. It doesn't have
     // anything defined on shared-network or subnet level, so

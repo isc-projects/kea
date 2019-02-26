@@ -17,6 +17,7 @@
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfg_4o6.h>
 #include <dhcpsrv/triplet.h>
+#include <util/optional.h>
 #include <boost/shared_ptr.hpp>
 #include <boost/weak_ptr.hpp>
 #include <cstdint>
@@ -135,7 +136,7 @@ public:
     /// other resources to a client.
     ///
     /// @param iface_name Interface name.
-    void setIface(const std::string& iface_name) {
+    void setIface(const util::Optional<std::string>& iface_name) {
         iface_name_ = iface_name;
     }
 
@@ -143,7 +144,7 @@ public:
     /// selected.
     ///
     /// @return Interface name as text.
-    std::string getIface() const {
+    util::Optional<std::string> getIface() const {
         return (iface_name_);
     };
 
@@ -230,7 +231,7 @@ public:
     void requireClientClass(const isc::dhcp::ClientClass& class_name);
 
     /// @brief Returns classes which are required to be evaluated
-    const isc::dhcp::ClientClasses& getRequiredClasses() const;
+    const ClientClasses& getRequiredClasses() const;
 
     /// @brief returns the client class
     ///
@@ -238,7 +239,7 @@ public:
     /// returned it is valid.
     ///
     /// @return client class @ref client_class_
-    const isc::dhcp::ClientClass& getClientClass() const {
+    const util::Optional<ClientClass>& getClientClass() const {
         return (client_class_);
     }
 
@@ -286,7 +287,7 @@ public:
     /// performance reasons.
     ///
     /// @return whether in-pool host reservations are allowed.
-    HRMode
+    util::Optional<HRMode>
     getHostReservationMode() const {
         return (host_reservation_mode_);
     }
@@ -296,7 +297,7 @@ public:
     /// See @ref getHostReservationMode for details.
     ///
     /// @param mode mode to be set
-    void setHostReservationMode(HRMode mode) {
+    void setHostReservationMode(const util::Optional<HRMode>& mode) {
         host_reservation_mode_ = mode;
     }
 
@@ -312,38 +313,38 @@ public:
     }
 
     /// @brief Returns whether or not T1/T2 calculation is enabled.
-    bool getCalculateTeeTimes() const {
+    util::Optional<bool> getCalculateTeeTimes() const {
         return (calculate_tee_times_);
     }
 
     /// @brief Sets whether or not T1/T2 calculation is enabled.
     ///
     /// @param calculate_tee_times new value of enabled/disabled.
-    void setCalculateTeeTimes(const bool& calculate_tee_times) {
+    void setCalculateTeeTimes(const util::Optional<bool>& calculate_tee_times) {
         calculate_tee_times_ = calculate_tee_times;
     }
 
     /// @brief Returns percentage to use when calculating the T1 (renew timer).
-    double getT1Percent() const {
+    util::Optional<double> getT1Percent() const {
         return (t1_percent_);
     }
 
     /// @brief Sets new precentage for calculating T1 (renew timer).
     ///
     /// @param t1_percent New percentage to use.
-    void setT1Percent(const double& t1_percent) {
+    void setT1Percent(const util::Optional<double>& t1_percent) {
         t1_percent_ = t1_percent;
     }
 
     /// @brief Returns percentage to use when calculating the T2 (rebind timer).
-    double getT2Percent() const {
+    util::Optional<double> getT2Percent() const {
         return (t2_percent_);
     }
 
     /// @brief Sets new precentage for calculating T2 (rebind timer).
     ///
     /// @param t2_percent New percentage to use.
-    void setT2Percent(const double& t2_percent) {
+    void setT2Percent(const util::Optional<double>& t2_percent) {
         t2_percent_ = t2_percent;
     }
 
@@ -355,7 +356,7 @@ public:
 protected:
 
     /// @brief Holds interface name for which this network is selected.
-    std::string iface_name_;
+    util::Optional<std::string> iface_name_;
 
     /// @brief Relay information
     ///
@@ -367,7 +368,7 @@ protected:
     /// If defined, only clients belonging to that class will be allowed to use
     /// this particular network. The default value for this is an empty string,
     /// which means that any client is allowed, regardless of its class.
-    ClientClass client_class_;
+    util::Optional<ClientClass> client_class_;
 
     /// @brief Required classes
     ///
@@ -387,19 +388,19 @@ protected:
     /// @brief Specifies host reservation mode
     ///
     /// See @ref HRMode type for details.
-    HRMode host_reservation_mode_;
+    util::Optional<HRMode> host_reservation_mode_;
 
     /// @brief Pointer to the option data configuration for this subnet.
     CfgOptionPtr cfg_option_;
 
     /// @brief Enables calculation of T1 and T2 timers
-    bool calculate_tee_times_;
+    util::Optional<bool> calculate_tee_times_;
 
     /// @brief Percentage of the lease lifetime to use when calculating T1 timer
-    double t1_percent_;
+    util::Optional<double> t1_percent_;
 
     /// @brief Percentage of the lease lifetime to use when calculating T2 timer
-    double t2_percent_;
+    util::Optional<double> t2_percent_;
 };
 
 /// @brief Pointer to the @ref Network object.
@@ -421,7 +422,7 @@ public:
     /// be used to identify the client's lease.
     ///
     /// @return true if client identifiers should be used, false otherwise.
-    bool getMatchClientId() const {
+    util::Optional<bool> getMatchClientId() const {
         return (match_client_id_);
     }
 
@@ -430,7 +431,7 @@ public:
     ///
     /// @param match If this value is true, the client identifiers are not
     /// used for lease lookup.
-    void setMatchClientId(const bool match) {
+    void setMatchClientId(const util::Optional<bool>& match) {
         match_client_id_ = match;
     }
 
@@ -439,7 +440,7 @@ public:
     ///
     /// @return true if requests for unknown IP addresses should be rejected,
     /// false otherwise.
-    bool getAuthoritative() const {
+    util::Optional<bool> getAuthoritative() const {
         return (authoritative_);
     }
 
@@ -448,7 +449,7 @@ public:
     ///
     /// @param authoritative If this value is true, the requests for unknown IP
     /// addresses will be rejected with DHCPNAK messages
-    void setAuthoritative(const bool authoritative) {
+    void setAuthoritative(const util::Optional<bool>& authoritative) {
         authoritative_ = authoritative;
     }
 
@@ -467,10 +468,10 @@ private:
 
     /// @brief Should server use client identifiers for client lease
     /// lookup.
-    bool match_client_id_;
+    util::Optional<bool> match_client_id_;
 
     /// @brief Should requests for unknown IP addresses be rejected.
-    bool authoritative_;
+    util::Optional<bool> authoritative_;
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv6 case.
@@ -514,7 +515,7 @@ public:
     /// is supported or unsupported for the subnet.
     ///
     /// @return true if the Rapid Commit option is supported, false otherwise.
-    bool getRapidCommit() const {
+    util::Optional<bool> getRapidCommit() const {
         return (rapid_commit_);
     }
 
@@ -522,7 +523,7 @@ public:
     ///
     /// @param rapid_commit A boolean value indicating that the Rapid Commit
     /// option support is enabled (if true), or disabled (if false).
-    void setRapidCommit(const bool rapid_commit) {
+    void setRapidCommit(const util::Optional<bool>& rapid_commit) {
         rapid_commit_ = rapid_commit;
     };
 
@@ -544,7 +545,7 @@ private:
     ///
     /// It's default value is false, which indicates that the Rapid
     /// Commit is disabled for the subnet.
-    bool rapid_commit_;
+    util::Optional<bool> rapid_commit_;
 };
 
 } // end of namespace isc::dhcp
