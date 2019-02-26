@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -122,6 +122,27 @@ public:
     ///
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
+
+    /// @brief Merges specified option definitions configuration into this
+    /// configuration.
+    ///
+    /// This method merges the option defintiions from the @c other
+    /// configuration into this configuration.  The merged set of
+    /// definitions is created as follows:
+    ///
+    /// Iterator over the definitions in each name space in this configuration:
+    /// If either the definition's name or code are defined in @c other
+    /// then skip over the definition otherwise add it to @other.
+    ///
+    /// Replace this configuration's definitions with the defnitions
+    /// in @c other using @c copyTo().
+    ///
+    /// @warning The merge operation affects @c other.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    void merge(CfgOptionDef& other);
 
 private:
 

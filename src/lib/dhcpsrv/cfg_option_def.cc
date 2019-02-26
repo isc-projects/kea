@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -204,6 +204,37 @@ CfgOptionDef::toElement() const {
         }
     }
     return (result);
+}
+
+void
+CfgOptionDef::merge(CfgOptionDef& other) {
+
+    if (other.getContainer().getOptionSpaceNames().empty()) {
+        // Nothing to merge, don't waste cycles.
+        return;
+    }
+
+
+    // Iterate over this config's definitions in each space.
+    // If either a definition's name or code already exist in
+    // that space in "other", skip it.  Otherwise, add it to "other".
+    auto spaces = option_definitions_.getOptionSpaceNames();
+    for (auto space = spaces.begin(); space != spaces.end(); ++space) {
+        OptionDefContainerPtr my_defs = getAll(*space);
+        for (auto my_def = my_defs->begin(); my_def != my_defs->end(); ++my_def) {
+            if ((other.get(*space, (*my_def)->getName())) ||
+                (other.get(*space, (*my_def)->getCode()))) {
+                // Already in "other" so skip it.
+                continue;
+            }
+
+            // Not in "other" so add it.
+            other.add(*my_def, *space);
+        }
+    }
+
+    // Replace the current definitions with the merged set.
+    other.copyTo(*this);
 }
 
 } // end of namespace isc::dhcp

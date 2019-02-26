@@ -83,7 +83,7 @@ ConfigBase::copy(ConfigBase& other) const {
 }
 
 void
-ConfigBase::merge(const ConfigBase& other) {
+ConfigBase::merge(ConfigBase& other) {
     // Merge logging info.
     if (!other.logging_info_.empty()) {
         logging_info_ = other.logging_info_;

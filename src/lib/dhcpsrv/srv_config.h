@@ -516,7 +516,7 @@ public:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    virtual void merge(const ConfigBase& other);
+    virtual void merge(ConfigBase& other);
 
     /// @brief Updates statistics.
     ///
@@ -662,7 +662,7 @@ private:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    void merge4(const SrvConfig& other);
+    void merge4(SrvConfig& other);
 
 
     /// @brief Merges the DHCPv4 globals specified in the given configuration
@@ -687,7 +687,7 @@ private:
     ///
     /// @param other An object holding the configuration to be merged
     /// into this configuration.
-    void mergeGlobals4(const SrvConfig& other);
+    void mergeGlobals4(SrvConfig& other);
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;

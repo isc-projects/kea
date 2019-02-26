@@ -85,7 +85,7 @@ public:
     /// to the same SrvConfig instance we are merging into.
     /// @param other the subnet configuration to be merged into this
     /// configuration.
-    void merge(CfgSharedNetworks4Ptr networks, const CfgSubnets4& other);
+    void merge(CfgSharedNetworks4Ptr networks, CfgSubnets4& other);
 
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///
