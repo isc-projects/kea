@@ -16,9 +16,8 @@ ci-setup:
   stage: setup
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   script:
-    - echo $CI_REGISTRY_IMAGE
-    - cat /etc/motd
-    - sudo apt install shellcheck
+    - cat /etc/debian_version
+    - sudo apt -y install shellcheck
 
 shellcheck:
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
