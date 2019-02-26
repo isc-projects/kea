@@ -4,9 +4,21 @@ variables:
 # Locale settings do not affect the build, but might affect tests.
   LC_ALL: C
 
+  CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
+
+.debian-stretch-amd64: &debian_stretch_amd64_image
+  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
+  <<: *linux_amd64
+
+stages:
+  - setup
+  - test
+
 ci-setup:
+  stage: setup
   script:
-    - cat /etc/debian_version
+    - echo $CI_REGISTRY_NAME
+    - cat /etc/motd
     - sudo apt install shellcheck
 
 shellcheck:
