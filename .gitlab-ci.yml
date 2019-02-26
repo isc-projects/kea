@@ -6,6 +6,11 @@ variables:
 
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
 
+.linux-amd64: &linux_amd64
+  tags:
+    - linux
+    - amd64
+
 .debian-stretch-amd64: &debian_stretch_amd64_image
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   <<: *linux_amd64
