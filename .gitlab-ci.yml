@@ -6,7 +6,8 @@ variables:
 
 ci-setup:
   script:
-    - apt install shellcheck
+    - cat /etc/debian_version
+    - sudo apt install shellcheck
 
 shellcheck:
   script:
