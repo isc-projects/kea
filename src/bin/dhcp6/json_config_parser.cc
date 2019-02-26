@@ -464,7 +464,7 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
         // We need definitions first
         ConstElementPtr option_defs = mutable_cfg->get("option-def");
         if (option_defs) {
-            OptionDefListParser parser;
+            OptionDefListParser parser(AF_INET6);
             CfgOptionDefPtr cfg_option_def = srv_config->getCfgOptionDef();
             parser.parse(cfg_option_def, option_defs);
         }

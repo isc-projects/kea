@@ -233,7 +233,7 @@ public:
             if (def_config != values_map.end()) {
 
                 CfgOptionDefPtr cfg_def = CfgMgr::instance().getStagingCfg()->getCfgOptionDef();
-                OptionDefListParser def_list_parser;
+                OptionDefListParser def_list_parser(family_);
                 def_list_parser.parse(cfg_def, def_config->second);
             }
 
@@ -717,6 +717,73 @@ TEST_F(ParseConfigTest, defaultSpaceOptionDefTest) {
     cfg.runCfgOptionsTest(family_, config);
 }
 
+/// @brief Check parsing of option definitions using invalid code fails.
+TEST_F(ParseConfigTest, badCodeOptionDefTest) {
+
+    {
+
+        SCOPED_TRACE("negative code");
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"negative\","
+            "      \"code\": -1,"
+            "      \"type\": \"ipv6-address\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, true);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("zero code");
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"zero\","
+            "      \"code\": 0,"
+            "      \"type\": \"ipv6-address\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, true);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("out of range code (v6)");
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"hundred-thousands\","
+            "      \"code\": 100000,"
+            "      \"type\": \"ipv6-address\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, true);
+        ASSERT_NE(0, rcode);
+    }
+
+    {
+        SCOPED_TRACE("out of range code (v4)");
+        family_ = AF_INET;     // Switch to DHCPv4.
+
+        std::string config =
+            "{ \"option-def\": [ {"
+            "      \"name\": \"thousand\","
+            "      \"code\": 1000,"
+            "      \"type\": \"ip-address\","
+            "      \"space\": \"isc\""
+            "  } ]"
+            "}";
+
+        int rcode = parseConfiguration(config, false);
+        ASSERT_NE(0, rcode);
+    }
+}
+
 /// @brief Check parsing of option definitions using invalid space fails.
 TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
 
@@ -724,7 +791,7 @@ TEST_F(ParseConfigTest, badSpaceOptionDefTest) {
     std::string config =
         "{ \"option-def\": [ {"
         "      \"name\": \"foo\","
-        "      \"code\": 100000,"
+        "      \"code\": 100,"
         "      \"type\": \"ipv6-address\","
         "      \"space\": \"-1\""
         "  } ]"

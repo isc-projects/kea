@@ -228,6 +228,11 @@ typedef std::pair<isc::dhcp::OptionDefinitionPtr, std::string> OptionDefinitionT
 /// This parser creates an instance of a single option definition.
 class OptionDefParser : public isc::data::SimpleParser {
 public:
+    /// @brief Constructor.
+    ///
+    /// @param address_family Address family: @c AF_INET or @c AF_INET6.
+    OptionDefParser(const uint16_t address_family);
+
     /// @brief Parses an entry that describes single option definition.
     ///
     /// @param option_def a configuration entry to be parsed.
@@ -236,6 +241,10 @@ public:
     /// @throw DhcpConfigError if parsing was unsuccessful.
     OptionDefinitionTuple
     parse(isc::data::ConstElementPtr option_def);
+
+private:
+    /// @brief Address family: @c AF_INET or @c AF_INET6.
+    uint16_t address_family_;
 };
 
 /// @brief Parser for a list of option definitions.
@@ -246,6 +255,11 @@ public:
 /// is put into the provided storage.
 class OptionDefListParser : public isc::data::SimpleParser {
 public:
+    /// @brief Constructor.
+    ///
+    /// @param address_family Address family: @c AF_INET or @c AF_INET6.
+    OptionDefListParser(const uint16_t address_family);
+
     /// @brief Parses a list of option definitions, create them and store in cfg
     ///
     /// This method iterates over def_list, which is a JSON list of option definitions,
@@ -255,6 +269,10 @@ public:
     /// @param def_list JSON list describing option definitions
     /// @param cfg parsed option definitions will be stored here
     void parse(CfgOptionDefPtr cfg, isc::data::ConstElementPtr def_list);
+
+private:
+    /// @brief Address family: @c AF_INET or @c AF_INET6.
+    uint16_t address_family_;
 };
 
 /// @brief a collection of pools
@@ -421,7 +439,7 @@ public:
     /// @throw isc::dhcp::DhcpConfigError if the address string is not a valid
     /// IP address, is an address of the wrong family, or is already in the
     /// relay address list
-    void addAddress(const std::string& name, const std::string& address_str, 
+    void addAddress(const std::string& name, const std::string& address_str,
                     isc::data::ConstElementPtr relay_elem,
                     const isc::dhcp::Network::RelayInfoPtr& relay_info);
 private:
