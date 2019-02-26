@@ -25,6 +25,10 @@ TEST(OptionalTest, constructor) {
     Optional<int> value2;
     EXPECT_EQ(0, value2.get());
     EXPECT_TRUE(value2.unspecified());
+
+    Optional<bool> value3(true, true);
+    EXPECT_TRUE(value3.get());
+    EXPECT_TRUE(value3.unspecified());
 }
 
 // This test checks if the constructors for a string value

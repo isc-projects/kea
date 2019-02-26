@@ -118,9 +118,9 @@ public:
 
     /// @brief Constructor.
     Network()
-        : iface_name_(), client_class_(""), t1_(), t2_(), valid_(),
-          host_reservation_mode_(HR_ALL), cfg_option_(new CfgOption()),
-          calculate_tee_times_(false), t1_percent_(0.0), t2_percent_(0.0) {
+        : iface_name_(), client_class_(), t1_(), t2_(), valid_(),
+          host_reservation_mode_(HR_ALL, true), cfg_option_(new CfgOption()),
+          calculate_tee_times_(), t1_percent_(), t2_percent_() {
     }
 
     /// @brief Virtual destructor.
@@ -415,7 +415,7 @@ public:
 
     /// @brief Constructor.
     Network4()
-        : Network(), match_client_id_(true), authoritative_(false) {
+        : Network(), match_client_id_(true, true), authoritative_() {
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
@@ -480,7 +480,7 @@ public:
 
     /// @brief Constructor.
     Network6()
-        : Network(), preferred_(0), interface_id_(), rapid_commit_(false) {
+        : Network(), preferred_(), interface_id_(), rapid_commit_() {
     }
 
     /// @brief Returns preferred lifetime (in seconds)

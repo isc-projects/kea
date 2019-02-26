@@ -86,9 +86,10 @@ public:
     /// @tparam A Type of the value to be assigned. Typically this is @c T, but
     /// may also be a type that can be cast to @c T.
     /// @param value value to be assigned.
+    /// @param unspecified initial state. Default is "unspecified".
     template<typename A>
-    Optional(A value)
-        : default_(value), unspecified_(false) {
+    Optional(A value, const bool unspecified = false)
+        : default_(value), unspecified_(unspecified) {
     }
 
     /// @brief Retrieves the encapsulated value.
