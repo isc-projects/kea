@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,44 @@ using namespace isc::asiolink;
 using namespace isc::dhcp;
 
 namespace {
+
+// This test verifies the default values set for the shared
+// networks and verifies that the optional values are unspecified.
+TEST(SharedNetwork4Test, defaults) {
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+    EXPECT_TRUE(network->getIface().unspecified());
+    EXPECT_TRUE(network->getIface().empty());
+
+    EXPECT_TRUE(network->getClientClass().unspecified());
+    EXPECT_TRUE(network->getClientClass().empty());
+
+    EXPECT_TRUE(network->getValid().unspecified());
+    EXPECT_EQ(0, network->getValid().get());
+
+    EXPECT_TRUE(network->getT1().unspecified());
+    EXPECT_EQ(0, network->getT1().get());
+
+    EXPECT_TRUE(network->getT2().unspecified());
+    EXPECT_EQ(0, network->getT2().get());
+
+    EXPECT_TRUE(network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+
+    EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT1Percent().get());
+
+    EXPECT_TRUE(network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getMatchClientId().unspecified());
+    EXPECT_TRUE(network->getMatchClientId().get());
+
+    EXPECT_TRUE(network->getAuthoritative().unspecified());
+    EXPECT_FALSE(network->getAuthoritative().get());
+}
 
 // This test verifies that shared network can be given a name and that
 // this name can be retrieved.
@@ -424,6 +462,44 @@ TEST(SharedNetwork4Test, delAll) {
 
     // Now check that there are no subnets.
     ASSERT_EQ(0, network->getAllSubnets()->size());
+}
+
+// This test verifies the default values set for the shared
+// networks and verifies that the optional values are unspecified.
+TEST(SharedNetwork6Test, defaults) {
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+    EXPECT_TRUE(network->getIface().unspecified());
+    EXPECT_TRUE(network->getIface().empty());
+
+    EXPECT_TRUE(network->getClientClass().unspecified());
+    EXPECT_TRUE(network->getClientClass().empty());
+
+    EXPECT_TRUE(network->getValid().unspecified());
+    EXPECT_EQ(0, network->getValid().get());
+
+    EXPECT_TRUE(network->getT1().unspecified());
+    EXPECT_EQ(0, network->getT1().get());
+
+    EXPECT_TRUE(network->getT2().unspecified());
+    EXPECT_EQ(0, network->getT2().get());
+
+    EXPECT_TRUE(network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+
+    EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT1Percent().get());
+
+    EXPECT_TRUE(network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getPreferred().unspecified());
+    EXPECT_EQ(0, network->getPreferred().get());
+
+    EXPECT_TRUE(network->getRapidCommit().unspecified());
+    EXPECT_FALSE(network->getRapidCommit().get());
 }
 
 // This test verifies that shared network can be given a name and that
