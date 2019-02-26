@@ -20,6 +20,7 @@ ci-setup:
     - sudo apt -y install shellcheck
 
 shellcheck:
+  stage: test
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   script:
     - SCRIPTS="src/bin/keactrl/keactrl.in src/bin/admin/kea-admin.in src/bin/admin/admin-utils.sh"
