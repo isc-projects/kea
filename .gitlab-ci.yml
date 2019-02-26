@@ -9,19 +9,13 @@ variables:
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
 
 stages:
-  - setup
   - test
-
-ci-setup:
-  stage: setup
-  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
-  script:
-    - cat /etc/debian_version
-    - sudo apt-get -y install shellcheck
 
 shellcheck:
   stage: test
   image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
+  before_script:
+    - sudo apt-get -y install shellcheck
   script:
     - SCRIPTS="src/bin/keactrl/keactrl.in src/bin/admin/kea-admin.in src/bin/admin/admin-utils.sh"
     - shellcheck ${SCRIPTS}
