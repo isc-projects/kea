@@ -1,0 +1,8 @@
+ci-setup:
+  script:
+    - apt install shellcheck
+
+shellcheck:
+  script:
+    - SCRIPTS="src/bin/keactrl/keactrl.in src/bin/admin/kea-admin.in src/bin/admin/admin-utils.sh"
+    - shellcheck ${SCRIPTS}
