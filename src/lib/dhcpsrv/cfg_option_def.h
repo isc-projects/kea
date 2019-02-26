@@ -123,10 +123,10 @@ public:
     /// @return a pointer to unparsed configuration
     virtual isc::data::ElementPtr toElement() const;
 
-    /// @brief Merges specified option definitions configuration into this
-    /// configuration.
+    /// @brief Merges specified option definitions from a configuration
+    /// into this configuration.
     ///
-    /// This method merges the option defintiions from the @c other
+    /// This method merges the option definitions from the @c other
     /// configuration into this configuration.  The merged set of
     /// definitions is created as follows:
     ///
@@ -134,7 +134,7 @@ public:
     /// If either the definition's name or code are defined in @c other
     /// then skip over the definition otherwise add it to @other.
     ///
-    /// Replace this configuration's definitions with the defnitions
+    /// Replace this configuration's definitions with the definitions
     /// in @c other using @c copyTo().
     ///
     /// @warning The merge operation affects @c other.
