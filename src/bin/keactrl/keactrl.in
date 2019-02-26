@@ -548,4 +548,3 @@ ${args}" 1
         log_error "Invalid command:  ${command}."
         exit 1 ;;
 esac
-fi

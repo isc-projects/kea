@@ -556,7 +556,7 @@ shift
 
 # Second, check what's the backend
 backend=${1}
-if [ -z ${backend} ]; then
+if [ -z "${backend}" ]; then
     log_error "missing backend"
     usage
     exit 1
@@ -577,7 +577,7 @@ do
         -h|--host)
             shift
             db_host=${1}
-            if [ -z ${db_host} ]; then
+            if [ -z "${db_host}" ]; then
                 log_error "-h or --host requires a parameter"
                 usage
                 exit 1
@@ -587,7 +587,7 @@ do
         -u|--user)
             shift
             db_user=${1}
-            if [ -z ${db_user} ]; then
+            if [ -z "${db_user}" ]; then
                 log_error "-u or --user requires a parameter"
                 usage
                 exit 1
@@ -597,7 +597,7 @@ do
         -p|--password)
             shift
             db_password=${1}
-            if [ -z ${db_password} ]; then
+            if [ -z "${db_password}" ]; then
                 log_error "-p or --password requires a parameter"
                 usage
                 exit 1
@@ -607,7 +607,7 @@ do
         -n|--name)
             shift
             db_name=${1}
-            if [ -z ${db_name} ]; then
+            if [ -z "${db_name}" ]; then
                 log_error "-n or --name requires a parameter"
                 usage
                 exit 1
@@ -616,7 +616,7 @@ do
         -d|--directory)
             shift
             scripts_dir=${1}
-            if [ -z ${scripts_dir} ]; then
+            if [ -z "${scripts_dir}" ]; then
                 log_error "-d or --directory requires a parameter"
                 usage
                 exit 1
@@ -644,7 +644,7 @@ do
         -o|--output)
             shift
             dump_file=${1}
-            if [ -z ${dump_file} ]; then
+            if [ -z "${dump_file}" ]; then
                 log_error "-o or --output requires a parameter"
                 usage
                 exit 1
