@@ -91,11 +91,19 @@ CfgOptionDef::add(const OptionDefinitionPtr& def,
         isc_throw(DuplicateOptionDefinition, "option definition with code '"
                   << def->getCode() << "' already exists in option"
                   " space '" << option_space << "'");
+    } else if (get(option_space, def->getName())) {
+        isc_throw(DuplicateOptionDefinition, "option definition with name '"
+                  << def->getName() << "' already exists in option"
+                  " space '" << option_space << "'");
 
     // Must not override standard option definition.
     } else if (LibDHCP::getOptionDef(option_space, def->getCode())) {
         isc_throw(BadValue, "unable to override definition of option '"
                   << def->getCode() << "' in standard option space '"
+                  << option_space << "'");
+    } else if (LibDHCP::getOptionDef(option_space, def->getName())) {
+        isc_throw(BadValue, "unable to override definition of option '"
+                  << def->getName() << "' in standard option space '"
                   << option_space << "'");
     }
     // Add the definition.

@@ -245,6 +245,14 @@ TEST(CfgOptionDefTest, overrideStdOptionDef) {
     def.reset(new OptionDefinition("routers", DHO_ROUTERS, "uint32"));
     EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
 
+    // Check code duplicate (same code, different name).
+    def.reset(new OptionDefinition("routers-bis", DHO_ROUTERS, "uint32"));
+    EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
+
+    // Check name duplicate (different code, same name).
+    def.reset(new OptionDefinition("routers", 170, "uint32"));
+    EXPECT_THROW(cfg.add(def, DHCP4_OPTION_SPACE), isc::BadValue);
+
     /// There is no definition for unassigned option 170.
     def.reset(new OptionDefinition("unassigned-option-170", 170, "string"));
     EXPECT_NO_THROW(cfg.add(def, DHCP4_OPTION_SPACE));
