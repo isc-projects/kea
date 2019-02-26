@@ -1,3 +1,5 @@
+
+
 variables:
   # Not normally needed, but may be if some script uses `apt-get install`.
   DEBIAN_FRONTEND: noninteractive
@@ -6,27 +8,20 @@ variables:
 
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
 
-.linux-amd64: &linux_amd64
-  tags:
-    - linux
-    - amd64
-
-.debian-stretch-amd64: &debian_stretch_amd64_image
-  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
-  <<: *linux_amd64
-
 stages:
   - setup
   - test
 
 ci-setup:
   stage: setup
+  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   script:
-    - echo $CI_REGISTRY_NAME
+    - echo $CI_REGISTRY_IMAGE
     - cat /etc/motd
     - sudo apt install shellcheck
 
 shellcheck:
+  image: "$CI_REGISTRY_IMAGE:debian-stretch-amd64"
   script:
     - SCRIPTS="src/bin/keactrl/keactrl.in src/bin/admin/kea-admin.in src/bin/admin/admin-utils.sh"
     - shellcheck ${SCRIPTS}
