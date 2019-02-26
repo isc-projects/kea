@@ -77,7 +77,7 @@ public:
     ///
     /// @param other the other configuration to be merged into this
     /// configuration.
-    virtual void merge(const ConfigBase& other);
+    virtual void merge(ConfigBase& other);
 
     /// @brief Converts to Element representation
     ///

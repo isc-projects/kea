@@ -20,7 +20,7 @@ CfgSharedNetworks4::hasNetworkWithServerId(const IOAddress& server_id) const {
 }
 
 void
-CfgSharedNetworks4::merge(const CfgSharedNetworks4& other) {
+CfgSharedNetworks4::merge(CfgSharedNetworks4& other) {
     auto& index = networks_.get<SharedNetworkNameIndexTag>();
 
     // Iterate over the subnets to be merged. They will replace the existing

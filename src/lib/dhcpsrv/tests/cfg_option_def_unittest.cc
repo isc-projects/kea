@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -250,7 +250,7 @@ TEST(CfgOptionDefTest, unparse) {
     CfgOptionDef cfg;
 
     // Add some options.
-    cfg.add(OptionDefinitionPtr(new 
+    cfg.add(OptionDefinitionPtr(new
         OptionDefinition("option-foo", 5, "uint16")), "isc");
     cfg.add(OptionDefinitionPtr(new
         OptionDefinition("option-bar", 5, "uint16", true)), "dns");
@@ -262,7 +262,7 @@ TEST(CfgOptionDefTest, unparse) {
     rec->addRecordField("uint16");
     rec->addRecordField("uint16");
     cfg.add(rec, "dns");
-    
+
     // Unparse
     std::string expected = "[\n"
         "{\n"
@@ -302,5 +302,51 @@ TEST(CfgOptionDefTest, unparse) {
         "}]\n";
     isc::test::runToElementTest<CfgOptionDef>(expected, cfg);
 }
+
+// This test verifies that configured option definitions can be merged
+// correctly.
+TEST(CfgOptionDefTest, merge) {
+    CfgOptionDef to;         // Configuration we are merging to.
+
+    // Add some options to the "to" config.
+    to.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
+    to.add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint16"))), "isc");
+    to.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "uint16"))), "fluff");
+    to.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint16"))), "fluff");
+
+    // Clone the "to" config and use that for merging.
+    CfgOptionDef to_clone;
+    to.copyTo(to_clone);
+
+    // Ensure they are equal before we do anything.
+    ASSERT_TRUE(to.equals(to_clone));
+
+    // Merge from an empty config.
+    CfgOptionDef empty_from;
+    ASSERT_NO_THROW(to_clone.merge(empty_from));
+
+    // Should have the same content as before.
+    ASSERT_TRUE(to.equals(to_clone));
+
+    // Construct a non-empty "from" config.
+    // Options "two" and "three" will be updated definitions and "five" will be new.
+    CfgOptionDef from;
+    from.add((OptionDefinitionPtr(new OptionDefinition("two", 22, "uint16"))), "isc");
+    from.add((OptionDefinitionPtr(new OptionDefinition("three", 3, "string"))), "fluff");
+    from.add((OptionDefinitionPtr(new OptionDefinition("five", 5, "uint16"))), "fluff");
+
+    // Now let's clone "from" config and use that manually construct the expected config.
+    CfgOptionDef expected;
+    from.copyTo(expected);
+    expected.add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
+    expected.add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint16"))), "fluff");
+
+    // Do the merge.
+    ASSERT_NO_THROW(to_clone.merge(from));
+
+    // Verify we have the expected content.
+    ASSERT_TRUE(expected.equals(to_clone));
+}
+
 
 }

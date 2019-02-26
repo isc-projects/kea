@@ -150,7 +150,7 @@ public:
     ///
     /// @param other the shared network configuration to be merged into this
     /// configuration.
-    void merge(const CfgSharedNetworks4& other);
+    void merge(CfgSharedNetworks4& other);
 };
 
 /// @brief Pointer to the configuration of IPv4 shared networks.
