@@ -111,12 +111,16 @@ OptionDataParser::findOptionDefinition(const std::string& option_space,
 
 // ******************************** OptionDefParser ****************************
 
+OptionDefParser::OptionDefParser(const uint16_t address_family)
+    : address_family_(address_family) {
+}
+
 std::pair<isc::dhcp::OptionDefinitionPtr, std::string>
 OptionDefParser::parse(ConstElementPtr option_def) {
 
     // Get mandatory parameters.
     std::string name = getString(option_def, "name");
-    uint32_t code = getInteger(option_def, "code");
+    int64_t code64 = getInteger(option_def, "code");
     std::string type = getString(option_def, "type");
 
     // Get optional parameters. Whoever called this parser, should have
@@ -127,6 +131,29 @@ OptionDefParser::parse(ConstElementPtr option_def) {
     std::string encapsulates = getString(option_def, "encapsulate");
     ConstElementPtr user_context = option_def->get("user-context");
 
+    // Check code value.
+    if (code64 < 0) {
+        isc_throw(DhcpConfigError, "option code must not be negative "
+                  "(" << getPosition("code", option_def) << ")");
+    } else if (code64 == 0) {
+        isc_throw(DhcpConfigError, "option code must not be zero "
+                  "(" << getPosition("code", option_def) << ")");
+    } else if (address_family_ == AF_INET &&
+               code64 > std::numeric_limits<uint8_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code64
+                  << "', it must not be greater than '"
+                  << static_cast<int>(std::numeric_limits<uint8_t>::max())
+                  << "' (" << getPosition("code", option_def) << ")");
+    } else if (address_family_ == AF_INET6 &&
+               code64 > std::numeric_limits<uint16_t>::max()) {
+        isc_throw(DhcpConfigError, "invalid option code '" << code64
+                  << "', it must not be greater than '"
+                  << std::numeric_limits<uint16_t>::max()
+                  << "' (" << getPosition("code", option_def) << ")");
+    }
+    uint32_t code = static_cast<uint32_t>(code64);
+
+    // Validate space name.
     if (!OptionSpace::validateName(space)) {
         isc_throw(DhcpConfigError, "invalid option space name '"
                   << space << "' ("
@@ -198,6 +225,11 @@ OptionDefParser::parse(ConstElementPtr option_def) {
 }
 
 // ******************************** OptionDefListParser ************************
+
+OptionDefListParser::OptionDefListParser(const uint16_t address_family)
+    : address_family_(address_family) {
+}
+
 void
 OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_list) {
     if (!option_def_list) {
@@ -207,7 +239,7 @@ OptionDefListParser::parse(CfgOptionDefPtr storage, ConstElementPtr option_def_l
                   << option_def_list->getPosition() << ")");
     }
 
-    OptionDefParser parser;
+    OptionDefParser parser(address_family_);
     BOOST_FOREACH(ConstElementPtr option_def, option_def_list->listValue()) {
         OptionDefinitionTuple def;
 
