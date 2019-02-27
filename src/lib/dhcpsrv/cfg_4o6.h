@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,7 @@
 
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
+#include <util/optional.h>
 #include <string>
 
 namespace isc {
@@ -24,7 +25,7 @@ struct Cfg4o6 : public isc::data::CfgToElement {
     ///
     /// Initializes fields to their default value.
     Cfg4o6()
-    :enabled_(false), subnet4o6_(std::make_pair(asiolink::IOAddress("::"), 128u)) {
+    :enabled_(false), subnet4o6_(std::make_pair(asiolink::IOAddress("::"), 128u), true) {
     }
 
     /// @brief Returns whether the DHCP4o6 is enabled or not.
@@ -41,7 +42,7 @@ struct Cfg4o6 : public isc::data::CfgToElement {
 
     /// @brief Returns the DHCP4o6 interface.
     /// @return value of the 4o6-interface parameter.
-    std::string getIface4o6() const {
+    util::Optional<std::string> getIface4o6() const {
         return (iface4o6_);
     }
 
@@ -54,7 +55,7 @@ struct Cfg4o6 : public isc::data::CfgToElement {
 
     /// @brief Returns prefix/len for the IPv6 subnet.
     /// @return prefix/length pair
-    std::pair<asiolink::IOAddress, uint8_t> getSubnet4o6() const {
+    util::Optional<std::pair<asiolink::IOAddress, uint8_t> > getSubnet4o6() const {
         return (subnet4o6_);
     }
 
@@ -90,10 +91,10 @@ private:
     bool enabled_;
 
     /// Specifies the network interface used as v4 subnet selector.
-    std::string iface4o6_;
+    util::Optional<std::string> iface4o6_;
 
     /// Specifies the IPv6 subnet used for v4 subnet selection.
-    std::pair<asiolink::IOAddress, uint8_t> subnet4o6_;
+    util::Optional<std::pair<asiolink::IOAddress, uint8_t> > subnet4o6_;
 
     /// Specifies the v6 interface-id used for v4 subnet selection.
     OptionPtr interface_id_;
