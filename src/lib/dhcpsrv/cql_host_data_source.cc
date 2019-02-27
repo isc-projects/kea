@@ -29,7 +29,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <util/buffer.h>
 #include <util/hash.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <asiolink/io_address.h>
 
 #include <stdint.h>       // for uint64_t
@@ -174,7 +174,7 @@ public:
     /// @param option_space option space
     /// @param option_descriptor structure used to hold option information
     void prepareExchange(const HostPtr& host,
-                         const OptionalValue<SubnetID>& subnet_id,
+                         const Optional<SubnetID>& subnet_id,
                          const IPv6Resrv* const reservation,
                          const std::string& option_space,
                          const OptionDescriptor& option_descriptor);
@@ -193,7 +193,7 @@ public:
     /// @param statement_tag tag of the statement being executed
     /// @param data array being filled with data from to the Host object
     void createBindForMutation(const HostPtr& host,
-                               const OptionalValue<SubnetID>& subnet_id,
+                               const Optional<SubnetID>& subnet_id,
                                const IPv6Resrv* const reservation,
                                const std::string& option_space,
                                const OptionDescriptor& option_descriptor,
@@ -214,7 +214,7 @@ public:
     /// @param statement_tag tag of the statement being executed
     /// @param data array being filled with data from to the Host object
     void createBindForDelete(const HostPtr& host,
-                             const OptionalValue<SubnetID>& subnet_id,
+                             const Optional<SubnetID>& subnet_id,
                              const IPv6Resrv* const reservation,
                              const std::string& option_space,
                              const OptionDescriptor& option_descriptor,
@@ -940,7 +940,7 @@ CqlHostExchange::createBindForSelect(AnyArray& data, StatementTag /* not used */
 
 void
 CqlHostExchange::prepareExchange(const HostPtr& host,
-                                 const OptionalValue<SubnetID>& subnet_id,
+                                 const Optional<SubnetID>& subnet_id,
                                  const IPv6Resrv* const reservation,
                                  const std::string& option_space,
                                  const OptionDescriptor& option_descriptor) {
@@ -1100,7 +1100,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
             option_client_class_.clear();
 
             // option_subnet_id: int
-            if (subnet_id.isSpecified()) {
+            if (!subnet_id.unspecified()) {
                 option_subnet_id_ = subnet_id;
             } else {
                 option_subnet_id_ = 0;
@@ -1131,7 +1131,7 @@ CqlHostExchange::prepareExchange(const HostPtr& host,
 
 void
 CqlHostExchange::createBindForMutation(const HostPtr& host,
-                                       const OptionalValue<SubnetID>& subnet_id,
+                                       const Optional<SubnetID>& subnet_id,
                                        const IPv6Resrv* const reservation,
                                        const std::string& option_space,
                                        const OptionDescriptor& option_descriptor,
@@ -1187,7 +1187,7 @@ CqlHostExchange::createBindForMutation(const HostPtr& host,
 
 void
 CqlHostExchange::createBindForDelete(const HostPtr& host,
-                                     const OptionalValue<SubnetID>& subnet_id,
+                                     const Optional<SubnetID>& subnet_id,
                                      const IPv6Resrv* const reservation,
                                      const std::string& option_space,
                                      const OptionDescriptor& option_descriptor,
@@ -1659,7 +1659,7 @@ protected:
     ///     information for the current denormalized table entry's option
     virtual bool insertOrDeleteHost(bool insert,
         const HostPtr& host,
-        const OptionalValue<SubnetID>& subnet_id = OptionalValue<SubnetID>(),
+        const Optional<SubnetID>& subnet_id = Optional<SubnetID>(),
         const IPv6Resrv* const reservation = NULL,
         const std::string& option_space = NULL_OPTION_SPACE,
         const OptionDescriptor& option_descriptor = OptionDescriptor(false));
@@ -2073,14 +2073,14 @@ CqlHostDataSourceImpl::insertOrDeleteHostWithOptions(bool insert,
                 }
                 option_found = true;
                 /// @todo: Assign actual value to subnet id.
-                result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation,
+                result = insertOrDeleteHost(insert, host, Optional<SubnetID>(), reservation,
                                             space, option);
             }
         }
     }
     if (result && !option_found) {
         // @todo: Assign actual value to subnet id.
-        result = insertOrDeleteHost(insert, host, OptionalValue<SubnetID>(), reservation);
+        result = insertOrDeleteHost(insert, host, Optional<SubnetID>(), reservation);
     }
 
     return (result);
@@ -2177,7 +2177,7 @@ CqlHostDataSourceImpl::getHostCollection(StatementTag statement_tag,
 bool
 CqlHostDataSourceImpl::insertOrDeleteHost(bool insert,
                                           const HostPtr& host,
-                                          const OptionalValue<SubnetID>& subnet_id,
+                                          const Optional<SubnetID>& subnet_id,
                                           const IPv6Resrv* const reservation,
                                           const std::string& option_space,
                                           const OptionDescriptor& option_descriptor) {
