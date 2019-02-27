@@ -15,7 +15,7 @@
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
 #include <util/buffer.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -1360,7 +1360,7 @@ public:
     void addOption(const PgSqlHostDataSourceImpl::StatementIndex& stindex,
                    const OptionDescriptor& opt_desc,
                    const std::string& opt_space,
-                   const OptionalValue<SubnetID>& subnet_id,
+                   const Optional<SubnetID>& subnet_id,
                    const HostID& host_id);
 
     /// @brief Inserts multiple options into the database.
@@ -1942,7 +1942,7 @@ void
 PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const OptionDescriptor& opt_desc,
                                    const std::string& opt_space,
-                                   const OptionalValue<SubnetID>&,
+                                   const Optional<SubnetID>&,
                                    const HostID& id) {
     PsqlBindArrayPtr bind_array;
     bind_array = host_option_exchange_->createBindForSend(opt_desc, opt_space,
@@ -1969,7 +1969,7 @@ PgSqlHostDataSourceImpl::addOptions(const StatementIndex& stindex,
         if (options && !options->empty()) {
             for (OptionContainer::const_iterator opt = options->begin();
                  opt != options->end(); ++opt) {
-                addOption(stindex, *opt, *space, OptionalValue<SubnetID>(),
+                addOption(stindex, *opt, *space, Optional<SubnetID>(),
                           host_id);
             }
         }
