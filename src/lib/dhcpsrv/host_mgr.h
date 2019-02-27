@@ -427,6 +427,19 @@ public:
         negative_caching_ = negative_caching;
     }
 
+    /// @brief Returns the prevent collection flag.
+    ///
+    /// @return the prevent collection flag.
+    bool getPreventCollection() const {
+        return (prevent_collection_);
+    }
+
+    /// @brief Sets the prevent collection flag.
+    ///
+    void setPreventCollection(bool prevent_collection) {
+        prevent_collection_ = prevent_collection;
+    }
+
 protected:
     /// @brief The negative caching flag.
     ///
@@ -434,6 +447,12 @@ protected:
     /// negative answers are inserted in the cache.
     /// This works for get[46] for a subnet and an identifier.
     bool negative_caching_;
+
+    /// @brief The prevent collection flag.
+    ///
+    /// When true prevent the use of lookup methods returning a
+    /// collection when methods returning a single object are usable instead.
+    bool prevent_collection_;
 
     /// @brief Cache an answer.
     ///
@@ -456,7 +475,7 @@ protected:
 private:
 
     /// @brief Private default constructor.
-    HostMgr() : negative_caching_(false) { }
+    HostMgr() : negative_caching_(false), prevent_collection_(false) { }
 
     /// @brief List of alternate host data sources.
     HostDataSourceList alternate_sources_;

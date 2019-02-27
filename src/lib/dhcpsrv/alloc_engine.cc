@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -544,7 +544,10 @@ void AllocEngine::findReservation(ClientContext6& ctx) {
     // client rather than a query for each subnet within this shared network.
     // The only case when it is going to be less efficient is when there are
     // more host identifier types in use than subnets within a shared network.
+    // As it breaks RADIUS and host caching this can be disabled by the
+    // host manager.
     const bool use_single_query = network &&
+        !HostMgr::instance().getPreventCollection() &&
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {
@@ -3070,7 +3073,10 @@ AllocEngine::findReservation(ClientContext4& ctx) {
     // client rather than a query for each subnet within this shared network.
     // The only case when it is going to be less efficient is when there are
     // more host identifier types in use than subnets within a shared network.
+    // As it breaks RADIUS and host caching this can be disabled by the
+    // host manager.
     const bool use_single_query = network &&
+        !HostMgr::instance().getPreventCollection() &&
         (network->getAllSubnets()->size() > ctx.host_identifiers_.size());
 
     if (use_single_query) {

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,6 +7,7 @@
 #include <config.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
+#include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/tests/alloc_engine_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <stats/stats_mgr.h>
@@ -2601,10 +2602,68 @@ TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservations) {
     ASSERT_EQ("2001:db8:2::15", lease->addr_.toText());
 }
 
+// This test verifies that the client is offerred a reserved address
+// even if this address belongs to another subnet within the same
+// shared network. Host lookups returning a collection are disabled.
+TEST_F(SharedNetworkAlloc6Test, solicitSharedNetworkReservationsNoColl) {
+    // Disable host lookups returning a collection.
+    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
+    HostMgr::instance().setPreventCollection(true);
+
+    // Create reservation for the client in the second subnet.
+    subnet_ = subnet2_;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
+
+    // Start allocation from subnet1_. The engine should determine that the
+    // client has reservations in subnet2_ and should rather assign reserved
+    // addresses.
+    Pkt6Ptr query(new Pkt6(DHCPV6_SOLICIT, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1_, duid_, false, false, "", true,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Find reservations for this subnet/shared network.
+    AllocEngine::findReservation(ctx);
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_EQ("2001:db8:2::15", lease->addr_.toText());
+}
+
 // This test verifies that the client is allocated a reserved address
 // even if this address belongs to another subnet within the same
 // shared network.
 TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkReservations) {
+    // Create reservation for the client in the second subnet.
+    subnet_ = subnet2_;
+    createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
+
+    // Start allocation from subnet1_. The engine should determine that the
+    // client has reservations in subnet2_ and should rather assign reserved
+    // addresses.
+    Pkt6Ptr query(new Pkt6(DHCPV6_REQUEST, 1234));
+    AllocEngine::ClientContext6 ctx(subnet1_, duid_, false, false, "", false,
+                                    query);
+    ctx.currentIA().iaid_ = iaid_;
+
+    // Find reservations for this subnet/shared network.
+    AllocEngine::findReservation(ctx);
+
+    Lease6Ptr lease;
+    ASSERT_NO_THROW(lease = expectOneLease(engine_.allocateLeases6(ctx)));
+    ASSERT_TRUE(lease);
+    ASSERT_EQ("2001:db8:2::15", lease->addr_.toText());
+}
+
+// This test verifies that the client is allocated a reserved address
+// even if this address belongs to another subnet within the same
+// shared network. Host lookups returning a collection are disabled.
+TEST_F(SharedNetworkAlloc6Test, requestSharedNetworkReservationsNoColl) {
+    // Disable host lookups returning a collection.
+    ASSERT_FALSE(HostMgr::instance().getPreventCollection());
+    HostMgr::instance().setPreventCollection(true);
+
     // Create reservation for the client in the second subnet.
     subnet_ = subnet2_;
     createHost6(true, IPv6Resrv::TYPE_NA, IOAddress("2001:db8:2::15"), 128);
