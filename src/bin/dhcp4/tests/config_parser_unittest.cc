@@ -5221,8 +5221,8 @@ TEST_F(Dhcp4ParserTest, 4o6subnet) {
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
     EXPECT_TRUE(dhcp4o6.enabled());
-    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.getSubnet4o6().first);
-    EXPECT_EQ(45, dhcp4o6.getSubnet4o6().second);
+    EXPECT_EQ(IOAddress("2001:db8::123"), dhcp4o6.getSubnet4o6().get().first);
+    EXPECT_EQ(45, dhcp4o6.getSubnet4o6().get().second);
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 subnet
@@ -5318,7 +5318,7 @@ TEST_F(Dhcp4ParserTest, 4o6iface) {
 
     Cfg4o6& dhcp4o6 = subnet->get4o6();
     EXPECT_TRUE(dhcp4o6.enabled());
-    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6().get());
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with both 4o6 network
@@ -5356,9 +5356,9 @@ TEST_F(Dhcp4ParserTest, 4o6subnetIface) {
     // ... and that subnet has 4o6 network interface specified.
     Cfg4o6& dhcp4o6 = subnet->get4o6();
     EXPECT_TRUE(dhcp4o6.enabled());
-    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.getSubnet4o6().first);
-    EXPECT_EQ(21, dhcp4o6.getSubnet4o6().second);
-    EXPECT_EQ("ethX", dhcp4o6.getIface4o6());
+    EXPECT_EQ(IOAddress("2001:db8::543"), dhcp4o6.getSubnet4o6().get().first);
+    EXPECT_EQ(21, dhcp4o6.getSubnet4o6().get().second);
+    EXPECT_EQ("ethX", dhcp4o6.getIface4o6().get());
 }
 
 // Checks if the DHCPv4 is able to parse the configuration with 4o6 network

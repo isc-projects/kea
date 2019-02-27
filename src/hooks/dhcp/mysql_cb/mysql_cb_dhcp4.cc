@@ -676,11 +676,11 @@ public:
 
         // Convert DHCPv4o6 subnet to text.
         std::string dhcp4o6_subnet;
-        if (!subnet->get4o6().getSubnet4o6().first.isV6Zero() ||
-            (subnet->get4o6().getSubnet4o6().second != 128u)) {
+        if (!subnet->get4o6().getSubnet4o6().get().first.isV6Zero() ||
+            (subnet->get4o6().getSubnet4o6().get().second != 128u)) {
             std::ostringstream s;
-            s << subnet->get4o6().getSubnet4o6().first << "/"
-              << static_cast<int>(subnet->get4o6().getSubnet4o6().second);
+            s << subnet->get4o6().getSubnet4o6().get().first << "/"
+              << static_cast<int>(subnet->get4o6().getSubnet4o6().get().second);
             dhcp4o6_subnet = s.str();
         }
 
