@@ -208,28 +208,26 @@ CfgOptionDef::toElement() const {
 
 void
 CfgOptionDef::merge(CfgOptionDef& other) {
-
+    // The definitions in "other" are presumed to be valid and
+    // not in conflict with standard definitions.
     if (other.getContainer().getOptionSpaceNames().empty()) {
         // Nothing to merge, don't waste cycles.
         return;
     }
 
-
     // Iterate over this config's definitions in each space.
     // If either a definition's name or code already exist in
     // that space in "other", skip it.  Otherwise, add it to "other".
-    auto spaces = option_definitions_.getOptionSpaceNames();
-    for (auto space = spaces.begin(); space != spaces.end(); ++space) {
-        OptionDefContainerPtr my_defs = getAll(*space);
-        for (auto my_def = my_defs->begin(); my_def != my_defs->end(); ++my_def) {
-            if ((other.get(*space, (*my_def)->getName())) ||
-                (other.get(*space, (*my_def)->getCode()))) {
+    for (auto space : option_definitions_.getOptionSpaceNames()) {
+        for (auto my_def : *(getAll(space))) {
+            if ((other.get(space, my_def->getName())) ||
+                (other.get(space, my_def->getCode()))) {
                 // Already in "other" so skip it.
                 continue;
             }
 
             // Not in "other" so add it.
-            other.add(*my_def, *space);
+            other.add(my_def, space);
         }
     }
 
