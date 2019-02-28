@@ -158,7 +158,9 @@ public:
         subnet->setValid(null_timer);
         test_subnets_.push_back(subnet);
 
-        subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 24, 30, 40, 60, 4096));
+        // Add a subnet with all defaults.
+        subnet.reset(new Subnet4(IOAddress("192.0.4.0"), 24, Triplet<uint32_t>(),
+                                 Triplet<uint32_t>(), Triplet<uint32_t>(), 4096));
         test_subnets_.push_back(subnet);
     }
 
@@ -622,6 +624,75 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     }
 }
 
+// Test that the information about unspecified optional parameters gets
+// propagated to the database.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithDefaults) {
+    // Insert new subnet.
+    Subnet4Ptr subnet = test_subnets_[2];
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
+
+    // Fetch this subnet by subnet identifier.
+    Subnet4Ptr returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                                    subnet->getID());
+    ASSERT_TRUE(returned_subnet);
+
+    EXPECT_TRUE(returned_subnet->getIface().unspecified());
+    EXPECT_TRUE(returned_subnet->getIface().empty());
+
+    EXPECT_TRUE(returned_subnet->getClientClass().unspecified());
+    EXPECT_TRUE(returned_subnet->getClientClass().empty());
+
+    EXPECT_TRUE(returned_subnet->getValid().unspecified());
+    EXPECT_EQ(0, returned_subnet->getValid().get());
+
+    EXPECT_TRUE(returned_subnet->getT1().unspecified());
+    EXPECT_EQ(0, returned_subnet->getT1().get());
+
+    EXPECT_TRUE(returned_subnet->getT2().unspecified());
+    EXPECT_EQ(0, returned_subnet->getT2().get());
+
+    EXPECT_TRUE(returned_subnet->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, returned_subnet->getHostReservationMode().get());
+
+    EXPECT_TRUE(returned_subnet->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(returned_subnet->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(returned_subnet->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, returned_subnet->getT1Percent().get());
+
+    EXPECT_TRUE(returned_subnet->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, returned_subnet->getT2Percent().get());
+
+    EXPECT_TRUE(returned_subnet->getMatchClientId().unspecified());
+    EXPECT_TRUE(returned_subnet->getMatchClientId().get());
+
+    EXPECT_TRUE(returned_subnet->getAuthoritative().unspecified());
+    EXPECT_FALSE(returned_subnet->getAuthoritative().get());
+
+    EXPECT_TRUE(returned_subnet->getSiaddr().unspecified());
+    EXPECT_TRUE(returned_subnet->getSiaddr().get().isV4Zero());
+
+    EXPECT_TRUE(returned_subnet->getSname().unspecified());
+    EXPECT_TRUE(returned_subnet->getSname().empty());
+
+    EXPECT_TRUE(returned_subnet->getFilename().unspecified());
+    EXPECT_TRUE(returned_subnet->getFilename().empty());
+
+    EXPECT_FALSE(returned_subnet->get4o6().enabled());
+
+    EXPECT_TRUE(returned_subnet->get4o6().getIface4o6().unspecified());
+    EXPECT_TRUE(returned_subnet->get4o6().getIface4o6().empty());
+
+    EXPECT_TRUE(returned_subnet->get4o6().getSubnet4o6().unspecified());
+    EXPECT_TRUE(returned_subnet->get4o6().getSubnet4o6().get().first.isV6Zero());
+    EXPECT_EQ(128, returned_subnet->get4o6().getSubnet4o6().get().second);
+
+    // The easiest way to verify whether the returned subnet matches the inserted
+    // subnet is to convert both to text.
+    EXPECT_EQ(subnet->toElement()->str(), returned_subnet->toElement()->str());
+}
+
+
 // Test that subnet can be associated with a shared network.
 TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4SharedNetwork) {
     Subnet4Ptr subnet = test_subnets_[0];
@@ -916,6 +987,53 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
                                                  shared_network2->getName());
     EXPECT_EQ(shared_network2->toElement()->str(),
               returned_network->toElement()->str());
+}
+
+// Test that the information about unspecified optional parameters gets
+// propagated to the database.
+TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithDefaults) {
+    // Insert new shared network.
+    SharedNetwork4Ptr shared_network = test_networks_[2];
+    cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network);
+
+    // Fetch this shared network by name.
+    SharedNetwork4Ptr
+        returned_network = cbptr_->getSharedNetwork4(ServerSelector::ALL(),
+                                                     test_networks_[2]->getName());
+    ASSERT_TRUE(returned_network);
+
+    EXPECT_TRUE(returned_network->getIface().unspecified());
+    EXPECT_TRUE(returned_network->getIface().empty());
+
+    EXPECT_TRUE(returned_network->getClientClass().unspecified());
+    EXPECT_TRUE(returned_network->getClientClass().empty());
+
+    EXPECT_TRUE(returned_network->getValid().unspecified());
+    EXPECT_EQ(0, returned_network->getValid().get());
+
+    EXPECT_TRUE(returned_network->getT1().unspecified());
+    EXPECT_EQ(0, returned_network->getT1().get());
+
+    EXPECT_TRUE(returned_network->getT2().unspecified());
+    EXPECT_EQ(0, returned_network->getT2().get());
+
+    EXPECT_TRUE(returned_network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, returned_network->getHostReservationMode().get());
+
+    EXPECT_TRUE(returned_network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(returned_network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(returned_network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, returned_network->getT1Percent().get());
+
+    EXPECT_TRUE(returned_network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, returned_network->getT2Percent().get());
+
+    EXPECT_TRUE(returned_network->getMatchClientId().unspecified());
+    EXPECT_TRUE(returned_network->getMatchClientId().get());
+
+    EXPECT_TRUE(returned_network->getAuthoritative().unspecified());
+    EXPECT_FALSE(returned_network->getAuthoritative().get());
 }
 
 // Test that all shared networks can be fetched.

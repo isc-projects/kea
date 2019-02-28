@@ -6,11 +6,15 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <mysql/mysql_binding.h>
 
 using namespace boost::posix_time;
+using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::util;
 
 namespace isc {
 namespace db {
@@ -94,8 +98,8 @@ MySqlBinding::createString(const std::string& value) {
 }
 
 MySqlBindingPtr
-MySqlBinding::condCreateString(const std::string& value) {
-    return (value.empty() ? MySqlBinding::createNull() : createString(value));
+MySqlBinding::condCreateString(const Optional<std::string>& value) {
+    return (value.unspecified() ? MySqlBinding::createNull() : createString(value));
 }
 
 MySqlBindingPtr
@@ -103,6 +107,31 @@ MySqlBinding::createBlob(const unsigned long length) {
     MySqlBindingPtr binding(new MySqlBinding(MySqlBindingTraits<std::vector<uint8_t> >::column_type,
                                    length));
     return (binding);
+}
+
+MySqlBindingPtr
+MySqlBinding::condCreateBool(const util::Optional<bool>& value) {
+    if (value.unspecified()) {
+        return (MySqlBinding::createNull());
+    }
+
+    return (createInteger<uint8_t>(static_cast<uint8_t>(value.get())));
+}
+
+MySqlBindingPtr
+MySqlBinding::condCreateIPv4Address(const Optional<IOAddress>& value) {
+    // If the value is unspecified it doesn't matter what the value is.
+    if (value.unspecified()) {
+        return (MySqlBinding::createNull());
+    }
+
+    // Make sure it is an IPv4 address.
+    if (!value.get().isV4()) {
+        isc_throw(BadValue, "unable to create a MySQL binding: specified value '"
+                  << value.get().toText() << "' is not an IPv4 address");
+    }
+
+    return (createInteger<uint32_t>(value.get().toUint32()));
 }
 
 MySqlBindingPtr

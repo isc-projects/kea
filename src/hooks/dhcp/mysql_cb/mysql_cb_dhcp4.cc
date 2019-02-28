@@ -343,20 +343,33 @@ public:
                                                        dhcp4o6_subnet_prefix_pair.second);
                 }
                 // boot_file_name
-                last_subnet->setFilename(out_bindings[5]->getStringOrDefault(""));
+                if (!out_bindings[5]->amNull()) {
+                    last_subnet->setFilename(out_bindings[5]->getString());
+                }
+
                 // client_class
                 if (!out_bindings[6]->amNull()) {
                     last_subnet->allowClientClass(out_bindings[6]->getString());
                 }
                 // interface
-                last_subnet->setIface(out_bindings[7]->getStringOrDefault(""));
+                if (!out_bindings[7]->amNull()) {
+                    last_subnet->setIface(out_bindings[7]->getString());
+                }
+
                 // match_client_id
-                last_subnet->setMatchClientId(static_cast<bool>
-                                              (out_bindings[8]->getIntegerOrDefault<uint8_t>(1)));
+                if (!out_bindings[8]->amNull()) {
+                    last_subnet->setMatchClientId(static_cast<bool>
+                                                  (out_bindings[8]->getInteger<uint8_t>()));
+                }
+
                 // modification_ts
                 last_subnet->setModificationTime(out_bindings[9]->getTimestamp());
+
                 // next_server
-                last_subnet->setSiaddr(IOAddress(out_bindings[10]->getIntegerOrDefault<uint32_t>(0)));
+                if (!out_bindings[10]->amNull()) {
+                    last_subnet->setSiaddr(IOAddress(out_bindings[10]->getInteger<uint32_t>()));
+                }
+
                 // relay
                 ElementPtr relay_element = out_bindings[12]->getJSON();
                 if (relay_element) {
@@ -389,12 +402,21 @@ public:
                     }
                 }
                 // reservation_mode
-                last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
-                    (out_bindings[15]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                if (!out_bindings[15]->amNull()) {
+                    last_subnet->setHostReservationMode(static_cast<Subnet4::HRMode>
+                        (out_bindings[15]->getInteger<uint8_t>()));
+                }
+
                 // server_hostname
-                last_subnet->setSname(out_bindings[16]->getStringOrDefault(""));
+                if (!out_bindings[16]->amNull()) {
+                    last_subnet->setSname(out_bindings[16]->getString());
+                }
+
                 // shared_network_name
-                last_subnet->setSharedNetworkName(out_bindings[17]->getStringOrDefault(""));
+                if (!out_bindings[17]->amNull()) {
+                    last_subnet->setSharedNetworkName(out_bindings[17]->getString());
+                }
+
                 // user_context
                 ElementPtr user_context = out_bindings[18]->getJSON();
                 if (user_context) {
@@ -668,16 +690,21 @@ public:
 
         // Convert DHCPv4o6 interface id to text.
         OptionPtr dhcp4o6_interface_id = subnet->get4o6().getInterfaceId();
-        std::string dhcp4o6_interface_id_text;
+        MySqlBindingPtr dhcp4o6_interface_id_binding;
         if (dhcp4o6_interface_id) {
-            dhcp4o6_interface_id_text.assign(dhcp4o6_interface_id->getData().begin(),
-                                             dhcp4o6_interface_id->getData().end());
+            std::string dhcp4o6_interface_id_text(dhcp4o6_interface_id->getData().begin(),
+                                                  dhcp4o6_interface_id->getData().end());
+            dhcp4o6_interface_id_binding = MySqlBinding::createString(dhcp4o6_interface_id_text);
+
+        } else {
+            dhcp4o6_interface_id_binding = MySqlBinding::createNull();
         }
 
         // Convert DHCPv4o6 subnet to text.
-        std::string dhcp4o6_subnet;
-        if (!subnet->get4o6().getSubnet4o6().get().first.isV6Zero() ||
-            (subnet->get4o6().getSubnet4o6().get().second != 128u)) {
+        Optional<std::string> dhcp4o6_subnet;
+        if (!subnet->get4o6().getSubnet4o6().unspecified() &&
+            (!subnet->get4o6().getSubnet4o6().get().first.isV6Zero() ||
+             (subnet->get4o6().getSubnet4o6().get().second != 128u))) {
             std::ostringstream s;
             s << subnet->get4o6().getSubnet4o6().get().first << "/"
               << static_cast<int>(subnet->get4o6().getSubnet4o6().get().second);
@@ -691,6 +718,16 @@ public:
              required_class != required_classes.cend();
              ++required_class) {
             required_classes_element->add(Element::create(*required_class));
+        }
+
+        // Create binding for host reservation mode.
+        MySqlBindingPtr hr_mode_binding;
+        auto hr_mode = subnet->getHostReservationMode();
+        if (!hr_mode.unspecified()) {
+            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                   (hr_mode.get()));
+        } else {
+            hr_mode_binding = MySqlBinding::createNull();
         }
 
         // Create binding with shared network name if the subnet belongs to a
@@ -725,19 +762,19 @@ public:
             MySqlBinding::createInteger<uint32_t>(subnet->getID()),
             MySqlBinding::createString(subnet->toText()),
             MySqlBinding::condCreateString(subnet->get4o6().getIface4o6()),
-            MySqlBinding::condCreateString(dhcp4o6_interface_id_text),
+            dhcp4o6_interface_id_binding,
             MySqlBinding::condCreateString(dhcp4o6_subnet),
             MySqlBinding::condCreateString(subnet->getFilename()),
             MySqlBinding::condCreateString(subnet->getClientClass()),
             MySqlBinding::condCreateString(subnet->getIface()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getMatchClientId())),
+            MySqlBinding::condCreateBool(subnet->getMatchClientId()),
             MySqlBinding::createTimestamp(subnet->getModificationTime()),
-            MySqlBinding::condCreateInteger<uint32_t>(subnet->getSiaddr().get().toUint32()),
+            MySqlBinding::condCreateIPv4Address(subnet->getSiaddr()),
             createBinding(subnet->getT2()),
             createInputRelayBinding(subnet),
             createBinding(subnet->getT1()),
             createInputRequiredClassesBinding(subnet),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(subnet->getHostReservationMode())),
+            hr_mode_binding,
             MySqlBinding::condCreateString(subnet->getSname()),
             shared_network_binding,
             createInputContextBinding(subnet),
@@ -971,11 +1008,15 @@ public:
                     last_network->allowClientClass(out_bindings[2]->getString());
                 }
                 // interface
-                last_network->setIface(out_bindings[3]->getStringOrDefault(""));
+                if (!out_bindings[3]->amNull()) {
+                    last_network->setIface(out_bindings[3]->getString());
+                }
 
                 // match_client_id
-                last_network->setMatchClientId(static_cast<bool>
-                    (out_bindings[4]->getIntegerOrDefault<uint8_t>(1)));
+                if (!out_bindings[4]->amNull()) {
+                    last_network->setMatchClientId(static_cast<bool>
+                                                   (out_bindings[4]->getInteger<uint8_t>()));
+                }
 
                 // modification_ts
                 last_network->setModificationTime(out_bindings[5]->getTimestamp());
@@ -1024,8 +1065,10 @@ public:
                 }
 
                 // reservation_mode
-                last_network->setHostReservationMode(static_cast<Subnet4::HRMode>
-                    (out_bindings[10]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                if (!out_bindings[10]->amNull()) {
+                    last_network->setHostReservationMode(static_cast<Subnet4::HRMode>
+                        (out_bindings[10]->getIntegerOrDefault<uint8_t>(Subnet4::HR_ALL)));
+                }
 
                 // user_context
                 ElementPtr user_context = out_bindings[11]->getJSON();
@@ -1136,18 +1179,27 @@ public:
 
         auto tag = getServerTag(server_selector, "creating or updating shared network");
 
+        // Create binding for host reservation mode.
+        MySqlBindingPtr hr_mode_binding;
+        auto hr_mode = shared_network->getHostReservationMode();
+        if (!hr_mode.unspecified()) {
+            hr_mode_binding = MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
+                                                                   (hr_mode.get()));
+        } else {
+            hr_mode_binding = MySqlBinding::createNull();
+        }
+
         MySqlBindingCollection in_bindings = {
             MySqlBinding::createString(shared_network->getName()),
             MySqlBinding::condCreateString(shared_network->getClientClass()),
             MySqlBinding::condCreateString(shared_network->getIface()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(shared_network->getMatchClientId())),
+            MySqlBinding::condCreateBool(shared_network->getMatchClientId()),
             MySqlBinding::createTimestamp(shared_network->getModificationTime()),
             createBinding(shared_network->getT2()),
             createInputRelayBinding(shared_network),
             createBinding(shared_network->getT1()),
             createInputRequiredClassesBinding(shared_network),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>
-                                                 (shared_network->getHostReservationMode())),
+            hr_mode_binding,
             createInputContextBinding(shared_network),
             createBinding(shared_network->getValid())
         };

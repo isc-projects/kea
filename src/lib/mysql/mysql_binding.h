@@ -7,9 +7,11 @@
 #ifndef MYSQL_BINDING_H
 #define MYSQL_BINDING_H
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <database/database_connection.h>
 #include <exceptions/exceptions.h>
+#include <util/optional.h>
 #include <boost/date_time/posix_time/conversion.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/shared_ptr.hpp>
@@ -316,12 +318,12 @@ public:
     static MySqlBindingPtr createString(const std::string& value);
 
     /// @brief Conditionally creates binding of text type for sending
-    /// data if provided value is not empty.
+    /// data if provided value is unspecified.
     ///
     /// @param value String value to be sent to the database.
     ///
     /// @return Pointer to the created binding.
-    static MySqlBindingPtr condCreateString(const std::string& value);
+    static MySqlBindingPtr condCreateString(const util::Optional<std::string>& value);
 
     /// @brief Creates binding of blob type for receiving data.
     ///
@@ -380,18 +382,35 @@ public:
     }
 
     /// @brief Conditionally creates binding of numeric type for sending
-    /// data if provided value is not 0.
+    /// data if provided value is specified.
     ///
-    /// @tparam Numeric type corresponding to the binding type, e.g.
+    /// @tparam T Numeric type corresponding to the binding type, e.g.
     /// @c uint8_t, @c uint16_t etc.
     ///
     /// @param value Numeric value to be sent to the database.
     ///
     /// @return Pointer to the created binding.
     template<typename T>
-    static MySqlBindingPtr condCreateInteger(T value) {
-        return (value == 0 ? createNull() : createInteger(value));
+    static MySqlBindingPtr condCreateInteger(const util::Optional<T>& value) {
+        return (value.unspecified() ? createNull() : createInteger<T>(value.get()));
     }
+
+    /// @brief Conditionally creates binding of @c uint8_t type representing
+    /// a boolean value if provided value is specified.
+    ///
+    /// @param value Boolean value for which the binding should be created.
+    ///
+    /// @return Pointer to the created binding.
+    static MySqlBindingPtr condCreateBool(const util::Optional<bool>& value);
+
+    /// @brief Conditionally creates binding of @c uint32_t type representing
+    /// an IPv4 address if provided value is specified.
+    ///
+    /// @param value @c IOAddress encapsulating an IPv4 address.
+    ///
+    /// @return Pointer to the created binding.
+    static MySqlBindingPtr
+    condCreateIPv4Address(const util::Optional<asiolink::IOAddress>& value);
 
     /// @brief Creates binding of timestamp type for receiving data.
     ///
