@@ -75,6 +75,19 @@ public:
     /// @brief Default constructor.
     ///
     /// Sets the encapsulated value to 0 and marks it as "unspecified".
+    ///
+    /// The caller must ensure that the constructor of the class @c T
+    /// creates a valid object when invoked with 0 as an argument.
+    /// For example, a @c std::string(0) compiles but will crash at
+    /// runtime as 0 is not a valid pointer for the
+    /// @c std::string(const char*) constructor. Therefore, the
+    /// specialization of the @c Optional template for @c std::string
+    /// is provided below. It uses @c std::string default constructor.
+    ///
+    /// For any other type used with this template which doesn't come
+    /// with an appropriate constructor, the caller must create a
+    /// template specialization similar to the one provided for
+    /// @c std::string below.
     Optional()
         : default_(T(0)), unspecified_(true) {
     }
