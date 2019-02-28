@@ -1,3 +1,8 @@
+1531.	[func]		tmark
+	When fetching configuration data from configured backends, 
+	kea-dhcp4 will now merge option definitions.
+	(Gitlab #400,!243, git 0c5d1417031e49bd0c247889989e187db2dd8f4b)
+
 1530.	[bug] 		adwol
 	Potential syntax error in keactrl fixed. Thanks to Adam Osuchowski
 	from Silesian University of Technology for providing a patch.
