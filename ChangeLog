@@ -1,3 +1,7 @@
+1533.	[doc]		sgoldlust,stephen
+	Kea User's Guide significantly updated.
+	(Gitlab #362,!182, git 4b7a8df6054d18f2c90fe61d93533466f89e6324)
+
 1532.	[func]*		marcin
 	Renamed OptionalValue C++ object to Optional and modified its
 	API. This object is now used to represent optional values in
