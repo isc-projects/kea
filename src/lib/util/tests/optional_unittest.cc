@@ -26,6 +26,7 @@ TEST(OptionalTest, constructor) {
     EXPECT_EQ(0, value2.get());
     EXPECT_TRUE(value2.unspecified());
 
+    // Use the non-default value for second parameter.
     Optional<bool> value3(true, true);
     EXPECT_TRUE(value3.get());
     EXPECT_TRUE(value3.unspecified());
@@ -46,9 +47,9 @@ TEST(OptionalTest, constructorString) {
 // This test checks if the assignment operator assigning an actual
 // value to the optional value works as expected.
 TEST(OptionalTest, assignValue) {
-    Optional<int> value(10);
+    Optional<int> value(10, true);
     EXPECT_EQ(10, value.get());
-    EXPECT_FALSE(value.unspecified());
+    EXPECT_TRUE(value.unspecified());
 
     // Assign a new value.
     value = 111;
