@@ -57,7 +57,7 @@ CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
 
 void
 CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
-                   const CfgSubnets4& other) {
+                   CfgSubnets4& other) {
     auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
 
     // Iterate over the subnets to be merged. They will replace the existing

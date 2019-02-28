@@ -259,16 +259,22 @@ TEST_F(Dhcp4CBTest, mergeGlobals) {
 
 // This test verifies that externally configured option definitions
 // merged correctly into staging configuration.
-// @todo enable test when SrvConfig can merge option definitions.
-TEST_F(Dhcp4CBTest, DISABLED_mergeOptionDefs) {
+TEST_F(Dhcp4CBTest, mergeOptionDefs) {
     string base_config =
         "{ \n"
-        "    \"option-def\": [ {"
-        "        \"name\": \"one\","
-        "        \"code\": 100,"
-        "        \"type\": \"ipv4-address\","
-        "        \"space\": \"isc\""
-        "     } ],"
+        "    \"option-def\": [ { \n"
+        "        \"name\": \"one\", \n"
+        "        \"code\": 1, \n"
+        "        \"type\": \"ipv4-address\", \n"
+        "        \"space\": \"isc\" \n"
+        "     }, \n"
+        "     { \n"
+        "        \"name\": \"two\", \n"
+        "        \"code\": 2, \n"
+        "        \"type\": \"string\", \n"
+        "        \"space\": \"isc\" \n"
+        "     } \n"
+        "   ], \n"
         "    \"config-control\": { \n"
         "       \"config-databases\": [ { \n"
         "               \"type\": \"memfile\", \n"
@@ -283,33 +289,47 @@ TEST_F(Dhcp4CBTest, DISABLED_mergeOptionDefs) {
 
     extractConfig(base_config);
 
-    // Create option two and add it to first backend.
-    OptionDefinitionPtr def_two(new OptionDefinition("two", 234, "string"));
-    def_two->setOptionSpaceName("dhcp4");
-    db1_->createUpdateOptionDef4(ServerSelector::ALL(), def_two);
+    // Create option one replacement and add it to first backend.
+    OptionDefinitionPtr def;
+    def.reset(new OptionDefinition("one", 101, "uint16"));
+    def->setOptionSpaceName("isc");
+    db1_->createUpdateOptionDef4(ServerSelector::ALL(), def);
 
-    // Create option three and add it to second backend.
-    OptionDefinitionPtr def_three(new OptionDefinition("three", 235, "string"));
-    def_three->setOptionSpaceName("dhcp4");
-    db2_->createUpdateOptionDef4(ServerSelector::ALL(), def_two);
+    // Create option three and add it to first backend.
+    def.reset(new OptionDefinition("three", 3, "string"));
+    def->setOptionSpaceName("isc");
+    db1_->createUpdateOptionDef4(ServerSelector::ALL(), def);
+
+    // Create option four and add it to second backend.
+    def.reset(new OptionDefinition("four", 4, "string"));
+    def->setOptionSpaceName("isc");
+    db2_->createUpdateOptionDef4(ServerSelector::ALL(), def);
 
     // Should parse and merge without error.
     ASSERT_NO_FATAL_FAILURE(configure(base_config, CONTROL_RESULT_SUCCESS, ""));
 
     // Verify the composite staging is correct.
     SrvConfigPtr staging_cfg = CfgMgr::instance().getStagingCfg();
-
-    // Option definition from JSON should be there.
     ConstCfgOptionDefPtr option_defs = staging_cfg->getCfgOptionDef();
-    OptionDefinitionPtr found_def = option_defs->get("isc", 100);
-    ASSERT_TRUE(found_def);
 
-    // Option definition from db1 should be there.
-    found_def = option_defs->get("dhcp4", 234);
+    // Definition "one" from first backend should be there.
+    OptionDefinitionPtr found_def = option_defs->get("isc", "one");
     ASSERT_TRUE(found_def);
+    EXPECT_EQ(101, found_def->getCode());
+    EXPECT_EQ(OptionDataType::OPT_UINT16_TYPE, found_def->getType());
 
-    // Option definition from db2 should not be there.
-    found_def = option_defs->get("dhcp4", 235);
+    // Definition "two" from JSON config should be there.
+    found_def = option_defs->get("isc", "two");
+    ASSERT_TRUE(found_def);
+    EXPECT_EQ(2, found_def->getCode());
+
+    // Definition "three" from first backend should be there.
+    found_def = option_defs->get("isc", "three");
+    ASSERT_TRUE(found_def);
+    EXPECT_EQ(3, found_def->getCode());
+
+    // Definition "four" from first backend should not be there.
+    found_def = option_defs->get("isc", "four");
     ASSERT_FALSE(found_def);
 }
 

@@ -159,10 +159,10 @@ SrvConfig::equals(const SrvConfig& other) const {
 }
 
 void
-SrvConfig::merge(const ConfigBase& other) {
+SrvConfig::merge(ConfigBase& other) {
     ConfigBase::merge(other);
     try {
-        const SrvConfig& other_srv_config = dynamic_cast<const SrvConfig&>(other);
+        SrvConfig& other_srv_config = dynamic_cast<SrvConfig&>(other);
         if (CfgMgr::instance().getFamily() == AF_INET) {
             merge4(other_srv_config);
         } else {
@@ -176,13 +176,14 @@ SrvConfig::merge(const ConfigBase& other) {
 }
 
 void
-SrvConfig::merge4(const SrvConfig& other) {
+SrvConfig::merge4(SrvConfig& other) {
     /// We merge objects in order of dependency (real or theoretical).
 
     /// Merge globals.
     mergeGlobals4(other);
 
-    /// @todo merge option defs
+    /// Merge option defs
+    cfg_option_def_->merge((*other.getCfgOptionDef()));
 
     /// @todo merge options
 
@@ -196,7 +197,7 @@ SrvConfig::merge4(const SrvConfig& other) {
 }
 
 void
-SrvConfig::mergeGlobals4(const SrvConfig& other) {
+SrvConfig::mergeGlobals4(SrvConfig& other) {
     // Iterate over the "other" globals, adding/overwriting them into
     // this config's list of globals.
     for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
