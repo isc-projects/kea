@@ -18,17 +18,17 @@ VERSION=@PACKAGE_VERSION@
 
 # Logs message at the error level.
 log_error() {
-    printf "ERROR/keactrl: ${1}\n"
+    printf "ERROR/keactrl: %s\n" "${1}"
 }
 
 # Logs message at the warning level.
 log_warning() {
-    printf "WARNING/keactrl: ${1}\n"
+    printf "WARNING/keactrl: %s\n" "${1}"
 }
 
 # Logs message at the info level.
 log_info() {
-    printf "INFO/keactrl: ${1}\n"
+    printf "INFO/keactrl: %s\n" "${1}"
 }
 
 ### Convenience functions ###
@@ -40,14 +40,14 @@ is_in_list() {
     local member=${1}  # Value to be checked
     local list="${2}"  # Comma separated list of items
     _inlist=0          # Return value: 0 if not in list, 1 otherwise.
-    if [ -z ${member} ]; then
-        log_error "missing ${class}"
+    if [ -z "${member}" ]; then
+        log_error "missing ${member}"
     fi
     # Iterate over all items on the list and compare with the member.
     # If they match, return, otherwise log error and exit.
     for item in ${list}
     do
-        if [ ${item} = ${member} ]; then
+        if [ "${item}" = "${member}" ]; then
             _inlist=1
             return
         fi
@@ -89,7 +89,7 @@ get_pid_from_file() {
     esac
 
     # Extract the name portion of the config file
-    local conf_name=$(basename ${kea_config_file} | cut -f1 -d'.')
+    local conf_name=$(basename "${kea_config_file}" | cut -f1 -d'.')
 
     # Default the directory to --localstatedir
     local pid_file_dir=@localstatedir@/@PACKAGE@
