@@ -6,13 +6,18 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
 #include <mysql/mysql_binding.h>
+#include <util/optional.h>
 #include <boost/date_time/gregorian/gregorian.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::db;
+using namespace isc::util;
 
 namespace {
 
@@ -25,9 +30,9 @@ TEST(MySqlBindingTest, defaultString) {
     EXPECT_EQ("bar", binding->getStringOrDefault("foo"));
 }
 
-// This test verifies that null binding is created for empty string.
+// This test verifies that null binding is created for unspecified string.
 TEST(MySqlBindingTest, conditionalString) {
-    auto binding = MySqlBinding::condCreateString("");
+    auto binding = MySqlBinding::condCreateString(Optional<std::string>());
     EXPECT_TRUE(binding->amNull());
 
     binding = MySqlBinding::condCreateString("foo");
@@ -72,14 +77,42 @@ TEST(MySqlBindingTest, defaultInteger) {
     EXPECT_EQ(1024, binding->getIntegerOrDefault<uint32_t>(123));
 }
 
-// This test verifies that null binding is created for 0 number.
+// This test verifies that null binding is created for unspecified number.
 TEST(MySqlBindingTest, conditionalInteger) {
-    auto binding = MySqlBinding::condCreateInteger<uint16_t>(0);
+    auto binding = MySqlBinding::condCreateInteger<uint16_t>(Optional<uint16_t>());
     EXPECT_TRUE(binding->amNull());
 
     binding = MySqlBinding::condCreateInteger<uint16_t>(1);
     ASSERT_FALSE(binding->amNull());
     EXPECT_EQ(1, binding->getInteger<uint16_t>());
+}
+
+// This test verifies that null binding is created for unspecified boolean
+// value.
+TEST(MySqlBindingTest, conditionalBoolean) {
+    auto binding = MySqlBinding::condCreateBool(Optional<bool>());
+    EXPECT_TRUE(binding->amNull());
+
+    binding = MySqlBinding::condCreateBool(false);
+    ASSERT_FALSE(binding->amNull());
+    EXPECT_EQ(0, binding->getInteger<uint8_t>());
+
+    binding = MySqlBinding::condCreateBool(true);
+    ASSERT_FALSE(binding->amNull());
+    EXPECT_NE(binding->getInteger<uint8_t>(), 0);
+}
+
+// This test verifies that null binding is created for unspecified address.
+TEST(MySqlBindingTest, conditionalIPv4Address) {
+    auto binding = MySqlBinding::condCreateIPv4Address(Optional<IOAddress>());
+    EXPECT_TRUE(binding->amNull());
+
+    binding = MySqlBinding::condCreateIPv4Address(IOAddress("192.0.2.1"));
+    ASSERT_FALSE(binding->amNull());
+    EXPECT_EQ(0xC0000201, binding->getInteger<uint32_t>());
+
+    EXPECT_THROW(MySqlBinding::condCreateIPv4Address(IOAddress("2001:db8:1::1")),
+                 isc::BadValue);
 }
 
 // This test verifies that default timestamp is returned if binding is null.

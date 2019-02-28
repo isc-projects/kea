@@ -26,6 +26,24 @@ ALTER TABLE dhcp6_options
     MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
     DEFAULT CURRENT_TIMESTAMP;
 
+ALTER TABLE dhcp4_subnet
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
 -- -----------------------------------------------------
 -- Make sure that constraints on the 7.0 schema tables
 -- have appropriate referential actions. All tables
