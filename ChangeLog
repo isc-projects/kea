@@ -1,5 +1,12 @@
+1532.	[func]*		marcin
+	Renamed OptionalValue C++ object to Optional and modified its
+	API. This object is now used to represent optional values in
+	subnets and shared networks. This is an internal Kea logic
+	change but it may impact existing user hooks libraries.
+	(Gitlab #487,!232, git 1c58e0ce9b9fd6fc8864dbfb2335bc5841c78ff3)
+
 1531.	[func]		tmark
-	When fetching configuration data from configured backends, 
+	When fetching configuration data from configured backends,
 	kea-dhcp4 will now merge option definitions.
 	(Gitlab #400,!243, git 0c5d1417031e49bd0c247889989e187db2dd8f4b)
 
