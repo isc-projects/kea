@@ -1001,7 +1001,10 @@ public:
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
-            MySqlBinding::createTimestamp() //option: modification_ts
+            MySqlBinding::createTimestamp(), //option: modification_ts
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
+            MySqlBinding::createInteger<float>(), // t1_percent
+            MySqlBinding::createInteger<float>() // t2_percent
         };
 
         uint64_t last_network_id = 0;
@@ -1098,6 +1101,21 @@ public:
                 // valid_lifetime
                 if (!out_bindings[12]->amNull()) {
                     last_network->setValid(createTriplet(out_bindings[12]));
+                }
+
+                // calculate_tee_times
+                if (!out_bindings[25]->amNull()) {
+                    last_network->setCalculateTeeTimes(out_bindings[25]->getBool());
+                }
+
+                // t1_percent
+                if (!out_bindings[26]->amNull()) {
+                    last_network->setT1Percent(out_bindings[26]->getFloat());
+                }
+
+                // t2_percent
+                if (!out_bindings[27]->amNull()) {
+                    last_network->setT2Percent(out_bindings[27]->getFloat());
                 }
 
                 shared_networks.push_back(last_network);
@@ -1220,7 +1238,10 @@ public:
             createInputRequiredClassesBinding(shared_network),
             hr_mode_binding,
             createInputContextBinding(shared_network),
-            createBinding(shared_network->getValid())
+            createBinding(shared_network->getValid()),
+            MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
+            MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent())
         };
 
         MySqlTransaction transaction(conn_);
@@ -2068,8 +2089,11 @@ TaggedStatementArray tagged_statements = { {
       "  require_client_classes,"
       "  reservation_mode,"
       "  user_context,"
-      "  valid_lifetime"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  valid_lifetime,"
+      "  calculate_tee_times,"
+      "  t1_percent,"
+      "  t2_percent"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2143,7 +2167,10 @@ TaggedStatementArray tagged_statements = { {
       "  require_client_classes = ?,"
       "  reservation_mode = ?,"
       "  user_context = ?,"
-      "  valid_lifetime = ? "
+      "  valid_lifetime = ?,"
+      "  calculate_tee_times = ?,"
+      "  t1_percent = ?,"
+      "  t2_percent = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.
