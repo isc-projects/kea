@@ -275,7 +275,10 @@ public:
             MySqlBinding::createString(USER_CONTEXT_BUF_LENGTH), // option: user_context
             MySqlBinding::createString(SHARED_NETWORK_NAME_BUF_LENGTH), // option: shared_network_name
             MySqlBinding::createInteger<uint64_t>(), // option: pool_id
-            MySqlBinding::createTimestamp() //option: modification_ts
+            MySqlBinding::createTimestamp(), //option: modification_ts
+            MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
+            MySqlBinding::createInteger<float>(), // t1_percent
+            MySqlBinding::createInteger<float>() // t2_percent
         };
 
         uint64_t last_pool_id = 0;
@@ -358,8 +361,7 @@ public:
 
                 // match_client_id
                 if (!out_bindings[8]->amNull()) {
-                    last_subnet->setMatchClientId(static_cast<bool>
-                                                  (out_bindings[8]->getInteger<uint8_t>()));
+                    last_subnet->setMatchClientId(out_bindings[8]->getBool());
                 }
 
                 // modification_ts
@@ -421,6 +423,21 @@ public:
                 ElementPtr user_context = out_bindings[18]->getJSON();
                 if (user_context) {
                     last_subnet->setContext(user_context);
+                }
+
+                // calculate_tee_times
+                if (!out_bindings[49]->amNull()) {
+                    last_subnet->setCalculateTeeTimes(out_bindings[49]->getBool());
+                }
+
+                // t1_percent
+                if (!out_bindings[50]->amNull()) {
+                    last_subnet->setT1Percent(out_bindings[50]->getFloat());
+                }
+
+                // t2_percent
+                if (!out_bindings[51]->amNull()) {
+                    last_subnet->setT2Percent(out_bindings[51]->getFloat());
                 }
 
                 // Subnet ready. Add it to the list.
@@ -778,7 +795,10 @@ public:
             MySqlBinding::condCreateString(subnet->getSname()),
             shared_network_binding,
             createInputContextBinding(subnet),
-            createBinding(subnet->getValid())
+            createBinding(subnet->getValid()),
+            MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes()),
+            MySqlBinding::condCreateFloat(subnet->getT1Percent()),
+            MySqlBinding::condCreateFloat(subnet->getT2Percent())
         };
 
         MySqlTransaction transaction(conn_);
@@ -1014,8 +1034,7 @@ public:
 
                 // match_client_id
                 if (!out_bindings[4]->amNull()) {
-                    last_network->setMatchClientId(static_cast<bool>
-                                                   (out_bindings[4]->getInteger<uint8_t>()));
+                    last_network->setMatchClientId(out_bindings[4]->getBool());
                 }
 
                 // modification_ts
@@ -1305,7 +1324,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint8_t>(0),
@@ -1367,7 +1386,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint32_t>(static_cast<uint32_t>(subnet_id)),
             MySqlBinding::createInteger<uint8_t>(1),
@@ -1465,7 +1484,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint8_t>(5),
@@ -1531,7 +1550,7 @@ public:
             createOptionValueBinding(option),
             MySqlBinding::condCreateString(option->formatted_value_),
             MySqlBinding::condCreateString(option->space_name_),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option->persistent_)),
+            MySqlBinding::createBool(option->persistent_),
             MySqlBinding::createNull(),
             MySqlBinding::createNull(),
             MySqlBinding::createInteger<uint8_t>(4),
@@ -1607,7 +1626,7 @@ public:
                                        "dhcp4" : option_def->getOptionSpaceName()),
             MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getType())),
             MySqlBinding::createTimestamp(option_def->getModificationTime()),
-            MySqlBinding::createInteger<uint8_t>(static_cast<uint8_t>(option_def->getArrayType())),
+            MySqlBinding::createBool(option_def->getArrayType()),
             MySqlBinding::createString(option_def->getEncapsulatedSpace()),
             record_types_binding,
             createInputContextBinding(option_def)
@@ -2018,9 +2037,12 @@ TaggedStatementArray tagged_statements = { {
       "  server_hostname,"
       "  shared_network_name,"
       "  user_context,"
-      "  valid_lifetime"
+      "  valid_lifetime,"
+      "  calculate_tee_times,"
+      "  t1_percent,"
+      "  t2_percent"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      "?, ?, ?, ?, ?, ?, ?, ?)" },
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -2101,7 +2123,10 @@ TaggedStatementArray tagged_statements = { {
       "  server_hostname = ?,"
       "  shared_network_name = ?,"
       "  user_context = ?,"
-      "  valid_lifetime = ? "
+      "  valid_lifetime = ?,"
+      "  calculate_tee_times = ?,"
+      "  t1_percent = ?,"
+      "  t2_percent = ? "
       "WHERE subnet_id = ?" },
 
     // Update existing shared network.

@@ -108,6 +108,9 @@ public:
         subnet->setSname("server-hostname");
         subnet->setContext(user_context);
         subnet->setValid(555555);
+        subnet->setCalculateTeeTimes(true);
+        subnet->setT1Percent(0.345);
+        subnet->setT2Percent(0.444);
 
         Pool4Ptr pool1(new Pool4(IOAddress("192.0.2.10"), IOAddress("192.0.2.20")));
         subnet->addPool(pool1);

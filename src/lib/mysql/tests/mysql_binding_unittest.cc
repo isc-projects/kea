@@ -14,6 +14,7 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <gtest/gtest.h>
 
+using namespace isc;
 using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::db;
@@ -30,7 +31,8 @@ TEST(MySqlBindingTest, defaultString) {
     EXPECT_EQ("bar", binding->getStringOrDefault("foo"));
 }
 
-// This test verifies that null binding is created for unspecified string.
+// This test verifies that null binding is created for unspecified string
+// and the string binding is created for a specified string.
 TEST(MySqlBindingTest, conditionalString) {
     auto binding = MySqlBinding::condCreateString(Optional<std::string>());
     EXPECT_TRUE(binding->amNull());
@@ -38,6 +40,19 @@ TEST(MySqlBindingTest, conditionalString) {
     binding = MySqlBinding::condCreateString("foo");
     ASSERT_FALSE(binding->amNull());
     EXPECT_EQ("foo", binding->getString());
+}
+
+// This test verifies that an error is thrown upon an attempt to use
+// invalid accessor for a string binding.
+TEST(MySqlBindingTest, stringTypeMismatch) {
+    auto binding = MySqlBinding::createString("foo");
+    EXPECT_NO_THROW(static_cast<void>(binding->getString()));
+
+    EXPECT_THROW(static_cast<void>(binding->getBlob()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint16_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getFloat()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBool()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getTimestamp()), InvalidOperation);
 }
 
 // This test verifies that null JSON is returned if the string binding
@@ -68,6 +83,20 @@ TEST(MySqlBindingTest, defaultBlob) {
     EXPECT_EQ(blob, binding->getBlobOrDefault(default_blob));
 }
 
+// This test verifies that an error is thrown upon an attempt to use
+// invalid accessor for a blob binding.
+TEST(MySqlBindingTest, blobTypeMismatch) {
+    std::vector<uint8_t> blob(10, 1);
+    auto binding = MySqlBinding::createBlob(blob.begin(), blob.end());
+    EXPECT_NO_THROW(static_cast<void>(binding->getBlob()));
+
+    EXPECT_THROW(static_cast<void>(binding->getString()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint16_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getFloat()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBool()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getTimestamp()), InvalidOperation);
+}
+
 // This test verifies that default number is returned if binding is null.
 TEST(MySqlBindingTest, defaultInteger) {
     auto binding = MySqlBinding::createNull();
@@ -77,7 +106,8 @@ TEST(MySqlBindingTest, defaultInteger) {
     EXPECT_EQ(1024, binding->getIntegerOrDefault<uint32_t>(123));
 }
 
-// This test verifies that null binding is created for unspecified number.
+// This test verifies that null binding is created for unspecified number
+// and the integer binding is created for a specified number.
 TEST(MySqlBindingTest, conditionalInteger) {
     auto binding = MySqlBinding::condCreateInteger<uint16_t>(Optional<uint16_t>());
     EXPECT_TRUE(binding->amNull());
@@ -87,7 +117,49 @@ TEST(MySqlBindingTest, conditionalInteger) {
     EXPECT_EQ(1, binding->getInteger<uint16_t>());
 }
 
+// This test verifies that an error is thrown upon an attempt to use
+// invalid accessor for an integer binding.
+TEST(MySqlBindingTest, integerTypeMismatch) {
+    auto binding = MySqlBinding::createInteger<uint32_t>(123);
+    EXPECT_NO_THROW(static_cast<void>(binding->getInteger<uint32_t>()));
+
+    EXPECT_THROW(static_cast<void>(binding->getString()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBlob()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint8_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint16_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getFloat()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBool()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getTimestamp()), InvalidOperation);
+}
+
+// This test verifies that null binding is created for unspecified floating
+// point value and the float binding is created for the specified value.
+TEST(MySqlBindingTest, conditionalFloat) {
+    auto binding = MySqlBinding::condCreateFloat(Optional<float>());
+    EXPECT_TRUE(binding->amNull());
+
+    binding = MySqlBinding::condCreateFloat<float>(1.567f);
+    ASSERT_FALSE(binding->amNull());
+    EXPECT_EQ(1.567f, binding->getFloat());
+}
+
+// This test verifies that an error is thrown upon an attempt to use
+// invalid accessor for a float binding.
+TEST(MySqlBindingTest, floatTypeMismatch) {
+    auto binding = MySqlBinding::createFloat(123.123f);
+    EXPECT_NO_THROW(static_cast<void>(binding->getFloat()));
+
+    EXPECT_THROW(static_cast<void>(binding->getString()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBlob()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint8_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint16_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint32_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBool()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getTimestamp()), InvalidOperation);
+}
+
 // This test verifies that null binding is created for unspecified boolean
+// value and the uint8_t binding is created for a specified boolean
 // value.
 TEST(MySqlBindingTest, conditionalBoolean) {
     auto binding = MySqlBinding::condCreateBool(Optional<bool>());
@@ -95,14 +167,30 @@ TEST(MySqlBindingTest, conditionalBoolean) {
 
     binding = MySqlBinding::condCreateBool(false);
     ASSERT_FALSE(binding->amNull());
-    EXPECT_EQ(0, binding->getInteger<uint8_t>());
+    EXPECT_FALSE(binding->getBool());
 
     binding = MySqlBinding::condCreateBool(true);
     ASSERT_FALSE(binding->amNull());
-    EXPECT_NE(binding->getInteger<uint8_t>(), 0);
+    EXPECT_TRUE(binding->getBool());
 }
 
-// This test verifies that null binding is created for unspecified address.
+// This test verifies that an error is thrown upon an attempt to use
+// invalid accessor for a float binding.
+TEST(MySqlBindingTest, booleanTypeMismatch) {
+    auto binding = MySqlBinding::createBool(false);
+    EXPECT_NO_THROW(static_cast<void>(binding->getBool()));
+    EXPECT_NO_THROW(static_cast<void>(binding->getInteger<uint8_t>()));
+
+    EXPECT_THROW(static_cast<void>(binding->getString()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getBlob()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint16_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getInteger<uint32_t>()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getFloat()), InvalidOperation);
+    EXPECT_THROW(static_cast<void>(binding->getTimestamp()), InvalidOperation);
+}
+
+// This test verifies that null binding is created for unspecified address
+// and the uint32_t binding is created for the specified address.
 TEST(MySqlBindingTest, conditionalIPv4Address) {
     auto binding = MySqlBinding::condCreateIPv4Address(Optional<IOAddress>());
     EXPECT_TRUE(binding->amNull());
