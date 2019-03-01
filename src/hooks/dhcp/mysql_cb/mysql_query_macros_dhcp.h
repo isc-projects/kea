@@ -223,7 +223,10 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  o.modification_ts " \
+    "  o.modification_ts," \
+    "  n.calculate_tee_times," \
+    "  n.t1_percent," \
+    "  n.t2_percent " \
     "FROM dhcp4_shared_network AS n " \
     "INNER JOIN dhcp4_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \

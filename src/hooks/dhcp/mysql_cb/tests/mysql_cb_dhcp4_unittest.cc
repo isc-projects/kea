@@ -185,6 +185,9 @@ public:
         shared_network->setHostReservationMode(Subnet4::HR_DISABLED);
         shared_network->setContext(user_context);
         shared_network->setValid(5555);
+        shared_network->setCalculateTeeTimes(true);
+        shared_network->setT1Percent(0.345);
+        shared_network->setT2Percent(0.444);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
