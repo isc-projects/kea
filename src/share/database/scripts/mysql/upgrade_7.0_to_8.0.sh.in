@@ -27,10 +27,20 @@ ALTER TABLE dhcp6_options
     DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE dhcp4_subnet
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
     MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
 
 ALTER TABLE dhcp4_subnet
     MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
 
 ALTER TABLE dhcp4_shared_network
     MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
@@ -39,7 +49,17 @@ ALTER TABLE dhcp4_shared_network
     MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
 
 ALTER TABLE dhcp6_subnet
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
     MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
 
 ALTER TABLE dhcp6_shared_network
     MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;

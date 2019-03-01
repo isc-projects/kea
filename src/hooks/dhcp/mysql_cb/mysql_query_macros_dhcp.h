@@ -98,7 +98,10 @@ namespace {
     "  o.user_context," \
     "  o.shared_network_name," \
     "  o.pool_id," \
-    "  o.modification_ts " \
+    "  o.modification_ts," \
+    "  s.calculate_tee_times," \
+    "  s.t1_percent," \
+    "  s.t2_percent " \
     "FROM dhcp4_subnet AS s " \
     "INNER JOIN dhcp4_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \

@@ -125,6 +125,13 @@ struct MySqlBindingTraits<uint64_t> {
     static const bool am_unsigned = true;
 };
 
+template<>
+struct MySqlBindingTraits<float> {
+    static const enum_field_types column_type = MYSQL_TYPE_FLOAT;
+    static const size_t length = 4;
+    static const bool am_unsigned = false;
+};
+
 /// @brief Forward declaration of @c MySqlBinding class.
 class MySqlBinding;
 
@@ -272,6 +279,30 @@ public:
         return (getInteger<T>());
     }
 
+    /// @brief Returns float value held in the binding.
+    ///
+    /// Call @c MySqlBinding::amNull to verify that the value is not
+    /// null prior to calling this method.
+    ///
+    /// @throw InvalidOperation if the value is NULL or the binding
+    /// type does not match the template parameter.
+    ///
+    /// @return Float value.
+    float getFloat() const;
+
+    /// @brief Returns boolean value held in the binding.
+    ///
+    /// Call @c MySqlBinding::amNull to verify that the value is not
+    /// null prior to calling this method.
+    ///
+    /// @throw InvalidOperation if the value is NULL or the binding
+    /// type is not uint8_t.
+    ///
+    /// @return Boolean value.
+    bool getBool() const {
+        return (static_cast<bool>(getInteger<uint8_t>()));
+    }
+
     /// @brief Returns timestamp value held in the binding.
     ///
     /// Call @c MySqlBinding::amNull to verify that the value is not
@@ -394,6 +425,35 @@ public:
     static MySqlBindingPtr condCreateInteger(const util::Optional<T>& value) {
         return (value.unspecified() ? createNull() : createInteger<T>(value.get()));
     }
+
+    /// @brief Creates binding having a float type for sending data.
+    ///
+    /// @param value Float value to be sent to the database.
+    ///
+    /// @return Pointer to the created binding.
+    static MySqlBindingPtr createFloat(const float value);
+
+    /// @Conditionally creates binding of float type for sending data if
+    /// provided value is specified.
+    ///
+    /// @tparam T Floating point type to be converted to float.
+    ///
+    /// @param value Value to be stored in the database as float.
+    ///
+    /// @return Pointer to the created binding.
+    template<typename T>
+    static MySqlBindingPtr condCreateFloat(const util::Optional<T>& value) {
+        return (value.unspecified() ? createNull() :
+                createInteger<float> (static_cast<float>(value.get())));
+    }
+
+    /// @brief Creates binding having a bool type for sending data.
+    ///
+    /// @param value Boolean value to be sent to the database.
+    ///
+    /// @return Pointer to the created binding holding an @c uint8_t
+    /// value representing the boolean value.
+    static MySqlBindingPtr createBool(const bool value);
 
     /// @brief Conditionally creates binding of @c uint8_t type representing
     /// a boolean value if provided value is specified.

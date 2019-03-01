@@ -64,6 +64,17 @@ MySqlBinding::getBlobOrDefault(const std::vector<uint8_t>& default_value) const 
     return (getBlob());
 }
 
+float
+MySqlBinding::getFloat() const {
+    // It may seem a bit weird that we use getInteger template method
+    // for getting a floating point value. However, the getInteger method
+    // seems to be generic enough to support it. If we were to redo the
+    // API of this class we would probably introduce a getNumericValue
+    // method instead of getInteger. However, we already have getInteger
+    // used in many places so we should stick to it.
+    return (getInteger<float>());
+}
+
 ptime
 MySqlBinding::getTimestamp() const {
     // Make sure the binding type is timestamp.
@@ -107,6 +118,22 @@ MySqlBinding::createBlob(const unsigned long length) {
     MySqlBindingPtr binding(new MySqlBinding(MySqlBindingTraits<std::vector<uint8_t> >::column_type,
                                    length));
     return (binding);
+}
+
+MySqlBindingPtr
+MySqlBinding::createFloat(const float value) {
+    // It may seem a bit weird that we use createInteger template method
+    // for setting a floating point value. However, the setInteger method
+    // seems to be generic enough to support it. If we were to redo the
+    // API of this class we would probably introduce a createNumericValue
+    // method instead of createInteger. However, we already have createInteger
+    // used in many places so we should stick to it.
+    return (createInteger<float>(value));
+}
+
+MySqlBindingPtr
+MySqlBinding::createBool(const bool value) {
+    return (createInteger<uint8_t>(static_cast<uint8_t>(value)));
 }
 
 MySqlBindingPtr
