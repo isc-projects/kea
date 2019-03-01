@@ -87,7 +87,8 @@ CfgSubnets4::del(const SubnetID& subnet_id) {
 void
 CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
                    CfgSubnets4& other) {
-    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto& index_id = subnets_.get<SubnetSubnetIdIndexTag>();
+    auto& index_prefix = subnets_.get<SubnetPrefixIndexTag>();
 
     // Iterate over the subnets to be merged. They will replace the existing
     // subnets with the same id. All new subnets will be inserted into the
@@ -98,11 +99,11 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
          ++other_subnet) {
 
         // Check if there is a subnet with the same ID.
-        auto subnet_it = index.find((*other_subnet)->getID());
-        if (subnet_it != index.end()) {
+        auto subnet_id_it = index_id.find((*other_subnet)->getID());
+        if (subnet_id_it != index_id.end()) {
 
             // Subnet found.
-            auto existing_subnet = *subnet_it;
+            auto existing_subnet = *subnet_id_it;
 
             // If the existing subnet and other subnet
             // are the same instance skip it.
@@ -120,7 +121,33 @@ CfgSubnets4::merge(CfgOptionDefPtr cfg_def, CfgSharedNetworks4Ptr networks,
             }
 
             // Now we remove the existing subnet.
-            index.erase(subnet_it);
+            index_id.erase(subnet_id_it);
+        }
+
+        // Check if there is a subnet with the same prefix.
+        auto subnet_prefix_it = index_prefix.find((*other_subnet)->toText());
+        if (subnet_prefix_it != index_prefix.end()) {
+
+            // Subnet found.
+            auto existing_subnet = *subnet_prefix_it;
+
+            // If the existing subnet and other subnet
+            // are the same instance skip it.
+            if (existing_subnet == *other_subnet) {
+                continue;
+            }
+
+            // We're going to replace the existing subnet with the other
+            // version. If it belongs to a shared network, we need
+            // remove it from that network.
+            SharedNetwork4Ptr network;
+            existing_subnet->getSharedNetwork(network);
+            if (network) {
+                network->del(existing_subnet->getID());
+            }
+
+            // Now we remove the existing subnet.
+            index_prefix.erase(subnet_prefix_it);
         }
 
         // Create the subnet's options based on the given definitions.
