@@ -819,7 +819,7 @@ public:
 
         try {
 
-            // Try to insert subnet. If this duplicates primary key, i.e. this
+            // Try to insert subnet. If this duplicates unique key, i.e. this
             // subnet already exists it will throw DuplicateEntry exception in
             // which case we'll try an update.
             conn_.insertQuery(MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4,
@@ -842,8 +842,9 @@ public:
             deletePools4(subnet);
             deleteOptions4(server_selector, subnet);
 
-            // Need to add one more binding for WHERE clause.
+            // Need to add two more bindings for WHERE clause.
             in_bindings.push_back(MySqlBinding::createInteger<uint32_t>(subnet->getID()));
+            in_bindings.push_back(MySqlBinding::createString(subnet->toText()));
             conn_.updateDeleteQuery(MySqlConfigBackendDHCPv4Impl::UPDATE_SUBNET4,
                                     in_bindings);
         }
@@ -2193,7 +2194,7 @@ TaggedStatementArray tagged_statements = { {
       "  t1_percent = ?,"
       "  t2_percent = ?,"
       "  authoritative = ? "
-      "WHERE subnet_id = ?" },
+      "WHERE subnet_id = ? OR subnet_prefix = ?" },
 
     // Update existing shared network.
     { MySqlConfigBackendDHCPv4Impl::UPDATE_SHARED_NETWORK4,
