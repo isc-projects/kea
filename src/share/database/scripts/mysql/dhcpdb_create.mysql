@@ -1908,6 +1908,23 @@ ALTER TABLE dhcp6_shared_network_server
     REFERENCES dhcp6_shared_network (id)
     ON DELETE CASCADE ON UPDATE NO ACTION;
 
+-- Update dhcp4_subnet_server and dhcp6_subnet_server to allow update
+-- on the prefix too.
+
+ALTER TABLE dhcp4_subnet_server
+    DROP FOREIGN KEY fk_dhcp4_subnet_server_subnet_id;
+ALTER TABLE dhcp4_subnet_server
+    ADD CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp4_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
+ALTER TABLE dhcp6_subnet_server
+    DROP FOREIGN KEY fk_dhcp6_subnet_server_subnet_id;
+ALTER TABLE dhcp6_subnet_server
+    ADD CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE CASCADE;
+
 -- -----------------------------------------------------
 -- Table `dhcp6_audit_revision`
 -- -----------------------------------------------------

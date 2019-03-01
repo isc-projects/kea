@@ -633,6 +633,25 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
                           AuditEntry::ModificationType::UPDATE,
                           "subnet set");
     }
+
+    // Insert another subnet.
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]);
+
+    // Fetch this subnet by prefix and verify it matches.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+					 test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(test_subnets_[2]->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the the subnet in the database (both use the same prefix).
+    subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2);
+
+    // Fetch again and verify.
+    returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+					 test_subnets_[2]->toText());
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 }
 
 // Test that the information about unspecified optional parameters gets
