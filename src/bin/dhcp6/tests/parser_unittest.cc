@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,8 @@
 #include <config.h>
 
 #include <gtest/gtest.h>
-#include <cc/data.h>
 #include <dhcp6/parser_context.h>
+#include <dhcpsrv/parsers/simple_parser6.h>
 #include <testutils/io_utils.h>
 #include <testutils/user_context_utils.h>
 
@@ -296,6 +296,17 @@ TEST(ParserTest, file) {
     for (int i = 0; i<configs.size(); i++) {
         testFile(string(CFG_EXAMPLES) + "/" + configs[i]);
     }
+}
+
+// This test loads the all-keys.json file and check global parameters.
+TEST(ParserTest, globalParameters) {
+    ConstElementPtr json;
+    Parser6Context ctx;
+    string fname = string(CFG_EXAMPLES) + "/" + "all-keys.json";
+    EXPECT_NO_THROW(json = ctx.parseFile(fname, Parser6Context::PARSER_DHCP6));
+    EXPECT_NO_THROW(json = json->get("Dhcp6"));
+    SimpleParser6 parser;
+    EXPECT_NO_THROW(parser.checkKeywords(parser.GLOBAL6_PARAMETERS, json));
 }
 
 /// @brief Tests error conditions in Dhcp6Parser

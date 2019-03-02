@@ -29,6 +29,45 @@ namespace dhcp {
 ///
 /// @{
 
+/// @brief This table defines all global parameters in DHCPv6.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows global_param rule in bison grammar.
+const SimpleKeywords SimpleParser6::GLOBAL6_PARAMETERS = {
+    { "preferred-lifetime",           Element::integer },
+    { "valid-lifetime",               Element::integer },
+    { "renew-timer",                  Element::integer },
+    { "rebind-timer",                 Element::integer },
+    { "decline-probation-period",     Element::integer },
+    { "subnet6",                      Element::list },
+    { "shared-networks",              Element::list },
+    { "interfaces-config",            Element::map },
+    { "lease-database",               Element::map },
+    { "hosts-database",               Element::map },
+    { "hosts-databases",              Element::list },
+    { "mac-sources",                  Element::list },
+    { "relay-supplied-options",       Element::list },
+    { "host-reservation-identifiers", Element::list },
+    { "client-classes",               Element::list },
+    { "option-def",                   Element::list },
+    { "option-data",                  Element::list },
+    { "hooks-libraries",              Element::list },
+    { "expired-leases-processing",    Element::map },
+    { "server-id",                    Element::map },
+    { "dhcp4o6-port",                 Element::integer },
+    { "control-socket",               Element::map },
+    { "dhcp-queue-control",           Element::map },
+    { "dhcp-ddns",                    Element::map },
+    { "user-context",                 Element::map },
+    { "comment",                      Element::string },
+    { "sanity-checks",                Element::map },
+    { "reservations",                 Element::list },
+    { "config-control",               Element::map },
+    { "server-tag",                   Element::string },
+    { "reservation-mode",             Element::string }
+};
+
 /// @brief This table defines default values for option definitions in DHCPv6.
 ///
 /// Dhcp6 may contain an array called option-def that enumerates new option
