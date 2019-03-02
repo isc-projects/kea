@@ -99,6 +99,7 @@ public:
         DELETE_SUBNET4_ID,
         DELETE_SUBNET4_PREFIX,
         DELETE_ALL_SUBNETS4,
+        DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
         DELETE_POOLS4_SUBNET_ID,
         DELETE_SHARED_NETWORK4_NAME,
         DELETE_ALL_SHARED_NETWORKS4,
@@ -2268,6 +2269,11 @@ TaggedStatementArray tagged_statements = { {
       MYSQL_DELETE_SUBNET(dhcp4)
     },
 
+    // Delete all subnets for a shared network.
+    { MySqlConfigBackendDHCPv4Impl:: DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
+      MYSQL_DELETE_SUBNET(dhcp4, AND s.shared_network_name = ?)
+    },
+
     // Delete pools for a subnet.
     { MySqlConfigBackendDHCPv4Impl::DELETE_POOLS4_SUBNET_ID,
       MYSQL_DELETE_POOLS(dhcp4)
@@ -2572,6 +2578,16 @@ MySqlConfigBackendDHCPv4::deleteAllSubnets4(const ServerSelector& server_selecto
     return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4,
                                        server_selector, "deleting all subnets",
                                        "deleted all subnets", true));
+}
+
+uint64_t
+MySqlConfigBackendDHCPv4::deleteSharedNetworkSubnets4(const db::ServerSelector& server_selector,
+                                                      const std::string& shared_network_name) {
+    return (impl_->deleteTransactional(MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
+                                       server_selector,
+                                       "deleting all subnets for a shared network",
+                                       "deleted all subnets for a shared network",
+                                       true, shared_network_name));
 }
 
 uint64_t

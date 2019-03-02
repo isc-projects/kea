@@ -328,6 +328,15 @@ ConfigBackendPoolDHCPv6::deleteAllSubnets6(const BackendSelector& backend_select
 }
 
 uint64_t
+ConfigBackendPoolDHCPv6::deleteSharedNetworkSubnets6(const db::BackendSelector& backend_selector,
+                                                     const db::ServerSelector& server_selector,
+                                                     const std::string& shared_network_name) {
+    return (createUpdateDeleteProperty<uint64_t, const std::string&>
+            (&ConfigBackendDHCPv6::deleteSharedNetworkSubnets6, backend_selector, server_selector,
+             shared_network_name));
+}
+
+uint64_t
 ConfigBackendPoolDHCPv6::deleteSharedNetwork6(const BackendSelector& backend_selector,
                                               const ServerSelector& server_selector,
                                               const std::string& name) {
