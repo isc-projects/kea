@@ -269,8 +269,8 @@ TEST(CfgSubnets4Test, mergeSubnets) {
                                               SubnetID(4), 100, shared_network2));
 
     // Fill cfg_from configuration with subnets.
-    // subnet 1b updates subnet 1 but leaves it in network 1
-    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.1.0"),
+    // subnet 1b updates subnet 1 but leaves it in network 1 with the same ID.
+    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.10.0"),
                                    26, 2, 3, 400, SubnetID(1)));
     subnet1b->setSharedNetworkName("shared-network1");
 
@@ -280,9 +280,8 @@ TEST(CfgSubnets4Test, mergeSubnets) {
     option->setData(value.begin(), value.end());
     ASSERT_NO_THROW(subnet1b->getCfgOption()->add(option, false, "isc"));
 
-    // subnet 3b updates subnet 3 and removes it from network 2
     Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
-                                   26, 3, 4, 500, SubnetID(3)));
+                                   26, 3, 4, 500, SubnetID(30)));
 
     // Now Add generic option 1 to subnet 3b.
     value = "Team!";
