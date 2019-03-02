@@ -1088,21 +1088,60 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                   networks[i]->toElement()->str());
     }
 
+    // Add some subnets.
+    test_networks_[1]->add(test_subnets_[0]);
+    test_subnets_[2]->setSharedNetworkName("level2");
+    test_networks_[2]->add(test_subnets_[3]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[0]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[2]);
+    cbptr_->createUpdateSubnet4(ServerSelector::ALL(), test_subnets_[3]);
+
+    // Both ways to attach a subnet are equivalent.
+    Subnet4Ptr subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                           test_subnets_[0]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_EQ("level1", subnet->getSharedNetworkName());
+
+    {
+        SCOPED_TRACE("CREATE audit entry for subnets");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::CREATE,
+                          "subnet set", 3);
+    }
+
     // Deleting non-existing shared network should return 0.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               "big-fish"));
     // All shared networks should be still there.
     ASSERT_EQ(test_networks_.size() - 1, networks.size());
 
-    // Should not delete the subnet for explicit server tag because
-    // our shared network is for all servers.
+    // Should not delete the shared network for explicit server tag
+    // because our shared network is for all servers.
     EXPECT_EQ(0, cbptr_->deleteSharedNetwork4(ServerSelector::ONE("server1"),
                                               test_networks_[1]->getName()));
 
     // Same for all shared networks.
     EXPECT_EQ(0, cbptr_->deleteAllSharedNetworks4(ServerSelector::ONE("server1")));
 
-    // Delete first shared network and verify it is gone.
+    // Delete first shared network with it subnets and verify it is gone.
+
+    // Begin by its subnet.
+    EXPECT_EQ(1, cbptr_->deleteSharedNetworkSubnets4(ServerSelector::ALL(),
+                                                     test_networks_[1]->getName()));
+
+    {
+        SCOPED_TRACE("DELETE audit entry for subnets of the first shared network");
+        testNewAuditEntry("dhcp4_subnet",
+                          AuditEntry::ModificationType::DELETE,
+                          "deleted all subnets for a shared network");
+    }
+
+    // Check that the subnet is gone..
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[0]->getID());
+    EXPECT_FALSE(subnet);
+
+    // And after the shared network itself.
     EXPECT_EQ(1, cbptr_->deleteSharedNetwork4(ServerSelector::ALL(),
                                               test_networks_[1]->getName()));
     networks = cbptr_->getAllSharedNetworks4(ServerSelector::ALL());
@@ -1127,6 +1166,16 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllSharedNetworks4) {
                           AuditEntry::ModificationType::DELETE,
                           "deleted all shared networks", 2);
     }
+
+    // Check that subnets are still there but detached.
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[2]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
+    subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
+                                test_subnets_[3]->getID());
+    ASSERT_TRUE(subnet);
+    EXPECT_TRUE(subnet->getSharedNetworkName().empty());
 }
 
 // Test that shared networks modified after given time can be fetched.
