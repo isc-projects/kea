@@ -17,37 +17,43 @@
 
 #include <config.h>
 
+#include <mysql/testutils/mysql_schema.h>
+
 #include <dhcpsrv/benchmarks/generic_host_data_source_benchmark.h>
 #include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <dhcpsrv/host_mgr.h>
+
 #include <iostream>
 
-using namespace isc::dhcp::bench;
-using namespace isc::dhcp::test;
+using namespace isc::db::test;
 using namespace isc::dhcp;
+using namespace isc::dhcp::bench;
 using namespace std;
 
 namespace {
 
 /// @brief This is a fixture class used for benchmarking MySQL host backend
-class MySqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
-public:
-
+struct MySqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
     /// @brief Setup routine.
     ///
     /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
-        destroyMySQLSchema(false);
-        createMySQLSchema(false);
+        destroyMySQLSchema();
+        createMySQLSchema();
         try {
-            HostDataSourceFactory::destroy();
-            HostDataSourceFactory::create(validMySQLConnectionString());
+            HostMgr::delBackend("mysql");
+            HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             cerr << "ERROR: unable to open database" << endl;
             throw;
         }
-        hdsptr_ = HostDataSourceFactory::getHostDataSourcePtr();
+        hdsptr_ = HostMgr::instance().getHostDataSource();
+    }
+
+    void SetUp(::benchmark::State& s) override {
+        ::benchmark::State const& cs = s;
+        SetUp(cs);
     }
 
     /// @brief Cleans up after the test.
@@ -59,8 +65,13 @@ public:
                     " is opened in read-only mode, continuing..."
                  << endl;
         }
-        HostDataSourceFactory::destroy();
-        destroyMySQLSchema(false);
+        HostMgr::delBackend("mysql");
+        destroyMySQLSchema();
+    }
+
+    void TearDown(::benchmark::State& s) override {
+        ::benchmark::State const& cs = s;
+        TearDown(cs);
     }
 };
 
@@ -85,16 +96,6 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, updateHosts)(benchmark::State& 
 }
 
 /// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by getAll(hw-addr, duid) call.
-BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAllByHWAddrDuid)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGetAllByHWAddrDuid();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll)(benchmark::State& state) {
     const size_t host_count = state.range(0);
@@ -115,16 +116,6 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAllv4Resv)(benchmark::State&
 }
 
 /// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by get4(subnet-id, hw-addr, duid) call.
-BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGet4BySubnetHWAddrDuid();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
 /// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4IdentifierSubnetId)(benchmark::State& state) {
     const size_t host_count = state.range(0);
@@ -141,16 +132,6 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)(benchmark:
     while (state.KeepRunning()) {
         setUpWithInserts(state, host_count);
         benchGet4SubnetIdv4Resrv();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
-/// hosts retrieval by get6(subnet-id, duid, hw-addr) call.
-BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        benchGet6SubnetIdDuidHWAddr();
     }
 }
 
@@ -187,61 +168,55 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& s
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts insertion.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, insertHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts update.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, updateHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by getAll(hw-addr, duid) call.
-BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, getAllByHWAddrDuid)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, getAll)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll(v4-reservation) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, getAllv4Resv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by get4(subnet-id, hw-addr, duid) call.
-BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get4BySubnetHWAddrDuid)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get4IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(subnet-id, v4-reservation) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts retrieval by get6(subnet-id, duid, hw-addr) call.
-BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get6SubnetIdDuidHWAddr)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, identifier-type, identifier) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get6IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, ip-address) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get6SubnetIdAddr)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(ip-prefix, prefix-len) call.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, get6Prefix)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
+    ->Unit(UNIT);
 
 }  // namespace

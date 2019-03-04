@@ -41,12 +41,13 @@ then
 	echo "    get version"
 	echo "libraries:"
 	echo "    libsysrepo"
+	echo "    libSysrepo-cpp"
 	exit 0
 else if [ $# -ne 2 ]
 	then
 		echo "run: \`$0 --help\` for more help"
 		exit 0
-	else if [ $2 != "libsysrepo" ]
+	else if [ $2 != "libsysrepo" ] && [ $2 != "libSysrepo-cpp" ] 
 		then
 			echo "library $2 not supported"
 			echo "run: \`$0 --help\` for more help"
@@ -62,12 +63,12 @@ then
 fi
 if [ $1 == "--cflags-only-I" ]
 then
-	echo "-I${SYSREPO_PATH}/inc/"
+	echo "-I${SYSREPO_PATH}/include/"
 	exit 0
 fi
 if [ $1 == "--libs" ]
 then
-	echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -l:${sysrepo_lib}.a -lSysrepo-cpp -lyang -pthread -lpcre -lev -lprotobuf -lavl -lprotobuf-c"
+	echo "-L${SYSREPO_PATH}/lib/ -L${YANG_LIBRARY_PATH} -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lprotobuf -lavl -lprotobuf-c"
 	exit 0
 fi
 if [ $1 == "--modversion" ]

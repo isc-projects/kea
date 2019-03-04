@@ -928,8 +928,8 @@ if test "$SYSREPO_CONFIG" != "" ; then
     )
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.h>],
-                              [Connection("conn-name");])],
+            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.hpp>],
+                              [sysrepo::Connection("conn-name");])],
             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
              AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.])]
