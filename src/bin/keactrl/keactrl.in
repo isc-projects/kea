@@ -158,7 +158,8 @@ start_server() {
     binary_path=${1}   # Full path to the binary.
     full_command=$@    # Binary and arguments.
     # Extract the name of the binary from the path.
-    local binary_name=$(basename "${binary_path}")
+    local binary_name
+    binary_name=$(basename "${binary_path}")
     # Use the binary name to check if the process is already running.
     check_running "${binary_name}"
     # If process is running, don't start another one. Just log a message.
@@ -177,7 +178,8 @@ stop_server() {
     binary_path=${1}   # Full path to the binary.
     local sig=15
     # Extract the name of the binary from the path.
-    local binary_name=$(basename "${binary_path}")
+    local binary_name
+    binary_name=$(basename "${binary_path}")
 
     # Use the binary name to check if the process is already running.
     check_running "${binary_name}"
@@ -199,7 +201,8 @@ reload_server() {
     binary_path=${1}   # Full path to the binary.
     local sig=1
     # Extract the name of the binary from the path.
-    local binary_name=$(basename "${binary_path}")
+    local binary_name
+    binary_name=$(basename "${binary_path}")
 
     # Use the binary name to check if the process is already running.
     check_running "${binary_name}"
@@ -292,10 +295,12 @@ run_conditional() {
     # Get the configuration value of the keactrl which indicates whether
     # the server should be enabled or not. Variables that hold these values
     # are: ${dhcp4}, ${dhcp6}, ${dhcp_ddns}.
-    local file_config=$( eval printf "%s" "\${$server}" )
+    local file_config
+    file_config=$( eval printf "%s" "\${$server}" )
     # Get the location of the current Kea configuration file. This will be used
     # to check that the file exists before it is used.
-    local kea_config_location=$( eval printf "%s" "\$kea_${server}_config_file" )
+    local kea_config_location
+    kea_config_location=$( eval printf "%s" "\$kea_${server}_config_file" )
     # Run the commands if we ignore the configuration setting or if the
     # setting is "yes".
     if [ "${check_file_cfg}" -eq 0 ] || [ "${file_config}" = "yes" ]; then
