@@ -466,6 +466,9 @@ case ${command} in
 
         # Run servers if they are on the list of servers from the command line
         # and if they are enabled in the keactrl configuration file.
+        # The variables (dhcp4_srv, dhcp6_serv, dhcp_ddns_srv etc) are set in the
+        # keactrl.conf file that shellcheck is unable to read.
+        # shellcheck disable=SC2154
         run_conditional "dhcp4" "start_server ${dhcp4_srv} -c ${kea_dhcp4_config_file} ${args}" 1
         run_conditional "dhcp6" "start_server ${dhcp6_srv} -c ${kea_dhcp6_config_file} ${args}" 1
         run_conditional "dhcp_ddns" "start_server ${dhcp_ddns_srv} -c ${kea_dhcp_ddns_config_file} \
