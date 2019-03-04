@@ -21,8 +21,9 @@ shellcheck:
   before_script:
     - sudo apt-get -y install shellcheck
   script:
-    - SCRIPTS="src/bin/keactrl/keactrl.in"
-    - SCRIPTS+="src/bin/admin/kea-admin.in"
-    - SCRIPTS+="src/bin/admin/admin-utils.sh"
-    - SCRIPTS+="tools/cql_config"
+    - SCRIPTS="src/bin/keactrl/keactrl.in "
+    - SCRIPTS+="src/bin/admin/kea-admin.in "
+    - SCRIPTS+="src/bin/admin/admin-utils.sh "
+    - SCRIPTS+="tools/cql_config "
+    - SCRIPTS+="tools/sysrepo_config "
     - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
