@@ -312,7 +312,6 @@ run_conditional() {
 # altered and only the handful of initial messages will be logged
 # to the default file.
 if [ -z "${KEA_LOGGER_DESTINATION}" ]; then
-    prefix=@prefix@
     export KEA_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
 fi
 
@@ -336,7 +335,6 @@ if [ ${_inlist} -eq 0 ]; then
 fi
 
 # Get the location of the keactrl configuration file.
-prefix=@prefix@
 keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 
 servers="all"
@@ -360,7 +358,7 @@ do
         # executed.
         -s|--server)
             shift
-            servers=$( printf "%s" ${1} | tr "," "\n" )
+            servers=$( printf "%s" "${1}" | tr "," "\n" )
             if [ -z "${servers}" ]; then
                 log_error "servers not specified"
                 usage
@@ -385,7 +383,7 @@ do
 done
 
 # Check if the file exists. If it doesn't, it is a fatal error.
-if [ ! -f ${keactrl_conf} ]; then
+if [ ! -f "${keactrl_conf}" ]; then
     log_error "keactrl configuration file doesn't exist in ${keactrl_conf}."
     exit 1
 fi
@@ -394,32 +392,32 @@ fi
 . ${keactrl_conf}
 
 # Get location of the DHCPv4 server binary.
-if [ -z ${dhcp4_srv} ]; then
+if [ -z "${dhcp4_srv}" ]; then
     log_error "dhcp4_srv parameter not specified"
     exit 1
 fi
 
 # Get location of the DHCPv6 server binary.
-if [ -z ${dhcp6_srv} ]; then
+if [ -z "${dhcp6_srv}" ]; then
     log_error "dhcp6_srv parameter not specified"
     exit 1
 fi
 
 # Get location of the DHCP DDNS server binary.
-if [ -z ${dhcp_ddns} ]; then
+if [ -z "${dhcp_ddns}" ]; then
     log_error "dhcp_ddns parameter not specified"
     exit 1
 fi
 
 # Get location of the Control Agent binary.
-if [ -z ${ctrl_agent_srv} ]; then
+if [ -z "${ctrl_agent_srv}" ]; then
     log_error "ctrl_agent_srv parameter not specified"
     exit 1
 fi
 
 # Get location of the Netconf binary.
-if [ ${have_netconf} -eq 1 ]; then
-    if [ -z ${netconf_srv} ]; then
+if [ "${have_netconf}" -eq 1 ]; then
+    if [ -z "${netconf_srv}" ]; then
         log_error "netconf_srv parameter not specified"
         exit 1
     fi
@@ -427,11 +425,11 @@ fi
 
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
-dhcp4=$( printf "%s" ${dhcp4} | tr '[:upper:]' '[:lower:]' )
-dhcp6=$( printf "%s" ${dhcp6} | tr '[:upper:]' '[:lower:]' )
-dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr '[:upper:]' '[:lower:]' )
-ctrl_agent=$( printf "%s" ${ctrl_agent} | tr '[:upper:]' '[:lower:]' )
-netconf=$( printf "%s" ${netconf} | tr '[:upper:]' '[:lower:]' )
+dhcp4=$( printf "%s" "${dhcp4}" | tr '[:upper:]' '[:lower:]' )
+dhcp6=$( printf "%s" "${dhcp6}" | tr '[:upper:]' '[:lower:]' )
+dhcp_ddns=$( printf "%s" "${dhcp_ddns}" | tr '[:upper:]' '[:lower:]' )
+ctrl_agent=$( printf "%s" "${ctrl_agent}" | tr '[:upper:]' '[:lower:]' )
+netconf=$( printf "%s" "${netconf}" | tr '[:upper:]' '[:lower:]' )
 
 case ${command} in
     # Start the servers.
@@ -478,50 +476,50 @@ ${args}" 1
 
     status)
         kea4_status="inactive"
-        check_running $(basename ${dhcp4_srv})
+        check_running $(basename "${dhcp4_srv}")
         if [ ${_running} -eq 1 ]; then
             kea4_status="active"
         fi
-        printf "DHCPv4 server: %s\n" ${kea4_status}
+        printf "DHCPv4 server: %s\n" "${kea4_status}"
 
         kea6_status="inactive"
-        check_running $(basename ${dhcp6_srv})
+        check_running $(basename "${dhcp6_srv}")
         if [ ${_running} -eq 1 ]; then
             kea6_status="active"
         fi
-        printf "DHCPv6 server: %s\n" ${kea6_status}
+        printf "DHCPv6 server: %s\n" "${kea6_status}"
 
         d2_status="inactive"
-        check_running $(basename ${dhcp_ddns_srv})
+        check_running $(basename "${dhcp_ddns_srv}")
         if [ ${_running} -eq 1 ]; then
             d2_status="active"
         fi
-        printf "DHCP DDNS: %s\n" ${d2_status}
+        printf "DHCP DDNS: %s\n" "${d2_status}"
 
         agent_status="inactive"
-        check_running $(basename ${ctrl_agent_srv})
+        check_running $(basename "${ctrl_agent_srv}")
         if [ ${_running} -eq 1 ]; then
             agent_status="active"
         fi
-        printf "Control Agent: %s\n" ${agent_status}
+        printf "Control Agent: %s\n" "${agent_status}"
 
         if [ ${have_netconf} -eq 1 ]; then
             netconf_status="inactive"
-            check_running $(basename ${netconf_srv})
+            check_running $(basename "${netconf_srv}")
             if [ ${_running} -eq 1 ]; then
                 netconf_status="active"
             fi
-            printf "Netconf agent: %s\n" ${netconf_status}
+            printf "Netconf agent: %s\n" "${netconf_status}"
         fi
 
-        printf "Kea DHCPv4 configuration file: %s\n" ${kea_dhcp4_config_file}
-        printf "Kea DHCPv6 configuration file: %s\n" ${kea_dhcp6_config_file}
-        printf "Kea DHCP DDNS configuration file: %s\n" ${kea_dhcp_ddns_config_file}
-        printf "Kea Control Agent configuration file: %s\n" ${kea_ctrl_agent_config_file}
+        printf "Kea DHCPv4 configuration file: %s\n" "${kea_dhcp4_config_file}"
+        printf "Kea DHCPv6 configuration file: %s\n" "${kea_dhcp6_config_file}"
+        printf "Kea DHCP DDNS configuration file: %s\n" "${kea_dhcp_ddns_config_file}"
+        printf "Kea Control Agent configuration file: %s\n" "${kea_ctrl_agent_config_file}"
         if [ ${have_netconf} -eq 1 ]; then
-            printf "Kea Netconf configuration file: %s\n" ${kea_netconf_config_file}
+            printf "Kea Netconf configuration file: %s\n" "${kea_netconf_config_file}"
         fi
-        printf "keactrl configuration file: %s\n" ${keactrl_conf}
+        printf "keactrl configuration file: %s\n" "${keactrl_conf}"
 
         check_kea_conf ${kea_dhcp4_config_file}
         check_kea_conf ${kea_dhcp6_config_file}
