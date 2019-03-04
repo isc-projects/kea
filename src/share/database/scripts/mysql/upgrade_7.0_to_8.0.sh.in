@@ -531,10 +531,32 @@ ALTER TABLE dhcp6_global_parameter
 -- Rename dhcp6_subnet_id column of dhcp6_pool and dhcp6_pd_pool
 
 ALTER TABLE dhcp6_pool
+    DROP FOREIGN KEY fk_dhcp6_pool_subnet_id;
+DROP INDEX fk_dhcp6_pool_subnet_id
+    ON dhcp6_pool;
+
+ALTER TABLE dhcp6_pd_pool
+    DROP FOREIGN KEY fk_dhcp6_pd_pool_subnet_id;
+DROP INDEX fk_dhcp6_pd_pool_subnet_id
+    ON dhcp6_pd_pool;
+
+ALTER TABLE dhcp6_pool
     CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
 
 ALTER TABLE dhcp6_pd_pool
     CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_pool
+    ADD CONSTRAINT fk_dhcp6_pool_subnet_id
+    FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id
+    FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- align dhcp6_shared_network_server indexes on dhcp4_shared_network_server
 
