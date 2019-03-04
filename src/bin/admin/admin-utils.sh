@@ -24,6 +24,8 @@ mysql_execute() {
         mysql -N -B "$@" -e "${QUERY}"
         retcode=$?
     else
+        # Shellcheck complains about variables not being set. They're set in the script that calls this script.
+        # shellcheck disable=SC2154
         mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
         retcode=$?
     fi

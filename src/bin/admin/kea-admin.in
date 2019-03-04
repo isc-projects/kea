@@ -43,12 +43,12 @@ fi
 
 # Prints out usage version.
 usage() {
-    printf "kea-admin $VERSION\n"
+    printf "kea-admin %s\n" "$VERSION"
     printf "\n"
     printf "This is a kea-admin script that conducts administrative tasks on\n"
     printf "the Kea installation.\n"
     printf "\n"
-    printf "Usage: $0 COMMAND BACKEND [parameters]\n"
+    printf "Usage: %s COMMAND BACKEND [parameters]\n" "$0"
     printf "\n"
     printf "COMMAND: Currently supported operations are:\n"
     printf "\n"
@@ -66,7 +66,7 @@ usage() {
     printf " -u or --user name - specifies username when connecting to a database\n"
     printf " -p or --password pass - specifies a password when connecting to a database\n"
     printf " -n or --name database - specifies a database name to connect to\n"
-    printf " -d or --directory - path to upgrade scripts (default: ${SCRIPTS_DIR_DEFAULT})\n"
+    printf " -d or --directory - path to upgrade scripts (default: %s)\n" "${SCRIPTS_DIR_DEFAULT}"
     printf " -v or --version - print kea-admin version and quit.\n"
     printf "\n"
     printf " Parameters specific to lease-dump:\n"
@@ -81,19 +81,19 @@ usage() {
 # Logs message at the error level.
 # Takes one parameter that is printed as is.
 log_error() {
-    printf "ERROR/kea-admin: ${1}\n"
+    printf "ERROR/kea-admin: %s\n" "${1}"
 }
 
 # Logs message at the warning level.
 # Takes one parameter that is printed as is.
 log_warning() {
-    printf "WARNING/kea-admin: ${1}\n"
+    printf "WARNING/kea-admin: %s\n" "${1}"
 }
 
 # Logs message at the info level.
 # Takes one parameter that is printed as is.
 log_info() {
-    printf "INFO/kea-admin: ${1}\n"
+    printf "INFO/kea-admin: %s\n" "${1}"
 }
 
 ### Convenience functions ###
@@ -105,14 +105,14 @@ is_in_list() {
     local member=${1}  # Value to be checked
     local list="${2}"  # Comma separated list of items
     _inlist=0          # Return value: 0 if not in list, 1 otherwise.
-    if [ -z ${member} ]; then
-        log_error "missing ${class}"
+    if [ -z "${member}" ]; then
+        log_error "missing member (need to specify a string as first param)"
     fi
     # Iterate over all items on the list and compare with the member.
     # If they match, return, otherwise log error and exit.
     for item in ${list}
     do
-        if [ ${item} = ${member} ]; then
+        if [ "${item}" = "${member}" ]; then
             _inlist=1
             return
         fi
@@ -141,7 +141,7 @@ mysql_init() {
     # We should not hide them as they may give hints to user what is wrong with
     # his setup.
     #
-    RESULT=`mysql_execute "SHOW TABLES;"`
+    RESULT=$(mysql_execute "SHOW TABLES;")
     ERRCODE=$?
     if [ $ERRCODE -ne  0 ]
     then
@@ -149,8 +149,8 @@ mysql_init() {
         exit 1
     fi
 
-    COUNT=`echo $RESULT | wc -w`
-    if [ $COUNT -gt 0 ]; then
+    COUNT=$(echo "$RESULT" | wc -w)
+    if [ "$COUNT" -gt 0 ]; then
         # Let's start with a new line. mysql could have printed something out.
         printf "\n"
         log_error "Expected empty database $db_name, but there are $COUNT tables: \n$RESULT. Aborting."
@@ -161,7 +161,7 @@ mysql_init() {
     mysql -B --host=$db_host --user=$db_user --password=$db_password $db_name < $scripts_dir/mysql/dhcpdb_create.mysql
     ERRCODE=$?
 
-    printf "mysql returned status code $ERRCODE\n"
+    printf "mysql returned status code %s\n" "$ERRCODE"
 
     if [ "$ERRCODE" -eq 0 ]; then
         printf "Lease DB version reported after initialization: "
@@ -177,15 +177,15 @@ pgsql_init() {
 
     # Let's try to count the number of tables. Anything above 0 means that there
     # is some database in place. If there is anything, we abort.
-    RESULT=`pgsql_execute "\d"`
+    RESULT=$(pgsql_execute "\d")
     ERRCODE=$?
     if [ "$ERRCODE" -ne 0 ]; then
         log_error "pgsql_init: table query failed, status code: $ERRCODE?"
         exit 1
     fi
 
-    COUNT=`echo "$RESULT" | wc -w`
-    if [ $COUNT -gt 0 ]; then
+    COUNT=$(echo "$RESULT" | wc -w)
+    if [ "$COUNT" -gt 0 ]; then
         printf "\n"
         log_error "Expected empty database $db_name, but the following tables are present \n$RESULT. Aborting."
         exit 2
@@ -193,15 +193,15 @@ pgsql_init() {
 
     init_script="$scripts_dir/pgsql/dhcpdb_create.pgsql"
     printf "Initializing database using script %s\n" $init_script
-    RESULT=`pgsql_execute_script $init_script`
+    RESULT=$(pgsql_execute_script $init_script)
     ERRCODE=$?
     if [ "$ERRCODE" -ne 0 ]; then
         log_error "Database initialization failed, status code: $ERRCODE?"
         exit 1
     fi
 
-    version=`pgsql_version`
-    printf "Lease DB version reported after initialization: $version\n"
+    version=$(pgsql_version)
+    printf "Lease DB version reported after initialization: %s\n" "$version"
     exit 0
 }
 
@@ -257,7 +257,7 @@ mysql_upgrade() {
 
     # Check if there are any files in it
     num_files=$(find ${scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
-    if [ $num_files -eq 0 ]; then
+    if [ "$num_files" -eq 0 ]; then
         log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
@@ -265,7 +265,7 @@ mysql_upgrade() {
     for script in ${scripts_dir}/mysql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} --host=${db_host} --user=${db_user} --password=${db_password} ${db_name}
+        sh "${script}" --host="${db_host}" --user="${db_user}" --password="${db_password}" "${db_name}"
     done
 
     printf "Lease DB version reported after upgrade: "
@@ -274,8 +274,8 @@ mysql_upgrade() {
 }
 
 pgsql_upgrade() {
-    version=`pgsql_version`
-    printf "Lease DB version reported before upgrade: $version\n"
+    version=$(pgsql_version)
+    printf "Lease DB version reported before upgrade: %s\n" "$version"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/pgsql ]; then
@@ -285,7 +285,7 @@ pgsql_upgrade() {
 
     # Check if there are any files in it
     num_files=$(find ${scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
-    if [ $num_files -eq 0 ]; then
+    if [ "$num_files" -eq 0 ]; then
         log_error "No scripts in ${scripts_dir}/pgsql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
     fi
@@ -297,17 +297,17 @@ pgsql_upgrade() {
     for script in ${scripts_dir}/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
-        sh ${script} -U ${db_user} -h ${db_host} -d ${db_name}
+        sh "${script}" -U "${db_user}" -h "${db_host}" -d "${db_name}"
     done
 
-    version=`pgsql_version`
-    printf "Lease DB version reported after upgrade: $version\n"
+    version=$(pgsql_version)
+    printf "Lease DB version reported after upgrade: %s\n" "$version"
     exit 0
 }
 
 cql_upgrade() {
-    version=`cql_version`
-    printf "Lease DB version reported before upgrade: $version\n"
+    version=$(cql_version)
+    printf "Lease DB version reported before upgrade: %s\n" "$version"
 
     # Check if the scripts directory exists at all.
     if [ ! -d ${scripts_dir}/cql ]; then
@@ -322,19 +322,20 @@ cql_upgrade() {
     fi
 
     # Check if there are upgrade scripts.
-    files=$(find ${scripts_dir}/cql/upgrade*.sh -type f)
-    if [ $? -eq 0 ]; then # Upgrade scripts are present.
+    find ${scripts_dir}/cql/upgrade*.sh -type f
+    retcode=$?
+    if [ $retcode -eq 0 ]; then # Upgrade scripts are present.
         for script in ${scripts_dir}/cql/upgrade*.sh
         do
             echo "Processing $script file..."
-            sh ${script} -u ${db_user} -p ${db_password} -k ${db_name}
+            sh "${script}" -u "${db_user}" -p "${db_password}" -k "${db_name}"
         done
     else
         echo "No upgrade script available."
     fi
 
-    version=`cql_version`
-    printf "Lease DB version reported after upgrade: $version\n"
+    version=$(cql_version)
+    printf "Lease DB version reported after upgrade: %s\n" "$version"
     exit 0
 }
 
@@ -343,12 +344,12 @@ cql_upgrade() {
 # to abort the current command.
 check_file_overwrite () {
     local file=$1
-    if [ -e ${file} ]
+    if [ -e "${file}" ]
     then
         echo "Output file, $file, exists and will be overwritten."
         echo "Do you wish to continue? (y/n)"
         read ans
-        if [ ${ans} != "y" ]
+        if [ "${ans}" != "y" ]
         then
             echo "$command aborted by user."
             exit 1
@@ -396,7 +397,7 @@ mysql_dump() {
     fi
 
     # get the correct dump query
-    version=`mysql_version`
+    version=$(mysql_version)
     retcode=$?
     if [ $retcode -ne 0 ]
     then
@@ -406,7 +407,7 @@ mysql_dump() {
 
     # Fetch the correct SQL text. Note this function will exit
     # if it fails.
-    get_dump_query $version
+    get_dump_query "$version"
 
     # Make sure they specified a file
     if [ "$dump_file" = "" ]; then
@@ -437,7 +438,8 @@ mysql_dump() {
 
     # Now translate tabs to commas.
     cat $tmp_file | tr '\t' ',' >$dump_file
-    if [ $? -ne 0 ]; then
+    retcode=$?
+    if [ $retcode -ne 0 ]; then
         log_error "lease-dump: reformatting failed";
         exit 1
     fi
@@ -457,8 +459,8 @@ pgsql_dump() {
         exit 1
     fi
 
-    version=`pgsql_version`
-    get_dump_query $version
+    version=$(pgsql_version)
+    get_dump_query "$version"
 
     # Make sure they specified a file
     if [ "$dump_file" = "" ]; then
@@ -513,7 +515,7 @@ cql_dump() {
     check_file_overwrite $dump_file
 
     # Run query, check for failure.
-    result=`cql_execute "$dump_query"`
+    result=$(cql_execute "$dump_query")
     return_code=$?
     if [ $return_code -ne 0 ]; then
         log_error "lease-dump: cql_execute failed, exit code $return_code";
@@ -535,7 +537,7 @@ cql_dump() {
 
 # First, find what the command is
 command=${1}
-if [ -z ${command} ]; then
+if [ -z "${command}" ]; then
     log_error "missing command"
     usage
     exit 1
