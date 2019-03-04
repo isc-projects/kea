@@ -8,6 +8,10 @@ variables:
 
   CI_REGISTRY_IMAGE: registry.gitlab.isc.org/isc-projects/images/bind9
 
+# Disabled warnings:
+# SC2039 - complains about local var: In POSIX sh, 'local' is undefined.
+  SHELLCHECK_OPTS: "--exclude=SC2039"
+
 stages:
   - test
 
@@ -18,4 +22,4 @@ shellcheck:
     - sudo apt-get -y install shellcheck
   script:
     - SCRIPTS="src/bin/keactrl/keactrl.in src/bin/admin/kea-admin.in src/bin/admin/admin-utils.sh"
-    - shellcheck ${SCRIPTS}
+    - shellcheck ${SCRIPTS} ${SHELLCHECK_OPTS}
