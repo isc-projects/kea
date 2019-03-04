@@ -1,3 +1,9 @@
+1534.	[func]		marcin
+	MySQL config backend correctly handles the optional values for
+	subnets and shared networks. Also, updated the MySQL config
+	backend to store and fetch T1 and T2 percentage settings.
+	(Gitlab #489,!250, git 01fc4d5bb4105b90c7025e8ca8131c3c15203848)
+
 1533.	[doc]		sgoldlust,stephen
 	Kea User's Guide significantly updated.
 	(Gitlab #362,!182, git 4b7a8df6054d18f2c90fe61d93533466f89e6324)
