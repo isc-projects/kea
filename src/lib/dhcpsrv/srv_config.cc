@@ -177,23 +177,26 @@ SrvConfig::merge(ConfigBase& other) {
 
 void
 SrvConfig::merge4(SrvConfig& other) {
-    /// We merge objects in order of dependency (real or theoretical).
+    // We merge objects in order of dependency (real or theoretical).
 
-    /// Merge globals.
+    // Merge globals.
     mergeGlobals4(other);
 
-    /// Merge option defs
+    // Merge option defs
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-    /// @todo merge options
+    // Merge options
+    // @todo should we sanity check and make sure
+    // that there are option defs for merged options?
+    cfg_option_->merge((*other.getCfgOption()));
 
     // Merge shared networks.
     cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
 
-    /// Merge subnets.
+    // Merge subnets.
     cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
 
-    /// @todo merge other parts of the configuration here.
+    // @todo merge other parts of the configuration here.
 }
 
 void
