@@ -332,14 +332,28 @@ public:
     /// @throw isc::BadValue if the option space is invalid.
     void add(const OptionDescriptor& desc, const std::string& option_space);
 
+    /// @brief Merges another option configuration into this one.
+    ///
+    /// This method calls @c mergeTo() to add this configuration's
+    /// options into @c other (skipping any duplicates). It then calls
+    /// @c copyTo() to overwrite this configurations' options with
+    /// the merged set in @c other. 
+    ///
+    /// @warning The merge operation will affect the @c other configuration.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    ///
+    /// @param option configurations to merge with.
+    void merge(CfgOption& other);
+
     /// @brief Merges this configuration to another configuration.
     ///
     /// This method iterates over the configuration items held in this
     /// configuration and copies them to the configuration specified
     /// as a parameter. If an item exists in the destination it is not
     /// copied.
-    ///
-    /// @note: this method is not longer used so should become private.
     ///
     /// @param [out] other Configuration object to merge to.
     void mergeTo(CfgOption& other) const;
