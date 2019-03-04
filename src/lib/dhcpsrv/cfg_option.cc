@@ -82,6 +82,18 @@ CfgOption::getVendorIdsSpaceNames() const {
 }
 
 void
+CfgOption::merge(CfgOption& other) {
+    // First we merge our options into other.
+    // This adds my opitions that are not
+    // in other, to other (i.e we skip over
+    // duplicates). 
+    mergeTo(other);
+
+    // Next we copy "other" on top of ourself.
+    other.copyTo(*this);
+}
+
+void
 CfgOption::mergeTo(CfgOption& other) const {
     // Merge non-vendor options.
     mergeInternal(options_, other.options_);
