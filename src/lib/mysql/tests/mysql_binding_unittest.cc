@@ -28,6 +28,7 @@ TEST(MySqlBindingTest, defaultString) {
     EXPECT_EQ("foo", binding->getStringOrDefault("foo"));
 
     binding = MySqlBinding::createString("bar");
+    ASSERT_FALSE(binding->amNull());
     EXPECT_EQ("bar", binding->getStringOrDefault("foo"));
 }
 
@@ -100,9 +101,11 @@ TEST(MySqlBindingTest, blobTypeMismatch) {
 // This test verifies that default number is returned if binding is null.
 TEST(MySqlBindingTest, defaultInteger) {
     auto binding = MySqlBinding::createNull();
+    ASSERT_TRUE(binding->amNull());
     EXPECT_EQ(123, binding->getIntegerOrDefault<uint32_t>(123));
 
     binding = MySqlBinding::createInteger<uint32_t>(1024);
+    ASSERT_FALSE(binding->amNull());
     EXPECT_EQ(1024, binding->getIntegerOrDefault<uint32_t>(123));
 }
 

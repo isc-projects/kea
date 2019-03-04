@@ -632,7 +632,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
 
 // Test that the information about unspecified optional parameters gets
 // propagated to the database.
-TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithDefaults) {
+TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4WithOptionalUnspecified) {
     // Insert new subnet.
     Subnet4Ptr subnet = test_subnets_[2];
     cbptr_->createUpdateSubnet4(ServerSelector::ALL(), subnet);
@@ -997,7 +997,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4) {
 
 // Test that the information about unspecified optional parameters gets
 // propagated to the database.
-TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithDefaults) {
+TEST_F(MySqlConfigBackendDHCPv4Test, getSharedNetwork4WithOptionalUnspecified) {
     // Insert new shared network.
     SharedNetwork4Ptr shared_network = test_networks_[2];
     cbptr_->createUpdateSharedNetwork4(ServerSelector::ALL(), shared_network);
