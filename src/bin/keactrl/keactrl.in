@@ -89,10 +89,12 @@ get_pid_from_file() {
     esac
 
     # Extract the name portion of the config file
-    local conf_name=$(basename "${kea_config_file}" | cut -f1 -d'.')
+    local conf_name
+    conf_name=$(basename "${kea_config_file}" | cut -f1 -d'.')
 
     # Default the directory to --localstatedir
-    local pid_file_dir=@localstatedir@/@PACKAGE@
+    local pid_file_dir
+    pid_file_dir=@localstatedir@/@PACKAGE@
 
     # Use directory override if set (primarily for testing only)
     if [ ! -z "$KEA_PIDFILE_DIR" ]; then
@@ -429,7 +431,7 @@ if [ "${have_netconf}" -eq 1 ]; then
 fi
 
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
-# respectively.
+# respectively. The same is true for ddns, ctrl-agent and netconf.
 dhcp4=$( printf "%s" "${dhcp4}" | tr '[:upper:]' '[:lower:]' )
 dhcp6=$( printf "%s" "${dhcp6}" | tr '[:upper:]' '[:lower:]' )
 dhcp_ddns=$( printf "%s" "${dhcp_ddns}" | tr '[:upper:]' '[:lower:]' )
@@ -508,10 +510,10 @@ ${args}" 1
         fi
         printf "Control Agent: %s\n" "${agent_status}"
 
-        if [ ${have_netconf} -eq 1 ]; then
+        if [ "${have_netconf}" -eq 1 ]; then
             netconf_status="inactive"
             check_running $(basename "${netconf_srv}")
-            if [ ${_running} -eq 1 ]; then
+            if [ "${_running}" -eq 1 ]; then
                 netconf_status="active"
             fi
             printf "Netconf agent: %s\n" "${netconf_status}"
@@ -521,17 +523,17 @@ ${args}" 1
         printf "Kea DHCPv6 configuration file: %s\n" "${kea_dhcp6_config_file}"
         printf "Kea DHCP DDNS configuration file: %s\n" "${kea_dhcp_ddns_config_file}"
         printf "Kea Control Agent configuration file: %s\n" "${kea_ctrl_agent_config_file}"
-        if [ ${have_netconf} -eq 1 ]; then
+        if [ "${have_netconf}" -eq 1 ]; then
             printf "Kea Netconf configuration file: %s\n" "${kea_netconf_config_file}"
         fi
         printf "keactrl configuration file: %s\n" "${keactrl_conf}"
 
-        check_kea_conf ${kea_dhcp4_config_file}
-        check_kea_conf ${kea_dhcp6_config_file}
-        check_kea_conf ${kea_dhcp_ddns_config_file}
-        check_kea_conf ${kea_ctrl_agent_config_file}
-        if [ ${have_netconf} -eq 1 ]; then
-            check_kea_conf ${kea_netconf_config_file}
+        check_kea_conf "${kea_dhcp4_config_file}"
+        check_kea_conf "${kea_dhcp6_config_file}"
+        check_kea_conf "${kea_dhcp_ddns_config_file}"
+        check_kea_conf "${kea_ctrl_agent_config_file}"
+        if [ "${have_netconf}" -eq 1 ]; then
+            check_kea_conf "${kea_netconf_config_file}"
         fi
 
         exit 0 ;;
