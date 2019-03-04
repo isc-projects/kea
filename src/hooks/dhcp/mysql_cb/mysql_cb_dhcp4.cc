@@ -278,7 +278,8 @@ public:
             MySqlBinding::createTimestamp(), //option: modification_ts
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
-            MySqlBinding::createInteger<float>() // t2_percent
+            MySqlBinding::createInteger<float>(), // t2_percent
+            MySqlBinding::createInteger<uint8_t>() // authoritative
         };
 
         uint64_t last_pool_id = 0;
@@ -438,6 +439,11 @@ public:
                 // t2_percent
                 if (!out_bindings[51]->amNull()) {
                     last_subnet->setT2Percent(out_bindings[51]->getFloat());
+                }
+
+                // authoritative
+                if (!out_bindings[52]->amNull()) {
+                    last_subnet->setAuthoritative(out_bindings[52]->getBool());
                 }
 
                 // Subnet ready. Add it to the list.
@@ -798,7 +804,8 @@ public:
             createBinding(subnet->getValid()),
             MySqlBinding::condCreateBool(subnet->getCalculateTeeTimes()),
             MySqlBinding::condCreateFloat(subnet->getT1Percent()),
-            MySqlBinding::condCreateFloat(subnet->getT2Percent())
+            MySqlBinding::condCreateFloat(subnet->getT2Percent()),
+            MySqlBinding::condCreateBool(subnet->getAuthoritative())
         };
 
         MySqlTransaction transaction(conn_);
@@ -1004,7 +1011,8 @@ public:
             MySqlBinding::createTimestamp(), //option: modification_ts
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
-            MySqlBinding::createInteger<float>() // t2_percent
+            MySqlBinding::createInteger<float>(), // t2_percent
+            MySqlBinding::createInteger<uint8_t>() // authoritative
         };
 
         uint64_t last_network_id = 0;
@@ -1116,6 +1124,11 @@ public:
                 // t2_percent
                 if (!out_bindings[27]->amNull()) {
                     last_network->setT2Percent(out_bindings[27]->getFloat());
+                }
+
+                // authoritative
+                if (!out_bindings[28]->amNull()) {
+                    last_network->setAuthoritative(out_bindings[28]->getBool());
                 }
 
                 shared_networks.push_back(last_network);
@@ -1241,7 +1254,8 @@ public:
             createBinding(shared_network->getValid()),
             MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
             MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
-            MySqlBinding::condCreateFloat(shared_network->getT2Percent())
+            MySqlBinding::condCreateFloat(shared_network->getT2Percent()),
+            MySqlBinding::condCreateBool(shared_network->getAuthoritative())
         };
 
         MySqlTransaction transaction(conn_);
@@ -2061,9 +2075,10 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
-      "  t2_percent"
+      "  t2_percent,"
+      "  authoritative"
       ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?,"
-      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the subnet with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SUBNET4_SERVER,
@@ -2092,8 +2107,9 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime,"
       "  calculate_tee_times,"
       "  t1_percent,"
-      "  t2_percent"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  t2_percent,"
+      "  authoritative"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2150,7 +2166,8 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
-      "  t2_percent = ? "
+      "  t2_percent = ?,"
+      "  authoritative = ? "
       "WHERE subnet_id = ?" },
 
     // Update existing shared network.
@@ -2170,7 +2187,8 @@ TaggedStatementArray tagged_statements = { {
       "  valid_lifetime = ?,"
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
-      "  t2_percent = ? "
+      "  t2_percent = ?,"
+      "  authoritative = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.

@@ -1344,6 +1344,7 @@ ALTER TABLE dhcp6_options
     DEFAULT CURRENT_TIMESTAMP;
 
 ALTER TABLE dhcp4_subnet
+    ADD COLUMN authoritative TINYINT(1) DEFAULT NULL,
     ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
     ADD COLUMN t1_percent FLOAT DEFAULT NULL,
     ADD COLUMN t2_percent FLOAT DEFAULT NULL;
@@ -1355,6 +1356,7 @@ ALTER TABLE dhcp4_subnet
     MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
 
 ALTER TABLE dhcp4_shared_network
+    ADD COLUMN authoritative TINYINT(1) DEFAULT NULL,
     ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
     ADD COLUMN t1_percent FLOAT DEFAULT NULL,
     ADD COLUMN t2_percent FLOAT DEFAULT NULL;
