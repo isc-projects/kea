@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2017 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -17,15 +17,15 @@
 
 #include <config.h>
 
-#include <exceptions/exceptions.h>
 #include <asiolink/io_address.h>
+#include <exceptions/exceptions.h>
+#include <cql/cql_connection.h>
+#include <cql/testutils/cql_schema.h>
 #include <dhcpsrv/host.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/cql_connection.h>
 #include <dhcpsrv/cql_lease_mgr.h>
 #include <dhcpsrv/cql_host_data_source.h>
-#include <dhcpsrv/testutils/cql_schema.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/tests/test_utils.h>
@@ -40,6 +40,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::data;
@@ -289,6 +291,29 @@ TEST(CqlConnection, checkTimeConversion) {
 // We currently don't test Cassandra in read-only mode.
 TEST_F(CqlHostDataSourceTest, DISABLED_testReadOnlyDatabase) {
     testReadOnlyDatabase(CQL_VALID_TYPE);
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+TEST_F(CqlHostDataSourceTest, getAll4BySubnet) {
+    testGetAll4();
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+TEST_F(CqlHostDataSourceTest, getAll6BySubnet) {
+    testGetAll6();
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+// by pages.
+// Does not work because TOKEN(id) order is not the same than id...
+TEST_F(CqlHostDataSourceTest, DISABLED_getPage4) {
+    testGetPage4();
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+// by pages.
+TEST_F(CqlHostDataSourceTest, DISABLED_getPage6) {
+    testGetPage6();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

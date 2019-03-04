@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -46,6 +46,13 @@ public:
     ///
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr discoverWithTruncatedVIVSO();
+
+    /// @brief returns captured DISCOVER from Genexis hardware.
+    ///
+    /// This device in uncommon, because it doesn't send VIVSO in Dicover, but
+    /// expects one in Offer.
+    /// @return DISCOVER.
+    static isc::dhcp::Pkt4Ptr discoverGenexis();
 
     // see pkt_captures6.cc for descriptions
     // The descriptions are too large and too closely related to the

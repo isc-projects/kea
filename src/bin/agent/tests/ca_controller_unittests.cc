@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,8 +40,9 @@ const char* valid_agent_config =
     "  }"
     "}";
 
-/// @brief test fixture class for testing CtrlAgentController class. This
-/// class derives from DControllerTest and wraps CtrlAgentController. Much
+/// @brief test fixture class for testing CtrlAgentController class.
+///
+/// This class derives from DControllerTest and wraps CtrlAgentController. Much
 /// of the underlying functionality is in the DControllerBase class which
 /// has extensive set of unit tests that are independent from the Control
 /// Agent.
@@ -167,8 +168,8 @@ public:
 // Verifies that the controller singleton gets created and that the
 // basic derivation from the base class is intact.
 TEST_F(CtrlAgentControllerTest, basicInstanceTesting) {
-    // Verify the we can the singleton instance can be fetched and that
-    // it is the correct type.
+    // Verify the singleton instance can be fetched and that
+    // it has the correct type.
     DControllerBasePtr& controller = DControllerTest::getController();
     ASSERT_TRUE(controller);
     ASSERT_NO_THROW(boost::dynamic_pointer_cast<CtrlAgentController>(controller));
@@ -255,7 +256,7 @@ TEST_F(CtrlAgentControllerTest, sigintShutdown) {
 
 // Tests that the SIGTERM triggers a normal shutdown.
 TEST_F(CtrlAgentControllerTest, sigtermShutdown) {
-    // Setup to raise SIGHUP in 1 ms.
+    // Setup to raise SIGTERM in 1 ms.
     TimedSignal sighup(*getIOService(), SIGTERM, 1);
 
     // Write valid_agent_config and then run launch() for a maximum of 1 s.
@@ -447,6 +448,8 @@ TEST_F(CtrlAgentControllerTest, registeredCommands) {
     // Check that the following command are really available.
     checkCommandRegistered("build-report");
     checkCommandRegistered("config-get");
+    checkCommandRegistered("config-reload");
+    checkCommandRegistered("config-set");
     checkCommandRegistered("config-test");
     checkCommandRegistered("config-write");
     checkCommandRegistered("list-commands");
@@ -505,6 +508,150 @@ TEST_F(CtrlAgentControllerTest, configWrite) {
 
     // Remove the file.
     ::remove(file.c_str());
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlAgentControllerTest, configReloadMissingFile) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution should
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    getController()->setConfigFile("does-not-exist.json");
+
+    // Build and execute the command.
+    string cmd_txt = "{ \"command\": \"config-reload\" }";
+    ConstElementPtr cmd = Element::fromJSON(cmd_txt);
+    ConstElementPtr params;
+    ConstElementPtr answer;
+    answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
+                                                           params, cmd);
+
+    // Verify the reload was rejected.
+    string expected = "[ { \"result\": 1, \"text\": "
+        "\"Configuration parsing failed: "
+        "Unable to open file does-not-exist.json\" } ]";
+    EXPECT_EQ(expected, answer->str());
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is not a valid JSON.
+TEST_F(CtrlAgentControllerTest, configReloadBrokenFile) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution should
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    getController()->setConfigFile("testbad.json");
+
+    // Although Kea is smart, its AI routines are not smart enough to handle
+    // this one... at least not yet.
+    ofstream f("testbad.json", ios::trunc);
+    f << "bla bla bla...";
+    f.close();
+
+    // Build and execute the command.
+    string cmd_txt = "{ \"command\": \"config-reload\" }";
+    ConstElementPtr cmd = Element::fromJSON(cmd_txt);
+    ConstElementPtr params;
+    ConstElementPtr answer;
+    answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
+                                                           params, cmd);
+
+    // Verify the reload was rejected.
+    string expected = "[ { \"result\": 1, \"text\": "
+        "\"Configuration parsing failed: "
+        "testbad.json:1.1: Invalid character: b\" } ]";
+    EXPECT_EQ(expected, answer->str());
+
+    // Remove the file.
+    ::remove("testbad.json");
+
+    // Now clean up after ourselves.
+    ctrl->deregisterCommands();
+}
+
+// Tests if config-reload attempts to reload a file and reports that the
+// file is missing.
+TEST_F(CtrlAgentControllerTest, configReloadFileValid) {
+    ASSERT_NO_THROW(initProcess());
+    EXPECT_TRUE(checkProcess());
+
+    // The framework available makes it very difficult to test the actual
+    // code as CtrlAgentController is not initialized the same way it is
+    // in production code. In particular, the way CtrlAgentController
+    // is initialized in tests does not call registerCommands().
+    // This is a crude workaround for this problem. Proper solution should
+    // be developed sooner rather than later.
+    const DControllerBasePtr& base = getController();
+    const CtrlAgentControllerPtr& ctrl
+        = boost::dynamic_pointer_cast<CtrlAgentController>(base);
+    ASSERT_TRUE(ctrl);
+    // Now clean up after ourselves.
+    ctrl->registerCommands();
+
+    // This is normally set to whatever value is passed to -c when the server is
+    // started, but we're not starting it that way, so need to set it by hand.
+    getController()->setConfigFile("testvalid.json");
+
+    // Ok, enough fooling around. Let's create a valid config.
+    ofstream f("testvalid.json", ios::trunc);
+    f << "{ \"Control-agent\": "
+      << string(valid_agent_config)
+      << " }" << endl;
+    f.close();
+
+    // Build and execute the command.
+    string cmd_txt = "{ \"command\": \"config-reload\" }";
+    ConstElementPtr cmd = Element::fromJSON(cmd_txt);
+    ConstElementPtr params;
+    ConstElementPtr answer;
+    answer = CtrlAgentCommandMgr::instance().handleCommand("config-reload",
+                                                           params, cmd);
+
+
+    // Verify the reload was successful.
+    string expected = "[ { \"result\": 0, \"text\": "
+        "\"Configuration applied successfully.\" } ]";
+    EXPECT_EQ(expected, answer->str());
+
+    // Check that the config was indeed applied?
+
+    // Remove the file.
+    ::remove("testvalid.json");
 
     // Now clean up after ourselves.
     ctrl->deregisterCommands();

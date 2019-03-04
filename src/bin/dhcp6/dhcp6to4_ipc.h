@@ -45,6 +45,10 @@ public:
     ///
     /// The handler sends the DHCPv6 packet back to the remote address
     static void handler();
+
+    /// @param client_port UDP port where all responses are sent to.
+    /// Not zero is mostly useful for testing purposes.
+    static uint16_t client_port;
 };
 
 } // namespace isc

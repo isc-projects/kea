@@ -50,6 +50,8 @@ using namespace std;
   NULL_TYPE "null"
 
   DHCP6 "Dhcp6"
+  CONFIG_CONTROL "config-control"
+  CONFIG_DATABASES "config-databases"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   RE_DETECT "re-detect"
@@ -83,6 +85,7 @@ using namespace std;
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
+  SERVER_TAG "server-tag"
   SUBNET6 "subnet6"
   OPTION_DEF "option-def"
   OPTION_DATA "option-data"
@@ -115,6 +118,7 @@ using namespace std;
   RESERVATION_MODE "reservation-mode"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
+  GLOBAL "global"
   ALL "all"
   SHARED_NETWORKS "shared-networks"
 
@@ -169,6 +173,8 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
+  DHCP_QUEUE_CONTROL "dhcp-queue-control"
+
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
   QUALIFYING_SUFFIX "qualifying-suffix"
@@ -179,7 +185,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
   OVERRIDE_NO_UPDATE "override-no-update"
   OVERRIDE_CLIENT_UPDATE "override-client-update"
   REPLACE_CLIENT_NAME "replace-client-name"
@@ -224,6 +229,7 @@ using namespace std;
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
   SUB_LOGGING
+  SUB_CONFIG_CONTROL
 ;
 
 %token <std::string> STRING "constant string"
@@ -262,6 +268,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
      | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
+     | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -450,11 +457,15 @@ global_param: preferred_lifetime
             | server_id
             | dhcp4o6_port
             | control_socket
+            | dhcp_queue_control
             | dhcp_ddns
             | user_context
             | comment
             | sanity_checks
             | reservations
+            | config_control
+            | server_tag
+            | reservation_mode
             | unknown_map_entry
             ;
 
@@ -481,6 +492,14 @@ rebind_timer: REBIND_TIMER COLON INTEGER {
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
+};
+
+server_tag: SERVER_TAG  {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-tag", stag);
+    ctx.leave();
 };
 
 interfaces_config: INTERFACES_CONFIG {
@@ -1078,6 +1097,7 @@ reservation_mode: RESERVATION_MODE {
 
 hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1))); }
        | OUT_OF_POOL { $$ = ElementPtr(new StringElement("out-of-pool", ctx.loc2pos(@1))); }
+       | GLOBAL { $$ = ElementPtr(new StringElement("global", ctx.loc2pos(@1))); }
        | ALL { $$ = ElementPtr(new StringElement("all", ctx.loc2pos(@1))); }
        ;
 
@@ -1905,6 +1925,46 @@ socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
+// --- dhcp-queue-control ---------------------------------------------
+
+dhcp_queue_control: DHCP_QUEUE_CONTROL {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ElementPtr qc = $4;
+    ctx.stack_.back()->set("dhcp-queue-control", qc);
+
+    // Doing this manually, because dhcp-queue-control
+    // content is otherwise arbitrary
+    if (!qc->contains("enable-queue")) {
+        std::stringstream msg;
+        msg << "'enable-queue' is required: ";
+        msg  << "(" << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
+    // queue-enable is mandatory
+    ConstElementPtr enable_queue = qc->get("enable-queue");
+    if (enable_queue->getType() != Element::boolean) {
+        std::stringstream msg;
+        msg << "'enable-queue' must be boolean: ";
+        msg  << "(" << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+     }
+
+    // if queue-type is supplied make sure it's a string
+    if (qc->contains("queue-type")) {
+        ConstElementPtr queue_type = qc->get("queue-type");
+        if (queue_type->getType() != Element::string) {
+            std::stringstream msg;
+            msg << "'queue-type' must be a string: ";
+            msg  << "(" << qc->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+    }
+
+    ctx.leave();
+};
+
 // --- dhcp ddns ---------------------------------------------
 
 dhcp_ddns: DHCP_DDNS {
@@ -1942,7 +2002,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | always_include_fqdn
                | override_no_update
                | override_client_update
                | replace_client_name
@@ -2016,11 +2075,6 @@ ncr_format: NCR_FORMAT {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(@4)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
-};
-
-always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("always-include-fqdn", b);
 };
 
 override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
@@ -2106,6 +2160,46 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.leave();
 };
 
+// Config control information element
+
+config_control: CONFIG_CONTROL {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-control", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.CONFIG_CONTROL);
+} COLON LCURLY_BRACKET config_control_params RCURLY_BRACKET {
+    // No config control params are required
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_config_control: LCURLY_BRACKET {
+    // Parse the config-control map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} config_control_params RCURLY_BRACKET {
+    // No config_control params are required
+    // parsing completed
+};
+
+// This defines that subnet can have one or more parameters.
+config_control_params: config_control_param
+                     | config_control_params COMMA config_control_param
+                     ;
+
+// This defines a list of allowed parameters for each subnet.
+config_control_param: config_databases
+                    ;
+
+config_databases: CONFIG_DATABASES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-databases", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CONFIG_DATABASE);
+} COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
 
 // --- logging entry -----------------------------------------
 

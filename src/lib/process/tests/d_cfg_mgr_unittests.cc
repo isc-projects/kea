@@ -8,7 +8,6 @@
 
 #include <cc/command_interpreter.h>
 #include <exceptions/exceptions.h>
-#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <process/testutils/d_test_stubs.h>
 #include <process/d_cfg_mgr.h>
 
@@ -33,7 +32,7 @@ class DCtorTestCfgMgr : public DCfgMgrBase {
 public:
     /// @brief Constructor - Note that is passes in an empty configuration
     /// pointer to the base class constructor.
-    DCtorTestCfgMgr() : DCfgMgrBase(DCfgContextBasePtr()) {
+    DCtorTestCfgMgr() : DCfgMgrBase(ConfigPtr()) {
     }
 
     /// @brief Destructor
@@ -41,8 +40,8 @@ public:
     }
 
     /// @brief Dummy implementation as this method is abstract.
-    virtual DCfgContextBasePtr createNewContext() {
-        return (DCfgContextBasePtr());
+    virtual ConfigPtr createNewContext() {
+        return (ConfigPtr());
     }
 
     /// @brief Returns summary of configuration in the textual format.
@@ -93,7 +92,7 @@ TEST(DCfgMgrBase, construction) {
     ASSERT_NO_THROW(cfg_mgr.reset(new DStubCfgMgr()));
 
     // Verify that the context can be retrieved and is not null.
-    DCfgContextBasePtr context = cfg_mgr->getContext();
+    ConfigPtr context = cfg_mgr->getContext();
     EXPECT_TRUE(context);
 
     // Verify that the manager can be destructed without error.
@@ -115,140 +114,12 @@ TEST_F(DStubCfgMgrTest, basicParseTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that we can parse a simple configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
 
     // Verify that we can check a simple configuration.
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, true);
     EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that an unknown element error is caught and returns a failed
-    // parse result.
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that an error is caught too when the config is checked for.
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
-    EXPECT_TRUE(checkAnswer(1));
-}
-
-///@brief Tests ordered and non-ordered element parsing
-/// This test verifies that:
-/// 1. Non-ordered parsing parses elements in the order they are presented
-/// by the configuration set (as-they-come).
-/// 2. A parse order list with too few elements is detected.
-/// 3. Ordered parsing parses the elements in the order specified by the
-/// configuration manager's parse order list.
-/// 4. A parse order list with too many elements is detected.
-TEST_F(DStubCfgMgrTest, parseOrderTest) {
-    // Element ids used for test.
-    std::string charlie("charlie");
-    std::string bravo("bravo");
-    std::string alpha("alpha");
-    std::string string_test("string_test");
-    std::string uint32_test("uint32_test");
-    std::string bool_test("bool_test");
-
-    // Create the test configuration with the elements in "random" order.
-
-    // NOTE that element sets produced by  isc::data::Element::fromJSON(),
-    // are in lexical order by element_id. This means that iterating over
-    // such an element set, will present the elements in lexical order. Should
-    // this change, this test will need to be modified accordingly.
-    string config = "{"
-                    " \"string_test\": \"hoopla\", "
-                    " \"bravo\": [],  "
-                    " \"uint32_test\": 55, "
-                    " \"alpha\": {},  "
-                    " \"charlie\": [], "
-                    " \"bool_test\": true "
-                    "} ";
-
-    ASSERT_TRUE(fromJSON(config));
-
-    // Verify that non-ordered parsing, results in an as-they-come parse order.
-    // Create an expected parse order.
-    // (NOTE that iterating over Element sets produced by fromJSON() will
-    // present the elements in lexical order.  Should this change, the expected
-    // order list below would need to be changed accordingly).
-    ElementIdList order_expected;
-
-    // scalar params should be first and lexically
-    order_expected.push_back(bool_test);
-    order_expected.push_back(string_test);
-    order_expected.push_back(uint32_test);
-
-    // objects second and lexically
-    order_expected.push_back(alpha);
-    order_expected.push_back(bravo);
-    order_expected.push_back(charlie);
-
-    // Verify that the manager has an EMPTY parse order list. (Empty list
-    // instructs the manager to parse them as-they-come.)
-    EXPECT_EQ(0, cfg_mgr_->getParseOrder().size());
-
-    // Parse the configuration, verify it parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(0));
-
-    // Verify that the parsed order matches what we expected.
-    EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
-
-    // Clear the manager's parse order "memory".
-    cfg_mgr_->parsed_order_.clear();
-
-    // Create a parse order list that has too few entries.  Verify that
-    // when parsing the test config, it fails.
-    cfg_mgr_->addToParseOrder(charlie);
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(1, cfg_mgr_->getParseOrder().size());
-
-    // Verify the configuration fails.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-
-    // Verify that the configuration parses correctly, when the parse order
-    // is correct.  Add the needed entries to the parse order
-    cfg_mgr_->addToParseOrder(bravo);
-    cfg_mgr_->addToParseOrder(alpha);
-
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(3, cfg_mgr_->getParseOrder().size());
-
-    // Clear the manager's parse order "memory".
-    cfg_mgr_->parsed_order_.clear();
-
-    // Verify the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(0));
-
-    // Build expected order
-    // primitives should be first and lexically
-    order_expected.clear();
-    order_expected.push_back(bool_test);
-    order_expected.push_back(string_test);
-    order_expected.push_back(uint32_test);
-
-    // objects second and by the parse order
-    order_expected.push_back(charlie);
-    order_expected.push_back(bravo);
-    order_expected.push_back(alpha);
-
-    // Verify that the parsed order is the order we configured.
-    EXPECT_TRUE(cfg_mgr_->parsed_order_ ==  order_expected);
-
-    // Create a parse order list that has too many entries.  Verify that
-    // when parsing the test config, it fails.
-    cfg_mgr_->addToParseOrder("delta");
-
-    // Verify the parse order list is the size we expect.
-    EXPECT_EQ(4, cfg_mgr_->getParseOrder().size());
-
-    // Verify the configuration fails.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
 }
 
 /// @brief Tests that element ids supported by the base class as well as those
@@ -271,35 +142,10 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
-
-    // Verify that the boolean parameter was parsed correctly by retrieving
-    // its value from the context.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    // Verify that the uint32 parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    // Verify that the string parameter was parsed correctly by retrieving
-    // its value from the context.
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
@@ -310,42 +156,10 @@ TEST_F(DStubCfgMgrTest, simpleTypesTest) {
     ASSERT_TRUE(fromJSON(config2));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
     ASSERT_TRUE(context);
-
-    // Verify that the boolean parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_bool = true;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_FALSE(actual_bool);
-
-    // Verify that the uint32 parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(88, actual_uint32);
-
-    // Verify that the string parameter was updated correctly by retrieving
-    // its value from the context.
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("ewww yuk!", actual_string);
-
-    // Verify previous objects are not there.
-    EXPECT_THROW(context->getObjectParam("map_test", object),
-                                         isc::dhcp::DhcpConfigError);
-    EXPECT_THROW(context->getObjectParam("list_test", object),
-                                         isc::dhcp::DhcpConfigError);
-
-    // Verify new map object is there.
-    EXPECT_NO_THROW(context->getObjectParam("map_test2", object));
-    EXPECT_TRUE(object);
-
-    // Verify new list object is there.
-    EXPECT_NO_THROW(context->getObjectParam("list_test2", object));
-    EXPECT_TRUE(object);
 }
 
 /// @brief Tests that the configuration context is preserved after failure
@@ -361,30 +175,10 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
-
-    // Verify that all of parameters have the expected values.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values
     // plus one unknown at the end.
@@ -395,32 +189,6 @@ TEST_F(DStubCfgMgrTest, rollBackTest) {
                     "  \"list_test2\": [] , "
                     "  \"zeta_unknown\": 33 } ";
     ASSERT_TRUE(fromJSON(config2));
-
-    // Force a failure on the last element
-    SimFailure::set(SimFailure::ftElementUnknown);
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
-    EXPECT_TRUE(checkAnswer(1));
-    context = getStubContext();
-    ASSERT_TRUE(context);
-
-    // Verify that all of parameters have the original values.
-    actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 }
 
 /// @brief Tests that the configuration context is preserved during
@@ -435,30 +203,11 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     EXPECT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that all of parameters have the expected values.
-    bool actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    std::string actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    isc::data::ConstElementPtr object;
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 
     // Create a configuration which "updates" all of the parameter values.
     string config2 = "{ \"bool_test\": false , "
@@ -468,29 +217,11 @@ TEST_F(DStubCfgMgrTest, checkOnly) {
                     "  \"list_test2\": [] }";
     ASSERT_TRUE(fromJSON(config2));
 
-    answer_ = cfg_mgr_->parseConfig(config_set_, true);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, true);
     EXPECT_TRUE(checkAnswer(0));
     context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that all of parameters have the original values.
-    actual_bool = false;
-    EXPECT_NO_THROW(context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-
-    actual_uint32 = 0;
-    EXPECT_NO_THROW(context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-
-    actual_string = "";
-    EXPECT_NO_THROW(context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-
-    EXPECT_NO_THROW(context->getObjectParam("map_test", object));
-    EXPECT_TRUE(object);
-
-    EXPECT_NO_THROW(context->getObjectParam("list_test", object));
-    EXPECT_TRUE(object);
 }
 
 // Tests that configuration element position is returned by getParam variants.
@@ -503,39 +234,11 @@ TEST_F(DStubCfgMgrTest, paramPosition) {
     ASSERT_TRUE(fromJSON(config));
 
     // Verify that the configuration parses without error.
-    answer_ = cfg_mgr_->parseConfig(config_set_, false);
+    answer_ = cfg_mgr_->simpleParseConfig(config_set_, false);
     ASSERT_TRUE(checkAnswer(0));
     DStubContextPtr context = getStubContext();
     ASSERT_TRUE(context);
 
-    // Verify that the boolean parameter was parsed correctly by retrieving
-    // its value from the context.
-    bool actual_bool = false;
-    isc::data::Element::Position pos;
-    EXPECT_NO_THROW(pos = context->getParam("bool_test", actual_bool));
-    EXPECT_EQ(true, actual_bool);
-    EXPECT_EQ(1, pos.line_);
-
-    // Verify that the uint32 parameter was parsed correctly by retrieving
-    // its value from the context.
-    uint32_t actual_uint32 = 0;
-    EXPECT_NO_THROW(pos = context->getParam("uint32_test", actual_uint32));
-    EXPECT_EQ(77, actual_uint32);
-    EXPECT_EQ(2, pos.line_);
-
-    // Verify that the string parameter was parsed correctly by retrieving
-    // its value from the context.
-    std::string actual_string = "";
-    EXPECT_NO_THROW(pos = context->getParam("string_test", actual_string));
-    EXPECT_EQ("hmmm chewy", actual_string);
-    EXPECT_EQ(3, pos.line_);
-
-    // Verify that an optional parameter that is not defined, returns the
-    // zero position.
-    pos = isc::data::Element::ZERO_POSITION();
-    EXPECT_NO_THROW(pos = context->getParam("bogus_value",
-                                            actual_string, true));
-    EXPECT_EQ(pos.file_, isc::data::Element::ZERO_POSITION().file_);
 }
 
 // This tests if some aspects of simpleParseConfig are behaving properly.

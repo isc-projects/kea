@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,18 +10,27 @@
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/subnet.h>
+#include <process/logging_info.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc::asiolink;
 using namespace isc::dhcp;
 using namespace isc::data;
+using namespace isc::process;
 
 // Those are the tests for SrvConfig storage. Right now they are minimal,
 // but the number is expected to grow significantly once we migrate more
 // parameters from CfgMgr storage to SrvConfig storage.
 
 namespace {
+
+/// @brief Derivation of the @c ConfigBase not being @c SrvConfig.
+///
+/// This is used to verify that the appropriate error is returned
+/// when other derivation of the @c ConfigBase than @c SrvConfig
+/// is used.
+class NonSrvConfig : public ConfigBase { };
 
 /// @brief Number of IPv4 and IPv6 subnets to be created for a test.
 const int TEST_SUBNETS_NUM = 3;
@@ -284,6 +293,22 @@ TEST_F(SrvConfigTest, echoClientId) {
     // Check the other constructor has the same default
     SrvConfig conf1(1);
     EXPECT_TRUE(conf1.getEchoClientId());
+}
+
+// This test verifies that server-tag may be configured.
+TEST_F(SrvConfigTest, serverTag) {
+    SrvConfig conf;
+
+    // Check that the default is an empty string.
+    EXPECT_TRUE(conf.getServerTag().empty());
+
+    // Check that it can be modified.
+    conf.setServerTag("boo");
+    EXPECT_EQ("boo", conf.getServerTag());
+
+    // Check the other constructor has the same default
+    SrvConfig conf1(1);
+    EXPECT_EQ("boo", conf.getServerTag());
 }
 
 // This test checks if entire configuration can be copied and that the sequence
@@ -588,7 +613,7 @@ TEST_F(SrvConfigTest, unparseHR) {
 
     // Add a v4 global host reservation to the plain subnet
     HostPtr ghost4(new Host("AA:01:02:03:04:05", "hw-address",
-                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED, 
+                            SUBNET_ID_GLOBAL, SUBNET_ID_UNUSED,
                             IOAddress("192.0.3.1")));
     conf4.getCfgHosts()->add(ghost4);
 
@@ -749,7 +774,7 @@ TEST_F(SrvConfigTest, unparseHR) {
     conf6.getCfgHosts()->add(phost6);
 
     // Add a host reservation to the shared subnet
-    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED, 
+    HostPtr shost6(new Host("f6:e5:d4:c3:b2:a1", "duid", SUBNET_ID_UNUSED,
                             s_id, IOAddress::IPV4_ZERO_ADDRESS(),
                             "bar.example.org"));
     conf6.getCfgHosts()->add(shost6);
@@ -866,6 +891,172 @@ TEST_F(SrvConfigTest, unparseHR) {
     ASSERT_TRUE(check);
     ASSERT_EQ(Element::string, check->getType());
     EXPECT_EQ("bar.example.org", check->stringValue());
+}
+
+// Verifies that the toElement method does not miss config control info
+TEST_F(SrvConfigTest, unparseConfigControlInfo4) {
+    // DHCPv4 version
+    CfgMgr::instance().setFamily(AF_INET);
+    SrvConfig conf4(32);
+
+    // Unparse the config
+    ConstElementPtr unparsed4 = conf4.toElement();
+    ASSERT_TRUE(unparsed4);
+    ASSERT_EQ(Element::map, unparsed4->getType());
+
+    // Get Dhcp4 entry
+    ConstElementPtr dhcp4;
+    ASSERT_NO_THROW(dhcp4 = unparsed4->get("Dhcp4"));
+    ASSERT_TRUE(dhcp4);
+    ASSERT_EQ(Element::map, dhcp4->getType());
+
+    // Config control should not be present.
+    ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp4->get("config-control"));
+    EXPECT_FALSE(check);
+
+    // Now let's create the info and add it to the configuration
+    ConfigControlInfoPtr info(new ConfigControlInfo());
+    ASSERT_NO_THROW(info->addConfigDatabase("type=mysql"));
+    ASSERT_NO_THROW(conf4.setConfigControlInfo(info));
+
+    // Unparse the config again
+    unparsed4 = conf4.toElement();
+    ASSERT_NO_THROW(dhcp4 = unparsed4->get("Dhcp4"));
+    ASSERT_TRUE(dhcp4);
+    ASSERT_EQ(Element::map, dhcp4->getType());
+
+    // Config control should be present.
+    ASSERT_NO_THROW(check = dhcp4->get("config-control"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Unparse the info object and compare its elements to
+    // that in unparsed config.  They should be equal.
+    ElementPtr info_elem = info->toElement();
+    EXPECT_TRUE(info_elem->equals(*check));
+}
+
+// Verifies that the toElement method does not miss config control info
+TEST_F(SrvConfigTest, unparseConfigControlInfo6) {
+    // DHCPv6 version
+    CfgMgr::instance().setFamily(AF_INET6);
+    SrvConfig conf6(32);
+
+    // Unparse the config
+    ConstElementPtr unparsed6 = conf6.toElement();
+    ASSERT_TRUE(unparsed6);
+    ASSERT_EQ(Element::map, unparsed6->getType());
+
+    // Get Dhcp4 entry
+    ConstElementPtr dhcp6;
+    ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
+    ASSERT_TRUE(dhcp6);
+    ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Config control should not be present.
+    ConstElementPtr check;
+    ASSERT_NO_THROW(check = dhcp6->get("config-control"));
+    EXPECT_FALSE(check);
+
+    // Now let's create the info and add it to the configuration
+    ConfigControlInfoPtr info(new ConfigControlInfo());
+    ASSERT_NO_THROW(info->addConfigDatabase("type=mysql"));
+    ASSERT_NO_THROW(conf6.setConfigControlInfo(info));
+
+    // Unparse the config again
+    unparsed6 = conf6.toElement();
+    ASSERT_NO_THROW(dhcp6 = unparsed6->get("Dhcp6"));
+    ASSERT_TRUE(dhcp6);
+    ASSERT_EQ(Element::map, dhcp6->getType());
+
+    // Config control should be present.
+    ASSERT_NO_THROW(check = dhcp6->get("config-control"));
+    ASSERT_TRUE(check);
+    ASSERT_EQ(Element::map, check->getType());
+
+    // Unparse the info object and compare its elements to
+    // that in unparsed config.  They should be equal.
+    ElementPtr info_elem = info->toElement();
+    EXPECT_TRUE(info_elem->equals(*check));
+}
+
+// Verifies that exception is thrown when instead of SrvConfig
+// another derivation of ConfigBase is used in the call to
+// merge.
+TEST_F(SrvConfigTest, mergeBadCast) {
+    SrvConfig srv_config;
+    NonSrvConfig non_srv_config;
+    ASSERT_THROW(srv_config.merge(non_srv_config), isc::InvalidOperation);
+}
+
+// This test verifies that globals from one SrvConfig
+// can be merged into another. It verifies that values
+// in the from-config override those in to-config which
+// override those in GLOBAL4_DEFAULTS.
+TEST_F(SrvConfigTest, mergeGlobals4) {
+    // Set the family we're working with.
+    CfgMgr::instance().setFamily(AF_INET);
+
+    // Let's create the "existing" config we will merge into.
+    SrvConfig cfg_to;
+
+    // Set some explicit values. 
+    cfg_to.setDeclinePeriod(100);
+    cfg_to.setEchoClientId(false);
+    cfg_to.setDhcp4o6Port(777);
+    cfg_to.setServerTag("not_this_server");
+
+    // Add some configured globals
+    cfg_to.addConfiguredGlobal("decline-probation-period", Element::create(300));
+    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(888));
+
+    // Now we'll create the config we'll merge from.
+    SrvConfig cfg_from;
+
+    // Set some explicit values. None of these should be preserved.
+    cfg_from.setDeclinePeriod(200);
+    cfg_from.setEchoClientId(true);
+    cfg_from.setDhcp4o6Port(888);
+    cfg_from.setServerTag("nor_this_server");
+
+    // Add some configured globals:
+    cfg_to.addConfiguredGlobal("dhcp4o6port", Element::create(999));
+    cfg_to.addConfiguredGlobal("server-tag", Element::create("use_this_server"));
+
+    // Now let's merge.
+    ASSERT_NO_THROW(cfg_to.merge(cfg_from));
+
+    // Make sure the explicit values are set correctly.
+
+    // decline-probation-period should be the "to" configured value.
+    EXPECT_EQ(300, cfg_to.getDeclinePeriod());
+
+    // echo-client-id should be the preserved "to" member value.
+    EXPECT_EQ(false, cfg_to.getEchoClientId());
+
+    //  dhcp4o6port should be the "from" configured value.
+    EXPECT_EQ(999, cfg_to.getDhcp4o6Port());
+
+    //  server-tag port should be the "from" configured value.
+    EXPECT_EQ("use_this_server", cfg_to.getServerTag());
+
+    // Next we check the explicitly "configured" globals. 
+    // The list should be all of the "to" + "from", with the
+    // latter overwriting the former.
+    std::string exp_globals =
+        "{ \n"
+        "   \"decline-probation-period\": 300,  \n"
+        "   \"dhcp4o6port\": 999,  \n"
+        "   \"server-tag\": \"use_this_server\"  \n"
+        "} \n";
+
+    ConstElementPtr expected_globals;
+    ASSERT_NO_THROW(expected_globals = Element::fromJSON(exp_globals))
+                    << "exp_globals didn't parse, test is broken";
+
+    EXPECT_TRUE(isEquivalent(expected_globals, cfg_to.getConfiguredGlobals()));
+
 }
 
 } // end of anonymous namespace

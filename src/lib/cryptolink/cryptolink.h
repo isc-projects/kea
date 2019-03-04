@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 #include <exceptions/exceptions.h>
 
 #include <boost/noncopyable.hpp>
-#include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 #include <memory>
 
@@ -41,6 +41,10 @@ class Hash;
 
 // Forward declaration for createHMAC()
 class HMAC;
+
+// Forward declaration for getRNG()
+class RNG;
+typedef boost::shared_ptr<RNG> RNGPtr;
 
 /// General exception class that is the base for all crypto-related
 /// exceptions
@@ -84,8 +88,9 @@ public:
         CryptoLinkError(file, line, what) {}
 };
 
-/// Forward declaration for pimpl
+/// Forward declarations for pimpl
 class CryptoLinkImpl;
+class RNGImpl;
 
 /// \brief Singleton entry point and factory class
 ///
@@ -209,6 +214,14 @@ public:
     HMAC* createHMAC(const void* secret, size_t secret_len,
                      const HashAlgorithm hash_algorithm);
 
+    /// \brief Get the global RNG
+    ///
+    /// \exception NotImplemented if the method was not implemented
+    ///                           in a derived class
+    /// \exception LibraryError if there was any unexpected exception
+    ///                         in the underlying library
+    virtual RNGPtr& getRNG();
+
 private:
     // To enable us to use an optional explicit initialization call,
     // the 'real' instance getter is private
@@ -220,6 +233,8 @@ private:
     ~CryptoLink();
 
     CryptoLinkImpl* impl_;
+
+    RNGPtr rng_;
 };
 
 } // namespace cryptolink

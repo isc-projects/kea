@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,12 +11,17 @@
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcp/tests/iface_mgr_test_config.h>
+#include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/cfg_subnets4.h>
+#include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
 #include <testutils/test_to_element.h>
+#include <util/doubles.h>
+
 #include <gtest/gtest.h>
 #include <vector>
 
@@ -27,6 +32,31 @@ using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {
+
+void checkMergedSubnet(CfgSubnets4& cfg_subnets,
+                       const SubnetID exp_subnet_id,
+                       const std::string& prefix,
+                       int exp_valid,
+                       SharedNetwork4Ptr exp_network) {
+
+    // The subnet1 should be replaced by subnet4 but the shared network
+    // should not be affected.
+    auto subnet = cfg_subnets.getByPrefix(prefix);
+    ASSERT_TRUE(subnet) << "subnet: " << prefix << " not found";
+    ASSERT_EQ(exp_subnet_id, subnet->getID()) << "subnet ID is wrong";
+    ASSERT_EQ(exp_valid, subnet->getValid()) << "subnet valid time is wrong";
+
+    SharedNetwork4Ptr shared_network;
+    subnet->getSharedNetwork(shared_network);
+    if (exp_network) {
+        ASSERT_TRUE(shared_network)
+            << " expected network: " << exp_network->getName() << " not found";
+        ASSERT_TRUE(shared_network == exp_network) << " networks do no match";
+    } else {
+        ASSERT_FALSE(shared_network) << " unexpected network assignment: "
+            << shared_network->getName();
+    }
+}
 
 // This test verifies that specific subnet can be retrieved by specifying
 // subnet identifier or subnet prefix.
@@ -105,6 +135,111 @@ TEST(CfgSubnets4Test, deleteSubnet) {
     ASSERT_NO_THROW(cfg.del(subnet2));
     ASSERT_EQ(2, cfg.getAll()->size());
     EXPECT_FALSE(cfg.getByPrefix("192.0.3.0/26"));
+}
+
+// This test verifies that subnets configuration is properly merged.
+TEST(CfgSubnets4Test, mergeSubnets) {
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 1, 2, 100, SubnetID(1)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 100, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 100, SubnetID(3)));
+    Subnet4Ptr subnet4(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 1, 2, 100, SubnetID(4)));
+
+
+    // Create the "existing" list of shared networks
+    CfgSharedNetworks4Ptr networks(new CfgSharedNetworks4());
+    SharedNetwork4Ptr shared_network1(new SharedNetwork4("shared-network1"));
+    networks->add(shared_network1);
+    SharedNetwork4Ptr shared_network2(new SharedNetwork4("shared-network2"));
+    networks->add(shared_network2);
+
+    // Empty network pointer.
+    SharedNetwork4Ptr no_network;
+
+    // Add Subnets 1, 2 and 4 to shared networks.
+    ASSERT_NO_THROW(shared_network1->add(subnet1));
+    ASSERT_NO_THROW(shared_network2->add(subnet2));
+    ASSERT_NO_THROW(shared_network2->add(subnet4));
+
+    // Create our "existing" configured subnets.
+    CfgSubnets4 cfg_to;
+    ASSERT_NO_THROW(cfg_to.add(subnet1));
+    ASSERT_NO_THROW(cfg_to.add(subnet2));
+    ASSERT_NO_THROW(cfg_to.add(subnet3));
+    ASSERT_NO_THROW(cfg_to.add(subnet4));
+
+
+    // Merge in an "empty" config. Should have the original config,
+    // still intact.
+    CfgSubnets4 cfg_from;
+    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
+
+    // We should have all four subnets, with no changes.
+    ASSERT_EQ(4, cfg_to.getAll()->size());
+
+
+    // Should be no changes to the configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
+                                              "192.0.1.0/26", 100, shared_network1));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
+                                              "192.0.2.0/26", 100, shared_network2));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
+                                              "192.0.3.0/26", 100, no_network));
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
+                                              "192.0.4.0/26", 100, shared_network2));
+
+    // Fill cfg_from configuration with subnets.
+    // subnet 1b updates subnet 1 but leaves it in network 1
+    Subnet4Ptr subnet1b(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 2, 3, 400, SubnetID(1)));
+    subnet1b->setSharedNetworkName("shared-network1");
+
+    // subnet 3b updates subnet 3 and removes it from network 2
+    Subnet4Ptr subnet3b(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 3, 4, 500, SubnetID(3)));
+
+    // subnet 4b updates subnet 4 and moves it from network2 to network 1
+    Subnet4Ptr subnet4b(new Subnet4(IOAddress("192.0.4.0"),
+                                   26, 3, 4, 500, SubnetID(4)));
+    subnet4b->setSharedNetworkName("shared-network1");
+
+    // subnet 5 is new and belongs to network 2
+    Subnet4Ptr subnet5(new Subnet4(IOAddress("192.0.5.0"),
+                                   26, 1, 2, 300, SubnetID(5)));
+    subnet5->setSharedNetworkName("shared-network2");
+
+    // Add subnets to the merge from config.
+    ASSERT_NO_THROW(cfg_from.add(subnet1b));
+    ASSERT_NO_THROW(cfg_from.add(subnet3b));
+    ASSERT_NO_THROW(cfg_from.add(subnet4b));
+    ASSERT_NO_THROW(cfg_from.add(subnet5));
+
+    // Merge again.
+    ASSERT_NO_THROW(cfg_to.merge(networks, cfg_from));
+    ASSERT_EQ(5, cfg_to.getAll()->size());
+
+    // The subnet1 should be replaced by subnet1b.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(1),
+                                              "192.0.1.0/26", 400, shared_network1));
+
+    // The subnet2 should not be affected because it was not present.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(2),
+                                              "192.0.2.0/26", 100, shared_network2));
+
+    // subnet3 should be replaced by subnet3b and no longer assigned to a network.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(3),
+                                              "192.0.3.0/26", 500, no_network));
+
+    // subnet4 should be replaced by subnet4b and moved to network1.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(4),
+                                              "192.0.4.0/26", 500, shared_network1));
+
+    // subnet5 should have been added to configuration.
+    ASSERT_NO_FATAL_FAILURE(checkMergedSubnet(cfg_to, SubnetID(5),
+                                              "192.0.5.0/26", 300, shared_network2));
 }
 
 // This test verifies that it is possible to retrieve a subnet using an
@@ -735,12 +870,21 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.2.0"), 26, 1, 2, 3, 123));
     Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.64"), 26, 1, 2, 3, 124));
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
+
     subnet1->allowClientClass("foo");
+    // These two should not appear, as calculateTeeTimes should be false.
+    subnet1->setT1Percent(0.45);
+    subnet1->setT2Percent(0.70);
+
     subnet2->setIface("lo");
     subnet2->addRelayAddress(IOAddress("10.0.0.1"));
+
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
+    subnet3->setCalculateTeeTimes(true);
+    subnet3->setT1Percent(0.50);
+    subnet3->setT2Percent(0.65);
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -769,6 +913,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
+        "    \"authoritative\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n"
@@ -787,6 +932,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
+        "    \"authoritative\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"user-context\": {},\n"
         "    \"option-data\": [ ],\n"
@@ -806,10 +952,14 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
+        "    \"authoritative\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n,"
-        "    \"require-client-classes\": [ \"foo\", \"bar\" ]\n"
+        "    \"require-client-classes\": [ \"foo\", \"bar\" ],\n"
+        "    \"calculate-tee-times\": true,\n"
+        "    \"t1-percent\": 0.50,\n"
+        "    \"t2-percent\": 0.65\n"
         "} ]\n";
     runToElementTest<CfgSubnets4>(expected, cfg);
 }
@@ -851,6 +1001,7 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
+        "    \"authoritative\": false,\n"
         "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [],\n"
         "    \"pools\": [\n"
@@ -908,6 +1059,112 @@ TEST(CfgSubnets4Test, hasSubnetWithServerId) {
 
     EXPECT_TRUE(cfg.hasSubnetWithServerId(IOAddress("1.2.3.4")));
     EXPECT_FALSE(cfg.hasSubnetWithServerId(IOAddress("2.3.4.5")));
+}
+
+// This test verifies the Subnet4 parser's validation logic for
+// t1-percent and t2-percent parameters.
+TEST(CfgSubnets4Test, teeTimePercentValidation) {
+
+    // Describes a single test scenario.
+    struct Scenario {
+        std::string label;         // label used for logging test failures
+        bool calculate_tee_times;  // value of calculate-tee-times parameter
+        double t1_percent;         // value of t1-percent parameter
+        double t2_percent;         // value of t2-percent parameter
+        std::string error_message; // expected error message is parsing should fail
+    };
+
+    // Test Scenarios.
+    std::vector<Scenario> tests = {
+        {"off and valid", false, .5, .95, ""},
+        {"on and valid", true, .5, .95, ""},
+        {"t2_negative", true, .5, -.95,
+         "subnet configuration failed: t2-percent:"
+         "  -0.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t2_too_big", true, .5, 1.95,
+         "subnet configuration failed: t2-percent:"
+         "  1.95 is invalid, it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_negative", true, -.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  -0.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_too_big", true, 1.5, .95,
+         "subnet configuration failed: t1-percent:"
+         "  1.5 is invalid it must be greater than 0.0 and less than 1.0"
+        },
+        {"t1_bigger_than_t2", true, .85, .45,
+         "subnet configuration failed: t1-percent:"
+         "  0.85 is invalid, it must be less than t2-percent: 0.45"
+        }
+    };
+
+    // First we create a set of elements that provides all
+    // required for a Subnet4.
+    std::string json =
+        "        {"
+        "            \"id\": 1,\n"
+        "            \"subnet\": \"10.1.2.0/24\", \n"
+        "            \"interface\": \"\", \n"
+        "            \"renew-timer\": 100, \n"
+        "            \"rebind-timer\": 200, \n"
+        "            \"valid-lifetime\": 300, \n"
+        "            \"match-client-id\": false, \n"
+        "            \"authoritative\": false, \n"
+        "            \"next-server\": \"\", \n"
+        "            \"server-hostname\": \"\", \n"
+        "            \"boot-file-name\": \"\", \n"
+        "            \"client-class\": \"\", \n"
+        "            \"require-client-classes\": [] \n,"
+        "            \"reservation-mode\": \"all\", \n"
+        "            \"4o6-interface\": \"\", \n"
+        "            \"4o6-interface-id\": \"\", \n"
+        "            \"4o6-subnet\": \"\", \n"
+        "            \"dhcp4o6-port\": 0, \n"
+        "            \"decline-probation-period\": 86400 \n"
+        "        }";
+
+
+    data::ElementPtr elems;
+    ASSERT_NO_THROW(elems = data::Element::fromJSON(json))
+                    << "invalid JSON:" << json << "\n test is broken";
+
+    // Iterate over the test scenarios, verifying each prescribed
+    // outcome.
+    for (auto test = tests.begin(); test != tests.end(); ++test) {
+        {
+            SCOPED_TRACE("test: " + (*test).label);
+
+            // Set this scenario's configuration parameters
+            elems->set("calculate-tee-times", data::Element::create((*test).calculate_tee_times));
+            elems->set("t1-percent", data::Element::create((*test).t1_percent));
+            elems->set("t2-percent", data::Element::create((*test).t2_percent));
+
+            Subnet4Ptr subnet;
+            try {
+                // Attempt to parse the configuration.
+                Subnet4ConfigParser parser;
+                subnet = parser.parse(elems);
+            } catch (const std::exception& ex) {
+                if (!(*test).error_message.empty()) {
+                    // We expected a failure, did we fail the correct way?
+                    EXPECT_EQ((*test).error_message, ex.what());
+                } else {
+                    // Should not have failed.
+                    ADD_FAILURE() << "Scenario should not have failed: " << ex.what();
+                }
+
+                // Either way we're done with this scenario.
+                continue;
+            }
+
+            // We parsed correctly, make sure the values are right.
+            EXPECT_EQ((*test).calculate_tee_times, subnet->getCalculateTeeTimes());
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t1_percent, subnet->getT1Percent()));
+            EXPECT_TRUE(util::areDoublesEquivalent((*test).t2_percent, subnet->getT2Percent()));
+        }
+    }
 }
 
 } // end of anonymous namespace

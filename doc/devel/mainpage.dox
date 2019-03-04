@@ -22,14 +22,14 @@
  *
  * If you are a user or system administrator, rather than software engineer,
  * you should read the
- * <a href="http://kea.isc.org/docs/kea-guide.html">Kea
+ * <a href="https://kb.isc.org/docs/kea-administrator-reference-manual">Kea
  * Administrator Reference Manual</a> instead. If you are using a beta or
  * development version of Kea, the
- * <a href="http://git.kea.isc.org/~tester/kea/guide/kea-guide.html">
+ * <a href="https://jenkins.isc.org/job/Kea_doc/guide/kea-guide.html">
  * development version of the manual</a> is recommended.
  *
  * Regardless of your field of expertise, you are encouraged to visit the
- * <a href="http://kea.isc.org/">Kea webpage (http://kea.isc.org)</a>
+ * <a href="https://gitlab.isc.org/isc-projects/kea/wikis/home">Kea wikipage (https://gitlab.isc.org/isc-projects/kea/wikis/home)</a>
  *
  * @section contrib Contributor's Guide
  * - @subpage contributorGuide - This page describes the process of sending
@@ -38,9 +38,9 @@
  *
  * @section buildingKeaWithUnitTests Building Kea with Unit tests
  * - @subpage unitTests
- *   - @subpage unitTestsIntroduction
  *   - @subpage unitTestsEnvironmentVariables
  *   - @subpage unitTestsDatabaseConfig
+ *   - @subpage unitTestsSysrepo
  *
  * @section performance Performance
  * - @subpage benchmarks
@@ -78,6 +78,7 @@
  *   - @subpage dhcpv6SignalBasedReconfiguration
  *   - @subpage dhcpv6Other
  *   - @subpage dhcpv4o6Dhcp6
+ * - @subpage congestionHandling
  * - @subpage d2
  *   - @subpage d2ProcessDerivation
  *   - @subpage d2ConfigMgt
@@ -129,6 +130,7 @@
  * - @subpage libprocess
  *   - @subpage cpl
  *   - @subpage cplSignals
+ * - @subpage libyang
  *
  * @section miscellaneousTopics Miscellaneous Topics
  * - @subpage terminology
@@ -139,6 +141,7 @@
  *   - @subpage logNotes
  * - @subpage LoggingApi
  * - @subpage SocketSessionUtility
+ * - @subpage docs
  * - <a href="./doxygen-error.log">Documentation warnings and errors</a>
  *
  */

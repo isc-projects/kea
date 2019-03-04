@@ -19,6 +19,7 @@
 #include <config.h>
 
 #include <dhcpsrv/cql_lease_mgr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 
 #include <dhcp/duid.h>
@@ -27,6 +28,7 @@
 #include <asiolink/io_address.h>
 
 using namespace isc::data;
+using namespace isc::db;
 using isc::asiolink::IOAddress;
 
 namespace isc {

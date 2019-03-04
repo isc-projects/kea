@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -396,6 +396,14 @@ public:
         return timestamp_;
     }
 
+    /// @brief Set packet timestamp.
+    ///
+    /// Sets packet timestamp to arbitrary value.
+    /// It is used by perfdhcp tool and should not be used elsewhere.
+    void setTimestamp(boost::posix_time::ptime& timestamp) {
+        timestamp_ = timestamp;
+    }
+
     /// @brief Copies content of input buffer to output buffer.
     ///
     /// This is mostly a diagnostic function. It is being used for sending
@@ -784,6 +792,9 @@ private:
                                  const std::vector<uint8_t>& hw_addr,
                                  HWAddrPtr& storage);
 };
+
+/// @brief A pointer to either Pkt4 or Pkt6 packet
+typedef boost::shared_ptr<isc::dhcp::Pkt> PktPtr;
 
 }; // namespace isc::dhcp
 }; // namespace isc

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,11 +7,11 @@
 #include <config.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_custom.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/addr_utilities.h>
 #include <stats/stats_mgr.h>
 #include <boost/foreach.hpp>
 #include <string.h>
@@ -188,7 +188,7 @@ CfgSubnets6::selectSubnet(const std::string& iface_name,
             // If interface name matches with the one specified for the subnet
             // and the client is not rejected based on the classification,
             // return the subnet.
-            if ((iface_name == (*subnet)->getIface()) &&
+            if (((*subnet)->getIface() == iface_name) &&
                 (*subnet)->clientSupported(client_classes)) {
 
                 LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE,

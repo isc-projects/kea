@@ -31,7 +31,7 @@ EXTRA_DIST += dhcp6_parser.yy
 if GENERATE_DOCS
 
 kea-dhcp6.8: kea-dhcp6.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
 	http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp6.xml
 
@@ -79,9 +79,23 @@ kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+
+if HAVE_MYSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
+kea_dhcp6_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 kea_dhcp6_LDADD += $(top_builddir)/src/lib/log/libkea-log.la

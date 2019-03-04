@@ -1,3 +1,520 @@
+1534.	[func]		marcin
+	MySQL config backend correctly handles the optional values for
+	subnets and shared networks. Also, updated the MySQL config
+	backend to store and fetch T1 and T2 percentage settings.
+	(Gitlab #489,!250, git 01fc4d5bb4105b90c7025e8ca8131c3c15203848)
+
+1533.	[doc]		sgoldlust,stephen
+	Kea User's Guide significantly updated.
+	(Gitlab #362,!182, git 4b7a8df6054d18f2c90fe61d93533466f89e6324)
+
+1532.	[func]*		marcin
+	Renamed OptionalValue C++ object to Optional and modified its
+	API. This object is now used to represent optional values in
+	subnets and shared networks. This is an internal Kea logic
+	change but it may impact existing user hooks libraries.
+	(Gitlab #487,!232, git 1c58e0ce9b9fd6fc8864dbfb2335bc5841c78ff3)
+
+1531.	[func]		tmark
+	When fetching configuration data from configured backends,
+	kea-dhcp4 will now merge option definitions.
+	(Gitlab #400,!243, git 0c5d1417031e49bd0c247889989e187db2dd8f4b)
+
+1530.	[bug] 		adwol
+	Potential syntax error in keactrl fixed. Thanks to Adam Osuchowski
+	from Silesian University of Technology for providing a patch.
+	(Gitlab #162,!241, git b1a1137f252432aa956ed6fea3da21c740857333)
+
+1529.	[func]		tmark
+	When fetching configuration data from configured backends,
+	kea-dhcp4 will now merge global parameters.
+	(Gitlab #402,!224, git dadaf76f8dd61b8bb3405aa5dc80029f09b2d4ec)
+
+1528.	[func]		fdupont
+	Aligned DHCPv4 and DHCPv6 specific tables used by the MySQL Config
+	Backend. Extended MySQL schema to implement audit trail for the
+	DHCPv6 Config Backend.
+	(Gitlab #460,!232,!236, git 57f945f917db522773281c9e95ec8027afae6205)
+
+1527.	[build]		adwol,fdupont,tomek
+	Default Kea installation directory has been changed to
+	${prefix}/lib/kea/hooks.
+	(Gitlab #161,!240, git cfaf16cf02191bf5b7172cade3f58a626288b5f0)
+
+1526.	[func]		tmark
+	In addition to subnets, when fetching configuration data from
+	configured backends, kea-dhcp4 will now merge shared-networks.
+	(Gitlab #399,!215, git 6b57b6b5d678c91b6b380fbe08beafd06b0e7b1d)
+
+1525.	[func]		fdupont
+	Defined API for the DHCPv6 Configuration Backend.
+	(Gitlab #458,!231, git f16e03d9bf1c10903c16b2614223b10880f73d50)
+
+1524.	[func]		tomek
+	Support for vendor options improved in DHCPv4 and DHCPv6. Kea is now
+	able to send back vendor suboptions, even if the client packet didn't
+	include DHCPv4 vivso (125) or DHCPv6 vendor (17) option. Usage of client
+	classification in such a case is required, though.
+	(Gitlab #464,!238, git 5c79da9358862657a631a9a8fc2ce79ae26b762e)
+
+1523.	[bug]		fdupont
+	IfaceMgr::send method now returns proper status that matches
+	its documentation. Thanks to Matthias Stoeckl from Secunet
+	for reporting this issue.
+	(Gitlab #417,!221, git 4be58523f38097cea81ea06161aead58e00aeb2a)
+
+1522.	[bug]		marcin
+	The "unspecified" DHCP timer values (e.g. renew-timer) are
+	represented as NULL values in the database. This corrects
+	a bug whereby the unspecified timers defaulted to 0 which
+	prevented the DHCP server from calculating the timers to
+	be sent to the client. Instead a value of 0 was sent.
+	(Gitlab #451,!227, git 5ec9a55528fbcfff4e0c808f9a745b9fd3a5dfae)
+
+1521.	[func]		marcin
+	Removed subsecond precision for the timestamps in MySQL config
+	backend. It caused issues on systems with MySQL version prior
+	to 5.6.4 which don't support subsecond timestamp values.
+	(Gitlab #444,!229, git 71200e98f5a862908240a0d2e269b5da23290af9)
+
+1520.	[build]		fdupont
+	Made perfdhcp build optional and off by default: to build it
+	please use the new --enable-perfdhcp configure flag.
+	(Gitlab #340,!220, git b2d9a5559c348e82d6730809ccf1429097a9872c)
+
+1519.	[bug]		Brent Bloxam
+	A bug in kea-admin that always assumed the PostgreSQL database is
+	always local has been fixed. Thank you to Brent Bloxam from
+	Beanfield Metroconnect for submiting a patch!
+	(Gitlab #423,!216, git d14e2f34c7d544aeb5e1e219f305fac9ab18c498)
+
+1518.	[func]		marcin
+	Extended MySQL schema to include the types of the global DHCP
+	parameters in the database. The Kea servers will use this
+	information to cast the values fetched from the database into
+	their actual types. The supported types are: string, integer,
+	boolean and real.
+	(Gitlab #429,!217, git edd745c507ce5a888461df1489311de0c22cd312)
+
+1517.	[func]		tmark
+	kea-dhcp4 will now connect to and fetch configuration data from
+	configured backends. At this point, only fetched subnet data is
+	merged and used.
+	(Gitlab #101,!202, git c572f8aea94349ff5fb4afee13a88ba811cc6459)
+
+1516.	[func]		marcin
+	Implemented audit trail for MySQL Configuration Backend. It allows
+	for tracking incremental changes in the servers' configurations.
+	Both mysql_cb hooks library and the MySQL schema have been updated
+	to facilitate this feature.
+	(Gitlab #396,!205, git 6d40db07ef641eef29405c42e718979e7a1e8675)
+
+1515.	[func]		fdupont
+	Changes required for new host commands that retrieve all host
+	reservations from a given subnet (reservation-get-all,
+	reservation-get-page) added. Also added documentation.
+	(Gitlab #313,!199, git 991b2fadcb9e8171a78e27f95e4bfba6393d7824)
+
+1514.	[func]		fdupont
+	Control Agent and DHCP-DDNS daemons now support config-reload
+	command, that instruct a given server to load again its
+	configuration from a file on disk.
+	(Gitlab #375,!192, git 93648a3a4918225e2c4413ae220fccc59eaea99a)
+
+1513.	[func]		godfryd
+	Fixed perfdhcp that now it keeps requested rate during performance
+	testing. Previously it was always about 20% lower than expected.
+	(Gitlab #283,!135, git 329f54bb151ec35888e9a8070cc5fa368d6f1f5e)
+
+1512.   [func]      tmark
+	kea-dhcp4 will now ignore empty Host Name (option code 12) values
+	received from clients.  While an empty value for this option is
+	not RFC-compliant, some clients do send them.  Prior to the this
+	server would drop the entire packet.  In the spirit of being liberal
+	in what we accept, the server will now simply omit the option.
+	(Gitlab #40,!203, git f41bd35c3e7a3bdc1f31c5602fd91d5c84c60163)
+
+1511.	[func]		fdupont
+	Obsolete experimental secure DHCPv6 options (701-704) removed.
+	(Gitlab #386,!196, git 1114527652615fb730e323946cafaf1c7ca72b42)
+
+1510.	[bug]		fdupont
+	DHCPv4 and DHCPv6 no longer crash if badly broken configuration
+	is received.
+	(Gitlab #381,!193, git f45fe7b7e3916d36d017b4ec5b50588fbf517d86)
+
+1509.	[func]		tmark
+	kea-dhcp4 can now be configured to calculate values to
+	send to clients for for T1 and T2 (options 58 and 59
+	repsectively).  Prior to this it was only possibly to
+	specify explicit values.
+	(Gitlab #365,!194, git 67944844a40436cd69e0e5b4962f5c9cba89ef6f)
+
+1508.	[func]		fdupont
+	Implemented the management API using a control socket for the
+	DHCP DDNS (D2) server. D2 now supports the following commands:
+	build-report, config-get, config-set, config-test, config-write,
+	list-commands, shutdown and version-get. Also, extended Control
+	Agent (CA) to support one additional command: config-set.
+	(Gitlab #30,!183, git ab27550cec365f42289eb5fa1bc39f33f01b19c2)
+
+1507.	[func]		tmark
+	kea-dhcp4 now ensures that the message type option (53) is
+	the first option in outbound DHCPv4 packets.  This was done
+	to accommodate non-compliant clients that require the option
+	to be first.
+	(Gitlab #363,!177, git 34f40035bf7a7849083138cacee440a9f0991d67)
+
+Kea 1.5.0 released on Dec 14, 2018
+
+1506.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 final release.
+	(Gitlab #338,!168, git 551c5d704804d0ab2ea276e95dbae66b9d0f5561)
+
+1505.	[bug]		marcin
+	Corrected an issue in the lease_cmds hooks library which caused
+	errors while adding leases with high lease expiration time value
+	to the database. Many thanks to Shawn Routhier from Infoblox for
+	finding and reporting the issue.
+	(Gitlab #337,!167, git 3fcdc28814310ac93b3903897e952b3b60cfa0bc)
+
+1504.	[bug]		fdupont
+	Created separate control buffers for reception and transmission
+	over UDP sockets.
+	(Gitlab #327,!166, git cbb573858d7b1a4d2ba2316db457aa55ab037fc3)
+
+1503.	[doc]		fdupont, marcin
+	Updated "JSON Configuration" section of the Kea User's Guide.
+	(Gitlab #198,!160, git 94c66b3c071d7bbf4b247bf57cd75ddcc343177e)
+
+1502.	[bug]		fdupont
+	Unicode parser for JSON structures has been improved. It now
+	handles escape sequences better.
+	(Gitlab #45,!40, git ba9b18cf2af66f8fb80e3dbbe13da11c99764588)
+
+1501.	[func]		fdupont
+	keactrl now supports kea-netconf. The new daemon is disabled by
+	default. Please edit keactrl.conf (netconf=yes) if you want to
+	start using it.
+	(Gitlab #186,!163, git 8f7d556456891e7c675082f7e6cc88da71a92fee)
+
+1500	[func, doc]	tmark
+	Streamlined the isc::dhcp::PacketQueue interface and
+	added a section on Congestion Handling to the developer's guide.
+	(Gitlab #278,!162, git 0ce615f5da993ac90f675c5315ba7cb5c2ef3e1c)
+
+1499.	[func]		tmark
+	For Kea 1.5.0, congestion handling has been disabled by
+	default.
+	(Gitlab #277,!164, git 8d87c46a3cc7b7be4dd5f751b48449e92ee62d84)
+
+1498.	[bug]		marcin
+	Corrected behavior of the DHCP servers with respect to the
+	"reconnect-wait-time" parameter setting. This parameter is
+	specified in milliseconds, but the servers used to interpret
+	it as specified in seconds.
+	(Gitlab #173,!154, git 377f49e84ad6ebc91cbeac4116d24a15571c522d)
+
+1497.	[func]		fdupont
+	All YANG modules now have a revision specified. When starting,
+	kea-netconf daemon will now check if the required modules are
+	installed and have a proper revision. This should help spotting
+	issues when migrating from older YANG modules.
+	(Gitlab #204,!121, git 9e772e1472e073ee85924cfc706cb57a5e70a0b1)
+
+1496.	[doc]		marcin
+	Updated Kea documentation to reference RFC 8415, which is the
+	new DHCPv6 specification. It obsoletes a number of RFCs:
+	RFC 3315 (previous DHCPv6 specification), RFC 3633, RFC 3736,
+	RFC 4242, RFC 7083, RFC 7283 and RFC 7550. Kea documentation
+	now refers to RFC 8415 where appropriate instead of obsoleted
+	RFCs.
+	(Gitlab #288,!158, git 974b033a8de7a8e671156c33efeb13d4ac847c96)
+
+1495.	[bug]		marcin
+	Corrected an issue in the Memfile lease backend which caused
+	errors while reading leases with very long lifetimes. Many
+	thanks to Shawn Routhier from Infoblox for finding and reporting
+	the issue.
+	(Gitlab #303,!151, git ab92ab6fcd414f1efc7c5de6a641274da7c04e92)
+
+1494.	[bug]		marcin
+	Kea servers reject commands with unsupported parameters.
+	(Gitlab #253,!147, git 7fc55489887c0e8f32db5c1fe9f46fa1cc2a4407)
+
+1493.	[bug]		marcin
+	Names carried in DHCPv4 Client FQDN option, Hostname option and
+	stored in the lease database are case insensitive.
+	(Gitlab #86,!152, git d9e23e2a6a3114b1c87de9c881ef10cdb1e00c61)
+
+Kea 1.5.0-beta2 released on Nov 30, 2018
+
+1492.	[doc]		fdupont
+	Added a step by step netconf operation example in the
+	Kea Administrators's Guide.
+	(Gitlab #195,!131, git 994a826caf3c1a9f5f84d8b703a3b202120e91b6)
+
+1491.	[build]		tomek
+	coroutine.hpp from Boost 1.68 has been added the Kea source.
+	It is used only if the Boost library provided by the system
+	is very old and does not include that header. This effectively
+	reverts the change done in Kea 1.4.0.
+	(Gitlab #293,!45, git df0f507b8b750c8dff1f537cad5b5748b7841852)
+
+1491.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 beta2 release.
+	Also, generated logger message files are now installed with Kea.
+	(Gitlab #62,!144, git 7dc8d73a58504fd81a49b1c54651388d53d98d53)
+
+1490.	[bug]		marcin
+	Applied fixes in Cassandra Host Manager which prevents Kea
+	crash during an attempt to delete non-existing reservation.
+	In particular, this crash was observed as a result of sending
+	reservation-del command over RESTful API.
+	(Gitlab #27,!138, git 8666ed4754ffd27f3aa46a2cf3e4b161a1d877ee)
+
+1489.	[doc]		fdupont
+	Added examples of global host reservations.
+	(Gitlab #136, !143, git bee8b8620f849f6bcaf2b31c3b130bb371c6312c)
+
+1488.	[doc]		marcin
+	Added stat_cmds to the list of available hooks libraries.
+	(Gitlab #85,!142, git 08615372b4f869fe61b13559efa33d0d9794d79b)
+
+1487.	[doc]		marcin
+	Corrected broken links and various typos in Kea documentation
+	which had been identified during Kea 1.5.0 beta1 release
+	process.
+	(Gitlab #263,!137, git 79a224288efa1e1c51b0f2ec11ff646563b306e1)
+
+1486.	[func]		tmark
+	For Kea 1.5.0-beta2, congestion handling has been enabled by
+	default. This was done to expose the feature to more testing.
+	We will finalize the default setting prior to releasing Kea 1.5.0.
+	(Gitlab #276,!132, git fda1f985997412a58d3b4eee4a1ca0588d3f3beb)
+
+1485.	[func]		fdupont
+	Simplified and updated Kea YANG models. For instance the list of
+	loggers was moved from the removed logging container to global
+	config parameters.
+	(Gitlab #204, !97, git 1de6c2987ec9067b7c1baa577c6dcd6ddd1b30fb)
+
+1484.	[bug]		marcin
+	Resolved issues with MySQL backend failing to insert a lease
+	to the MariaDB database on OpenSUSE. This fix may also
+	improve stability of the MySQL backend on other systems running
+	MariaDB.
+	(Gitlab #53,!125, git 038eddbc7b904289e4b74b5ef2406cb57f79a646)
+
+1483.	[func]		tmark
+	Use of congestion handling is now optional via the 'enable-queue'
+	flag added to 'dhcp-queue-control'.  It is disabled by default.
+	When disabled Kea's DHCPv4 and DHCPv6 servers will consume packets
+	directly from interface sockets in the main thread (i.e. employs
+	pre Kea 1.5 technique).
+	(Gitlab #260, !120, git 9e304fae48d0d0658fd39a21aba9da528b4cc6f4)
+
+1482.	[func]		fdupont
+	The configuration parameter "reservation-mode" can be specified
+	at global (new), subnet and shared network levels.
+	(Gitlab #268,!126, git c72d381c39868308c7d11c7d4def3bdae0a0e04e)
+
+1481.	[func]		fdupont
+	Cleaned up the keatest-module YANG test module.
+	(Gitlab #204,!98, git a830adcefd9306969216d35c51306df3610278bb)
+
+1480.	[func]		fdupont
+	The unused configuration parameter "always-include-fqdn"
+	was removed. Configurations using it will be rejected as
+	it is no longer recognized.
+	(Gitlab #182,!128, git cafeba167e7c64370dd39eca4551f61acd89d3da)
+
+1479.	[build]		fdupont
+	Support for sysrepo 0.7.6 (and libyang 0.16-r2) was added.
+	Previous versions of sysrepo (and libyang) are still supported.
+	(Gitlab #176, !107, git 4304a10b21708afb2a7599c77bc7508a600333cb)
+
+1478.	[bug]		marcin
+	Performance improvements in the HTTP client code used in the
+	Kea High Availability.
+	(Gitlab #57,!122, git 7bd97af1f3d7670cd64cadf0d0cb9ddbe4e74909)
+
+Kea 1.5.0-beta1 released on Nov 9, 2018
+
+1477.	[build]		marcin
+	Bumped up libraries version numbers for Kea 1.5.0 beta release.
+	(Gitlab #261,!119, git 54d63139048e7fe2dd0384b547ed6f8b96ff0e8f)
+
+1476.	[func]		tmark
+	Added initial implementation of congestion handling to kea-dhcp4
+	and kea-dhcpt6. This adds a new top level element to the server
+	configurations, "dhcp-queue-control".  Both servers will now
+	read client packets from interface sockets in a separate thread
+	queueing them for server level processing.  For Kea 1.5-Beta
+	this feature is always on.
+	(Gitlab #42, !103, git 09d5ffebc8f9bfab2ab99c384eec9c3a3c915f39)
+
+1475.	[func]		sebschrader
+	Add authoritative feature for DHCPv4 from ISC DHCP: requests from
+	unknown clients are dropped (default/previous behavior) or
+	answered with DHCPNAK (new behevior with new authoritative flag
+	set to true for the subnet). Patch proposed by Sebastian Schrader.
+	(Gitlab #66, !115, git 0fc1b767826f214475025d8631227970de368de5)
+
+1474.	[doc]		godfryd
+	Updated list of supported operating systems.
+	(Gitlab #205, !109, git 73253af554cf48434798282f8440a99b1494fd04)
+
+1473.	[doc]		tomek
+	Outdated FAQ section removed from the User's Guide.
+	(Gitlab #118, !113, git 7d079384bd5f49e0e36a571ee964bfd7d6ebd25d)
+
+1472.	[bug]		marcin
+	Timeout is now reported by the HTTP client when connecting to the server
+	takes too long. This eliminates HTTP client hangs when firewall is
+	misconfigured and causes connection to never be established. This issue
+	was found during Kea High Availability testing.
+	(Gitlab #26,!106, git 9724823f160af0ef5e8ccdf779087ff08a04457a)
+
+1471.	[bug]		lmasarati
+	Fixed a bug in kea-admin that ignored specified remote hostname.
+	Thank you to lmasarati and Thorsten Krohn for reporting it and
+	proposing a patch!
+	(Gitlab #61, #138, !114, git 901cac7dc85ad8dacf631bf3a5c266eefeb3e6a1)
+
+1470.	[func]		marcin
+	Improved lease database synchronization mechanisms in High
+	Availability hooks library. The new implementation uses
+	lease4-get-page and lease6-get-page commands to fetch leases
+	from the partner server. This prevents timeouts occurring
+	during long synchronizations as well as decreases CPU and
+	memory consumption on the HA enabled servers during lease
+	database synchronization.
+	(Gitlab #78,!85, git c54ea216463dcc6df693c96c4a5f82c0fbec2ff6)
+
+1469.	[doc]		marcin, fdupont
+	Documented new class_cmds premium library which is used
+	to modify client class configuration of the DHCP servers.
+	(Gitlab #64,!41, git c1c1d0b71496d81b330a8c1eb95996bbf634ada0)
+
+1468.	[build]		wlodek
+	make distcheck fix.
+	(Gitlab #202, !111, git 5d8fb5f7af5fa36f4cb2b89f10631683b2e230d5)
+
+1467.	[doc]		fdupont, tomek
+	Doxygen errors fixed.
+	(Gitlab #180,!93, git d12fb04d71c3b2d0e84ebb2c957334454b5705c4)
+
+1466.	[func]		fdupont
+	Added random number generation in services provided by
+	the crypto library (and ultimately by the crypto backend,
+	i.e. Botan or OpenSSL).
+	(Gitlab #29,!9, git 609ddc69613dc828b3d93673d61a2c259c3944aa)
+
+1465.	[build]		marcin
+	Removed libkea-process dependency on MySQL, Postgres and
+	Cassandra libraries.
+	(Gitlab #194,!104, git bcce7d3c2226c10218d537c4688344c3b7f8c84a)
+
+1464.	[build]		marcin
+	Exclude mysql_cb hooks library from the Kea 1.5.0 release. This
+	library will be added back in Kea 1.6.0 release.
+	(Gitlab #93,!105, git 49572aa300ea2b25712d7e8cea0dd0df34faf7ee)
+
+1463.	[bug]		tmark
+	Added missing parsing logic for the reservation-mode value,
+	"global", to kea-dhcp6.  The parsing logic was somehow omitted
+	and caused kea-dhcp6 configuration parsing to fail on values
+	of "global".
+	(Gitlab #129,!55, git 00352d701f61274f0993b468a413af6c5623af3d)
+
+1462.	[build,doc]	tomek,sgoldlust,vicky
+	Kea REST API is now documented. Thanks to Suzanne Goldlust for
+	providing descriptions for great majority of commands and to
+	Vicky Risk for review and corrections. Also, docgen, a new
+	tool for documentation generation has been written.
+	(Gitlab #10,!3, git 5d2e4d6fcc182a19eafa895abc35b1aee599fd23)
+
+1461.	[doc]		marcin, fdupont
+	Added new sample configurations providing all parameters at
+	the exception of host reservations for DHCPv4 and DHCPv6 servers
+	for testing of configuration managers.
+	(Gitlab #130,!89, git 4bc7e0dbe4804f63c51d100a8f724327e3d3a936)
+
+1460.	[func]		tmark
+	While kea-dhcp4 and kea-dhcp6 configuration parsing supports
+	configuration backend elements "server-tag" and "config-control",
+	use of these parameters has been disabled. Development of this
+	feature will resume after Kea 1.5 release.
+	(Gitlab #101,!87, git 4292a7ef7ab268826f846812e7320e1fe1fc46ef)
+
+1459.	[func]		marcin
+	Implemented libdhcp_mysql_cb hooks library which provides
+	Configuration Backend functionality for MySQL.
+	(Gitlab #93, git 98456608056b3361352b3127767138845eeb5d00)
+
+1458.	[func]		fdupont
+	Control sockets for kea-netconf has been implemented. The code is
+	not functional yet, but the capability of the kea-netconf daemon
+	to communicate with CA, D2, DHCPv4 and DHCPv6 daemons is there.
+	(Gitlab #153,!60, git 11486e255aef704114645f8e7c5fee9c3abf9e76)
+
+1457.	[func]		tmark
+	Both kea-dhcp4 and kea-dhcp6 configuration parsing support new,
+	server-level configuration elements "server-tag" and "config-control".
+	While these elements will parse, they are not yet used by the servers.
+	(Gitlab #32,!23, git c0727407da8d749d9fb51d873a725369800c967b)
+
+1456.	[build]		tomek
+	Extended Kea version is now stored in a separate file for
+	build performance reasons.
+	(Gitlab #137,!42, git 87479e979ca3d3025cb4129ace991a59e32e0f62)
+
+1455.	[func]		fdupont
+	Implemented hexstring(value, separator) operator that can be used
+	in any expression, such as client classification, flex-id or
+	RADIUS attribute.
+	(Gitlab #67,!34, git 004d9a29db09b1c203c52e23585bd275c52095fa)
+
+1454.	[func]		fdupont
+	Unused interface-id and rapid-commit parameters removed from
+	DHCPv4 parser.
+	(Gitlab #116,!24, git 7e47292f10acb9179241c991d3591e9bfa47c37d)
+
+1453.	[func]		marcin
+	Updated MySQL schema to facilitate Kea Configuration Backend
+	feature.
+	(Gitlab #89,!22, git e28c0c7b3e7a7729167cdad993f634ed1f0ac53b)
+
+1452.	[func]		marcin
+	Implemented libkea-cb library which includes basic class
+	hierarchy for the Kea Configuration Backend.
+	(Gitlab #28,!20, git fb5c031ecaf4182e56f62874e9a6bd4c1d755a77)
+
+1451.	[build]		tmark
+	Resolved a namespace issue with std::distance() in libdhcp++.cc
+	when building with Boost 1.68.   Thanks to Huy Vu and Khem Raj
+	for reporting and suggesting a fix.
+	(Gitlab #109,!21, git 1fd301f998129e9926ffa35eac27768ae150633d)
+
+1450.	[build]		tomek
+	Dependencies improved. libkea-process no longer requires libkea-dhcpsrv.
+	As a result, D2 and CA are no longer linked with libkea-dhcpsrv.
+	(Gitlab #25,!14, git cdb3a6f2d98a303b80433df7e0d5698c77897b7f)
+
+1449.	[func]		tmark
+	Modified Kea 1.5.0 database upgrade scripts to convert
+	subnet ID values of 0, to either null (MySQL and Postgres)
+	or 0xFFFFFFFF (CQL), in existing host reservations. This
+	is done to accommodate support for global host reservations.
+	(Gitlab #15,!11, git 25b54fd9ced4c6d3a2c8ceff9cc7c866b56da2c1)
+
+1448.	[build]*	marcin
+	Created new Kea libraries: libkea-database, libkea-mysql,
+	libkea-pgsql and libkea-cql. Some database specific code was
+	moved from libkea-dhcpsrv to those new libraries.
+	(Gitlab #92,!13, git 5feb6b8a53675c27715e9e8fbeb312bd6eb17547)
+
 1447.	[doc]		tmark
 	Updated Kea Administrators's Guide with discussions of the
 	use of subnet ID parameters in hook library commands.
@@ -38,7 +555,7 @@
 	(Gitlab #8, git 3dbaf4917bea112466f1ee5726870c545950e114)
 
 1440.	[func]		tmark
-	The internal represenation of an "unused" subnet-id has been
+	The internal representation of an "unused" subnet-id has been
 	changed from zero to 0xFFFFFFFF. The largest, valid value for
 	a subnet's ID is now 0xFFFFFFFE.  Three new constants have been
 	added so subnet_id.h:
@@ -70,7 +587,7 @@
 	(Trac #5682, git 609bfa0a67caa91fac6834eb39260acfd19e3be4)
 
 1436.   [func]      tmark
-	Added two new configuration paramters to kea-dhcp4 and kea-dhcp6
+	Added two new configuration parameters to kea-dhcp4 and kea-dhcp6
 	DhcpDdns sections: 'hostname-char-set' and 'hostname-char-replacment'.
 	These values (when not empty) are used by the server to sanitize
 	host name and FQDN domain names sent by clients prior to using them
@@ -344,7 +861,7 @@ Kea 1.4.0-beta released on May 18, 2018
 	tracked by the database, they do not have to be recalculated at startup
 	or following reconfiguration. This may result in less processing overhead
 	during these events. The new statistics will be accessible via a new Hooks
-	library, being developed for Kea 1.4 under #5589. 
+	library, being developed for Kea 1.4 under #5589.
 	(Trac #5586, git a070c327668c10de3b28f5e249f91d6d16a97ff5)
 
 1394.	[doc]		marcin
@@ -9110,5 +9627,3 @@ LEGEND
 	fix except that it will be handled as confidential and will cause
 	security patch releases.
 *: Backward incompatible or operational change.
-
-

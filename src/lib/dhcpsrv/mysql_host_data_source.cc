@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,17 +6,16 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
 #include <dhcpsrv/cfg_option.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <util/buffer.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -32,6 +31,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -129,7 +129,7 @@ public:
           bind_(columns_num_), columns_(columns_num_),
           error_(columns_num_, MLM_FALSE), host_id_(0),
           dhcp_identifier_length_(0), dhcp_identifier_type_(0),
-          dhcp4_subnet_id_(SUBNET_ID_UNUSED), 
+          dhcp4_subnet_id_(SUBNET_ID_UNUSED),
           dhcp6_subnet_id_(SUBNET_ID_UNUSED), ipv4_address_(0),
           hostname_length_(0), dhcp4_client_classes_length_(0),
           dhcp6_client_classes_length_(0),
@@ -220,10 +220,14 @@ public:
     ///        data associated with one of the "bind" elements, the
     ///        corresponding element in the error array is set to MLM_TRUE.
     static void setErrorIndicators(std::vector<MYSQL_BIND>& bind,
-                                   std::vector<my_bool>& error) {
+                                   std::vector<my_bools>& error) {
         for (size_t i = 0; i < error.size(); ++i) {
             error[i] = MLM_FALSE;
+#ifdef HAVE_MYSQL_MY_BOOL
             bind[i].error = reinterpret_cast<char*>(&error[i]);
+#else
+            bind[i].error = reinterpret_cast<bool*>(&error[i]);
+#endif
         }
     };
 
@@ -240,7 +244,7 @@ public:
     ///        the error.
     /// @param names Array of column names, the same size as the error array.
     /// @param count Size of each of the arrays.
-    static std::string getColumnsInError(std::vector<my_bool>& error,
+    static std::string getColumnsInError(std::vector<my_bools>& error,
                                          const std::vector<std::string>& names) {
         std::string result = "";
 
@@ -407,7 +411,7 @@ public:
             auth_key_null_ =  auth_key.empty() ? MLM_TRUE : MLM_FALSE;
             bind_[13].buffer = auth_key_;
             bind_[13].buffer_length = auth_key.length();
-        
+
         } catch (const std::exception& ex) {
             isc_throw(DbOperationError,
                       "Could not create bind array from Host: "
@@ -542,7 +546,7 @@ public:
         bind_[13].buffer_length = auth_key_length_;
         bind_[13].length = &auth_key_length_;
         bind_[13].is_null = &auth_key_null_;
-        
+
         // Add the error flags
         setErrorIndicators(bind_, error_);
 
@@ -723,7 +727,7 @@ protected:
     std::vector<std::string> columns_;
 
     /// Error array.
-    std::vector<my_bool> error_;
+    std::vector<my_bools> error_;
 
     /// Pointer to Host object holding information to be inserted into
     /// Hosts table.
@@ -800,7 +804,7 @@ private:
 
     /// The length of the string for holding keys
     unsigned long auth_key_length_;
-    
+
     /// @name Boolean values indicating if values of specific columns in
     /// the database are NULL.
     //@{
@@ -1754,7 +1758,7 @@ public:
     std::vector<MYSQL_BIND>
     createBindForSend(const OptionDescriptor& opt_desc,
                       const std::string& opt_space,
-                      const OptionalValue<SubnetID>& subnet_id,
+                      const Optional<SubnetID>& subnet_id,
                       const HostID& host_id) {
 
         // Hold pointer to the option to make sure it remains valid until
@@ -1846,7 +1850,7 @@ public:
             bind_[7].length = &client_class_len_;
 
             // dhcp4_subnet_id: INT UNSIGNED NULL
-            if (subnet_id.isSpecified()) {
+            if (!subnet_id.unspecified()) {
                 subnet_id_ = subnet_id;
                 bind_[8].buffer_type = MYSQL_TYPE_LONG;
                 bind_[8].buffer = reinterpret_cast<char*>(subnet_id_);
@@ -1951,6 +1955,10 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
+        GET_HOST_SUBID4,        // Get hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Get hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Get hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Get hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1991,7 +1999,7 @@ public:
     /// @param bind Vector of MYSQL_BIND objects to be used when making the
     /// query.
     ///
-    /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    /// @throw isc::db::DuplicateEntry Database throws duplicate entry error
     void addStatement(MySqlHostDataSourceImpl::StatementIndex stindex,
                       std::vector<MYSQL_BIND>& bind);
 
@@ -2021,7 +2029,7 @@ public:
     void addOption(const MySqlHostDataSourceImpl::StatementIndex& stindex,
                    const OptionDescriptor& opt_desc,
                    const std::string& opt_space,
-                   const OptionalValue<SubnetID>& subnet_id,
+                   const Optional<SubnetID>& subnet_id,
                    const HostID& host_id);
 
     /// @brief Inserts multiple options into the database.
@@ -2035,7 +2043,7 @@ public:
 
     /// @brief Check Error and Throw Exception
     ///
-    /// This method invokes @ref MySqlConnection::checkError.
+    /// This method invokes @ref db::MySqlConnection::checkError.
     ///
     /// @param status Status code: non-zero implies an error
     /// @param index Index of statement that caused the error
@@ -2127,6 +2135,8 @@ public:
     /// @brief Indicates if the database is opened in read only mode.
     bool is_readonly_;
 };
+
+namespace {
 
 /// @brief Array of tagged statements.
 typedef boost::array<TaggedStatement, MySqlHostDataSourceImpl::NUM_STATEMENTS>
@@ -2321,19 +2331,112 @@ TaggedStatementArray tagged_statements = { {
             "persistent, user_context, dhcp_client_class, dhcp6_subnet_id, host_id, scope_id) "
          " VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 3)"},
 
+    // Delete a single IPv4 reservation by subnet id and reserved address.
     {MySqlHostDataSourceImpl::DEL_HOST_ADDR4,
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND ipv4_address = ?"},
 
+    // Delete a single IPv4 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID4_ID,
      "DELETE FROM hosts WHERE dhcp4_subnet_id = ? AND dhcp_identifier_type=? "
      "AND dhcp_identifier = ?"},
 
+    // Delete a single IPv6 reservation by subnet id and identifier.
     {MySqlHostDataSourceImpl::DEL_HOST_SUBID6_ID,
      "DELETE FROM hosts WHERE dhcp6_subnet_id = ? AND dhcp_identifier_type=? "
-     "AND dhcp_identifier = ?"}
+     "AND dhcp_identifier = ?"},
 
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. Hosts are retrieved by IPv4 subnet id.
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID4,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp4_options AS o "
+                "ON h.host_id = o.host_id "
+            "WHERE h.dhcp4_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id"},
+
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host. The number of rows returned is a multiplication
+    // of number of IPv6 reservations and DHCPv6 options. Hosts are retrieved
+    // by IPv6 subnet id.
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM hosts AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "WHERE h.dhcp6_subnet_id = ? "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"},
+
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. Hosts are retrieved by IPv4 subnet id
+    // and with a host id greater than the start one.
+    // The number of hosts returned is lower or equal to the limit.
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
+            "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+                "h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context "
+            "FROM ( SELECT * FROM hosts AS h "
+                       "WHERE h.dhcp4_subnet_id = ? AND h.host_id > ? "
+                       "ORDER BY h.host_id "
+                       "LIMIT ? ) AS h "
+            "LEFT JOIN dhcp4_options AS o "
+                "ON h.host_id = o.host_id "
+            "ORDER BY h.host_id, o.option_id"},
+
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host. The number of rows returned is a multiplication
+    // of number of IPv6 reservations and DHCPv6 options. Hosts are retrieved
+    // by IPv6 subnet id and with a host id greater than the start one.
+    // The number of hosts returned is lower or equal to the limit.
+    {MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
+            "SELECT h.host_id, h.dhcp_identifier, "
+                "h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+                "h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+                "h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+
+                "h.dhcp4_next_server, h.dhcp4_server_hostname, "
+                "h.dhcp4_boot_file_name, h.auth_key, "
+                "o.option_id, o.code, o.value, o.formatted_value, o.space, "
+                "o.persistent, o.user_context, "
+                "r.reservation_id, r.address, r.prefix_len, r.type, "
+                "r.dhcp6_iaid "
+            "FROM ( SELECT * FROM hosts AS h "
+                       "WHERE h.dhcp6_subnet_id = ? AND h.host_id > ? "
+                       "ORDER BY h.host_id "
+                       "LIMIT ? ) AS h "
+            "LEFT JOIN dhcp6_options AS o "
+                "ON h.host_id = o.host_id "
+            "LEFT JOIN ipv6_reservations AS r "
+                "ON h.host_id = r.host_id "
+            "ORDER BY h.host_id, o.option_id, r.reservation_id"}
     }
 };
+
+}; // anonymous namespace
 
 MySqlHostDataSourceImpl::
 MySqlHostDataSourceImpl(const MySqlConnection::ParameterMap& parameters)
@@ -2521,7 +2624,7 @@ void
 MySqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const OptionDescriptor& opt_desc,
                                    const std::string& opt_space,
-                                   const OptionalValue<SubnetID>& subnet_id,
+                                   const Optional<SubnetID>& subnet_id,
                                    const HostID& id) {
     std::vector<MYSQL_BIND> bind =
         host_option_exchange_->createBindForSend(opt_desc, opt_space,
@@ -2549,7 +2652,7 @@ MySqlHostDataSourceImpl::addOptions(const StatementIndex& stindex,
         if (options && !options->empty()) {
             for (OptionContainer::const_iterator opt = options->begin();
                  opt != options->end(); ++opt) {
-                addOption(stindex, *opt, *space, OptionalValue<SubnetID>(),
+                addOption(stindex, *opt, *space, Optional<SubnetID>(),
                           host_id);
             }
         }
@@ -2866,6 +2969,108 @@ MySqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     ConstHostCollection result;
     impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_DHCPID, inbind,
                              impl_->host_ipv46_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4,
+                             inbind, impl_->host_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[1];
+    memset(inbind, 0, sizeof(inbind));
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6,
+                             inbind, impl_->host_ipv6_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getPage4(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind subnet id
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind lower host id
+    uint32_t host_id = lower_host_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&host_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    uint32_t page_size_data = page_size.page_size_;
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&page_size_data);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
+                             inbind, impl_->host_exchange_,
+                             result, false);
+    return (result);
+}
+
+ConstHostCollection
+MySqlHostDataSource::getPage6(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    MYSQL_BIND inbind[3];
+    memset(inbind, 0, sizeof(inbind));
+
+    // Bind subnet id
+    uint32_t subnet = subnet_id;
+    inbind[0].buffer_type = MYSQL_TYPE_LONG;
+    inbind[0].buffer = reinterpret_cast<char*>(&subnet);
+    inbind[0].is_unsigned = MLM_TRUE;
+
+    // Bind lower host id
+    uint32_t host_id = lower_host_id;
+    inbind[1].buffer_type = MYSQL_TYPE_LONG;
+    inbind[1].buffer = reinterpret_cast<char*>(&host_id);
+    inbind[1].is_unsigned = MLM_TRUE;
+
+    // Bind page size value
+    uint32_t page_size_data = page_size.page_size_;
+    inbind[2].buffer_type = MYSQL_TYPE_LONG;
+    inbind[2].buffer = reinterpret_cast<char*>(&page_size_data);
+    inbind[2].is_unsigned = MLM_TRUE;
+
+    ConstHostCollection result;
+    impl_->getHostCollection(MySqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
+                             inbind, impl_->host_ipv6_exchange_,
                              result, false);
     return (result);
 }

@@ -7,15 +7,20 @@
 #ifndef COMMAND_OPTIONS_H
 #define COMMAND_OPTIONS_H
 
-#include <boost/noncopyable.hpp>
-
 #include <dhcp/option.h>
+
+#include <boost/noncopyable.hpp>
 #include <stdint.h>
 #include <string>
 #include <vector>
 
 namespace isc {
 namespace perfdhcp {
+
+enum class Scenario {
+    BASIC,
+    AVALANCHE
+};
 
 /// \brief Command Options.
 ///
@@ -24,6 +29,14 @@ namespace perfdhcp {
 ///
 class CommandOptions : public boost::noncopyable {
 public:
+
+    /// \brief Default Constructor.
+    ///
+    /// Private constructor as this is a singleton class.
+    /// Use CommandOptions::instance() to get instance of it.
+    CommandOptions() {
+        reset();
+    }
 
     /// @brief A vector holding MAC addresses.
     typedef std::vector<std::vector<uint8_t> > MacAddrsVector;
@@ -105,12 +118,6 @@ public:
         DO_SA,
         DORA_SARR
     };
-
-    /// CommandOptions is a singleton class. This method returns reference
-    /// to its sole instance.
-    ///
-    /// \return the only existing instance of command options
-    static CommandOptions& instance();
 
     /// \brief Reset to defaults
     ///
@@ -238,15 +245,15 @@ public:
     /// \return number of preload exchanges.
     int getPreload() const { return preload_; }
 
-    /// \brief Returns aggressivity value.
-    ///
-    /// \return aggressivity value.
-    int getAggressivity() const { return aggressivity_; }
-
     /// \brief Returns local port number.
     ///
     /// \return local port number.
     int getLocalPort() const { return local_port_; }
+
+    /// \brief Returns remote port number.
+    ///
+    /// \return remote port number.
+    int getRemotePort() const { return remote_port_; }
 
     /// @brief Returns the time in microseconds to delay the program by.
     ///
@@ -343,10 +350,32 @@ public:
     /// @return container with options
     const isc::dhcp::OptionCollection& getExtraOpts() const { return extra_opts_; }
 
+    /// \brief Check if single-threaded mode is enabled.
+    ///
+    /// \return true if single-threaded mode is enabled.
+    bool isSingleThreaded() const { return single_thread_mode_; }
+
+    /// \brief Returns selected scenario.
+    ///
+    /// \return enum Scenario.
+    Scenario getScenario() const { return scenario_; }
+
     /// \brief Returns server name.
     ///
     /// \return server name.
     std::string getServerName() const { return server_name_; }
+
+
+    /// \brief Find if diagnostic flag has been set.
+    ///
+    /// \param diag diagnostic flag (a,e,i,s,r,t,T).
+    /// \return true if diagnostics flag has been set.
+    bool testDiags(const char diag) {
+        if (getDiags().find(diag) != std::string::npos) {
+            return (true);
+        }
+        return (false);
+    }
 
     /// \brief Print command line arguments.
     void printCommandLine() const;
@@ -362,15 +391,6 @@ public:
     void version() const;
 
 private:
-
-    /// \brief Default Constructor.
-    ///
-    /// Private constructor as this is a singleton class.
-    /// Use CommandOptions::instance() to get instance of it.
-    CommandOptions() {
-        reset();
-    }
-
     /// \brief Initializes class members based on the command line.
     ///
     /// Reads each command line parameter and sets class member values.
@@ -384,8 +404,11 @@ private:
 
     /// \brief Validates initialized options.
     ///
+    /// It checks provided options. If there are issues they are reported
+    /// and exception is raised. If possible some options are corrected
+    /// e.g. overriding drop_time in case of avalanche scenario.
     /// \throws isc::InvalidParameter if command line validation fails.
-    void validate() const;
+    void validate();
 
     /// \brief Throws !InvalidParameter exception if condition is true.
     ///
@@ -507,13 +530,13 @@ private:
     LeaseType lease_type_;
 
     /// Rate in exchange per second
-    int rate_;
+    unsigned int rate_;
 
     /// A rate at which DHCPv6 Renew messages are sent.
-    int renew_rate_;
+    unsigned int renew_rate_;
 
     /// A rate at which DHCPv6 Release messages are sent.
-    int release_rate_;
+    unsigned int release_rate_;
 
     /// Delay between generation of two consecutive performance reports
     int report_delay_;
@@ -574,11 +597,11 @@ private:
     /// measurements.
     int preload_;
 
-    /// Number of exchanges sent before next pause.
-    int aggressivity_;
-
     /// Local port number (host endian)
     int local_port_;
+
+    /// Remote port number (host endian)
+    int remote_port_;
 
     /// Randomization seed.
     uint32_t seed_;
@@ -646,6 +669,12 @@ private:
 
     /// @brief Extra options to be sent in each packet.
     isc::dhcp::OptionCollection extra_opts_;
+
+    /// @brief Option to switch modes between single-threaded and multi-threaded.
+    bool single_thread_mode_;
+
+    /// @brief Selected performance scenario. Default is basic.
+    Scenario scenario_;
 };
 
 }  // namespace perfdhcp

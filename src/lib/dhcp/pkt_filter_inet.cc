@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,8 +18,10 @@ namespace isc {
 namespace dhcp {
 
 PktFilterInet::PktFilterInet()
-    : control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-      control_buf_(new char[control_buf_len_])
+    : recv_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
+      send_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
+      recv_control_buf_(new char[recv_control_buf_len_]),
+      send_control_buf_(new char[send_control_buf_len_])
 {
 }
 
@@ -112,7 +114,7 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     struct sockaddr_in from_addr;
     uint8_t buf[IfaceMgr::RCVBUFSIZE];
 
-    memset(&control_buf_[0], 0, control_buf_len_);
+    memset(&recv_control_buf_[0], 0, recv_control_buf_len_);
     memset(&from_addr, 0, sizeof(from_addr));
 
     // Initialize our message header structure.
@@ -135,8 +137,8 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
     // previously asked the kernel to give us packet
     // information (when we initialized the interface), so we
     // should get the destination address from that.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
+    m.msg_control = &recv_control_buf_[0];
+    m.msg_controllen = recv_control_buf_len_;
 
     int result = recvmsg(socket_info.sockfd_, &m, 0);
     if (result < 0) {
@@ -211,7 +213,7 @@ PktFilterInet::receive(Iface& iface, const SocketInfo& socket_info) {
 int
 PktFilterInet::send(const Iface&, uint16_t sockfd,
                     const Pkt4Ptr& pkt) {
-    memset(&control_buf_[0], 0, control_buf_len_);
+    memset(&send_control_buf_[0], 0, send_control_buf_len_);
 
     // Set the target address we're sending to.
     sockaddr_in to;
@@ -247,8 +249,8 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
     // We have to create a "control message", and set that to
     // define the IPv4 packet information. We set the source address
     // to handle correctly interfaces with multiple addresses.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
+    m.msg_control = &send_control_buf_[0];
+    m.msg_controllen = send_control_buf_len_;
     struct cmsghdr* cmsg = CMSG_FIRSTHDR(&m);
     cmsg->cmsg_level = IPPROTO_IP;
     cmsg->cmsg_type = IP_PKTINFO;
@@ -281,7 +283,7 @@ PktFilterInet::send(const Iface&, uint16_t sockfd,
                   " with an error: " << strerror(errno));
     }
 
-    return (result);
+    return (0);
 }
 
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -357,6 +357,7 @@ strFromStringstream(std::istream& in, const std::string& file,
     while (c != EOF && c != '"') {
         if (c == '\\') {
             // see the spec for allowed escape characters
+            int d;
             switch (in.peek()) {
             case '"':
                 c = '"';
@@ -381,6 +382,48 @@ strFromStringstream(std::istream& in, const std::string& file,
                 break;
             case 't':
                 c = '\t';
+                break;
+            case 'u':
+                // skip first 0
+                in.ignore();
+                ++pos;
+                c = in.peek();
+                if (c != '0') {
+                    throwJSONError("Unsupported unicode escape", file, line, pos);
+                }
+                // skip second 0
+                in.ignore();
+                ++pos;
+                c = in.peek();
+                if (c != '0') {
+                    throwJSONError("Unsupported unicode escape", file, line, pos - 2);
+                }
+                // get first digit
+                in.ignore();
+                ++pos;
+                d = in.peek();
+                if ((d >= '0') && (d <= '9')) {
+                    c = (d - '0') << 4;
+                } else if ((d >= 'A') && (d <= 'F')) {
+                    c = (d - 'A' + 10) << 4;
+                } else if ((d >= 'a') && (d <= 'f')) {
+                    c = (d - 'a' + 10) << 4;
+                } else {
+                    throwJSONError("Not hexadecimal in unicode escape", file, line, pos - 3);
+                }
+                // get second digit
+                in.ignore();
+                ++pos;
+                d = in.peek();
+                if ((d >= '0') && (d <= '9')) {
+                    c |= d - '0';
+                } else if ((d >= 'A') && (d <= 'F')) {
+                    c |= d - 'A' + 10;
+                } else if ((d >= 'a') && (d <= 'f')) {
+                    c |= d - 'a' + 10;
+                } else {
+                    throwJSONError("Not hexadecimal in unicode escape", file, line, pos - 4);
+                }
                 break;
             default:
                 throwJSONError("Bad escape", file, line, pos);
@@ -748,7 +791,18 @@ IntElement::toJSON(std::ostream& ss) const {
 
 void
 DoubleElement::toJSON(std::ostream& ss) const {
-    ss << doubleValue();
+    // The default output for doubles nicely drops off trailing
+    // zeros, however this produces strings without decimal points
+    // for whole number values.  When reparsed this will create
+    // IntElements not DoubleElements.  Rather than used a fixed
+    // precision, we'll just tack on an ".0" when the decimal point
+    // is missing.
+    ostringstream val_ss;
+    val_ss << doubleValue();
+    ss << val_ss.str();
+    if (val_ss.str().find_first_of('.') == string::npos) {
+        ss << ".0";
+    }
 }
 
 void
@@ -797,7 +851,7 @@ StringElement::toJSON(std::ostream& ss) const {
             ss << '\\' << 't';
             break;
         default:
-            if ((c >= 0) && (c < 0x20)) {
+            if (((c >= 0) && (c < 0x20)) || (c < 0) || (c >= 0x7f)) {
                 std::ostringstream esc;
                 esc << "\\u"
                     << hex

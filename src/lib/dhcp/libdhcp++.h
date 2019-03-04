@@ -178,13 +178,22 @@ public:
     /// may be different reasons (option too large, option malformed,
     /// too many options etc.)
     ///
-    /// This is v4 specific version, which stores Relay Agent Information
-    /// option and END options last.
+    /// This is v4 specific version, which stores DHCP message type first,
+    /// and the Relay Agent Information option and END options last. This
+    /// function is initially called to pack the options for a packet in
+    /// @ref Pkt4::pack(). That call leads to it being called recursively in
+    /// @ref Option::packOptions(). Thus the logic used to output the
+    /// message type should only be executed by the top-most. This is governed
+    /// by the paramater top, below.
     ///
     /// @param buf output buffer (assembled options will be stored here)
     /// @param options collection of options to store to
+    /// @param top indicates if this is the first call to pack the options.
+    /// When true logic to emit the message type first is executed. It
+    /// defaults to false.
     static void packOptions4(isc::util::OutputBuffer& buf,
-                             const isc::dhcp::OptionCollection& options);
+                             const isc::dhcp::OptionCollection& options,
+                             bool top = false);
 
     /// @brief Stores DHCPv6 options in a buffer.
     ///

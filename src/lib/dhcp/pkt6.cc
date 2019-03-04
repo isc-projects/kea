@@ -298,7 +298,7 @@ Pkt6::packUDP() {
             for (vector<RelayInfo>::iterator relay = relay_info_.begin();
                  relay != relay_info_.end(); ++relay) {
 
-                // build relay-forw/relay-repl header (see RFC3315, section 7)
+                // build relay-forw/relay-repl header (see RFC 8415, section 9)
                 buffer_out_.writeUint8(relay->msg_type_);
                 buffer_out_.writeUint8(relay->hop_count_);
                 buffer_out_.writeData(&(relay->linkaddr_.toBytes()[0]),

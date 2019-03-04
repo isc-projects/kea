@@ -211,10 +211,9 @@ public:
     IfaceMgrTestConfig iface_mgr_test_config_;
 
     // Bit Constants for turning on and off DDNS configuration options.
-    static const uint16_t ALWAYS_INCLUDE_FQDN = 1;
-    static const uint16_t OVERRIDE_NO_UPDATE = 2;
-    static const uint16_t OVERRIDE_CLIENT_UPDATE = 4;
-    static const uint16_t REPLACE_CLIENT_NAME = 8;
+    static const uint16_t OVERRIDE_NO_UPDATE = 1;
+    static const uint16_t OVERRIDE_CLIENT_UPDATE = 2;
+    static const uint16_t REPLACE_CLIENT_NAME = 4;
 
     // Enum used to specify whether a client (packet) should include
     // the hostname option
@@ -271,7 +270,6 @@ public:
                                   isc::asiolink::IOAddress("127.0.0.1"), 53001,
                                   isc::asiolink::IOAddress("0.0.0.0"), 0, 1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  (mask & ALWAYS_INCLUDE_FQDN),
                                   (mask & OVERRIDE_NO_UPDATE),
                                   (mask & OVERRIDE_CLIENT_UPDATE),
                                   ((mask & REPLACE_CLIENT_NAME) ?
@@ -409,6 +407,29 @@ public:
         // Create Client FQDN Option with the specified flags and
         // domain-name.
         pkt->addOption(createHostname(hostname));
+
+        return (pkt);
+
+    }
+
+    // Create a message holding an empty Hostname option.
+    Pkt4Ptr generatePktWithEmptyHostname(const uint8_t msg_type) {
+
+        Pkt4Ptr pkt = Pkt4Ptr(new Pkt4(msg_type, 1234));
+        pkt->setRemoteAddr(IOAddress("192.0.2.3"));
+        // For DISCOVER we don't include server id, because client broadcasts
+        // the message to all servers.
+        if (msg_type != DHCPDISCOVER) {
+            pkt->addOption(srv_->getServerID());
+        }
+
+        pkt->addOption(generateClientId());
+
+        // Create Hostname option.
+        std::string hostname(" ");
+        OptionPtr opt = createHostname(hostname);
+        opt->setData(hostname.begin(), hostname.begin());
+        pkt->addOption(opt);
 
         return (pkt);
 
@@ -815,6 +836,17 @@ TEST_F(NameDhcpv4SrvTest, serverUpdateWrongHostname) {
     EXPECT_FALSE(hostname);
 }
 
+// Test that the server does not see an empty Hostname option.
+// Suppressing the empty Hostname is done in libdhcp++ during
+// unpackcing, so technically we don't need this test but,
+// hey it's already written.
+TEST_F(NameDhcpv4SrvTest, serverUpdateEmptyHostname) {
+    Pkt4Ptr query;
+    ASSERT_NO_THROW(query = generatePktWithEmptyHostname(DHCPREQUEST));
+    OptionStringPtr hostname;
+    ASSERT_NO_THROW(hostname = processHostname(query));
+    EXPECT_FALSE(hostname);
+}
 
 // Test that server generates the fully qualified domain name for the client
 // if client supplies the partial name.
@@ -885,8 +917,11 @@ TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsNewLease) {
 TEST_F(NameDhcpv4SrvTest, createNameChangeRequestsRenewNoChange) {
     Lease4Ptr lease = createLease(IOAddress("192.0.2.3"), "myhost.example.com.",
                                   true, true);
+    // Comparison should be case insensitive, so turning some of the
+    // characters of the old lease hostname to upper case should not
+    // trigger NCRs.
     Lease4Ptr old_lease = createLease(IOAddress("192.0.2.3"),
-                                      "myhost.example.com.", true, true);
+                                      "Myhost.Example.Com.", true, true);
     old_lease->valid_lft_ += 100;
 
     ASSERT_NO_THROW(srv_->createNameChangeRequests(lease, old_lease));
@@ -1069,7 +1104,8 @@ TEST_F(NameDhcpv4SrvTest, processTwoRequestsHostname) {
     IfaceMgrTestConfig test_config(true);
     IfaceMgr::instance().openSockets4();
 
-    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Case in a hostname should be ignored.
+    Pkt4Ptr req1 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.
@@ -1144,11 +1180,11 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewFqdn) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same FQDN. Server
-    // should generate no NameChangeRequests.
+    // Create another Request message with the same FQDN. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
     Pkt4Ptr req2 = generatePktWithFqdn(DHCPREQUEST, Option4ClientFqdn::FLAG_S |
                                        Option4ClientFqdn::FLAG_E,
-                                       "myhost.example.com.",
+                                       "Myhost.Example.Com.",
                                        Option4ClientFqdn::FULL, true);
 
     ASSERT_NO_THROW(reply = srv_->processRequest(req2));
@@ -1185,9 +1221,9 @@ TEST_F(NameDhcpv4SrvTest, processRequestRenewHostname) {
                             "965B68B6D438D98E680BF10B09F3BCF",
                             time(NULL), subnet_->getValid(), true);
 
-    // Create another Request message with the same Hostname. Server
-    // should generate no NameChangeRequests.
-    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "myhost.example.com.");
+    // Create another Request message with the same Hostname. Case changes in the
+    // hostname should be ignored. Server should generate no NameChangeRequests.
+    Pkt4Ptr req2 = generatePktWithHostname(DHCPREQUEST, "Myhost.Example.Com.");
 
     // Set interface for the incoming packet. The server requires it to
     // generate client id.

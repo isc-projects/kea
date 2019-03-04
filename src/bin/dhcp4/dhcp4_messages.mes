@@ -120,11 +120,20 @@ new configuration. It is output during server startup, and when an updated
 configuration is committed by the administrator.  Additional information
 may be provided.
 
+% DHCP4_CONFIG_FETCH Fetching configuration data from config backends.
+This is an informational message emitted when the DHCPv4 server about to begin
+retrieving configuration data from one or more configuration backends.
+
 % DHCP4_CONFIG_LOAD_FAIL configuration error using file: %1, reason: %2
 This error message indicates that the DHCPv4 configuration has failed.
 If this is an initial configuration (during server's startup) the server
 will fail to start. If this is a dynamic reconfiguration attempt the
 server will continue to use an old configuration.
+
+% DHCP4_CONFIG_MERGED Configuration backend data has been merged.
+This is an informational message emitted when the DHCPv4 server has
+successfully merged configuration data retrieved from its configuration
+backends into the current configuration.
 
 % DHCP4_CONFIG_NEW_SUBNET a new subnet has been added to configuration: %1
 This is an informational message reporting that the configuration has
@@ -134,6 +143,11 @@ been extended to include the specified IPv4 subnet.
 This warning message is issued on an attempt to configure multiple options
 with the same option code for a particular subnet. Adding multiple options
 is uncommon for DHCPv4, but is not prohibited.
+
+% DHCP4_CONFIG_PACKET_QUEUE DHCPv4 packet queue info after configuration: %1
+This informational message is emitted during DHCPv4 server configuration,
+immediately after configuring the DHCPv4 packet queue.  The information
+shown depends upon the packet queue type selected.
 
 % DHCP4_CONFIG_RECEIVED received configuration %1
 A debug message listing the configuration received by the DHCPv4 server.
@@ -153,7 +167,7 @@ An error message indicating that an attempt to reconnect to the lease and/or
 host data bases has failed.  This occurs after connectivity to either one
 has been lost and an automatic attempt to reconnect has failed.
 
-% DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 seconds
+% DHCP4_DB_RECONNECT_ATTEMPT_SCHEDULE scheduling attempt %1 of %2 in %3 milliseconds
 An informational message indicating that the server is scheduling the next
 attempt to reconnect to its lease and/or host databases.  This occurs when the
 server has lost databse connectivity and is attempting to reconnect
@@ -411,7 +425,12 @@ This warning message is issued when current server configuration specifies
 no interfaces that server should listen on, or specified interfaces are not
 configured to receive the traffic.
 
-% DHCP4_OPEN_SOCKET opening sockets on port %1
+% DHCP4_OPEN_CONFIG_DB Opening configuration database: %1
+This message is printed when the DHCPv4 server is attempting to open a
+configuration database.  The database access string with password redacted
+is logged.
+
+% DHCP4_OPEN_SOCKET opening service sockets on port %1
 A debug message issued during startup, this indicates that the DHCPv4
 server is about to open sockets on the specified port.
 
@@ -729,7 +748,7 @@ This informational message indicates that the DHCPv4 server has
 processed any command-line switches and is starting. The version
 is also printed.
 
-% DHCP4_START_INFO pid: %1, port: %2, verbose: %3
+% DHCP4_START_INFO pid: %1, server port: %2, client port: %3, verbose: %4
 This is a debug message issued during the DHCPv4 server startup.
 It lists some information about the parameters with which the server
 is running.
@@ -763,10 +782,7 @@ will drop its message if the received message was DHCPDISCOVER,
 and will send DHCPNAK if the received message was DHCPREQUEST.
 The argument includes the client and the transaction identification
 information.
-<<<<<<< HEAD
-=======
 
 % DHCP6_DHCP4O6_PACKET_RECEIVED received DHCPv4o6 packet from DHCPv6 server (type %1) for %2 port %3 on interface %4
 This debug message is printed when the server is receiving a DHCPv4o6
 from the DHCPv6 server over inter-process communication.
->>>>>>> trac5404

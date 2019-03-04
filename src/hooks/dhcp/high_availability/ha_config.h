@@ -348,6 +348,22 @@ public:
         sync_timeout_ = sync_timeout;
     }
 
+    /// @brief Returns maximum number of leases per page to be fetched
+    /// during database synchronization.
+    ///
+    /// @return Maximum number of leases per page.
+    uint32_t getSyncPageLimit() const {
+        return (sync_page_limit_);
+    }
+
+    /// @brief Sets new page limit size for leases fetched from the partner
+    /// during database synchronization.
+    ///
+    /// @param sync_page_limit New page limit value.
+    void setSyncPageLimit(const uint32_t sync_page_limit) {
+        sync_page_limit_ = sync_page_limit;
+    }
+
     /// @brief Returns heartbeat delay in milliseconds.
     ///
     /// This value indicates the delay in sending a heartbeat command after
@@ -479,6 +495,8 @@ public:
     bool send_lease_updates_;             ///< Send lease updates to partner?
     bool sync_leases_;                    ///< Synchronize databases on startup?
     uint32_t sync_timeout_;               ///< Timeout for syncing lease database (ms)
+    uint32_t sync_page_limit_;            ///< Page size limit while synchronizing
+                                          ///< leases.
     uint32_t heartbeat_delay_;            ///< Heartbeat delay in milliseconds.
     uint32_t max_response_delay_;         ///< Max delay in response to heartbeats.
     uint32_t max_ack_delay_;              ///< Maximum DHCP message ack delay.

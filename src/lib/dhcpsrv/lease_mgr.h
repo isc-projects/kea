@@ -9,13 +9,12 @@
 
 #include <asiolink/io_address.h>
 #include <asiolink/io_service.h>
+#include <database/db_exceptions.h>
 #include <dhcp/duid.h>
 #include <dhcp/option.h>
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/subnet.h>
-#include <dhcpsrv/db_exceptions.h>
-#include <dhcpsrv/sql_common.h>
 
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
@@ -537,7 +536,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr) = 0;
 

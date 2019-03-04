@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -6,17 +6,16 @@
 
 #include <config.h>
 
+#include <database/db_exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option.h>
 #include <dhcp/option_definition.h>
 #include <dhcp/option_space.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/pgsql_host_data_source.h>
-#include <dhcpsrv/db_exceptions.h>
 #include <util/buffer.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 
 #include <boost/algorithm/string/split.hpp>
 #include <boost/algorithm/string/classification.hpp>
@@ -29,6 +28,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::util;
 using namespace isc::data;
@@ -257,12 +257,12 @@ public:
 
             // add auth keys
             std::string key = host->getKey().ToText();
-            if (key.empty()) { 
+            if (key.empty()) {
                 bind_array->addNull();
             } else {
                 bind_array->add(key);
             }
-        
+
         } catch (const std::exception& ex) {
             host_.reset();
             isc_throw(DbOperationError,
@@ -1293,6 +1293,10 @@ public:
         DEL_HOST_ADDR4,         // Delete v4 host (subnet-id, addr4)
         DEL_HOST_SUBID4_ID,     // Delete v4 host (subnet-id, ident.type, identifier)
         DEL_HOST_SUBID6_ID,     // Delete v6 host (subnet-id, ident.type, identifier)
+        GET_HOST_SUBID4,        // Gets hosts by IPv4 SubnetID
+        GET_HOST_SUBID6,        // Gets hosts by IPv6 SubnetID
+        GET_HOST_SUBID4_PAGE,   // Gets hosts by IPv4 SubnetID beginning by HID
+        GET_HOST_SUBID6_PAGE,   // Gets hosts by IPv6 SubnetID beginning by HID
         NUM_STATEMENTS          // Number of statements
     };
 
@@ -1326,7 +1330,7 @@ public:
     /// @return 0 if return_last_id is false, otherwise it returns the
     /// the value in the result set in the first col of the first row.
     ///
-    /// @throw isc::dhcp::DuplicateEntry Database throws duplicate entry error
+    /// @throw isc::db::DuplicateEntry Database throws duplicate entry error
     uint64_t addStatement(PgSqlHostDataSourceImpl::StatementIndex stindex,
                           PsqlBindArrayPtr& bind,
                           const bool return_last_id = false);
@@ -1356,7 +1360,7 @@ public:
     void addOption(const PgSqlHostDataSourceImpl::StatementIndex& stindex,
                    const OptionDescriptor& opt_desc,
                    const std::string& opt_space,
-                   const OptionalValue<SubnetID>& subnet_id,
+                   const Optional<SubnetID>& subnet_id,
                    const HostID& host_id);
 
     /// @brief Inserts multiple options into the database.
@@ -1429,7 +1433,7 @@ public:
     ///         integers. "first" is the major version number, "second" the
     ///         minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
     std::pair<uint32_t, uint32_t> getVersion() const;
 
@@ -1714,6 +1718,106 @@ TaggedStatementArray tagged_statements = { {
      "DELETE FROM hosts WHERE dhcp6_subnet_id = $1 "
      "AND dhcp_identifier_type = $2 "
      "AND dhcp_identifier = $3"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_SUBID4
+    //
+    // Retrieves host information for all hosts in a subnet, along with the
+    // DHCPv4 options associated with it. Left joining the dhcp4_options table
+    // results in multiple rows being returned for the same host. The hosts are
+    // retrieved by subnet id.
+    {1,
+     { OID_INT8 }, "get_host_subid4",
+     "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+     "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
+     "WHERE h.dhcp4_subnet_id = $1 "
+     "ORDER BY h.host_id, o.option_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_SUBID6
+    //
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with all hosts using the IPv6 subnet id. This query returns
+    // host information for many hosts. However, multiple rows are
+    // returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options for each host in a subnet. There
+    // are usually many hosts in a subnet. The amount of returned data may
+    // be huge.
+    {1,
+     { OID_INT8 }, "get_host_subid6",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "FROM hosts AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "WHERE h.dhcp6_subnet_id = $1 "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE
+    // Retrieves host information along with the DHCPv4 options associated with
+    // it. Left joining the dhcp4_options table results in multiple rows being
+    // returned for the same host. The hosts are retrieved by subnet id,
+    // starting from specified host id. Specified number of hosts is returned.
+    {3,
+     { OID_INT8, OID_INT8, OID_INT8 },
+     "get_host_subid4_page",
+     "SELECT h.host_id, h.dhcp_identifier, h.dhcp_identifier_type, "
+     "  h.dhcp4_subnet_id, h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.dhcp4_subnet_id = $1 AND h.host_id > $2 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $3 ) AS h "
+     "LEFT JOIN dhcp4_options AS o ON h.host_id = o.host_id "
+     "ORDER BY h.host_id, o.option_id"
+    },
+
+    // PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE
+    // Retrieves host information, IPv6 reservations and DHCPv6 options
+    // associated with a host using IPv6 subnet id. This query returns
+    // host information for a single host. However, multiple rows are
+    // returned due to left joining IPv6 reservations and DHCPv6 options.
+    // The number of rows returned is multiplication of number of existing
+    // IPv6 reservations and DHCPv6 options.
+    {3,
+     { OID_INT8, OID_INT8, OID_INT8 },
+     "get_host_subid6_page",
+     "SELECT h.host_id, h.dhcp_identifier, "
+     "  h.dhcp_identifier_type, h.dhcp4_subnet_id, "
+     "  h.dhcp6_subnet_id, h.ipv4_address, h.hostname, "
+     "  h.dhcp4_client_classes, h.dhcp6_client_classes, h.user_context, "
+     "  h.dhcp4_next_server, h.dhcp4_server_hostname, "
+     "  h.dhcp4_boot_file_name, h.auth_key, "
+     "  o.option_id, o.code, o.value, o.formatted_value, o.space, "
+     "  o.persistent, o.user_context, "
+     "  r.reservation_id, r.address, r.prefix_len, r.type, r.dhcp6_iaid "
+     "FROM ( SELECT * FROM hosts AS h "
+     "       WHERE h.dhcp6_subnet_id = $1 AND h.host_id > $2 "
+     "       ORDER BY h.host_id "
+     "       LIMIT $3 ) AS h "
+     "LEFT JOIN dhcp6_options AS o ON h.host_id = o.host_id "
+     "LEFT JOIN ipv6_reservations AS r ON h.host_id = r.host_id "
+     "ORDER BY h.host_id, o.option_id, r.reservation_id"
     }
 }
 };
@@ -1838,7 +1942,7 @@ void
 PgSqlHostDataSourceImpl::addOption(const StatementIndex& stindex,
                                    const OptionDescriptor& opt_desc,
                                    const std::string& opt_space,
-                                   const OptionalValue<SubnetID>&,
+                                   const Optional<SubnetID>&,
                                    const HostID& id) {
     PsqlBindArrayPtr bind_array;
     bind_array = host_option_exchange_->createBindForSend(opt_desc, opt_space,
@@ -1865,7 +1969,7 @@ PgSqlHostDataSourceImpl::addOptions(const StatementIndex& stindex,
         if (options && !options->empty()) {
             for (OptionContainer::const_iterator opt = options->begin();
                  opt != options->end(); ++opt) {
-                addOption(stindex, *opt, *space, OptionalValue<SubnetID>(),
+                addOption(stindex, *opt, *space, Optional<SubnetID>(),
                           host_id);
             }
         }
@@ -2094,6 +2198,92 @@ PgSqlHostDataSource::getAll(const Host::IdentifierType& identifier_type,
     impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_DHCPID,
                              bind_array, impl_->host_ipv46_exchange_,
                              result, false);
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id.
+    bind_array->add(subnet_id);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID4,
+                             bind_array, impl_->host_exchange_,
+                             result, false);
+
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id.
+    bind_array->add(subnet_id);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6,
+                             bind_array, impl_->host_ipv6_exchange_,
+                             result, false);
+
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getPage4(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id.
+    bind_array->add(subnet_id);
+
+    // Add the lower bound host id.
+    bind_array->add(lower_host_id);
+
+    // Add the page size value.
+    string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array->add(page_size_data);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID4_PAGE,
+                             bind_array, impl_->host_exchange_,
+                             result, false);
+
+    return (result);
+}
+
+ConstHostCollection
+PgSqlHostDataSource::getPage6(const SubnetID& subnet_id,
+                              size_t& /*source_index*/,
+                              uint64_t lower_host_id,
+                              const HostPageSize& page_size) const {
+    // Set up the WHERE clause value
+    PsqlBindArrayPtr bind_array(new PsqlBindArray());
+
+    // Add the subnet id.
+    bind_array->add(subnet_id);
+
+    // Add the lower bound host id.
+    bind_array->add(lower_host_id);
+
+    // Add the page size value.
+    string page_size_data =
+        boost::lexical_cast<std::string>(page_size.page_size_);
+    bind_array->add(page_size_data);
+
+    ConstHostCollection result;
+    impl_->getHostCollection(PgSqlHostDataSourceImpl::GET_HOST_SUBID6_PAGE,
+                             bind_array, impl_->host_ipv6_exchange_,
+                             result, false);
+
     return (result);
 }
 

@@ -1,5 +1,5 @@
 <!--
- - Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,7 +10,7 @@
 
   <info>
     <productname>ISC Kea</productname>
-    <date>Dec. 31, 3000</date>
+    <date>Dec 14, 2018</date>
     <edition>1.5.0</edition>
     <author>
       <contrib>The Kea software has been written by a number of
@@ -42,18 +42,20 @@
 
   <refsynopsisdiv>
     <cmdsynopsis sepchar=" ">
-      <command>kea-dhcp4</command>
+      <command>kea-netconf</command>
       <arg choice="opt" rep="norepeat"><option>-v</option></arg>
       <arg choice="opt" rep="norepeat"><option>-V</option></arg>
+      <arg choice="opt" rep="norepeat"><option>-W</option></arg>
       <arg choice="opt" rep="norepeat"><option>-d</option></arg>
       <arg choice="opt" rep="norepeat"><option>-c <replaceable class="parameter">config-file</replaceable></option></arg>
+      <arg choice="opt" rep="norepeat"><option>-t <replaceable class="parameter">config-file</replaceable></option></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
   <refsect1>
     <title>DESCRIPTION</title>
     <para>
-      The <command>kea-netconf</command> daemon provides a YANG/NETCONF
+      The <command>kea-netconf</command> agent provides a YANG/NETCONF
       interface for the Kea environment.
     </para>
 
@@ -80,13 +82,12 @@
         </para></listitem>
       </varlistentry>
 
-      <!-- not supported yet in kea-netconf
       <varlistentry>
         <term><option>-W</option></term>
         <listitem><para>
           Display the configuration report.
         </para></listitem>
-      </varlistentry> -->
+      </varlistentry>
 
       <varlistentry>
         <term><option>-d</option></term>
@@ -98,7 +99,17 @@
       <varlistentry>
         <term><option>-c</option></term>
         <listitem><para>
-          Configuration file including the configuration for NETCONF daemon.
+          Configuration file including the configuration for NETCONF agent.
+        </para></listitem>
+      </varlistentry>
+
+      <varlistentry>
+        <term><option>-t</option></term>
+        <listitem><para>
+            Check the syntax of the configuration file and report the
+            first error if any. Note that not all parameters are
+            completely checked, in particular, service and client
+            sockets are not opened, and hook libraries are not loaded.
         </para></listitem>
       </varlistentry>
 
@@ -114,15 +125,14 @@
       lists all possible messages Kea can print with a brief
       description for each of them. Both documents are typically
       available in various formats (txt, html, pdf) with your Kea
-      distribution. The on-line version is available at
-      http://kea.isc.org/docs/.</para>
+      distribution. The Kea documentation is available at
+      https://kb.isc.org/docs/kea-administrator-reference-manual .</para>
     <para>
-      Kea source code is documented in the Kea Developer's Guide. It's
-      on-line version is available at http://kea.isc.org. Please
-      follow Developer's Guide link.
+      Kea source code is documented in the Kea Developer's Guide. Its
+      on-line version is available at https://jenkins.isc.org/job/Kea_doc/doxygen/.
     </para>
     <para>
-      Kea project website is available at: http://kea.isc.org.
+      Kea project website is available at: https://gitlab.isc.org/isc-projects/kea.
     </para>
   </refsect1>
 
@@ -155,6 +165,11 @@
   <refsect1>
     <title>SEE ALSO</title>
     <para>
+      <citerefentry>
+        <refentrytitle>kea-dhcp4</refentrytitle>
+        <manvolnum>8</manvolnum>
+      </citerefentry>,
+
       <citerefentry>
         <refentrytitle>kea-dhcp6</refentrytitle>
         <manvolnum>8</manvolnum>

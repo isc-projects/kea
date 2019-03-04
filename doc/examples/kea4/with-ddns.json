@@ -1,6 +1,6 @@
 // This is an example configuration file for the DHCPv4 server in Kea.
 // It is a basic scenario with one IPv4 subnet configured but with DDNS
-// enabled. 
+// enabled.
 
 { "Dhcp4":
 
@@ -49,7 +49,6 @@
         "max-queue-size" : 2048,
         "ncr-protocol" : "UDP",
         "ncr-format" : "JSON",
-        "always-include-fqdn" : true,
         "override-no-update" : true,
         "override-client-update" : true,
         "replace-client-name" : "when-present",

@@ -42,9 +42,7 @@
                 "socket-name": "/path/to/the/unix/socket-v6"
             },
 
-            // Currently DHCP-DDNS (nicknamed D2) does not support
-            // command channel yet, but we hope this will change in the
-            // future.
+            // Location of the D2 command channel socket.
             "d2":
             {
                 "socket-type": "unix",

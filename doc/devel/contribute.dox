@@ -27,7 +27,8 @@ to kea-users.
 
 The first step in writing the patch or new feature should be to get
 the source code from our Git repository. The procedure is very easy and
-is explained here: http://kea.isc.org/wiki/GitGuidelines.  While it is
+is explained here: https://gitlab.isc.org/isc-projects/kea/wikis/gitlab-howto.  
+While it is
 possible to provide a patch against the latest stable release, it makes
 the review process much easier if it is for latest code from the Git \c
 master branch.
@@ -40,12 +41,12 @@ relatively uncommon systems like OpenBSD. Will your code
 compile and work there? What about endianness? It is likely that you used
 a regular x86 architecture machine to write your patch, but the software
 is expected to run on many other architectures. You may take a look at
-system specific build notes (http://kea.isc.org/wiki/Install).
+system specific build notes (https://kb.isc.org/docs/installing-kea).
 For a complete list of systems we build on, you may take a look at the
 following build farm report: https://jenkins.isc.org/view/Kea_BuildFarm/ .
 
 Does your patch conform to Kea coding guidelines
-(http://kea.isc.org/wiki/CodingGuidelines)? You can submit a
+(https://gitlab.isc.org/isc-projects/kea/wikis/coding-guidelines)? You can submit a
 patch that does not adhere to them, but that will reduce its chances of
 being accepted. If the deviations are minor, one of the Kea engineers who
 does the review will likely fix the issues. However, if there are lots
@@ -153,7 +154,7 @@ be shown as yours in github history. If you care for that kind of things, once t
 patch is merged, you'll be automatically listed as contributor and Kea will be
 listed as project you have contributed to.
 
-- Create a ticket in the Kea trac and attach your patch to it. Sending a patch has a
+- Create a ticket in the Kea Gitlab (https://gitlab.isc.org/isc-projects/kea) and attach your patch to it. Sending a patch has a
 number of disadvantages. First, if you don't specify the base version against
 which it was created, one of ISC engineers will have to guess that or go through
 a series of trials and errors to find that out. If the code doesn't compile, the

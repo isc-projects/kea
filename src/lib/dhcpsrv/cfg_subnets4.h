@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/cfg_to_element.h>
 #include <dhcp/pkt4.h>
+#include <dhcpsrv/cfg_shared_networks.h>
 #include <dhcpsrv/subnet.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/subnet_selector.h>
@@ -46,6 +47,45 @@ public:
     ///
     /// @throw isc::BadValue if such subnet doesn't exist.
     void del(const ConstSubnet4Ptr& subnet);
+
+    /// @brief Merges specified subnet configuration into this configuration.
+    ///
+    /// This method merges subnets from the @c other configuration into this
+    /// configuration. The general rule is that existing subnets are replaced
+    /// by the subnets from @c other. If there is no corresponding subnet in
+    /// this configuration the subnet from @c other configuration is inserted.
+    ///
+    /// The complexity of the merge process stems from the associations between
+    /// the subnets and shared networks.  It is assumed that subnets in @c other
+    /// are the authority on their shared network assignments. It is also
+    /// assumed that @ networks is the list of shared networks that should be
+    /// used in making assignments.  The general concept is that the overarching
+    /// merge process will first merge shared networks and then pass that list
+    /// of networks into this method. Subnets from @c other are then merged
+    /// into this configuration as follows:
+    ///
+    /// For each subnet in @c other:
+    ///
+    /// - If a subnet of the same ID already exists in this configuration:
+    ///    -# If it belongs to a shared network, remove it from that network
+    ///    -# Remove the subnet from this configuration and discard it
+    ///
+    /// - Add the subnet from @c other to this configuration.
+    /// - If that subnet is associated to shared network, find that network
+    ///   in @ networks and add that subnet to it.
+    ///
+    /// @warning The merge operation affects the @c other configuration.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    ///
+    /// @param networks collection of shared networks that to which assignments
+    /// should be added. In other words, the list of shared networks that belong
+    /// to the same SrvConfig instance we are merging into.
+    /// @param other the subnet configuration to be merged into this
+    /// configuration.
+    void merge(CfgSharedNetworks4Ptr networks, CfgSubnets4& other);
 
     /// @brief Returns pointer to the collection of all IPv4 subnets.
     ///
@@ -226,7 +266,7 @@ public:
     ///   received over.
     ///
     /// @todo: Add additional selection criteria. See
-    ///  http://kea.isc.org/wiki/ISC-DHCP4o6-Design for details.
+    ///  https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design for details.
     ///
     /// @param selector Const reference to the selector structure which holds
     /// various information extracted from the client's packet which are used

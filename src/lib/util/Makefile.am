@@ -10,12 +10,13 @@ lib_LTLIBRARIES = libkea-util.la
 libkea_util_la_SOURCES  = boost_time_utils.h boost_time_utils.cc
 libkea_util_la_SOURCES += buffer.h io_utilities.h
 libkea_util_la_SOURCES += csv_file.h csv_file.cc
+libkea_util_la_SOURCES += doubles.h
 libkea_util_la_SOURCES += filename.h filename.cc
 libkea_util_la_SOURCES += hash.h
 libkea_util_la_SOURCES += labeled_value.h labeled_value.cc
 libkea_util_la_SOURCES += memory_segment.h
 libkea_util_la_SOURCES += memory_segment_local.h memory_segment_local.cc
-libkea_util_la_SOURCES += optional_value.h
+libkea_util_la_SOURCES += optional.h
 libkea_util_la_SOURCES += pid_file.h pid_file.cc
 libkea_util_la_SOURCES += pointer_util.h
 libkea_util_la_SOURCES += process_spawn.h process_spawn.cc
@@ -40,7 +41,7 @@ libkea_util_la_SOURCES += random/random_number_generator.h
 
 libkea_util_la_LIBADD = $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 
-libkea_util_la_LDFLAGS  = -no-undefined -version-info 3:1:0
+libkea_util_la_LDFLAGS  = -no-undefined -version-info 5:0:0
 
 CLEANFILES = *.gcno *.gcda
 
@@ -50,13 +51,14 @@ libkea_util_include_HEADERS = \
 	boost_time_utils.h \
 	buffer.h \
 	csv_file.h \
+	doubles.h \
 	filename.h \
 	hash.h \
 	io_utilities.h \
 	labeled_value.h \
 	memory_segment.h \
 	memory_segment_local.h \
-	optional_value.h \
+	optional.h \
 	pid_file.h \
 	pointer_util.h \
 	process_spawn.h \
@@ -97,4 +99,5 @@ libkea_util_random_include_HEADERS = \
 libkea_util_threads_includedir = $(pkgincludedir)/util/threads
 libkea_util_threads_include_HEADERS = \
 	threads/sync.h \
-	threads/thread.h
+	threads/thread.h \
+	threads/watched_thread.h

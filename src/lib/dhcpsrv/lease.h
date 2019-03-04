@@ -32,7 +32,7 @@ typedef boost::shared_ptr<Lease> LeasePtr;
 ///
 /// This structure holds all information that is common between IPv4 and IPv6
 /// leases.
-struct Lease : public UserContext, public isc::data::CfgToElement {
+struct Lease : public isc::data::UserContext, public isc::data::CfgToElement {
 
     /// @brief Type of lease or pool
     typedef enum {
@@ -187,6 +187,8 @@ struct Lease : public UserContext, public isc::data::CfgToElement {
     bool stateDeclined() const;
 
     /// @brief Returns true if the other lease has equal FQDN data.
+    ///
+    /// The comparison of the hostname is case insensitive.
     ///
     /// @param other Lease which FQDN data is to be compared with our lease.
     ///

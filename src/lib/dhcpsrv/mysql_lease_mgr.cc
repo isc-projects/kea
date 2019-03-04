@@ -11,7 +11,7 @@
 #include <dhcp/hwaddr.h>
 #include <dhcpsrv/dhcpsrv_log.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
-#include <dhcpsrv/mysql_connection.h>
+#include <mysql/mysql_connection.h>
 
 #include <boost/array.hpp>
 #include <boost/static_assert.hpp>
@@ -26,6 +26,7 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::data;
 using namespace std;
@@ -335,7 +336,11 @@ public:
                                    size_t count) {
         for (size_t i = 0; i < count; ++i) {
             error[i] = MLM_FALSE;
+#ifdef HAVE_MYSQL_MY_BOOL
             bind[i].error = reinterpret_cast<char*>(&error[i]);
+#else
+            bind[i].error = &error[i];
+#endif
         }
     }
 
@@ -463,6 +468,16 @@ public:
             if (hwaddr) {
                 hwaddr_ = hwaddr->hwaddr_;
                 hwaddr_length_ = hwaddr->hwaddr_.size();
+
+                // Make sure that the buffer has at least length of 1, even if
+                // empty HW address is passed. This is required by some of the
+                // MySQL connectors that the buffer is set to non-null value.
+                // Otherwise, null value would be inserted into the database,
+                // rather than empty string.
+                if (hwaddr_.empty()) {
+                    hwaddr_.resize(1);
+                }
+
                 bind_[1].buffer_type = MYSQL_TYPE_BLOB;
                 bind_[1].buffer = reinterpret_cast<char*>(&(hwaddr_[0]));
                 bind_[1].buffer_length = hwaddr_length_;
@@ -483,6 +498,16 @@ public:
             if (lease_->client_id_) {
                 client_id_ = lease_->client_id_->getClientId();
                 client_id_length_ = client_id_.size();
+
+                // Make sure that the buffer has at least length of 1, even if
+                // empty client id is passed. This is required by some of the
+                // MySQL connectors that the buffer is set to non-null value.
+                // Otherwise, null value would be inserted into the database,
+                // rather than empty string.
+                if (client_id_.empty()) {
+                    client_id_.resize(1);
+                }
+
                 bind_[2].buffer_type = MYSQL_TYPE_BLOB;
                 bind_[2].buffer = reinterpret_cast<char*>(&client_id_[0]);
                 bind_[2].buffer_length = client_id_length_;
@@ -545,7 +570,10 @@ public:
                                               // reasons, see memset() above
 
             // hostname: varchar(255)
-            bind_[8].buffer_type = MYSQL_TYPE_VARCHAR;
+            // Note that previously we used MYSQL_TYPE_VARCHAR instead of
+            // MYSQL_TYPE_STRING. However, that caused 'buffer type not supported'
+            // errors on some systems running MariaDB.
+            bind_[8].buffer_type = MYSQL_TYPE_STRING;
             bind_[8].buffer = const_cast<char*>(lease_->hostname_.c_str());
             bind_[8].buffer_length = lease_->hostname_.length();
             // bind_[8].is_null = &MLM_FALSE; // commented out for performance
@@ -666,6 +694,9 @@ public:
                                           // reasons, see memset() above
 
         // hostname: varchar(255)
+        // Note that previously we used MYSQL_TYPE_VARCHAR instead of
+        // MYSQL_TYPE_STRING. However, that caused 'buffer type not supported'
+        // errors on some systems running MariaDB.
         hostname_length_ = sizeof(hostname_buffer_);
         bind_[8].buffer_type = MYSQL_TYPE_STRING;
         bind_[8].buffer = reinterpret_cast<char*>(hostname_buffer_);
@@ -1005,7 +1036,7 @@ public:
                                                // reasons, see memset() above
 
             // hostname: varchar(255)
-            bind_[11].buffer_type = MYSQL_TYPE_VARCHAR;
+            bind_[11].buffer_type = MYSQL_TYPE_STRING;
             bind_[11].buffer = const_cast<char*>(lease_->hostname_.c_str());
             bind_[11].buffer_length = lease_->hostname_.length();
             // bind_[11].is_null = &MLM_FALSE; // commented out for performance
@@ -1016,6 +1047,16 @@ public:
             if (hwaddr) {
                 hwaddr_ = hwaddr->hwaddr_;
                 hwaddr_length_ = hwaddr->hwaddr_.size();
+
+                // Make sure that the buffer has at least length of 1, even if
+                // empty HW address is passed. This is required by some of the
+                // MySQL connectors that the buffer is set to non-null value.
+                // Otherwise, null value would be inserted into the database,
+                // rather than empty string.
+                if (hwaddr_.empty()) {
+                    hwaddr_.resize(1);
+                }
+
                 bind_[12].buffer_type = MYSQL_TYPE_BLOB;
                 bind_[12].buffer = reinterpret_cast<char*>(&(hwaddr_[0]));
                 bind_[12].buffer_length = hwaddr_length_;
@@ -1890,15 +1931,22 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+
+    // If the data happens to be empty, we have to create a 1 byte dummy
+    // buffer and pass it to the binding.
+    uint8_t single_byte_data = 0;
+
     // As "buffer" is "char*" - even though the data is being read - we need
     // to cast away the "const"ness as well as reinterpreting the data as
     // a "char*". (We could avoid the "const_cast" by copying the data to a
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
+    uint8_t* data = !hwaddr.hwaddr_.empty() ? const_cast<uint8_t*>(&hwaddr.hwaddr_[0])
+        : &single_byte_data;
 
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = hwaddr_length;
     inbind[0].length = &hwaddr_length;
@@ -1920,15 +1968,22 @@ MySqlLeaseMgr::getLease4(const HWAddr& hwaddr, SubnetID subnet_id) const {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
+    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
+
+    // If the data happens to be empty, we have to create a 1 byte dummy
+    // buffer and pass it to the binding.
+    std::vector<uint8_t> single_byte_vec(1);
+
     // As "buffer" is "char*" - even though the data is being read - we need
     // to cast away the "const"ness as well as reinterpreting the data as
     // a "char*". (We could avoid the "const_cast" by copying the data to a
     // local variable, but as the data is only being read, this introduces
     // an unnecessary copy).
-    unsigned long hwaddr_length = hwaddr.hwaddr_.size();
-    uint8_t* data = const_cast<uint8_t*>(&hwaddr.hwaddr_[0]);
+    uint8_t* data = !hwaddr.hwaddr_.empty() ? const_cast<uint8_t*>(&hwaddr.hwaddr_[0])
+        : &single_byte_vec[0];
 
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
     inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = hwaddr_length;
     inbind[0].length = &hwaddr_length;
@@ -1953,9 +2008,17 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid) const {
     MYSQL_BIND inbind[1];
     memset(inbind, 0, sizeof(inbind));
 
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
+    // If the data happens to be empty, we have to create a 1 byte dummy
+    // buffer and pass it to the binding.
+    if (client_data.empty()) {
+        client_data.resize(1);
+    }
+
     inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
@@ -1987,9 +2050,17 @@ MySqlLeaseMgr::getLease4(const ClientId& clientid, SubnetID subnet_id) const {
     MYSQL_BIND inbind[2];
     memset(inbind, 0, sizeof(inbind));
 
+    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
     std::vector<uint8_t> client_data = clientid.getClientId();
     unsigned long client_data_length = client_data.size();
-    inbind[0].buffer_type = MYSQL_TYPE_BLOB;
+
+    // If the data happens to be empty, we have to create a 1 byte dummy
+    // buffer and pass it to the binding.
+    if (client_data.empty()) {
+        client_data.resize(1);
+    }
+
     inbind[0].buffer = reinterpret_cast<char*>(&client_data[0]);
     inbind[0].buffer_length = client_data_length;
     inbind[0].length = &client_data_length;
@@ -2130,9 +2201,18 @@ MySqlLeaseMgr::getLeases6(Lease::Type lease_type,
     // data).  For that reason, "const_cast" has been used.
     const vector<uint8_t>& duid_vector = duid.getDuid();
     unsigned long duid_length = duid_vector.size();
+
+    // Make sure that the buffer has at least length of 1, even if
+    // empty client id is passed. This is required by some of the
+    // MySQL connectors that the buffer is set to non-null value.
+    // Otherwise, null value would be inserted into the database,
+    // rather than empty string.
+    uint8_t single_byte_data = 0;
+    uint8_t* data = !duid_vector.empty() ? const_cast<uint8_t*>(&duid_vector[0])
+        : &single_byte_data;
+
     inbind[0].buffer_type = MYSQL_TYPE_BLOB;
-    inbind[0].buffer = reinterpret_cast<char*>(
-            const_cast<uint8_t*>(&duid_vector[0]));
+    inbind[0].buffer = reinterpret_cast<char*>(data);
     inbind[0].buffer_length = duid_length;
     inbind[0].length = &duid_length;
 

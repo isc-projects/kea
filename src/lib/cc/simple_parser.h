@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <cc/dhcp_config_error.h>
+#include <map>
 #include <vector>
 #include <string>
 #include <stdint.h>
@@ -18,7 +19,7 @@
 namespace isc {
 namespace data {
 
-/// This array defines a single entry of default values
+/// This array defines a single entry of default values.
 struct SimpleDefault {
     SimpleDefault(const char* name, isc::data::Element::types type, const char* value)
         :name_(name), type_(type), value_(value) {}
@@ -27,11 +28,17 @@ struct SimpleDefault {
     const char* value_;
 };
 
-/// This specifies all default values in a given scope (e.g. a subnet)
+/// This specifies all required keywords.
+typedef std::vector<std::string> SimpleRequiredKeywords;
+
+/// This specifies all accepted keywords with their types.
+typedef std::map<std::string, isc::data::Element::types> SimpleKeywords;
+
+/// This specifies all default values in a given scope (e.g. a subnet).
 typedef std::vector<SimpleDefault> SimpleDefaults;
 
 /// This defines a list of all parameters that are derived (or inherited) between
-/// contexts
+/// contexts.
 typedef std::vector<std::string> ParamsList;
 
 
@@ -59,6 +66,30 @@ typedef std::vector<std::string> ParamsList;
 ///   spread out in multiple files in multiple directories).
 class SimpleParser {
  public:
+
+    /// @brief Checks that all required keywords are present.
+    ///
+    /// This method throws an exception when a required
+    /// entry is not present in the given scope.
+    ///
+    /// @param required Required keywords.
+    /// @param scope Specified parameters which are checked.
+    /// @throw DhcpConfigError if a required parameter is not present.
+    static void checkRequired(const SimpleRequiredKeywords& required,
+                              isc::data::ConstElementPtr scope);
+
+    /// @brief Checks acceptable keywords with their expected type.
+    ///
+    /// This methods throws an exception when a not acceptable keyword
+    /// is found or when an acceptable entry does not have the expected type.
+    ///
+    /// @param keywords The @c SimpleKeywords keywords and types map.
+    /// @param scope Specified parameters which are checked.
+    /// @throw DhcpConfigError if a not acceptable keyword is found.
+    /// @throw DhcpConfigError if an acceptable entry does not have
+    /// the expected type.
+    static void checkKeywords(const SimpleKeywords& keywords,
+                              isc::data::ConstElementPtr scope);
 
     /// @brief Derives (inherits) parameters from parent scope to a child
     ///
@@ -139,6 +170,23 @@ class SimpleParser {
     static int64_t getInteger(isc::data::ConstElementPtr scope,
                               const std::string& name);
 
+    /// @brief Returns an integer parameter from a scope and checks its range
+    ///
+    /// Unconditionally returns a parameter. Checks that the value specified
+    /// is in min =< X =< max range.
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @param min minimum allowed value
+    /// @param max maximum allowed value
+    /// @return an integer value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not of
+    /// appropriate type.
+    /// @throw OutOfRange if the parameter is out of range
+    static int64_t getInteger(isc::data::ConstElementPtr scope,
+                              const std::string& name,
+                              int64_t min, int64_t max);
+
     /// @brief Returns a boolean parameter from a scope
     ///
     /// Unconditionally returns a parameter.
@@ -164,6 +212,18 @@ class SimpleParser {
     /// being a proper address).
     static isc::asiolink::IOAddress
     getAddress(const ConstElementPtr& scope, const std::string& name);
+
+    /// @brief Returns a floating point parameter from a scope
+    ///
+    /// Unconditionally returns a parameter.
+    ///
+    /// @param scope specified parameter will be extracted from this scope
+    /// @param name name of the parameter
+    /// @return a double value of the parameter
+    /// @throw DhcpConfigError if the parameter is not there or is not
+    /// an Element::real
+    static double getDouble(const ConstElementPtr& scope,
+                            const std::string& name);
 
 protected:
 

@@ -6,7 +6,8 @@
 
 #include <config.h>
 
-#include "command_options.h"
+#include <perfdhcp/command_options.h>
+
 #include <exceptions/exceptions.h>
 #include <dhcp/iface_mgr.h>
 #include <dhcp/duid.h>
@@ -16,13 +17,14 @@
 
 #include <boost/lexical_cast.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
-
 #include <sstream>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <unistd.h>
 #include <fstream>
+#include <thread>
+#include <getopt.h>
 
 #ifdef HAVE_OPTRESET
 extern int optreset;
@@ -95,12 +97,6 @@ CommandOptions::LeaseType::toText() const {
     }
 }
 
-CommandOptions&
-CommandOptions::instance() {
-    static CommandOptions options;
-    return (options);
-}
-
 void
 CommandOptions::reset() {
     // Default mac address used in DHCP messages
@@ -136,8 +132,8 @@ CommandOptions::reset() {
     localname_.clear();
     is_interface_ = false;
     preload_ = 0;
-    aggressivity_ = 1;
     local_port_ = 0;
+    remote_port_ = 0;
     seeded_ = false;
     seed_ = 0;
     broadcast_ = false;
@@ -155,6 +151,12 @@ CommandOptions::reset() {
     v6_relay_encapsulation_level_ = 0;
     generateDuidTemplate();
     extra_opts_.clear();
+    if (std::thread::hardware_concurrency() == 1) {
+        single_thread_mode_ = true;
+    } else {
+        single_thread_mode_ = false;
+    }
+    scenario_ = Scenario::BASIC;
 }
 
 bool
@@ -203,6 +205,8 @@ CommandOptions::parse(int argc, char** const argv, bool print_cmd_line) {
     return (help_or_version_mode);
 }
 
+const int LONG_OPT_SCENARIO = 300;
+
 bool
 CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     int opt = 0;                // Subsequent options returned by getopt()
@@ -219,10 +223,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     stream << "perfdhcp";
     int num_mac_list_files = 0;
 
+    struct option long_options[] = {
+        {"scenario", required_argument, 0, LONG_OPT_SCENARIO},
+        {0,          0,                 0, 0}
+    };
+
     // In this section we collect argument values from command line
     // they will be tuned and validated elsewhere
-    while((opt = getopt(argc, argv, "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:M:"
-                        "s:iBc1T:X:O:o:E:S:I:x:W:w:e:f:F:")) != -1) {
+    while((opt = getopt_long(argc, argv,
+                             "hv46A:r:t:R:b:n:p:d:D:l:P:a:L:N:M:s:iBc1"
+                             "T:X:O:o:E:S:I:x:W:w:e:f:F:g:",
+                             long_options, NULL)) != -1) {
         stream << " -" << static_cast<char>(opt);
         if (optarg) {
             stream << " " << optarg;
@@ -253,11 +264,6 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
         case '6':
             check(ipversion_ == 4, "IP version already set to 4");
             ipversion_ = 6;
-            break;
-
-        case 'a':
-            aggressivity_ = positiveInteger("value of aggressivity: -a<value>"
-                                            " must be a positive integer");
             break;
 
         case 'b':
@@ -337,6 +343,17 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                                             " positive integer");
             break;
 
+        case 'g': {
+            auto optarg_text = std::string(optarg);
+            if (optarg_text == "single") {
+                single_thread_mode_ = true;
+            } else if (optarg_text == "multi") {
+                single_thread_mode_ = false;
+            } else {
+                isc_throw(InvalidParameter, "value of thread mode (-g) '" << optarg << "' is wrong - should be '-g single' or '-g multi'");
+            }
+            break;
+        }
         case 'h':
             usage();
             return (true);
@@ -362,8 +379,18 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
                                               " negative integer");
              check(local_port_ >
                    static_cast<int>(std::numeric_limits<uint16_t>::max()),
-                  "local-port must be lower than " +
-                  boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+                   "local-port must be lower than " +
+                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
+            break;
+
+        case 'N':
+             remote_port_ = nonNegativeInteger("value of remote port:"
+                                               " -L<value> must not be a"
+                                               " negative integer");
+             check(remote_port_ >
+                   static_cast<int>(std::numeric_limits<uint16_t>::max()),
+                   "remote-port must be lower than " +
+                   boost::lexical_cast<std::string>(std::numeric_limits<uint16_t>::max()));
             break;
 
         case 'M':
@@ -522,8 +549,19 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
             xid_offset_.push_back(offset_arg);
             break;
 
+        case LONG_OPT_SCENARIO: {
+            auto optarg_text = std::string(optarg);
+            if (optarg_text == "basic") {
+                scenario_ = Scenario::BASIC;
+            } else if (optarg_text == "avalanche") {
+                scenario_ = Scenario::AVALANCHE;
+            } else {
+                isc_throw(InvalidParameter, "scenario value '" << optarg << "' is wrong - should be 'basic' or 'avalanche'");
+            }
+            break;
+        }
         default:
-            isc_throw(isc::InvalidParameter, "unknown command line option");
+            isc_throw(isc::InvalidParameter, "wrong command line option");
         }
     }
 
@@ -548,7 +586,7 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
     }
 
     // Get server argument
-    // NoteFF02::1:2 and FF02::1:3 are defined in RFC3315 as
+    // NoteFF02::1:2 and FF02::1:3 are defined in RFC 8415 as
     // All_DHCP_Relay_Agents_and_Servers and All_DHCP_Servers
     // addresses
     check(optind < argc -1, "extra arguments?");
@@ -570,6 +608,16 @@ CommandOptions::initialize(int argc, char** argv, bool print_cmd_line) {
 
     if (print_cmd_line) {
         std::cout << "Running: " << stream.str() << std::endl;
+    }
+
+    if (scenario_ == Scenario::BASIC) {
+        std::cout << "Scenario: basic." << std::endl;
+    } else if (scenario_ == Scenario::AVALANCHE) {
+        std::cout << "Scenario: avalanche." << std::endl;
+    }
+
+    if (!isSingleThreaded()) {
+        std::cout << "Multi-thread mode enabled." << std::endl;
     }
 
     // Handle the local '-l' address/interface
@@ -726,7 +774,7 @@ CommandOptions::generateDuidTemplate() {
     duid_template_[2] = HWTYPE_ETHERNET >> 8;
     duid_template_[3] = HWTYPE_ETHERNET & 0xff;
 
-    // As described in RFC3315: 'the time value is the time
+    // As described in RFC 8415: 'the time value is the time
     // that the DUID is generated represented in seconds
     // since midnight (UTC), January 1, 2000, modulo 2^32.'
     ptime now = microsec_clock::universal_time();
@@ -800,7 +848,7 @@ bool CommandOptions::decodeMacString(const std::string& line) {
 }
 
 void
-CommandOptions::validate() const {
+CommandOptions::validate() {
     check((getIpVersion() != 4) && (isBroadcast() != 0),
           "-B is not compatible with IPv6 (-6)");
     check((getIpVersion() != 6) && (isRapidCommit() != 0),
@@ -866,6 +914,30 @@ CommandOptions::validate() const {
           "use -I<ip-offset>");
     check((!getMacListFile().empty() && base_.size() > 0),
           "Can't use -b with -M option");
+
+    auto nthreads = std::thread::hardware_concurrency();
+    if (nthreads == 1 && isSingleThreaded() == false) {
+        std::cout << "WARNING: Currently system can run only 1 thread in parallel." << std::endl
+                  << "WARNING: Better results are achieved when run in single-threaded mode." << std::endl
+                  << "WARNING: To switch use -g single option." << std::endl;
+    } else if (nthreads > 1 && isSingleThreaded()) {
+        std::cout << "WARNING: Currently system can run more than 1 thread in parallel." << std::endl
+                  << "WARNING: Better results are achieved when run in multi-threaded mode." << std::endl
+                  << "WARNING: To switch use -g multi option." << std::endl;
+    }
+
+    if (scenario_ == Scenario::AVALANCHE) {
+        check(getClientsNum() <= 0,
+              "in case of avalanche scenario number\nof clients must be specified"
+              " using -R option explicitly");
+
+        // in case of AVALANCHE drops ie. long responses should not be observed by perfdhcp
+        double dt[2] = { 1000.0, 1000.0 };
+        drop_time_.assign(dt, dt + 2);
+        if (drop_time_set_) {
+            std::cout << "INFO: in avalanche scenario drop time is ignored" << std::endl;
+        }
+    }
 }
 
 void
@@ -963,9 +1035,11 @@ CommandOptions::printCommandLine() const {
     if (preload_ != 0) {
         std::cout << "preload=" << preload_ <<  std::endl;
     }
-    std::cout << "aggressivity=" << aggressivity_ << std::endl;
     if (getLocalPort() != 0) {
         std::cout << "local-port=" << local_port_ <<  std::endl;
+    }
+    if (getRemotePort() != 0) {
+        std::cout << "remote-port=" << remote_port_ <<  std::endl;
     }
     if (seeded_) {
         std::cout << "seed=" << seed_ << std::endl;
@@ -1016,6 +1090,11 @@ CommandOptions::printCommandLine() const {
     if (!server_name_.empty()) {
         std::cout << "server=" << server_name_ << std::endl;
     }
+    if (single_thread_mode_) {
+        std::cout << "single-thread-mode" << std::endl;
+    } else {
+        std::cout << "multi-thread-mode" << std::endl;
+    }
 }
 
 void
@@ -1026,8 +1105,8 @@ CommandOptions::usage() const {
         "         [-F<release-rate>] [-t<report>] [-R<range>] [-b<base>]\n"
         "         [-n<num-request>] [-p<test-period>] [-d<drop-time>]\n"
         "         [-D<max-drop>] [-l<local-addr|interface>] [-P<preload>]\n"
-        "         [-a<aggressivity>] [-L<local-port>] [-s<seed>] [-i] [-B]\n"
-        "         [-W<late-exit-delay>]\n"
+        "         [-L<local-port>] [-N<remote-port>]\n"
+        "         [-s<seed>] [-i] [-B] [-W<late-exit-delay>]\n"
         "         [-c] [-1] [-M<mac-list-file>] [-T<template-file>]\n"
         "         [-X<xid-offset>] [-O<random-offset] [-E<time-offset>]\n"
         "         [-S<srvid-offset>] [-I<ip-offset>] [-x<diagnostic-selector>]\n"
@@ -1049,13 +1128,16 @@ CommandOptions::usage() const {
         "the server.\n"
         "The -r option is used to set up a performance test, without\n"
         "it exchanges are initiated as fast as possible.\n"
+        "The other scenario is an avalanche which is selected by\n"
+        "--scenario avalanche. It first sends as many Discovery or Solicit\n"
+        "messages as request in -R option then back off mechanism is used for\n"
+        "each simulated client until all requests are answered. At the end\n"
+        "time of whole scenario is reported.\n"
         "\n"
         "Options:\n"
         "-1: Take the server-ID option from the first received message.\n"
         "-4: DHCPv4 operation (default). This is incompatible with the -6 option.\n"
         "-6: DHCPv6 operation. This is incompatible with the -4 option.\n"
-        "-a<aggressivity>: When the target sending rate is not yet reached,\n"
-        "    control how many exchanges are initiated before the next pause.\n"
         "-b<base>: The base mac, duid, IP, etc, used to simulate different\n"
         "    clients.  This can be specified multiple times, each instance is\n"
         "    in the <type>=<value> form, for instance:\n"
@@ -1079,6 +1161,10 @@ CommandOptions::usage() const {
         "    with the exchange rate (given by -r<rate>).  Furthermore the sum of\n"
         "    this value and the release-rate (given by -F<rate) must be equal\n"
         "    to or less than the exchange rate.\n"
+        "-g: Select thread mode: 'single' or 'multi'. In multi-thread mode packets\n"
+        "    are received in separate thread. This allows better utilisation of CPUs.\n"
+        "    If more than 1 CPU is present then multi-thread mode is the default,\n"
+        "    otherwise single-thread is the default.\n"
         "-h: Print this help.\n"
         "-i: Do only the initial part of an exchange: DO or SA, depending on\n"
         "    whether -6 is given.\n"
@@ -1097,6 +1183,8 @@ CommandOptions::usage() const {
         "   from this list for every new exchange. In the DHCPv6 case, MAC\n"
         "   addresses are used to generate DUID-LLs. This parameter must not be\n"
         "   used in conjunction with the -b parameter.\n"
+        "-N<remote-port>: Specify the remote port to use\n"
+        "    (the value 0 means to use the default).\n"
         "-O<random-offset>: Offset of the last octet to randomize in the template.\n"
         "-P<preload>: Initiate first <preload> exchanges back to back at startup.\n"
         "-r<rate>: Initiate <rate> DORA/SARR (or if -i is given, DO/SA)\n"
@@ -1107,6 +1195,7 @@ CommandOptions::usage() const {
         "-R<range>: Specify how many different clients are used. With 1\n"
         "    (the default), all requests seem to come from the same client.\n"
         "-s<seed>: Specify the seed for randomization, making it repeatable.\n"
+        "--scenario <name>: where name is 'basic' (default) or 'avalanche'.\n"
         "-S<srvid-offset>: Offset of the server-ID option in the\n"
         "    (second/request) template.\n"
         "-T<template-file>: The name of a file containing the template to use\n"
@@ -1182,6 +1271,7 @@ void
 CommandOptions::version() const {
     std::cout << "VERSION: " << VERSION << std::endl;
 }
+
 
 }  // namespace perfdhcp
 }  // namespace isc

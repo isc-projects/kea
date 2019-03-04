@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,6 +21,7 @@
 using namespace std;
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 
@@ -181,7 +182,7 @@ TEST_F(HostCacheTest, identifier4) {
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv4SubnetID(), address));
-    
+
     // It is cached so we can still get it.
     got = HostMgr::instance().get4(host->getIPv4SubnetID(),
                                    host->getIdentifierType(),
@@ -189,7 +190,7 @@ TEST_F(HostCacheTest, identifier4) {
                                    host->getIdentifier().size());
     ASSERT_TRUE(got);
     HostDataSourceUtils::compareHosts(got, host);
-                                                
+
     // Even by address.
     got = HostMgr::instance().get4(host->getIPv4SubnetID(), address);
     ASSERT_TRUE(got);
@@ -214,7 +215,7 @@ TEST_F(HostCacheTest, identifier6) {
                                                         Host::IDENT_DUID,
                                                         false);
     ASSERT_TRUE(host);  // Make sure the host is generated properly.
-    
+
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
@@ -238,7 +239,7 @@ TEST_F(HostCacheTest, identifier6) {
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv6SubnetID(), address));
-    
+
     // It is cached so we can still get it.
     got = HostMgr::instance().get6(host->getIPv6SubnetID(),
                                    host->getIdentifierType(),
@@ -246,7 +247,7 @@ TEST_F(HostCacheTest, identifier6) {
                                    host->getIdentifier().size());
     ASSERT_TRUE(got);
     HostDataSourceUtils::compareHosts(got, host);
-                                                
+
     // Even by address.
     got = HostMgr::instance().get6(host->getIPv6SubnetID(), address);
     ASSERT_TRUE(got);
@@ -287,12 +288,12 @@ TEST_F(HostCacheTest, address4) {
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv4SubnetID(), address));
-    
+
     // It is cached so we can still get it.
     got = HostMgr::instance().get4(host->getIPv4SubnetID(), address);
     ASSERT_TRUE(got);
     HostDataSourceUtils::compareHosts(got, host);
-                                                
+
     // Even by identifier.
     got = HostMgr::instance().get4(host->getIPv4SubnetID(),
                                    host->getIdentifierType(),
@@ -320,7 +321,7 @@ TEST_F(HostCacheTest, address6) {
                                                         Host::IDENT_DUID,
                                                         false);
     ASSERT_TRUE(host);  // Make sure the host is generated properly.
-    
+
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
@@ -342,12 +343,12 @@ TEST_F(HostCacheTest, address6) {
 
     // Remove it from test host data source.
     EXPECT_TRUE(memptr_->del(host->getIPv6SubnetID(), address));
-    
+
     // It is cached so we can still get it.
     got = HostMgr::instance().get6(host->getIPv6SubnetID(), address);
     ASSERT_TRUE(got);
     HostDataSourceUtils::compareHosts(got, host);
-                                                
+
     // Even by identifier.
     got = HostMgr::instance().get6(host->getIPv6SubnetID(),
                                    host->getIdentifierType(),
@@ -564,7 +565,7 @@ TEST_F(HostCacheTest, negativeAddress6) {
                                                         Host::IDENT_DUID,
                                                         false);
     ASSERT_TRUE(host);  // Make sure the host is generated properly.
-    
+
     // Get the address.
     IPv6ResrvRange resrvs = host->getIPv6Reservations();
     ASSERT_EQ(1, std::distance(resrvs.first, resrvs.second));
@@ -597,8 +598,26 @@ public:
     /// Destructor
     virtual ~TestOneBackend() { }
 
-    ConstHostCollection getAll(const Host::IdentifierType&, const uint8_t*, 
+    ConstHostCollection getAll(const Host::IdentifierType&, const uint8_t*,
                                const size_t) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAll4(const SubnetID&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getAll6(const SubnetID&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getPage4(const SubnetID&, size_t&, uint64_t,
+                                 const HostPageSize&) const {
+        return (getCollection());
+    }
+
+    ConstHostCollection getPage6(const SubnetID&, size_t&, uint64_t,
+                                 const HostPageSize&) const {
         return (getCollection());
     }
 

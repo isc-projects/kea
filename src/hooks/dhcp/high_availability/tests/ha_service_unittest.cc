@@ -161,11 +161,11 @@ public:
     /// should be disabled.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncDisable(const std::string& server_name,
-                      const unsigned int max_period,
-                      const PostRequestCallback& post_request_action) {
-        HAService::asyncDisable(client_, server_name, max_period,
-                                post_request_action);
+    void asyncDisableDHCPService(const std::string& server_name,
+                                 const unsigned int max_period,
+                                 const PostRequestCallback& post_request_action) {
+        HAService::asyncDisableDHCPService(client_, server_name, max_period,
+                                           post_request_action);
     }
 
     /// @brief Schedules asynchronous "dhcp-enable" command to the specified
@@ -177,9 +177,9 @@ public:
     /// sent.
     /// @param post_request_action pointer to the function to be executed when
     /// the request is completed.
-    void asyncEnable(const std::string& server_name,
-                     const PostRequestCallback& post_request_action) {
-        HAService::asyncEnable(client_, server_name, post_request_action);
+    void asyncEnableDHCPService(const std::string& server_name,
+                                const PostRequestCallback& post_request_action) {
+        HAService::asyncEnableDHCPService(client_, server_name, post_request_action);
     }
 
     using HAService::asyncSendHeartbeat;
@@ -209,7 +209,7 @@ public:
     TestHttpResponseCreator() :
         requests_(), control_result_(CONTROL_RESULT_SUCCESS),
         arguments_(), per_request_control_result_(),
-        per_request_arguments_() {
+        per_request_arguments_(), request_index_() {
     }
 
     /// @brief Removes all received requests.
@@ -270,11 +270,23 @@ public:
     /// @brief Sets arguments to be included in the response to a particular
     /// command.
     ///
+    /// Some tests require that the returned arguments vary for the same
+    /// command sent multiple times. One example of such command is the
+    /// @c lease4-get-page command sent multiple times to fetch pages of
+    /// leases from the partner. This method facilitates such test scenario.
+    /// In order to set different arguments for consecutive requests this
+    /// method must be called multiple times. Each call results in adding
+    /// arguments to be returned when the command is issued multiple times.
+    ///
     /// @param command_name command name.
     /// @param arguments pointer to the arguments.
     void setArguments(const std::string& command_name,
                       const ElementPtr& arguments) {
-        per_request_arguments_[command_name] = arguments;
+        per_request_arguments_[command_name].push_back(isc::data::copy(arguments));
+        // Create request index for this command if it doesn't exist.
+        if (request_index_.count(command_name) == 0) {
+            request_index_[command_name] = 0;
+        }
     }
 
     /// @brief Create a new request.
@@ -345,7 +357,17 @@ private:
                 // Check if there are specific arguments to be returned for this
                 // command.
                 if (per_request_arguments_.count(command_name) > 0) {
-                    arguments = per_request_arguments_[command_name];
+                    // For certain requests we may return different arguments for consecutive
+                    // instances of the same command. The request_index_ tracks the current
+                    // index of the arguments to be returned.
+                    arguments = per_request_arguments_[command_name][request_index_[command_name]];
+
+                    // If we have reached the last arguments do not increase the index. Simply
+                    // continue returning the same arguments.
+                    if (request_index_[command_name] + 1 < per_request_arguments_[command_name].size()) {
+                        // Not the last arguments, increase the index.
+                        ++request_index_[command_name];
+                    }
                 }
             }
         }
@@ -392,7 +414,10 @@ private:
     std::map<std::string, int> per_request_control_result_;
 
     /// @brief Command specific response arguments.
-    std::map<std::string, ElementPtr> per_request_arguments_;
+    std::map<std::string, std::vector<ElementPtr> > per_request_arguments_;
+
+    /// @brief Index of the next request of the given type.
+    std::map<std::string, size_t> request_index_;
 };
 
 /// @brief Shared pointer to the @c TestHttpResponseCreator.
@@ -509,9 +534,14 @@ public:
         generateTestLeases(leases4_);
     }
 
-    /// @brief Returns generated IPv4 leases in JSON format.
-    ConstElementPtr getTestLeases4AsJson() const {
-        return (getLeasesAsJson(leases4_));
+    /// @brief Returns range of generated IPv4 leases in JSON format.
+    ///
+    /// @param first_index Index of the first lease to be returned.
+    /// @param last_index Index of the last lease to be returned.
+    ConstElementPtr getTestLeases4AsJson(const size_t first_index,
+                                         const size_t last_index) const {
+        return (getLeasesAsJson(std::vector<Lease4Ptr>(leases4_.begin() + first_index,
+                                                       leases4_.begin() + last_index)));
     }
 
     /// @brief Generates IPv6 leases to be used by the tests.
@@ -519,9 +549,82 @@ public:
         generateTestLeases(leases6_);
     }
 
-    /// @brief Returns generated IPv6 leases in JSON format.
-    ConstElementPtr getTestLeases6AsJson() const {
-        return (getLeasesAsJson(leases6_));
+    /// @brief Returns range of generated IPv6 leases in JSON format.
+    ///
+    /// @param first_index Index of the first lease to be returned.
+    /// @param last_index Index of the last lease to be returned.
+    ConstElementPtr getTestLeases6AsJson(const size_t first_index,
+                                         const size_t last_index) const {
+        return (getLeasesAsJson(std::vector<Lease6Ptr>(leases6_.begin() + first_index,
+                                                       leases6_.begin() + last_index)));
+    }
+
+    /// @brief Configure server side to return  IPv4 leases in 3-element
+    /// chunks.
+    ///
+    /// Leases are fetched in pages, so the lease4-get-page should be
+    /// sent multiple times. The server is configured to return leases
+    /// in 3-element chunks. Note that the HA configis set to ask for 3
+    /// leases.
+    void createPagedSyncResponses4() {
+        ElementPtr response_arguments = Element::createMap();
+
+        // First, return leases with indexes from 0 to 2.
+        response_arguments->set("leases", getTestLeases4AsJson(0, 3));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Next, return leases with indexes from 3 to 5.
+        response_arguments->set("leases", getTestLeases4AsJson(3, 6));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Then, return leases with indexes from 6 to 8.
+        response_arguments->set("leases", getTestLeases4AsJson(6, 9));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+
+        // Finally, there is one lease with index 9 to be returned.
+        // When the server requests a page of 3 leases and gets 1 it
+        // means that the last page was returned. At this point, the
+        // server ends synchronization.
+        response_arguments->set("leases", getTestLeases4AsJson(9, 10));
+        factory2_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
+    }
+
+    /// @brief Configure server side to return  IPv6 leases in 3-element
+    /// chunks.
+    ///
+    /// Leases are fetched in pages, so the lease6-get-page should be
+    /// sent multiple times. The server is configured to return leases
+    /// in 3-element chunks. Note that the HA configis set to ask for 3
+    /// leases.
+    void createPagedSyncResponses6() {
+        ElementPtr response_arguments = Element::createMap();
+
+        // First, return leases with indexes from 0 to 2.
+        response_arguments->set("leases", getTestLeases6AsJson(0, 3));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Next, return leases with indexes from 3 to 5.
+        response_arguments->set("leases", getTestLeases6AsJson(3, 6));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Then, return leases with indexes from 6 to 8.
+        response_arguments->set("leases", getTestLeases6AsJson(6, 9));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+
+        // Finally, there is one lease with index 9 to be returned.
+        // When the server requests a page of 3 leases and gets 1 it
+        // means that the last page was returned. At this point, the
+        // server ends synchronization.
+        response_arguments->set("leases", getTestLeases6AsJson(9, 10));
+        factory2_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
+        factory3_->getResponseCreator()->setArguments("lease6-get-page", response_arguments);
     }
 
     /// @brief Tests scenarios when lease updates are sent to a partner while
@@ -780,14 +883,10 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
 
-        // Convert leases to the JSON format, the same as used by the lease_cmds
-        // hook library. Configure our test HTTP servers to return those
-        // leases in this format.
-        ElementPtr response_arguments = Element::createMap();
-        response_arguments->set("leases", getTestLeases4AsJson());
-
-        factory2_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
+        // Leases are fetched in pages, so the lease4-get-page should be
+        // sent multiple times. The server is configured to return leases
+        // in 3-element chunks.
+        createPagedSyncResponses4();
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -832,14 +931,10 @@ public:
         // server 1.
         HAConfigPtr config_storage = createValidConfiguration();
 
-        // Convert leases to the JSON format, the same as used by the lease_cmds
-        // hook library. Configure our test HTTP servers to return those
-        // leases in this format.
-        ElementPtr response_arguments = Element::createMap();
-        response_arguments->set("leases", getTestLeases6AsJson());
-
-        factory2_->getResponseCreator()->setArguments("lease6-get-all", response_arguments);
-        factory3_->getResponseCreator()->setArguments("lease6-get-all", response_arguments);
+        // Leases are fetched in pages, so the lease6-get-page should be
+        // sent multiple times. The server is configured to return leases
+        // in 3-element chunks.
+        createPagedSyncResponses6();
 
         // Start the servers.
         ASSERT_NO_THROW({
@@ -1610,10 +1705,11 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
     // hook library. Configure our test HTTP servers to return those
     // leases in this format.
     ElementPtr response_arguments = Element::createMap();
-    response_arguments->set("leases", getTestLeases4AsJson());
 
-    factory2_->getResponseCreator()->setArguments(response_arguments);
-    factory3_->getResponseCreator()->setArguments(response_arguments);
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. The server is configured to return leases
+    // in 3-element chunks.
+    createPagedSyncResponses4();
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -1635,7 +1731,7 @@ TEST_F(HAServiceTest, asyncSyncLeases) {
         // Stop running the IO service if we see a lease in the lease
         // database which is expected to be inserted as a result of lease
         // syncing.
-        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(4)).empty());
+        return (!LeaseMgrFactory::instance().getLeases4(SubnetID(10)).empty());
     }));
 
     // Check if all leases have been stored in the local database.
@@ -1783,10 +1879,11 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
     // hook library. Configure our test HTTP servers to return those
     // leases in this format.
     ElementPtr response_arguments = Element::createMap();
-    response_arguments->set("leases", getTestLeases6AsJson());
 
-    factory2_->getResponseCreator()->setArguments(response_arguments);
-    factory3_->getResponseCreator()->setArguments(response_arguments);
+    // Leases are fetched in pages, so the lease4-get-page should be
+    // sent multiple times. We need to configure the server side to
+    // return leases in 3-element chunks.
+    createPagedSyncResponses6();
 
     // Start the servers.
     ASSERT_NO_THROW({
@@ -1809,7 +1906,7 @@ TEST_F(HAServiceTest, asyncSyncLeases6) {
         // Stop running the IO service if we see a lease in the lease
         // database which is expected to be inserted as a result of lease
         // syncing.
-        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(4)).empty());
+        return (!LeaseMgrFactory::instance().getLeases6(SubnetID(10)).empty());
     }));
 
     // Check if all leases have been stored in the local database.
@@ -1934,9 +2031,9 @@ TEST_F(HAServiceTest, processSynchronize4) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease4-get-all and dhcp-enable.
+    // lease4-get-page and dhcp-enable.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -1958,15 +2055,15 @@ TEST_F(HAServiceTest, processSynchronizeDisableError) {
     // The server2 should only receive dhcp-disable commands. Remaining two should
     // not be sent.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
-// This test verifies that an error is reported when sending a lease4-get-all
+// This test verifies that an error is reported when sending a lease4-get-page
 // command causes an error.
-TEST_F(HAServiceTest, processSynchronizeLease4GetAllError) {
+TEST_F(HAServiceTest, processSynchronizeLease4GetPageError) {
     // Setup the server2 to return an error to dhcp-disable commands.
-    factory2_->getResponseCreator()->setControlResult("lease4-get-all",
+    factory2_->getResponseCreator()->setControlResult("lease4-get-page",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -1980,7 +2077,7 @@ TEST_F(HAServiceTest, processSynchronizeLease4GetAllError) {
     // The server2 should receive all commands. The dhcp-disable was successful, so
     // the dhcp-enable command must be sent to re-enable the service after failure.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2001,7 +2098,7 @@ TEST_F(HAServiceTest, processSynchronizeEnableError) {
 
     // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease4-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2027,9 +2124,9 @@ TEST_F(HAServiceTest, processSynchronize6) {
     }
 
     // The following commands should have been sent to the server2: dhcp-disable,
-    // lease6-get-all and dhcp-enable.
+    // lease6-get-page and dhcp-enable.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2051,15 +2148,15 @@ TEST_F(HAServiceTest, processSynchronize6DisableError) {
     // The server2 should only receive dhcp-disable commands. Remaining two should
     // not be sent.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_FALSE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
-// This test verifies that an error is reported when sending a lease6-get-all
+// This test verifies that an error is reported when sending a lease6-get-page
 // command causes an error.
-TEST_F(HAServiceTest, processSynchronizeLease6GetAllError) {
+TEST_F(HAServiceTest, processSynchronizeLease6GetPageError) {
     // Setup the server2 to return an error to dhcp-disable commands.
-    factory2_->getResponseCreator()->setControlResult("lease6-get-all",
+    factory2_->getResponseCreator()->setControlResult("lease6-get-page",
                                                       CONTROL_RESULT_ERROR);
 
     // Run HAService::processSynchronize and gather a response.
@@ -2073,7 +2170,7 @@ TEST_F(HAServiceTest, processSynchronizeLease6GetAllError) {
     // The server2 should receive all commands. The dhcp-disable was successful, so
     // the dhcp-enable command must be sent to re-enable the service after failure.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
@@ -2094,12 +2191,12 @@ TEST_F(HAServiceTest, processSynchronize6EnableError) {
 
     // The server2 should receive all commands.
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-disable","20"));
-    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-all",""));
+    EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("lease6-get-page",""));
     EXPECT_TRUE(factory2_->getResponseCreator()->findRequest("dhcp-enable",""));
 }
 
 // This test verifies that the DHCPv4 service can be disabled on the remote server.
-TEST_F(HAServiceTest, asyncDisable4) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2114,9 +2211,9 @@ TEST_F(HAServiceTest, asyncDisable4) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server3", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
         io_service_->stop();
@@ -2134,7 +2231,7 @@ TEST_F(HAServiceTest, asyncDisable4) {
 
 // This test verifies that there is no exception thrown as a result of dhcp-disable
 // command when the server is offline.
-TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2142,9 +2239,9 @@ TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server2", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server2", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -2156,7 +2253,7 @@ TEST_F(HAServiceTest, asyncDisable4ServerOffline) {
 
 // This test verifies that an error is returned when the remote server
 // returns control status error.
-TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
+TEST_F(HAServiceTest, asyncDisableDHCPService4ControlResultError) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2176,9 +2273,9 @@ TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
 
     // Send dhcp-disable command with max-period of 10 seconds.
     // When the transaction is finished, the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncDisable("server3", 10,
-                                         [this](const bool success,
-                                                const std::string& error_message) {
+    ASSERT_NO_THROW(service.asyncDisableDHCPService("server3", 10,
+                                                    [this](const bool success,
+                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
         io_service_->stop();
@@ -2189,7 +2286,7 @@ TEST_F(HAServiceTest, asyncDisable4ControlResultError) {
 }
 
 // This test verifies that the DHCPv4 service can be enabled on the remote server.
-TEST_F(HAServiceTest, asyncEnable4) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2204,7 +2301,8 @@ TEST_F(HAServiceTest, asyncEnable4) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_TRUE(success);
         EXPECT_TRUE(error_message.empty());
@@ -2222,7 +2320,7 @@ TEST_F(HAServiceTest, asyncEnable4) {
 
 // This test verifies that there is no exception thrown as a result of dhcp-enable
 // command when the server is offline.
-TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4ServerOffline) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2230,7 +2328,8 @@ TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
@@ -2243,7 +2342,7 @@ TEST_F(HAServiceTest, asyncEnable4ServerOffline) {
 
 // This test verifies that an error is returned when the remote server
 // returns control status error.
-TEST_F(HAServiceTest, asyncEnable4ControlResultError) {
+TEST_F(HAServiceTest, asyncEnableDHCPService4ControlResultError) {
     // Create HA configuration.
     HAConfigPtr config_storage = createValidConfiguration();
 
@@ -2263,7 +2362,8 @@ TEST_F(HAServiceTest, asyncEnable4ControlResultError) {
 
     // Send dhcp-enable command. When the transaction is finished,
     // the IO service gets stopped.
-    ASSERT_NO_THROW(service.asyncEnable("server2", [this](const bool success,
+    ASSERT_NO_THROW(service.asyncEnableDHCPService("server2",
+                                                   [this](const bool success,
                                                           const std::string& error_message) {
         EXPECT_FALSE(success);
         EXPECT_FALSE(error_message.empty());
@@ -2412,7 +2512,7 @@ public:
 
     /// @brief Enable response to commands required for leases synchronization.
     ///
-    /// Enables dhcp-disable, dhcp-enable and lease4-get-all commands. The last
+    /// Enables dhcp-disable, dhcp-enable and lease4-get-page commands. The last
     /// of them returns a bunch of test leases.
     void enableRespondLeaseFetching() {
         // Create IPv4 leases which will be fetched from the other server.
@@ -2425,7 +2525,7 @@ public:
         ElementPtr response_arguments = Element::createMap();
         response_arguments->set("leases", getLeasesAsJson(leases4));
 
-        factory_->getResponseCreator()->setArguments("lease4-get-all", response_arguments);
+        factory_->getResponseCreator()->setArguments("lease4-get-page", response_arguments);
     }
 
     /// @brief Starts up the partner.
@@ -2502,6 +2602,7 @@ public:
     void startService(const HAConfigPtr& config,
                       const HAServerType& server_type = HAServerType::DHCPv4) {
         config->setHeartbeatDelay(1);
+        config->setSyncPageLimit(1000);
         service_.reset(new TestHAService(io_service_, network_state_, config,
                                          server_type));
         // Replace default communication state with custom state which exposes
@@ -3063,7 +3164,7 @@ TEST_F(HAServiceStateMachineTest, waitingSyncingReadyLoadBalancing) {
     // the partner's IO service in thread (in background).
     testSynchronousCommands([this, &partner]() {
 
-        // SYNCING state: the partner is up but it won't respond to the lease4-get-all
+        // SYNCING state: the partner is up but it won't respond to the lease4-get-page
         // command correctly. This should leave us in the SYNCING state until we finally
         // can synchronize.
         service_->runModel(HAService::NOP_EVT);

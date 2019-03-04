@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,44 @@ using isc::dhcp::DhcpConfigError;
 namespace isc {
 namespace data {
 
+void
+SimpleParser::checkRequired(const SimpleRequiredKeywords& required,
+                            ConstElementPtr scope) {
+    for (auto name : required) {
+        if (scope->contains(name)) {
+            continue;
+        }
+        isc_throw(DhcpConfigError, "missing '" << name << "' parameter");
+    }
+}
+
+void
+SimpleParser::checkKeywords(const SimpleKeywords& keywords,
+                            ConstElementPtr scope) {
+    string spurious;
+    for (auto entry : scope->mapValue()) {
+        if (keywords.count(entry.first) == 0) {
+            if (spurious.empty()) {
+                spurious = entry.first;
+            }
+            continue;
+        }
+        Element::types expected = keywords.at(entry.first);
+        if ((expected == Element::any) ||
+            (entry.second->getType() == expected)) {
+            continue;
+        }
+        isc_throw(DhcpConfigError, "'" << entry.first << "' parameter is not "
+                  << (expected == Element::integer ? "an " : "a ")
+                  << Element::typeToName(expected));
+    }
+    if (!spurious.empty()) {
+        isc_throw(DhcpConfigError, "spurious '" << spurious << "' parameter");
+    }
+}
+
 std::string
-SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getString(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -38,7 +74,7 @@ SimpleParser::getString(isc::data::ConstElementPtr scope, const std::string& nam
 }
 
 int64_t
-SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getInteger(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -54,8 +90,21 @@ SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& na
     return (x->intValue());
 }
 
+int64_t
+SimpleParser::getInteger(isc::data::ConstElementPtr scope, const std::string& name,
+                         int64_t min, int64_t max) {
+    int64_t tmp = getInteger(scope, name);
+    if (tmp < min || tmp > max) {
+        isc_throw(OutOfRange,
+                  "The '" << name << "' value (" << tmp
+                  << ") is not within expected range: (" << min << " - " << max
+                  << ")");
+    }
+    return (tmp);
+}
+
 bool
-SimpleParser::getBoolean(isc::data::ConstElementPtr scope, const std::string& name) {
+SimpleParser::getBoolean(ConstElementPtr scope, const std::string& name) {
     ConstElementPtr x = scope->get(name);
     if (!x) {
         isc_throw(DhcpConfigError,
@@ -84,6 +133,26 @@ SimpleParser::getAddress(const ConstElementPtr& scope,
     }
 }
 
+double
+SimpleParser::getDouble(const ConstElementPtr& scope,
+                        const std::string& name) {
+    ConstElementPtr x = scope->get(name);
+    if (!x) {
+        isc_throw(DhcpConfigError,
+                  "missing parameter '" << name << "' ("
+                  << scope->getPosition() << ")");
+    }
+
+    if (x->getType() != Element::real) {
+        isc_throw(DhcpConfigError,
+                  "invalid type specified for parameter '" << name
+                  << "' (" << x->getPosition() << ")");
+    }
+
+    return (x->doubleValue());
+}
+
+
 const data::Element::Position&
 SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr parent) {
     if (!parent) {
@@ -96,7 +165,7 @@ SimpleParser::getPosition(const std::string& name, const data::ConstElementPtr p
     return (elem->getPosition());
 }
 
-size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
+size_t SimpleParser::setDefaults(ElementPtr scope,
                                  const SimpleDefaults& default_values) {
     size_t cnt = 0;
 
@@ -170,7 +239,7 @@ size_t SimpleParser::setDefaults(isc::data::ElementPtr scope,
 }
 
 size_t
-SimpleParser::setListDefaults(isc::data::ConstElementPtr list,
+SimpleParser::setListDefaults(ConstElementPtr list,
                               const SimpleDefaults& default_values) {
     size_t cnt = 0;
     BOOST_FOREACH(ElementPtr entry, list->listValue()) {
@@ -180,8 +249,8 @@ SimpleParser::setListDefaults(isc::data::ConstElementPtr list,
 }
 
 size_t
-SimpleParser::deriveParams(isc::data::ConstElementPtr parent,
-                           isc::data::ElementPtr child,
+SimpleParser::deriveParams(ConstElementPtr parent,
+                           ElementPtr child,
                            const ParamsList& params) {
     if ( (parent->getType() != Element::map) ||
          (child->getType() != Element::map)) {

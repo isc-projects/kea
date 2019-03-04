@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,9 +10,21 @@
 #include <cc/simple_parser.h>
 #include <gtest/gtest.h>
 
+using namespace isc;
 using namespace isc::data;
 using namespace isc::asiolink;
 using isc::dhcp::DhcpConfigError;
+
+/// This list defines required keywords.
+const SimpleRequiredKeywords REQUIRED_KEYWORDS = { "foobar" };
+
+/// This table defines keywords and types.
+const SimpleKeywords KEYWORDS = {
+    { "id",     Element::integer },
+    { "prefix", Element::string },
+    { "map",    Element::map },
+    { "any",    Element::any }
+};
 
 /// This table defines sample default values. Although these are DHCPv6
 /// specific, the mechanism is generic and can be used by any other component.
@@ -85,6 +97,51 @@ public:
         }
     }
 };
+
+// This test checks if the checkRequired method works as expected.
+TEST_F(SimpleParserTest, checkRequired) {
+    ConstElementPtr empty = Element::fromJSON("{ }");
+    EXPECT_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, empty),
+                 DhcpConfigError);
+    ConstElementPtr other = Element::fromJSON("{ \"foo\": 1, \"bar\": 2 }");
+    EXPECT_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, other),
+                 DhcpConfigError);
+    ConstElementPtr good = Element::fromJSON("{ \"foobar\": 2 }");
+    EXPECT_NO_THROW(SimpleParser::checkRequired(REQUIRED_KEYWORDS, good));
+}
+
+// This test checks if the checkKeywords method works as expected.
+TEST_F(SimpleParserTest, checkKeywords) {
+    ConstElementPtr empty = Element::fromJSON("{ }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, empty));
+    ConstElementPtr id = Element::fromJSON("{ \"id\": 1 }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, id));
+    ConstElementPtr any = Element::fromJSON("{ \"any\": 1 }");
+    EXPECT_NO_THROW(SimpleParser::checkKeywords(KEYWORDS, any));
+    ConstElementPtr bad_id = Element::fromJSON("{ \"id\": true }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_id),
+                 DhcpConfigError);
+    ConstElementPtr bad_prefix = Element::fromJSON("{ \"prefix\": 12 }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_prefix),
+                 DhcpConfigError);
+    ConstElementPtr bad_map = Element::fromJSON("{ \"map\": [ ] }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, bad_map),
+                 DhcpConfigError);
+    ConstElementPtr spurious = Element::fromJSON("{ \"spurious\": 1 }");
+    EXPECT_THROW(SimpleParser::checkKeywords(KEYWORDS, spurious),
+                 DhcpConfigError);
+
+    // Bad type has precedence.
+    ConstElementPtr bad = Element::fromJSON("{ \"spurious\": 1, \"id\": true }");
+    try {
+        SimpleParser::checkKeywords(KEYWORDS, bad);
+        ADD_FAILURE() << "expect exception";
+    } catch (const DhcpConfigError& ex) {
+        EXPECT_EQ("'id' parameter is not an integer", std::string(ex.what()));
+    } catch (...) {
+        ADD_FAILURE() << "expect DhcpConfigError";
+    }
+}
 
 // This test checks if the parameters can be inherited from the global
 // scope to the subnet scope.
@@ -189,6 +246,27 @@ TEST_F(SimpleParserTest, getIntType) {
     EXPECT_EQ(100, val);
 }
 
+// This test exercises the getInteger with range checking
+TEST_F(SimpleParserTest, getInteger) {
+
+    // The value specified is 100.
+    ElementPtr json = Element::fromJSON("{ \"bar\": 100 }");
+    int64_t x;
+
+    // Positive case: we expect value in range 0..200. All ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 0, 200));
+    EXPECT_EQ(100, x);
+
+    // Border checks: 100 for 100..200 range is still ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 100, 200));
+    // Border checks: 100 for 1..100 range is still ok.
+    EXPECT_NO_THROW(x = SimpleParser::getInteger(json, "bar", 1, 100));
+
+    // Out of expected range. Should throw.
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 101, 200), OutOfRange);
+    EXPECT_THROW(x = SimpleParser::getInteger(json, "bar", 1, 99), OutOfRange);
+}
+
 // This test exercises the getAndConvert template
 TEST_F(SimpleParserTest, getAndConvert) {
 
@@ -236,4 +314,51 @@ TEST_F(SimpleParserTest, getIOAddress) {
     ElementPtr v6 = Element::fromJSON("{ \"foo\": \"2001:db8::1\" }");
     EXPECT_NO_THROW(val = parser.getAddress(v6, "foo"));
     EXPECT_EQ("2001:db8::1" , val.toText());
+}
+
+// This test exercises getDouble()
+TEST_F(SimpleParserTest, getDouble) {
+
+    SimpleParserClassTest parser;
+    std::string json =
+    "{\n"
+    "  \"string\" : \"12.3\",\n"
+    "  \"bool\" : true, \n"
+    "  \"int\" : 777, \n"
+    "  \"map\" : {}, \n"
+    "  \"list\" : [], \n"
+    "  \"zero\" : 0.0, \n"
+    "  \"fraction\" : .75, \n"
+    "  \"negative\" : -1.45, \n"
+    "  \"positive\" : 346.7 \n"
+    "}\n";
+
+    // Create our test set of parameters.
+    ElementPtr elems;
+    ASSERT_NO_THROW(elems = Element::fromJSON(json)) << " invalid JSON, test is broken";
+
+    // Verify that a non-existant element is caught.
+    EXPECT_THROW(parser.getDouble(elems, "not-there"), DhcpConfigError);
+
+    // Verify that wrong element types are caught.
+    EXPECT_THROW(parser.getDouble(elems, "string"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "int"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "bool"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "map"), DhcpConfigError);
+    EXPECT_THROW(parser.getDouble(elems, "list"), DhcpConfigError);
+
+    // Verify valid values are correct.
+    double value;
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "zero"));
+    EXPECT_EQ(0.0, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "fraction"));
+    EXPECT_EQ(.75, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "negative"));
+    EXPECT_EQ(-1.45, value);
+
+    EXPECT_NO_THROW(value = parser.getDouble(elems, "positive"));
+    EXPECT_EQ(346.7, value);
 }

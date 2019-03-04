@@ -1,4 +1,4 @@
-# Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -178,9 +178,9 @@ version_test() {
 
 version_test "shell.version"
 shell_command_test "shell.list-commands" "list-commands" \
-    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
+    "[ { \"arguments\": [ \"build-report\", \"config-get\", \"config-reload\", \"config-set\", \"config-test\", \"config-write\", \"list-commands\", \"shutdown\", \"version-get\" ], \"result\": 0 } ]" ""
 shell_command_test "shell.bogus" "give-me-a-beer" \
-"[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported. You did not include \\\"service\\\" parameter in the command, which indicates that Kea Control Agent should process this command rather than forward it to one or more DHCP servers. If you aimed to send this command to one of the DHCP servers you should include the \\\"service\\\" parameter in your request, e.g. \\\"service\\\": [ \\\"dhcp4\\\" ] to forward the command to the DHCPv4 server, or \\\"service\\\": [ \\\"dhcp4\\\", \\\"dhcp6\\\" ] to forward it to both DHCPv4 and DHCPv6 servers etc.\" } ]" ""
+"[ { \"result\": 2, \"text\": \"'give-me-a-beer' command not supported. You did not include \\\"service\\\" parameter in the command, which indicates that Kea Control Agent should process this command rather than forward it to one or more Kea servers. If you aimed to send this command to one of the Kea servers you should include the \\\"service\\\" parameter in your request, e.g. \\\"service\\\": [ \\\"dhcp4\\\" ] to forward the command to the DHCPv4 server, or \\\"service\\\": [ \\\"dhcp4\\\", \\\"dhcp6\\\", \\\"d2\\\" ] to forward it to DHCPv4, DHCPv6 and D2 servers etc.\" } ]" ""
 shell_command_test "shell.empty-config-test" "config-test" \
     "[ { \"result\": 1, \"text\": \"Missing mandatory 'arguments' parameter.\" } ]" ""
 shell_command_test "shell.no-app-config-test" "config-test" \
@@ -190,5 +190,5 @@ shell_command_test "shell.no-map-config-test" "config-test" \
     "[ { \"result\": 1, \"text\": \"'Control-agent' parameter expected to be a map.\" } ]" \
     "\"Control-agent\": [ ]"
 shell_command_test "shell.bad-value-config-test" "config-test" \
-    "[ { \"result\": 2, \"text\": \"out of range value (80000) specified for parameter 'http-port' (<string>:1:76) You did not include \\\"service\\\" parameter in the command, which indicates that Kea Control Agent should process this command rather than forward it to one or more DHCP servers. If you aimed to send this command to one of the DHCP servers you should include the \\\"service\\\" parameter in your request, e.g. \\\"service\\\": [ \\\"dhcp4\\\" ] to forward the command to the DHCPv4 server, or \\\"service\\\": [ \\\"dhcp4\\\", \\\"dhcp6\\\" ] to forward it to both DHCPv4 and DHCPv6 servers etc.\" } ]" \
+    "[ { \"result\": 1, \"text\": \"out of range value (80000) specified for parameter 'http-port' (<string>:1:76)\" } ]" \
     "\"Control-agent\": { \"http-port\": 80000 }"

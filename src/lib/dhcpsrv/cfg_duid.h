@@ -1,4 +1,4 @@
-// Copyright (C) 2015,2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,12 +22,12 @@ namespace dhcp {
 /// The DHCPv6 server uses DHCPv6 Unique Identifier (DUID) to identify itself
 /// to the clients. Typically, the server generates the DUID on the first
 /// startup and writes it to the persistent storage so as it doesn't change
-/// across restarts of the server. RFC3315 and RFC6355 define different DUID
-/// types. Kea allows for selecting a type of DUID that the server should
-/// generate. It also allows for overriding entire default DUID or parts of
-/// it via configuration file. This class holds the DUID configuration
-/// specified in the server configuration file.
-class CfgDUID : public UserContext, public isc::data::CfgToElement {
+/// across restarts of the server. RFC 8415 defines different DUID types.
+/// Kea allows for selecting a type of DUID that the server should generate.
+/// It also allows for overriding entire default DUID or parts of it via
+/// configuration file. This class holds the DUID configuration specified
+/// in the server configuration file.
+class CfgDUID : public data::UserContext, public isc::data::CfgToElement {
 public:
 
     /// @brief Constructor.

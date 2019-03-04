@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,7 +8,9 @@
 #include <asiolink/io_service.h>
 #include <process/d_log.h>
 #include <process/testutils/d_test_stubs.h>
+#include <process/daemon.h>
 #include <cc/command_interpreter.h>
+#include <boost/bind.hpp>
 
 using namespace boost::asio;
 
@@ -70,10 +72,11 @@ DStubProcess::configure(isc::data::ConstElementPtr config_set, bool check_only) 
                 "Simulated process configuration error."));
     }
 
-    return (getCfgMgr()->parseConfig(config_set, check_only));
+    return (getCfgMgr()->simpleParseConfig(config_set, check_only));
 }
 
 DStubProcess::~DStubProcess() {
+    Daemon::setVerbose(false);
 };
 
 //************************** DStubController *************************
@@ -243,9 +246,9 @@ DControllerTest::getCfgMgr() {
     return (p);
 }
 
-DCfgContextBasePtr
+ConfigPtr
 DControllerTest::getContext() {
-    DCfgContextBasePtr p;
+    ConfigPtr p;
     if (getCfgMgr()) {
         p = getCfgMgr()->getContext();
     }
@@ -261,30 +264,18 @@ const char* DControllerTest::CFG_TEST_FILE = "d2-test-config.json";
 
 //************************** DStubContext *************************
 
-DStubContext::DStubContext(): object_values_(new ObjectStorage()) {
+DStubContext::DStubContext() {
 }
 
 DStubContext::~DStubContext() {
 }
 
-void
-DStubContext::getObjectParam(const std::string& name,
-                             isc::data::ConstElementPtr& value) {
-    value = object_values_->getParam(name);
-}
-
-ObjectStoragePtr&
-DStubContext::getObjectStorage() {
-    return (object_values_);
-}
-
-DCfgContextBasePtr
+ConfigPtr
 DStubContext::clone() {
-    return (DCfgContextBasePtr(new DStubContext(*this)));
+    return (ConfigPtr(new DStubContext(*this)));
 }
 
-DStubContext::DStubContext(const DStubContext& rhs): DCfgContextBase(rhs),
-    object_values_(new ObjectStorage(*(rhs.object_values_))) {
+DStubContext::DStubContext(const DStubContext& rhs): ConfigBase(rhs) {
 }
 
 isc::data::ElementPtr
@@ -295,52 +286,15 @@ DStubContext::toElement() const {
 //************************** DStubCfgMgr *************************
 
 DStubCfgMgr::DStubCfgMgr()
-    : DCfgMgrBase(DCfgContextBasePtr(new DStubContext())) {
+    : DCfgMgrBase(ConfigPtr(new DStubContext())) {
 }
 
 DStubCfgMgr::~DStubCfgMgr() {
 }
 
-DCfgContextBasePtr
+ConfigPtr
 DStubCfgMgr::createNewContext() {
-    return (DCfgContextBasePtr (new DStubContext()));
-}
-
-void
-DStubCfgMgr::parseElement(const std::string& element_id,
-                          isc::data::ConstElementPtr element) {
-    DStubContextPtr context
-        = boost::dynamic_pointer_cast<DStubContext>(getContext());
-
-    if (element_id == "bool_test") {
-        bool value = element->boolValue();
-        context->getBooleanStorage()->setParam(element_id, value,
-                                               element->getPosition()); 
-    } else if (element_id == "uint32_test") {
-        uint32_t value = element->intValue();
-        context->getUint32Storage()->setParam(element_id, value,
-                                              element->getPosition()); 
-
-    } else if (element_id == "string_test") {
-        std::string value = element->stringValue();
-        context->getStringStorage()->setParam(element_id, value,
-                                              element->getPosition()); 
-    } else {
-        // Fail only if SimFailure dictates we should.  This makes it easier
-        // to test parse ordering, by permitting a wide range of element ids
-        // to "succeed" without specifically supporting them.
-        if (SimFailure::shouldFailOn(SimFailure::ftElementUnknown)) {
-            isc_throw(DCfgMgrBaseError,
-                      "Configuration parameter not supported: " << element_id
-                      << element->getPosition());
-        }
-
-        // Going to assume anything else is an object element.
-        context->getObjectStorage()->setParam(element_id, element,
-                                              element->getPosition()); 
-    }
-
-    parsed_order_.push_back(element_id);
+    return (ConfigPtr (new DStubContext()));
 }
 
 isc::data::ConstElementPtr

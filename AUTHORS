@@ -1,4 +1,3 @@
-
  Kea authors and contributors
 ------------------------------
 
@@ -6,7 +5,7 @@ Primary developers:
  - Tomek Mrugalski (lead developer: DHCPv4, DHCPv6 components, prefix
                     delegation, memfile, database interface, core libdhcp++,
                     host reservation, MAC extraction in DHCPv6,
-                    statistics manager, kea-shell)
+                    statistics manager, kea-shell, netconf)
  - Stephen Morris (Hooks, MySQL)
  - Marcin Siodelski (DHCPv4, DHCPv6 components, options handling, perfdhcp,
                      host reservation, lease file cleanup, lease expiration,
@@ -14,8 +13,11 @@ Primary developers:
  - Thomas Markwalder (DDNS, user_chk, global host reservations)
  - Jeremy C. Reed (documentation, build system, testing, release engineering)
  - Wlodek Wencel (testing, release engineering)
- - Francis Dupont (crypto, perfdhcp, control agent)
+ - Francis Dupont (crypto, flex/bison parsers, perfdhcp, control agent,
+                   radius, netconf)
+ - Brian Reid     (logo design)
  - Shawn Routhier (lease file cleanup)
+ - Michal Nowikowski (testing)
 
 Primary area of work mentioned in parentheses. The list is in a roughly
 chronological order.
@@ -69,6 +71,8 @@ We have received the following contributions:
 
  - Adam Osuchowski, Silesian University of Technology
    2014-09: Examples corrected in Kea ARM
+   2019-02: Hooks installation directory fixed.
+   2019-02: Possible syntax error in keactrl fixed.
 
  - Nicolas Chaigneau, Capgemini
    2014-09: Fix for interfaces with multiple addresses in perfdhcp
@@ -181,14 +185,13 @@ We have received the following contributions:
 
  - Vicky Risk
    2018-08: Documentation clean up
+   2018-10: API documentation clean ups
 
-Kea uses log4cplus (http://sourceforge.net/projects/log4cplus/) for logging,
-Boost (http://www.boost.org/) library for almost everything, and can use Botan
-(http://botan.randombit.net/) or OpenSSL (https://www.openssl.org/) for
-cryptographic operations. It can also optionally use PostgreSQL
-(http://www.postgresql.org/) and/or MySQL (http://www.mysql.com/) and/or
-Cassandra (http://cassandra.apache.org/) as a database.
+ - Franciszek Gorski
+   2018-10: Makefile bug fixed
 
-Kea can use googletest for unit-tests (https://github.com/google/googletest).
+ - Suzanne Goldlust
+   2018-10: API documentation
 
-Kea uses ISC Forge (https://github.com/isc-projects/forge/) for conformance testing.
+ - lpaserati, Thorsten Krohn
+   2018-11: Two bugfixes in kea-admin

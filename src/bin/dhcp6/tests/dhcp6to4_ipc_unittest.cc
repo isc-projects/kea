@@ -139,6 +139,9 @@ TEST_F(Dhcp6to4IpcTest, receive) {
     // Create instance of the IPC endpoint being used as a source of messages.
     TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
 
+    // Reset the IPC.
+    ASSERT_NO_THROW(ipc.close());
+
     // Open both endpoints.
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
@@ -197,6 +200,9 @@ TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     // Create instance of the IPC endpoint being used as a source of messages.
     TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
 
+    // Reset the IPC.
+    ASSERT_NO_THROW(ipc.close());
+
     // Open both endpoints.
     ASSERT_NO_THROW(ipc.open());
     ASSERT_NO_THROW(src_ipc.open());
@@ -247,6 +253,51 @@ TEST_F(Dhcp6to4IpcTest, DISABLED_receiveRelayed) {
     ASSERT_TRUE(d4_resp);
     EXPECT_EQ(1, pkt6_snd->getInteger().first);
     EXPECT_EQ(1, d4_resp->getInteger().first);
+}
+
+// This test verifies the client port is enforced also with DHCP4o6.
+TEST_F(Dhcp6to4IpcTest, clientPort) {
+    // Create instance of the IPC endpoint under test.
+    Dhcp6to4Ipc& ipc = Dhcp6to4Ipc::instance();
+    // Set the client port.
+    ipc.client_port = 1234;
+    // Create instance of the IPC endpoint being used as a source of messages.
+    TestIpc src_ipc(TEST_PORT, TestIpc::ENDPOINT_TYPE_V4);
+
+    // Reset the IPC.
+    ASSERT_NO_THROW(ipc.close());
+
+    // Open both endpoints.
+    ASSERT_NO_THROW(ipc.open());
+    ASSERT_NO_THROW(src_ipc.open());
+
+    // Create message to be sent over IPC.
+    Pkt6Ptr pkt(new Pkt6(DHCPV6_DHCPV4_RESPONSE, 1234));
+    pkt->addOption(createDHCPv4MsgOption());
+    pkt->setIface("eth0");
+    pkt->setRemoteAddr(IOAddress("2001:db8:1::123"));
+    ASSERT_NO_THROW(pkt->pack());
+
+    // Reset the callout cached packet
+    Dhcp6to4IpcTest::callback_pkt_.reset();
+
+    // Send and wait up to 1 second to receive it.
+    ASSERT_NO_THROW(src_ipc.send(pkt));
+    ASSERT_NO_THROW(IfaceMgr::instance().receive6(1, 0));
+
+    // Make sure that the received packet was configured to return copy of
+    // retrieved options within a callout.
+    EXPECT_TRUE(callback_pkt_options_copy_);
+
+    // Get the forwarded packet from the callout
+    Pkt6Ptr forwarded = Dhcp6to4IpcTest::callback_pkt_;
+    ASSERT_TRUE(forwarded);
+
+    // Verify the packet received.
+    EXPECT_EQ(ipc.client_port, forwarded->getRemotePort());
+
+    // Reset the value in case tests are not in order.
+    ipc.client_port = 0;
 }
 
 } // end of anonymous namespace

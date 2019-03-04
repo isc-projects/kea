@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -24,7 +24,7 @@
 #include <dhcpsrv/cfg_consistency.h>
 #include <dhcpsrv/client_class_def.h>
 #include <dhcpsrv/d2_client_cfg.h>
-#include <dhcpsrv/logging_info.h>
+#include <process/config_base.h>
 #include <hooks/hooks_config.h>
 #include <cc/data.h>
 #include <cc/user_context.h>
@@ -41,7 +41,7 @@ class CfgMgr;
 /// @brief Specifies current DHCP configuration
 ///
 /// @todo Migrate all other configuration parameters from cfgmgr.h here
-class SrvConfig : public UserContext, public isc::data::CfgToElement {
+class SrvConfig : public process::ConfigBase {
 public:
     /// @name Constants for selection of parameters returned by @c getConfigSummary
     ///
@@ -62,6 +62,8 @@ public:
     static const uint32_t CFGSEL_SUBNET  = 0x00000003;
     /// Configured globals
     static const uint32_t CFGSEL_GLOBALS = 0x00000020;
+    /// Config control info
+    static const uint32_t CFGSEL_CFG_CTL = 0x00000040;
     /// IPv4 related config
     static const uint32_t CFGSEL_ALL4    = 0x00000035;
     /// IPv6 related config
@@ -116,25 +118,6 @@ public:
     ///
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
-
-    /// @name Modifiers and accesors for the configuration objects.
-    ///
-    /// @warning References to the objects returned by accessors are only
-    /// valid during the lifetime of the @c SrvConfig object which
-    /// returned them.
-    ///
-    //@{
-    /// @brief Returns logging specific configuration.
-    const LoggingInfoStorage& getLoggingInfo() const {
-        return (logging_info_);
-    }
-
-    /// @brief Sets logging specific configuration.
-    ///
-    /// @param logging_info New logging configuration.
-    void addLoggingInfo(const LoggingInfo& logging_info) {
-        logging_info_.push_back(logging_info);
-    }
 
     /// @brief Returns non-const pointer to interface configuration.
     ///
@@ -377,6 +360,18 @@ public:
         control_socket_ = control_socket;
     }
 
+    /// @brief Returns DHCP queue control information
+    /// @return pointer to the DHCP queue control information
+    const isc::data::ConstElementPtr getDHCPQueueControl() const {
+        return (dhcp_queue_control_);
+    }
+
+    /// @brief Sets information about the dhcp queue control
+    /// @param dhcp_queue_control new dhcp queue control information
+    void setDHCPQueueControl(const isc::data::ConstElementPtr dhcp_queue_control) {
+        dhcp_queue_control_ = dhcp_queue_control;
+    }
+
     /// @brief Returns pointer to the dictionary of global client
     /// class definitions
     ClientClassDictionaryPtr getClientClassDictionary() {
@@ -427,9 +422,6 @@ public:
     /// be copied.
     void copy(SrvConfig& new_config) const;
 
-    /// @brief Apply logging configuration to log4cplus.
-    void applyLoggingCfg() const;
-
     /// @name Methods and operators used to compare configurations.
     ///
     //@{
@@ -468,7 +460,7 @@ public:
         return (equals(other));
     }
 
-    /// @param other An object to be compared with this object.
+    /// @brief other An object to be compared with this object.
     ///
     /// It ignores the configuration sequence number when checking for
     /// inequality of objects.
@@ -481,6 +473,50 @@ public:
     }
 
     //@}
+
+    /// @brief Merges the configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// This method is used when two or more configurations held in the
+    /// @c SrvConfig objects need to be combined into a single configuration.
+    /// Specifically, when the configuration backend is used, then part of
+    /// the server configuration comes from the configuration file and
+    /// stored in the staging configuration. The other part of the
+    /// configuration comes from the database. The configuration fetched
+    /// from the database is stored in a separate @c SrvConfig instance
+    /// and then merged into the staging configuration prior to commiting
+    /// it.
+    ///
+    /// The merging strategy depends on the underlying data being merged.
+    /// For example: subnets are merged using the algorithm implemented
+    /// in the @c CfgSubnets4. Other data structures are merged using the
+    /// algorithms implemented in their respective configuration
+    /// containers.
+    ///
+    /// The general rule is that the configuration data from the @c other
+    /// object replaces configuration data held in this object instance.
+    /// The data that do not overlap between the two objects is simply
+    /// inserted into this configuration.
+    ///
+    /// @warning The call to @c merge may modify the data in the @c other
+    /// object. Therefore, the caller must not rely on the data held
+    /// in the @c other object after the call to @c merge. Also, the
+    /// data held in @c other must not be modified after the call to
+    /// @c merge because it may affect the merged configuration.
+    ///
+    /// The @c other parameter must be a @c SrvConfig or its derivation.
+    ///
+    /// This method calls either @c merge4 or @c merge6 based on
+    /// @c CfgMgr::family_.
+    ///
+    /// Currently, the following parts of the configuration are merged:
+    /// - IPv4 subnets
+    ///
+    /// @todo Add support for merging other configuration elements.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    virtual void merge(ConfigBase& other);
 
     /// @brief Updates statistics.
     ///
@@ -544,7 +580,7 @@ public:
     ///
     /// See @ref setDhcp4o6Port for brief discussion.
     /// @return value of DHCP4o6 IPC port
-    uint16_t getDhcp4o6Port() {
+    uint16_t getDhcp4o6Port() const {
         return (dhcp4o6_port_);
     }
 
@@ -579,6 +615,21 @@ public:
         configured_globals_->set(name, value);
     }
 
+    /// @brief Sets the server's logical name
+    ///
+    /// @param server_tag a unique string name which identifies this server
+    /// from any other configured servers
+    void setServerTag(const std::string& server_tag) {
+        server_tag_ = server_tag;
+    }
+
+    /// @brief Returns the server's logical name
+    ///
+    /// @return string containing the server's tag
+    std::string getServerTag() const {
+        return (server_tag_);
+    }
+
     /// @brief Unparse a configuration object
     ///
     /// @return a pointer to unparsed configuration
@@ -586,11 +637,60 @@ public:
 
 private:
 
+    /// @brief Merges the DHCPv4 configuration specified as a parameter into
+    /// this configuration.
+    ///
+    /// The general rule is that the configuration data from the @c other
+    /// object replaces configuration data held in this object instance.
+    /// The data that do not overlap between the two objects is simply
+    /// inserted into this configuration.
+    ///
+    /// @warning The call to @c merge may modify the data in the @c other
+    /// object. Therefore, the caller must not rely on the data held
+    /// in the @c other object after the call to @c merge. Also, the
+    /// data held in @c other must not be modified after the call to
+    /// @c merge because it may affect the merged configuration.
+    ///
+    /// The @c other parameter must be a @c SrvConfig or its derivation.
+    ///
+    /// Currently, the following parts of the v4 configuration are merged:
+    /// - globals
+    /// - shared-networks
+    /// - subnets
+    ///
+    /// @todo Add support for merging other configuration elements.
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void merge4(SrvConfig& other);
+
+
+    /// @brief Merges the DHCPv4 globals specified in the given configuration
+    /// into this configuration.
+    ///
+    /// Configurable global values may be specified either via JSON
+    /// configuration (e.g. "echo-client-id":true) or as global parameters
+    /// within a configuration back end.  Regardless of the source, these
+    /// values once provided, are stored in @c SrvConfig::configured_globals_.
+    /// Any such value that does not have an explicit specification should be
+    /// considered "unspecified" at the global scope.
+    ///
+    /// This function adds the configured globals from the "other" config
+    /// into this config's configured globals.  If a value already exists
+    /// in this config, it will be overwritten with the value from the
+    /// "other" config.
+    ///
+    /// It then iterates over this merged list of globals, setting
+    /// any of the corresponding SrvConfig members that map to a
+    /// a configurable parameter (e.g. c@ SrvConfig::echo_client_id_,
+    /// @c SrvConfig::server_tag_).
+    ///
+    /// @param other An object holding the configuration to be merged
+    /// into this configuration.
+    void mergeGlobals4(SrvConfig& other);
+
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
-
-    /// @brief Logging specific information.
-    LoggingInfoStorage logging_info_;
 
     /// @brief Interface configuration.
     ///
@@ -659,6 +759,9 @@ private:
     /// @brief Pointer to the control-socket information
     isc::data::ConstElementPtr control_socket_;
 
+    /// @brief Pointer to the dhcp-queue-control information
+    isc::data::ConstElementPtr dhcp_queue_control_;
+
     /// @brief Pointer to the dictionary of global client class definitions
     ClientClassDictionaryPtr class_dictionary_;
 
@@ -688,6 +791,9 @@ private:
 
     /// @brief Pointer to the configuration consistency settings
     CfgConsistencyPtr cfg_consist_;
+
+    /// @brief Logical name of the server
+    std::string server_tag_;
 };
 
 /// @name Pointers to the @c SrvConfig object.

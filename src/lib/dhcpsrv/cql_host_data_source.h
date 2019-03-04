@@ -1,3 +1,4 @@
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 // Copyright (C) 2016-2018 Deutsche Telekom AG.
 //
 // Author: Andrei Pavel <andrei.pavel@qualitance.com>
@@ -17,8 +18,8 @@
 #ifndef CQL_HOST_DATA_SOURCE_H
 #define CQL_HOST_DATA_SOURCE_H
 
+#include <cql/cql_connection.h>
 #include <dhcpsrv/base_host_data_source.h>
-#include <dhcpsrv/cql_connection.h>
 
 #include <string>
 #include <vector>
@@ -70,19 +71,19 @@ public:
     /// - tcp-nodelay
     ///
     /// For details regarding those paraemters, see
-    /// @ref isc::dhcp::CqlConnection::openDatabase.
+    /// @ref isc::db::CqlConnection::openDatabase.
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
     /// @param parameters a data structure relating keywords and values
     ///        concerned with the database.
     ///
-    /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database or if the
+    /// @throw isc::db::NoDatabaseName Mandatory database name not given
+    /// @throw isc::db::DbOpenError Error opening the database or if the
     /// schema version is invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    explicit CqlHostDataSource(const DatabaseConnection::ParameterMap& parameters);
+    explicit CqlHostDataSource(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Virtual destructor.
     ///
@@ -94,7 +95,7 @@ public:
     /// The implementations of this method should guard against duplicate
     /// reservations for the same @ref Host, where possible. For example, when
     /// the reservation for the same @ref HWAddr and @ref SubnetID is added
-    /// twice, @ref add() should throw a @ref DuplicateEntry exception. Note,
+    /// twice, @ref add() should throw a @ref db::DuplicateEntry exception. Note,
     /// that usually it is impossible to guard against adding duplicated @ref
     /// Host, where one instance is identified by different identifier types.
     ///
@@ -166,6 +167,62 @@ public:
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len) const override;
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// This method returns all @ref Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id subnet identifier to filter by
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const override;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// This method returns all @ref Host objects which represent reservations
+    /// in a specified subnet.
+    ///
+    /// @param subnet_id subnet identifier to filter by
+    ///
+    /// @return Collection of const @ref Host objects.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const override;
+
+    /// @brief Returns range of hosts in a DHCPv4 subnet.
+    ///
+    /// Not implemented.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage4(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const override;
+
+    /// @brief Returns range of hosts in a DHCPv6 subnet.
+    ///
+    /// Not implemented.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    ///
+    /// @return Collection of const @c Host objects (may be empty).
+    virtual ConstHostCollection
+    getPage6(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const override;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -278,9 +335,9 @@ public:
     ///         integers. "first" is the major version number, "second" is the
     ///         minor version number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database
+    /// @throw isc::db::DbOperationError An operation on the open database
     ///        has failed.
-    virtual VersionPair getVersion() const;
+    virtual db::VersionPair getVersion() const;
 
     /// @brief Commit Transactions
     ///

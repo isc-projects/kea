@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,6 +50,8 @@ using namespace std;
   NULL_TYPE "null"
 
   DHCP4 "Dhcp4"
+  CONFIG_CONTROL "config-control"
+  CONFIG_DATABASES "config-databases"
   INTERFACES_CONFIG "interfaces-config"
   INTERFACES "interfaces"
   DHCP_SOCKET_TYPE "dhcp-socket-type"
@@ -65,6 +67,7 @@ using namespace std;
 
   ECHO_CLIENT_ID "echo-client-id"
   MATCH_CLIENT_ID "match-client-id"
+  AUTHORITATIVE "authoritative"
   NEXT_SERVER "next-server"
   SERVER_HOSTNAME "server-hostname"
   BOOT_FILE_NAME "boot-file-name"
@@ -96,7 +99,11 @@ using namespace std;
   VALID_LIFETIME "valid-lifetime"
   RENEW_TIMER "renew-timer"
   REBIND_TIMER "rebind-timer"
+  CALCULATE_TEE_TIMES "calculate-tee-times"
+  T1_PERCENT "t1-percent"
+  T2_PERCENT "t2-percent"
   DECLINE_PROBATION_PERIOD "decline-probation-period"
+  SERVER_TAG "server-tag"
   SUBNET4 "subnet4"
   SUBNET_4O6_INTERFACE "4o6-interface"
   SUBNET_4O6_INTERFACE_ID "4o6-interface-id"
@@ -122,9 +129,7 @@ using namespace std;
 
   SUBNET "subnet"
   INTERFACE "interface"
-  INTERFACE_ID "interface-id"
   ID "id"
-  RAPID_COMMIT "rapid-commit"
   RESERVATION_MODE "reservation-mode"
   DISABLED "disabled"
   OUT_OF_POOL "out-of-pool"
@@ -169,6 +174,8 @@ using namespace std;
   SOCKET_TYPE "socket-type"
   SOCKET_NAME "socket-name"
 
+  DHCP_QUEUE_CONTROL "dhcp-queue-control"
+
   DHCP_DDNS "dhcp-ddns"
   ENABLE_UPDATES "enable-updates"
   QUALIFYING_SUFFIX "qualifying-suffix"
@@ -179,7 +186,6 @@ using namespace std;
   MAX_QUEUE_SIZE "max-queue-size"
   NCR_PROTOCOL "ncr-protocol"
   NCR_FORMAT "ncr-format"
-  ALWAYS_INCLUDE_FQDN "always-include-fqdn"
   OVERRIDE_NO_UPDATE "override-no-update"
   OVERRIDE_CLIENT_UPDATE "override-client-update"
   REPLACE_CLIENT_NAME "replace-client-name"
@@ -222,6 +228,7 @@ using namespace std;
   SUB_HOOKS_LIBRARY
   SUB_DHCP_DDNS
   SUB_LOGGING
+  SUB_CONFIG_CONTROL
 ;
 
 %token <std::string> STRING "constant string"
@@ -260,6 +267,7 @@ start: TOPLEVEL_JSON { ctx.ctx_ = ctx.NO_KEYWORD; } sub_json
      | SUB_HOOKS_LIBRARY { ctx.ctx_ = ctx.HOOKS_LIBRARIES; } sub_hooks_library
      | SUB_DHCP_DDNS { ctx.ctx_ = ctx.DHCP_DDNS; } sub_dhcp_ddns
      | SUB_LOGGING { ctx.ctx_ = ctx.LOGGING; } sub_logging
+     | SUB_CONFIG_CONTROL { ctx.ctx_ = ctx.CONFIG_CONTROL; } sub_config_control
      ;
 
 // ---- generic JSON parser ---------------------------------
@@ -445,9 +453,11 @@ global_param: valid_lifetime
             | expired_leases_processing
             | dhcp4o6_port
             | control_socket
+            | dhcp_queue_control
             | dhcp_ddns
             | echo_client_id
             | match_client_id
+            | authoritative
             | next_server
             | server_hostname
             | boot_file_name
@@ -455,6 +465,12 @@ global_param: valid_lifetime
             | comment
             | sanity_checks
             | reservations
+            | config_control
+            | server_tag
+            | reservation_mode
+            | calculate_tee_times
+            | t1_percent
+            | t2_percent
             | unknown_map_entry
             ;
 
@@ -473,9 +489,32 @@ rebind_timer: REBIND_TIMER COLON INTEGER {
     ctx.stack_.back()->set("rebind-timer", prf);
 };
 
+calculate_tee_times: CALCULATE_TEE_TIMES COLON BOOLEAN {
+    ElementPtr ctt(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("calculate-tee-times", ctt);
+};
+
+t1_percent: T1_PERCENT COLON FLOAT {
+    ElementPtr t1(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("t1-percent", t1);
+};
+
+t2_percent: T2_PERCENT COLON FLOAT {
+    ElementPtr t2(new DoubleElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("t2-percent", t2);
+};
+
 decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ElementPtr dpp(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("decline-probation-period", dpp);
+};
+
+server_tag: SERVER_TAG  {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("server-tag", stag);
+    ctx.leave();
 };
 
 echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
@@ -486,6 +525,11 @@ echo_client_id: ECHO_CLIENT_ID COLON BOOLEAN {
 match_client_id: MATCH_CLIENT_ID COLON BOOLEAN {
     ElementPtr match(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("match-client-id", match);
+};
+
+authoritative: AUTHORITATIVE COLON BOOLEAN {
+    ElementPtr prf(new BoolElement($3, ctx.loc2pos(@3)));
+    ctx.stack_.back()->set("authoritative", prf);
 };
 
 
@@ -1021,15 +1065,14 @@ subnet4_param: valid_lifetime
              | pools_list
              | subnet
              | interface
-             | interface_id
              | id
-             | rapid_commit
              | client_class
              | require_client_classes
              | reservations
              | reservation_mode
              | relay
              | match_client_id
+             | authoritative
              | next_server
              | server_hostname
              | boot_file_name
@@ -1038,6 +1081,9 @@ subnet4_param: valid_lifetime
              | subnet_4o6_subnet
              | user_context
              | comment
+             | calculate_tee_times
+             | t1_percent
+             | t2_percent
              | unknown_map_entry
              ;
 
@@ -1081,14 +1127,6 @@ interface: INTERFACE {
     ctx.leave();
 };
 
-interface_id: INTERFACE_ID {
-    ctx.enter(ctx.NO_KEYWORD);
-} COLON STRING {
-    ElementPtr iface(new StringElement($4, ctx.loc2pos(@4)));
-    ctx.stack_.back()->set("interface-id", iface);
-    ctx.leave();
-};
-
 client_class: CLIENT_CLASS {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
@@ -1123,11 +1161,6 @@ hr_mode: DISABLED { $$ = ElementPtr(new StringElement("disabled", ctx.loc2pos(@1
 id: ID COLON INTEGER {
     ElementPtr id(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("id", id);
-};
-
-rapid_commit: RAPID_COMMIT COLON BOOLEAN {
-    ElementPtr rc(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("rapid-commit", rc);
 };
 
 // ---- shared-networks ---------------------
@@ -1171,6 +1204,7 @@ shared_network_param: name
                     | rebind_timer
                     | option_data_list
                     | match_client_id
+                    | authoritative
                     | next_server
                     | server_hostname
                     | boot_file_name
@@ -1181,6 +1215,9 @@ shared_network_param: name
                     | valid_lifetime
                     | user_context
                     | comment
+                    | calculate_tee_times
+                    | t1_percent
+                    | t2_percent
                     | unknown_map_entry
                     ;
 
@@ -1825,6 +1862,45 @@ control_socket_name: SOCKET_NAME {
     ctx.leave();
 };
 
+
+// --- dhcp-queue-control ---------------------------------------------
+
+dhcp_queue_control: DHCP_QUEUE_CONTROL {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON map_value {
+    ElementPtr qc = $4;
+    ctx.stack_.back()->set("dhcp-queue-control", qc);
+
+    // Doing this manually, because dhcp-queue-control
+    // content is otherwise arbitrary
+    if (!qc->contains("enable-queue")) {
+        std::stringstream msg;
+        msg << "'enable-queue' is required: ";
+        msg  << "(" << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
+    ConstElementPtr enable_queue = qc->get("enable-queue");
+    if (enable_queue->getType() != Element::boolean) {
+        std::stringstream msg;
+        msg << "'enable-queue' must be boolean: ";
+        msg  << "(" << qc->getPosition().str() << ")";
+        error(@1, msg.str());
+    }
+
+    if (qc->contains("queue-type")) {
+        ConstElementPtr queue_type = qc->get("queue-type");
+        if (queue_type->getType() != Element::string) {
+            std::stringstream msg;
+            msg << "'queue-type' must be a string: ";
+            msg  << "(" << qc->getPosition().str() << ")";
+            error(@1, msg.str());
+        }
+    }
+
+    ctx.leave();
+};
+
 // --- dhcp ddns ---------------------------------------------
 
 dhcp_ddns: DHCP_DDNS {
@@ -1862,7 +1938,6 @@ dhcp_ddns_param: enable_updates
                | max_queue_size
                | ncr_protocol
                | ncr_format
-               | always_include_fqdn
                | override_no_update
                | override_client_update
                | replace_client_name
@@ -1938,11 +2013,6 @@ ncr_format: NCR_FORMAT {
     ctx.leave();
 };
 
-always_include_fqdn: ALWAYS_INCLUDE_FQDN COLON BOOLEAN {
-    ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
-    ctx.stack_.back()->set("always-include-fqdn", b);
-};
-
 override_no_update: OVERRIDE_NO_UPDATE COLON BOOLEAN {
     ElementPtr b(new BoolElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("override-no-update", b);
@@ -1962,7 +2032,7 @@ replace_client_name: REPLACE_CLIENT_NAME {
 
 replace_client_name_value:
     WHEN_PRESENT {
-      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1))); 
+      $$ = ElementPtr(new StringElement("when-present", ctx.loc2pos(@1)));
       }
   | NEVER {
       $$ = ElementPtr(new StringElement("never", ctx.loc2pos(@1)));
@@ -2024,6 +2094,45 @@ control_agent_json_object: CONTROL_AGENT {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON value {
     ctx.stack_.back()->set("Control-agent", $4);
+    ctx.leave();
+};
+
+config_control: CONFIG_CONTROL {
+    ElementPtr i(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-control", i);
+    ctx.stack_.push_back(i);
+    ctx.enter(ctx.CONFIG_CONTROL);
+} COLON LCURLY_BRACKET config_control_params RCURLY_BRACKET {
+    // No config control params are required
+    ctx.stack_.pop_back();
+    ctx.leave();
+};
+
+sub_config_control: LCURLY_BRACKET {
+    // Parse the config-control map
+    ElementPtr m(new MapElement(ctx.loc2pos(@1)));
+    ctx.stack_.push_back(m);
+} config_control_params RCURLY_BRACKET {
+    // No config_control params are required
+    // parsing completed
+};
+
+// This defines that subnet can have one or more parameters.
+config_control_params: config_control_param
+                     | config_control_params COMMA config_control_param
+                     ;
+
+// This defines a list of allowed parameters for each subnet.
+config_control_param: config_databases
+                    ;
+
+config_databases: CONFIG_DATABASES {
+    ElementPtr l(new ListElement(ctx.loc2pos(@1)));
+    ctx.stack_.back()->set("config-databases", l);
+    ctx.stack_.push_back(l);
+    ctx.enter(ctx.CONFIG_DATABASE);
+} COLON LSQUARE_BRACKET database_list RSQUARE_BRACKET {
+    ctx.stack_.pop_back();
     ctx.leave();
 };
 

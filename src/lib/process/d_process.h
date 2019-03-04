@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -40,6 +40,12 @@ static const std::string CONFIG_WRITE_COMMAND("config-write");
 /// @brief String value for the config-test command.
 static const std::string CONFIG_TEST_COMMAND("config-test");
 
+/// @brief String value for the config-reload command.
+static const std::string CONFIG_RELOAD_COMMAND("config-reload");
+
+/// @brief String value for the config-set command.
+static const std::string CONFIG_SET_COMMAND("config-set");
+
 /// @brief String value for the shutdown command.
 static const std::string SHUT_DOWN_COMMAND("shutdown");
 
@@ -76,7 +82,7 @@ public:
     /// configuration parsing.
     ///
     /// @throw DProcessBaseError is io_service is NULL.
-    DProcessBase(const char* app_name, asiolink::IOServicePtr io_service, 
+    DProcessBase(const char* app_name, asiolink::IOServicePtr io_service,
                  DCfgMgrBasePtr cfg_mgr)
         : app_name_(app_name), io_service_(io_service), shut_down_flag_(false),
         cfg_mgr_(cfg_mgr) {
@@ -103,20 +109,20 @@ public:
     /// @throw DProcessBaseError if an operational error is encountered.
     virtual void run() = 0;
 
-    /// @brief Initiates the process's shutdown process. 
-    /// 
-    /// This is last step in the shutdown event callback chain, that is 
+    /// @brief Initiates the process's shutdown process.
+    ///
+    /// This is last step in the shutdown event callback chain, that is
     /// intended to notify the process it is to begin its shutdown process.
     ///
     /// @param args an Element set of shutdown arguments (if any) that are
-    /// supported by the process derivation. 
-    /// 
+    /// supported by the process derivation.
+    ///
     /// @return an Element that contains the results of argument processing,
-    /// consisting of an integer status value (0 means successful, 
-    /// non-zero means failure), and a string explanation of the outcome. 
-    ///  
+    /// consisting of an integer status value (0 means successful,
+    /// non-zero means failure), and a string explanation of the outcome.
+    ///
     /// @throw DProcessBaseError if an operational error is encountered.
-    virtual isc::data::ConstElementPtr 
+    virtual isc::data::ConstElementPtr
     shutdown(isc::data::ConstElementPtr args) = 0;
 
     /// @brief Processes the given configuration.

@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,7 +22,7 @@
 #include <dhcpsrv/network_state.h>
 #include <dhcpsrv/subnet.h>
 #include <hooks/callout_handle.h>
-#include <dhcpsrv/daemon.h>
+#include <process/daemon.h>
 
 #include <boost/noncopyable.hpp>
 
@@ -191,7 +191,7 @@ typedef boost::shared_ptr<Dhcpv4Exchange> Dhcpv4ExchangePtr;
 /// This class does not support any controlling mechanisms directly.
 /// See the derived \ref ControlledDhcpv4Srv class for support for
 /// command and configuration updates over msgq.
-class Dhcpv4Srv : public Daemon {
+class Dhcpv4Srv : public process::Daemon {
 private:
 
     /// @brief Pointer to IO service used by the server.
@@ -212,18 +212,21 @@ public:
     /// In particular, creates IfaceMgr that will be responsible for
     /// network interaction. Will instantiate lease manager, and load
     /// old or create new DUID. It is possible to specify alternate
-    /// port on which DHCPv4 server will listen on. That is mostly useful
+    /// port on which DHCPv4 server will listen on and alternate port
+    /// where DHCPv4 server sends all responses to. Those are mostly useful
     /// for testing purposes. The Last two arguments of the constructor
     /// should be left at default values for normal server operation.
     /// They should be set to 'false' when creating an instance of this
     /// class for unit testing because features they enable require
     /// root privileges.
     ///
-    /// @param port specifies port number to listen on
+    /// @param server_port specifies port number to listen on
+    /// @param client_port specifies port number to send to
     /// @param use_bcast configure sockets to support broadcast messages.
     /// @param direct_response_desired specifies if it is desired to
     /// use direct V4 traffic.
-    Dhcpv4Srv(uint16_t port = DHCP4_SERVER_PORT,
+    Dhcpv4Srv(uint16_t server_port = DHCP4_SERVER_PORT,
+              uint16_t client_port = 0,
               const bool use_bcast = true,
               const bool direct_response_desired = true);
 
@@ -241,7 +244,7 @@ public:
     }
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref Daemon::getVersion()
+    /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     static std::string getVersion(bool extended);
 
     /// @brief Main server processing loop.
@@ -285,8 +288,8 @@ public:
     /// for testing purposes only.
     ///
     /// @return UDP port on which server should listen.
-    uint16_t getPort() const {
-        return (port_);
+    uint16_t getServerPort() const {
+        return (server_port_);
     }
 
     /// @brief Return bool value indicating that broadcast flags should be set
@@ -539,6 +542,33 @@ protected:
     /// @param ex DHCPv4 exchange holding the client's message to be checked.
     void assignLease(Dhcpv4Exchange& ex);
 
+    /// @brief Adds the T1 and T2 timers to the outbound response as appropriate
+    ///
+    /// This method determines if either of the timers T1 (option 58) and T2
+    /// (option 59) should be sent to the client.  It is influenced by the
+    /// lease's subnet's values for renew-timer, rebind-timer,
+    /// calculate-tee-times, t1-percent, and t2-percent as follows:
+    ///
+    /// By default neither T1 nor T2 will be sent.
+    ///
+    /// T2:
+    ///
+    /// If rebind-timer is set use its value, otherwise if calculate-tee-times
+    /// is true use the value given by valid lease time * t2-percent.  Either
+    /// way the value will only be sent if it is less than the valid lease time.
+    ///
+    /// T1:
+    ///
+    /// If renew-timer is set use its value, otherwise if calculate-tee-times
+    /// is true use the value given by valid lease time * t1-percent.  Either
+    /// way the value will only be sent if it is less than T2 when T2 is being
+    /// sent, or less than the valid lease time if T2 is not being sent.
+    ///
+    /// @param lease lease being assigned to the client
+    /// @param subnet the subnet to which the lease belongs
+    /// @param resp outbound response for the client to which timers are added.
+    void setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp);
+
     /// @brief Append basic options if they are not present.
     ///
     /// This function adds the following basic options if they
@@ -745,7 +775,8 @@ protected:
     /// address).
     ///
     /// The destination port is always DHCPv4 client (68) or relay (67) port,
-    /// depending if the response will be sent directly to a client.
+    /// depending if the response will be sent directly to a client, unless
+    /// a client port was enforced from the command line.
     ///
     /// The source port is always set to DHCPv4 server port (67).
     ///
@@ -762,7 +793,7 @@ protected:
     ///
     /// @param ex The exchange holding both the client's message and the
     /// server's response.
-    static void adjustIfaceData(Dhcpv4Exchange& ex);
+    void adjustIfaceData(Dhcpv4Exchange& ex);
 
     /// @brief Sets remote addresses for outgoing packet.
     ///
@@ -927,10 +958,16 @@ private:
     /// @return Option that contains netmask information
     static OptionPtr getNetmaskOption(const Subnet4Ptr& subnet);
 
-    uint16_t port_;  ///< UDP port number on which server listens.
-    bool use_bcast_; ///< Should broadcast be enabled on sockets (if true).
+    /// UDP port number on which server listens.
+    uint16_t server_port_;
+
+    /// Should broadcast be enabled on sockets (if true).
+    bool use_bcast_;
 
 protected:
+
+    /// UDP port number to which server sends responses.
+    uint16_t client_port_;
 
     /// @brief Holds information about disabled DHCP service and/or
     /// disabled subnet/network scopes.

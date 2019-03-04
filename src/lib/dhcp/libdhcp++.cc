@@ -419,14 +419,14 @@ size_t LibDHCP::unpackOptions6(const OptionBuffer& buf,
         // We previously did the lookup only for dhcp6 option space, but with the
         // addition of S46 options, we now do it for every space.
         range = idx.equal_range(opt_type);
-        num_defs = distance(range.first, range.second);
+        num_defs = std::distance(range.first, range.second);
 
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
+            num_defs = std::distance(range.first, range.second);
         }
 
         OptionPtr opt;
@@ -525,6 +525,15 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
             return (last_offset);
         }
 
+        // While an empty Host Name option is non-RFC compliant, some clients
+        // do send it.  In the spirit of being liberal, we'll just drop it,
+        // rather than the dropping the whole packet.  We do not have a
+        // way to log this from here but meh...  a PCAP will show it arriving,
+        // and we know we drop it.
+        if (opt_len == 0 && opt_type == DHO_HOST_NAME) {
+            continue;
+        }
+
         // Get all definitions with the particular option code. Note
         // that option code is non-unique within this container
         // however at this point we expect to get one option
@@ -538,14 +547,14 @@ size_t LibDHCP::unpackOptions4(const OptionBuffer& buf,
         // may be standard options in other spaces (e.g. radius). So we now do
         // the lookup for every space.
         range = idx.equal_range(opt_type);
-        num_defs = distance(range.first, range.second);
+        num_defs = std::distance(range.first, range.second);
 
         // Standard option definitions do not include the definition for
         // our option or we're searching for non-standard option. Try to
         // find the definition among runtime option definitions.
         if (num_defs == 0) {
             range = runtime_idx.equal_range(opt_type);
-            num_defs = distance(range.first, range.second);
+            num_defs = std::distance(range.first, range.second);
         }
 
         // Check if option unpacking must be deferred
@@ -638,7 +647,7 @@ size_t LibDHCP::unpackVendorOptions6(const uint32_t vendor_id,
                 idx->equal_range(opt_type);
             // Get the number of returned option definitions for the
             // option code.
-            size_t num_defs = distance(range.first, range.second);
+            size_t num_defs = std::distance(range.first, range.second);
 
             if (num_defs > 1) {
                 // Multiple options of the same code are not supported
@@ -746,7 +755,7 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
                     idx->equal_range(opt_type);
                 // Get the number of returned option definitions for
                 // the option code.
-                size_t num_defs = distance(range.first, range.second);
+                size_t num_defs = std::distance(range.first, range.second);
 
                 if (num_defs > 1) {
                     // Multiple options of the same code are not
@@ -787,14 +796,29 @@ size_t LibDHCP::unpackVendorOptions4(const uint32_t vendor_id, const OptionBuffe
 
 void
 LibDHCP::packOptions4(isc::util::OutputBuffer& buf,
-                     const OptionCollection& options) {
+                     const OptionCollection& options,
+                     bool top /* = false */) {
     OptionPtr agent;
     OptionPtr end;
+
+    // We only look for type when we're the top level
+    // call that starts packing for options for a packet.
+    // This way we avoid doing type logic in all ensuing
+    // recursive calls.
+    if (top) {
+        auto x = options.find(DHO_DHCP_MESSAGE_TYPE);
+        if (x != options.end()) {
+            x->second->pack(buf);
+        }
+    }
+
     for (OptionCollection::const_iterator it = options.begin();
          it != options.end(); ++it) {
 
-        // RAI and END options must be last.
+        // TYPE is already done, RAI and END options must be last.
         switch (it->first) {
+            case DHO_DHCP_MESSAGE_TYPE:
+                break;
             case DHO_DHCP_AGENT_OPTIONS:
                 agent = it->second;
                 break;

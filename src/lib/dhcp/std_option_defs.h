@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,10 @@
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
+
+// NOTE:
+// When adding a new space, make sure you also update
+// src/lib/yang/adaptor_option.cc
 
 namespace isc {
 namespace dhcp {
@@ -447,14 +451,6 @@ const OptionDefParams STANDARD_V6_OPTION_DEFINITIONS[] = {
     { "relay-source-port", D6O_RELAY_SOURCE_PORT, OPT_UINT16_TYPE, false, NO_RECORD_DEF, "" },
     { "ipv6-address-andsf", D6O_IPV6_ADDRESS_ANDSF, OPT_IPV6_ADDRESS_TYPE, true,
       NO_RECORD_DEF, "" },
-    { "public-key", D6O_PUBLIC_KEY, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" },
-    { "certificate", D6O_CERTIFICATE, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" },
-    { "signature", D6O_SIGNATURE, OPT_RECORD_TYPE, false,
-      RECORD_DEF(SIGNATURE_RECORDS), "" },
-    { "timestamp", D6O_TIMESTAMP, OPT_BINARY_TYPE, false,
-      NO_RECORD_DEF, "" },
     { "s46-cont-mape", D6O_S46_CONT_MAPE, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
         MAPE_V6_OPTION_SPACE },
     { "s46-cont-mapt", D6O_S46_CONT_MAPT, OPT_EMPTY_TYPE, false, NO_RECORD_DEF,
@@ -482,7 +478,7 @@ const OptionDefParams OPTION_DEF_PARAMS_S46_PORTPARAMS = { "s46-portparams",
 
 /// @brief Definitions of vendor-specific DHCPv6 options, defined by ISC.
 /// 4o6-* options are used for inter-process communication. For details, see
-/// http://kea.isc.org/wiki/Dhcp4o6Design
+/// https://gitlab.isc.org/isc-projects/kea/wikis/designs/dhcpv4o6-design
 ///
 /// @todo: As those options are defined by ISC, they do not belong in std_option_defs.h.
 ///        We need to move them to a separate file, e.g. isc_option_defs.h

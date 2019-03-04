@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -124,7 +124,33 @@ public:
     /// @return true if there is a network with a specified server identifier.
     bool hasNetworkWithServerId(const asiolink::IOAddress& server_id) const;
 
-
+    /// @brief Merges specified shared network configuration into this
+    /// configuration.
+    ///
+    /// This method merges networks from the @c other configuration into this
+    /// configuration. The general rule is that existing networks are replaced
+    /// by the networks from @c other.
+    ///
+    /// For each network in @c other, do the following:
+    ///
+    /// - Any associated subnets are removed.  Shared networks retrieved from
+    /// config backends, do not carry their associated subnets (if any) with
+    /// them. (Subnet assignments are maintained by subnet merges).
+    /// - If a shared network of the same name already exists in this
+    /// configuration:
+    ///     - All of its associated subnets are moved to the "other" network.
+    ///     - The existing network is removed from this configuration.
+    /// - The "other" network is added to this configuration.
+    ///
+    /// @warning The merge operation may affect the @c other configuration.
+    /// Therefore, the caller must not rely on the data held in the @c other
+    /// object after the call to @c merge. Also, the data held in @c other must
+    /// not be modified after the call to @c merge because it may affect the
+    /// merged configuration.
+    ///
+    /// @param other the shared network configuration to be merged into this
+    /// configuration.
+    void merge(CfgSharedNetworks4& other);
 };
 
 /// @brief Pointer to the configuration of IPv4 shared networks.

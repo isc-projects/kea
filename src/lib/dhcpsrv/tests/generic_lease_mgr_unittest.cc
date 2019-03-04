@@ -7,13 +7,14 @@
 #include <config.h>
 
 #include <asiolink/io_address.h>
-#include <exceptions/exceptions.h>
+#include <database/database_connection.h>
+#include <database/db_exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcpsrv/database_connection.h>
-#include <dhcpsrv/db_exceptions.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
 #include <dhcpsrv/tests/test_utils.h>
+#include <exceptions/exceptions.h>
 #include <stats/stats_mgr.h>
 
 #include <boost/foreach.hpp>
@@ -27,6 +28,7 @@
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::data;
+using namespace isc::db;
 
 namespace isc {
 namespace dhcp {
@@ -1052,7 +1054,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSize() {
     // Database should not let us add one that is too big
     // (The 42 is a random value put in each byte of the address.)
     leases[1]->hwaddr_->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
-    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::db::DbOperationError);
 }
 
 void
@@ -1104,7 +1106,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetId() {
     /// @todo: Simply use HWAddr directly once 2589 is implemented
     EXPECT_THROW(returned = lmptr_->getLease4(*leases[1]->hwaddr_,
                                               leases[1]->subnet_id_),
-                 isc::dhcp::MultipleRecords);
+                 isc::db::MultipleRecords);
 
 }
 
@@ -1129,7 +1131,7 @@ GenericLeaseMgrTest::testGetLease4HWAddrSubnetIdSize() {
     // Database should not let us add one that is too big
     // (The 42 is a random value put in each byte of the address.)
     leases[1]->hwaddr_->hwaddr_.resize(HWAddr::MAX_HWADDR_LEN + 100, 42);
-    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::dhcp::DbOperationError);
+    EXPECT_THROW(lmptr_->addLease(leases[1]), isc::db::DbOperationError);
 }
 
 void
@@ -1752,7 +1754,7 @@ GenericLeaseMgrTest::testUpdateLease4() {
 
     // Try to update the lease with the too long hostname.
     leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::dhcp::DbOperationError);
+    EXPECT_THROW(lmptr_->updateLease4(leases[1]), isc::db::DbOperationError);
 
     // Try updating a lease not in the database.
     lmptr_->deleteLease(ioaddress4_[2]);
@@ -1812,7 +1814,7 @@ GenericLeaseMgrTest::testUpdateLease6() {
 
     // Try to update the lease with the too long hostname.
     leases[1]->hostname_.assign(256, 'a');
-    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::dhcp::DbOperationError);
+    EXPECT_THROW(lmptr_->updateLease6(leases[1]), isc::db::DbOperationError);
 
     // Try updating a lease not in the database.
     EXPECT_THROW(lmptr_->updateLease6(leases[2]), isc::dhcp::NoSuchLease);

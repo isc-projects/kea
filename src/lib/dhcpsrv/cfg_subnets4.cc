@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,8 +12,8 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/shared_network.h>
 #include <dhcpsrv/subnet_id.h>
-#include <dhcpsrv/addr_utilities.h>
 #include <asiolink/io_address.h>
+#include <asiolink/addr_utilities.h>
 #include <stats/stats_mgr.h>
 #include <sstream>
 
@@ -53,6 +53,67 @@ CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_DEL_SUBNET4)
         .arg(subnet->toText());
+}
+
+void
+CfgSubnets4::merge(CfgSharedNetworks4Ptr networks,
+                   CfgSubnets4& other) {
+    auto& index = subnets_.get<SubnetSubnetIdIndexTag>();
+
+    // Iterate over the subnets to be merged. They will replace the existing
+    // subnets with the same id. All new subnets will be inserted into the
+    // configuration into which we're merging.
+    auto other_subnets = other.getAll();
+    for (auto other_subnet = other_subnets->begin();
+         other_subnet != other_subnets->end();
+         ++other_subnet) {
+
+        // Check if there is a subnet with the same ID.
+        auto subnet_it = index.find((*other_subnet)->getID());
+        if (subnet_it != index.end()) {
+
+            // Subnet found.
+            auto existing_subnet = *subnet_it;
+
+            // If the existing subnet and other subnet
+            // are the same instance skip it.
+            if (existing_subnet == *other_subnet) {
+                continue;
+            }
+
+            // We're going to replace the existing subnet with the other
+            // version. If it belongs to a shared network, we need
+            // remove it from that network.
+            SharedNetwork4Ptr network;
+            existing_subnet->getSharedNetwork(network);
+            if (network) {
+                network->del(existing_subnet->getID());
+            }
+
+            // Now we remove the existing subnet.
+            index.erase(subnet_it);
+        }
+
+        // Add the "other" subnet to the our collection of subnets.
+        subnets_.push_back(*other_subnet);
+
+        // If it belongs to a shared network, find the network and
+        // add the subnet to it
+        std::string network_name = (*other_subnet)->getSharedNetworkName();
+        if (!network_name.empty()) {
+            SharedNetwork4Ptr network = networks->getByName(network_name);
+            if (network) {
+                network->add(*other_subnet);
+            } else {
+                // This implies the shared-network collection we were given
+                // is out of sync with the subnets we were given.
+                isc_throw(InvalidOperation, "Cannot assign subnet ID of "
+                          << (*other_subnet)->getID()
+                          << " to shared network: " << network_name
+                          << ", network does not exist");
+            }
+        }
+    }
 }
 
 ConstSubnet4Ptr

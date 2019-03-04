@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,7 +63,7 @@ CREATE TABLE lease6 (
     pref_lifetime INT UNSIGNED,                 # Preferred lifetime
     lease_type TINYINT,                         # Lease type (see lease6_types
                                                 #    table for possible values)
-    iaid INT UNSIGNED,                          # See Section 10 of RFC 3315
+    iaid INT UNSIGNED,                          # See Section 12 of RFC 8415
     prefix_len TINYINT UNSIGNED,                # For IA_PD only
     fqdn_fwd BOOL,                              # Has forward DNS update been performed by a server
     fqdn_rev BOOL,                              # Has reverse DNS update been performed by a server
@@ -765,14 +765,1481 @@ CREATE TABLE logs (
 CREATE INDEX timestamp_index ON logs (timestamp);
 
 #add auth key for reconfiguration
-ALTER TABLE hosts  
-    ADD COLUMN auth_key VARCHAR(16) NULL; 
+ALTER TABLE hosts
+    ADD COLUMN auth_key VARCHAR(16) NULL;
+
+
+# Add scope for shared network specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(4, "shared-network");
+
+# Add scope for pool specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(5, "pool");
+
+# Add scope for PD pool specific options.
+INSERT INTO dhcp_option_scope (scope_id, scope_name)
+    VALUES(6, "pd-pool");
+
+-- -----------------------------------------------------
+-- Table `modification`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS modification (
+  id TINYINT(3) NOT NULL,
+  modification_type VARCHAR(32) NOT NULL,
+  PRIMARY KEY (id)
+) ENGINE=InnoDB;
+
+INSERT INTO modification(id, modification_type)
+    VALUES(0, "create");
+
+INSERT INTO modification(id, modification_type)
+    VALUES(1, "update");
+
+INSERT INTO modification(id, modification_type)
+    VALUES(2, "delete");
+
+-- -----------------------------------------------------
+-- Table `dhcp4_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_server (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(256) NOT NULL,
+    description TEXT,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY dhcp4_server_tag_UNIQUE (tag),
+    KEY key_dhcp4_server_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+# Special server entry meaning "all servers". This refers to
+# the configuration entries owned by all servers.
+INSERT INTO dhcp4_server(id, tag, description, modification_ts)
+    VALUES(1, "all", "special type: all servers", NOW());
+
+-- -----------------------------------------------------
+-- Table `dhcp4_audit`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_audit (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    object_type VARCHAR(256) NOT NULL,
+    object_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_type TINYINT(1) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    log_message TEXT,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_audit_by_modification_ts (modification_ts),
+    KEY fk_dhcp4_audit_modification_type (modification_type),
+    CONSTRAINT fk_dhcp4_audit_modification_type FOREIGN KEY (modification_type)
+        REFERENCES modification (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `dhcp4_global_parameter`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_global_parameter (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    value LONGTEXT NOT NULL,
+    modification_ts timestamp NOT NULL,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_global_parameter_modification_ts (modification_ts),
+    KEY key_dhcp4_global_parameter_name (name)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_global_parameter_server`
+-- M-to-M cross-reference between global parameters and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_global_parameter_server (
+    parameter_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (parameter_id, server_id),
+    KEY fk_dhcp4_global_parameter_server_server_id (server_id),
+    KEY key_dhcp4_global_parameter_server (modification_ts),
+    CONSTRAINT fk_dhcp4_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
+        REFERENCES dhcp4_global_parameter (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_global_parameter_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_option_def`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_option_def (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    code SMALLINT UNSIGNED NOT NULL,
+    name VARCHAR(128) NOT NULL,
+    space VARCHAR(128) NOT NULL,
+    type TINYINT UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    array TINYINT(1) NOT NULL,
+    encapsulate VARCHAR(128) NOT NULL,
+    record_types VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_option_def_modification_ts (modification_ts),
+    KEY key_dhcp4_option_def_code_space (code, space)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_option_def_server`
+-- M-to-M cross-reference between option definitions and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_option_def_server (
+    option_def_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_def_id, server_id),
+    KEY fk_dhcp4_option_def_server_server_id_idx (server_id),
+    KEY key_dhcp4_option_def_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp4_option_def (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_shared_network`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_shared_network (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    match_client_id TINYINT(1) NOT NULL DEFAULT '1',
+    modification_ts TIMESTAMP NOT NULL,
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT DEFAULT NULL,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY name_UNIQUE (name),
+    KEY key_dhcp4_shared_network_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_shared_network_server`
+-- M-to-M cross-reference between shared networks and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_shared_network_server (
+    shared_network_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (shared_network_id, server_id),
+    KEY key_dhcp4_shared_network_server_modification_ts (modification_ts),
+    KEY fk_dhcp4_shared_network_server_server_id (server_id),
+    CONSTRAINT fk_dhcp4_shared_network_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
+        REFERENCES dhcp4_shared_network (id) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_subnet`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_subnet (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    subnet_prefix VARCHAR(32) NOT NULL,
+    4o6_interface VARCHAR(128) DEFAULT NULL,
+    4o6_interface_id VARCHAR(128) DEFAULT NULL,
+    4o6_subnet VARCHAR(64) DEFAULT NULL,
+    boot_file_name VARCHAR(512) DEFAULT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    match_client_id TINYINT(1) NOT NULL DEFAULT '1',
+    modification_ts TIMESTAMP NOT NULL,
+    next_server INT(10) UNSIGNED DEFAULT NULL,
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT DEFAULT NULL,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    server_hostname VARCHAR(512) DEFAULT NULL,
+    shared_network_name VARCHAR(128) DEFAULT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (subnet_id),
+    UNIQUE KEY subnet4_subnet_prefix (subnet_prefix),
+    KEY fk_dhcp4_subnet_shared_network (shared_network_name),
+    KEY key_dhcp4_subnet_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp4_shared_network (name)
+        ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    start_address INT(10) UNSIGNED NOT NULL,
+    end_address INT(10) UNSIGNED NOT NULL,
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_pool_modification_ts (modification_ts),
+    KEY fk_dhcp4_pool_subnet_id (subnet_id),
+    CONSTRAINT fk_dhcp4_pool_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp4_subnet (subnet_id)
+        ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_subnet_server`
+-- M-to-M cross-reference between subnets and servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_subnet_server (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (subnet_id,server_id),
+    KEY fk_dhcp4_subnet_server_server_id_idx (server_id),
+    KEY key_dhcp4_subnet_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_subnet_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp4_subnet (subnet_id)
+        ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+
+# Modify the primary key to BINGINT as other tables have.
+ALTER TABLE dhcp4_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+# Add conifguration backend specific columns.
+ALTER TABLE dhcp4_options
+    ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_options_server`
+-- M-to-M cross-reference between options and servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_options_server (
+    option_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_id, server_id),
+    KEY fk_dhcp4_options_server_server_id (server_id),
+    KEY key_dhcp4_options_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp4_options_server_option_id FOREIGN KEY (option_id)
+        REFERENCES dhcp4_options (option_id)
+        ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp4_options_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp4_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp4_pool_BDEL BEFORE DELETE ON dhcp4_pool FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM dhcp4_options WHERE scope_id = 5 AND pool_id = OLD.id;
+END
+$$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_server`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_server (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    tag VARCHAR(256) NOT NULL,
+    description TEXT,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY dhcp6_server_tag_UNIQUE (tag),
+    KEY key_dhcp6_server_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+# Special server entry meaning "all servers". This refers to
+# the configuration entries owned by all servers.
+INSERT INTO dhcp6_server(id, tag, description, modification_ts)
+    VALUES(1, "all", "special type: all servers", NOW());
+
+-- -----------------------------------------------------
+-- Table `dhcp6_audit`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_audit (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    object_type VARCHAR(256) NOT NULL,
+    object_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_type TINYINT(1) NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    log_message TEXT,
+    PRIMARY KEY (id),
+    KEY key_dhcp6_audit_modification_ts (modification_ts),
+    KEY fk_dhcp6_audit_modification_type (modification_type),
+    CONSTRAINT fk_dhcp6_audit_modification_type FOREIGN KEY (modification_type)
+        REFERENCES modification (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_global_parameter`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_global_parameter (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    value LONGTEXT NOT NULL,
+    modification_ts timestamp NOT NULL,
+    PRIMARY KEY (id),
+    KEY key_dhcp6_global_parameter_modification_ts (modification_ts),
+    KEY key_dhcp6_global_parameter_name (name)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_global_parameter_server`
+-- M-to-M cross-reference between global parameters and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_global_parameter_server (
+    parameter_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (parameter_id, server_id),
+    KEY fk_dhcp6_global_parameter_server_server_id (server_id),
+    KEY key_dhcp6_global_parameter_server (modification_ts),
+    CONSTRAINT fk_dhcp6_global_parameter_server_parameter_id FOREIGN KEY (parameter_id)
+        REFERENCES dhcp6_global_parameter (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_global_parameter_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_option_def`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_option_def (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    code SMALLINT UNSIGNED NOT NULL,
+    name VARCHAR(128) NOT NULL,
+    space VARCHAR(128) NOT NULL,
+    type TINYINT UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    array TINYINT(1) NOT NULL,
+    encapsulate VARCHAR(128) NOT NULL,
+    record_types VARCHAR(512) DEFAULT NULL,
+    user_context LONGTEXT,
+    PRIMARY KEY (id),
+    KEY key_dhcp6_option_def_modification_ts (modification_ts),
+    KEY key_dhcp6_option_def_code_space (code, space)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_option_def_server`
+-- M-to-M cross-reference between option definitions and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_option_def_server (
+    option_def_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_def_id, server_id),
+    KEY fk_dhcp6_option_def_server_server_id_idx (server_id),
+    KEY key_dhcp6_option_def_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_option_def_server_option_def_id FOREIGN KEY (option_def_id)
+        REFERENCES dhcp6_option_def (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_option_def_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id) ON DELETE NO ACTION ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_shared_network`
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_shared_network (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(128) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    preferred_lifetime INT(10) DEFAULT NULL,
+    rapid_commit TINYINT(1) NOT NULL DEFAULT '1',
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT DEFAULT NULL,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (id),
+    UNIQUE KEY name_UNIQUE (name),
+    KEY key_dhcp6_shared_network_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_shared_network_server`
+-- M-to-M cross-reference between shared networks and
+-- servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_shared_network_server (
+    shared_network_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    KEY key_dhcp6_shared_network_server_modification_ts (modification_ts),
+    KEY fk_dhcp6_shared_network_server_server_id_idx (server_id),
+    KEY fk_dhcp6_shared_network_server_shared_network_id (shared_network_id),
+    CONSTRAINT fk_dhcp6_shared_network_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id FOREIGN KEY (shared_network_id)
+        REFERENCES dhcp6_shared_network (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_subnet`
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_subnet (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    subnet_prefix VARCHAR(64) NOT NULL,
+    client_class VARCHAR(128) DEFAULT NULL,
+    interface VARCHAR(128) DEFAULT NULL,
+    modification_ts TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    preferred_lifetime INT(10) DEFAULT NULL,
+    rapid_commit TINYINT(1) NOT NULL DEFAULT '1',
+    rebind_timer INT(10) DEFAULT NULL,
+    relay LONGTEXT DEFAULT NULL,
+    renew_timer INT(10) DEFAULT NULL,
+    require_client_classes LONGTEXT,
+    reservation_mode TINYINT(3) NOT NULL DEFAULT '3',
+    shared_network_name VARCHAR(128) DEFAULT NULL,
+    user_context LONGTEXT,
+    valid_lifetime INT(10) DEFAULT NULL,
+    PRIMARY KEY (subnet_id),
+    UNIQUE KEY subnet_prefix_UNIQUE (subnet_prefix),
+    KEY subnet6_subnet_prefix (subnet_prefix),
+    KEY fk_dhcp6_subnet_shared_network (shared_network_name),
+    KEY key_dhcp6_subnet_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_subnet_shared_network FOREIGN KEY (shared_network_name)
+        REFERENCES dhcp6_shared_network (name)
+        ON DELETE SET NULL ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_subnet_server`
+-- M-to-M cross-reference between subnets and servers
+-- -----------------------------------------------------
+CREATE TABLE dhcp6_subnet_server (
+    subnet_id INT(10) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (subnet_id, server_id),
+    KEY fk_dhcp6_subnet_server_server_id (server_id),
+    KEY key_dhcp6_subnet_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_subnet_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_subnet_server_subnet_id FOREIGN KEY (subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id)
+        ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_pd_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_pd_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    prefix VARCHAR(45) NOT NULL,
+    prefix_length TINYINT(3) NOT NULL,
+    delegated_prefix_length TINYINT(3) NOT NULL,
+    dhcp6_subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY fk_dhcp6_pd_pool_subnet_id (dhcp6_subnet_id),
+    KEY key_dhcp6_pd_pool_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_pd_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_pool`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_pool (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    start_address VARCHAR(45) NOT NULL,
+    end_address VARCHAR(45) NOT NULL,
+    dhcp6_subnet_id INT(10) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (id),
+    KEY fk_dhcp6_pool_subnet_id (dhcp6_subnet_id),
+    KEY key_dhcp6_pool_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_pool_subnet_id FOREIGN KEY (dhcp6_subnet_id)
+        REFERENCES dhcp6_subnet (subnet_id) ON DELETE CASCADE ON UPDATE CASCADE
+) ENGINE=InnoDB;
+
+# Modify the primary key to BINGINT as other tables have.
+ALTER TABLE dhcp6_options MODIFY option_id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT;
+
+# Add conifguration backend specific columns.
+ALTER TABLE dhcp6_options
+    ADD COLUMN shared_network_name VARCHAR(128) DEFAULT NULL,
+    ADD COLUMN pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN pd_pool_id BIGINT(20) UNSIGNED DEFAULT NULL,
+    ADD COLUMN modification_ts TIMESTAMP NOT NULL;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_options_server`
+-- M-to-M cross-reference between options and servers
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_options_server (
+    option_id BIGINT(20) UNSIGNED NOT NULL,
+    server_id BIGINT(20) UNSIGNED NOT NULL,
+    modification_ts TIMESTAMP NOT NULL,
+    PRIMARY KEY (option_id, server_id),
+    KEY fk_dhcp6_options_server_server_id_idx (server_id),
+    KEY key_dhcp6_options_server_modification_ts (modification_ts),
+    CONSTRAINT fk_dhcp6_options_server_option_id FOREIGN KEY (option_id)
+        REFERENCES dhcp6_options (option_id)
+        ON DELETE NO ACTION ON UPDATE NO ACTION,
+    CONSTRAINT fk_dhcp6_options_server_server_id FOREIGN KEY (server_id)
+        REFERENCES dhcp6_server (id)
+        ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB;
+
+# Create trigger which removes pool specific options upon removal of
+# the pool.
+DELIMITER $$
+CREATE TRIGGER dhcp6_pool_BDEL BEFORE DELETE ON dhcp6_pool FOR EACH ROW
+-- Edit trigger body code below this line. Do not edit lines above this one
+BEGIN
+DELETE FROM dhcp6_options WHERE scope_id = 5 AND pool_id = OLD.id;
+END
+$$
+DELIMITER ;
 
 # Update the schema version number
 UPDATE schema_version
 SET version = '7', minor = '0';
 
 # This line concludes database upgrade to version 7.0.
+
+
+ALTER TABLE dhcp4_options
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE dhcp6_options
+    MODIFY COLUMN modification_ts TIMESTAMP NOT NULL
+    DEFAULT CURRENT_TIMESTAMP;
+
+ALTER TABLE dhcp4_subnet
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp4_subnet
+    MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp4_shared_network
+    MODIFY COLUMN match_client_id TINYINT(1) DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp6_subnet
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    ADD COLUMN calculate_tee_times TINYINT(1) DEFAULT NULL,
+    ADD COLUMN t1_percent FLOAT DEFAULT NULL,
+    ADD COLUMN t2_percent FLOAT DEFAULT NULL;
+
+ALTER TABLE dhcp6_shared_network
+    MODIFY COLUMN reservation_mode TINYINT(3) DEFAULT NULL;
+
+
+-- -----------------------------------------------------
+-- Make sure that constraints on the 7.0 schema tables
+-- have appropriate referential actions. All tables
+-- which join the configuration elements with the
+-- servers should perform cascade deletion.
+-- -----------------------------------------------------
+
+ALTER TABLE dhcp4_global_parameter_server
+    DROP FOREIGN KEY fk_dhcp4_global_parameter_server_server_id;
+
+ALTER TABLE dhcp4_global_parameter_server
+    ADD CONSTRAINT fk_dhcp4_global_parameter_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_option_def_server
+    DROP FOREIGN KEY fk_dhcp4_option_def_server_server_id;
+
+ALTER TABLE dhcp4_option_def_server
+    ADD CONSTRAINT fk_dhcp4_option_def_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_shared_network_server
+    DROP FOREIGN KEY fk_dhcp4_shared_network_server_server_id;
+
+ALTER TABLE dhcp4_shared_network_server
+    ADD CONSTRAINT fk_dhcp4_shared_network_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_subnet_server
+    DROP FOREIGN KEY fk_dhcp4_subnet_server_server_id;
+
+ALTER TABLE dhcp4_subnet_server
+    ADD CONSTRAINT fk_dhcp4_subnet_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp4_options_server
+    DROP FOREIGN KEY fk_dhcp4_options_server_server_id;
+
+ALTER TABLE dhcp4_options_server
+    ADD CONSTRAINT fk_dhcp4_options_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp4_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_global_parameter_server
+    DROP FOREIGN KEY fk_dhcp6_global_parameter_server_server_id;
+
+ALTER TABLE dhcp6_global_parameter_server
+    ADD CONSTRAINT fk_dhcp6_global_parameter_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_option_def_server
+    DROP FOREIGN KEY fk_dhcp6_option_def_server_server_id;
+
+ALTER TABLE dhcp6_option_def_server
+    ADD CONSTRAINT fk_dhcp6_option_def_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_shared_network_server
+    DROP FOREIGN KEY fk_dhcp6_shared_network_server_server_id;
+
+ALTER TABLE dhcp6_shared_network_server
+    ADD CONSTRAINT fk_dhcp6_shared_network_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_subnet_server
+    DROP FOREIGN KEY fk_dhcp6_subnet_server_server_id;
+
+ALTER TABLE dhcp6_subnet_server
+    ADD CONSTRAINT fk_dhcp6_subnet_server_server_id
+        FOREIGN KEY (server_id)
+    REFERENCES dhcp6_server (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_options_server
+    DROP FOREIGN KEY fk_dhcp6_options_server_option_id;
+
+ALTER TABLE dhcp6_options_server
+    ADD CONSTRAINT fk_dhcp6_options_server_option_id
+        FOREIGN KEY (option_id)
+    REFERENCES dhcp6_options (option_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- -----------------------------------------------------
+-- Table `dhcp4_audit_revision`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp4_audit_revision (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    modification_ts TIMESTAMP NOT NULL,
+    log_message TEXT,
+    server_id BIGINT(10) UNSIGNED,
+    PRIMARY KEY (id),
+    KEY key_dhcp4_audit_revision_by_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Drop columns from the dhcp4_audit table which now
+-- belong to the dhcp4_audit_revision.
+-- -----------------------------------------------------
+ALTER TABLE dhcp4_audit
+    DROP COLUMN modification_ts,
+    DROP COLUMN log_message;
+
+-- -----------------------------------------------------
+-- Add column revision_id and the foreign key with a
+-- reference to the dhcp4_audit_revision table.
+-- -----------------------------------------------------
+ALTER TABLE dhcp4_audit
+    ADD COLUMN revision_id BIGINT(20) UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp4_audit
+    ADD CONSTRAINT fk_dhcp4_audit_revision FOREIGN KEY (revision_id)
+        REFERENCES dhcp4_audit_revision (id)
+        ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp4_audit_revision table and sets appropriate session
+-- variables to be used while creating the audit entries
+-- by triggers. This procedure should be called at the
+-- beginning of a transaction which modifies configuration
+-- data in the database, e.g. when new subnet is added.
+--
+-- Parameters:
+-- - audit_ts timestamp to be associated with the audit
+--   revision.
+-- - server_tag is used to retrieve the server_id which
+--   associates the changes applied with the particular
+--   server or all servers.
+-- - audit_log_message is a log message associates with
+--   the audit revision.
+-- - cascade_transaction is assigned to a session
+--   variable which is used in some triggers to determine
+--   if the audit entry should be created for them or
+--   not. Specifically, this is used when DHCP options
+--   are inserted, updated or deleted. If such modification
+--   is a part of the larger change (e.g. change in the
+--   subnet the options belong to) the dedicated audit
+--   entry for options must not be created. On the other
+--   hand, if the global option is being added, the
+--   audit entry for the option must be created because
+--   it is the sole object modified in that case.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createAuditRevisionDHCP4;
+DELIMITER $$
+CREATE PROCEDURE createAuditRevisionDHCP4(IN audit_ts TIMESTAMP,
+                                          IN server_tag VARCHAR(256),
+                                          IN audit_log_message TEXT,
+                                          IN cascade_transaction TINYINT(1))
+BEGIN
+    DECLARE srv_id BIGINT(20);
+    SELECT id INTO srv_id FROM dhcp4_server WHERE tag = server_tag;
+    INSERT INTO dhcp4_audit_revision (modification_ts, server_id, log_message)
+       VALUES (audit_ts, srv_id, audit_log_message);
+    SET @audit_revision_id = LAST_INSERT_ID();
+    SET @cascade_transaction = cascade_transaction;
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp4_audit table. It should be called from the
+-- triggers of the tables where the config modifications
+-- are applied. The @audit_revision_id variable contains
+-- the revision id to be placed in the audit entries.
+--
+-- The following parameters are passed to this procedure:
+-- - object_type_val: name of the table to be associated
+--   with the applied changes.
+-- - object_id_val: identifier of the modified object in
+--   that table.
+-- - modification_type_val: string value indicating the
+--   type of the change, i.e. "create", "update" or
+--   "delete".
+-- ----------------------------------------------------
+DROP PROCEDURE IF EXISTS createAuditEntryDHCP4;
+DELIMITER $$
+CREATE PROCEDURE createAuditEntryDHCP4(IN object_type_val VARCHAR(256),
+                                       IN object_id_val BIGINT(20) UNSIGNED,
+                                       IN modification_type_val VARCHAR(32))
+BEGIN
+    INSERT INTO dhcp4_audit (object_type, object_id, modification_type, revision_id)
+        VALUES (object_type_val, object_id_val, \
+               (SELECT id FROM modification WHERE modification_type = modification_type_val), \
+                @audit_revision_id);
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Triggers used to create entries in the audit
+-- tables upon insertion, update or deletion of the
+-- configuration entries.
+-- -----------------------------------------------------
+
+# Create dhcp4_global_parameter insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_global_parameter_AINS AFTER INSERT ON dhcp4_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_global_parameter', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_global_parameter update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_global_parameter_AUPD AFTER UPDATE ON dhcp4_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_global_parameter', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_global_parameter delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_global_parameter_ADEL AFTER DELETE ON dhcp4_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_global_parameter', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_subnet insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_AINS AFTER INSERT ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_subnet update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_AUPD AFTER UPDATE ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_subnet', NEW.subnet_id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_subnet delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_subnet_ADEL AFTER DELETE ON dhcp4_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_subnet', OLD.subnet_id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_shared_network insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_AINS AFTER INSERT ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_shared_network update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_AUPD AFTER UPDATE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_shared_network delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_shared_network_ADEL AFTER DELETE ON dhcp4_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_shared_network', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_option_def insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_option_def_AINS AFTER INSERT ON dhcp4_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_option_def', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_option_def update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_option_def_AUPD AFTER UPDATE ON dhcp4_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_option_def', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp4_option_def delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_option_def_ADEL AFTER DELETE ON dhcp4_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP4('dhcp4_option_def', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates an audit entry for a
+-- DHCPv4 option. Depending on the scope of the option
+-- the audit entry can be created for various levels
+-- of configuration hierarchy. If this is a global
+-- option the audit entry is created for this option
+-- for CREATE, UPDATE or DELETE. If the option is being
+-- added for an owning option, e.g. for a subnet, the
+-- audit entry is created as an UPDATE to this object.
+-- From the Kea perspective such option addition will
+-- be seen as a subnet update and the server will fetch
+-- the whole subnet and merge it into its configuration.
+-- The audit entry is not created if it was already
+-- created as part of the current transaction.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createOptionAuditDHCP4;
+DELIMITER $$
+CREATE PROCEDURE createOptionAuditDHCP4(IN modification_type VARCHAR(32),
+                                        IN scope_id TINYINT(3) UNSIGNED,
+                                        IN option_id BIGINT(20) UNSIGNED,
+                                        IN subnet_id INT(10) UNSIGNED,
+                                        IN host_id INT(10) UNSIGNED,
+                                        IN network_name VARCHAR(128),
+                                        IN pool_id BIGINT(20))
+BEGIN
+    # These variables will hold shared network id and subnet id that
+    # we will select.
+    DECLARE snid VARCHAR(128);
+    DECLARE sid INT(10) UNSIGNED;
+
+    # Cascade transaction flag is set to 1 to prevent creation of
+    # the audit entries for the options when the options are
+    # created as part of the parent object creation or update.
+    # For example: when the option is added as part of the subnet
+    # addition, the cascade transaction flag is equal to 1. If
+    # the option is added into the existing subnet the cascade
+    # transaction is equal to 0. Note that depending on the option
+    # scope the audit entry will contain the object_type value
+    # of the parent object to cause the server to replace the
+    # entire subnet. The only case when the object_type will be
+    # set to 'dhcp4_options' is when a global option is added.
+    # Global options do not have the owner.
+    IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
+        # todo: host manager hasn't been updated to use audit
+        # mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            # If a global option is added or modified, create audit
+            # entry for the 'dhcp4_options' table.
+            CALL createAuditEntryDHCP4('dhcp4_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            # If subnet specific option is added or modified, create
+            # audit entry for the entire subnet, which indicates that
+            # it should be treated as the subnet update.
+            CALL createAuditEntryDHCP4('dhcp4_subnet', subnet_id, "update");
+        ELSEIF scope_id = 4 THEN
+            # If shared network specific option is added or modified,
+            # create audit entry for the shared network which
+            # indicates that it should be treated as the shared
+            # network update.
+           SELECT id INTO snid FROM dhcp4_shared_network WHERE name = network_name LIMIT 1;
+           CALL createAuditEntryDHCP4('dhcp4_shared_network', snid, "update");
+        ELSEIF scope_id = 5 THEN
+            # If pool specific option is added or modified, create
+            # audit entry for the subnet which this pool belongs to.
+            SELECT dhcp4_pool.subnet_id INTO sid FROM dhcp4_pool WHERE id = pool_id;
+            CALL createAuditEntryDHCP4('dhcp4_subnet', sid, "update");
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+# Create dhcp4_options insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AINS AFTER INSERT ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("create", NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_options update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_AUPD AFTER UPDATE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("update", NEW.scope_id, NEW.option_id, NEW.dhcp4_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id);
+    END $$
+DELIMITER ;
+
+# Create dhcp4_options delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp4_options_ADEL AFTER DELETE ON dhcp4_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP4("delete", OLD.scope_id, OLD.option_id, OLD.dhcp4_subnet_id,
+                                    OLD.host_id, OLD.shared_network_name, OLD.pool_id);
+    END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Table `parameter_data_type`
+-- Reflects an enum used by Kea to define supported
+-- data types for the simple configuration parameters,
+-- e.g. global parameters used by DHCP servers.
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS parameter_data_type (
+    id TINYINT UNSIGNED NOT NULL PRIMARY KEY,
+    name VARCHAR(32) NOT NULL
+) ENGINE = InnoDB;
+
+START TRANSACTION;
+INSERT INTO parameter_data_type VALUES (0, 'integer');
+INSERT INTO parameter_data_type VALUES (1, 'real');
+INSERT INTO parameter_data_type VALUES (2, 'boolean');
+INSERT INTO parameter_data_type VALUES (4, 'string');
+COMMIT;
+
+ALTER TABLE dhcp4_global_parameter
+    ADD COLUMN parameter_type TINYINT UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp4_global_parameter
+    ADD CONSTRAINT fk_dhcp4_global_parameter_type FOREIGN KEY (parameter_type)
+        REFERENCES parameter_data_type (id);
+
+ALTER TABLE dhcp6_global_parameter
+    ADD COLUMN parameter_type TINYINT UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_global_parameter
+    ADD CONSTRAINT fk_dhcp6_global_parameter_type FOREIGN KEY (parameter_type)
+        REFERENCES parameter_data_type (id);
+
+
+-- Rename dhcp6_subnet_id column of dhcp6_pool and dhcp6_pd_pool
+
+ALTER TABLE dhcp6_pool
+    DROP FOREIGN KEY fk_dhcp6_pool_subnet_id;
+DROP INDEX fk_dhcp6_pool_subnet_id
+    ON dhcp6_pool;
+
+ALTER TABLE dhcp6_pd_pool
+    DROP FOREIGN KEY fk_dhcp6_pd_pool_subnet_id;
+DROP INDEX fk_dhcp6_pd_pool_subnet_id
+    ON dhcp6_pd_pool;
+
+ALTER TABLE dhcp6_pool
+    CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_pd_pool
+    CHANGE dhcp6_subnet_id subnet_id INT(10) UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_pool
+    ADD CONSTRAINT fk_dhcp6_pool_subnet_id
+    FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+ALTER TABLE dhcp6_pd_pool
+    ADD CONSTRAINT fk_dhcp6_pd_pool_subnet_id
+    FOREIGN KEY (subnet_id)
+    REFERENCES dhcp6_subnet (subnet_id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- align dhcp6_shared_network_server indexes on dhcp4_shared_network_server
+
+ALTER TABLE dhcp6_shared_network_server
+    ADD PRIMARY KEY (shared_network_id, server_id);
+
+ALTER TABLE dhcp6_shared_network_server
+    DROP FOREIGN KEY fk_dhcp6_shared_network_server_shared_network_id;
+DROP INDEX fk_dhcp6_shared_network_server_shared_network_id
+    ON dhcp6_shared_network_server;
+ALTER TABLE dhcp6_shared_network_server
+    ADD CONSTRAINT fk_dhcp6_shared_network_server_shared_network_id
+    FOREIGN KEY (shared_network_id)
+    REFERENCES dhcp6_shared_network (id)
+    ON DELETE CASCADE ON UPDATE NO ACTION;
+
+-- -----------------------------------------------------
+-- Table `dhcp6_audit_revision`
+-- -----------------------------------------------------
+CREATE TABLE IF NOT EXISTS dhcp6_audit_revision (
+    id BIGINT(20) UNSIGNED NOT NULL AUTO_INCREMENT,
+    modification_ts TIMESTAMP NOT NULL,
+    log_message TEXT,
+    server_id BIGINT(10) UNSIGNED,
+    PRIMARY KEY (id),
+    KEY key_dhcp6_audit_revision_by_modification_ts (modification_ts)
+) ENGINE=InnoDB;
+
+-- -----------------------------------------------------
+-- Drop columns from the dhcp6_audit table which now
+-- belong to the dhcp6_audit_revision.
+-- -----------------------------------------------------
+ALTER TABLE dhcp6_audit
+    DROP COLUMN modification_ts,
+    DROP COLUMN log_message;
+
+-- -----------------------------------------------------
+-- Add column revision_id and the foreign key with a
+-- reference to the dhcp6_audit_revision table.
+-- -----------------------------------------------------
+ALTER TABLE dhcp6_audit
+    ADD COLUMN revision_id BIGINT(20) UNSIGNED NOT NULL;
+
+ALTER TABLE dhcp6_audit
+    ADD CONSTRAINT fk_dhcp6_audit_revision FOREIGN KEY (revision_id)
+        REFERENCES dhcp6_audit_revision (id)
+        ON DELETE NO ACTION ON UPDATE CASCADE;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp6_audit_revision table and sets appropriate session
+-- variables to be used while creating the audit entries
+-- by triggers. This procedure should be called at the
+-- beginning of a transaction which modifies configuration
+-- data in the database, e.g. when new subnet is added.
+--
+-- Parameters:
+-- - audit_ts timestamp to be associated with the audit
+--   revision.
+-- - server_tag is used to retrieve the server_id which
+--   associates the changes applied with the particular
+--   server or all servers.
+-- - audit_log_message is a log message associates with
+--   the audit revision.
+-- - cascade_transaction is assigned to a session
+--   variable which is used in some triggers to determine
+--   if the audit entry should be created for them or
+--   not. Specifically, this is used when DHCP options
+--   are inserted, updated or deleted. If such modification
+--   is a part of the larger change (e.g. change in the
+--   subnet the options belong to) the dedicated audit
+--   entry for options must not be created. On the other
+--   hand, if the global option is being added, the
+--   audit entry for the option must be created because
+--   it is the sole object modified in that case.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createAuditRevisionDHCP6;
+DELIMITER $$
+CREATE PROCEDURE createAuditRevisionDHCP6(IN audit_ts TIMESTAMP,
+                                          IN server_tag VARCHAR(256),
+                                          IN audit_log_message TEXT,
+                                          IN cascade_transaction TINYINT(1))
+BEGIN
+    DECLARE srv_id BIGINT(20);
+    SELECT id INTO srv_id FROM dhcp6_server WHERE tag = server_tag;
+    INSERT INTO dhcp6_audit_revision (modification_ts, server_id, log_message)
+       VALUES (audit_ts, srv_id, audit_log_message);
+    SET @audit_revision_id = LAST_INSERT_ID();
+    SET @cascade_transaction = cascade_transaction;
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates a new entry in the
+-- dhcp6_audit table. It should be called from the
+-- triggers of the tables where the config modifications
+-- are applied. The @audit_revision_id variable contains
+-- the revision id to be placed in the audit entries.
+--
+-- The following parameters are passed to this procedure:
+-- - object_type_val: name of the table to be associated
+--   with the applied changes.
+-- - object_id_val: identifier of the modified object in
+--   that table.
+-- - modification_type_val: string value indicating the
+--   type of the change, i.e. "create", "update" or
+--   "delete".
+-- ----------------------------------------------------
+DROP PROCEDURE IF EXISTS createAuditEntryDHCP6;
+DELIMITER $$
+CREATE PROCEDURE createAuditEntryDHCP6(IN object_type_val VARCHAR(256),
+                                       IN object_id_val BIGINT(20) UNSIGNED,
+                                       IN modification_type_val VARCHAR(32))
+BEGIN
+    INSERT INTO dhcp6_audit (object_type, object_id, modification_type, revision_id)
+        VALUES (object_type_val, object_id_val, \
+               (SELECT id FROM modification WHERE modification_type = modification_type_val), \
+                @audit_revision_id);
+END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Triggers used to create entries in the audit
+-- tables upon insertion, update or deletion of the
+-- configuration entries.
+-- -----------------------------------------------------
+
+# Create dhcp6_global_parameter insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_global_parameter_AINS AFTER INSERT ON dhcp6_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_global_parameter', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_global_parameter update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_global_parameter_AUPD AFTER UPDATE ON dhcp6_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_global_parameter', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_global_parameter delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_global_parameter_ADEL AFTER DELETE ON dhcp6_global_parameter
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_global_parameter', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_subnet insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_subnet_AINS AFTER INSERT ON dhcp6_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_subnet', NEW.subnet_id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_subnet update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_subnet_AUPD AFTER UPDATE ON dhcp6_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_subnet', NEW.subnet_id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_subnet delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_subnet_ADEL AFTER DELETE ON dhcp6_subnet
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_subnet', OLD.subnet_id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_shared_network insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_shared_network_AINS AFTER INSERT ON dhcp6_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_shared_network', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_shared_network update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_shared_network_AUPD AFTER UPDATE ON dhcp6_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_shared_network', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_shared_network delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_shared_network_ADEL AFTER DELETE ON dhcp6_shared_network
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_shared_network', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_option_def insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_option_def_AINS AFTER INSERT ON dhcp6_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_option_def', NEW.id, "create");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_option_def update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_option_def_AUPD AFTER UPDATE ON dhcp6_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_option_def', NEW.id, "update");
+    END $$
+DELIMITER ;
+
+# Create dhcp6_option_def delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_option_def_ADEL AFTER DELETE ON dhcp6_option_def
+    FOR EACH ROW
+    BEGIN
+        CALL createAuditEntryDHCP6('dhcp6_option_def', OLD.id, "delete");
+    END $$
+DELIMITER ;
+
+-- -----------------------------------------------------
+-- Stored procedure which creates an audit entry for a
+-- DHCPv6 option. Depending on the scope of the option
+-- the audit entry can be created for various levels
+-- of configuration hierarchy. If this is a global
+-- option the audit entry is created for this option
+-- for CREATE, UPDATE or DELETE. If the option is being
+-- added for an owning option, e.g. for a subnet, the
+-- audit entry is created as an UPDATE to this object.
+-- From the Kea perspective such option addition will
+-- be seen as a subnet update and the server will fetch
+-- the whole subnet and merge it into its configuration.
+-- The audit entry is not created if it was already
+-- created as part of the current transaction.
+--
+-- The following parameters are passed to the procedure:
+-- - modification_type: "create", "update" or "delete"
+-- - scope_id: identifier of the option scope, e.g.
+--   global, subnet specific etc.
+-- - option_id: identifier of the option.
+-- - subnet_id: identifier of the subnet if the option
+--   belongs to the subnet.
+-- - host_id: identifier of the host if the option
+-- - belongs to the host.
+-- - network_name: shared network name if the option
+--   belongs to the shared network.
+-- - pool_id: identifier of the pool if the option
+--   belongs to the pool.
+-- - pd_pool_id: identifier of the pool if the option
+--   belongs to the pd pool.
+-- -----------------------------------------------------
+DROP PROCEDURE IF EXISTS createOptionAuditDHCP6;
+DELIMITER $$
+CREATE PROCEDURE createOptionAuditDHCP6(IN modification_type VARCHAR(32),
+                                        IN scope_id TINYINT(3) UNSIGNED,
+                                        IN option_id BIGINT(20) UNSIGNED,
+                                        IN subnet_id INT(10) UNSIGNED,
+                                        IN host_id INT(10) UNSIGNED,
+                                        IN network_name VARCHAR(128),
+                                        IN pool_id BIGINT(20),
+                                        IN pd_pool_id BIGINT(20))
+BEGIN
+    # These variables will hold shared network id and subnet id that
+    # we will select.
+    DECLARE snid VARCHAR(128);
+    DECLARE sid INT(10) UNSIGNED;
+
+    # Cascade transaction flag is set to 1 to prevent creation of
+    # the audit entries for the options when the options are
+    # created as part of the parent object creation or update.
+    # For example: when the option is added as part of the subnet
+    # addition, the cascade transaction flag is equal to 1. If
+    # the option is added into the existing subnet the cascade
+    # transaction is equal to 0. Note that depending on the option
+    # scope the audit entry will contain the object_type value
+    # of the parent object to cause the server to replace the
+    # entire subnet. The only case when the object_type will be
+    # set to 'dhcp6_options' is when a global option is added.
+    # Global options do not have the owner.
+    IF @cascade_transaction IS NULL OR @cascade_transaction = 0 THEN
+        # todo: host manager hasn't been updated to use audit
+        # mechanisms so ignore host specific options for now.
+        IF scope_id = 0 THEN
+            # If a global option is added or modified, create audit
+            # entry for the 'dhcp6_options' table.
+            CALL createAuditEntryDHCP6('dhcp6_options', option_id, modification_type);
+        ELSEIF scope_id = 1 THEN
+            # If subnet specific option is added or modified, create
+            # audit entry for the entire subnet, which indicates that
+            # it should be treated as the subnet update.
+            CALL createAuditEntryDHCP6('dhcp6_subnet', subnet_id, "update");
+        ELSEIF scope_id = 4 THEN
+            # If shared network specific option is added or modified,
+            # create audit entry for the shared network which
+            # indicates that it should be treated as the shared
+            # network update.
+           SELECT id INTO snid FROM dhcp6_shared_network WHERE name = network_name LIMIT 1;
+           CALL createAuditEntryDHCP6('dhcp6_shared_network', snid, "update");
+        ELSEIF scope_id = 5 THEN
+            # If pool specific option is added or modified, create
+            # audit entry for the subnet which this pool belongs to.
+            SELECT dhcp6_pool.subnet_id INTO sid FROM dhcp6_pool WHERE id = pool_id;
+            CALL createAuditEntryDHCP6('dhcp6_subnet', sid, "update");
+        ELSEIF scope_id = 6 THEN
+            # If pd pool specific option is added or modified, create
+            # audit entry for the subnet which this pd pool belongs to.
+            SELECT dhcp6_pd_pool.subnet_id INTO sid FROM dhcp6_pd_pool WHERE id = pd_pool_id;
+            CALL createAuditEntryDHCP6('dhcp6_subnet', sid, "update");
+        END IF;
+    END IF;
+END $$
+DELIMITER ;
+
+# Create dhcp6_options insert trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_AINS AFTER INSERT ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("create", NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id, NEW.pd_pool_id);
+    END $$
+DELIMITER ;
+
+# Create dhcp6_options update trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_AUPD AFTER UPDATE ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("update", NEW.scope_id, NEW.option_id, NEW.dhcp6_subnet_id,
+                                    NEW.host_id, NEW.shared_network_name, NEW.pool_id, NEW.pd_pool_id);
+    END $$
+DELIMITER ;
+
+# Create dhcp6_options delete trigger
+DELIMITER $$
+CREATE TRIGGER dhcp6_options_ADEL AFTER DELETE ON dhcp6_options
+    FOR EACH ROW
+    BEGIN
+        CALL createOptionAuditDHCP6("delete", OLD.scope_id, OLD.option_id, OLD.dhcp6_subnet_id,
+                                    OLD.host_id, OLD.shared_network_name, OLD.pool_id, OLD.pd_pool_id);
+    END $$
+DELIMITER ;
+
+
+# Update the schema version number
+UPDATE schema_version
+SET version = '8', minor = '0';
+
+# This line concludes database upgrade to version 8.0.
+
 
 # Notes:
 #

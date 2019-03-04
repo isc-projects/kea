@@ -4,20 +4,22 @@
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
-#include <iostream>
-#include <stdint.h>
-
 #include <config.h>
+
+#include <perfdhcp/avalanche_scen.h>
+#include <perfdhcp/basic_scen.h>
+#include <perfdhcp/command_options.h>
+
 #include <exceptions/exceptions.h>
 
-#include "test_control.h"
-#include "command_options.h"
+#include <iostream>
+#include <stdint.h>
 
 using namespace isc::perfdhcp;
 
 int
 main(int argc, char* argv[]) {
-    CommandOptions& command_options = CommandOptions::instance();
+    CommandOptions command_options;
     std::string diags(command_options.getDiags());
     int ret_code = 0;
     try {
@@ -33,20 +35,27 @@ main(int argc, char* argv[]) {
         }
     } catch(isc::Exception& e) {
         ret_code = 1;
-        std::cerr << "Error parsing command line options: "
-                  << e.what() << std::endl;
         command_options.usage();
+        std::cerr << "\nERROR: parsing command line options: "
+                  << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }
         return (ret_code);
     }
     try{
-        TestControl& test_control = TestControl::instance();
-        ret_code =  test_control.run();
+        auto scenario = command_options.getScenario();
+        PerfSocket socket(command_options);
+        if (scenario == Scenario::BASIC) {
+            BasicScen scen(command_options, socket);
+            ret_code = scen.run();
+        } else if (scenario == Scenario::AVALANCHE) {
+            AvalancheScen scen(command_options, socket);
+            ret_code = scen.run();
+        }
     } catch (std::exception& e) {
         ret_code = 1;
-        std::cerr << "Error running perfdhcp: " << e.what() << std::endl;
+        std::cerr << "\nERROR: running perfdhcp: " << e.what() << std::endl;
         if (diags.find('e') != std::string::npos) {
             std::cerr << "Fatal error" << std::endl;
         }

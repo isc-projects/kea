@@ -7,7 +7,7 @@ AC_PREREQ([2.69])
 # For GIT versions, this is x.y.z-git, where x.y.z denotes the software
 # version that was used as a base + changes that were made later, but
 # are not released yet.
-AC_INIT(kea,1.4.0-git, kea-dev@lists.isc.org)
+AC_INIT(kea,1.5.0-git, kea-dev@lists.isc.org)
 AC_CONFIG_SRCDIR(README)
 
 # serial-tests is not available in automake version before 1.13, so
@@ -43,7 +43,12 @@ else
 fi
 # Export EXTENDED_VERSION to config.h
 # This will be either "tarball" or "git abcd".
-AC_DEFINE_UNQUOTED([EXTENDED_VERSION], ["${KEA_SRCID}"], [Extended Kea version])
+# We do not want to put this in a config.h, because it messes up ccache
+# horribly. When building different branches, the commit-id is different
+# and since the config.h is included in most files *and* has a different
+# content, ccache can't use cached content and thus has to do full compilation.
+# Now it is in kea_version.h and config.status substitutes it.
+AC_SUBST(KEA_SRCID)
 
 # Find a separator for path_replacer
 for sep in "+" "," ";" "&" "__NONE__"; do
@@ -73,6 +78,9 @@ if test "$cross_compiling" = "yes"; then
 	fi
 fi
 AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
+
+# pkg-config can be required.
+AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 
 # Enable low-performing debugging facilities? This option optionally
 # enables some debugging aids that perform slowly and hence aren't built
@@ -428,6 +436,20 @@ case "$host" in
         ;;
 esac
 
+# Made perfdhcp optional.
+AC_ARG_ENABLE(perfdhcp, [AC_HELP_STRING([--enable-perfdhcp],
+  [enable perfdhcp, a DHCP benchmarking tool [default=no]])],
+  enable_perfdhcp=$enableval, enable_perfdhcp=no)
+
+DISTCHECK_PERFDHCP_CONFIGURE_FLAG=
+if test "x$enable_perfdhcp" != xno ; then
+  DISTCHECK_PERFDHCP_CONFIGURE_FLAG="--enable-perfdhcp"
+fi
+
+# Export to makefiles the info whether we have perfdhcp enabled or not
+AM_CONDITIONAL(PERFDHCP, test x$enable_perfdhcp != xno)
+AC_SUBST(DISTCHECK_PERFDHCP_CONFIGURE_FLAG)
+
 # Kea-shell is written in python. It can work with python 2.7 or any 3.x.
 # It may likely work with earlier versions, but 2.7 was the oldest one we tested
 # it with. We require python only if kea-shell was enabled. It is disabled
@@ -673,6 +695,7 @@ if test "${deprec_msg}" = "yes" ; then
 fi
 
 if test "${mysql_config}" = "yes" ; then
+    MYSQL_CONFIG="/usr/bin/mysql_config"
     for d in $defaultdirs
     do
         if test -f $d/bin/mysql_config; then
@@ -686,7 +709,7 @@ fi
 
 if test "$MYSQL_CONFIG" != "" ; then
     if test -d "$MYSQL_CONFIG" -o ! -x "$MYSQL_CONFIG" ; then
-        AC_MSG_ERROR([--with-mysql should point to a mysql_config program])
+        AC_MSG_ERROR([MySQL dependencies cannot be found. Please install MySQL libraries or point --with-mysql to mysql_config program if it is located in non-default directory, eg. --with-mysql=/opt/mysql/bin/mysql_config.])
     fi
 
     MYSQL_CPPFLAGS=`$MYSQL_CONFIG --cflags`
@@ -704,20 +727,30 @@ if test "$MYSQL_CONFIG" != "" ; then
     LIBS="$MYSQL_LIBS $LIBS"
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <mysql.h>],
-                             [MYSQL mysql_handle;
-                              (void) mysql_init(&mysql_handle);
-                             ])],
-            [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
-            [AC_MSG_RESULT([checking for MySQL headers and library... no])
-             AC_MSG_ERROR([Needs MySQL library])]
+        [AC_LANG_PROGRAM([#include <mysql.h>],
+                         [MYSQL mysql_handle;
+                          (void) mysql_init(&mysql_handle);
+                         ])],
+        [AC_MSG_RESULT([checking for MySQL headers and library... yes])],
+        [AC_MSG_RESULT([checking for MySQL headers and library... no])
+         AC_MSG_ERROR([Needs MySQL library])]
     )
+
+    # Note that MYSQL is present in the config.h file
+    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
+
+    # Check is my_bool is defined.
+    AC_COMPILE_IFELSE(
+        [AC_LANG_PROGRAM([#include <mysql.h>
+                          const my_bool MLM_FALSE = 0;]
+                         [])],
+        [AC_MSG_RESULT([checking for MySQL my_bool... yes])
+         AC_DEFINE([HAVE_MYSQL_MY_BOOL], [1], [MySQL uses my_bool])],
+        [AC_MSG_RESULT([checking for MySQL my_bool... no])])
 
     CPPFLAGS=$CPPFLAGS_SAVED
     LIBS=$LIBS_SAVED
 
-    # Note that MYSQL is present in the config.h file
-    AC_DEFINE([HAVE_MYSQL], [1], [MySQL is present])
 fi
 
 # Solaris puts FIONREAD in filio.h
@@ -741,6 +774,7 @@ if test "${deprec_msg}" = "yes" ; then
 fi
 
 if test "${pg_config}" = "yes" ; then
+    PG_CONFIG="/usr/bin/pg_config"
     for d in $defaultdirs
     do
         if test -f $d/bin/pg_config; then
@@ -754,7 +788,7 @@ fi
 
 if test "$PG_CONFIG" != "" ; then
     if test -d "$PG_CONFIG" -o ! -x "$PG_CONFIG" ; then
-        AC_MSG_ERROR([--with-pgsql should point to a pg_config program])
+        AC_MSG_ERROR([PostgreSQL dependencies cannot be found. Please install PostgreSQL libraries or point --with-pgsql to pg_config program if it is located in non-default directory, eg. --with-pgsql=/opt/pgsql/bin/pg_config.])
     fi
 
     PGSQL_CPPFLAGS=`$PG_CONFIG --cppflags`
@@ -817,7 +851,6 @@ AC_ARG_WITH([cql],
     [cql_config="$withval"])
 
 if test "${cql_config}" = "yes" ; then
-    AC_PATH_PROG([PKG_CONFIG], [pkg-config])
     CQL_CONFIG="$PKG_CONFIG"
 elif test "${cql_config}" != "no" ; then
     CQL_CONFIG="${cql_config}"
@@ -826,6 +859,11 @@ fi
 if test "$CQL_CONFIG" != "" ; then
     if test -d "$CQL_CONFIG" -o ! -x "$CQL_CONFIG" ; then
         AC_MSG_ERROR([--with-cql should point to a pkg-config or cql_config program])
+    fi
+
+    $CQL_CONFIG --print-errors $cql_lib
+    if test $? -ne 0; then
+        AC_MSG_ERROR([$CQL_CONFIG $cql_lib failed])
     fi
 
     CQL_INCLUDEDIR=`$CQL_CONFIG --cflags-only-I $cql_lib`
@@ -861,21 +899,25 @@ fi
 # ... and at the shell level, so Makefile.am can take action depending on this.
 AM_CONDITIONAL(HAVE_CQL, test "$CQL_CONFIG" != "")
 
+DISTCHECK_SYSREPO_CONFIGURE_FLAG=
 sysrepo_config="no"
 AC_ARG_WITH([sysrepo],
   AC_HELP_STRING([--with-sysrepo=PATH],
-    [path to the Sysrepo 'sysrepo_config' script]),
+    [path to pkg-config or the Sysrepo 'sysrepo_config' script]),
     [sysrepo_config="$withval"])
 
 if test "${sysrepo_config}" = "yes" ; then
     SYSREPO_CONFIG="$PKG_CONFIG"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 elif test "${sysrepo_config}" != "no" ; then
     SYSREPO_CONFIG="${sysrepo_config}"
+    DISTCHECK_SYSREPO_CONFIGURE_FLAG="-with-sysrepo=${sysrepo_config}"
 fi
+AC_SUBST(DISTCHECK_SYSREPO_CONFIGURE_FLAG)
 
 if test "$SYSREPO_CONFIG" != "" ; then
     if test -d "$SYSREPO_CONFIG" -o ! -x "$SYSREPO_CONFIG" ; then
-        AC_MSG_ERROR([--with-sysrepo should point to a sysrepo_config program])
+        AC_MSG_ERROR([--with-sysrepo should point to a pkg-config or sysrepo_config program])
     fi
 
     # Let's get the configuration environment for pure Sysrepo (written in C) first
@@ -883,6 +925,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
     SYSREPO_CPPFLAGS="$SYSREPO_INCLUDEDIR `$SYSREPO_CONFIG --cflags-only-other libsysrepo`"
     SYSREPO_LIBS="`$SYSREPO_CONFIG --libs libsysrepo`"
     SYSREPO_VERSION=`$SYSREPO_CONFIG --modversion libsysrepo`
+    SYSREPO_REPO=`$SYSREPO_CONFIG --variable=SR_REPOSITORY_LOC libsysrepo`
 
     # Now get the environment for C++ bindings for Sysrepo.
     SYSREPOCPP_INCLUDEDIR=`$SYSREPO_CONFIG --cflags-only-I libSysrepo-cpp`
@@ -906,6 +949,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
 
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
+    AC_SUBST(SYSREPO_REPO)
 
     # Check that a simple program using Sysrepo functions can compile and link.
     CPPFLAGS_SAVED="$CPPFLAGS"
@@ -928,11 +972,19 @@ if test "$SYSREPO_CONFIG" != "" ; then
     )
 
     AC_LINK_IFELSE(
-            [AC_LANG_PROGRAM([#include <sysrepo-cpp/Session.hpp>],
-                              [sysrepo::Connection("conn-name");])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
-            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
-             AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.])]
+        [AC_LANG_PROGRAM(
+            [#include <sysrepo-cpp/Session.hpp>],
+            [sysrepo::Connection("conn-name");])],
+        [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... yes])],
+        [AC_LINK_IFELSE(
+            [AC_LANG_PROGRAM(
+                [#include <sysrepo-cpp/Session.h>],
+                [Connection("conn-name");])],
+            [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... old])
+             AC_DEFINE([HAVE_PRE_0_7_6_SYSREPO], [1], [Using sysrepo < 0.7.6])],
+             [AC_MSG_RESULT([checking for Sysrepo C++ bindings headers and library... no])
+              AC_MSG_ERROR([Needs Sysrepo C++ bindings (unable to find Sysrepo-ccp library. To get it, you need to compile sysrepo with -DGEN_CPP_BINDINGS=ON.)])]
+        )]
     )
 
     CPPFLAGS=$CPPFLAGS_SAVED
@@ -964,11 +1016,14 @@ else
         do
                 if test -f $d/include/log4cplus/logger.h; then
                         LOG4CPLUS_INCLUDES="-I$d/include"
-                        LOG4CPLUS_LIBS="-L$d/lib -L$d/lib64"
+                        LOG4CPLUS_LIBS="-L$d/lib"
+                        if test -d $d/lib64; then
+                                LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -L$d/lib64"
+                        fi
                         break
                 fi
         done
-	DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
+        DISTCHECK_LOG4CPLUS_CONFIGURE_FLAG="-with-log4cplus"
 fi
 
 LOG4CPLUS_LIBS="$LOG4CPLUS_LIBS -llog4cplus"
@@ -1270,6 +1325,10 @@ fi
 #
 # ASIO: we extensively use it as the C++ event management module.
 #
+# Use our 'coroutine' header from ext
+# CPPFLAGS="$CPPFLAGS -I\$(top_srcdir)/ext/coroutine"
+
+#
 # Doesn't seem to be required?
 CPPFLAGS="$CPPFLAGS -DBOOST_ASIO_HEADER_ONLY"
 #
@@ -1362,6 +1421,14 @@ AC_ARG_ENABLE(generate_docs, [AC_HELP_STRING([--enable-generate-docs],
 
 if test "x$enable_generate_docs" != xno ; then
 
+# xsltproc --nonet parameter
+  NONET="--nonet"
+  AC_ARG_VAR(XSLTPROC_NET, [xsltproc uses the Internet to fetch DTDs, entities or documents.])
+  if test "x$XSLTPROC_NET" != x ; then
+    NONET=
+  fi
+  AC_SUBST(NONET)
+
 # Check for xsltproc
   AC_PATH_PROG([XSLTPROC], [xsltproc])
   if test -z "$XSLTPROC"; then
@@ -1369,11 +1436,11 @@ if test "x$enable_generate_docs" != xno ; then
   else
     AC_MSG_CHECKING([if $XSLTPROC works])
     # run xsltproc to see if works
-    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
+    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/manpages/docbook.xsl")
     fi
-    $XSLTPROC --novalid --xinclude http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
+    $XSLTPROC --novalid --xinclude $NONET http://docbook.sourceforge.net/release/xsl/current/html/docbook.xsl
     if test $? -ne 0 ; then
       AC_MSG_ERROR("Error with $XSLTPROC using release/xsl/current/html/docbook.xsl")
     fi
@@ -1455,8 +1522,11 @@ AC_CONFIG_FILES([Makefile
                  doc/Makefile
                  doc/guide/Makefile
                  doc/version.ent
+                 doc/docgen/Makefile
                  ext/Makefile
                  ext/gtest/Makefile
+                 ext/coroutine/Makefile
+                 kea_version.h
                  m4macros/Makefile
                  src/Makefile
                  src/bin/Makefile
@@ -1498,7 +1568,10 @@ AC_CONFIG_FILES([Makefile
                  src/bin/lfc/tests/Makefile
                  src/bin/netconf/Makefile
                  src/bin/netconf/tests/Makefile
-                 src/bin/netconf/tests/netconf_tests.sh
+                 src/bin/netconf/tests/shtests/Makefile
+                 src/bin/netconf/tests/shtests/netconf_tests.sh
+                 src/bin/netconf/tests/test_data_files_config.h
+                 src/bin/netconf/tests/test_libraries.h
                  src/bin/perfdhcp/Makefile
                  src/bin/perfdhcp/tests/Makefile
                  src/bin/perfdhcp/tests/testdata/Makefile
@@ -1513,6 +1586,8 @@ AC_CONFIG_FILES([Makefile
                  src/hooks/dhcp/high_availability/tests/Makefile
                  src/hooks/dhcp/lease_cmds/Makefile
                  src/hooks/dhcp/lease_cmds/tests/Makefile
+                 src/hooks/dhcp/mysql_cb/Makefile
+                 src/hooks/dhcp/mysql_cb/tests/Makefile
                  src/hooks/dhcp/user_chk/Makefile
                  src/hooks/dhcp/user_chk/tests/Makefile
                  src/hooks/dhcp/user_chk/tests/test_data_files_config.h
@@ -1532,8 +1607,13 @@ AC_CONFIG_FILES([Makefile
                  src/lib/config/tests/Makefile
                  src/lib/config/tests/data_def_unittests_config.h
                  src/lib/config/tests/testdata/Makefile
+                 src/lib/config_backend/Makefile
+                 src/lib/config_backend/tests/Makefile
                  src/lib/cryptolink/Makefile
                  src/lib/cryptolink/tests/Makefile
+                 src/lib/database/Makefile
+                 src/lib/database/tests/Makefile
+                 src/lib/database/testutils/Makefile
                  src/lib/dhcp/Makefile
                  src/lib/dhcp/tests/Makefile
                  src/lib/dhcp_ddns/Makefile
@@ -1570,6 +1650,15 @@ AC_CONFIG_FILES([Makefile
                  src/lib/log/tests/logger_lock_test.sh
                  src/lib/log/tests/severity_test.sh
                  src/lib/log/tests/tempdir.h
+                 src/lib/mysql/Makefile
+                 src/lib/mysql/testutils/Makefile
+                 src/lib/mysql/tests/Makefile
+                 src/lib/pgsql/Makefile
+                 src/lib/pgsql/tests/Makefile
+                 src/lib/pgsql/testutils/Makefile
+                 src/lib/cql/Makefile
+                 src/lib/cql/tests/Makefile
+                 src/lib/cql/testutils/Makefile
                  src/lib/process/Makefile
                  src/lib/process/tests/Makefile
                  src/lib/process/testutils/Makefile
@@ -1586,6 +1675,10 @@ AC_CONFIG_FILES([Makefile
                  src/lib/util/threads/Makefile
                  src/lib/util/threads/tests/Makefile
                  src/lib/util/unittests/Makefile
+                 src/lib/yang/Makefile
+                 src/lib/yang/pretests/Makefile
+                 src/lib/yang/tests/Makefile
+                 src/lib/yang/testutils/Makefile
                  src/share/Makefile
                  src/share/database/Makefile
                  src/share/database/scripts/Makefile
@@ -1602,6 +1695,7 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/mysql/upgrade_5.1_to_5.2.sh
                  src/share/database/scripts/mysql/upgrade_5.2_to_6.0.sh
                  src/share/database/scripts/mysql/upgrade_6.0_to_7.0.sh
+                 src/share/database/scripts/mysql/upgrade_7.0_to_8.0.sh
                  src/share/database/scripts/pgsql/Makefile
                  src/share/database/scripts/pgsql/upgrade_1.0_to_2.0.sh
                  src/share/database/scripts/pgsql/upgrade_2.0_to_3.0.sh
@@ -1610,6 +1704,8 @@ AC_CONFIG_FILES([Makefile
                  src/share/database/scripts/pgsql/upgrade_3.2_to_3.3.sh
                  src/share/database/scripts/pgsql/upgrade_3.3_to_4.0.sh
                  src/share/database/scripts/pgsql/upgrade_4.0_to_5.0.sh
+                 src/share/yang/Makefile
+                 src/share/yang/modules/Makefile
                  tools/Makefile
                  tools/path_replacer.sh
 ])
@@ -1646,6 +1742,22 @@ if test "$KEA_SRCID" != ""; then
    EXTENDED_VERSION="${EXTENDED_VERSION} ($KEA_SRCID)"
 fi
 
+# By default the following variables are defined:
+# - prefix = /usr/local
+# - exec_prefix = ${prefix}
+# - libdir = ${exec_prefix}/lib
+# The exec_prefix and libdir variables contain unexpanded,literal ${prefix}.
+# This is done on purpose. The idea is to be able to make this expansion
+# late, so use can do:
+# make install prefix=/my/own/prefix
+#
+# Now, we want to print those directories in the config.report, but we
+# don't want to modify the actual variables. So we need to expand them.
+# Since libdir contains $exec_prefix and exec_prefix contains $prefix, then
+# to get the real value, we need to expand it twice.
+libdir_real="$(eval echo ${libdir})"
+libdir_real="$(eval echo ${libdir_real})"
+
 cat > config.report << END
 
        Kea source configure results:
@@ -1657,7 +1769,8 @@ Package:
   Extended version:  ${EXTENDED_VERSION}
   OS Family:         ${OS_TYPE}
 
-  Hooks directory:   ${prefix}/lib/hooks
+  Prefix:            ${prefix}
+  Hooks directory:   ${libdir_real}/kea/hooks
 END
 if test "$PREMIUM" != ""; then
 cat >> config.report << END
@@ -1793,6 +1906,7 @@ Sysrepo:
   SYSREPO_VERSION:     ${SYSREPO_VERSION}
   SYSREPO_CPPFLAGS:    ${SYSREPO_CPPFLAGS}
   SYSREPO_LIBS:        ${SYSREPO_LIBS}
+  SYSREPO_REPO:        ${SYSREPO_REPO}
 END
 else
 cat >> config.report << END
@@ -1859,6 +1973,7 @@ Developer:
   Logger checks:          $enable_logger_checks
   Generate Documentation: $enable_generate_docs
   Parser Generation:      $enable_generate_parser
+  Perfdhcp:               $enable_perfdhcp
   Kea-shell:              $enable_shell
 
 END

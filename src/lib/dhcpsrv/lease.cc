@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/lease.h>
 #include <util/pointer_util.h>
+#include <boost/algorithm/string.hpp>
 #include <boost/scoped_ptr.hpp>
 #include <sstream>
 #include <iostream>
@@ -112,7 +113,7 @@ Lease::getExpirationTime() const {
 
 bool
 Lease::hasIdenticalFqdn(const Lease& other) const {
-    return (hostname_ == other.hostname_ &&
+    return (boost::algorithm::iequals(hostname_, other.hostname_) &&
             fqdn_fwd_ == other.fqdn_fwd_ &&
             fqdn_rev_ == other.fqdn_rev_);
 }

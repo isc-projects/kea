@@ -1,9 +1,9 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -14,48 +14,48 @@
       <title>Overview</title>
       <para>
       The DHCP-DDNS Server (kea-dhcp-ddns, known informally as D2) conducts
-      the client side of the DDNS protocol (defined in  <link
+      the client side of the Dynamic DNS protocol (DDNS, defined in <link
       xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc2136">RFC 2136</link>)
       on behalf of the DHCPv4 and DHCPv6 servers (kea-dhcp4 and kea-dhcp6
       respectively). The DHCP servers construct DDNS update requests, known
-      as NameChangeRequests (NCRs), based upon DHCP lease change events and
-      then post these to D2. D2 attempts to match each such request to the
-      appropriate DNS server(s) and carry out the necessary conversation with
+      as NameChangeRequests (NCRs), based on DHCP lease change events and
+      then post them to D2. D2 attempts to match each request to the
+      appropriate DNS server(s) and carries out the necessary conversation with
       those servers to update the DNS data.
     </para>
     <section id="dhcp-ddns-dns-server-selection">
-      <title>DNS Server selection</title>
+      <title>DNS Server Selection</title>
       <para>
       In order to match a request to the appropriate DNS servers, D2 must have a
       catalog of servers from which to select. In fact, D2 has two such catalogs,
       one for forward DNS and one for reverse DNS; these catalogs are referred
-      to as DDNS Domain Lists.  Each list consists of one or more named DDNS
+      to as DDNS Domain Lists. Each list consists of one or more named DDNS
       Domains. Further, each DDNS Domain has a list of one or more DNS
       servers that publish the DNS data for that domain.
       </para>
       <para>
-      When conducting forward domain matching, D2 will compare the FQDN in
-      the request against the name of each forward DDNS Domain. The domain
+      When conducting forward domain matching, D2 compares the fully-qualified domain name (FQDN) in
+      the request against the name of each Forward DDNS Domain in its catalog. The domain
       whose name matches the longest portion of the FQDN is considered the
-      best match.  For example, if the FQDN is "myhost.sample.example.com.",
-      and there are two forward domains in the catalog: "sample.example.com."
-      and "example.com.", the former is regarded as the best match.  In some
+      best match. For example, if the FQDN is "myhost.sample.example.com.",
+      and there are two forward domains in the catalog, "sample.example.com."
+      and "example.com.", the former is regarded as the best match. In some
       cases, it may not be possible to find a suitable match. Given the same two
       forward domains there would be no match for the FQDN, "bogus.net", so the
-      request would be rejected.   Finally, if there are no forward DDNS Domains
-      defined, D2 will simply disregard the forward update portion of requests.
+      request would be rejected. Finally, if there are no Forward DDNS Domains
+      defined, D2 simply disregards the forward update portion of requests.
       </para>
       <para>
       When conducting reverse domain matching, D2 constructs a reverse
-      FQDN from the lease address in the request and compare that against
-      the name of each reverse DDNS Domain. Again, the domain whose name matches
+      FQDN from the lease address in the request and compares that against
+      the name of each Reverse DDNS Domain. Again, the domain whose name matches
       the longest portion of the FQDN is considered the best match. For instance,
       if the lease address is "172.16.1.40" and there are two reverse domains in
-      the catalog: "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
-      former is the best match.  As with forward matching, it is possible to not
-      find a suitable match.  Given the same two domains, there would be no
+      the catalog, "1.16.172.in-addr.arpa." and "16.172.in-addr.arpa", the
+      former is the best match. As with forward matching, it may not
+      find a suitable match. Given the same two domains, there would be no
       match for the lease address, "192.168.1.50", and the request would be
-      rejected. Finally, if there are no reverse DDNS Domains defined, D2 will
+      rejected. Finally, if there are no Reverse DDNS Domains defined, D2 will
       simply disregard the reverse update portion of requests.
       </para>
     </section>
@@ -65,38 +65,35 @@
         D2 implements the conflict resolution strategy prescribed by
         <ulink url="http://tools.ietf.org/html/rfc4703">RFC 4703</ulink>.
         Conflict resolution is intended to prevent different clients from
-        mapping to the same FQDN at the same time.  To make this possible, the
+        mapping to the same FQDN at the same time. To make this possible, the
         RFC requires that forward DNS entries for a given FQDN must be
-        accompanied by a DHCID resource record (RR).  This record contains a
+        accompanied by a DHCID resource record (RR). This record contains a
         client identifier that uniquely identifies the client to whom the name
-        belongs. Furthermore, any DNS updater who wishes to update or remove
+        belongs. Furthermore, any DNS updater that wishes to update or remove
         existing forward entries for an FQDN may only do so if their client
         matches that of the DHCID RR.
         </para>
         <para>
         In other words, the DHCID RR maps an FQDN to the client to whom it
-        belongs and thereafter only changes to that mapping should only be
+        belongs, and thereafter changes to that mapping should only be
         done by or at the behest of that client.
         </para>
         <para>
-        Currently, conflict detection is always performed.  Future releases may
-        offer alternative behavior.
+        Currently, conflict detection is always performed.
         </para>
     </section>
     <section id="dhcp-ddns-dual-stack">
-      <title>Dual Stack Environments</title>
+      <title>Dual-Stack Environments</title>
       <para>
         <ulink url="http://tools.ietf.org/html/rfc4703#section-5.2">RFC 4703,
-        sec. 5.2,</ulink> describes issues that may arise with dual stack
+        section 5.2,</ulink> describes issues that may arise with dual-stack
         clients. These are clients that wish to have have both IPv4 and IPv6
-        mappings for the same FQDN.  In order for this work properly, such
-        clients are required to embed ther IPv6 DUID within their IPv4 client
+        mappings for the same FQDN. For this to work properly, the
+        clients are required to embed their IPv6 DUID within their IPv4 client
         identifier option as described in
         <ulink url="http://tools.ietf.org/html/rfc4361">RFC 4703</ulink>.
-        In this way, DNS upates for both IPv4 and IPv6 can be managed under
-        the same DHCID RR. Support for this does not yet exist in Kea but is
-        called for in the ticket, http://kea.isc.org/ticket/4519, which we
-        hope to include in a future release.
+        In this way, DNS updates for both IPv4 and IPv6 can be managed under
+        the same DHCID RR. Support for this does not yet exist in Kea.
       </para>
     </section>
     </section>
@@ -105,12 +102,12 @@
 
       <para>
       <command>kea-dhcp-ddns</command> is the Kea DHCP-DDNS server
-      and, due to the nature of DDNS, it is run alongside either the
-      DHCPv4 or DHCPv6 components (or both).  Like other parts of
+      and, due to the nature of DDNS, it runs alongside either the
+      DHCPv4 or DHCPv6 component (or both). Like other parts of
       Kea, it is a separate binary that can be run on its own or through
       <command>keactrl</command> (see <xref linkend="keactrl"/>). In
       normal operation, controlling <command>kea-dhcp-ddns</command>
-      with <command>keactrl</command> is recommended. However, it is also
+      with <command>keactrl</command> is recommended; however, it is also
       possible to run the DHCP-DDNS server directly. It accepts the
       following command-line switches:
       </para>
@@ -128,21 +125,21 @@
             logging should be switched to debug/verbose mode. In verbose mode,
             the logging severity and debuglevel specified in the configuration
             file are ignored and "debug" severity and the maximum debuglevel
-            (99) are assumed. The flag is convenient, for temporarily
+            (99) are assumed. The flag is convenient for temporarily
             switching the server into maximum verbosity, e.g. when
             debugging.</simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-v</command> - prints out Kea version and exits.
+              <command>-v</command> - displays the Kea version and exits.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <command>-W</command> - prints out the Kea configuration report
+              <command>-W</command> - displays the Kea configuration report
               and exits. The report is a copy of the
               <filename>config.report</filename> file produced by
-              <userinput>./configure</userinput>: it is embedded in the
+              <userinput>./configure</userinput>; it is embedded in the
               executable binary.
             </simpara>
           </listitem>
@@ -150,21 +147,20 @@
             <simpara>
             <command>-t <replaceable>file</replaceable></command>
             specifies the configuration file to be tested. Kea-dhcp-ddns
-            will attempt to load it, and will conduct sanity checks.
+            will attempt to load it and will conduct sanity checks.
             Note that certain checks are possible only while running
-            the actual server. The actual status is reported with exit
+            the actual server. The actual status is reported with an exit
             code (0 = configuration looks ok, 1 = error encountered).
-            Kea will print out log messages to standard output and error
-            to standard error when testing configuration.</simpara>
+            Kea prints out log messages to standard output and errors
+            to standard error when testing the configuration.</simpara>
           </listitem>
       </itemizedlist>
 
       <para>
             The <filename>config.report</filename> may also be accessed more
-            directly.  The following command may be used to extract this
-            information.  The binary <userinput>path</userinput> may be found
+            directly, via the following command. The binary <userinput>path</userinput> may be found
             in the install directory or in the <filename>.libs</filename>
-            subdirectory in the source tree. For example
+            subdirectory in the source tree. For example:
             <filename>kea/src/bin/d2/.libs/kea-dhcp-ddns</filename>.
 <screen>
 strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
@@ -172,7 +168,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       </para>
 
       <para>
-      Upon start up the module will load its configuration and begin listening
+      Upon startup the module will load its configuration and begin listening
       for NCRs based on that configuration.
       </para>
 
@@ -183,14 +179,14 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         <itemizedlist>
             <listitem>
             <simpara><command>localstatedir</command>: The value as passed into the
-            build configure script. It defaults to "/usr/local/var".  Note
-            that this value may be overridden at run time by setting the environment
-            variable KEA_PIDFILE_DIR.  This is intended primarily for testing purposes.
+            build configure script; it defaults to "/usr/local/var". Note
+            that this value may be overridden at runtime by setting the environment
+            variable KEA_PIDFILE_DIR. This is intended primarily for testing purposes.
             </simpara>
             </listitem>
             <listitem>
             <simpara><command>conf name</command>: The configuration file name
-            used to start the server, minus all preceding path and file extension.
+            used to start the server, minus all preceding paths and the file extension.
             For example, given a pathname of "/usr/local/etc/kea/myconf.txt", the
             portion used would be "myconf".
             </simpara>
@@ -199,8 +195,8 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         If the file already exists and contains the PID of a live process,
         the server will issue a DHCP_DDNS_ALREADY_RUNNING log message and exit. It
         is possible, though unlikely, that the file is a remnant of a system crash
-        and the process to which the PID belongs is unrelated to Kea.  In such a
-        case it would be necessary to manually delete the PID file.
+        and the process to which the PID belongs is unrelated to Kea. In such a
+        case it is necessary to manually delete the PID file.
       </para>
 
 
@@ -209,7 +205,7 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       <title>Configuring the DHCP-DDNS Server</title>
       <para>
         Before starting <command>kea-dhcp-ddns</command> module for the
-        first time, a configuration file needs to be created. The following default
+        first time, a configuration file must be created. The following default
         configuration is a template that can be customized to your requirements.
 <screen>
 <userinput>"DhcpDdns": {
@@ -229,28 +225,33 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
 </screen>
       </para>
       <para>
-      The configuration can be divided as follows, each of which is described
-      in its own section:
+      The configuration can be divided into the following sections, each of which is described
+      below:
       </para>
         <itemizedlist>
           <listitem>
             <simpara>
-        <emphasis>Global Server Parameters</emphasis> - values which control connectivity and global server behavior
+        <emphasis>Global Server Parameters</emphasis> - values which control connectivity and global server behavior.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers
+              <emphasis>Control Socket</emphasis> - defines the Control Socket type and name.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>Forward DDNS</emphasis> - defines the catalog of Forward DDNS Domains
+              <emphasis>TSIG Key Info</emphasis> - defines the TSIG keys used for secure traffic with DNS servers.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
-              <emphasis>Reverse DDNS</emphasis> - defines the catalog of Forward DDNS Domains
+              <emphasis>Forward DDNS</emphasis> - defines the catalog of Forward DDNS Domains.
+            </simpara>
+          </listitem>
+          <listitem>
+            <simpara>
+              <emphasis>Reverse DDNS</emphasis> - defines the catalog of Forward DDNS Domains.
             </simpara>
           </listitem>
         </itemizedlist>
@@ -265,30 +266,29 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>port</command> - Port on which D2 listens for requests.  The default value
+      <command>port</command> - Port on which D2 listens for requests. The default value
       is 53001.
       </simpara></listitem>
 
       <listitem><simpara>
-      <command>dns-server-timeout</command> - The maximum amount
-      of time in milliseconds, that D2 will wait for a response from a
+      <command>dns-server-timeout</command> - Maximum amount
+      of time, in milliseconds, that D2 will wait for a response from a
       DNS server to a single DNS update message.
       </simpara></listitem>
 
       <listitem><simpara>
       <command>ncr-protocol</command> - Socket protocol to use when sending requests to D2.
-      Currently only UDP is supported.  TCP may be available in a future release.
+      Currently only UDP is supported.
       </simpara></listitem>
 
       <listitem><simpara>
       <command>ncr-format</command> - Packet format to use when sending requests to D2.
-      Currently only JSON format is supported.  Other formats may be available
-      in future releases.
+      Currently only JSON format is supported.
       </simpara></listitem>
 
       </itemizedlist>
         <para>
-        D2 must listen for change requests on a known address and port.  By
+        D2 must listen for change requests on a known address and port. By
         default it listens at 127.0.0.1 on port 53001. The following example
         illustrates how to change D2's global parameters so it will listen
         at 192.168.1.10 port 900:
@@ -303,22 +303,74 @@ strings <userinput>path</userinput>/kea-dhcp-ddns | sed -n 's/;;;; //p'
         <warning>
           <simpara>
             It is possible for a malicious attacker to send bogus
-            NameChangeRequests to the DHCP-DDNS server.  Addresses
+            NameChangeRequests to the DHCP-DDNS server. Addresses
             other than the IPv4 or IPv6 loopback addresses (127.0.0.1
             or ::1) should only be used for testing purposes, but
             note that local users may still communicate with the
-            DHCP-DDNS server.  A future version of Kea will implement
-            authentication to guard against such attacks.
+            DHCP-DDNS server.
           </simpara>
 <!-- see ticket #3514 -->
         </warning>
 <note>
 <simpara>
-If the ip-address and port are changed, it will be necessary to change the
-corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
+If the ip-address and port are changed, the
+corresponding values in the DHCP servers' "dhcp-ddns" configuration section must be changed.
 </simpara>
 </note>
       </section> <!-- "d2-server-parameter-config" -->
+
+      <section xml:id="d2-ctrl-channel">
+        <title>Management API for the D2 Server</title>
+        <para>
+          The management API allows the issuing of specific management
+          commands, such as configuration retrieval or shutdown.
+          For more details, see <xref linkend="ctrl-channel"/>.
+          Currently the only supported communication channel type is UNIX
+          stream socket. By default there are no sockets open. To instruct
+          Kea to open a socket, the following entry in the configuration
+          file can be used:
+<screen>
+"DhcpDdns": {
+    "control-socket": {
+        "socket-type": "unix",
+        "socket-name": <userinput>"/path/to/the/unix/socket"</userinput>
+    },
+    ...
+}
+</screen>
+        </para>
+
+        <para>
+          The length of the path specified by
+          the <command>socket-name</command> parameter is restricted by
+          the maximum length for the unix socket name on your operating
+          system, i.e. the size of the <command>sun_path</command> field
+          in the <command>sockaddr_un</command> structure, decreased by 1.
+          This value varies on different operating systems between
+          91 and 107 characters. Typical values are 107 on Linux and 103
+          on FreeBSD.
+        </para>
+
+        <para>
+          Communication over control channel is conducted using JSON
+          structures.  See the Control Channel section in the Kea
+          Developer's Guide for more details.
+        </para>
+
+        <para>The D2 server supports the following operational commands:
+          <itemizedlist>
+              <listitem>build-report</listitem>
+              <listitem>config-get</listitem>
+              <listitem>config-reload</listitem>
+              <listitem>config-set</listitem>
+              <listitem>config-test</listitem>
+              <listitem>config-write</listitem>
+              <listitem>list-commands</listitem>
+              <listitem>shutdown</listitem>
+              <listitem>version-get</listitem>
+          </itemizedlist>
+        </para>
+      </section> <!-- "d2-ctrl-channel" -->
 
       <section xml:id="d2-tsig-key-list-config">
         <title>TSIG Key List</title>
@@ -331,36 +383,36 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
         <para>To use TSIG when updating entries in a DNS Domain,
         a key must be defined in the TSIG Key List and referenced by
-        name in that domain's configuration entry.  When D2 matches a
+        name in that domain's configuration entry. When D2 matches a
         change request to a domain, it checks whether the domain has
-        a TSIG key associated with it.  If so, D2 will use that key to
+        a TSIG key associated with it. If so, D2 will use that key to
         sign DNS update messages sent to and verify responses received
         from the domain's DNS server(s). For each TSIG key required by
-        the DNS servers that D2 will be working with there must be a
+        the DNS servers that D2 will be working with, there must be a
         corresponding TSIG key in the TSIG Key list.</para>
 
         <para>
         As one might gather from the name, the tsig-key section of the
-        D2 configuration lists the TSIG keys.  Each entry describes a
+        D2 configuration lists the TSIG keys. Each entry describes a
         TSIG key used by one or more DNS servers to authenticate requests
-        and sign responses.  Every entry in the list has three parameters:
+        and sign responses. Every entry in the list has three parameters:
         <itemizedlist>
           <listitem>
             <simpara>
               <command>name</command> -
               a unique text label used to identify this key within the
-              list.  This value is used to specify which key (if any) should be
-              used when updating a specific domain. So long as it is unique its
+              list. This value is used to specify which key (if any) should be
+              used when updating a specific domain. As long as the name is unique its
               content is arbitrary, although for clarity and ease of maintenance
               it is recommended that it match the name used on the DNS server(s).
-              It cannot be blank.
+              This field cannot be blank.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>algorithm</command> -
               specifies which hashing algorithm should be used with this
-              key.  This value must specify the same algorithm used for the
+              key. This value must specify the same algorithm used for the
               key on the DNS server(s). The supported algorithms are listed below:
               <itemizedlist>
                 <listitem>
@@ -382,25 +434,25 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
                   <command>HMAC-SHA512</command>
               </listitem>
               </itemizedlist>
-              This value is not case sensitive.
+              This value is not case-sensitive.
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>digest-bits</command> -
               is used to specify the minimum truncated length in bits.
-              The default value 0 means truncation is forbidden, non-zero
-              values must be an integral number of octets, be greater
-              than 80 and the half of the full length. Note in BIND9
+              The default value 0 means truncation is forbidden; non-zero
+              values must be an integral number of octets, and be greater than
+              both 80 and half of the full length. (Note that in BIND 9
               this parameter is appended after a dash to the algorithm
-              name.
+              name.)
             </simpara>
           </listitem>
           <listitem>
             <simpara>
               <command>secret</command> -
-              is used to specify the shared secret key code for this key.  This value is
-              case sensitive and must exactly match the value specified on the DNS server(s).
+              is used to specify the shared secret key code for this key. This value is
+              case-sensitive and must exactly match the value specified on the DNS server(s).
               It is a base64-encoded text value.
             </simpara>
           </listitem>
@@ -408,9 +460,9 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         </para>
         <para>
         As an example, suppose that a domain D2 will be updating is
-        maintained by a BIND9 DNS server which requires dynamic updates
-        to be secured with TSIG.  Suppose further that the entry for
-        the TSIG key in BIND9's named.conf file looks like this:
+        maintained by a BIND 9 DNS server, which requires dynamic updates
+        to be secured with TSIG. Suppose further that the entry for
+        the TSIG key in BIND 9's named.conf file looks like this:
 <screen>
    :
    key "key.four.example.com." {
@@ -442,7 +494,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 </screen>
         </para>
 
-        <para>These steps would be repeated for each TSIG key needed.  Note that
+        <para>These steps would be repeated for each TSIG key needed. Note that
         the same TSIG key can be used with more than one domain.</para>
       </section>
         <!-- "d2-tsig-key-list-config" -->
@@ -452,7 +504,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         <para>
         The Forward DDNS section is used to configure D2's forward update
         behavior. Currently it contains a single parameter, the catalog of
-        forward DDNS Domains, which is a list of structures.
+        Forward DDNS Domains, which is a list of structures.
 <screen>
 "DhcpDdns": {
     <userinput>"forward-ddns": {
@@ -468,52 +520,52 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         <section xml:id="add-forward-ddns-domain">
           <title>Adding Forward DDNS Domains</title>
           <para>
-          A forward DDNS Domain maps a forward DNS zone to a set of
-          DNS servers which maintain the forward DNS data (i.e. name to
-          address mapping) for that zone.  You will need one forward DDNS
-          Domain for each zone you wish to service.  It may very well
-          be that some or all of your zones are maintained by the same
-          servers. You will still need one DDNS Domain per zone. Remember
+          A Forward DDNS Domain maps a forward DNS zone to a set of
+          DNS servers which maintain the forward DNS data (i.e. name-to-
+          address mapping) for that zone. Each zone served needs one Forward DDNS
+          Domain. It may very well
+          be that some or all of the zones are maintained by the same
+          servers, but you will still need one DDNS Domain per zone. Remember
           that matching a request to the appropriate server(s) is done
           by zone and a DDNS Domain only defines a single zone.
           </para>
           <para>
-          This section describes how to add Forward DDNS Domains. Repeat these
-          steps for each Forward DDNS Domain desired.  Each Forward DDNS Domain
+          This section describes how to add Forward DDNS Domains; repeat these
+          steps for each Forward DDNS Domain desired. Each Forward DDNS Domain
           has the following parameters:
           <itemizedlist>
             <listitem>
               <simpara>
               <command>name</command> -
-              The fully qualified domain name (or zone) that this DDNS Domain
-              can update.  This is value used to compare against the request
-              FQDN during forward matching.  It must be unique within the
+              the fully qualified domain name (or zone) that this DDNS Domain
+              can update. This value is compared against the request
+              FQDN during forward matching. It must be unique within the
               catalog.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>key-name</command> -
-              If TSIG is used with this domain's servers, this
-              value should be the name of the key from within the TSIG Key List
-              to use.  If the value is blank (the default), TSIG will not be
+              if TSIG is used with this domain's servers, this
+              value should be the name of the key from within the TSIG Key List.
+              If the value is blank (the default), TSIG will not be
               used in DDNS conversations with this domain's servers.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>dns-servers</command> -
-              A list of one or more DNS servers which can conduct the server
-              side of the DDNS protocol for this domain.  The servers
-              are used in a first to last preference. In other words, when D2
-              begins to process a request for this domain it will pick the
+              a list of one or more DNS servers which can conduct the server
+              side of the DDNS protocol for this domain. The servers
+              are used in a first-to-last preference; in other words, when D2
+              begins to process a request for this domain, it will pick the
               first server in this list and attempt to communicate with it.
               If that attempt fails, it will move to next one in the list and
-              so on until the it achieves success or the list is exhausted.
+              so on until either it achieves success or the list is exhausted.
               </simpara>
             </listitem>
           </itemizedlist>
-        To create a new forward DDNS Domain, one must add a new domain
+        To create a new Forward DDNS Domain, add a new domain
         element and set its parameters:
 <screen>
 "DhcpDdns": {
@@ -530,9 +582,9 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 }
 </screen>
 
-        It is permissible to add a domain without any servers. If that domain
-        should be matched to a request, however, the request will fail.  In
-        order to make the domain useful though, we must add at least one DNS
+        It is possible to add a domain without any servers; however, if that domain
+        matches a request, the request will fail.
+        To make the domain useful, we must add at least one DNS
         server to it.
         </para>
 
@@ -540,7 +592,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           <title>Adding Forward DNS Servers</title>
           <para>
           This section describes how to add DNS servers to a Forward DDNS Domain.
-          Repeat them for as many servers as desired for a each domain.
+          Repeat these instructions as needed for all the servers in each domain.
           </para>
           <para>
           Forward DNS Server entries represent actual DNS servers which
@@ -550,28 +602,28 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
             <listitem>
               <simpara>
               <command>hostname</command> -
-              The resolvable host name of the DNS server. This value is not
+              the resolvable host name of the DNS server; this parameter is not
               yet implemented.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>ip-address</command> -
-              The IP address at which the server listens for DDNS requests.
+              the IP address at which the server listens for DDNS requests.
               This may be either an IPv4 or an IPv6 address.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>port</command> -
-              The port on which the server listens for DDNS requests. It
+              the port on which the server listens for DDNS requests. It
               defaults to the standard DNS service port of 53.
               </simpara>
             </listitem>
           </itemizedlist>
           To create a new forward DNS Server, one must add a new server
-          element to the domain and fill in its parameters.  If for
-        example the service is running at "172.88.99.10", then set it as
+          element to the domain and fill in its parameters. If, for
+        example, the service is running at "172.88.99.10", then set the forward DNS Server as
         follows:
 <screen>
 "DhcpDdns": {
@@ -595,7 +647,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           </para>
 
     <note><simpara>
-        As stated earlier, "hostname" is not yet supported so, the parameter
+        Since "hostname" is not yet supported, the parameter
         "ip-address" must be set to the address of the DNS server.
     </simpara></note>
 
@@ -611,7 +663,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         The Reverse DDNS section is used to configure D2's reverse update
         behavior, and the concepts are the same as for the forward DDNS
         section. Currently it contains a single parameter, the catalog of
-        reverse DDNS Domains, which is a list of structures.
+        Reverse DDNS Domains, which is a list of structures.
 <screen>
 "DhcpDdns": {
     <userinput>"reverse-ddns": {
@@ -626,30 +678,30 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         <section xml:id="add-reverse-ddns-domain">
           <title>Adding Reverse DDNS Domains</title>
           <para>
-          A reverse DDNS Domain maps a reverse DNS zone to a set of DNS
-          servers which maintain the reverse DNS data (address to name
-          mapping) for that zone.  You will need one reverse DDNS Domain
-          for each zone you wish to service.  It may very well be that
-          some or all of your zones are maintained by the same servers;
-          even then, you will still need one DDNS Domain entry for each
+          A Reverse DDNS Domain maps a reverse DNS zone to a set of DNS
+          servers which maintain the reverse DNS data (address-to-name
+          mapping) for that zone. Each zone served needs one Reverse DDNS Domain.
+          It may very well be that
+          some or all of the zones are maintained by the same servers,
+          but you will still need one DDNS Domain entry for each
           zone. Remember that matching a request to the appropriate
           server(s) is done by zone and a DDNS Domain only defines a
           single zone.
           </para>
           <para>
-          This section describes how to add Reverse DDNS Domains. Repeat these
-          steps for each Reverse DDNS Domain desired.  Each Reverse DDNS Domain
+          This section describes how to add Reverse DDNS Domains; repeat these
+          steps for each Reverse DDNS Domain desired. Each Reverse DDNS Domain
           has the following parameters:
           <itemizedlist>
             <listitem>
               <simpara>
               <command>name</command> -
-              The fully qualified reverse zone that this DDNS Domain
-              can update.  This is the value used during reverse matching
+              the fully qualified reverse zone that this DDNS Domain
+              can update. This is the value used during reverse matching,
               which will compare it with a reversed version of the request's
               lease address. The zone name should follow the appropriate
-              standards: for example, to to support the IPv4 subnet 172.16.1,
-              the name should be. "1.16.172.in-addr.arpa.".  Similarly,
+              standards; for example, to support the IPv4 subnet 172.16.1,
+              the name should be "1.16.172.in-addr.arpa.". Similarly,
               to support an IPv6 subnet of 2001:db8:1, the name should be
               "1.0.0.0.8.B.D.0.1.0.0.2.ip6.arpa."
               Whatever the name, it must be unique within the catalog.
@@ -658,10 +710,10 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
             <listitem>
               <simpara>
               <command>key-name</command> -
-              If TSIG should be used with this domain's servers, then this
+              if TSIG should be used with this domain's servers, this
               value should be the name of that key from the TSIG Key List.
               If the value is blank (the default), TSIG will not be
-              used in DDNS conversations with this domain's servers.  Currently
+              used in DDNS conversations with this domain's servers. Currently
               this value is not used as TSIG has not been implemented.
               </simpara>
             </listitem>
@@ -669,16 +721,16 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
               <simpara>
               <command>dns-servers</command> -
               a list of one or more DNS servers which can conduct the server
-              side of the DDNS protocol for this domain.  Currently the servers
-              are used in a first to last preference. In other words, when D2
-              begins to process a request for this domain it will pick the
+              side of the DDNS protocol for this domain. Currently, the servers
+              are used in a first-to-last preference; in other words, when D2
+              begins to process a request for this domain, it will pick the
               first server in this list and attempt to communicate with it.
-              If that attempt fails, it will move to next one in the list and
-              so on until the it achieves success or the list is exhausted.
+              If that attempt fails, it will move to the next one in the list and
+              so on until either it achieves success or the list is exhausted.
               </simpara>
             </listitem>
           </itemizedlist>
-        To create a new reverse DDNS Domain, one must add a new domain element
+        To create a new Reverse DDNS Domain, one must add a new domain element
         and set its parameters. For example, to support subnet 2001:db8:1::,
         the following configuration could be used:
 <screen>
@@ -696,9 +748,9 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 }
 </screen>
 
-        It is permissible to add a domain without any servers. If that domain
-        should be matched to a request, however, the request will fail.  In
-        order to make the domain useful though, we must add at least one DNS
+        It is possible to add a domain without any servers; however, if that domain
+        matches a request, the request will fail.
+        To make the domain useful, you must add at least one DNS
         server to it.
         </para>
 
@@ -706,37 +758,37 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           <title>Adding Reverse DNS Servers</title>
           <para>
           This section describes how to add DNS servers to a Reverse DDNS Domain.
-          Repeat them for as many servers as desired for each domain.
+          Repeat these instructions as needed for all the servers in each domain.
           </para>
           <para>
-          Reverse DNS Server entries represents a actual DNS servers which
+          Reverse DNS Server entries represent actual DNS servers which
           support the server side of the DDNS protocol. Each Reverse DNS Server
           has the following parameters:
           <itemizedlist>
             <listitem>
               <simpara>
               <command>hostname</command> -
-              The resolvable host name of the DNS server. This value is
+              the resolvable host name of the DNS server; this value is
               currently ignored.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>ip-address</command> -
-              The IP address at which the server listens for DDNS requests.
+              the IP address at which the server listens for DDNS requests.
               </simpara>
             </listitem>
             <listitem>
               <simpara>
               <command>port</command> -
-              The port on which the server listens for DDNS requests. It
+              the port on which the server listens for DDNS requests. It
               defaults to the standard DNS service port of 53.
               </simpara>
             </listitem>
           </itemizedlist>
           To create a new reverse DNS Server, one must first add a new server
-          element to the domain and fill in its parameters.  If for
-        example the service is running at "172.88.99.10", then set it as
+          element to the domain and fill in its parameters. If, for
+        example, the service is running at "172.88.99.10", then set it as
         follows:
 <screen>
 "DhcpDdns": {
@@ -761,7 +813,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
     <note>
     <simpara>
-    As stated earlier, "hostname" is not yet supported so, the parameter
+    Since "hostname" is not yet supported, the parameter
     "ip-address" must be set to the address of the DNS server.
     </simpara>
     </note>
@@ -773,25 +825,25 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
       </section> <!-- "d2-reverse-ddns-config" -->
 
       <section xml:id="d2-user-contexts">
-        <title>User context in DDNS</title>
+        <title>User Contexts in DDNS</title>
 
         <note>
-          <para>User contexts were designed for hook libraries which
+          <para>User contexts were designed for hook libraries, which
           are not yet supported for DHCP-DDNS server configuration.</para>
         </note>
 
         <para>
-          User contexts can store arbitrary data as long as it is valid JSON
+          User contexts can store arbitrary data as long as it has valid JSON
           syntax and its top level element is a map (i.e. the data must be
           enclosed in curly brackets).
         </para>
 
         <para>
-          User contexts can be specified on either global scope, ddns
-          domain, dns server, tsig key and loggers. One other useful
-          usage is the ability to store comments or descriptions: the
-          parser translates a "comment" entry into a user-context with
-          the entry, this allows to attach a comment inside the
+          User contexts can be specified on global scope, ddns
+          domain, dns server, tsig key, and loggers. One other useful
+          usage is the ability to store comments or descriptions; the
+          parser translates a "comment" entry into a user context with
+          the entry, which allows a comment to be attached inside the
           configuration itself.
         </para>
       </section> <!-- "d2-user-contexts" -->
@@ -799,12 +851,12 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
       <section xml:id="d2-example-config">
         <title>Example DHCP-DDNS Server Configuration</title>
         <para>
-        This section provides an example DHCP-DDNS server configuration based
-        on a small example network.  Let's suppose our example network has
+        This section provides a sample DHCP-DDNS server configuration, based
+        on a small example network. Let's suppose our example network has
         three domains, each with their own subnet.
 
         <table>
-          <title>Our example network</title>
+          <title>Our Example Network</title>
           <tgroup cols="4" align="left">
           <colspec colname="domain"/>
           <colspec colname="subnet"/>
@@ -842,7 +894,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         </table>
         </para>
         <para>
-        We need to construct three forward DDNS Domains:
+        We need to construct three Forward DDNS Domains:
         <table>
           <title>Forward DDNS Domains Needed</title>
           <tgroup cols="3" align="left">
@@ -875,15 +927,15 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
           </tbody>
           </tgroup>
         </table>
-        As discussed earlier, FQDN to domain matching is based on the longest
+        As discussed earlier, FQDN-to-domain matching is based on the longest
         match. The FQDN, "myhost.four.example.com.", will match the first
         domain ("four.example.com") while "admin.example.com." will match the
         third domain ("example.com"). The
-        FQDN, "other.example.net." will fail to match any domain and would
-        be rejected.
+        FQDN, "other.example.net.", will fail to match any domain and is
+        rejected.
         </para>
         <para>
-        The following example configuration specified the Forward DDNS Domains.
+        The following example configuration specifies the Forward DDNS Domains.
 <screen><userinput>
 "DhcpDdns": {
     "comment": "example configuration: forward part",
@@ -920,7 +972,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
 
         </para>
         <para>
-        Similarly, we need to construct the three reverse DDNS Domains:
+        Similarly, we need to construct the three Reverse DDNS Domains:
         <table>
           <title>Reverse DDNS Domains Needed</title>
           <tgroup cols="3" align="left">
@@ -1002,7 +1054,7 @@ corresponding values in the DHCP servers' "dhcp-ddns" configuration section.
         <listitem>
           <simpara>
             Requests received from the DHCP servers are placed in a
-            queue until they are processed.  Currently all queued requests
+            queue until they are processed. Currently, all queued requests
             are lost when the server shuts down.
           </simpara>
         </listitem>

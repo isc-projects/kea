@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2016 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -27,21 +27,20 @@ typedef boost::shared_ptr<DUID> DuidPtr;
 class DUID {
  public:
     /// @brief maximum duid size
-    /// As defined in RFC3315, section 9.1
+    /// As defined in RFC 8415, section 11.1
     static const size_t MAX_DUID_LEN = 128;
 
     /// @brief minimum duid size
-    /// There's no explicit minimal DUID size specified in RFC3315,
-    /// so let's use absolute minimum
+    /// The minimal DUID size specified in RFC 8415 is 1.
     static const size_t MIN_DUID_LEN = 1;
 
     /// @brief specifies DUID type
     typedef enum {
         DUID_UNKNOWN = 0, ///< invalid/unknown type
-        DUID_LLT = 1,     ///< link-layer + time, see RFC3315, section 9.2
-        DUID_EN = 2,      ///< enterprise-id, see RFC3315, section 9.3
-        DUID_LL = 3,      ///< link-layer, see RFC3315, section 9.4
-        DUID_UUID = 4,    ///< UUID, see RFC6355
+        DUID_LLT = 1,     ///< link-layer + time, see RFC3315, section 11.2
+        DUID_EN = 2,      ///< enterprise-id, see RFC3315, section 11.3
+        DUID_LL = 3,      ///< link-layer, see RFC3315, section 11.4
+        DUID_UUID = 4,    ///< UUID, see RFC3315, section 11.5
         DUID_MAX          ///< not a real type, just maximum defined value + 1
     } DUIDType;
 

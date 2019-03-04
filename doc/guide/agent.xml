@@ -3,29 +3,30 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-ctrl-agent">
-  <title>Kea Control Agent</title>
+  <title>The Kea Control Agent</title>
 
   <section xml:id="agent-overview">
     <title>Overview</title>
-    <para>Kea Control Agent (CA) is a daemon, first included in Kea 1.2, which
+    <para>The Kea Control Agent (CA) is a daemon which
     exposes a RESTful control interface for managing Kea servers. The daemon
     can receive control commands over HTTP and either forward these commands
     to the respective Kea servers or handle these commands on its own. The
     determination whether the command should be handled by the CA or forwarded
-    is made by checking the value of the 'service' parameter which may be
+    is made by checking the value of the "service" parameter, which may be
     included in the command from the controlling client. The details of the
-    supported commands as well as their structures are provided in
+    supported commands, as well as their structures, are provided in
     <xref linkend="ctrl-channel"/>.</para>
-    <para>Hook libraries can be loaded by the CA to provide support for
+    
+    <para>The CA can use hook libraries to provide support for
     additional commands or custom behavior of existing commands. Such hook
-    libraries must implement callouts for 'control_command_receive' hook point.
+    libraries must implement callouts for the "control_command_receive" hook point.
     Details about creating new hook libraries and supported hook points can be
-    found in
+    found in the
     <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://jenkins.isc.org/job/Kea_doc/doxygen/">Kea Developer's Guide</link>.
     </para>
 
@@ -41,15 +42,15 @@
 
         <listitem>
           <simpara>
-            If the service specifies one more or services, the CA will forward the
-            command to specified services and return the accumulated responses.
+            If the service specifies one more or services, forward the
+            command to the specified services and return the accumulated responses.
           </simpara>
         </listitem>
 
         <listitem>
           <simpara>
-            If service is not specified or is an empty list, the CA will handle
-            the command if it supports it.
+            If the service is not specified or is an empty list, handle
+            the command if the CA supports it.
           </simpara>
         </listitem>
 
@@ -75,9 +76,13 @@
             },
             "dhcp6": {
                 "socket-type": "unix",
-                "socket-name": "/path/to/the/unix/socket-v4",
+                "socket-name": "/path/to/the/unix/socket-v6",
                 "user-context": { "version": 3 }
-            }
+            },
+            "d2": {
+                "socket-type": "unix",
+                "socket-name": "/path/to/the/unix/socket-d2"
+            },
         },
 
         "hooks-libraries": [
@@ -99,77 +104,72 @@
     </para>
 
     <para>
-      The <command>http-host</command> and <command>http-port</command>
+      The <command>http-host</command> and <command>http-port</command> parameters
       specify an IP address and port to which HTTP service will be bound.
-      In case of the example configuration provided above, the RESTful
+      In the example configuration provided above, the RESTful
       service will be available under the URL of
       <command>http://10.20.30.40:8080/</command>. If these parameters
       are not specified, the default URL is http://127.0.0.1:8000/
     </para>
 
     <para>
-      It has been mentioned in the <xref linkend="agent-overview"/> that
-      CA can forward received commands to the specific Kea servers for
+      As mentioned in <xref linkend="agent-overview"/>, the
+      CA can forward received commands to the Kea servers for
       processing. For example, <command>config-get</command> is sent to
-      retrieve configuration of one of the Kea services. When CA receives
+      retrieve the configuration of one of the Kea services. When the CA receives
       this command, including a <command>service</command> parameter
-      indicating that the client desires to retrieve configuration of
-      the DHCPv4 server, the CA will forward this command to this server
-      and then pass the received response back to the client. More about
-      the <command>service</command> parameter and general structure of
-      the commands can be found in <xref linkend="ctrl-channel"/>.
+      indicating that the client desires to retrieve the configuration of
+      the DHCPv4 server, the CA forwards this command to that server
+      and passes the received response back to the client. More about
+      the <command>service</command> parameter and the general structure of
+      commands can be found in <xref linkend="ctrl-channel"/>.
     </para>
 
     <para>
-      The CA uses unix domain sockets to forward control commands and receive
+      The CA uses UNIX domain sockets to forward control commands and receive
       responses from other Kea services. The <command>dhcp4</command>,
-      <command>dhcp6</command> and <command>d2</command> maps
-      specify the files to which unix domain sockets are bound. In case
-      of the configuration above, the CA will connect to the DHCPv4 server
+      <command>dhcp6</command>, and <command>d2</command> maps
+      specify the files to which UNIX domain sockets are bound. In
+      the configuration above, the CA will connect to the DHCPv4 server
       via <filename>/path/to/the/unix/socket-v4</filename> to forward the
       commands to it. Obviously, the DHCPv4 server must be configured to
       listen to connections via this same socket. In other words, the command
-      socket configuration for the DHCPv4 server and CA (for this server)
-      must match. Consult the <xref linkend="dhcp4-ctrl-channel"/> and the
-      <xref linkend="dhcp6-ctrl-channel"/> to learn how the socket
-      configuration is specified for the DHCPv4 and DHCPv6 services.
+      socket configuration for the DHCPv4 server and the CA (for this server)
+      must match. Consult <xref linkend="dhcp4-ctrl-channel"/>, 
+      <xref linkend="dhcp6-ctrl-channel"/> and
+      <xref linkend="d2-ctrl-channel"/> to learn how the socket
+      configuration is specified for the DHCPv4, DHCPv6 and D2 services.
     </para>
 
     <warning>
       <simpara>
-        We have renamed "dhcp4-server", "dhcp6-server" and "d2-server"
-        to "dhcp4", "dhcp6" and "d2" respectively after release of Kea 1.2.
-        If you are migrating from Kea 1.2 you need to tweak your CA config
-        to use this new naming convention. We have made this incompatible
-        change to facilitate future use cases where it will be possible to
-        specify additional values of the "service" parameter to point to
-        the particular instances of the Kea servers, e.g. "dhcp4/3"
-        pointing to the 3rd instance of the DHCPv4 server in the
-        multi-processed configuration. This is not yet supported but the
-        current renaming lays the ground for it.
+        "dhcp4-server", "dhcp6-server" and "d2-server" were renamed
+        to "dhcp4", "dhcp6" and "d2" respectively in Kea 1.2.
+        If you are migrating from Kea 1.2, you must modify your CA configuration
+        to use this new naming convention.
       </simpara>
     </warning>
 
     <para>
-      User contexts can store arbitrary data as long as it is valid JSON
-      syntax and its top level element is a map (i.e. the data must be
+      User contexts can store arbitrary data as long as they are in valid JSON
+      syntax and their top-level element is a map (i.e. the data must be
       enclosed in curly brackets). Some hook libraries may expect specific
-      formatting, though.  Please consult specific hook library
+      formatting; please consult the relevant hook library
       documentation for details.
     </para>
 
     <para>
       User contexts can be specified on either global scope, control
-      socket and loggers. One other useful usage is the ability to
-      store comments or descriptions: the parser translates a
-      "comment" entry into a user-context with the entry, this allows
-      to attach a comment inside the configuration itself.
+      socket, or loggers. One other useful feature is the ability to
+      store comments or descriptions; the parser translates a
+      "comment" entry into a user context with the entry, which allows
+      a comment to be attached within the configuration itself.
     </para>
 
     <para>
-      Hooks libraries can be loaded by the Control Agent just like to
-      DHCPv4 and DHCPv6 servers. It currently supports one hook point
-      'control_command_receive' which makes it possible to delegate
+      Hooks libraries can be loaded by the Control Agent in the same way as they are loaded by the
+      DHCPv4 and DHCPv6 servers. The CA currently supports one hook point -
+      'control_command_receive' - which makes it possible to delegate
       processing of some commands to the hooks library. The
       <command>hooks-libraries</command> list contains the list of hooks
       libraries that should be loaded by the CA, along with their configuration
@@ -179,26 +179,26 @@
     <para>
       Please consult <xref linkend="logging"/> for the details how to
       configure logging. The CA's root logger's name is
-      <command>kea-ctrl-agent</command> as given in the example above.
+      <command>kea-ctrl-agent</command>, as given in the example above.
     </para>
   </section>
 
   <section xml:id="agent-secure-connection">
     <title>Secure Connections</title>
     <para>
-      Control Agent doesn't natively support secure HTTP connections like
-      SSL or TLS. In order to setup secure connection please use one
-      of the available third party HTTP servers and configure it to run
+      The Control Agent does not natively support secure HTTP connections like
+      SSL or TLS. In order to setup a secure connection, please use one
+      of the available third-party HTTP servers and configure it to run
       as a reverse proxy to the Control Agent. Kea has been tested with
       two major HTTP server implentations working as a reverse proxy:
-      Apache2 and nginx. Example configurations including extensive
-      comments are provided in the <filename>doc/examples/https/</filename>
+      Apache2 and nginx. Example configurations, including extensive
+      comments, are provided in the <filename>doc/examples/https/</filename>
       directory.
     </para>
 
     <para>
-      The reverse proxy forwards HTTP requests received over secure
-      connection to the Control Agent using (not secured) HTTP. Typically,
+      The reverse proxy forwards HTTP requests received over a secure
+      connection to the Control Agent using unsecured HTTP. Typically,
       the reverse proxy and the Control Agent are running on the same machine,
       but it is possible to configure them to run on separate machines as
       well. In this case, security depends on the protection of the
@@ -209,10 +209,10 @@
     a reverse proxy server is also often used for authentication of the
     controlling clients. In this case, the client must present a valid
     certificate when it connects via reverse proxy. The proxy server
-    authenticates the client by checking if the presented certificate is
+    authenticates the client by checking whether the presented certificate is
     signed by the certificate authority used by the server.</para>
 
-    <para>To illustrate this, we provide a sample configuration for the
+    <para>To illustrate this, the following is a sample configuration for the
     nginx server running as a reverse proxy to the Kea Control Agent.
     The server enables authentication of the clients using
     certificates.</para>
@@ -284,48 +284,31 @@ http {
 
   <note>
     <simpara>Note that the configuration snippet provided above is for testing
-    purposes only. Consult security policies and best practices of your
-    organization which apply to this setup.</simpara>
+    purposes only. It should be modified according to the security policies and best practices of your organization.</simpara>
   </note>
 
     <para>When you use an HTTP client without TLS support as <command>
-    kea-shell</command> you can use an HTTP/HTTPS translator such as stunnel
+    kea-shell</command>, you can use an HTTP/HTTPS translator such as stunnel
     in client mode. A sample configuration is provided in the
-    <filename>doc/examples/https/shell/</filename> directory</para>
+    <filename>doc/examples/https/shell/</filename> directory.</para>
 
-  </section>
-
-  <section xml:id="agent-limitations">
-    <title>Control Agent Limitations</title>
-    <para>
-      Control Agent is a new component, first released in Kea 1.2. In
-      this release it comes with one notable limitation:
-      <itemizedlist>
-        <listitem>
-          <simpara>
-            keactrl hasn't been updated to manage the Control Agent (start, stop
-            reload). As a result, the CA must be started directly as described in
-            <xref linkend="agent-launch"/>
-          </simpara>
-        </listitem>
-      </itemizedlist>
-    </para>
   </section>
 
   <section xml:id="agent-launch">
-    <title>Starting Control Agent</title>
+    <title>Starting the Control Agent</title>
     <para>
       The CA is started by running its binary and specifying the configuration file
       it should use. For example:
 <screen>
 $ ./kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf
 </screen>
+      It can be started by keactrl as well (see <xref linkend="keactrl"/>).
     </para>
   </section>
 
   <section xml:id="agent-clients">
     <title>Connecting to the Control Agent</title>
-    <para>For an example of tool that can take advantage of the
+    <para>For an example of a tool that can take advantage of the
     RESTful API, see <xref linkend="kea-shell"/>.</para>
   </section>
 </chapter>

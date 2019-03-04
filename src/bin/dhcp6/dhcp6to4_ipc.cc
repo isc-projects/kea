@@ -27,6 +27,8 @@ using namespace isc::hooks;
 namespace isc {
 namespace dhcp {
 
+uint16_t Dhcp6to4Ipc::client_port = 0;
+
 Dhcp6to4Ipc::Dhcp6to4Ipc() : Dhcp4o6IpcBase() {}
 
 Dhcp6to4Ipc& Dhcp6to4Ipc::instance() {
@@ -93,7 +95,10 @@ void Dhcp6to4Ipc::handler() {
     // want to know if it is a relayed message (vs. internal message type).
     // getType() always returns the type of internal message.
     uint8_t msg_type = buf[0];
-    if ((msg_type == DHCPV6_RELAY_FORW) || (msg_type == DHCPV6_RELAY_REPL)) {
+    if (client_port) {
+        pkt->setRemotePort(client_port);
+    } else if ((msg_type == DHCPV6_RELAY_FORW) ||
+               (msg_type == DHCPV6_RELAY_REPL)) {
         pkt->setRemotePort(relay_port ? relay_port : DHCP6_SERVER_PORT);
     } else {
         pkt->setRemotePort(DHCP6_CLIENT_PORT);

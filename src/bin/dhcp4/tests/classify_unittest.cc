@@ -50,7 +50,7 @@ namespace {
 ///   - 1 pool: 10.0.0.10-10.0.0.100
 ///   - the following classes defined:
 ///     not (option[93].hex == 0x0009)
-///     not member(<preceeding>), next-server set to 1.2.3.4 
+///     not member(<preceeding>), next-server set to 1.2.3.4
 ///     option[93].hex == 0x0006
 ///     option[93].hex == 0x0001
 ///     or member(<last two>), set boot-file-name to pxelinux.0

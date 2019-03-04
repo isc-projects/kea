@@ -129,7 +129,7 @@
                              // set to the corresponding values.
                              "url": "http://192.168.56.33:8080/",
                              // This server is primary. The other one must be
-                             // secondary. 
+                             // secondary.
                              "role": "primary"
                          },
                          // This is the configuration of our HA peer.

@@ -11,7 +11,7 @@
 #include <boost/shared_ptr.hpp>
 
 namespace isc {
-namespace dhcp {
+namespace data {
 
 /// @brief Base class for user context
 ///

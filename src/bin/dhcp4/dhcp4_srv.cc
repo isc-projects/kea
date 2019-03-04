@@ -1,10 +1,12 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
+
 #include <dhcp/dhcp4.h>
 #include <dhcp/duid.h>
 #include <dhcp/hwaddr.h>
@@ -23,7 +25,7 @@
 #include <dhcp4/dhcp4to6_ipc.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
-#include <dhcpsrv/addr_utilities.h>
+#include <asiolink/addr_utilities.h>
 #include <dhcpsrv/cfgmgr.h>
 #include <dhcpsrv/cfg_host_operations.h>
 #include <dhcpsrv/cfg_iface.h>
@@ -60,7 +62,7 @@
 #endif
 #include <dhcpsrv/memfile_lease_mgr.h>
 
-#include <boost/algorithm/string/join.hpp>
+#include <boost/algorithm/string.hpp>
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/pointer_cast.hpp>
@@ -439,17 +441,20 @@ Dhcpv4Exchange::setReservedMessageFields() {
 
 const std::string Dhcpv4Srv::VENDOR_CLASS_PREFIX("VENDOR_CLASS_");
 
-Dhcpv4Srv::Dhcpv4Srv(uint16_t port, const bool use_bcast,
-                     const bool direct_response_desired)
-    : io_service_(new IOService()), shutdown_(true), alloc_engine_(), port_(port),
-      use_bcast_(use_bcast), network_state_(new NetworkState(NetworkState::DHCPv4)) {
+Dhcpv4Srv::Dhcpv4Srv(uint16_t server_port, uint16_t client_port,
+                     const bool use_bcast, const bool direct_response_desired)
+    : io_service_(new IOService()), shutdown_(true), alloc_engine_(),
+      server_port_(server_port), use_bcast_(use_bcast),
+      client_port_(client_port),
+      network_state_(new NetworkState(NetworkState::DHCPv4)) {
 
-    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET).arg(port);
+    LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_OPEN_SOCKET)
+        .arg(server_port);
     try {
         // Port 0 is used for testing purposes where we don't open broadcast
         // capable sockets. So, set the packet filter handling direct traffic
         // only if we are in non-test mode.
-        if (port) {
+        if (server_port) {
             // First call to instance() will create IfaceMgr (it's a singleton)
             // it may throw something if things go wrong.
             // The 'true' value of the call to setMatchingPacketFilter imposes
@@ -1465,21 +1470,43 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
-    // Try to get the vendor option
+    uint32_t vendor_id = 0;
+
+    // Try to get the vendor option from the client packet. This is how it's
+    // supposed to be done. Client sends vivso, we look at the vendor-id and
+    // then send back the vendor options specific to that client.
     boost::shared_ptr<OptionVendor> vendor_req = boost::dynamic_pointer_cast<
         OptionVendor>(ex.getQuery()->getOption(DHO_VIVSO_SUBOPTIONS));
-    if (!vendor_req) {
+    if (vendor_req) {
+        vendor_id = vendor_req->getVendorId();
+    }
+
+    // Something is fishy. Client was supposed to send vivso, but didn't.
+    // Let's try an alternative. It's possible that the server already
+    // inserted vivso in the response message, (e.g. by using client
+    // classification or perhaps a hook inserted it).
+    boost::shared_ptr<OptionVendor> vendor_rsp = boost::dynamic_pointer_cast<
+        OptionVendor>(ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS));
+    if (vendor_rsp) {
+        vendor_id = vendor_rsp->getVendorId();
+    }
+
+    if (!vendor_req && !vendor_rsp) {
+        // Ok, we're out of luck today. Neither client nor server packets
+        // have vivso.  There is no way to figure out vendor-id here.
+        // We give up.
         return;
     }
 
-    uint32_t vendor_id = vendor_req->getVendorId();
     std::vector<uint8_t> requested_opts;
 
     // Let's try to get ORO within that vendor-option
     /// @todo This is very specific to vendor-id=4491 (Cable Labs). Other
     /// vendors may have different policies.
-    OptionUint8ArrayPtr oro =
-        boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    OptionUint8ArrayPtr oro;
+    if (vendor_req) {
+        oro = boost::dynamic_pointer_cast<OptionUint8Array>(vendor_req->getOption(DOCSIS3_V4_ORO));
+    }
     // Get the list of options that client requested.
     if (oro) {
         requested_opts = oro->getValues();
@@ -1491,6 +1518,7 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         if (!opts) {
             continue;
         }
+
         // Get persistent options
         const OptionContainerPersistIndex& idx = opts->get<2>();
         const OptionContainerPersistRange& range = idx.equal_range(true);
@@ -1509,7 +1537,11 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
         return;
     }
 
-    boost::shared_ptr<OptionVendor> vendor_rsp(new OptionVendor(Option::V4, vendor_id));
+    if (!vendor_rsp) {
+        // It's possible that vivso was inserted already by client class or
+        // a hook. If that is so, let's use it.
+        vendor_rsp.reset(new OptionVendor(Option::V4, vendor_id));
+    }
 
     // Get the list of options that client requested.
     bool added = false;
@@ -1527,7 +1559,9 @@ Dhcpv4Srv::appendRequestedVendorOptions(Dhcpv4Exchange& ex) {
             }
         }
 
-        if (added) {
+        // If we added some sub-options and the vivso option is not in
+        // the response already, then add it.
+        if (added && !ex.getResponse()->getOption(DHO_VIVSO_SUBOPTIONS)) {
             ex.getResponse()->addOption(vendor_rsp);
         }
     }
@@ -1719,9 +1753,12 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         // send back a hostname option, send this option with a reserved
         // name for this client.
         if (should_send_hostname) {
-            const std::string& hostname =
-                d2_mgr.qualifyName(ctx->currentHost()->getHostname(),
-                                                             false);
+            std::string hostname =
+                d2_mgr.qualifyName(ctx->currentHost()->getHostname(), false);
+
+            // Convert hostname to lower case.
+            boost::algorithm::to_lower(hostname);
+
             LOG_DEBUG(ddns4_logger, DBG_DHCP4_DETAIL_DATA,
                       DHCP4_RESERVED_HOSTNAME_ASSIGNED)
                 .arg(ex.getQuery()->getLabel())
@@ -1810,6 +1847,9 @@ Dhcpv4Srv::processHostnameOption(Dhcpv4Exchange& ex) {
         if (sanitizer) {
             hostname = sanitizer->scrub(hostname);
         }
+
+        // Convert hostname to lower case.
+        boost::algorithm::to_lower(hostname);
 
         if (label_count == 2) {
             // If there are two labels, it means that the client has specified
@@ -1988,8 +2028,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
 
         // Check the first error case: unknown client. We check this before
         // validating the address sent because we don't want to respond if
-        // we don't know this client.
-        if (!lease || !lease->belongsToClient(hwaddr, client_id)) {
+        // we don't know this client, except if we're authoritative.
+        bool authoritative = original_subnet->getAuthoritative();
+        bool known_client = lease && lease->belongsToClient(hwaddr, client_id);
+        if (!authoritative && !known_client) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_NO_LEASE_INIT_REBOOT)
                 .arg(query->getLabel())
@@ -1999,9 +2041,10 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
             return;
         }
 
-        // We know this client so we can now check if his notion of the
-        // IP address is correct.
-        if (lease && (lease->addr_ != hint)) {
+        // If we know this client, check if his notion of the IP address is
+        // correct, if we don't know him, check if we are authoritative.
+        if ((known_client && (lease->addr_ != hint)) ||
+            (!known_client && authoritative)) {
             LOG_DEBUG(bad_packet4_logger, DBG_DHCP4_DETAIL,
                       DHCP4_PACKET_NAK_0002)
                 .arg(query->getLabel())
@@ -2179,32 +2222,8 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
         // Subnet mask (type 1)
         resp->addOption(getNetmaskOption(subnet));
 
-        // rebind timer (type 59) - if specified then send it only it if
-        // it is less than lease lifetime.  Note we "sanity" check T1
-        // and T2 against lease lifetime here in event the lifetime has
-        // been altered somewhere along the line.
-        uint32_t timer_ceiling = lease->valid_lft_;
-        if ((!subnet->getT2().unspecified()) &&
-            (subnet->getT2() <  timer_ceiling)) {
-            OptionUint32Ptr t2(new OptionUint32(Option::V4,
-                                                DHO_DHCP_REBINDING_TIME,
-                                                subnet->getT2()));
-            resp->addOption(t2);
-
-            // If T2 is specified, then it becomes the ceiling for T1
-            timer_ceiling = subnet->getT2();
-        }
-
-        // renewal-timer (type 58) - if specified then send it only if
-        // it is less than the ceiling (T2 if given, lease life time if not)
-        if ((!subnet->getT1().unspecified()) &&
-            (subnet->getT1() <  timer_ceiling)) {
-            OptionUint32Ptr t1(new OptionUint32(Option::V4,
-                                                DHO_DHCP_RENEWAL_TIME,
-                                                subnet->getT1()));
-            resp->addOption(t1);
-        }
-
+        // Set T1 and T2 per configuration.
+        setTeeTimes(lease, subnet, resp);
 
         // Create NameChangeRequests if DDNS is enabled and this is a
         // real allocation.
@@ -2239,6 +2258,46 @@ Dhcpv4Srv::assignLease(Dhcpv4Exchange& ex) {
     }
 }
 
+void
+Dhcpv4Srv::setTeeTimes(const Lease4Ptr& lease, const Subnet4Ptr& subnet, Pkt4Ptr resp) {
+
+    uint32_t t2_time = 0;
+    // If T2 is explicitly configured we'll use try value.
+    if (!subnet->getT2().unspecified()) {
+        t2_time = subnet->getT2();
+    } else if (subnet->getCalculateTeeTimes()) {
+        // Calculating tee times is enabled, so calculated it.
+        t2_time = static_cast<uint32_t>(subnet->getT2Percent() * (lease->valid_lft_));
+    }
+
+    // Send the T2 candidate value only if it's sane: to be sane it must be less than
+    // the valid life time.
+    uint32_t timer_ceiling = lease->valid_lft_;
+    if (t2_time > 0 && t2_time < timer_ceiling) {
+        OptionUint32Ptr t2(new OptionUint32(Option::V4, DHO_DHCP_REBINDING_TIME, t2_time));
+        resp->addOption(t2);
+        // When we send T2, timer ceiling for T1 becomes T2.
+        timer_ceiling = t2_time;
+    }
+
+    uint32_t t1_time = 0;
+    // If T1 is explicitly configured we'll use try value.
+    if (!subnet->getT1().unspecified()) {
+        t1_time = subnet->getT1();
+    } else if (subnet->getCalculateTeeTimes()) {
+        // Calculating tee times is enabled, so calculate it.
+        t1_time = static_cast<uint32_t>(subnet->getT1Percent() * (lease->valid_lft_));
+    }
+
+    // Send T1 if it's sane: If we sent T2, T1 must be less than that.  If not it must be
+    // less than the valid life time.
+    if (t1_time > 0 && t1_time < timer_ceiling) {
+        OptionUint32Ptr t1(new OptionUint32(Option::V4, DHO_DHCP_RENEWAL_TIME, t1_time));
+        resp->addOption(t1);
+    }
+}
+
+
 uint16_t
 Dhcpv4Srv::checkRelayPort(const Dhcpv4Exchange& ex) {
 
@@ -2267,11 +2326,15 @@ Dhcpv4Srv::adjustIfaceData(Dhcpv4Exchange& ex) {
     // server has to reply via relay agent. For other messages we send back
     // through relay if message is relayed, and unicast to the client if the
     // message is not relayed.
+    // If client port was set from the command line enforce all responses
+    // to it. Of course it is only for testing purposes.
     // Note that the call to this function may throw if invalid combination
     // of hops and giaddr is found (hops = 0 if giaddr = 0 and hops != 0 if
     // giaddr != 0). The exception will propagate down and eventually cause the
     // packet to be discarded.
-    if (((query->getType() == DHCPINFORM) &&
+    if (client_port_) {
+        response->setRemotePort(client_port_);
+    } else if (((query->getType() == DHCPINFORM) &&
          ((!query->getCiaddr().isV4Zero()) ||
           (!query->isRelayed() && !query->getRemoteAddr().isV4Zero()))) ||
         ((query->getType() != DHCPINFORM) && !query->isRelayed())) {

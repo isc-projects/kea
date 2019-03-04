@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,24 +7,15 @@
 #include <config.h>
 #include <cc/command_interpreter.h>
 #include <cfgrpt/config_report.h>
-#include <dhcpsrv/cfgmgr.h>
 #include <exceptions/exceptions.h>
 #include <log/logger.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_controller.h>
-
-#ifdef HAVE_MYSQL
-#include <dhcpsrv/mysql_lease_mgr.h>
-#endif
-#ifdef HAVE_PGSQL
-#include <dhcpsrv/pgsql_lease_mgr.h>
-#endif
-#ifdef HAVE_CQL
-#include <dhcpsrv/cql_lease_mgr.h>
-#endif
-#include <dhcpsrv/memfile_lease_mgr.h>
-
+#include <process/config_base.h>
+#include <kea_version.h>
+#include <boost/bind.hpp>
 #include <sstream>
 #include <unistd.h>
 
@@ -84,12 +75,12 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     // It is important that we set a default logger name because this name
     // will be used when the user doesn't provide the logging configuration
     // in the Kea configuration file.
-    isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
+    Daemon::setDefaultLoggerName(bin_name_);
 
     // Logger's default configuration depends on whether we are in the
     // verbose mode or not. CfgMgr manages the logger configuration so
     // the verbose mode is set for CfgMgr.
-    isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
+    Daemon::setVerbose(verbose_);
 
     // Do not initialize logger here if we are running unit tests. It would
     // replace an instance of unit test specific logger.
@@ -99,8 +90,16 @@ DControllerBase::launch(int argc, char* argv[], const bool test_mode) {
     }
 
     try {
+        checkConfigFile();
+    } catch (const std::exception& ex) {
+        LOG_FATAL(dctl_logger, DCTL_CONFIG_FILE_LOAD_FAIL)
+            .arg(app_name_).arg(ex.what());
+        isc_throw (LaunchError, "Launch Failed: " << ex.what());
+    }
+
+    try {
         createPIDFile();
-    } catch (const dhcp::DaemonPIDExists& ex) {
+    } catch (const DaemonPIDExists& ex) {
         LOG_FATAL(dctl_logger, DCTL_ALREADY_RUNNING)
                   .arg(bin_name_).arg(ex.what());
         isc_throw (LaunchError, "Launch Failed: " << ex.what());
@@ -161,8 +160,8 @@ DControllerBase::checkConfigOnly() {
         // messages are to be printed.
         // This is just a test, so we don't care about lockfile.
         setenv("KEA_LOCKFILE_DIR", "none", 0);
-        isc::dhcp::CfgMgr::instance().setDefaultLoggerName(bin_name_);
-        isc::dhcp::CfgMgr::instance().setVerbose(verbose_);
+        Daemon::setDefaultLoggerName(bin_name_);
+        Daemon::setVerbose(verbose_);
         Daemon::loggerInit(bin_name_.c_str(), verbose_);
 
         // Check the syntax first.
@@ -211,6 +210,11 @@ DControllerBase::checkConfigOnly() {
 void
 DControllerBase::parseArgs(int argc, char* argv[])
 {
+
+    if (argc == 1) {
+        isc_throw(InvalidUsage, "");
+    }
+
     // Iterate over the given command line options. If its a stock option
     // ("c" or "d") handle it here.  If its a valid custom option, then
     // invoke customOption.
@@ -318,7 +322,9 @@ ConstElementPtr
 DControllerBase::configFromFile() {
     // Rollback any previous staging configuration. For D2, only a
     // logger configuration is used here.
-    isc::dhcp::CfgMgr::instance().rollback();
+    // We're not using cfgmgr to store logging configuration anymore.
+    // isc::dhcp::CfgMgr::instance().rollback();
+
     // Will hold configuration.
     ConstElementPtr module_config;
     // Will receive configuration result.
@@ -343,8 +349,7 @@ DControllerBase::configFromFile() {
         // so we can log things during configuration process.
 
         // Temporary storage for logging configuration
-        isc::dhcp::SrvConfigPtr storage =
-            isc::dhcp::CfgMgr::instance().getStagingCfg();
+        ConfigPtr storage = process_->getCfgMgr()->getContext();
 
         // Get 'Logging' element from the config and use it to set up
         // logging. If there's no such element, we'll just pass NULL.
@@ -364,13 +369,14 @@ DControllerBase::configFromFile() {
         if (!rcode) {
             // Configuration successful, so apply the logging configuration
             // to log4cplus.
-            isc::dhcp::CfgMgr::instance().getStagingCfg()->applyLoggingCfg();
-            isc::dhcp::CfgMgr::instance().commit();
+            storage->applyLoggingCfg();
         }
 
     } catch (const std::exception& ex) {
         // Rollback logging configuration.
-        isc::dhcp::CfgMgr::instance().rollback();
+        // We don't use CfgMgr to store logging information anymore.
+        // isc::dhcp::CfgMgr::instance().rollback();
+
         // build an error result
         ConstElementPtr error = createAnswer(COMMAND_ERROR,
                  std::string("Configuration parsing failed: ") + ex.what());
@@ -379,7 +385,6 @@ DControllerBase::configFromFile() {
 
     return (answer);
 }
-
 
 void
 DControllerBase::runProcess() {
@@ -461,14 +466,18 @@ DControllerBase::configWriteHandler(const std::string&,
     //
     // As a result, we need to extract the CA configuration from one
     // place and logging from another.
-    ConstElementPtr loginfo = isc::dhcp::CfgMgr::instance().getCurrentCfg()->toElement();
-    if (loginfo) {
-        // If there was a config stored in dhcp::CfgMgr, try to get Logging info from it.
-        loginfo = loginfo->get("Logging");
-    }
-    if (loginfo) {
-        // If there is some logging information, add it to our config.
-        cfg->set("Logging", loginfo);
+    if (!cfg->contains("Logging")) {
+        ConfigPtr base_cfg = process_->getCfgMgr()->getContext();
+
+        ConstElementPtr loginfo = base_cfg->toElement();
+        if (loginfo) {
+            // If there was a config stored in dhcp::CfgMgr, try to get Logging info from it.
+            loginfo = loginfo->get("Logging");
+        }
+        if (loginfo) {
+            // If there is some logging information, add it to our config.
+            cfg->set("Logging", loginfo);
+        }
     }
 
     try {
@@ -524,10 +533,72 @@ DControllerBase::configTestHandler(const std::string&, ConstElementPtr args) {
     // We are starting the configuration process so we should remove any
     // staging configuration that has been created during previous
     // configuration attempts.
-    isc::dhcp::CfgMgr::instance().rollback();
+    // We're not using cfgmgr to store logging information anymore.
+    // isc::dhcp::CfgMgr::instance().rollback();
 
     // Now we check the server proper.
     return (checkConfig(module_config));
+}
+
+ConstElementPtr
+DControllerBase::configReloadHandler(const std::string&, ConstElementPtr) {
+    // Add reload in message?
+    return (configFromFile());
+}
+
+ConstElementPtr
+DControllerBase::configSetHandler(const std::string&, ConstElementPtr args) {
+    const int status_code = COMMAND_ERROR; // 1 indicates an error
+    ConstElementPtr module_config;
+    std::string app_name = getAppName();
+    std::string message;
+
+    // Command arguments are expected to be:
+    // { "Module": { ... }, "Logging": { ... } }
+    // The Logging component is technically optional. If it's not supplied
+    // logging will revert to default logging.
+    if (!args) {
+        message = "Missing mandatory 'arguments' parameter.";
+    } else {
+      module_config = args->get(app_name);
+        if (!module_config) {
+            message = "Missing mandatory '" + app_name + "' parameter.";
+        } else if (module_config->getType() != Element::map) {
+            message = "'" + app_name + "' parameter expected to be a map.";
+        }
+    }
+
+    if (!message.empty()) {
+        // Something is amiss with arguments, return a failure response.
+        ConstElementPtr result = isc::config::createAnswer(status_code,
+                                                           message);
+        return (result);
+    }
+
+    // We are starting the configuration process so we should remove any
+    // staging configuration that has been created during previous
+    // configuration attempts.
+    // We're not using cfgmgr to store logging information anymore.
+    // isc::dhcp::CfgMgr::instance().rollback();
+
+    // Temporary storage for logging configuration
+    ConfigPtr storage = process_->getCfgMgr()->getContext();
+
+    // Get 'Logging' element from the config and use it to set up
+    // logging. If there's no such element, we'll just pass NULL.
+    Daemon::configureLogger(args->get("Logging"), storage);
+
+    // Now we check the server proper.
+    ConstElementPtr answer = updateConfig(module_config);
+    int rcode = 0;
+    parseAnswer(rcode, answer);
+    if (!rcode) {
+        // Configuration successful, so apply the logging configuration
+        // to log4cplus.
+        storage->applyLoggingCfg();
+    }
+
+    return (answer);
 }
 
 ConstElementPtr

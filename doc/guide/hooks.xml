@@ -1,10 +1,16 @@
 <!--
- - Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
  - file, You can obtain one at http://mozilla.org/MPL/2.0/.
 -->
+
+<!-- need this include to make the &keaversion; macro work -->
+<!DOCTYPE book [
+<!ENTITY % keaversion SYSTEM "version.ent">
+%keaversion;
+]>
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="hooks-libraries">
@@ -85,7 +91,7 @@
       <para>
         1. Download the package. You will receive detailed instructions how to
         get it separately. This will be a file with a name similar to
-        kea-premium-1.4.0.tar.gz. Your name may differ depending on which
+        kea-premium-&keaversion;.tar.gz. Your name may differ depending on which
         package you got.
       </para>
 
@@ -94,26 +100,26 @@
         open-source Kea package still on your system (from when you installed
         Kea), skip this step.  Otherwise extract the Kea source from the
         original tarball you downloaded.  For example, if you downloaded Kea
-        1.4.0., you should have a tarball called kea-1.4.0.tar.gz on your
+        &keaversion;., you should have a tarball called kea-&keaversion;.tar.gz on your
         system. Unpack this tarball:
 
 <screen>
-$ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
+$ <userinput>tar zxvf kea-&keaversion;.tar.gz</userinput>
 </screen>
 
-        This will unpack the tarball into the kea-1.4.0 subdirectory of your
+        This will unpack the tarball into the kea-&keaversion; subdirectory of your
         current working directory.
       </para>
 
       <para>
         3. Unpack the Kea premium tarball into the directory into which Kea was
         unpacked. For example, assuming that you followed step 2 and that Kea
-        1.4.0 has been unpacked into a kea-1.4.0 subdirectory and that the Kea
-        premium tarball is in your current directory, the following steps will
+        &keaversion; has been unpacked into a kea-&keaversion; subdirectory and that
+        the Kea premium tarball is in your current directory, the following steps will
         unpack the premium tarball into the correct location:
 <screen>
-  $ <userinput>cd kea-1.4.0</userinput>
-  $ <userinput>tar xvf ../kea-premium-1.4.0.tar.gz</userinput>
+  $ <userinput>cd kea-&keaversion;</userinput>
+  $ <userinput>tar xvf ../kea-premium-&keaversion;.tar.gz</userinput>
 </screen>
         Note that unpacking the Kea premium package will put the files into a
         directory named premium. Regardless of the name of your package, the
@@ -137,8 +143,8 @@ $ <userinput>tar zxvf kea-1.4.0.tar.gz</userinput>
 <screen>
 Package:
   Name:            kea
-  Version:         1.4.0
-  Extended version:1.4.0 (tarball)
+  Version:         &keaversion;
+  Extended version:&keaversion; (tarball)
   OS Family:       Linux
   Using GNU sed:   yes
   Premium package: yes
@@ -176,6 +182,7 @@ $ <userinput>sudo make install</userinput>
       libraries are installed properly with this command:
 <screen>
 $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
+/usr/local/lib/hooks/libdhcp_class_cmds.so
 /usr/local/lib/hooks/libdhcp_flex_id.so
 /usr/local/lib/hooks/libdhcp_host_cmds.so
 /usr/local/lib/hooks/libdhcp_lease_cmds.so
@@ -236,7 +243,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
 
         <note>
           <para>
-          The library reloading behavior has changed in Kea 1.1. Libraries are
+          The library reloading behavior has changed in Kea 1.1.0. Libraries are
           reloaded, even if their list hasn't changed. Kea does that, because
           the parameters specified for the library (or the files those
           parameters point to) may have changed.
@@ -511,6 +518,30 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               </entry>
             </row>
             <row>
+              <entry>Statistics Commands</entry>
+              <entry>Kea sources</entry>
+              <entry>Kea 1.4.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>
+                The Statistics Commands library provides additional commmands
+                for retrieving accurate DHCP lease statistics for Kea DHCP
+                servers that share the same lease database. This setup is
+                common in deployments where DHCP service redundancy is required
+                and a shared lease database is used to avoid lease data
+                replication between the DHCP servers. A feature was introduced
+                in Kea 1.4.0 that allows tracking lease allocations within the
+                lease database, thus making the statistics accessible to all
+                connected DHCP servers. The Statistics Commands hooks library
+                utilizes this feature and returns lease statistics for all
+                subnets respectively.
+              </entry>
+            </row>
+            <row>
               <entry>Radius</entry>
               <entry>Support customers</entry>
               <entry>Kea 1.4.0</entry>
@@ -549,6 +580,21 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
               in the database.
               </entry>
             </row>
+            <row>
+              <entry>Class Commands</entry>
+              <entry>Support customers</entry>
+              <entry>Kea 1.5.0</entry>
+              <entry>
+                <simplelist>
+                  <member>kea-dhcp4</member>
+                  <member>kea-dhcp6</member>
+                </simplelist>
+              </entry>
+              <entry>This Class Cmds hooks library allows for adding, updating
+              deleting and fetching configured DHCP client classes without the
+              need to restart the DHCP server.
+              </entry>
+            </row>
           </tbody>
           </tgroup>
           </table>
@@ -558,7 +604,7 @@ $ <userinput>ls -l /usr/local/lib/hooks/*.so</userinput>
         ISC hopes to see more hooks libraries become available as time
         progresses, both developed internally and externally. Since
         this list may evolve dynamically, we decided to keep it on a
-        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/Hooks">http://kea.isc.org/wiki/Hooks</link>.
+        wiki page, available at this link: <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available">https://gitlab.isc.org/isc-projects/kea/wikis/Hooks-available</link>.
         If you are a developer or are aware of any hooks libraries not
         listed there, please send a note to the kea-users or kea-dev
         mailing lists and someone will update it.
@@ -1215,7 +1261,9 @@ $
           can be represented as 626174. Alternatively, it can be expressed
           as quoted value (using double and single quotes), e.g. "'bar'".
           The former is more convenient for printable characters, while hex
-          string values are more convenient for non-printable characters.
+          string values are more convenient for non-printable characters
+          and does not require the use of the <command>hexstring</command>
+          operator.
         </para>
 <screen>
 "Dhcp6": {
@@ -1370,15 +1418,19 @@ $
         </para>
 
         <para>
-          Currently three commands are supported: reservation-add (which adds
+          Currently five commands are supported: reservation-add (which adds
           new host reservation), reservation-get (which returns existing
-          reservation if specified criteria are matched) and reservation-del
+          reservation if specified criteria are matched), reservation-get-all
+          (which returns all reservations in a specified subnet),
+          reservation-get-page (variant of reservation-get-all which returns
+          all reservations in a specified subnet by pages) and reservation-del
           (which attempts to delete a reservation matching specified
           criteria). To use commands that change the reservation information
           (currently these are reservation-add and reservation-del, but this
           rule applies to other commands that may be implemented in the future),
           hosts database must be specified (see hosts-databases description in
-          <xref linkend="hosts-databases-configuration4"/> and <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
+          <xref linkend="hosts-databases-configuration4"/> and
+          <xref linkend="hosts-databases-configuration6"/>) and it must not operate in
           read-only mode. If the hosts-databases are not specified or are running
           in read-only mode, the host_cmds library will load, but any attempts
           to use reservation-add or reservation-del will fail.
@@ -1387,8 +1439,10 @@ $
         <para>
           Additional host reservation commands are planned in the future. For
           a description of envisaged commands, see
-<link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/wiki/ControlAPIRequirements">Control API
-Requirements </link> document.</para>
+          <link xmlns:xlink="http://www.w3.org/1999/xlink"
+           xlink:href="https://gitlab.isc.org/isc-projects/kea/wikis/designs/commands">Control API
+          Requirements </link> document.
+        </para>
 
         <para>
           All commands are using JSON syntax. They can be issued either using
@@ -1430,7 +1484,7 @@ Requirements </link> document.</para>
         </para>
         </section>
 
-        <section>
+        <section xml:id="command-reservation-add">
           <title>reservation-add command</title>
         <para>
           <command>reservation-add</command> allows for the insertion of a new host.  It
@@ -1522,7 +1576,7 @@ Here is an example of complex IPv6 reservation:
         </para>
         </section>
 
-        <section>
+        <section xml:id="command-reservation-get">
           <title>reservation-get command</title>
           <para><command>reservation-get</command> can be used to query the host
           database and retrieve existing reservations. There are two types of
@@ -1537,7 +1591,7 @@ Here is an example of complex IPv6 reservation:
           "circuit-id", "client-id" and "flex-id", but additional types may be
           added in the future. If any new identifier types are defined in the
           future, reservation-get command will support them automatically.
-          The <command>subnet-id</command> is manadatory. Use a value of zero (0) to
+          The <command>subnet-id</command> is mandatory. Use a value of zero (0) to
           fetch a global reservation, or the id of the subnet to which the reservation
           belongs.
           </para>
@@ -1558,7 +1612,7 @@ An example query by (subnet-id, identifier-type, identifier) looks as follows:
 <screen>
 {
     "command": "reservation-get",
-    "arguments":
+    "arguments": {
         "subnet-id": 4,
         "identifier-type": "hw-address",
         "identifier": "01:02:03:04:05:06"
@@ -1600,7 +1654,208 @@ An example result returned when the query was malformed:<screen>
 
         </section>
 
-        <section>
+        <section xml:id="command-reservation-get-all">
+          <title>reservation-get-all command</title>
+          <para><command>reservation-get-all</command> can be used to
+          query the host database and retrieve all reservations in a
+          specified subnet. This command uses parameters providing the
+          mandatory subnet-id. Global host reservations can be
+          retrieved by using subnet-id value of zero (0).
+          </para>
+
+          <para>For instance for retrieving host reservations for the
+          subnet 1:
+<screen>
+{
+    "command": "reservation-get-all",
+    "arguments": {
+        <userinput>"subnet-id": 1</userinput>
+     }
+}
+</screen> returns found some IPv4 hosts:
+<screen>
+{
+    "arguments": {
+        "hosts": [
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "somehost.example.org",
+                "hw-address": "01:02:03:04:05:06",
+                "ip-address": "192.0.2.100",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            },
+            ...
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "otherhost.example.org",
+                "hw-address": "01:02:03:04:05:ff",
+                "ip-address": "192.0.2.200",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            }
+        ]
+    },
+    "result": 0,
+    "text": "72 IPv4 host(s) found."
+}
+</screen>
+         </para>
+
+          <para>The response returned by <command>reservation-get-all</command>
+          can be very long. The DHCP server does not handle DHCP
+          traffic when preparing a response to reservation-get-all.
+          If there are many reservations in a subnet, this may be disruptive. Use with caution.
+          For larger deployments, please consider using
+          <command>reservation-get-page</command> instead (see <xref
+          linkend="command-reservation-get-page"/>).
+          </para>
+          
+          <para>
+          For a reference, see <xref linkend="ref-reservation-get-all"/>.
+          </para>
+        </section>
+
+        <section xml:id="command-reservation-get-page">
+          <title>reservation-get-page command</title>
+          <para><command>reservation-get-page</command> can be used to
+          query the host database and retrieve all reservations in a
+          specified subnet by pages. This command uses parameters providing the
+          mandatory subnet-id. Use a value of zero (0) to fetch global
+          reservations. The second mandatory parameter is the page size limit.
+          Optional source-index and from host id, both defaulting to 0, are
+          uses to chain page queries.
+          </para>
+
+          <para>
+            The usage of from and source-index parameters requires
+            additional explanation. For the first call those
+            parameters should not be specified (or specified as
+            zeros). For any follow up calls they should be set to the
+            values returned in previous calls in a next map holding
+            from and source-index values.  The subsequent calls should
+            be issued until all reservations are returned. The end is
+            reached once the returned list is empty, count is 0, no
+            next map is present and result status 3 (empty) is returned.
+          </para>
+
+          <note>
+            <simpara>The from and source-index parameters are
+            reflecting internal state of the search. There is no need
+            to understand what they represent, it's simply a value
+            that is supposed to be copied from one response to the
+            next query. However, if you are curious, from field
+            represents a 64 bits representation of host identifier
+            used by a host backend. The source-index represents
+            internal representation of multiple host backends: 0 is
+            used to represent hosts defined in a configuration file, 1
+            represents the first database backend. In some uncommon
+            cases there may be more than one database backend
+            configured, so potentially there may be 2. In any case,
+            Kea will iterate over all backends configured.
+            </simpara>
+          </note>
+
+          <para>For instance for retrieving host reservations for the
+          subnet 1 requesting the first page can be done by:
+<screen>
+{
+    "command": "reservation-get-page",
+    "arguments": {
+        <userinput>"subnet-id": 1,
+        "limit": 10</userinput>
+     }
+}
+</screen> Since this is the first call, source-index and from should
+not be specified. They will default to their zero default values.
+          </para>
+
+          <para>Some hosts are returned with informations to get the next page:
+<screen>
+{
+    "arguments": {
+        "count": 72,
+        "hosts": [
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "somehost.example.org",
+                "hw-address": "01:02:03:04:05:06",
+                "ip-address": "192.0.2.100",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            },
+            ...
+            {
+                "boot-file-name": "bootfile.efi",
+                "client-classes": [ ],
+                "hostname": "otherhost.example.org",
+                "hw-address": "01:02:03:04:05:ff",
+                "ip-address": "192.0.2.200",
+                "next-server": "192.0.0.2",
+                "option-data": [ ],
+                "server-hostname": "server-hostname.example.org"
+            }
+        ],
+        "next": {
+            "from": 1234567,
+            "source-index": 1
+        }
+    },
+    "result": 0,
+    "text": "72 IPv4 host(s) found."
+}
+</screen> Note that from and source-index fields were specified in the
+response in the next map. Those two must be copied to the next
+command, so Kea continues from the place where the last command
+finished. To get the next page the following command can be sent:
+<screen>
+{
+    "command": "reservation-get-page",
+    "arguments": {
+        <userinput>"subnet-id": 1,
+        "source-index": 1,
+        "from": 1234567,
+        "limit": 10</userinput>
+     }
+}
+</screen>. The response will contain a list of hosts with updated
+source-index and from fields. Continue calling the command until you
+get the last page. Its response will look like this:
+<screen>
+{
+    "arguments": {
+        "count": 0,
+        "hosts": [ ],
+    },
+    "result": 3,
+    "0 IPv4 host(s) found."
+}
+</screen></para>
+
+          <para>This command is more complex than
+          <command>reservation-get-all</command>, but lets users
+          retrieve larger host reservations lists by smaller
+          chunks. For small deployments with few reservations, is it
+          easier to use <command>reservation-get-all</command> (see
+          <xref linkend="command-reservation-get-all"/>.</para>
+
+          <para>
+          For a reference, see <xref linkend="ref-reservation-get-page"/>.
+          </para>
+
+          <note><simpara>
+              Currently <command>reservation-get-page</command> is not
+              supported by the Cassandra host backend.
+          </simpara></note>
+        </section>
+
+        <section xml:id="command-reservation-del">
           <title>reservation-del command</title>
           <para><command>reservation-del</command> can be used to delete a
           reservation from the host database. There are two types of parameters
@@ -1764,7 +2019,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
         </itemizedlist>
         </para>
 
-        <section>
+        <section id="command-subnet4-list">
           <title>subnet4-list command</title>
           <para>
             This command is used to list all currently configured subnets. The
@@ -1808,7 +2063,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           </para>
         </section>
 
-        <section>
+        <section id="command-subnet6-list">
           <title>subnet6-list command</title>
           <para>
             This command is used to list all currently configured subnets. The
@@ -1852,7 +2107,7 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           </para>
         </section>
 
-      <section>
+      <section id="command-subnet4-get">
         <title>subnet4-get command</title>
         <para>This command is used to retrieve detailed information about the
         specified subnet. This command usually follows the
@@ -1904,7 +2159,7 @@ or
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-get">
         <title>subnet6-get command</title>
         <para>This command is used to retrieve detailed information about the
         specified subnet. This command usually follows the
@@ -1953,7 +2208,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet4-add">
         <title>subnet4-add</title>
         <para>
           This command is used to create and add new subnet to the existing
@@ -1973,7 +2228,7 @@ If the subnet exists the response will be similar to this:
 {
     "command": "subnet4-add",
     "arguments": {
-        "subnets": [ {
+        "subnet4": [ {
             "id": 123,
             "subnet": "10.20.30.0/24",
             ...
@@ -1990,7 +2245,7 @@ If the subnet exists the response will be similar to this:
     "result": 0,
     "text": "IPv4 subnet added",
     "arguments": {
-        "subnets": [
+        "subnet4": [
             {
                 "id": 123,
                 "subnet": "10.20.30.0/24"
@@ -2002,7 +2257,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-add">
         <title>subnet6-add</title>
         <para>
           This command is used to create and add new subnet to the existing
@@ -2081,7 +2336,7 @@ If the subnet exists the response will be similar to this:
 
       </section>
 
-      <section>
+      <section id="command-subnet4-del">
         <title>subnet4-del command</title>
         <para>
           This command is used to remove a subnet from the server's configuration.
@@ -2141,7 +2396,7 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-subnet6-del">
         <title>subnet6-del command</title>
         <para>
           This command is used to remove a subnet from the server's configuration.
@@ -2199,9 +2454,9 @@ If the subnet exists the response will be similar to this:
         </para>
       </section>
 
-      <section>
+      <section id="command-network4-list">
         <title>network4-list, network6-list commands</title>
-        <para>
+        <para id="command-network6-list">
           These commands are used to retrieve full list of currently configured
           shared networks. The list contains only very basic information about
           each shared network. If more details are needed, please use
@@ -2230,9 +2485,9 @@ both the query and the response.
         </para>
     </section>
 
-    <section>
+    <section id="command-network4-get">
         <title>network4-get, network6-get commands</title>
-        <para>
+        <para id="command-network6-get">
           These commands are used to retrieve detailed information
           about shared networks, including subnets currently
           being part of a given network. Both commands take one
@@ -2289,9 +2544,9 @@ shared networks information.
         </para>
     </section>
 
-    <section>
+    <section id="command-network4-add">
         <title>network4-add, network6-add commands</title>
-        <para>
+        <para id="command-network6-add">
           These commands are used to add a new shared network. New
           network has to have unique name. This command requires one parameter
           <command>shared-networks</command>, which is a list and
@@ -2364,9 +2619,9 @@ the response. However, there are some parameters that are IPv4-only
 applies to subnets within the network.
         </para>
     </section>
-    <section>
+    <section id="command-network4-del">
         <title>network4-del, network6-del commands</title>
-        <para>
+        <para id="command-network6-del">
           These commands are used to delete existing shared
           networks. Both commands take exactly one parameter 'name' that
           specifies the name of the network to be removed. An example invocation
@@ -2422,9 +2677,9 @@ both the command and the response.
         <command>subnet6-del</command> commands.</para>
 
     </section>
-    <section>
+    <section id="command-network4-subnet-add">
         <title>network4-subnet-add, network6-subnet-add commands</title>
-        <para>
+        <para id="command-network6-subnet-add">
           These commands are used to add existing subnets to existing shared
           networks. There are several ways to add new shared network. System
           administrator can add the whole shared network at once, either by
@@ -2481,9 +2736,9 @@ both the command and the response.
           filled with default values, rather than inherited from
           global scope or from the shared network.</para></note>
     </section>
-    <section>
+    <section id="command-network4-subnet-del">
         <title>network4-subnet-del, network6-subnet-del commands</title>
-        <para>
+        <para id="command-network6-subnet-del">
           These commands are used to remove a subnet that is part of existing shared
           network and demote it to a plain, stand-alone subnet. If you want to
           remove a subnet completely, use <command>subnet4-del</command> or
@@ -2519,14 +2774,17 @@ both the command and the response.
 
     </section> <!-- end of subnet commands -->
 
+    <!-- section class-cmds-library -->
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-class-cmds.xml"/>
+
     <!-- section high-availability-library -->
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-ha.xml"/>
+
+    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-stat-cmds.xml"/>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-radius.xml"/>
 
     <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-host-cache.xml"/>
-
-    <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="hooks-stat-cmds.xml"/>
 
   </section>
 
@@ -2566,4 +2824,4 @@ both the command and the response.
         of server id which is DHCPv6 only.
       </para>
     </section>
-   </chapter>
+</chapter>

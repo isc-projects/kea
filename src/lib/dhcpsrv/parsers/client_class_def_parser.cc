@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 #include <algorithm>
+#include <sstream>
 
 using namespace isc::data;
 using namespace isc::asiolink;
@@ -68,8 +69,9 @@ ExpressionParser::parse(ExpressionPtr& expression,
 void
 ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                             ConstElementPtr class_def_cfg,
-                            uint16_t family) {
-    // name is now mandatory
+                            uint16_t family,
+                            bool append_error_position) {
+    // name is now mandatory, so let's deal with it first.
     std::string name = getString(class_def_cfg, "name");
     if (name.empty()) {
         isc_throw(DhcpConfigError,
@@ -207,10 +209,50 @@ ClientClassDefParser::parse(ClientClassDictionaryPtr& class_dictionary,
                                    depend_on_known, options, defs,
                                    user_context, next_server, sname, filename);
     } catch (const std::exception& ex) {
-        isc_throw(DhcpConfigError, "Can't add class: " << ex.what()
-                  << " (" << class_def_cfg->getPosition() << ")");
+        std::ostringstream s;
+        s << "Can't add class: " << ex.what();
+        // Append position of the error in JSON string if required.
+        if (append_error_position) {
+            s << " (" << class_def_cfg->getPosition() << ")";
+        }
+        isc_throw(DhcpConfigError, s.str());
     }
 }
+
+void
+ClientClassDefParser::checkParametersSupported(const ConstElementPtr& class_def_cfg,
+                                               const uint16_t family) {
+    // Make sure that the client class definition is stored in a map.
+    if (!class_def_cfg || (class_def_cfg->getType() != Element::map)) {
+        isc_throw(DhcpConfigError, "client class definition is not a map");
+    }
+
+    // Common v4 and v6 parameters supported for the client class.
+    static std::set<std::string> supported_params = { "name",
+                                                      "test",
+                                                      "option-data",
+                                                      "user-context",
+                                                      "only-if-required" };
+
+    // The v4 client class supports additional parmeters.
+    static std::set<std::string> supported_params_v4 = { "option-def",
+                                                         "next-server",
+                                                         "server-hostname",
+                                                         "boot-file-name" };
+
+    // Iterate over the specified parameters and check if they are all supported.
+    for (auto name_value_pair : class_def_cfg->mapValue()) {
+        if ((supported_params.count(name_value_pair.first) > 0) ||
+            ((family == AF_INET) && (supported_params_v4.count(name_value_pair.first) > 0))) {
+            continue;
+
+        } else {
+            isc_throw(DhcpConfigError, "unsupported client class parameter '"
+                      << name_value_pair.first << "'");
+        }
+    }
+}
+
 
 // ****************** ClientClassDefListParser ************************
 

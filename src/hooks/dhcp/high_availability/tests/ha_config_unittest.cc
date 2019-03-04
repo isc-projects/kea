@@ -68,6 +68,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
         "        \"send-lease-updates\": false,"
         "        \"sync-leases\": false,"
         "        \"sync-timeout\": 20000,"
+        "        \"sync-page-limit\": 3,"
         "        \"heartbeat-delay\": 8,"
         "        \"max-response-delay\": 11,"
         "        \"max-ack-delay\": 5,"
@@ -117,6 +118,7 @@ TEST_F(HAConfigTest, configureLoadBalancing) {
     EXPECT_FALSE(impl->getConfig()->amSendingLeaseUpdates());
     EXPECT_FALSE(impl->getConfig()->amSyncingLeases());
     EXPECT_EQ(20000, impl->getConfig()->getSyncTimeout());
+    EXPECT_EQ(3, impl->getConfig()->getSyncPageLimit());
     EXPECT_EQ(8, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(11, impl->getConfig()->getMaxResponseDelay());
     EXPECT_EQ(5, impl->getConfig()->getMaxAckDelay());
@@ -222,6 +224,7 @@ TEST_F(HAConfigTest, configureHotStandby) {
     EXPECT_TRUE(impl->getConfig()->amSendingLeaseUpdates());
     EXPECT_TRUE(impl->getConfig()->amSyncingLeases());
     EXPECT_EQ(60000, impl->getConfig()->getSyncTimeout());
+    EXPECT_EQ(10000, impl->getConfig()->getSyncPageLimit());
     EXPECT_EQ(10000, impl->getConfig()->getHeartbeatDelay());
     EXPECT_EQ(10000, impl->getConfig()->getMaxAckDelay());
     EXPECT_EQ(10, impl->getConfig()->getMaxUnackedClients());

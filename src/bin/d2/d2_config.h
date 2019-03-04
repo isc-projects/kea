@@ -77,6 +77,11 @@ namespace d2 {
 ///  "interface" : "eth1" ,
 ///  "ip-address" : "192.168.1.33" ,
 ///  "port" : 88 ,
+///  "control-socket":
+///  {
+///    "socket-type": "unix" ,
+///    "socket-name": "/tmp/d2-ctrl-socket"
+//// },
 ///  "tsig-keys":
 //// [
 ///    {
@@ -257,7 +262,7 @@ typedef boost::shared_ptr<D2Params> D2ParamsPtr;
 /// instance of the actual key (@ref isc::dns::TSIGKey) that can be used
 /// by the IO layer for signing and verifying messages.
 ///
-class TSIGKeyInfo : public isc::dhcp::UserContext, public isc::data::CfgToElement {
+class TSIGKeyInfo : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Defines string values for the supported TSIG algorithms
     //@{
@@ -412,7 +417,7 @@ typedef boost::shared_ptr<TSIGKeyInfoMap> TSIGKeyInfoMapPtr;
 /// belongs to a list of servers supporting DNS for a given domain. It will
 /// be used to establish communications with the server to carry out DNS
 /// updates.
-class DnsServerInfo : public isc::dhcp::UserContext, public isc::data::CfgToElement {
+class DnsServerInfo : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief defines DNS standard port value
     static const uint32_t STANDARD_DNS_PORT = 53;
@@ -522,7 +527,7 @@ typedef boost::shared_ptr<DnsServerInfoStorage> DnsServerInfoStoragePtr;
 /// @todo Currently the name entry for a domain is just an std::string. It
 /// may be worthwhile to change this to a dns::Name for purposes of better
 /// validation and matching capabilities.
-class DdnsDomain : public isc::dhcp::UserContext, public isc::data::CfgToElement {
+class DdnsDomain : public isc::data::UserContext, public isc::data::CfgToElement {
 public:
     /// @brief Constructor
     ///
@@ -701,7 +706,7 @@ typedef boost::shared_ptr<DdnsDomainListMgr> DdnsDomainListMgrPtr;
 ///
 /// This class implements a concrete version of the base class by supplying a
 /// "clone" method.
-class DScalarContext : public process::DCfgContextBase {
+class DScalarContext : public process::ConfigBase {
 public:
 
     /// @brief Constructor
@@ -715,8 +720,8 @@ public:
     /// @brief Creates a clone of a DStubContext.
     ///
     /// @return returns a pointer to the new clone.
-    virtual process::DCfgContextBasePtr clone() {
-        return (process::DCfgContextBasePtr(new DScalarContext(*this)));
+    virtual process::ConfigPtr clone() {
+        return (process::ConfigPtr(new DScalarContext(*this)));
     }
 
     /// @brief Unparse a configuration object
@@ -728,7 +733,7 @@ public:
 
 protected:
     /// @brief Copy constructor
-    DScalarContext(const DScalarContext& rhs) : DCfgContextBase(rhs) {
+    DScalarContext(const DScalarContext& rhs) : ConfigBase(rhs) {
     }
 
 private:

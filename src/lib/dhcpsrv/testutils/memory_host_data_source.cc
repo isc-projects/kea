@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 
 #include <dhcpsrv/testutils/memory_host_data_source.h>
 
+using namespace isc::db;
 using namespace std;
 
 namespace isc {
@@ -19,6 +20,74 @@ MemHostDataSource::getAll(const Host::IdentifierType& /*identifier_type*/,
                           const uint8_t* /*identifier_begin*/,
                           const size_t /*identifier_len*/) const {
     return (ConstHostCollection());
+}
+
+ConstHostCollection
+MemHostDataSource::getAll4(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Keep it when subnet_id matchs.
+        if ((*h)->getIPv4SubnetID() == subnet_id) {
+            hosts.push_back(*h);
+        }
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getAll6(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Keep it when subnet_id matchs.
+        if ((*h)->getIPv6SubnetID() == subnet_id) {
+            hosts.push_back(*h);
+        }
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getPage4(const SubnetID& subnet_id,
+                            size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Skip it when subnet_id does not match.
+        if ((*h)->getIPv4SubnetID() != subnet_id) {
+            continue;
+        }
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+MemHostDataSource::getPage6(const SubnetID& subnet_id,
+                            size_t& /*source_index*/,
+                            uint64_t lower_host_id,
+                            const HostPageSize& page_size) const {
+    ConstHostCollection hosts;
+    for (auto h = store_.begin(); h != store_.end(); ++h) {
+        // Skip it when subnet_id does not match.
+        if ((*h)->getIPv6SubnetID() != subnet_id) {
+            continue;
+        }
+        if (lower_host_id && ((*h)->getHostId() <= lower_host_id)) {
+            continue;
+        }
+        hosts.push_back(*h);
+        if (hosts.size() == page_size.page_size_) {
+            break;
+        }
+    }
+    return (hosts);
 }
 
 ConstHostCollection
@@ -118,6 +187,7 @@ MemHostDataSource::get6(const SubnetID& subnet_id,
 
 void
 MemHostDataSource::add(const HostPtr& host) {
+    host->setHostId(++next_host_id_);
     store_.push_back(host);
 }
 

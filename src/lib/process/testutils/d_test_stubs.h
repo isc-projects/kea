@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -542,7 +542,7 @@ public:
     ///
     /// @return A pointer to the context which may be null if it has not yet
     /// been instantiated.
-    DCfgContextBasePtr getContext();
+    ConfigPtr getContext();
 
     /// @brief Timer used for delayed configuration file writing.
     asiolink::IntervalTimerPtr write_timer_;
@@ -554,11 +554,7 @@ public:
     static const char* CFG_TEST_FILE;
 };
 
-/// @brief a collection of elements that store uint32 values
-typedef isc::dhcp::ValueStorage<isc::data::ConstElementPtr> ObjectStorage;
-typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
-
-/// @brief Test Derivation of the DCfgContextBase class.
+/// @brief Test Derivation of the ConfigBase class.
 ///
 /// This class is used to test basic functionality of configuration context.
 /// It adds an additional storage container "extra values" to mimic an
@@ -566,7 +562,7 @@ typedef boost::shared_ptr<ObjectStorage> ObjectStoragePtr;
 /// both the base class content as well as the application content is
 /// correctly copied during cloning.  This is vital to configuration backup
 /// and rollback during configuration parsing.
-class DStubContext : public DCfgContextBase {
+class DStubContext : public ConfigBase {
 public:
 
     /// @brief Constructor
@@ -578,20 +574,7 @@ public:
     /// @brief Creates a clone of a DStubContext.
     ///
     /// @return returns a pointer to the new clone.
-    virtual DCfgContextBasePtr clone();
-
-    /// @brief Fetches the value for a given "extra" configuration parameter
-    /// from the context.
-    ///
-    /// @param name is the name of the parameter to retrieve.
-    /// @param value is an output parameter in which to return the retrieved
-    /// value.
-    /// @throw throws DhcpConfigError if the context does not contain the
-    /// parameter.
-    void getObjectParam(const std::string& name,
-                        isc::data::ConstElementPtr& value);
-
-    ObjectStoragePtr& getObjectStorage();
+    virtual ConfigPtr clone();
 
 protected:
     /// @brief Copy constructor
@@ -600,9 +583,6 @@ protected:
 private:
     /// @brief Private assignment operator, not implemented.
     DStubContext& operator=(const DStubContext& rhs);
-
-    /// @brief Stores non-scalar configuration elements
-    ObjectStoragePtr object_values_;
 
     /// @brief Unparse a configuration object
     ///
@@ -638,30 +618,6 @@ public:
     /// @brief Destructor
     virtual ~DStubCfgMgr();
 
-    /// @brief Parses the given element into the appropriate object
-    ///
-    /// The method supports three named elements:
-    ///
-    /// -# "bool_test"
-    /// -# "uint32_test"
-    /// -# "string_test"
-    ///
-    /// which are parsed and whose value is then stored in the
-    /// the appropriate context value store.
-    ///
-    /// Any other element_id is treated generically and stored
-    /// in the context's object store, unless the simulated
-    /// error has been set to SimFailure::ftElementUnknown.
-    ///
-    /// @param element_id name of the element to parse
-    /// @param element Element to parse
-    ///
-    /// @throw DCfgMgrBaseError if simulated error is set
-    /// to ftElementUnknown and element_id is not one of
-    /// the named elements.
-    virtual void parseElement(const std::string& element_id,
-                              isc::data::ConstElementPtr element);
-
     /// @brief Pretends to parse the config
     ///
     /// This method pretends to parse the configuration specified on input
@@ -682,12 +638,8 @@ public:
         return ("");
     }
 
-    /// @brief A list for remembering the element ids in the order they were
-    /// parsed.
-    ElementIdList parsed_order_;
-
     /// @todo
-    virtual DCfgContextBasePtr createNewContext();
+    virtual ConfigPtr createNewContext();
 };
 
 /// @brief Defines a pointer to DStubCfgMgr.

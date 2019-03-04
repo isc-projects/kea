@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -20,8 +20,10 @@ namespace isc {
 namespace dhcp {
 
 PktFilterInet6::PktFilterInet6()
-: control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-    control_buf_(new char[control_buf_len_]) {
+: recv_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
+  send_control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
+  recv_control_buf_(new char[recv_control_buf_len_]),
+  send_control_buf_(new char[send_control_buf_len_]) {
 }
 
 SocketInfo
@@ -135,7 +137,7 @@ Pkt6Ptr
 PktFilterInet6::receive(const SocketInfo& socket_info) {
     // Now we have a socket, let's get some data from it!
     uint8_t buf[IfaceMgr::RCVBUFSIZE];
-    memset(&control_buf_[0], 0, control_buf_len_);
+    memset(&recv_control_buf_[0], 0, recv_control_buf_len_);
     struct sockaddr_in6 from;
     memset(&from, 0, sizeof(from));
 
@@ -163,8 +165,8 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
     // previously asked the kernel to give us packet
     // information (when we initialized the interface), so we
     // should get the destination address from that.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
+    m.msg_control = &recv_control_buf_[0];
+    m.msg_controllen = recv_control_buf_len_;
 
     int result = recvmsg(socket_info.sockfd_, &m, 0);
 
@@ -245,7 +247,7 @@ PktFilterInet6::receive(const SocketInfo& socket_info) {
 int
 PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
 
-    memset(&control_buf_[0], 0, control_buf_len_);
+    memset(&send_control_buf_[0], 0, send_control_buf_len_);
 
     // Set the target address we're sending to.
     sockaddr_in6 to;
@@ -287,8 +289,8 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     // define the IPv6 packet information. We could set the
     // source address if we wanted, but we can safely let the
     // kernel decide what that should be.
-    m.msg_control = &control_buf_[0];
-    m.msg_controllen = control_buf_len_;
+    m.msg_control = &send_control_buf_[0];
+    m.msg_controllen = send_control_buf_len_;
     struct cmsghdr *cmsg = CMSG_FIRSTHDR(&m);
 
     // FIXME: Code below assumes that cmsg is not NULL, but
@@ -317,12 +319,12 @@ PktFilterInet6::send(const Iface&, uint16_t sockfd, const Pkt6Ptr& pkt) {
     pkt->updateTimestamp();
 
     int result = sendmsg(sockfd, &m, 0);
-    if  (result < 0) {
+    if (result < 0) {
         isc_throw(SocketWriteError, "pkt6 send failed: sendmsg() returned"
                   " with an error: " << strerror(errno));
     }
 
-    return (result);
+    return (0);
 }
 
 

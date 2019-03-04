@@ -1,4 +1,4 @@
-// Copyright (C) 2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -41,7 +41,7 @@ this step is called phase 2.
 
 Other issues with the old parsers are discussed here: @ref dhcpv6ConfigParserBison (this section is
 focused on DHCPv6, but the same issues affected DHCPv4 and D2) and here:
-http://kea.isc.org/wiki/SimpleParser.
+https://gitlab.isc.org/isc-projects/kea/wikis/designs/simple-parser-design.
 
 @section parserBisonIntro Flex/Bison Based Parser
 
@@ -434,6 +434,7 @@ Here's the complete set of changes that were necessary.
                 | reservation_mode
                 | relay
                 | match_client_id
+                | authoritative
                 | next_server
                 | subnet_4o6_interface
                 | subnet_4o6_interface_id (*)

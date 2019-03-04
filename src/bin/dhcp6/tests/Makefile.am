@@ -78,31 +78,35 @@ libco3_la_CPPFLAGS = $(AM_CPPFLAGS)
 libco3_la_LDFLAGS = -avoid-version -export-dynamic -module -rpath /nowhere
 
 TESTS += dhcp6_unittests
-dhcp6_unittests_SOURCES  = dhcp6_unittests.cc
+
+# This list is ordered alphabetically. When adding new files, please maintain
+# this order.
+dhcp6_unittests_SOURCES  = classify_unittests.cc
+dhcp6_unittests_SOURCES += config_parser_unittest.cc
+dhcp6_unittests_SOURCES += confirm_unittest.cc
+dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
+dhcp6_unittests_SOURCES += decline_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
+dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
 dhcp6_unittests_SOURCES += dhcp6_srv_unittest.cc
+dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
+dhcp6_unittests_SOURCES += dhcp6_unittests.cc
+dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
 dhcp6_unittests_SOURCES += fqdn_unittest.cc
+dhcp6_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
 dhcp6_unittests_SOURCES += hooks_unittest.cc
 dhcp6_unittests_SOURCES += host_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6_test_utils.cc dhcp6_test_utils.h
-dhcp6_unittests_SOURCES += d2_unittest.cc d2_unittest.h
+dhcp6_unittests_SOURCES += infrequest_unittest.cc
+dhcp6_unittests_SOURCES += kea_controller_unittest.cc
 dhcp6_unittests_SOURCES += marker_file.cc
-dhcp6_unittests_SOURCES += ctrl_dhcp6_srv_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6_client.cc dhcp6_client.h
+dhcp6_unittests_SOURCES += parser_unittest.cc
 dhcp6_unittests_SOURCES += rebind_unittest.cc
 dhcp6_unittests_SOURCES += renew_unittest.cc
 dhcp6_unittests_SOURCES += sarr_unittest.cc
-dhcp6_unittests_SOURCES += config_parser_unittest.cc
-dhcp6_unittests_SOURCES += confirm_unittest.cc
-dhcp6_unittests_SOURCES += infrequest_unittest.cc
-dhcp6_unittests_SOURCES += decline_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6_message_test.cc dhcp6_message_test.h
-dhcp6_unittests_SOURCES += kea_controller_unittest.cc
-dhcp6_unittests_SOURCES += dhcp6to4_ipc_unittest.cc
-dhcp6_unittests_SOURCES += classify_unittests.cc
-dhcp6_unittests_SOURCES += parser_unittest.cc
 dhcp6_unittests_SOURCES += simple_parser6_unittest.cc
-dhcp6_unittests_SOURCES += get_config_unittest.cc get_config_unittest.h
 dhcp6_unittests_SOURCES += shared_network_unittest.cc
+dhcp6_unittests_SOURCES += vendor_opts_unittest.cc
 
 nodist_dhcp6_unittests_SOURCES  = marker_file.h test_libraries.h
 
@@ -129,7 +133,24 @@ dhcp6_unittests_LDADD += $(top_builddir)/src/lib/testutils/libkea-testutils.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dhcp/tests/libdhcptest.la
+
+if HAVE_MYSQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/mysql/libkea-mysql.la
+endif
+if HAVE_PGSQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/testutils/libpgsqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/pgsql/libkea-pgsql.la
+endif
+if HAVE_CQL
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cql/libkea-cql.la
+endif
+
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/testutils/libdatabasetest.la
+dhcp6_unittests_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 dhcp6_unittests_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la

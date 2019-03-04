@@ -18,7 +18,7 @@ EXTRA_DIST += agent.dox agent_hooks.dox
 
 if GENERATE_DOCS
 kea-ctrl-agent.8: kea-ctrl-agent.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-ctrl-agent.xml
 
@@ -68,7 +68,6 @@ kea_ctrl_agent_SOURCES = main.cc
 kea_ctrl_agent_LDADD  = libagent.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
@@ -84,14 +83,10 @@ kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+kea_ctrl_agent_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_ctrl_agent_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_ctrl_agent_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-
-if HAVE_CQL
-kea_ctrl_agent_LDFLAGS += $(CQL_LIBS)
-endif
-
 
 if GENERATE_PARSER
 

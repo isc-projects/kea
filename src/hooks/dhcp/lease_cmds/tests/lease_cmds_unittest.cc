@@ -30,6 +30,12 @@ using namespace isc::test;
 
 namespace {
 
+/// @brief High valid lifetime used for leases in the tests below.
+constexpr uint32_t HIGH_VALID_LIFETIME = 0xFFFFFFFE;
+
+/// @brief December 11th 2030 date used in the unit tests for cltt.
+constexpr time_t DEC_2030_TIME = 1923222072;
+
 /// @brief Test fixture for testing loading and unloading the flex-id library
 class LibLoadTest : public ::testing::Test {
 public:
@@ -291,7 +297,7 @@ public:
 
     /// @brief Creates an IPv4 lease
     ///
-    /// Lease parameters: valid lifetime = 3600, cltt = 12345678, fqdn-fwd = false,
+    /// Lease parameters: valid lifetime = 0xFFFFFFFE, cltt = 1923222072, fqdn-fwd = false,
     /// fqdn-rev = true, hostname = myhost.example.com
     ///
     /// @param ip_address IP address for the lease.
@@ -315,8 +321,10 @@ public:
         // Set other parameters.  For historical reasons, address 0 is not used.
         lease->hwaddr_.reset(new HWAddr(vector<uint8_t>(6, hw_address_pattern), HTYPE_ETHER));
         lease->client_id_ = ClientIdPtr(new ClientId(vector<uint8_t>(8, client_id_pattern)));
-        lease->valid_lft_ = 3600;
-        lease->cltt_ = 12345678;
+        // Purposely using high cltt and valid lifetime to test that
+        // expiration time is cast properly.
+        lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->cltt_ = DEC_2030_TIME; // December 11th 2030
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -327,9 +335,9 @@ public:
 
     /// @brief Creates an IPv6 lease
     ///
-    /// Lease parameters: cltt = 12345678, fqdn-fwd = false, fqdn-rev = true,
+    /// Lease parameters: cltt = 1923222072, fqdn-fwd = false, fqdn-rev = true,
     /// hostname = myhost.example.com, preferred lifetime = 1800,
-    /// valid lifetime = 3600
+    /// valid lifetime = 0xFFFFFFFE
     ///
     /// @param ip_address IP address for the lease.
     /// @param subnet_id subnet identifier
@@ -346,8 +354,10 @@ public:
         lease->iaid_ = 42;
         lease->duid_ = DuidPtr(new DUID(vector<uint8_t>(8, duid_pattern)));
         lease->preferred_lft_ = 1800;
-        lease->valid_lft_ = 3600;
-        lease->cltt_ = 12345678;
+        // Purposely using high cltt and valid lifetime to test that
+        // expiration time is cast properly.
+        lease->valid_lft_ = HIGH_VALID_LIFETIME; // Very high valid lifetime
+        lease->cltt_ = DEC_2030_TIME; // December 11th 2030
         lease->subnet_id_ = subnet_id;
         lease->fqdn_fwd_ = false;
         lease->fqdn_rev_ = true;
@@ -398,19 +408,26 @@ public:
         }
 
         // Check that other parameters are there.
-        EXPECT_TRUE(l->contains("valid-lft"));
-        EXPECT_TRUE(l->contains("cltt"));
-        EXPECT_TRUE(l->contains("subnet-id"));
-        EXPECT_TRUE(l->contains("state"));
-        EXPECT_TRUE(l->contains("fqdn-fwd"));
-        EXPECT_TRUE(l->contains("fqdn-rev"));
-        EXPECT_TRUE(l->contains("hostname"));
-        EXPECT_TRUE(l->contains("state"));
+        ASSERT_TRUE(l->contains("valid-lft"));
+        ASSERT_TRUE(l->contains("cltt"));
+        ASSERT_TRUE(l->contains("subnet-id"));
+        ASSERT_TRUE(l->contains("state"));
+        ASSERT_TRUE(l->contains("fqdn-fwd"));
+        ASSERT_TRUE(l->contains("fqdn-rev"));
+        ASSERT_TRUE(l->contains("hostname"));
+        ASSERT_TRUE(l->contains("state"));
 
         // Check that there are no v6 specific fields
-        EXPECT_FALSE(l->contains("prefix"));
-        EXPECT_FALSE(l->contains("duid"));
-        EXPECT_FALSE(l->contains("preferred-lft"));
+        ASSERT_FALSE(l->contains("prefix"));
+        ASSERT_FALSE(l->contains("duid"));
+        ASSERT_FALSE(l->contains("preferred-lft"));
+
+        // Assuming that these values were used to create the lease.
+        // If we ever want to test different values they will need to
+        // be added as parameters to this function.
+        EXPECT_EQ(HIGH_VALID_LIFETIME,
+                  static_cast<uint32_t>(l->get("valid-lft")->intValue()));
+        EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
 
     /// @brief Checks if specified response contains IPv6 lease
@@ -462,17 +479,24 @@ public:
         }
 
         // Check that there are expected fields
-        EXPECT_TRUE(l->contains("preferred-lft"));
-        EXPECT_TRUE(l->contains("valid-lft"));
-        EXPECT_TRUE(l->contains("cltt"));
-        EXPECT_TRUE(l->contains("subnet-id"));
-        EXPECT_TRUE(l->contains("fqdn-fwd"));
-        EXPECT_TRUE(l->contains("fqdn-rev"));
-        EXPECT_TRUE(l->contains("hostname"));
-        EXPECT_TRUE(l->contains("state"));
+        ASSERT_TRUE(l->contains("preferred-lft"));
+        ASSERT_TRUE(l->contains("valid-lft"));
+        ASSERT_TRUE(l->contains("cltt"));
+        ASSERT_TRUE(l->contains("subnet-id"));
+        ASSERT_TRUE(l->contains("fqdn-fwd"));
+        ASSERT_TRUE(l->contains("fqdn-rev"));
+        ASSERT_TRUE(l->contains("hostname"));
+        ASSERT_TRUE(l->contains("state"));
 
         // Check that there are no v4 specific fields.
-        EXPECT_FALSE(l->contains("client-id"));
+        ASSERT_FALSE(l->contains("client-id"));
+
+        // Assuming that these values were used to create the lease.
+        // If we ever want to test different values they will need to
+        // be added as parameters to this function.
+        EXPECT_EQ(HIGH_VALID_LIFETIME,
+                  static_cast<uint32_t>(l->get("valid-lft")->intValue()));
+        EXPECT_EQ(DEC_2030_TIME, l->get("cltt")->intValue());
     }
 };
 
@@ -751,6 +775,62 @@ TEST_F(LeaseCmdsTest, Lease4AddSubnetIdMissingBadAddr) {
     ASSERT_FALSE(l);
 }
 
+// Check that the lease with negative expiration time is rejected.
+TEST_F(LeaseCmdsTest, Lease4AddNegativeExpireTime) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Add a lease with negative expiration time.
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"expire\": -6218189367\n"
+        "    }\n"
+        "}";
+    string exp_rsp = "expiration time must be positive for address 192.0.2.202";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease was not added.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_FALSE(l);
+}
+
+// Check that the lease with negative cltt is rejected.
+TEST_F(LeaseCmdsTest, Lease4AddNegativeCltt) {
+
+    // Initialize lease manager (false = v4, false = don't add leases)
+    initLeaseMgr(false, false);
+
+    // Check that the lease manager pointer is there.
+    ASSERT_TRUE(lmptr_);
+
+    // Add a lease with negative cltt (expiration time - valid lifetime)
+    string txt =
+        "{\n"
+        "    \"command\": \"lease4-add\",\n"
+        "    \"arguments\": {"
+        "        \"ip-address\": \"192.0.2.202\",\n"
+        "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"expire\": 123456,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    string exp_rsp = "expiration time must be greater than valid lifetime for "
+        "address 192.0.2.202";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Now check that the lease was not added.
+    Lease4Ptr l = lmptr_->getLease4(IOAddress("192.0.2.202"));
+    ASSERT_FALSE(l);
+}
+
 // Check that a well formed lease4 with tons of parameters can be added.
 TEST_F(LeaseCmdsTest, Lease4AddFull) {
 
@@ -770,7 +850,7 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"client-id\": \"01:02:03:04:05:06:07:08\",\n"
         "        \"valid-lft\": 1000,\n"
-        "        \"expire\": 12345678,\n"
+        "        \"expire\": 6218189367,\n"
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
         "        \"hostname\": \"urania.example.org\",\n"
@@ -788,7 +868,8 @@ TEST_F(LeaseCmdsTest, Lease4AddFull) {
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->client_id_);
     EXPECT_EQ("01:02:03:04:05:06:07:08", l->client_id_->toText());
-    EXPECT_EQ(l->cltt_, 12344678); // expire (12345678) - valid_lft(1000)
+    // expire (6218189367) - valid_lft(1000)
+    EXPECT_EQ(static_cast<time_t>(6218189367 - 1000), l->cltt_);
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
@@ -1011,6 +1092,41 @@ TEST_F(LeaseCmdsTest, Lease6AddBadParams) {
     exp_rsp = "Duplicated comment entry '\"direct\"' in user context "
         "'{ \"comment\": \"in user context\" }'";
     testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Negative expiration time.
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"expire\": -6218189367\n"
+        "    }\n"
+        "}";
+    exp_rsp = "expiration time must be positive for address 2001:db8:1::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
+    // Negative cltt
+    txt =
+        "{\n"
+        "    \"command\": \"lease6-add\",\n"
+        "    \"arguments\": {"
+        "        \"subnet-id\": 66,\n"
+        "        \"ip-address\": \"2001:db8:1::1\",\n"
+        "        \"duid\": \"1a:1b:1c:1d:1e:1f\",\n"
+        "        \"iaid\": 1234\n,"
+        "        \"user-context\": { \"comment\": \"in user context\" },\n"
+        "        \"expire\": 123456,\n"
+        "        \"valid-lft\": 123457"
+        "    }\n"
+        "}";
+    exp_rsp = "expiration time must be greater than valid lifetime for address "
+        "2001:db8:1::1";
+    testCommand(txt, CONTROL_RESULT_ERROR, exp_rsp);
+
 }
 
 // Check that a simple, well formed lease6 can be added.
@@ -1157,7 +1273,7 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
         "        \"hw-address\": \"1a:1b:1c:1d:1e:1f\",\n"
         "        \"preferred-lft\": 500,\n"
         "        \"valid-lft\": 1000,\n"
-        "        \"expire\": 12345678,\n"
+        "        \"expire\": 6218189367,\n"
         "        \"fqdn-fwd\": true,\n"
         "        \"fqdn-rev\": true,\n"
         "        \"hostname\": \"urania.example.org\",\n"
@@ -1176,7 +1292,8 @@ TEST_F(LeaseCmdsTest, Lease6AddFullAddr) {
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));
     ASSERT_TRUE(l->duid_);
     EXPECT_EQ("01:02:03:04:05:06:07:08", l->duid_->toText());
-    EXPECT_EQ(l->cltt_, 12344678); // expire (12345678) - valid_lft(1000)
+    // expire (6218189367) - valid_lft(1000)
+    EXPECT_EQ(static_cast<time_t>(6218189367 - 1000), l->cltt_);
     EXPECT_EQ(true, l->fqdn_fwd_);
     EXPECT_EQ(true, l->fqdn_rev_);
     EXPECT_EQ("urania.example.org", l->hostname_);
@@ -2702,7 +2819,7 @@ TEST_F(LeaseCmdsTest, Lease4UpdateForceCreateNoSubnetId) {
 
     // Make sure the subnet-id is figured out correctly.
     EXPECT_EQ(44, l->subnet_id_);
-    
+
     // Make sure it contains expected values..
     ASSERT_TRUE(l->hwaddr_);
     EXPECT_EQ("1a:1b:1c:1d:1e:1f", l->hwaddr_->toText(false));

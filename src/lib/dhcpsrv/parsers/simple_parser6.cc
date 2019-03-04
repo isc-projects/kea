@@ -62,7 +62,9 @@ const SimpleDefaults SimpleParser6::GLOBAL6_DEFAULTS = {
     { "preferred-lifetime",       Element::integer, "3600" },
     { "valid-lifetime",           Element::integer, "7200" },
     { "decline-probation-period", Element::integer, "86400" }, // 24h
-    { "dhcp4o6-port",             Element::integer, "0" }
+    { "dhcp4o6-port",             Element::integer, "0" },
+    { "server-tag",               Element::string,  "" },
+    { "reservation-mode",         Element::string,  "all" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -70,9 +72,8 @@ const SimpleDefaults SimpleParser6::SUBNET6_DEFAULTS = {
     { "id",               Element::integer, "0" }, // 0 means autogenerate
     { "interface",        Element::string,  "" },
     { "client-class",     Element::string,  "" },
-    { "reservation-mode", Element::string,  "all" },
     { "rapid-commit",     Element::boolean, "false" }, // rapid-commit disabled by default
-    { "interface-id",     Element::string,  "" },
+    { "interface-id",     Element::string,  "" }
 };
 
 /// @brief This table defines default values for each IPv6 subnet.
@@ -83,9 +84,8 @@ const SimpleDefaults SimpleParser6::SHARED_SUBNET6_DEFAULTS = {
 /// @brief This table defines default values for each IPv6 shared network.
 const SimpleDefaults SimpleParser6::SHARED_NETWORK6_DEFAULTS = {
     { "client-class",     Element::string,  "" },
-    { "interface",        Element::string, "" },
+    { "interface",        Element::string,  "" },
     { "interface-id",     Element::string,  "" },
-    { "reservation-mode", Element::string, "all" },
     { "rapid-commit",     Element::boolean, "false" } // rapid-commit disabled by default
 };
 
@@ -116,6 +116,15 @@ const ParamsList SimpleParser6::INHERIT_TO_SUBNET6 = {
     "reservation-mode",
     "valid-lifetime"
 };
+
+/// @brief This table defines default values for dhcp-queue-control in DHCPv4.
+const SimpleDefaults SimpleParser6::DHCP_QUEUE_CONTROL6_DEFAULTS = {
+    { "enable-queue",   Element::boolean, "false"},
+    { "queue-type", Element::string,  "kea-ring6"},
+    { "capacity",  Element::integer, "500"}
+};
+
+
 /// @}
 
 /// ---------------------------------------------------------------------------
@@ -170,6 +179,19 @@ size_t SimpleParser6::setAllDefaults(isc::data::ElementPtr global) {
             }
         }
     }
+
+    // Set the defaults for dhcp-queue-control.  If the element isn't there
+    // we'll add it.
+    ConstElementPtr queue_control = global->get("dhcp-queue-control");
+    ElementPtr mutable_cfg;
+    if (queue_control) {
+        mutable_cfg = boost::const_pointer_cast<Element>(queue_control);
+    } else {
+        mutable_cfg = Element::createMap();
+        global->set("dhcp-queue-control", mutable_cfg);
+    }
+
+    cnt += setDefaults(mutable_cfg, DHCP_QUEUE_CONTROL6_DEFAULTS);
 
     return (cnt);
 }

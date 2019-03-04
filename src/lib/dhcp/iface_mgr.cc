@@ -1,4 +1,4 @@
-// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,7 @@
 
 #include <boost/foreach.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/bind.hpp>
 
 #include <cstring>
 #include <errno.h>
@@ -28,11 +29,21 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <string.h>
+#include <sys/ioctl.h>
 #include <sys/select.h>
+
+#ifndef FD_COPY
+#define FD_COPY(orig, copy) \
+    do { \
+        memmove(copy, orig, sizeof(fd_set)); \
+    } while (0)
+#endif
 
 using namespace std;
 using namespace isc::asiolink;
 using namespace isc::util;
+using namespace isc::util::thread;
+using namespace isc::util::io;
 using namespace isc::util::io::internal;
 
 namespace isc {
@@ -82,6 +93,7 @@ Iface::closeSockets(const uint16_t family) {
                   << " specified when requested to close all sockets"
                   << " which belong to this family");
     }
+
     // Search for the socket of the specific type.
     SocketCollection::iterator sock = sockets_.begin();
     while (sock != sockets_.end()) {
@@ -168,21 +180,25 @@ bool Iface::delSocket(const uint16_t sockfd) {
 }
 
 IfaceMgr::IfaceMgr()
-    :control_buf_len_(CMSG_SPACE(sizeof(struct in6_pktinfo))),
-     control_buf_(new char[control_buf_len_]),
-     packet_filter_(new PktFilterInet()),
+    :packet_filter_(new PktFilterInet()),
      packet_filter6_(new PktFilterInet6()),
      test_mode_(false),
-     allow_loopback_(false)
-{
+     allow_loopback_(false) {
+
+    // Ensure that PQMs have been created to guarantee we have
+    // default packet queues in place.
+    try {
+        packet_queue_mgr4_.reset(new PacketQueueMgr4());
+        packet_queue_mgr6_.reset(new PacketQueueMgr6());
+    } catch (const std::exception& ex) {
+        isc_throw(Unexpected, "Failed to create PacketQueueManagers: " << ex.what());
+    }
 
     try {
+
         // required for sending/receiving packets
         // let's keep it in front, just in case someone
         // wants to send anything during initialization
-
-        // control_buf_ = boost::scoped_array<char>();
-
         detectIfaces();
 
     } catch (const std::exception& ex) {
@@ -197,7 +213,7 @@ void Iface::addUnicast(const isc::asiolink::IOAddress& addr) {
                       << " already defined on the " << name_ << " interface.");
         }
     }
-    unicasts_.push_back(OptionalValue<IOAddress>(addr, true));
+    unicasts_.push_back(Optional<IOAddress>(addr));
 }
 
 bool
@@ -228,7 +244,7 @@ Iface::hasAddress(const isc::asiolink::IOAddress& address) const {
 
 void
 Iface::addAddress(const isc::asiolink::IOAddress& addr) {
-    addrs_.push_back(Address(addr, OptionalValueState(true)));
+    addrs_.push_back(Address(addr));
 }
 
 void
@@ -236,7 +252,7 @@ Iface::setActive(const IOAddress& address, const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
         if (address == addr_it->get()) {
-            addr_it->specify(OptionalValueState(active));
+            addr_it->unspecified(!active);
             return;
         }
     }
@@ -248,7 +264,7 @@ void
 Iface::setActive(const bool active) {
     for (AddressCollection::iterator addr_it = addrs_.begin();
          addr_it != addrs_.end(); ++addr_it) {
-        addr_it->specify(OptionalValueState(active));
+        addr_it->unspecified(!active);
     }
 }
 
@@ -256,7 +272,7 @@ unsigned int
 Iface::countActive4() const {
     uint16_t count = 0;
     BOOST_FOREACH(Address addr, addrs_) {
-        if (addr.get().isV4() && addr.isSpecified()) {
+        if (!addr.unspecified() && addr.get().isV4()) {
             ++count;
         }
     }
@@ -264,22 +280,31 @@ Iface::countActive4() const {
 }
 
 void IfaceMgr::closeSockets() {
+    // Stops the receiver thread if there is one.
+    stopDHCPReceiver();
+
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
         iface->closeSockets();
     }
 }
 
-void
-IfaceMgr::closeSockets(const uint16_t family) {
-    BOOST_FOREACH(IfacePtr iface, ifaces_) {
-        iface->closeSockets(family);
+void IfaceMgr::stopDHCPReceiver() {
+    if (isDHCPReceiverRunning()) {
+        dhcp_receiver_->stop();
+    }
+
+    dhcp_receiver_.reset();
+
+    if (getPacketQueue4()) {
+        getPacketQueue4()->clear();
+    }
+
+    if (getPacketQueue6()) {
+        getPacketQueue6()->clear();
     }
 }
 
 IfaceMgr::~IfaceMgr() {
-    // control_buf_ is deleted automatically (scoped_ptr)
-    control_buf_len_ = 0;
-
     closeSockets();
 }
 
@@ -476,20 +501,32 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
             }
 
-            IOAddress out_address("0.0.0.0");
-            if (!iface->flag_up_ || !iface->flag_running_ ||
-                !iface->getAddress4(out_address)) {
+            if (!iface->flag_up_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
-                               << " is down or has no usable IPv4"
-                               " addresses configured");
+                               << " is down");
+                continue;
+            }
+
+            if (!iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is not running");
+                continue;
+            }
+
+            IOAddress out_address("0.0.0.0");
+            if (!iface->getAddress4(out_address)) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " has no usable IPv4 addresses configured");
                 continue;
             }
         }
 
         BOOST_FOREACH(Iface::Address addr, iface->getAddresses()) {
             // Skip non-IPv4 addresses and those that weren't selected..
-            if (!addr.get().isV4() || !addr.isSpecified()) {
+            if (addr.unspecified() || !addr.get().isV4()) {
                 continue;
             }
 
@@ -555,6 +592,13 @@ IfaceMgr::openSockets4(const uint16_t port, const bool use_bcast,
 
         }
     }
+
+    // If we have open sockets, start the receiver.
+    if (count > 0) {
+        // starts the receiver thread (if queueing is enabled).
+        startDHCPReceiver(AF_INET);
+    }
+
     return (count > 0);
 }
 
@@ -581,11 +625,15 @@ IfaceMgr::openSockets6(const uint16_t port,
                                " interface " << iface->getName());
                 continue;
 
-            } else if (!iface->flag_up_ || !iface->flag_running_) {
+            } else if (!iface->flag_up_) {
                 IFACEMGR_ERROR(SocketConfigError, error_handler,
                                "the interface " << iface->getName()
-                               << " is down or has no usable IPv6"
-                               " addresses configured");
+                               << " is down");
+                continue;
+            } else if (!iface->flag_running_) {
+                IFACEMGR_ERROR(SocketConfigError, error_handler,
+                               "the interface " << iface->getName()
+                               << " is not running");
                 continue;
             }
 
@@ -633,7 +681,47 @@ IfaceMgr::openSockets6(const uint16_t port,
 
         }
     }
+
+    // If we have open sockets, start the receiver.
+    if (count > 0) {
+        // starts the receiver thread (if queueing is enabled).
+        startDHCPReceiver(AF_INET6);
+    }
     return (count > 0);
+}
+
+void
+IfaceMgr::startDHCPReceiver(const uint16_t family) {
+    if (isDHCPReceiverRunning()) {
+        isc_throw(InvalidOperation, "a receiver thread already exists");
+    }
+
+    switch (family) {
+    case AF_INET:
+        // If the queue doesn't exist, packet queing has been configured
+        // as disabled. If there is no queue, we do not create a reciever.
+        if(!getPacketQueue4()) {
+            return;
+        }
+
+        dhcp_receiver_.reset(new WatchedThread());
+        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP4Packets, this));
+
+        break;
+    case AF_INET6:
+        // If the queue doesn't exist, packet queing has been configured
+        // as disabled. If there is no queue, we do not create a reciever.
+        if(!getPacketQueue6()) {
+            return;
+        }
+
+        dhcp_receiver_.reset(new WatchedThread());
+        dhcp_receiver_->start(boost::bind(&IfaceMgr::receiveDHCP6Packets, this));
+        break;
+    default:
+        isc_throw (BadValue, "startDHCPReceiver: invalid family: " << family);
+        break;
+    }
 }
 
 void
@@ -870,7 +958,8 @@ IfaceMgr::send(const Pkt6Ptr& pkt) {
     }
 
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    return (packet_filter6_->send(*iface, getSocket(*pkt), pkt));
+    // The packet filter returns an int but in fact it either returns 0 or throws.
+    return (packet_filter6_->send(*iface, getSocket(*pkt), pkt) == 0);
 }
 
 bool
@@ -883,11 +972,119 @@ IfaceMgr::send(const Pkt4Ptr& pkt) {
     }
 
     // Assuming that packet filter is not NULL, because its modifier checks it.
-    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt));
+    // The packet filter returns an int but in fact it either returns 0 or throws.
+    return (packet_filter_->send(*iface, getSocket(*pkt).sockfd_, pkt) == 0);
 }
 
-
 Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+    if (isDHCPReceiverRunning()) {
+        return (receive4Indirect(timeout_sec, timeout_usec));
+    }
+
+    return (receive4Direct(timeout_sec, timeout_usec));
+}
+
+Pkt4Ptr IfaceMgr::receive4Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
+
+    fd_set sockets;
+    int maxfd = 0;
+
+    FD_ZERO(&sockets);
+
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            addFDtoSet(s.socket_, maxfd, &sockets);
+        }
+    }
+
+    // Add Receiver ready watch socket
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+
+    // Add Receiver error watch socket
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+
+    // Set timeout for our next select() call.  If there are
+    // no DHCP packets to read, then we'll wait for a finite
+    // amount of time for an IO event.  Otherwise, we'll
+    // poll (timeout = 0 secs).  We need to poll, even if
+    // DHCP packets are waiting so we don't starve external
+    // sockets under heavy DHCP load.
+    struct timeval select_timeout;
+    if (getPacketQueue4()->empty()) {
+        select_timeout.tv_sec = timeout_sec;
+        select_timeout.tv_usec = timeout_usec;
+    } else {
+        select_timeout.tv_sec = 0;
+        select_timeout.tv_usec = 0;
+    }
+
+    // zero out the errno to be safe
+    errno = 0;
+
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+
+    if ((result == 0) && getPacketQueue4()->empty()) {
+        // nothing received and timeout has been reached
+        return (Pkt4Ptr());
+    } else if (result < 0) {
+        // In most cases we would like to know whether select() returned
+        // an error because of a signal being received  or for some other
+        // reason. This is because DHCP servers use signals to trigger
+        // certain actions, like reconfiguration or graceful shutdown.
+        // By catching a dedicated exception the caller will know if the
+        // error returned by the function is due to the reception of the
+        // signal or for some other reason.
+        if (errno == EINTR) {
+            isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else {
+            isc_throw(SocketReadError, strerror(errno));
+        }
+    }
+
+    // We only check external sockets if select detected an event.
+    if (result > 0) {
+        // Check for receiver thread read errors.
+        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+            string msg = dhcp_receiver_->getLastError();
+            dhcp_receiver_->clearReady(WatchedThread::ERROR);
+            isc_throw(SocketReadError, msg);
+        }
+
+        // Let's find out which external socket has the data
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            if (!FD_ISSET(s.socket_, &sockets)) {
+                continue;
+            }
+
+            // something received over external socket
+
+            // Calling the external socket's callback provides its service
+            // layer access without integrating any specific features
+            // in IfaceMgr
+            if (s.callback_) {
+                s.callback_();
+            }
+
+            return (Pkt4Ptr());
+        }
+    }
+
+    // If we're here it should only be because there are DHCP packets waiting.
+    Pkt4Ptr pkt = getPacketQueue4()->dequeuePacket();
+    if (!pkt) {
+        dhcp_receiver_->clearReady(WatchedThread::READY);
+    }
+
+    return (pkt);
+}
+
+Pkt4Ptr IfaceMgr::receive4Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
@@ -905,15 +1102,10 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     /// provided set to indicated which sockets have something to read.
     BOOST_FOREACH(iface, ifaces_) {
         BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
-
             // Only deal with IPv4 addresses.
             if (s.addr_.isV4()) {
-
                 // Add this socket to listening set
-                FD_SET(s.sockfd_, &sockets);
-                if (maxfd < s.sockfd_) {
-                    maxfd = s.sockfd_;
-                }
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
             }
         }
     }
@@ -921,10 +1113,8 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     // if there are any callbacks for external sockets registered...
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
-            FD_SET(s.socket_, &sockets);
-            if (maxfd < s.socket_) {
-                maxfd = s.socket_;
-            }
+            // Add this socket to listening set
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
@@ -996,7 +1186,29 @@ Pkt4Ptr IfaceMgr::receive4(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     return (packet_filter_->receive(*iface, *candidate));
 }
 
-Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
+Pkt6Ptr
+IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */) {
+    if (isDHCPReceiverRunning()) {
+        return (receive6Indirect(timeout_sec, timeout_usec));
+    }
+
+    return (receive6Direct(timeout_sec, timeout_usec));
+}
+
+void
+IfaceMgr::addFDtoSet(int fd, int& maxfd, fd_set* sockets) {
+    if (!sockets) {
+        isc_throw(BadValue, "addFDtoSet: sockets can't be null");
+    }
+
+    FD_SET(fd, sockets);
+    if (maxfd < fd) {
+        maxfd = fd;
+    }
+}
+
+Pkt6Ptr
+IfaceMgr::receive6Direct(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
     // Sanity check for microsecond timeout.
     if (timeout_usec >= 1000000) {
         isc_throw(BadValue, "fractional timeout must be shorter than"
@@ -1013,16 +1225,11 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     /// and then use its copy for select(). Please note that select() modifies
     /// provided set to indicated which sockets have something to read.
     BOOST_FOREACH(IfacePtr iface, ifaces_) {
-
         BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
             // Only deal with IPv6 addresses.
             if (s.addr_.isV6()) {
-
                 // Add this socket to listening set
-                FD_SET(s.sockfd_, &sockets);
-                if (maxfd < s.sockfd_) {
-                    maxfd = s.sockfd_;
-                }
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
             }
         }
     }
@@ -1031,10 +1238,7 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     if (!callbacks_.empty()) {
         BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
             // Add it to the set as well
-            FD_SET(s.socket_, &sockets);
-            if (maxfd < s.socket_) {
-                maxfd = s.socket_;
-            }
+            addFDtoSet(s.socket_, maxfd, &sockets);
         }
     }
 
@@ -1104,7 +1308,320 @@ Pkt6Ptr IfaceMgr::receive6(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */
     return (packet_filter6_->receive(*candidate));
 }
 
-uint16_t IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
+Pkt6Ptr
+IfaceMgr::receive6Indirect(uint32_t timeout_sec, uint32_t timeout_usec /* = 0 */ ) {
+    // Sanity check for microsecond timeout.
+    if (timeout_usec >= 1000000) {
+        isc_throw(BadValue, "fractional timeout must be shorter than"
+                  " one million microseconds");
+    }
+
+    fd_set sockets;
+    int maxfd = 0;
+
+    FD_ZERO(&sockets);
+
+    // if there are any callbacks for external sockets registered...
+    if (!callbacks_.empty()) {
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            // Add it to the set as well
+            addFDtoSet(s.socket_, maxfd, &sockets);
+        }
+    }
+
+    // Add Receiver ready watch socket
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::READY), maxfd, &sockets);
+
+    // Add Receiver error watch socket
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::ERROR), maxfd, &sockets);
+
+    // Set timeout for our next select() call.  If there are
+    // no DHCP packets to read, then we'll wait for a finite
+    // amount of time for an IO event.  Otherwise, we'll
+    // poll (timeout = 0 secs).  We need to poll, even if
+    // DHCP packets are waiting so we don't starve external
+    // sockets under heavy DHCP load.
+    struct timeval select_timeout;
+    if (getPacketQueue6()->empty()) {
+        select_timeout.tv_sec = timeout_sec;
+        select_timeout.tv_usec = timeout_usec;
+    } else {
+        select_timeout.tv_sec = 0;
+        select_timeout.tv_usec = 0;
+    }
+
+    // zero out the errno to be safe
+    errno = 0;
+
+    int result = select(maxfd + 1, &sockets, NULL, NULL, &select_timeout);
+
+    if ((result == 0) && getPacketQueue6()->empty()) {
+        // nothing received and timeout has been reached
+        return (Pkt6Ptr());
+    } else if (result < 0) {
+        // In most cases we would like to know whether select() returned
+        // an error because of a signal being received  or for some other
+        // reason. This is because DHCP servers use signals to trigger
+        // certain actions, like reconfiguration or graceful shutdown.
+        // By catching a dedicated exception the caller will know if the
+        // error returned by the function is due to the reception of the
+        // signal or for some other reason.
+        if (errno == EINTR) {
+            isc_throw(SignalInterruptOnSelect, strerror(errno));
+        } else {
+            isc_throw(SocketReadError, strerror(errno));
+        }
+    }
+
+    // We only check external sockets if select detected an event.
+    if (result > 0) {
+        // Check for receiver thread read errors.
+        if (dhcp_receiver_->isReady(WatchedThread::ERROR)) {
+            string msg = dhcp_receiver_->getLastError();
+            dhcp_receiver_->clearReady(WatchedThread::ERROR);
+            isc_throw(SocketReadError, msg);
+        }
+
+        // Let's find out which external socket has the data
+        BOOST_FOREACH(SocketCallbackInfo s, callbacks_) {
+            if (!FD_ISSET(s.socket_, &sockets)) {
+                continue;
+            }
+
+            // something received over external socket
+
+            // Calling the external socket's callback provides its service
+            // layer access without integrating any specific features
+            // in IfaceMgr
+            if (s.callback_) {
+                s.callback_();
+            }
+
+            return (Pkt6Ptr());
+        }
+    }
+
+    // If we're here it should only be because there are DHCP packets waiting.
+    Pkt6Ptr pkt = getPacketQueue6()->dequeuePacket();
+    if (!pkt) {
+        dhcp_receiver_->clearReady(WatchedThread::READY);
+    }
+
+    return (pkt);
+}
+
+void
+IfaceMgr::receiveDHCP4Packets() {
+    IfacePtr iface;
+    fd_set sockets;
+    int maxfd = 0;
+
+    FD_ZERO(&sockets);
+
+    // Add terminate watch socket.
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+
+    // Add Interface sockets.
+    BOOST_FOREACH(iface, ifaces_) {
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            // Only deal with IPv4 addresses.
+            if (s.addr_.isV4()) {
+                // Add this socket to listening set.
+                addFDtoSet(s.sockfd_, maxfd, &sockets);
+            }
+        }
+    }
+
+    for (;;) {
+        // Check the watch socket.
+        if (dhcp_receiver_->shouldTerminate()) {
+            return;
+        }
+
+        fd_set rd_set;
+        FD_COPY(&sockets, &rd_set);
+
+        // zero out the errno to be safe.
+        errno = 0;
+
+        // Select with null timeouts to wait indefinetly an event
+        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+
+        // Re-check the watch socket.
+        if (dhcp_receiver_->shouldTerminate()) {
+            return;
+        }
+
+        if (result == 0) {
+            // nothing received?
+            continue;
+
+        } else if (result < 0) {
+            // This thread should not get signals?
+            if (errno != EINTR) {
+                // Signal the error to receive4.
+                dhcp_receiver_->setError(strerror(errno));
+                // We need to sleep in case of the error condition to
+                // prevent the thread from tight looping when result
+                // gets negative.
+                sleep(1);
+            }
+            continue;
+        }
+
+        // Let's find out which interface/socket has data.
+        BOOST_FOREACH(iface, ifaces_) {
+            BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+                if (FD_ISSET(s.sockfd_, &sockets)) {
+                    receiveDHCP4Packet(*iface, s);
+                    // Can take time so check one more time the watch socket.
+                    if (dhcp_receiver_->shouldTerminate()) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+}
+
+void
+IfaceMgr::receiveDHCP6Packets() {
+    IfacePtr iface;
+    fd_set sockets;
+    int maxfd = 0;
+
+    FD_ZERO(&sockets);
+
+    // Add terminate watch socket.
+    addFDtoSet(dhcp_receiver_->getWatchFd(WatchedThread::TERMINATE), maxfd, &sockets);
+
+    // Add Interface sockets.
+    BOOST_FOREACH(iface, ifaces_) {
+        BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+            // Only deal with IPv6 addresses.
+            if (s.addr_.isV6()) {
+                // Add this socket to listening set.
+                addFDtoSet(s.sockfd_ , maxfd, &sockets);
+            }
+        }
+    }
+
+    for (;;) {
+        // Check the watch socket.
+        if (dhcp_receiver_->shouldTerminate()) {
+            return;
+        }
+
+        fd_set rd_set;
+        FD_COPY(&sockets, &rd_set);
+
+        // zero out the errno to be safe.
+        errno = 0;
+
+        // Note we wait until something happen.
+        int result = select(maxfd + 1, &rd_set, 0, 0, 0);
+
+        // Re-check the watch socket.
+        if (dhcp_receiver_->shouldTerminate()) {
+            return;
+        }
+
+        if (result == 0) {
+            // nothing received?
+            continue;
+        } else if (result < 0) {
+            // This thread should not get signals?
+            if (errno != EINTR) {
+                // Signal the error to receive6.
+                dhcp_receiver_->setError(strerror(errno));
+                // We need to sleep in case of the error condition to
+                // prevent the thread from tight looping when result
+                // gets negative.
+                sleep(1);
+            }
+            continue;
+        }
+
+        // Let's find out which interface/socket has data.
+        BOOST_FOREACH(iface, ifaces_) {
+            BOOST_FOREACH(SocketInfo s, iface->getSockets()) {
+                if (FD_ISSET(s.sockfd_, &sockets)) {
+                    receiveDHCP6Packet(s);
+                    // Can take time so check one more time the watch socket.
+                    if (dhcp_receiver_->shouldTerminate()) {
+                        return;
+                    }
+                }
+            }
+        }
+    }
+}
+
+void
+IfaceMgr::receiveDHCP4Packet(Iface& iface, const SocketInfo& socket_info) {
+    int len;
+
+    int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
+    if (result < 0) {
+        // Signal the error to receive4.
+        dhcp_receiver_->setError(strerror(errno));
+        return;
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return;
+    }
+
+    Pkt4Ptr pkt;
+
+    try {
+        pkt = packet_filter_->receive(iface, socket_info);
+    } catch (const std::exception& ex) {
+        dhcp_receiver_->setError(strerror(errno));
+    } catch (...) {
+        dhcp_receiver_->setError("packet filter receive() failed");
+    }
+
+    if (pkt) {
+        getPacketQueue4()->enqueuePacket(pkt, socket_info);
+        dhcp_receiver_->markReady(WatchedThread::READY);
+    }
+}
+
+void
+IfaceMgr::receiveDHCP6Packet(const SocketInfo& socket_info) {
+    int len;
+
+    int result = ioctl(socket_info.sockfd_, FIONREAD, &len);
+    if (result < 0) {
+        // Signal the error to receive6.
+        dhcp_receiver_->setError(strerror(errno));
+        return;
+    }
+    if (len == 0) {
+        // Nothing to read.
+        return;
+    }
+
+    Pkt6Ptr pkt;
+
+    try {
+        pkt = packet_filter6_->receive(socket_info);
+    } catch (const std::exception& ex) {
+        dhcp_receiver_->setError(ex.what());
+    } catch (...) {
+        dhcp_receiver_->setError("packet filter receive() failed");
+    }
+
+    if (pkt) {
+        getPacketQueue6()->enqueuePacket(pkt, socket_info);
+        dhcp_receiver_->markReady(WatchedThread::READY);
+    }
+}
+
+uint16_t
+IfaceMgr::getSocket(const isc::dhcp::Pkt6& pkt) {
     IfacePtr iface = getIface(pkt.getIface());
     if (!iface) {
         isc_throw(IfaceNotFound, "Tried to find socket for non-existent interface");
@@ -1192,6 +1709,43 @@ IfaceMgr::getSocket(isc::dhcp::Pkt4 const& pkt) {
 
     return (*candidate);
 }
+
+bool
+IfaceMgr::configureDHCPPacketQueue(uint16_t family, data::ConstElementPtr queue_control) {
+    if (isDHCPReceiverRunning()) {
+        isc_throw(InvalidOperation, "Cannot reconfigure queueing"
+                                    " while DHCP receiver thread is running");
+    }
+
+    bool enable_queue = false;
+    if (queue_control) {
+        try {
+            enable_queue = data::SimpleParser::getBoolean(queue_control, "enable-queue");
+        } catch (...) {
+            // @todo - for now swallow not found errors.
+            // if not present we assume default
+        }
+    }
+
+    if (enable_queue) {
+        // Try to create the queue as configured.
+        if (family == AF_INET) {
+            packet_queue_mgr4_->createPacketQueue(queue_control);
+        } else {
+            packet_queue_mgr6_->createPacketQueue(queue_control);
+        }
+    } else {
+        // Destroy the current queue (if one), this inherently disables threading.
+        if (family == AF_INET) {
+            packet_queue_mgr4_->destroyPacketQueue();
+        } else {
+            packet_queue_mgr6_->destroyPacketQueue();
+        }
+    }
+
+    return(enable_queue);
+}
+
 
 } // end of namespace isc::dhcp
 } // end of namespace isc

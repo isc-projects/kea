@@ -14,7 +14,14 @@ int
 main(int argc, char* argv[]) {
     ::testing::InitGoogleTest(&argc, argv);
 
+    // See the documentation of the KEA_* environment variables in
+    // the developer's guide for info on how to tweak logging
     isc::log::initLogger();
 
-    return (isc::util::unittests::run_all());
+    // Override --localstatedir value for PID files
+    setenv("KEA_PIDFILE_DIR", TEST_DATA_BUILDDIR, 1);
+
+    int result = RUN_ALL_TESTS();
+
+    return (result);
 }

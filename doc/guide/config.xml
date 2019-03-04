@@ -3,36 +3,42 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
 <chapter xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="kea-config">
   <title>Kea Configuration</title>
 
-  <para>Kea is using JSON structures to handle configuration. Previously
-  we there was a concept of other configuration backends, but that never was
-  implemented and the idea was abandoned.</para>
+  <para>Kea uses JSON structures to represent server configurations.
+  The following sections describe how the configuration structures are
+  organized.
+  </para>
 
   <section xml:id="json">
     <title>JSON Configuration</title>
-    <para>JSON is notation used throughout the Kea project. The most obvious
-    usage is for configuration file, but it is also used for sending commands
-    over Management API (see <xref linkend="ctrl-channel"/>) and for
-    communicating between DHCP servers and DDNS update daemon.</para>
+    <para>JSON is the notation used throughout the Kea project. The most obvious
+    usage is for the configuration file, but JSON is also used for sending commands
+    over the Management API (see <xref linkend="ctrl-channel"/>) and for
+    communicating between DHCP servers and the DDNS update daemon.</para>
 
-    <para>Typical usage assumes that the servers are started from the command line
-    (either directly or using a script, e.g. <filename>keactrl</filename>).
-    The JSON backend uses certain signals to influence Kea. The
-    configuration file is specified upon startup using the -c parameter.</para>
+    <para>Typical usage assumes that the servers are started from the command line,
+    either directly or using a script, e.g. <filename>keactrl</filename>.
+    The configuration file is specified upon startup using the -c parameter.</para>
 
     <section xml:id="json-format">
       <title>JSON Syntax</title>
-      <para>Configuration files for DHCPv4, DHCPv6 and DDNS modules are defined
-      in an extended JSON format. Basic JSON is defined in <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link>. Note that Kea
-      1.2 introduces a new parser that is better at following the JSON spec.  In
-      particular, the only values allowed for boolean are true or false (all
-      lowercase). The capitalized versions (True or False) are not accepted.
+
+      <para>Configuration files for the DHCPv4, DHCPv6, DDNS, Control
+      Agent, and Netconf modules are defined in an extended JSON
+      format. Basic JSON is defined
+      in <link xmlns:xlink="http://www.w3.org/1999/xlink"
+      xlink:href="http://tools.ietf.org/html/rfc7159">RFC 7159</link> and
+      <link xmlns:xlink="http://www.w3.org/1999/xlink"
+            xlink:href="http://www.ecma-international.org/publications/standards/Ecma-404.htm">ECMA 404</link>.
+      In particular, the only boolean values allowed
+      are true or false (all lowercase). The capitalized
+      versions (True or False) are not accepted.
       </para>
 
       <para>Kea components use an extended JSON with additional features
@@ -40,85 +46,55 @@
       <itemizedlist>
         <listitem>
           <simpara>shell comments: any text after the hash (#)
-          character is ignored. Both Dhcp4 and Dhcp6 allow # in any column,
-          while Ddns requires hash to be in the first column.</simpara>
+          character is ignored.</simpara>
         </listitem>
         <listitem>
           <simpara>C comments: any text after the double slashes (//)
-          character is ignored. Both Dhcp4 and Dhcp6 supports this
-          feature.</simpara>
+          character is ignored.</simpara>
         </listitem>
         <listitem>
           <simpara>Multiline comments: any text between /* and */ is
-          ignored. This commenting can span multiple lines. Both Dhcp4 and
-          Dhcp6 supports this feature.</simpara>
+          ignored. This commenting can span multiple lines.</simpara>
         </listitem>
         <listitem>
-          <simpara>File inclusion: JSON files can include other JSON
-          files. This can be done by using &lt;?include
-          "file.json"?&gt;. Both Dhcp4 and Dhcp6 supports this
-          feature.</simpara>
+          <simpara>File inclusion: JSON files can include other JSON files by using a statement of the form &lt;?include
+          "file.json"?&gt;.</simpara>
         </listitem>
       </itemizedlist>
       </para>
 
-      <para>The configuration file consists of a single object (often colloquially
-      called a map) started with a curly bracket. It comprises the "Dhcp4", "Dhcp6",
-      "DhcpDdns" and/or "Logging" objects. It is possible to define additional
-      elements, but they will be ignored. For example, it is possible to define
-      Dhcp4, Dhcp6 and Logging elements in a single configuration file that can
-      be used to start both the DHCPv4 and DHCPv6 components. When starting,
-      the DHCPv4 component will use Dhcp4 object to configure itself and the
-      Logging object to configure logging parameters; it will ignore the Dhcp6
-      object.</para>
+      <para>The configuration file consists of a single object (often
+      colloquially called a map) started with a curly bracket. It
+      comprises one or more of the "Dhcp4", "Dhcp6", "DhcpDdns", "Control-agent",
+      "Netconf", and "Logging" objects. It is possible to define
+      additional elements but they will be ignored.</para>
 
-      <para>A very simple configuration for both DHCPv4 and
-      DHCPv6 could look like this:
+      <para>A very simple configuration for DHCPv4 could look like this:
 <screen>
 # The whole configuration starts here.
 {
-
-# DHCPv4 specific configuration starts here.
-"Dhcp4": {
-    "interfaces-config": {
-        "interfaces": [ "eth0" ],
-        "dhcp-socket-type": "raw"
+    # DHCPv4 specific configuration starts here.
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": [ "eth0" ],
+            "dhcp-socket-type": "raw"
+        },
+        "valid-lifetime": 4000,
+        "renew-timer": 1000,
+        "rebind-timer": 2000,
+        "subnet4": [{
+           "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
+           "subnet": "192.0.2.0/24"
+        }]
     },
-    "valid-lifetime": 4000,
-    "renew-timer": 1000,
-    "rebind-timer": 2000,
-    "subnet4": [{
-       "pools": [ { "pool": "192.0.2.1-192.0.2.200" } ],
-       "subnet": "192.0.2.0/24"
-    }]
-},
-# DHCPv4 specific configuration ends here.
 
-# DHCPv6 specific configuration starts here.
-"Dhcp6": {
-    "interfaces-config": {
-        "interfaces": [ "eth1" ]
-    },
-    "preferred-lifetime": 3000,
-    "valid-lifetime": 4000,
-    "renew-timer": 1000,
-    "rebind-timer": 2000,
-    "subnet6": [{
-       "pools": [ { "pool": "2001:db8::/80" } ],
-       "subnet": "2001:db8::/64"
-    }]
-},
-# DHCPv6 specific configuration ends here.
-
-# Logger parameters (that could be shared among several components) start here.
-# This section is used by both the DHCPv4 and DHCPv6 servers.
-"Logging": {
-   "loggers": [{
-        "name": "*",
-        "severity": "DEBUG"
-    }]
-}
-# Logger parameters end here.
+    # Logger configuration starts here.
+    "Logging": {
+       "loggers": [{
+            "name": "*",
+            "severity": "DEBUG"
+        }]
+    }
 
 # The whole configuration structure ends here.
 }
@@ -128,27 +104,51 @@
         <para>More examples are available in the installed
         <filename>share/doc/kea/examples</filename> directory.</para>
 
-        <para>To avoid repetition of mostly similar structures, examples in the
-        rest of this guide will showcase only the subset of parameters appropriate for a given
-        context. For example, when discussing the IPv6 subnets configuration in
-        DHCPv6, only subnet6 parameters will be mentioned. It is implied that
-        the remaining elements (the global map that holds Dhcp6, Logging and possibly
-        DhcpDdns) are present, but they are omitted for clarity. Usually, locations
-        where extra parameters may appear are denoted by an ellipsis.</para>
+      <note>
+        <para>
+          The "Logging" element will be removed in Kea 1.6.0 and its contents
+          (the "loggers" object) moved inside the configuration objects (maps) for
+          the respective Kea modules. For example, the "Dhcp4" map will contain the
+          "loggers" object specifying logging configuration for the DHCPv4
+          server. Backward compatibility will be maintained until at least Kea
+          1.7.0; it will be possible to specify the "Logging" object
+          at the top configuration level and "loggers"
+          objects at the module configuration level. Ultimately, support for the
+          top-level "Logging" object will be removed.
+        </para>
+        <para>
+          The specification of several supported elements (e.g. "Dhcp4",
+          "Dhcp6") in a single configuration file can be confusing and works
+          badly with the commands that fetch and write new configurations.
+          Support for it will be removed in a future release of Kea, after which
+          each component will require its own configuration file.
+        </para>
+      </note>
+
+        <para>To avoid repetition of mostly similar structures,
+        examples in the rest of this guide will showcase only the
+        subset of parameters appropriate for a given context. For
+        example, when discussing the IPv6 subnets configuration in
+        DHCPv6, only subnet6 parameters will be mentioned. It is
+        implied that the remaining elements (the global map that holds
+        Dhcp6 and Logging) are present, but they are omitted for
+        clarity. Usually, locations where extra parameters may appear
+        are denoted by an ellipsis (...).</para>
     </section>
 
     <section>
       <title>Simplified Notation</title>
 
-        <para>It is sometimes convenient to refer to a specific element in the
-        configuration hierarchy. Each hierarchy level is separated by a slash.
-        If there is an array, a specific instance within that array is referenced by
-        a number in square brackets (with numbering starting at zero). For example, in the above configuration the
-        valid-lifetime in the Dhcp6 component can be referred to as
-        Dhcp6/valid-lifetime and the pool in the first subnet defined in the DHCPv6
-        configuration as Dhcp6/subnet6[0]/pool.</para>
+        <para>It is sometimes convenient to refer to a specific
+        element in the configuration hierarchy. Each hierarchy level
+        is separated by a slash. If there is an array, a specific
+        instance within that array is referenced by a number in square
+        brackets (with numbering starting at zero). For example, in
+        the above configuration the valid-lifetime in the Dhcp4
+        component can be referred to as Dhcp4/valid-lifetime and the
+        pool in the first subnet defined in the DHCPv4 configuration
+        as Dhcp4/subnet4[0]/pool.</para>
 
-      <!-- @todo Add a reference here after #3422 is done -->
     </section>
 
   </section>

@@ -3,15 +3,6 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
-if HAVE_MYSQL
-AM_CPPFLAGS += $(MYSQL_CPPFLAGS)
-endif
-if HAVE_PGSQL
-AM_CPPFLAGS += $(PGSQL_CPPFLAGS)
-endif
-if HAVE_CQL
-AM_CPPFLAGS += $(CQL_CPPFLAGS)
-endif
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -36,7 +27,7 @@ EXTRA_DIST += images/trans_classes.svg images/update_exec_classes.svg
 
 if GENERATE_DOCS
 kea-dhcp-ddns.8: kea-dhcp-ddns.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-dhcp-ddns.xml
 
@@ -89,13 +80,13 @@ kea_dhcp_ddns_SOURCES  = main.cc
 kea_dhcp_ddns_LDADD  = libd2.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cfgrpt/libcfgrpt.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
-kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiodns/libkea-asiodns.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/dns/libkea-dns++.la
@@ -108,15 +99,6 @@ kea_dhcp_ddns_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 kea_dhcp_ddns_LDADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
 kea_dhcp_ddns_LDFLAGS = $(AM_LDFLAGS) $(CRYPTO_LDFLAGS)
-if HAVE_MYSQL
-kea_dhcp_ddns_LDFLAGS += $(MYSQL_LIBS)
-endif
-if HAVE_PGSQL
-kea_dhcp_ddns_LDFLAGS += $(PGSQL_LIBS)
-endif
-if HAVE_CQL
-kea_dhcp_ddns_LDFLAGS += $(CQL_LIBS)
-endif
 
 kea_dhcp_ddnsdir = $(pkgdatadir)
 

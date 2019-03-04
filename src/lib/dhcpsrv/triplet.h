@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8,6 +8,7 @@
 #define TRIPLET_H
 
 #include <exceptions/exceptions.h>
+#include <util/optional.h>
 
 namespace isc {
 namespace dhcp {
@@ -33,8 +34,10 @@ namespace dhcp {
 /// it can be assigned to a plain integer or integer assigned to a Triplet.
 /// See TripletTest.operator test for details on an easy Triplet usage.
 template <class T>
-class Triplet {
+class Triplet : public util::Optional<T> {
 public:
+
+    using util::Optional<T>::get;
 
     /// @brief Base type to Triplet conversion.
     ///
@@ -44,27 +47,18 @@ public:
     /// @param other A number to be assigned as min, max and default value.
     Triplet<T>& operator=(T other) {
         min_ = other;
-        default_ = other;
+        util::Optional<T>::default_ = other;
         max_ = other;
         // The value is now specified because we just assigned one.
-        unspecified_ = false;
+        util::Optional<T>::unspecified_ = false;
         return (*this);
-    }
-
-    /// @brief Triplet to base type conversion
-    ///
-    /// Typically: Triplet to uint32_t assignment. It is very convenient
-    /// to be able to simply write uint32_t z = x; (where x is a Triplet)
-    operator T() const {
-        return (default_);
     }
 
     /// @brief Constructor without parameters.
     ///
     /// Marks value in @c Triplet unspecified.
     Triplet()
-        : min_(0), default_(0), max_(0),
-          unspecified_(true) {
+        : util::Optional<T>(), min_(0), max_(0) {
     }
 
     /// @brief Sets a fixed value.
@@ -74,16 +68,14 @@ public:
     ///
     /// @param value A number to be assigned as min, max and default value.
     Triplet(T value)
-        : min_(value), default_(value), max_(value),
-          unspecified_(false) {
+        : util::Optional<T>(value), min_(value), max_(value) {
     }
 
     /// @brief Sets the default value and thresholds
     ///
     /// @throw BadValue if min <= def <= max rule is violated
     Triplet(T min, T def, T max)
-        : min_(min), default_(def), max_(max),
-          unspecified_(false) {
+        : util::Optional<T>(def), min_(min), max_(max) {
         if ( (min_ > def) || (def > max_) ) {
             isc_throw(BadValue, "Invalid triplet values.");
         }
@@ -91,9 +83,6 @@ public:
 
     /// @brief Returns a minimum allowed value
     T getMin() const { return (min_);}
-
-    /// @brief Returns the default value
-    T get() const { return (default_); }
 
     /// @brief Returns value with a hint
     ///
@@ -122,26 +111,13 @@ public:
     /// @brief Returns a maximum allowed value
     T getMax() const { return (max_); }
 
-    /// @brief Check if the value has been specified.
-    ///
-    /// @return true if the value hasn't been specified, or false otherwise.
-    bool unspecified() const {
-        return (unspecified_);
-    }
-
 private:
 
     /// @brief the minimum value
     T min_;
 
-    /// @brief the default value
-    T default_;
-
     /// @brief the maximum value
     T max_;
-
-    /// @brief Indicates whether the value is unspecified.
-    bool unspecified_;
 };
 
 

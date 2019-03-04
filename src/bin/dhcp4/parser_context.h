@@ -88,6 +88,9 @@ public:
         /// This will parse the input as dhcp-ddns.
         PARSER_DHCP_DDNS,
 
+        /// This will parse the input as config-control.
+        PARSER_CONFIG_CONTROL,
+
         /// This will parse the content of Logging.
         PARSER_LOGGING
     } ParserType;
@@ -244,7 +247,7 @@ public:
         /// Used while parsing shared-networks structures.
         SHARED_NETWORK,
 
-        /// Used while parsing Dhcp4/Subnet4/reservation-mode.
+        /// Used while parsing Dhcp4/reservation-mode.
         RESERVATION_MODE,
 
         /// Used while parsing Dhcp4/option-def structures.
@@ -266,6 +269,9 @@ public:
 
         /// Used while parsing Dhcp4/control-socket structures.
         CONTROL_SOCKET,
+
+        /// Used while parsing Dhcp4/dhcp-queue-control structures.
+        DHCP_QUEUE_CONTROL,
 
         /// Used while parsing Dhcp4/subnet4/pools structures.
         POOLS,
@@ -292,7 +298,13 @@ public:
         NCR_FORMAT,
 
         /// Used while parsing Dhcp4/dhcp-ddns/replace-client-name.
-        REPLACE_CLIENT_NAME
+        REPLACE_CLIENT_NAME,
+
+        /// Used while parsing Dhcp4/config-control
+        CONFIG_CONTROL,
+
+        /// Used while parsing config-control/config-databases
+        CONFIG_DATABASE
 
     } ParserContext;
 

@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -44,6 +44,7 @@ public:
     static const isc::data::SimpleDefaults SHARED_SUBNET4_DEFAULTS;
     static const isc::data::SimpleDefaults SHARED_NETWORK4_DEFAULTS;
     static const isc::data::SimpleDefaults IFACE4_DEFAULTS;
+    static const isc::data::SimpleDefaults DHCP_QUEUE_CONTROL4_DEFAULTS;
     static const isc::data::ParamsList INHERIT_TO_SUBNET4;
 };
 

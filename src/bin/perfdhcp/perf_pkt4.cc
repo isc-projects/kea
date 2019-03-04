@@ -6,10 +6,10 @@
 
 #include <config.h>
 
+#include <perfdhcp/perf_pkt4.h>
+
 #include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp4.h>
-
-#include "perf_pkt4.h"
 
 using namespace std;
 using namespace isc;

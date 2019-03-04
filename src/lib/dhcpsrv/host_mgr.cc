@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -110,6 +110,88 @@ HostMgr::getAll(const Host::IdentifierType& identifier_type,
     return (hosts);
 }
 
+ConstHostCollection
+HostMgr::getAll4(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll4(subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAll4(subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+
+ConstHostCollection
+HostMgr::getAll6(const SubnetID& subnet_id) const {
+    ConstHostCollection hosts = getCfgHosts()->getAll6(subnet_id);
+    for (auto source : alternate_sources_) {
+        ConstHostCollection hosts_plus = source->getAll6(subnet_id);
+        hosts.insert(hosts.end(), hosts_plus.begin(), hosts_plus.end());
+    }
+    return (hosts);
+}
+
+ConstHostCollection
+HostMgr::getPage4(const SubnetID& subnet_id,
+                  size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
+    }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage4(subnet_id, source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage4(subnet_id, source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage4(subnet_id, source_index, 0UL, page_size));
+}
+
+ConstHostCollection
+HostMgr::getPage6(const SubnetID& subnet_id,
+                  size_t& source_index,
+                  uint64_t lower_host_id,
+                  const HostPageSize& page_size) const {
+    // Return empty if (and only if) sources are exhausted.
+    if (source_index > alternate_sources_.size()) {
+        return (ConstHostCollection());
+    }
+
+    ConstHostCollection hosts;
+    // Source index 0 means config file.
+    if (source_index == 0) {
+        hosts = getCfgHosts()->
+            getPage6(subnet_id, source_index, lower_host_id, page_size);
+    } else {
+        hosts = alternate_sources_[source_index - 1]->
+            getPage6(subnet_id, source_index, lower_host_id, page_size);
+    }
+
+    // When got something return it.
+    if (!hosts.empty()) {
+        return (hosts);
+    }
+
+    // Nothing from this source: try the next one.
+    // Note the recursion is limited to the number of sources in all cases.
+    ++source_index;
+    return (getPage6(subnet_id, source_index, 0UL, page_size));
+}
 
 ConstHostCollection
 HostMgr::getAll4(const IOAddress& address) const {
@@ -186,7 +268,7 @@ HostMgr::get4(const SubnetID& subnet_id,
     }
     return (host);
 }
-    
+
 ConstHostPtr
 HostMgr::get4(const SubnetID& subnet_id,
               const asiolink::IOAddress& address) const {

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -118,12 +118,12 @@ CtrlAgentCommandMgr::handleCommandInternal(std::string cmd_name,
                 s << text->stringValue();
                 s << " You did not include \"service\" parameter in the command,"
                     " which indicates that Kea Control Agent should process this"
-                " command rather than forward it to one or more DHCP servers. If you"
-                    " aimed to send this command to one of the DHCP servers you"
+                    " command rather than forward it to one or more Kea servers. If you"
+                    " aimed to send this command to one of the Kea servers you"
                     " should include the \"service\" parameter in your request, e.g."
                     " \"service\": [ \"dhcp4\" ] to forward the command to the DHCPv4"
-                    " server, or \"service\": [ \"dhcp4\", \"dhcp6\" ] to forward it to"
-                    " both DHCPv4 and DHCPv6 servers etc.";
+                    " server, or \"service\": [ \"dhcp4\", \"dhcp6\", \"d2\" ] to forward it to"
+                    " DHCPv4, DHCPv6 and D2 servers etc.";
 
                 answer->set(CONTROL_TEXT, Element::create(s.str()));
             }

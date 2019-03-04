@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- need this include to make the &keaversion; macro work -->
@@ -21,25 +21,22 @@
     </para>
 
     <para>
-      Kea was initially developed as a part of the BIND 10 framework.
-      In early 2014, ISC made the decision to discontinue active
-      development of BIND 10 and continue development of Kea as
-      standalone DHCP software.
-    </para>
-
-    <para>
       This guide covers Kea version &keaversion;.
     </para>
 
     <section>
       <title>Supported Platforms</title>
       <para>
-        Kea is officially supported on Red Hat Enterprise Linux,
-	    CentOS, Fedora and FreeBSD systems. It is also likely to work on many
-	    other platforms: Kea 1.4.0 builds have been tested on (in no
-        particular order) Red Hat Enterprise Linux 6.4, Debian GNU/Linux 7,
-        Ubuntu 14.04, Ubuntu 16.04, Fedora 25, Fedore 26, Fedora 27,
-        CentOS Linux 7, FreeBSD 11.0 OS X 10.11, OS X 10.12, Debian 7.11, Debian 9
+        Kea is officially supported on CentOS, Fedora, Ubuntu, Debian, and FreeBSD systems.
+        It is also likely to work on many other platforms. Kea-&keaversion; builds have been tested on:
+        <itemizedlist>
+          <listitem>CentOS Linux — 7.1804 (aka 7.5)</listitem>
+          <listitem>Fedora — 28, 29</listitem>
+          <listitem>Ubuntu — 16.04, 18.04</listitem>
+          <listitem>Debian GNU/Linux — 7, 8, 9</listitem>
+          <listitem>FreeBSD — 11.0</listitem>
+          <listitem>macOS — 10.13, 10.14</listitem>
+        </itemizedlist>
       </para>
       <para>There are currently no plans to port Kea to Windows platforms.</para>
     </section>
@@ -48,7 +45,7 @@
       <title>Required Software at Run-time</title>
 
       <para>
-        Running Kea uses various extra software which may
+        Running Kea uses various extra software packages which may
         not be provided in the default installation of some operating systems,
         nor in the standard package collections. You may
         need to install this required software separately.
@@ -60,12 +57,12 @@
 
         <listitem>
             <simpara>
-        Kea supports two crypto libraries: Botan and OpenSSL. Only one of them
+        Kea supports two cryptographic libraries: Botan and OpenSSL. Only one of them
         is required to be installed during compilation. Kea uses the Botan
-        crypto library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
-        version 1.9 or later. As an alternative to Botan, Kea can use the
-        OpenSSL crypto library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
-        version 1.0.1 or later.
+        library for C++ (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://botan.randombit.net/">http://botan.randombit.net/</uri>),
+        version 1.9 or later. Note that support for Botan versions earlier than 2.0 will be removed in Kea 1.6.0 and later. As an alternative to Botan, Kea can use the
+        OpenSSL cryptographic library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.openssl.org/">http://www.openssl.org/</uri>),
+        version 1.0.2 or later.
             </simpara>
         </listitem>
 
@@ -78,9 +75,15 @@
         </listitem>
 
         <listitem>
+          <simpara>
+            Kea requires the Boost system library (<uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.boost.org/">http://www.boost.org/</uri>). Building with the header-only version of Boost is no longer recommended.
+          </simpara>
+        </listitem>
+
+        <listitem>
             <simpara>
 	In order to store lease information in a MySQL database, Kea requires MySQL
-    headers and libraries.  This is an optional dependency in that Kea can be
+    headers and libraries. This is an optional dependency in that Kea can be
     built without MySQL support.
             </simpara>
         </listitem>
@@ -88,17 +91,35 @@
         <listitem>
             <simpara>
 	In order to store lease information in a PostgreSQL database, Kea requires PostgreSQL
-    headers and libraries.  This is an optional dependency in that Kea can be
+    headers and libraries. This is an optional dependency in that Kea can be
     built without PostgreSQL support.
             </simpara>
         </listitem>
 
         <listitem>
             <simpara>
-	In order to store lease information in a Cassandra  database (CQL), Kea
+	In order to store lease information in a Cassandra database (CQL), Kea
     requires Cassandra headers and libraries. This is an optional dependency
     in that Kea can be built without Cassandra support.
             </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+    Integration with RADIUS is provided in Kea via the hooks
+    library available to our paid support customers. Use of this library requires
+    the FreeRadius-client library to be present on the system where Kea is running.
+    This is an optional dependency in that Kea can be built without RADIUS support.
+          </simpara>
+        </listitem>
+
+        <listitem>
+          <simpara>
+    As of the 1.5.0 release, Kea provides a NETCONF interface with the kea-netconf agent.
+    This Kea module is built optionally and requires Sysrepo software when used.
+    Building Kea with NETCONF support requires many dependencies to be installed,
+    which are described in more detail in <xref linkend="netconf-install"/>.
+          </simpara>
         </listitem>
       </itemizedlist>
     </section>
@@ -106,7 +127,7 @@
     <section xml:id="kea_software">
       <title>Kea Software</title>
       <para>
-        Kea is modular.  Part of this modularity is
+        Kea is modular. Part of this modularity is
         accomplished using multiple cooperating processes which, together,
         provide the server functionality.
         The following software is included with Kea:
@@ -146,7 +167,7 @@
               The DHCP Dynamic DNS process.
               This process acts as an intermediary between the DHCP servers
               and DNS servers. It receives name update requests from the DHCP
-              servers and sends DNS Update messages to the DNS servers.
+              servers and sends DNS update messages to the DNS servers.
             </simpara>
           </listitem>
 
@@ -154,7 +175,7 @@
             <simpara>
               <command>kea-admin</command> —
               A useful tool for database backend maintenance (creating a new
-              database, checking versions, upgrading etc.)
+              database, checking versions, upgrading, etc.)
             </simpara>
           </listitem>
 
@@ -162,8 +183,8 @@
             <simpara>
               <command>kea-lfc</command> —
               This process removes redundant information from the files used
-              to provide persistent storage for the memfile data base backend.
-              While it can be run standalone, it is normally run as and when 
+              to provide persistent storage for the memfile database backend.
+              While it can be run standalone, it is normally run as and when
               required by the Kea DHCP servers.
             </simpara>
           </listitem>
@@ -171,15 +192,23 @@
           <listitem>
             <simpara>
               <command>kea-ctrl-agent</command> —
-              Kea Control Agent (CA) is a daemon exposes a RESTful control
+              Kea Control Agent (CA) is a daemon that exposes a RESTful control
               interface for managing Kea servers.
             </simpara>
           </listitem>
 
           <listitem>
             <simpara>
+              <command>kea-netconf</command> -
+              Kea netconf is an agent that provides a YANG/NETCONF interface
+              for the Kea environment.
+            </simpara>
+          </listitem>
+
+          <listitem>
+            <simpara>
               <command>kea-shell</command> —
-              Simple text client that uses REST interface to connect to Kea
+              This simple text client uses the REST interface to connect to the Kea
               Control Agent.
             </simpara>
           </listitem>
@@ -205,7 +234,7 @@
 
     <para>
       Kea also provides C++ libraries and programmer interfaces for
-      DHCP.  These include detailed developer documentation and
+      DHCP. These include detailed developer documentation and
       code examples.
 <!-- TODO point to this -->
     </para>

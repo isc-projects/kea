@@ -215,6 +215,12 @@ This error message is issued to indicate that there was a problem while
 parsing a response from the server from which leases have been fetched for
 local database synchronization. The argument contains a reason for the error.
 
+% HA_LEASES_SYNC_LEASE_PAGE_RECEIVED received %1 leases from %2
+This informational message is issued during lease database synchronization
+to indicate that a bulk of leases have been received. The first argument
+holds the count of leases received. The second argument specifies the
+partner server name.
+
 % HA_LEASE_SYNC_FAILED synchronization failed for lease: %1, reason: %2
 This warning message is issued when creating or updating a lease in the
 local lease database fails. The lease information in the JSON format is

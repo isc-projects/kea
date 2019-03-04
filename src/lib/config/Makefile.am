@@ -35,7 +35,7 @@ libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/util/libkea-util.la
 libkea_cfgclient_la_LIBADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
 libkea_cfgclient_la_LIBADD += $(LOG4CPLUS_LIBS) $(CRYPTO_LIBS) $(BOOST_LIBS)
 
-libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 5:1:0
+libkea_cfgclient_la_LDFLAGS = -no-undefined -version-info 6:0:0
 libkea_cfgclient_la_LDFLAGS += $(CRYPTO_LDFLAGS)
 
 nodist_libkea_cfgclient_la_SOURCES  = config_messages.h config_messages.cc

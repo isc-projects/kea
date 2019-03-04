@@ -19,7 +19,7 @@ EXTRA_DIST = $(man_MANS) kea-sockcreator.xml
 if GENERATE_DOCS
 
 kea-sockcreator.8: kea-sockcreator.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/kea-sockcreator.xml
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/kea-sockcreator.xml
 
 else
 

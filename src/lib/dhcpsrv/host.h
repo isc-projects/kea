@@ -239,7 +239,7 @@ typedef std::pair<IPv6ResrvIterator, IPv6ResrvIterator> IPv6ResrvRange;
 /// - disable IPv4 reservation without a need to set it to the 0.0.0.0 address
 /// Note that the last three operations are mainly required for managing
 /// host reservations which will be implemented later.
-class Host : public UserContext {
+class Host : public data::UserContext {
 public:
 
     /// @brief Type of the host identifier.
@@ -715,9 +715,9 @@ private:
     /// @brief key for authentication .
     ///
     /// key is a 16 byte value to be used in the authentication field.
-    /// Server replies will contain the below key in authentication field as specified in the RFC 3315bis. 
-    //  While sending reconfigure message authentication field 
-    /// shall contain MD5 hash computed using this key.
+    /// Server replies will contain the below key in authentication field
+    /// as specified in the RFC 8415. While sending reconfigure message
+    /// authentication field shall contain MD5 hash computed using this key.
     AuthKey key_;
 };
 

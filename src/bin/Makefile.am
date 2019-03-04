@@ -1,5 +1,9 @@
 # The following build order must be maintained.
-SUBDIRS = dhcp4 dhcp6 d2 agent perfdhcp admin lfc keactrl
+SUBDIRS = dhcp4 dhcp6 d2 agent admin lfc keactrl
+
+if PERFDHCP
+SUBDIRS += perfdhcp
+endif
 
 if KEA_SHELL
 SUBDIRS += shell

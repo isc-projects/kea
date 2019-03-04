@@ -1,10 +1,11 @@
-// Copyright (C) 2011-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2011-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <kea_version.h>
 
 #include <dhcp4/ctrl_dhcp4_srv.h>
 #include <dhcp4/dhcp4_log.h>
@@ -22,6 +23,7 @@
 
 using namespace isc::data;
 using namespace isc::dhcp;
+using namespace isc::process;
 using namespace std;
 
 /// This file contains entry point (main() function) for standard DHCPv4 server
@@ -42,14 +44,16 @@ usage() {
     cerr << "Kea DHCPv4 server, version " << VERSION << endl;
     cerr << endl;
     cerr << "Usage: " << DHCP4_NAME
-         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number]" << endl;
+         << " -[v|V|W] [-d] [-{c|t} cfgfile] [-p number] [-P number]" << endl;
     cerr << "  -v: print version number and exit" << endl;
     cerr << "  -V: print extended version and exit" << endl;
     cerr << "  -W: display the configuration report and exit" << endl;
     cerr << "  -d: debug mode with extra verbosity (former -v)" << endl;
     cerr << "  -c file: specify configuration file" << endl;
     cerr << "  -t file: check the configuration file syntax and exit" << endl;
-    cerr << "  -p number: specify non-standard port number 1-65535 "
+    cerr << "  -p number: specify non-standard server port number 1-65535 "
+         << "(useful for testing only)" << endl;
+    cerr << "  -P number: specify non-standard client port number 1-65535 "
          << "(useful for testing only)" << endl;
     exit(EXIT_FAILURE);
 }
@@ -58,15 +62,17 @@ usage() {
 int
 main(int argc, char* argv[]) {
     int ch;
-    int port_number = DHCP4_SERVER_PORT; // The default. any other values are
-                                         // useful for testing only.
+    // The default. Any other values are useful for testing only.
+    int server_port_number = DHCP4_SERVER_PORT;
+    // Not zero values are useful for testing only.
+    int client_port_number = 0;
     bool verbose_mode = false; // Should server be verbose?
     bool check_mode = false;   // Check syntax
 
     // The standard config file
     std::string config_file("");
 
-    while ((ch = getopt(argc, argv, "dvVWc:p:t:")) != -1) {
+    while ((ch = getopt(argc, argv, "dvVWc:p:P:t:")) != -1) {
         switch (ch) {
         case 'd':
             verbose_mode = true;
@@ -94,14 +100,29 @@ main(int argc, char* argv[]) {
 
         case 'p':
             try {
-                port_number = boost::lexical_cast<int>(optarg);
+                server_port_number = boost::lexical_cast<int>(optarg);
             } catch (const boost::bad_lexical_cast &) {
-                cerr << "Failed to parse port number: [" << optarg
+                cerr << "Failed to parse server port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
-            if (port_number <= 0 || port_number > 65535) {
-                cerr << "Failed to parse port number: [" << optarg
+            if (server_port_number <= 0 || server_port_number > 65535) {
+                cerr << "Failed to parse server port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            break;
+
+        case 'P':
+            try {
+                client_port_number = boost::lexical_cast<int>(optarg);
+            } catch (const boost::bad_lexical_cast &) {
+                cerr << "Failed to parse client port number: [" << optarg
+                     << "], 1-65535 allowed." << endl;
+                usage();
+            }
+            if (client_port_number <= 0 || client_port_number > 65535) {
+                cerr << "Failed to parse client port number: [" << optarg
                      << "], 1-65535 allowed." << endl;
                 usage();
             }
@@ -133,7 +154,7 @@ main(int argc, char* argv[]) {
             // We need to initialize logging, in case any error messages are to be printed.
             // This is just a test, so we don't care about lockfile.
             setenv("KEA_LOCKFILE_DIR", "none", 0);
-            CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+            Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
             Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
 
             // Check the syntax first.
@@ -180,17 +201,20 @@ main(int argc, char* argv[]) {
         // It is important that we set a default logger name because this name
         // will be used when the user doesn't provide the logging configuration
         // in the Kea configuration file.
-        CfgMgr::instance().setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
+        Daemon::setDefaultLoggerName(DHCP4_ROOT_LOGGER_NAME);
 
         // Initialize logging.  If verbose, we'll use maximum verbosity.
         Daemon::loggerInit(DHCP4_ROOT_LOGGER_NAME, verbose_mode);
         LOG_DEBUG(dhcp4_logger, DBG_DHCP4_START, DHCP4_START_INFO)
-            .arg(getpid()).arg(port_number).arg(verbose_mode ? "yes" : "no");
+            .arg(getpid())
+            .arg(server_port_number)
+            .arg(client_port_number)
+            .arg(verbose_mode ? "yes" : "no");
 
         LOG_INFO(dhcp4_logger, DHCP4_STARTING).arg(VERSION);
 
         // Create the server instance.
-        ControlledDhcpv4Srv server(port_number);
+        ControlledDhcpv4Srv server(server_port_number, client_port_number);
 
         // Remember verbose-mode
         server.setVerbose(verbose_mode);
@@ -228,7 +252,7 @@ main(int argc, char* argv[]) {
 
         LOG_INFO(dhcp4_logger, DHCP4_SHUTDOWN);
 
-    } catch (const isc::dhcp::DaemonPIDExists& ex) {
+    } catch (const isc::process::DaemonPIDExists& ex) {
         // First, we print the error on stderr (that should always work)
         cerr << DHCP4_NAME << " already running? " << ex.what()
              << endl;

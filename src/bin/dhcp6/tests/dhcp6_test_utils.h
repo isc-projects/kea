@@ -272,6 +272,7 @@ public:
     using Dhcpv6Srv::name_change_reqs_;
     using Dhcpv6Srv::VENDOR_CLASS_PREFIX;
     using Dhcpv6Srv::initContext;
+    using Dhcpv6Srv::client_port_;
 
     /// @brief packets we pretend to receive
     ///

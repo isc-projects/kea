@@ -103,7 +103,7 @@ const std::string FILE_HEADER =
         This is the messages manual for Kea version &keaversion;.\n\
             The most up-to-date version of this document, along with\n\
             other documents for Kea, can be found at\n\
-        <ulink url=\"http://kea.isc.org/docs\"/>.\n\
+        <ulink url=\"https://jenkins.isc.org/job/Kea_doc/messages/kea-messages.html\"/>.\n\
       </para>\n\
     </abstract>\n\
 \n\

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -66,7 +66,9 @@ TEST_F(PktFilterInet6Test, send) {
     ASSERT_GE(sock_info_.sockfd_, 0);
 
     // Send the packet over the socket.
-    ASSERT_NO_THROW(pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
+    int result = -1;
+    ASSERT_NO_THROW(result = pkt_filter.send(iface, sock_info_.sockfd_, test_message_));
+    ASSERT_EQ(0, result);
 
     // Read the data from socket.
     fd_set readfds;
@@ -76,7 +78,7 @@ TEST_F(PktFilterInet6Test, send) {
     struct timeval timeout;
     timeout.tv_sec = 5;
     timeout.tv_usec = 0;
-    int result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
+    result = select(sock_info_.sockfd_ + 1, &readfds, NULL, NULL, &timeout);
     // We should receive some data from loopback interface.
     ASSERT_GT(result, 0);
 

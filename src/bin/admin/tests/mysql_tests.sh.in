@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -245,7 +245,7 @@ mysql_upgrade_schema_to_version() {
 
 mysql_upgrade_test() {
 
-    test_start "mysql.host_reservation-upgrade"
+    test_start "mysql.upgrade"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -258,7 +258,7 @@ mysql_upgrade_test() {
 
     assert_str_eq "1.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
-    # Ok, we have a 1.0 database. Let's upgrade it to 7.0
+    # Ok, we have a 1.0 database. Let's upgrade it to 8.0
     ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
     ERRCODE=$?
 
@@ -382,7 +382,8 @@ EOF
     count=`mysql_execute "${qry}"`
     ERRCODE=$?
     assert_eq 0 $ERRCODE "select from dhcp_option_scope failed. (expected status code %d, returned %d)"
-    assert_eq 4 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
+    # verify that dhcp_option_scope table contains correct number of entries.
+    assert_eq 7 "$count" "dhcp_option_scope does not contain correct number of entries. (expected %d, returned %d)"
 
     #table: scope_id columns to dhcp4_options (upgrade 4.1 -> 5.0)
     # verify that dhcp4_options table includes scope_id
@@ -469,10 +470,228 @@ EOF
     ERRCODE=$?
     assert_eq 0 $ERRCODE "logs table is missing or broken. (expected status code %d, returned %d)"
 
-    # Verify upgraded schema reports version 7.0
-    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
-    assert_str_eq "7.0" ${version} "Expected kea-admin to return %s, returned value was %s"
+    # table: modification (upgrade 6.0 -> 7.0)
+    qry="select id, modification_type from modification"
+    run_statement "modification"  "$qry"
 
+    # table: modification table should have 3 entries (upgrade 6.0 -> 7.0)
+    qry="select count(*) from modification"
+    run_statement "modification count" "$qry" 3
+
+    # table: dhcp4_server
+    qry="select id, tag, description, modification_ts from dhcp4_server"
+    run_statement "dhcp4_server" "$qry"
+
+    # table: dhcp4_server - check if it contains default entry
+    qry="select count(*) from dhcp4_server"
+    run_statement "dhcp4_server" "$qry" 1
+
+    # table: dhcp4_audit
+    qry="select id, object_type, object_id, modification_type from dhcp4_audit"
+    run_statement "dhcp4_audit" "$qry"
+
+    # table: dhcp4_global_parameter
+    qry="select id, name, value, parameter_type, modification_ts from dhcp4_global_parameter"
+    run_statement "dhcp4_global_parameter" "$qry"
+
+    # table: dhcp4_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp4_global_parameter_server"
+    run_statement "dhcp4_global_parameter_server" "$qry"
+
+    # table: dhcp4_option_def
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp4_option_def"
+    run_statement "dhcp4_option_def" "$qry"
+
+    # table: dhcp4_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp4_option_def_server"
+    run_statement "dhcp4_option_def_server" "$qry"
+
+    # table: dhcp4_shared_network
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp4_shared_network"
+    run_statement "dhcp4_shared_network" "$qry"
+
+    # table: dhcp4_shared_network_server
+    qry="select shared_network_id, server_id, modification_ts from dhcp4_shared_network_server"
+    run_statement "dhcp4_shared_network_server" "$qry"
+
+    # table: dhcp4_subnet
+    qry="select subnet_prefix, 4o6_interface, 4o6_interface_id, 4o6_subnet, boot_file_name, client_class, interface, match_client_id, modification_ts, next_server, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, server_hostname, shared_network_name, subnet_id, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp4_subnet"
+    run_statement "dhcp4_subnet" "$qry"
+
+    # table: dhcp4_pool
+    qry="select id, start_address, end_address, subnet_id, modification_ts from dhcp4_pool"
+    run_statement "dhcp4_pool" "$qry"
+
+    # table: dhcp4_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp4_subnet_server"
+    run_statement "dhcp4_subnet_server" "$qry"
+
+    # table: dhcp4_options (should include three new columns)
+    qry="select shared_network_name, pool_id, modification_ts from dhcp4_options"
+    run_statement "dhcp4_options" "$qry"
+
+    # table: dhcp4_options_server
+    qry="select option_id, server_id, modification_ts from dhcp4_options_server"
+    run_statement "dhcp4_options_server" "$qry"
+
+    # table: dhcp6_server
+    qry="select id, tag, description, modification_ts from dhcp6_server"
+    run_statement "dhcp6_server" "$qry"
+
+    # table: dhcp6_server - check if it contains default entry
+    qry="select count(*) from dhcp6_server"
+    run_statement "dhcp6_server" "$qry" 1
+
+    # table: dhcp6_audit
+    qry="select id, object_type, object_id, modification_type from dhcp6_audit"
+    run_statement "dhcp6_audit" "$qry"
+
+    # table: dhcp6_global_parameter
+    qry="select id, name, value, parameter_type, modification_ts from dhcp6_global_parameter"
+    run_statement "dhcp6_global_parameter" "$qry"
+
+    # table: dhcp6_global_parameter_server
+    qry="select parameter_id, server_id, modification_ts from dhcp6_global_parameter_server"
+    run_statement "dhcp6_global_parameter_server" "$qry"
+
+    # table: dhcp6_option_def
+    qry="select id, code, name, space, type, modification_ts, array, encapsulate, record_types, user_context from dhcp6_option_def"
+    run_statement "dhcp6_option_def" "$qry"
+
+    # table: dhcp6_option_def_server
+    qry="select option_def_id, server_id, modification_ts from dhcp6_option_def_server"
+    run_statement "dhcp6_option_def_server" "$qry"
+
+    # table: dhcp6_shared_network
+    qry="select id, name, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_shared_network"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_shared_network_server
+    qry="select shared_network_id, server_id, modification_ts from dhcp6_shared_network_server"
+    run_statement "dhcp6_shared_network" "$qry"
+
+    # table: dhcp6_subnet
+    qry="select subnet_prefix, client_class, interface, modification_ts, preferred_lifetime, rapid_commit, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, shared_network_name, subnet_id, user_context, valid_lifetime, calculate_tee_times, t1_percent, t2_percent from dhcp6_subnet"
+    run_statement "dhcp6_subnet" "$qry"
+
+    # table: dhcp6_subnet_server
+    qry="select subnet_id, server_id, modification_ts from dhcp6_subnet_server"
+    run_statement "dhcp6_subnet_server" "$qry"
+
+    # table: dhcp6_pd_pool
+    qry="select id, prefix_length, delegated_prefix_length, subnet_id, modification_ts from dhcp6_pd_pool"
+    run_statement "dhcp6_pd_pool" "$qry"
+
+    # table: dhcp6_pool
+    qry="select id, start_address, end_address, subnet_id, modification_ts from dhcp6_pool"
+    run_statement "dhcp6_pool" "$qry"
+
+    # table: dhcp6_options (should include four new columns)
+    qry="select shared_network_name, pool_id, pd_pool_id, modification_ts from dhcp6_options"
+    run_statement "dhcp6_options" "$qry"
+
+    # table: dhcp6_options_server
+    qry="select option_id, server_id, modification_ts from dhcp6_options_server"
+    run_statement "dhcp6_options_server" "$qry"
+
+    # Schema upgrade from 7.0 to 8.0
+
+    # Test that createAuditRevisionDHCP4 exists and creates entry in
+    # the dhcp4_audit_revision table.
+    qry="CALL createAuditRevisionDHCP4('2019-01-28 23:59:11', 'all', 'some log message', 0)"
+    run_statement "createAuditRevisionDHCP4" "$qry"
+
+    qry="SELECT COUNT(*) from dhcp4_audit_revision"
+    run_statement "dhcp4_audit_revision count" "$qry" 1
+
+    qry="SELECT id, modification_ts, server_id, log_message FROM dhcp4_audit_revision"
+    run_statement "dhcp4_audit_revision" "$qry"
+
+    # Test that createAuditEntryDHCP4 exists and creates entry in
+    # the dhcp4_audit table.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); CALL createAuditEntryDHCP4('dhcp4_subnet', 1, 'create')"
+    run_statement "createAuditEntryDHCP4" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp4_audit"
+    run_statement "dhcp4_audit count" "$qry" 1
+
+    qry="SELECT id, object_type, object_id, modification_type, revision_id FROM dhcp4_audit"
+    run_statement "dhcp4_audit" "$qry"
+
+    # Test that createOptionAuditDHCP4 exists can create an audit
+    # entry.
+
+    # First set the cascade_transaction session variable to check that
+    # the procedure won't create the audit entry for the option when
+    # this flag is set.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP4 cascade update" "$qry"
+
+    # The number of rows matching the audit entry should be 0.
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 0;
+
+    # This time set the cascade_update to 0 and expect that the
+    # audit entry will be created for the option.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp4_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP4('create', 0, 1024, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP4 cascade update" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp4_audit WHERE object_type = 'dhcp4_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP4 cascade update, entry not inserted" "$qry" 1;
+
+    # Test that createAuditRevisionDHCP6 exists and creates entry in
+    # the dhcp6_audit_revision table.
+    qry="CALL createAuditRevisionDHCP6('2019-01-28 23:59:11', 'all', 'some log message', 0)"
+    run_statement "createAuditRevisionDHCP6" "$qry"
+
+    qry="SELECT COUNT(*) from dhcp6_audit_revision"
+    run_statement "dhcp6_audit_revision count" "$qry" 1
+
+    qry="SELECT id, modification_ts, server_id, log_message FROM dhcp6_audit_revision"
+    run_statement "dhcp6_audit_revision" "$qry"
+
+    # Test that createAuditEntryDHCP6 exists and creates entry in
+    # the dhcp6_audit table.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); CALL createAuditEntryDHCP6('dhcp6_subnet', 1, 'create')"
+    run_statement "createAuditEntryDHCP6" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp6_audit"
+    run_statement "dhcp6_audit count" "$qry" 1
+
+    qry="SELECT id, object_type, object_id, modification_type, revision_id FROM dhcp6_audit"
+    run_statement "dhcp6_audit" "$qry"
+
+    # Test that createOptionAuditDHCP6 exists can create an audit
+    # entry.
+
+    # First set the cascade_transaction session variable to check that
+    # the procedure won't create the audit entry for the option when
+    # this flag is set.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 1; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP6 cascade update" "$qry"
+
+    # The number of rows matching the audit entry should be 0.
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 0;
+
+    # This time set the cascade_update to 0 and expect that the
+    # audit entry will be created for the option.
+    qry="SET @audit_revision_id = (SELECT id FROM dhcp6_audit_revision LIMIT 1); SET @cascade_transaction = 0; CALL createOptionAuditDHCP6('create', 0, 1024, NULL, NULL, NULL, NULL, NULL)"
+    run_statement "createOptionAuditDHCP6 cascade update" "$qry"
+
+    qry="SELECT COUNT(*) FROM dhcp6_audit WHERE object_type = 'dhcp6_options' AND object_id = 1024";
+    run_statement "createOptionAuditDHCP6 cascade update, entry not inserted" "$qry" 1;
+
+    # New triggers aren't tested here because the extensive tests are
+    # provided with the backend implementations.
+
+    # parameter_data_type must exist and must have 4 rows.
+    qry="SELECT COUNT(*) FROM parameter_data_type";
+    run_statement "parameter_data_type count" "$qry" 4;
+
+    # Verify upgraded schema reports version 8.0
+    version=$(${keaadmin} lease-version mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir)
+    assert_str_eq "8.0" ${version} "Expected kea-admin to return %s, returned value was %s"
 
     # Let's wipe the whole database
     mysql_wipe
@@ -869,6 +1088,89 @@ mysql_lease_stat_upgrade_test() {
     mysql_wipe
 }
 
+# Verifies that you can upgrade from an earlier version and
+# that unused subnet ID values in hosts and options tables are
+# converted to NULL.
+mysql_unused_subnet_id_test() {
+    test_start "mysql.unused_subnet_id_test"
+
+    # Let's wipe the whole database
+    mysql_wipe
+
+    # We need to create an older database with lease data so we can
+    # verify the upgrade mechanisms which convert subnet id values
+    #
+    # Initialize database to scheme 1.0.
+    mysql -u$db_user -p$db_password $db_name < @abs_top_srcdir@/src/bin/admin/tests/dhcpdb_create_1.0.mysql
+
+    # Now upgrade to schema 6.0, this has lease_state in it
+    mysql_upgrade_schema_to_version 6.0
+
+    # Now we need insert some hosts to "migrate" for both v4 and v6
+    qry=\
+"insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '0123456', 0, 0, 'both'); \
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '1123456', 4, 0, 'v4only');
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname)\
+   values (0, '2123456', 0, 6, 'v6only');\
+ insert into hosts (dhcp_identifier_type, dhcp_identifier, dhcp4_subnet_id, dhcp6_subnet_id, hostname) \
+   values (0, '3123456', 4, 6, 'neither');"
+
+    run_statement "insert hosts" "$qry"
+
+    # Now we need insert some options to "migrate" for both v4 and v6
+    qry=\
+"insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (1, 4, 0);\
+ insert into dhcp4_options (code, dhcp4_subnet_id, scope_id) values (2, 0, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (1, 6, 0);\
+ insert into dhcp6_options (code, dhcp6_subnet_id, scope_id) values (2, 0, 0);"
+
+    run_statement "insert options" "$qry"
+
+    # Ok, we have a 4.0 database with hosts and options. Let's upgrade it to 5.0
+    ${keaadmin} lease-upgrade mysql -u $db_user -p $db_password -n $db_name -d $db_scripts_dir
+    ERRCODE=$?
+
+    # Upgrade should succeed
+    assert_eq 0 $ERRCODE "upgrade failed"
+
+    # Two hosts should have null v4 subnet ids
+    qry="select count(host_id) from hosts where dhcp4_subnet_id is null;"
+    run_statement "#hosts.1" "$qry" 2
+
+    # Two hosts should have v4 subnet ids = 4
+    qry="select count(host_id) from hosts where dhcp4_subnet_id = 4;"
+    run_statement "#hosts.2" "$qry" 2
+
+    # Two hosts should have null v6 subnet ids
+    qry="select count(host_id) from hosts where dhcp6_subnet_id is null;"
+    run_statement "#hosts.3" "$qry" 2
+
+    # Two hosts should should have v6 subnet ids = 6
+    qry="select count(host_id) from hosts where dhcp6_subnet_id = 6;"
+    run_statement "#hosts.4" "$qry" 2
+
+    # One option should have null v4 subnet id
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id is null;"
+    run_statement "#options.1" "$qry" 1
+
+    # One option should have v4 subnet id = 4
+    qry="select count(option_id) from dhcp4_options where dhcp4_subnet_id = 4;"
+    run_statement "#options.2" "$qry" 1
+
+    # One option should have null v6 subnet id
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id is null;"
+    run_statement "#options.3" "$qry" 1
+
+    # One option should have v4 subnet id = 6
+    qry="select count(option_id) from dhcp6_options where dhcp6_subnet_id = 6;"
+    run_statement "#options.4" "$qry" 1
+
+    # Let's wipe the whole database
+    mysql_wipe
+}
+
 mysql_lease_init_test
 mysql_host_reservation_init_test
 mysql_lease_version_test
@@ -878,3 +1180,4 @@ mysql_lease6_dump_test
 mysql_lease4_stat_test
 mysql_lease6_stat_test
 mysql_lease_stat_upgrade_test
+mysql_unused_subnet_id_test

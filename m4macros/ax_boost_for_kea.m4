@@ -71,11 +71,27 @@ fi
 # Check the path with some specific headers.
 CPPFLAGS_SAVED="$CPPFLAGS"
 if test "${boost_include_path}" ; then
-	BOOST_INCLUDES="-I${boost_include_path}"
+	BOOST_INCLUDES="-isystem ${boost_include_path}"
 	CPPFLAGS="$CPPFLAGS $BOOST_INCLUDES"
 fi
-AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio/coroutine.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp],,
+AC_CHECK_HEADERS([boost/shared_ptr.hpp boost/foreach.hpp boost/interprocess/sync/interprocess_upgradable_mutex.hpp boost/date_time/posix_time/posix_time_types.hpp boost/bind.hpp boost/function.hpp boost/asio.hpp boost/asio/ip/address.hpp boost/system/error_code.hpp boost/atomic.hpp boost/circular_buffer.hpp],,
   AC_MSG_ERROR([Missing required header files.]))
+
+AC_CHECK_HEADERS(boost/asio/coroutine.hpp,,AC_MSG_RESULT(not found, using built-in header.))
+
+# Verify that the path does not include standard headers by mistake.
+# There are two regex.h headers: one is a standard system header (usually
+# in /usr/include) and the second one is provided by boost. If you specify the
+# path to boost in a way that specifies the actual directory, this will mess up
+# the code and we'll end up using the system header rather than the boost. For
+# example, if your boost headers are in /usr/local/include/boost, you should
+# use --with-boost-include=/usr/local/include
+AC_TRY_COMPILE([
+#include <regex.h>
+#ifdef BOOST_RE_REGEX_H
+#error "boost/regex.h"
+#endif],,,
+[AC_MSG_ERROR([${boost_include_path}/regex.h is used in place of /usr/include/regex.h: when specifying path to boost, please omit the /boost at the end of the include path.])])
 
 # clang can cause false positives with -Werror without -Qunused-arguments.
 # it can be triggered if used with ccache.
@@ -204,8 +220,19 @@ if test "x${BOOST_LIBS}" != "x"; then
      [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
                       [boost::system::error_code ec;])],
      [AC_MSG_RESULT([checking for Boost system library... yes])],
-     [AC_MSG_RESULT([checking for Boost system library... no])
-      AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed; Check config.log for details, you may be missing other libraries.])])
+     [if test "x${BOOST_LIB_DIR}" = "x"; then
+         BOOST_LIB_DIR="$boost_lib_path"
+      fi
+      if test "x${BOOST_LIB_DIR}" != "x"; then
+         BOOST_LIBS="-L$BOOST_LIB_DIR $BOOST_LIBS"
+      fi
+      LIBS="$BOOST_LIBS $LIBS_SAVED"
+      AC_LINK_IFELSE(
+        [AC_LANG_PROGRAM([#include <boost/system/error_code.hpp>],
+                         [boost::system::error_code ec;])],
+        [AC_MSG_RESULT([checking for Boost system library... yes])],
+        [AC_MSG_RESULT([checking for Boost system library... no])
+         AC_MSG_ERROR([Linking with ${BOOST_LIBS} is not enough: please make sure libboost_system is installed in an expected location; Check config.log for details, you may be missing other libraries.])])])
 
    LIBS="$LIBS_SAVED"
 fi

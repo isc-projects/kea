@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,8 +7,10 @@
 #include <config.h>
 #include <asiolink/asio_wrapper.h>
 #include <cc/command_interpreter.h>
+#include <config/command_mgr.h>
 #include <d2/d2_log.h>
 #include <d2/d2_cfg_mgr.h>
+#include <d2/d2_controller.h>
 #include <d2/d2_process.h>
 
 using namespace isc::process;
@@ -22,7 +24,7 @@ const unsigned int D2Process::QUEUE_RESTART_PERCENT =  80;
 
 D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
     : DProcessBase(name, io_service, DCfgMgrBasePtr(new D2CfgMgr())),
-     reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
+      reconf_queue_flag_(false), shutdown_type_(SD_NORMAL) {
 
     // Instantiate queue manager.  Note that queue manager does not start
     // listening at this point.  That can only occur after configuration has
@@ -40,14 +42,21 @@ D2Process::D2Process(const char* name, const asiolink::IOServicePtr& io_service)
 
 void
 D2Process::init() {
+    // CommandMgr uses IO service to run asynchronous socket operations.
+    isc::config::CommandMgr::instance().setIOService(getIoService());
 };
 
 void
 D2Process::run() {
     LOG_INFO(d2_logger, DHCP_DDNS_STARTED).arg(VERSION);
-    // Loop forever until we are allowed to shutdown.
-    while (!canShutdown()) {
-        try {
+    D2ControllerPtr controller =
+        boost::dynamic_pointer_cast<D2Controller>(D2Controller::instance());
+    try {
+        // Now logging was initialized so commands can be registered.
+        controller->registerCommands();
+
+        // Loop forever until we are allowed to shutdown.
+        while (!canShutdown()) {
             // Check on the state of the request queue. Take any
             // actions necessary regarding it.
             checkQueueStatus();
@@ -61,7 +70,8 @@ D2Process::run() {
             //   a. NCR message has been received
             //   b. Transaction IO has completed
             //   c. Interval timer expired
-            //   d. Something stopped IO service (runIO returns 0)
+            //   d. Control channel event
+            //   e. Something stopped IO service (runIO returns 0)
             if (runIO() == 0) {
                 // Pretty sure this amounts to an unexpected stop and we
                 // should bail out now.  Normal shutdowns do not utilize
@@ -69,16 +79,19 @@ D2Process::run() {
                 isc_throw(DProcessBaseError,
                           "Primary IO service stopped unexpectedly");
             }
-        } catch (const std::exception& ex) {
-            LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
-            isc_throw (DProcessBaseError,
-                       "Process run method failed: " << ex.what());
         }
+    } catch (const std::exception& ex) {
+        LOG_FATAL(d2_logger, DHCP_DDNS_FAILED).arg(ex.what());
+        controller->deregisterCommands();
+        isc_throw (DProcessBaseError,
+                   "Process run method failed: " << ex.what());
     }
 
     // @todo - if queue isn't empty, we may need to persist its contents
     // this might be the place to do it, once there is a persistence mgr.
     // This may also be better in checkQueueStatus.
+
+    controller->deregisterCommands();
 
     LOG_DEBUG(d2_logger, isc::log::DBGLVL_START_SHUT, DHCP_DDNS_RUN_EXIT);
 
@@ -198,7 +211,8 @@ D2Process::configure(isc::data::ConstElementPtr config_set, bool check_only) {
         .arg(config_set->str());
 
     isc::data::ConstElementPtr answer;
-    answer = getCfgMgr()->parseConfig(config_set, check_only);;
+    answer = getCfgMgr()->simpleParseConfig(config_set, check_only,
+                boost::bind(&D2Process::reconfigureCommandChannel, this));
     if (check_only) {
         return (answer);
     }
@@ -390,6 +404,39 @@ const char* D2Process::getShutdownTypeStr(const ShutdownType& type) {
     }
 
     return (str);
+}
+
+void
+D2Process::reconfigureCommandChannel() {
+    // Get new socket configuration.
+    isc::data::ConstElementPtr sock_cfg = getD2CfgMgr()->getControlSocketInfo();
+
+    // Determine if the socket configuration has changed. It has if
+    // both old and new configuration is specified but respective
+    // data elements aren't equal.
+    bool sock_changed = (sock_cfg && current_control_socket_ &&
+                         !sock_cfg->equals(*current_control_socket_));
+
+    // If the previous or new socket configuration doesn't exist or
+    // the new configuration differs from the old configuration we
+    // close the existing socket and open a new socket as appropriate.
+    // Note that closing an existing socket means the client will not
+    // receive the configuration result.
+    if (!sock_cfg || !current_control_socket_ || sock_changed) {
+        // Close the existing socket.
+        if (current_control_socket_) {
+            isc::config::CommandMgr::instance().closeCommandSocket();
+            current_control_socket_.reset();
+        }
+
+        // Open the new socket.
+        if (sock_cfg) {
+            isc::config::CommandMgr::instance().openCommandSocket(sock_cfg);
+        }
+    }
+
+    // Commit the new socket configuration.
+    current_control_socket_ = sock_cfg;
 }
 
 }; // namespace isc::d2

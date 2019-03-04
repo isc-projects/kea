@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,6 +10,7 @@
 #include <cc/data.h>
 #include <cc/command_interpreter.h>
 #include <config/command_mgr.h>
+#include <database/dbaccess_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp6/json_config_parser.h>
 #include <dhcp6/dhcp6_log.h>
@@ -23,7 +24,6 @@
 #include <dhcpsrv/timer_mgr.h>
 #include <dhcpsrv/triplet.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/duid_config_parser.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
@@ -31,12 +31,14 @@
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
 #include <dhcpsrv/parsers/simple_parser6.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <hooks/hooks_parser.h>
 #include <log/logger_support.h>
+#include <process/config_ctl_parser.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 
@@ -168,6 +170,10 @@ public:
         if (user_context) {
             srv_config->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        srv_config->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -292,7 +298,7 @@ public:
                         continue;
                     }
 
-                    if (iface != (*subnet)->getIface()) {
+                    if ((*subnet)->getIface() != iface) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
                                   << " has specified interface " << (*subnet)->getIface()
                                   << ", but earlier subnet in the same shared-network"
@@ -477,6 +483,12 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "dhcp-queue-control") {
+                DHCPQueueControlParser parser;
+                srv_config->setDHCPQueueControl(parser.parse(config_pair.second));
+                continue;
+            }
+
             if (config_pair.first == "host-reservation-identifiers") {
                 HostReservationIdsParser6 parser;
                 parser.parse(config_pair.second);
@@ -542,25 +554,31 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DBType::LEASE_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setLeaseDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setHostDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-databases") {
                 CfgDbAccessPtr cfg_db_access = srv_config->getCfgDbAccess();
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
-                    parser.parse(cfg_db_access, it);
+                    std::string access_string;
+                    parser.parse(access_string, it);
+                    cfg_db_access->setHostDbAccessString(access_string);
                 }
                 continue;
             }
@@ -600,6 +618,13 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "config-control") {
+                process::ConfigControlParser parser;
+                process::ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port and user-context
@@ -611,7 +636,9 @@ configureDhcp6Server(Dhcpv6Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "valid-lifetime") ||
                  (config_pair.first == "decline-probation-period") ||
                  (config_pair.first == "dhcp4o6-port") ||
-                 (config_pair.first == "user-context")) {
+                 (config_pair.first == "user-context") ||
+                 (config_pair.first == "server-tag") ||
+                 (config_pair.first == "reservation-mode")) {
                 continue;
             }
 

@@ -1,5 +1,9 @@
 {
     "DhcpDdns": {
+        "control-socket": {
+            "socket-name": "/tmp/d2-ctrl-socket",
+            "socket-type": "unix"
+        },
         "dns-server-timeout": 1000,
         "forward-ddns": {
             "ddns-domains": [

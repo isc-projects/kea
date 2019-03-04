@@ -23,6 +23,7 @@
 #include <sstream>
 
 using namespace isc::data;
+using namespace isc::db;
 using namespace isc::dhcp;
 using namespace isc::hooks;
 using namespace isc::config;
@@ -275,7 +276,8 @@ ControlledDhcpv4Srv::commandConfigWriteHandler(const string&,
     // Ok, it's time to write the file.
     size_t size = 0;
     try {
-        size = writeConfigFile(filename);
+        ConstElementPtr cfg = CfgMgr::instance().getCurrentCfg()->toElement();
+        size = writeConfigFile(filename, cfg);
     } catch (const isc::Exception& ex) {
         return (createAnswer(CONTROL_RESULT_ERROR, string("Error during write-config:")
                              + ex.what()));
@@ -632,6 +634,21 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
         return (isc::config::createAnswer(1, err.str()));
     }
 
+    // Configure DHCP packet queueing
+    try {
+        data::ConstElementPtr qc;
+        qc  = CfgMgr::instance().getStagingCfg()->getDHCPQueueControl();
+        if (IfaceMgr::instance().configureDHCPPacketQueue(AF_INET, qc)) {
+            LOG_INFO(dhcp4_logger, DHCP4_CONFIG_PACKET_QUEUE)
+                      .arg(IfaceMgr::instance().getPacketQueue4()->getInfoStr());
+        }
+
+    } catch (const std::exception& ex) {
+        err << "Error setting packet queue controls after server reconfiguration: "
+            << ex.what();
+        return (isc::config::createAnswer(1, err.str()));
+    }
+
     // Configuration may change active interfaces. Therefore, we have to reopen
     // sockets according to new configuration. It is possible that this
     // operation will fail for some interfaces but the openSockets function
@@ -640,7 +657,8 @@ ControlledDhcpv4Srv::processConfig(isc::data::ConstElementPtr config) {
     // is no need to rollback configuration if socket fails to open on any
     // of the interfaces.
     CfgMgr::instance().getStagingCfg()->getCfgIface()->
-        openSockets(AF_INET, srv->getPort(), getInstance()->useBroadcast());
+        openSockets(AF_INET, srv->getServerPort(),
+                    getInstance()->useBroadcast());
 
     // Install the timers for handling leases reclamation.
     try {
@@ -698,8 +716,10 @@ ControlledDhcpv4Srv::checkConfig(isc::data::ConstElementPtr config) {
     return (configureDhcp4Server(*srv, config, true));
 }
 
-ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t port /*= DHCP4_SERVER_PORT*/)
-    : Dhcpv4Srv(port), io_service_(), timer_mgr_(TimerMgr::instance()) {
+ControlledDhcpv4Srv::ControlledDhcpv4Srv(uint16_t server_port /*= DHCP4_SERVER_PORT*/,
+                                         uint16_t client_port /*= 0*/)
+    : Dhcpv4Srv(server_port, client_port), io_service_(),
+      timer_mgr_(TimerMgr::instance()) {
     if (getInstance()) {
         isc_throw(InvalidOperation,
                   "There is another Dhcpv4Srv instance already.");
@@ -887,7 +907,7 @@ ControlledDhcpv4Srv::dbReconnect(ReconnectCtlPtr db_reconnect_ctl) {
             TimerMgr::instance()->registerTimer("Dhcp4DbReconnectTimer",
                             boost::bind(&ControlledDhcpv4Srv::dbReconnect, this,
                                         db_reconnect_ctl),
-                            db_reconnect_ctl->retryInterval() * 1000,
+                            db_reconnect_ctl->retryInterval(),
                             asiolink::IntervalTimer::ONE_SHOT);
         }
 

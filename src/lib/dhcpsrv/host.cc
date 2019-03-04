@@ -5,16 +5,15 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+
 #include <dhcp/pkt4.h>
 #include <dhcpsrv/host.h>
 #include <util/encode/hex.h>
 #include <util/strutil.h>
 #include <asiolink/io_address.h>
-#include <boost/random.hpp>
-#include <boost/random/uniform_int_distribution.hpp>
-#include <boost/random/mersenne_twister.hpp>
+#include <cryptolink/crypto_rng.h>
 #include <exceptions/exceptions.h>
-#include <random>
+
 #include <sstream>
 
 using namespace isc::data;
@@ -22,7 +21,6 @@ using namespace isc::asiolink;
 
 namespace isc {
 namespace dhcp {
-
 
 AuthKey::AuthKey(const std::string key) {
     setAuthKey(key);
@@ -34,23 +32,17 @@ AuthKey::AuthKey(void) {
 
 std::string
 AuthKey::getRandomKeyString() {
-    std::array <char, AuthKey::KEY_LEN> randomString;
-    
-    std::random_device rd;
-    boost::random::mt19937 gen(rd());
-
-    std::for_each(randomString.begin(), randomString.end() - 1,
-        [&gen](char& a){ boost::random::uniform_int_distribution<char> dist('!', '~');
-        a = dist(gen); } );
-
-    return std::string(randomString.begin(), randomString.end());
+    std::vector<uint8_t> rs = isc::cryptolink::random(AuthKey::KEY_LEN);
+    std::string result;
+    result.resize(rs.size());
+    memmove(&result[0], &rs[0], result.size());
+    return (result);
 }
 
 std::string 
 AuthKey::ToText() const {
-    //this will need enhancement if the stored container is not
-    //string
-    return authKey_;
+    // this will need enhancement if the stored container is not a string
+    return (authKey_);
 }
 
 void

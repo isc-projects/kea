@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -63,13 +63,13 @@ TEST(CtrlAgentProcess, construction) {
 }
 
 // Verifies that en external call to shutdown causes the run method to
-// exit gracefully. 
+// exit gracefully.
 TEST_F(CtrlAgentProcessTest, shutdown) {
     // Use an asiolink IntervalTimer and callback to generate the
     // shutdown invocation. (Note IntervalTimer setup is in milliseconds).
     IntervalTimer timer(*getIoService());
     timer.setup(boost::bind(&CtrlAgentProcessTest::genShutdownCallback, this),
-                2 * 1000);
+                200);
 
     // Record start time, and invoke run().
     ptime start = microsec_clock::universal_time();
@@ -82,8 +82,8 @@ TEST_F(CtrlAgentProcessTest, shutdown) {
     // timer duration.  This demonstrates that the shutdown was driven
     // by an io_service event and callback.
     time_duration elapsed = stop - start;
-    EXPECT_TRUE(elapsed.total_milliseconds() >= 1900 &&
-                elapsed.total_milliseconds() <= 2200);
+    EXPECT_TRUE(elapsed.total_milliseconds() >= 100 &&
+                elapsed.total_milliseconds() <= 400);
 }
 
 

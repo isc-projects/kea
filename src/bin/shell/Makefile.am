@@ -12,7 +12,7 @@ EXTRA_DIST = $(man_MANS) kea-shell.xml
 
 if GENERATE_DOCS
 kea-shell.8: kea-shell.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ \
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ \
         http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl \
 	$(srcdir)/kea-shell.xml
 

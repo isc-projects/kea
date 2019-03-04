@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7,27 +7,32 @@
 #include <config.h>
 
 #include <cc/command_interpreter.h>
+#include <database/dbaccess_parser.h>
+#include <database/backend_selector.h>
+#include <database/server_selector.h>
 #include <dhcp4/dhcp4_log.h>
 #include <dhcp4/dhcp4_srv.h>
+#include <dhcp4/json_config_parser.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_definition.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/cfgmgr.h>
-#include <dhcp4/json_config_parser.h>
+#include <dhcpsrv/config_backend_dhcp4_mgr.h>
 #include <dhcpsrv/db_type.h>
 #include <dhcpsrv/parsers/client_class_def_parser.h>
-#include <dhcpsrv/parsers/dbaccess_parser.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/expiration_config_parser.h>
 #include <dhcpsrv/parsers/host_reservation_parser.h>
 #include <dhcpsrv/parsers/host_reservations_list_parser.h>
 #include <dhcpsrv/parsers/ifaces_config_parser.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/dhcp_queue_control_parser.h>
 #include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/parsers/sanity_checks_parser.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/timer_mgr.h>
+#include <process/config_ctl_parser.h>
 #include <hooks/hooks_parser.h>
 #include <config/command_mgr.h>
 #include <util/encode/hex.h>
@@ -49,6 +54,9 @@ using namespace isc::dhcp;
 using namespace isc::data;
 using namespace isc::asiolink;
 using namespace isc::hooks;
+using namespace isc::process;
+using namespace isc::config;
+using namespace isc::db;
 
 namespace {
 
@@ -98,6 +106,10 @@ public:
         if (user_context) {
             cfg->setContext(user_context);
         }
+
+        // Set the server's logical name
+        std::string server_tag = getString(global, "server-tag");
+        cfg->setServerTag(server_tag);
     }
 
     /// @brief Copies subnets from shared networks to regular subnets container
@@ -183,6 +195,7 @@ public:
             // Let's check if all subnets have either the same interface
             // or don't have the interface specified at all.
             string iface = (*net)->getIface();
+            bool authoritative = (*net)->getAuthoritative();
 
             const Subnet4Collection* subnets = (*net)->getAllSubnets();
             if (subnets) {
@@ -197,11 +210,19 @@ public:
                         continue;
                     }
 
-                    if (iface != (*subnet)->getIface()) {
+                    if ((*subnet)->getIface() != iface) {
                         isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
                                   << " has specified interface " << (*subnet)->getIface()
                                   << ", but earlier subnet in the same shared-network"
                                   << " or the shared-network itself used " << iface);
+                    }
+
+                    if ((*subnet)->getAuthoritative() != authoritative) {
+                        isc_throw(DhcpConfigError, "Subnet " << (*subnet)->toText()
+                                  << " has different authoritative setting "
+                                  << (*subnet)->getAuthoritative()
+                                  << " than the shared-network itself: "
+                                  << authoritative);
                     }
 
                     // Let's collect the subnets in case we later find out the
@@ -273,11 +294,12 @@ void configureCommandChannel() {
     }
 }
 
+
 isc::data::ConstElementPtr
 configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                      bool check_only) {
     if (!config_set) {
-        ConstElementPtr answer = isc::config::createAnswer(1,
+        ConstElementPtr answer = isc::config::createAnswer(CONTROL_RESULT_ERROR,
                                  string("Can't parse NULL config"));
         return (answer);
     }
@@ -313,9 +335,11 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // the parsers.  It is declared outside the loops so in case of an error,
     // the name of the failing parser can be retrieved in the "catch" clause.
     ConfigPair config_pair;
+    ElementPtr mutable_cfg;
+    SrvConfigPtr srv_cfg;
     try {
-
-        SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
+        // Get the staging configuration
+        srv_cfg = CfgMgr::instance().getStagingCfg();
 
         // Preserve all scalar global parameters
         srv_cfg->extractConfiguredGlobals(config_set);
@@ -323,7 +347,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
         // This is a way to convert ConstElementPtr to ElementPtr.
         // We need a config that can be edited, because we will insert
         // default values and will insert derived values as well.
-        ElementPtr mutable_cfg = boost::const_pointer_cast<Element>(config_set);
+        mutable_cfg = boost::const_pointer_cast<Element>(config_set);
 
         // Set all default values if not specified by the user.
         SimpleParser4::setAllDefaults(mutable_cfg);
@@ -367,6 +391,12 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             if (config_pair.first == "control-socket") {
                 ControlSocketParser parser;
                 parser.parse(*srv_cfg, config_pair.second);
+                continue;
+            }
+
+            if (config_pair.first == "dhcp-queue-control") {
+                DHCPQueueControlParser parser;
+                srv_cfg->setDHCPQueueControl(parser.parse(config_pair.second));
                 continue;
             }
 
@@ -429,31 +459,36 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
 
             // Please move at the end when migration will be finished.
             if (config_pair.first == "lease-database") {
-                DbAccessParser parser(DBType::LEASE_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setLeaseDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-database") {
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
+                std::string access_string;
+                parser.parse(access_string, config_pair.second);
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                parser.parse(cfg_db_access, config_pair.second);
+                cfg_db_access->setHostDbAccessString(access_string);
                 continue;
             }
 
             if (config_pair.first == "hosts-databases") {
                 CfgDbAccessPtr cfg_db_access = srv_cfg->getCfgDbAccess();
-                DbAccessParser parser(DBType::HOSTS_DB);
+                db::DbAccessParser parser;
                 auto list = config_pair.second->listValue();
                 for (auto it : list) {
-                    parser.parse(cfg_db_access, it);
+                    std::string access_string;
+                    parser.parse(access_string, it);
+                    cfg_db_access->setHostDbAccessString(access_string);
                 }
                 continue;
             }
 
             if (config_pair.first == "subnet4") {
-                SrvConfigPtr srv_cfg = CfgMgr::instance().getStagingCfg();
                 Subnets4ListConfigParser subnets_parser;
                 // parse() returns number of subnets parsed. We may log it one day.
                 subnets_parser.parse(srv_cfg, config_pair.second);
@@ -488,12 +523,20 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                 continue;
             }
 
+            if (config_pair.first == "config-control") {
+                ConfigControlParser parser;
+                ConfigControlInfoPtr config_ctl_info = parser.parse(config_pair.second);
+                CfgMgr::instance().getStagingCfg()->setConfigControlInfo(config_ctl_info);
+                continue;
+            }
+
             // Timers are not used in the global scope. Their values are derived
             // to specific subnets (see SimpleParser6::deriveParameters).
             // decline-probation-period, dhcp4o6-port, echo-client-id,
             // user-context are handled in global_parser.parse() which
             // sets global parameters.
-            // match-client-id is derived to subnet scope level.
+            // match-client-id and authoritative are derived to subnet scope
+            // level.
             if ( (config_pair.first == "renew-timer") ||
                  (config_pair.first == "rebind-timer") ||
                  (config_pair.first == "valid-lifetime") ||
@@ -502,9 +545,15 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
                  (config_pair.first == "echo-client-id") ||
                  (config_pair.first == "user-context") ||
                  (config_pair.first == "match-client-id") ||
+                 (config_pair.first == "authoritative") ||
                  (config_pair.first == "next-server") ||
                  (config_pair.first == "server-hostname") ||
-                 (config_pair.first == "boot-file-name")) {
+                 (config_pair.first == "boot-file-name") ||
+                 (config_pair.first == "server-tag") ||
+                 (config_pair.first == "reservation-mode") ||
+                 (config_pair.first == "calculate-tee-times") ||
+                 (config_pair.first == "t1-percent") ||
+                 (config_pair.first == "t2-percent")) {
                 continue;
             }
 
@@ -525,7 +574,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     } catch (const isc::Exception& ex) {
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_FAIL)
                   .arg(config_pair.first).arg(ex.what());
-        answer = isc::config::createAnswer(1, ex.what());
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
 
         // An error occurred, so make sure that we restore original data.
         rollback = true;
@@ -533,7 +582,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     } catch (...) {
         // For things like bad_cast in boost::lexical_cast
         LOG_ERROR(dhcp4_logger, DHCP4_PARSER_EXCEPTION).arg(config_pair.first);
-        answer = isc::config::createAnswer(1, "undefined configuration"
+        answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                            " processing error");
 
         // An error occurred, so make sure that we restore original data.
@@ -543,7 +592,7 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     if (check_only) {
         rollback = true;
         if (!answer) {
-            answer = isc::config::createAnswer(0,
+            answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS,
             "Configuration seems sane. Control-socket, hook-libraries, and D2 "
             "configuration were sanity checked, but not applied.");
         }
@@ -555,7 +604,6 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
     // This operation should be exception safe but let's make sure.
     if (!rollback) {
         try {
-
             // Setup the command channel.
             configureCommandChannel();
 
@@ -573,19 +621,23 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
             const HooksConfig& libraries =
                 CfgMgr::instance().getStagingCfg()->getHooksConfig();
             libraries.loadLibraries();
+
+            // If there are config backends, fetch and merge into staging config
+            databaseConfigFetch(srv_cfg);
         }
         catch (const isc::Exception& ex) {
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_FAIL).arg(ex.what());
-            answer = isc::config::createAnswer(2, ex.what());
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, ex.what());
             rollback = true;
         } catch (...) {
             // For things like bad_cast in boost::lexical_cast
             LOG_ERROR(dhcp4_logger, DHCP4_PARSER_COMMIT_EXCEPTION);
-            answer = isc::config::createAnswer(2, "undefined configuration"
+            answer = isc::config::createAnswer(CONTROL_RESULT_ERROR, "undefined configuration"
                                                " parsing error");
             rollback = true;
         }
     }
+
 
     // Rollback changes as the configuration parsing failed.
     if (rollback) {
@@ -600,8 +652,104 @@ configureDhcp4Server(Dhcpv4Srv& server, isc::data::ConstElementPtr config_set,
              getConfigSummary(SrvConfig::CFGSEL_ALL4));
 
     // Everything was fine. Configuration is successful.
-    answer = isc::config::createAnswer(0, "Configuration successful.");
+    answer = isc::config::createAnswer(CONTROL_RESULT_SUCCESS, "Configuration successful.");
     return (answer);
+}
+
+void databaseConfigFetch(const SrvConfigPtr& srv_cfg) {
+
+    ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
+
+    // Close any existing CB databasess, then open all in srv_cfg (if any)
+    if (!databaseConfigConnect(srv_cfg)) {
+        // There are no CB databases so we're done
+        return;
+    }
+
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_FETCH);
+
+    // For now we find data based on first backend that has it.
+    BackendSelector backend_selector(BackendSelector::Type::UNSPEC);
+
+    // Use the server_tag if set, otherwise use ALL.
+    std::string server_tag = srv_cfg->getServerTag();
+    ServerSelector& server_selector = (server_tag.empty()? ServerSelector::ALL()
+                                                         : ServerSelector::ONE(server_tag));
+    // Create the external config into which we'll fetch backend config data.
+    SrvConfigPtr external_cfg = CfgMgr::instance().createExternalCfg();
+
+    // First let's fetch the globals and add them to external config.
+    data::StampedValueCollection globals;
+    globals = mgr.getPool()->getAllGlobalParameters4(backend_selector, server_selector);
+    addGlobalsToConfig(external_cfg, globals);
+
+    // Now we fetch the option definitions and add them.
+    OptionDefContainer option_defs = mgr.getPool()->getAllOptionDefs4(backend_selector,
+                                                                      server_selector);
+    for (auto option_def = option_defs.begin(); option_def != option_defs.end(); ++option_def) {
+        external_cfg->getCfgOptionDef()->add((*option_def), (*option_def)->getOptionSpaceName());
+    }
+
+    // Next fetch the options. They are returned as a container of OptionDescriptors.
+    OptionContainer options = mgr.getPool()->getAllOptions4(backend_selector, server_selector);
+    for (auto option = options.begin(); option != options.end(); ++option) {
+        external_cfg->getCfgOption()->add((*option), (*option).space_name_);
+    }
+
+    // Now fetch the shared networks.
+    SharedNetwork4Collection networks = mgr.getPool()->getAllSharedNetworks4(backend_selector,
+                                                                             server_selector);
+    for (auto network = networks.begin(); network != networks.end(); ++network) {
+        external_cfg->getCfgSharedNetworks4()->add((*network));
+    }
+
+    // Next we fetch subnets.
+    Subnet4Collection subnets = mgr.getPool()->getAllSubnets4(backend_selector, server_selector);
+    for (auto subnet = subnets.begin(); subnet != subnets.end(); ++subnet) {
+        external_cfg->getCfgSubnets4()->add((*subnet));
+    }
+
+    // Now we merge the fecthed configuration into the staging configuration.
+    CfgMgr::instance().mergeIntoStagingCfg(external_cfg->getSequence());
+    LOG_INFO(dhcp4_logger, DHCP4_CONFIG_MERGED);
+}
+
+bool databaseConfigConnect(const SrvConfigPtr& srv_cfg) {
+    // We need to get rid of any existing backends.  These would be any
+    // opened by previous configuration cycle.
+    ConfigBackendDHCPv4Mgr& mgr = ConfigBackendDHCPv4Mgr::instance();
+    mgr.delAllBackends();
+
+    // Fetch the config-control info.
+    ConstConfigControlInfoPtr config_ctl = srv_cfg->getConfigControlInfo();
+    if (!config_ctl || config_ctl->getConfigDatabases().empty()) {
+        // No config dbs, nothing to do.
+        return (false);
+    }
+
+    // Iterate over the configured DBs and instantiate them.
+    for (auto db : config_ctl->getConfigDatabases()) {
+        LOG_INFO(dhcp4_logger, DHCP4_OPEN_CONFIG_DB)
+                 .arg(db.redactedAccessString());
+        mgr.addBackend(db.getAccessString());
+    }
+
+    // Let the caller know we have opened DBs.
+    return (true);
+}
+
+
+void addGlobalsToConfig(SrvConfigPtr external_cfg, data::StampedValueCollection& cb_globals) {
+    const auto& index = cb_globals.get<StampedValueNameIndexTag>();
+    for (auto cb_global = index.begin(); cb_global != index.end(); ++cb_global) {
+
+        if ((*cb_global)->amNull()) {
+            continue;
+        }
+
+        external_cfg->addConfiguredGlobal((*cb_global)->getName(), 
+                                          (*cb_global)->getElementValue());
+    }
 }
 
 }; // end of isc::dhcp namespace

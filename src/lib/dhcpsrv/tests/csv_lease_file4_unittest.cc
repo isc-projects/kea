@@ -11,6 +11,7 @@
 #include <dhcpsrv/lease.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 #include <gtest/gtest.h>
+#include <ctime>
 #include <sstream>
 
 using namespace isc;
@@ -426,10 +427,45 @@ TEST_F(CSVLeaseFile4Test, declinedLeaseTest) {
     }
 }
 
+// Verifies that it is possible to output a lease with very high valid
+// lifetime (infinite in RFC2131 terms) and current time, and then read
+// back this lease.
+TEST_F(CSVLeaseFile4Test, highLeaseLifetime) {
+    CSVLeaseFile4 lf(filename_);
+    ASSERT_NO_THROW(lf.recreate());
+    ASSERT_TRUE(io_.exists());
+
+    // Write lease with very high lease lifetime and current time.
+    Lease4Ptr lease(new Lease4(IOAddress("192.0.3.2"),
+                               hwaddr0_,
+                               NULL, 0,
+                               0xFFFFFFFF, 50, 80, time(0),
+                               8, true, true,
+                               "host.example.com"));
+    // Write this lease out to the lease file.
+    ASSERT_NO_THROW(lf.append(*lease));
+
+    // Close the lease file.
+    lf.close();
+
+    Lease4Ptr lease_read;
+
+    // Re-open the file for reading.
+    ASSERT_NO_THROW(lf.open());
+
+    // Read the lease and make sure it is successful.
+    EXPECT_TRUE(lf.next(lease_read));
+    ASSERT_TRUE(lease_read);
+
+    // The valid lifetime and the cltt should match with the original lease.
+    EXPECT_EQ(lease->valid_lft_, lease_read->valid_lft_);
+    EXPECT_EQ(lease->cltt_, lease_read->cltt_);
+}
+
 /// @todo Currently we don't check invalid lease attributes, such as invalid
 /// lease type, invalid preferred lifetime vs valid lifetime etc. The Lease6
 /// should be extended with the function that validates lease attributes. Once
 /// this is implemented we should provide more tests for malformed leases
-/// in the CSV file. See http://kea.isc.org/ticket/2405.
+/// in the CSV file. See http://oldkea.isc.org/ticket/2405.
 
 } // end of anonymous namespace

@@ -6,18 +6,19 @@
 
 #include <config.h>
 #include <cc/data.h>
+#include <database/dbaccess_parser.h>
 #include <dhcpsrv/cfg_db_access.h>
 #include <dhcpsrv/host_data_source_factory.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/lease_mgr.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
+#include <mysql/testutils/mysql_schema.h>
 #include <testutils/test_to_element.h>
 #include <gtest/gtest.h>
 
 using namespace isc;
+using namespace isc::db::test;
 using namespace isc::dhcp;
-using namespace isc::dhcp::test;
 using namespace isc::test;
 
 namespace {

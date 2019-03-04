@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -13,6 +13,7 @@
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
+#include <process/logging_info.h>
 #include <stats/stats_mgr.h>
 
 #include <boost/scoped_ptr.hpp>
@@ -31,6 +32,7 @@ using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::util;
 using namespace isc::stats;
+using namespace isc::process;
 using namespace isc;
 
 // don't import the entire boost namespace.  It will unexpectedly hide uint8_t
@@ -279,7 +281,6 @@ public:
     }
 
     void clear() {
-        CfgMgr::instance().setVerbose(false);
         CfgMgr::instance().setFamily(AF_INET);
         CfgMgr::instance().clear();
         LeaseMgrFactory::destroy();
@@ -341,7 +342,7 @@ TEST_F(CfgMgrTest, d2ClientConfig) {
                                   isc::asiolink::IOAddress("127.0.0.1"), 478,
                                   1024,
                                   dhcp_ddns::NCR_UDP, dhcp_ddns::FMT_JSON,
-                                  true, true, true, D2ClientConfig::RCM_ALWAYS,
+                                  true, true, D2ClientConfig::RCM_ALWAYS,
                                   "pre-fix", "suf-fix", "[^A-z]", "*")));
 
     // Verify that we can assign a new, non-empty configuration.
@@ -492,18 +493,6 @@ TEST_F(CfgMgrTest, revert) {
     // of the current configuration will become 12.
     ASSERT_NO_THROW(cfg_mgr.revert(3));
     EXPECT_EQ(12, cfg_mgr.getCurrentCfg()->getLoggingInfo()[0].debuglevel_);
-}
-
-// This test verifies that the verbosity can be set and obtained from the
-// configuration manager.
-TEST_F(CfgMgrTest, verbosity) {
-    ASSERT_FALSE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(true);
-    ASSERT_TRUE(CfgMgr::instance().isVerbose());
-
-    CfgMgr::instance().setVerbose(false);
-    EXPECT_FALSE(CfgMgr::instance().isVerbose());
 }
 
 // This test verifies that the address family can be set and obtained
@@ -671,6 +660,145 @@ TEST_F(CfgMgrTest, clearStats6) {
 
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].total-pds"));
     EXPECT_FALSE(stats_mgr.getObservation("subnet[123].assigned-pds"));
+}
+
+// This test verifies that the external configuration can be merged into
+// the staging configuration via CfgMgr.
+TEST_F(CfgMgrTest, mergeIntoStagingCfg) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Create first external configuration.
+    SrvConfigPtr ext_cfg1;
+    ASSERT_NO_THROW(ext_cfg1 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg1);
+    // It should pick the first available sequence number.
+    EXPECT_EQ(0, ext_cfg1->getSequence());
+
+    // Create second external configuration.
+    SrvConfigPtr ext_cfg2;
+    ASSERT_NO_THROW(ext_cfg2 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg2);
+    // It should pick the next available sequence number.
+    EXPECT_EQ(1, ext_cfg2->getSequence());
+
+    // Those must be two separate instances.
+    ASSERT_FALSE(ext_cfg1 == ext_cfg2);
+
+    // Add a subnet which will be merged from first configuration.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    ext_cfg1->getCfgSubnets4()->add(subnet1);
+
+    // Add a subnet which will be merged from the second configuration.
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.1.3.0"), 24, 1, 2, 3, 124));
+    ext_cfg2->getCfgSubnets4()->add(subnet2);
+
+    // Merge first configuration.
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoStagingCfg(ext_cfg1->getSequence()));
+    // Second attempt should fail because the configuration is discarded after
+    // the merge.
+    ASSERT_THROW(cfg_mgr.mergeIntoStagingCfg(ext_cfg1->getSequence()), BadValue);
+
+    // Check that the subnet from first configuration has been merged but not
+    // from the second configuration.
+    ASSERT_TRUE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(123));
+    ASSERT_FALSE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // Create another configuration instance to check what sequence it would
+    // pick. It should pick the first available one.
+    SrvConfigPtr ext_cfg3;
+    ASSERT_NO_THROW(ext_cfg3 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg3);
+    EXPECT_EQ(2, ext_cfg3->getSequence());
+
+    // Merge the second and third (empty) configuration.
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoStagingCfg(ext_cfg2->getSequence()));
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoStagingCfg(ext_cfg3->getSequence()));
+
+    // Make sure that both subnets have been merged.
+    ASSERT_TRUE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(123));
+    ASSERT_TRUE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // The next configuration instance should reset the sequence to 0 because
+    // there are no other configurations in CfgMgr.
+    SrvConfigPtr ext_cfg4;
+    ASSERT_NO_THROW(ext_cfg4 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg4);
+    EXPECT_EQ(0, ext_cfg4->getSequence());
+
+    // Try to commit the staging configuration.
+    ASSERT_NO_THROW(cfg_mgr.commit());
+
+    // Make sure that both subnets are present in the current configuration.
+    EXPECT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(123));
+    EXPECT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // The staging configuration should not include them.
+    EXPECT_FALSE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(123));
+    EXPECT_FALSE(cfg_mgr.getStagingCfg()->getCfgSubnets4()->getBySubnetId(124));
+}
+
+// This test verifies that the external configuration can be merged into
+// the current configuration via CfgMgr.
+TEST_F(CfgMgrTest, mergeIntoCurrentCfg) {
+    CfgMgr& cfg_mgr = CfgMgr::instance();
+
+    // Create first external configuration.
+    SrvConfigPtr ext_cfg1;
+    ASSERT_NO_THROW(ext_cfg1 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg1);
+    // It should pick the first available sequence number.
+    EXPECT_EQ(0, ext_cfg1->getSequence());
+
+    // Create second external configuration.
+    SrvConfigPtr ext_cfg2;
+    ASSERT_NO_THROW(ext_cfg2 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg2);
+    // It should pick the next available sequence number.
+    EXPECT_EQ(1, ext_cfg2->getSequence());
+
+    // Those must be two separate instances.
+    ASSERT_FALSE(ext_cfg1 == ext_cfg2);
+
+    // Add a subnet which will be merged from first configuration.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.1.2.0"), 24, 1, 2, 3, 123));
+    ext_cfg1->getCfgSubnets4()->add(subnet1);
+
+    // Add a subnet which will be merged from the second configuration.
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.1.3.0"), 24, 1, 2, 3, 124));
+    ext_cfg2->getCfgSubnets4()->add(subnet2);
+
+    // Merge first configuration.
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoCurrentCfg(ext_cfg1->getSequence()));
+    // Second attempt should fail because the configuration is discarded after
+    // the merge.
+    ASSERT_THROW(cfg_mgr.mergeIntoCurrentCfg(ext_cfg1->getSequence()), BadValue);
+
+    // Check that the subnet from first configuration has been merged but not
+    // from the second configuration.
+    ASSERT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(123));
+    ASSERT_FALSE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // Create another configuration instance to check what sequence it would
+    // pick. It should pick the first available one.
+    SrvConfigPtr ext_cfg3;
+    ASSERT_NO_THROW(ext_cfg3 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg3);
+    EXPECT_EQ(2, ext_cfg3->getSequence());
+
+    // Merge the second and third (empty) configuration.
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoCurrentCfg(ext_cfg2->getSequence()));
+    ASSERT_NO_THROW(cfg_mgr.mergeIntoCurrentCfg(ext_cfg3->getSequence()));
+
+    // Make sure that both subnets have been merged.
+    ASSERT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(123));
+    ASSERT_TRUE(cfg_mgr.getCurrentCfg()->getCfgSubnets4()->getBySubnetId(124));
+
+    // The next configuration instance should reset the sequence to 0 because
+    // there are no other configurations in CfgMgr.
+    SrvConfigPtr ext_cfg4;
+    ASSERT_NO_THROW(ext_cfg4 = cfg_mgr.createExternalCfg());
+    ASSERT_TRUE(ext_cfg4);
+    EXPECT_EQ(0, ext_cfg4->getSequence());
 }
 
 /// @todo Add unit-tests for testing:

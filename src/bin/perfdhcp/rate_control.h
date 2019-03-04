@@ -41,21 +41,10 @@ public:
     /// \brief Default constructor.
     RateControl();
 
-    /// \brief Constructor which sets desired rate and aggressivity.
+    /// \brief Constructor which sets desired rate.
     ///
     /// \param rate A desired rate.
-    /// \param aggressivity A desired aggressivity.
-    RateControl(const int rate, const int aggressivity);
-
-    /// \brief Returns the value of aggressivity.
-    int getAggressivity() const {
-        return (aggressivity_);
-    }
-
-    /// \brief Returns current due time to send next message.
-    boost::posix_time::ptime getDue() const {
-        return (send_due_);
-    }
+    RateControl(const unsigned int rate);
 
     /// \brief Returns number of messages to be sent "now".
     ///
@@ -79,38 +68,13 @@ public:
     /// the timer resolution). If the calculated value is equal to 0, it is
     /// rounded to 1, so as at least one message is sent.
     ///
-    /// The value of aggressivity limits the maximal number of messages to
-    /// be sent one after another. If the number of messages calculated with
-    /// the equation above exceeds the aggressivity, this function will return
-    /// the value equal to aggressivity.
-    ///
-    /// If the rate is not specified (equal to 0), the value calculated by
-    /// this function is equal to aggressivity.
-    ///
     /// \return A number of messages to be sent immediately.
     uint64_t getOutboundMessageCount();
 
     /// \brief Returns the rate.
-    int getRate() const {
+    unsigned int getRate() const {
         return (rate_);
     }
-
-    /// \brief Returns the value of the late send flag.
-    ///
-    /// The flag returned by this function indicates whether the new due time
-    /// calculated by the \c RateControl::updateSendDue is in the past.
-    /// This value is used by the \c TestControl object to increment the counter
-    /// of the late sent messages in the \c StatsMgr.
-    bool isLateSent() const {
-        return (late_sent_);
-    }
-
-    /// \brief Sets the value of aggressivity.
-    ///
-    /// \param aggressivity A new value of aggressivity. This value must be
-    /// a positive integer.
-    /// \throw isc::BadValue if new value is not a positive integer.
-    void setAggressivity(const int aggressivity);
 
     /// \brief Sets the new rate.
     ///
@@ -118,52 +82,27 @@ public:
     /// \throw isc::BadValue if new rate is negative.
     void setRate(const int rate);
 
-    /// \brief Sets the value of the due time.
-    ///
-    /// This function is intended for unit testing. It manipulates the value of
-    /// the due time. The parameter passed to this function specifies the
-    /// (positive or negative) number of seconds relative to current time.
-    ///
-    /// \param offset A number of seconds relative to current time which
-    /// constitutes the new due time.
-    void setRelativeDue(const int offset);
-
-    /// \brief Sets the timestamp of the last sent message to current time.
-    void updateSendTime();
-
 protected:
 
     /// \brief Convenience function returning current time.
     ///
     /// \return current time.
-    static boost::posix_time::ptime currentTime();
-
-    /// \brief Calculates the send due.
-    ///
-    /// This function calculates the send due timestamp using the current time
-    /// and desired rate. The due timestamp is calculated as a sum of the
-    /// timestamp when the last message was sent and the reciprocal of the rate
-    /// in micro or nanoseconds (depending on the timer resolution). If the rate
-    /// is not specified, the duration between two consecutive sends is one
-    /// timer tick.
-    void updateSendDue();
-
-    /// \brief Holds a timestamp when the next message should be sent.
-    boost::posix_time::ptime send_due_;
-
-    /// \brief Holds a timestamp when the last message was sent.
-    boost::posix_time::ptime last_sent_;
-
-    /// \brief Holds an aggressivity value.
-    int aggressivity_;
+    boost::posix_time::ptime currentTime();
 
     /// \brief Holds a desired rate value.
-    int rate_;
+    unsigned int rate_;
 
-    /// \brief A flag which indicates that the calculated due time is in the
-    /// past.
-    bool late_sent_;
+    /// \brief Holds number of packets send from the beginning.
 
+    /// It is used to calculate current request rate. Then this is used
+    /// to estimate number of packets to send in current cycle.
+    uint64_t total_pkts_sent_count_;
+
+    /// \brief Holds time of start of testing.
+
+    /// It is used to calculate current request rate. Then this is used
+    /// to estimate number of packets to send in current cycle.
+    boost::posix_time::ptime start_time_;
 };
 
 }

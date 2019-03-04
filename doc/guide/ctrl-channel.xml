@@ -1,9 +1,9 @@
 <!--
- - Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+ - Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -14,34 +14,33 @@
     the server's configuration is stored in configuration files
     and, when the configuration is changed, the daemon is restarted.
     This approach has the significant disadvantage of introducing periods
-    of downtime, when client traffic is not handled. Another risk
-    is that if the new configuration is invalid for whatever reason,
+    of downtime when client traffic is not handled. Another risk
+    is that if the new configuration is invalid for any reason,
     the server may refuse to start, which will further extend the
     downtime period until the issue is resolved.</para>
 
-    <para>To avoid such problems, both the DHCPv4 and DHCPv6 servers
+    <para>To avoid such problems, the DHCPv4, DHCPv6 and D2 servers in Kea
     include support for a mechanism that allows
-    on-line reconfiguration without requiring server shutdown.
+    online reconfiguration without requiring server shutdown.
     Both servers can be instructed to open control sockets, which
-    is a communication channel. The server is able to receive
-    commands on that channel, act on them and report back status.
-    While the set of commands in Kea 1.2.0 is limited,
-    the number is expected to grow over time.</para>
+    is a communications channel. The server is able to receive
+    commands on that channel, act on them, and report back status.</para>
 
-    <para>The DHCPv4 and DHCPv6 servers receive commands over the
-    unix domain sockets. The details how to configure these sockets,
-    see <xref linkend="dhcp4-ctrl-channel"/> and <xref linkend="dhcp6-ctrl-channel"/>. While it is possible control
+    <para>The DHCPv4, DHCPv6 and D2 servers receive commands over the
+    UNIX domain sockets. The details how to configure these sockets,
+    see <xref linkend="dhcp4-ctrl-channel"/> and <xref
+    linkend="dhcp6-ctrl-channel"/>. While it is possible to control
     the servers directly using unix domain sockets it requires that
     the controlling client be running on the same machine as
-    the server. In order to connect remotely SSH is usually used to
-    connect to the controlled machine.</para>
+    the server. SSH is usually used to
+    connect remotely to the controlled machine.</para>
 
-    <para>The network administrators usually prefer using some form
-    of a RESTful API to control the servers, rather than using unix
-    domain sockets directly. Therefore, as of Kea 1.2.0 release,
-    Kea includes a new component called Control Agent (or CA) which
+    <para>Network administrators usually prefer using some form
+    of a RESTful API to control the servers, rather than using UNIX
+    domain sockets directly. Therefore,
+    Kea includes a component called Control Agent (or CA), which
     exposes a RESTful API to the controlling clients and can forward
-    commands to the respective Kea services over the unix domain
+    commands to the respective Kea services over the UNIX domain
     sockets. The CA configuration has been described in
     <xref linkend="agent-configuration"/>.</para>
 
@@ -49,32 +48,23 @@
     commands encapsulated within HTTP requests. Simply speaking,
     the CA is responsible for stripping the HTTP layer from the
     received commands and forwarding the commands in a JSON format
-    over the unix domain sockets to respective services. Because the
-    CA receives commands for all services it requires additional
+    over the UNIX domain sockets to the respective services. Because the
+    CA receives commands for all services, it requires additional
     "forwarding" information to be included in the client's messages.
-    This "forwarding" information is carried within the
+    This forwarding information is carried within the
     <command>service</command> parameter of the received command.
-    If the <command>service</command> parameter is not included or if
-    the parameter is a blank list the CA will assume that the control
-    command is targetted at the CA itself and will try to handle
+    If the <command>service</command> parameter is not included, or if
+    the parameter is a blank list, the CA will assume that the control
+    command is targeted at the CA itself and will try to handle
     it on its own.
     </para>
 
-    <para>Control connections over both HTTP and unix domain sockets are
+    <para>Control connections over both HTTP and UNIX domain sockets are
     guarded with timeouts. The default timeout value is set to 10s
-    and is not configurable. The timeout configuration will be
-    implemented in the future.
+    and is not configurable.
     </para>
 
-    <note>
-      <simpara>Kea 1.2.0 release and earlier had a limitation of 64kB
-      on the maximum size of a command and a response sent over the unix
-      domain socket. This limitation has been removed in Kea 1.3.0
-      release.
-      </simpara>
-    </note>
-
-    <section xml:id="ctrl-channel-syntax">
+        <section xml:id="ctrl-channel-syntax">
     <title>Data Syntax</title>
     <para>Communication over the control channel is conducted using JSON
     structures. If configured, Kea will open a socket and listen
@@ -94,7 +84,7 @@
 </screen>
 
     The same command sent over the RESTful interface to the CA will have
-    the following structure.
+    the following structure:
 
 <screen>
     POST / HTTP/1.1\r\n
@@ -111,25 +101,25 @@
     }
 </screen>
 
-    <command>command</command> is the name of command to execute and
+    <command>command</command> is the name of the command to execute and
     is mandatory. <command>arguments</command> is a map of parameters
-    required to carry out the given command.  The exact content and
-    format of the map is command specific.</para>
+    required to carry out the given command. The exact content and
+    format of the map is command-specific.</para>
 
     <para>
       <command>service</command> is a list of the servers at which the control
-      command is targetted. In the example above, the control command is
-      targetted at the DHCPv4 server. In most cases, the CA will simply forward this
-      command to the DHCPv4 server for processing via unix domain socket.
+      command is targeted. In the example above, the control command is
+      targeted at the DHCPv4 server. In most cases, the CA will simply forward this
+      command to the DHCPv4 server for processing via a UNIX domain socket.
       Sometimes, the command including a service value may also be processed by the
-      CA, if the CA is running a hooks library which handles such command for the
+      CA, if the CA is running a hooks library which handles such a command for the
       given server. As an example, the hooks library loaded by the CA
-      may perform some operations on the database (like adding host reservations,
-      modifying leases etc.). An advantage of performing DHCPv4 specific
-      administrative operations in the CA rather than forwarding it to
-      the DHCPv4 server is the ability to perform these operations without
-      disrupting the DHCPv4 service (DHCPv4 server doesn't have to stop
-      processing DHCP messages to apply changes to the database). Nevertheless,
+      may perform some operations on the database, such as adding host reservations,
+      modifying leases, etc. An advantage of performing DHCPv4-specific
+      administrative operations in the CA, rather than forwarding it to
+      the DHCPv4 server, is the ability to perform these operations without
+      disrupting the DHCPv4 service, since the DHCPv4 server doesn't have to stop
+      processing DHCP messages to apply changes to the database. Nevertheless,
       these situations are rather rare and, in most cases, when the
       <command>service</command> parameter contains a name of the service
       the commands are simply forwarded by the CA. The forwarded command
@@ -140,28 +130,28 @@
 
     <para>
       If the command received by the CA does not include a <command>service</command>
-      parameter or this list is empty, the CA will simply process this message
-      on its own. For example, the <command>config-get</command> command which
-      doesn't include service parameter will return Control Agent's own
-      configuration. The <command>config-get</command> including a service
-      value "dhcp4" will be forwarded to the DHCPv4 server and will return
-      DHCPv4 server's configuration and so on.
+      parameter or this list is empty, the CA simply processes this message
+      on its own. For example, a <command>config-get</command> command which
+      includes no service parameter returns the Control Agent's own
+      configuration. The <command>config-get</command> with a service
+      value "dhcp4" is forwarded to the DHCPv4 server and returns the
+      DHCPv4 server's configuration.
     </para>
 
     <para>
-      The following list contains a mapping of the values carried within the
+      The following list shows the mapping of the values carried within the
       <command>service</command> parameter to the servers to which the commands
       are forwarded:
 
       <itemizedlist>
         <listitem>
           <simpara><command>dhcp4</command> - the command is forwarded to the
-          <command>kea-dhcp4</command> server,</simpara>
+          <command>kea-dhcp4</command> server.</simpara>
         </listitem>
 
         <listitem>
           <simpara><command>dhcp6</command> - the command is forwarded to the
-          <command>kea-dhcp6</command> server,</simpara>
+          <command>kea-dhcp6</command> server.</simpara>
         </listitem>
 
         <listitem>
@@ -185,33 +175,33 @@
 }
 </screen>
     <command>result</command> indicates the outcome of the command. A value of 0
-    means success while any non-zero value designates an error or at least a
-    failure to complete the requested action. Currently 1 is used as a generic
-    error, 2 means that a command is not supported and 3 means that the
+    means success, while any non-zero value designates an error or a
+    failure to complete the requested action. Currently 1 indicates a generic
+    error, 2 means that a command is not supported, and 3 means that the
     requested operation was completed, but the requested object was not
-    found. Additional error codes may be added in the future. For example a well
-    formed command that requests a subnet that exists in server's configuration
-    would return result 0. If the server encounters an error condition, it would
-    return 1. If the command was asking for IPv6 subnet, but was sent to DHCPv4
-    server, it would return 2. If the query was asking for a subnet-id and there
-    is no subnet with such id, the result would be set to 3.</para>
+    found. For example, a well-formed
+    command that requests a subnet that exists in a server's configuration
+    returns the result 0. If the server encounters an error condition, it
+    returns 1. If the command asks for the IPv6 subnet, but was sent to a DHCPv4
+    server, it returns 2. If the query asks for a subnet-id and there
+    is no subnet with such an id, the result is 3.</para>
 
     <para>
-    The <command>text</command> field typically appears when result is non-zero
+    The <command>text</command> field typically appears when the result is non-zero
     and contains a description of the error encountered, but it often also appears
-    for successful outcomes. The exact text is command specific, but in general
+    for successful outcomes. The exact text is command-specific, but in general
     uses plain English to describe the outcome of the command.
     <command>arguments</command> is a map of additional data values
-    returned by the server which is specific to the command issued. The map is
-    may be present, but that depends on specific command.
+    returned by the server which are specific to the command issued. The map
+    may be present, but that depends on the specific command.
     </para>
 
     <note>
       <simpara>
         When sending commands via Control Agent, it is possible to specify
-        multiple services at which the command is targetted. CA will forward this
+        multiple services at which the command is targeted. CA forwards this
         command to each service individually. Thus, the CA response to the
-        controlling client will contain an array of individual responses.
+        controlling client contains an array of individual responses.
       </simpara>
     </note>
 
@@ -220,13 +210,10 @@
     <section xml:id="ctrl-channel-client">
     <title>Using the Control Channel</title>
 
-    <para>Kea development team is actively working on providing client applications
-    which can be used to control the servers. These applications are, however, in the
-    early stages of development and as of Kea 1.2.0 release have certain limitations.
-    The easiest way to start interacting with the control API is to use common Unix/Linux tools
+    <para>The easiest way to start interacting with the control API is to use common UNIX/Linux tools
     such as <command>socat</command> and <command>curl</command>.</para>
 
-    <para>In order to control the given Kea service via unix domain socket, use
+    <para>In order to control the given Kea service via UNIX domain socket, use
     <command>socat</command> in interactive mode as follows:
 <screen>
 $ socat UNIX:/path/to/the/kea/socket -
@@ -239,22 +226,22 @@ $ echo "{ some command...}" | socat UNIX:/path/to/the/kea/socket -,ignoreeof
 where <command>/path/to/the/kea/socket</command> is the path specified in the
 <command>Dhcp4/control-socket/socket-name</command> parameter in the Kea
 configuration file. Text passed to <command>socat</command>
-will be sent to Kea and the responses received from Kea printed to standard
+is sent to Kea and the responses received from Kea are printed to standard
     output. This approach communicates with the specific server directly and
-    bypasses Control Agent.</para>
+    bypasses the Control Agent.</para>
 
-    <para>It is also easy to open UNIX socket programmatically. An example of
-    such a simplistic client written in C is available in the Kea Developer's
-    Guide, chapter Control Channel Overview, section Using Control Channel.</para>
+    <para>It is also easy to open a UNIX socket programmatically. An example of
+    a simple client written in C is available in the Kea Developer's
+    Guide, in the Control Channel Overview chapter, in the Using Control Channel section.</para>
 
-    <para>In order to use Kea's RESTful API with <command>curl</command> you may
+    <para>To use Kea's RESTful API with <command>curl</command>, you may
     use the following:
 <screen>
 $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get", "service": [ "dhcp4" ] }' http://ca.example.org:8000/
 </screen>
 
     This assumes that the Control Agent is running on host
-    <filename>ca.example.org</filename> and runs RESTful service on port 8000.
+    <filename>ca.example.org</filename> and is running the RESTful service on port 8000.
     </para>
 
     </section>
@@ -284,15 +271,15 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         <para>The <emphasis>config-get</emphasis> command retrieves the current
         configuration used by the server. This command does not take any
         parameters. The configuration returned is roughly equal to the
-        configuration that was loaded using -c command line option during server
+        configuration that was loaded using the -c command line option during server
         start-up or later set using config-set command. However, there may be
-        certain differences. Comments are not retained. If the original
+        certain differences, as comments are not retained. If the original
         configuration used file inclusion, the returned configuration will
         include all parameters from all the included files.</para>
 
-        <para> Note that returned configuration is not redacted, i.e. it will
+        <para> Note that the returned configuration is not redacted, i.e. it will
         contain database passwords in plain text if those were specified in the
-        original configuration. Care should be taken to not expose the command
+        original configuration. Care should be taken not to expose the command
         channel to unprivileged users.</para>
 
         <para>
@@ -311,13 +298,13 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         <para>The <emphasis>config-reload</emphasis> command instructs
         Kea to load again the configuration file that was used
         previously. This operation is useful if the configuration file
-        has been changed by some external sources. For example, a
+        has been changed by some external source; for example, a
         sysadmin can tweak the configuration file and use this command
         to force Kea pick up the changes.</para>
 
         <para>Caution should be taken when mixing this with config-set
         commands. Kea remembers the location of the configuration file
-        it was started with. This configuration can be significantly
+        it was started with, and this configuration can be significantly
         changed using config-set command. When config-reload is issued
         after config-set, Kea will attempt to reload its original
         configuration from the file, possibly losing all changes
@@ -341,10 +328,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
      The <emphasis>config-test</emphasis> command instructs the server to check
      whether the new configuration supplied in the command's arguments can
      be loaded. The supplied configuration is expected to be the full
-     configuration for the target server along with an optional Logger
-     configuration. As for the <command>-t</command> command some sanity checks
+     configuration for the target server, along with an optional Logger
+     configuration. As for the <command>-t</command> command, some sanity checks
      are not performed so it is possible a configuration which successfully
-     passes this command will still fail in <command>config-set</command>
+     passes this command will still fail in the <command>config-set</command>
      command or at launch time.
      The structure of the command is as follows:
       </para>
@@ -392,12 +379,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       <section xml:id="command-config-write">
         <title>config-write</title>
 
-        <para>The <emphasis>config-write</emphasis> command instructs Kea server
+        <para>The <emphasis>config-write</emphasis> command instructs the Kea server
         to write its current configuration to a file on disk. It takes one
         optional argument called <emphasis>filename</emphasis> that specifies
-        the name of the file to write configuration to. If not specified, the
-        name used when starting Kea (passed as -c argument) will be
-        used. If relative path is specified, Kea will write its files
+        the name of the file to write the configuration to. If not specified, the
+        name used when starting Kea (passed as a -c argument) will be
+        used. If a relative path is specified, Kea will write its files
         only in the directory it is running.</para>
         <para>
           An example command invocation looks like this:
@@ -429,13 +416,13 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </para>
 
         <para>The <emphasis>remove</emphasis> boolean parameter is mandatory
-        and it indicates whether the reclaimed leases should be removed from
-        the lease database (if true), or they should be left in the
+        and indicates whether the reclaimed leases should be removed from
+        the lease database (if true), or left in the
         <emphasis>expired-reclaimed</emphasis> state (if false). The latter
-        facilitates lease affinity, i.e. ability to re-assign expired lease to
+        facilitates lease affinity, i.e. the ability to re-assign an expired lease to
         the same client which used this lease before. See
         <xref linkend="lease-affinity"/> for the details. Also, see
-        <xref linkend="lease-reclamation"/> for the general information
+        <xref linkend="lease-reclamation"/> for general information
         about the processing of expired leases (leases reclamation).</para>
       </section>
 
@@ -443,12 +430,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         <title>libreload</title>
 
         <para>
-          The <emphasis>libreload</emphasis> command will first unload and then
-          load all currently loaded hook libraries.  This is primarily intended
+          The <emphasis>libreload</emphasis> command first unloads and then
+          loads all currently loaded hook libraries. This is primarily intended
           to allow one or more hook libraries to be replaced with newer versions
-          without requiring Kea servers to be reconfigured or restarted.  Note
-          the hook libraries will be passed the same parameter values (if any)
-          they were passed when originally loaded.
+          without requiring Kea servers to be reconfigured or restarted. Note that
+          the hook libraries are passed the same parameter values (if any)
+          that were passed when they originally loaded.
 <screen>
 {
     "command": "libreload",
@@ -457,8 +444,8 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
        </para>
        <para>
-         The server will respond with a result of 0 indicating success, or 1
-         indicating a failure.
+         The server will respond with a result of either 0, indicating success, or 1,
+         indicating failure.
        </para>
      </section> <!-- end of command-libreload -->
 
@@ -477,8 +464,8 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
       </para>
       <para>
-        The server will respond with a list of all supported commands. The
-        arguments element will be a list of strings. Each string will convey
+        The server responds with a list of all supported commands. The
+        arguments element is a list of strings, each of which conveys
         one supported command.
       </para>
     </section> <!-- end of command-list-commands -->
@@ -490,9 +477,9 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
     The <emphasis>config-set</emphasis> command instructs the server to replace
     its current configuration with the new configuration supplied in the
     command's arguments. The supplied configuration is expected to be the full
-    configuration for the target server along with an optional Logger
-    configuration.  While optional, the Logger configuration is highly
-    recommended as without it the server will revert to its default logging
+    configuration for the target server, along with an optional Logger
+    configuration. While optional, the Logger configuration is highly
+    recommended, as without it the server will revert to its default logging
     configuration. The structure of the command is as follows:
       </para>
 <screen>
@@ -508,7 +495,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
       <para>
     where &lt;server&gt; is the configuration element name for a given server
-    such as "Dhcp4" or "Dhcp6".  For example:
+    such as "Dhcp4" or "Dhcp6". For example:
       </para>
 <screen>
 {
@@ -524,13 +511,13 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 }
 </screen>
       <para>
-    If the new configuration proves to be invalid the server will retain
-    its current configuration.  Please note that the new configuration is
-    retained in memory only.  If the server is restarted or a configuration
-    reload is triggered via a signal, the server will use the configuration
+    If the new configuration proves to be invalid, the server retains
+    its current configuration. Please note that the new configuration is
+    retained in memory only; if the server is restarted or a configuration
+    reload is triggered via a signal, the server uses the configuration
     stored in its configuration file.
 
-        The server's response will contain a numeric code, "result" (0 for success,
+        The server's response contains a numeric code, "result" (0 for success,
     non-zero on failure), and  a string, "text", describing the outcome:
 <screen>
     {"result": 0, "text": "Configuration successful." }
@@ -548,7 +535,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       <para>
         The <emphasis>shutdown</emphasis> command instructs the server to initiate
         its shutdown procedure. It is the equivalent of sending a SIGTERM signal
-        to the process. This command does not take any arguments.  An example
+        to the process. This command does not take any arguments. An example
         command may look like this:
 <screen>
 {
@@ -557,7 +544,7 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 </screen>
       </para>
       <para>
-        The server will respond with a confirmation that the shutdown procedure
+        The server responds with a confirmation that the shutdown procedure
         has been initiated.
       </para>
     </section> <!-- end of command-shutdown -->
@@ -568,11 +555,11 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         The <emphasis>dhcp-disable</emphasis> command globally disables the DHCP
         service. The server continues to operate, but it drops all received DHCP
         messages. This command is useful when the server's maintenance requires that
-        the server temporarily stops allocating new leases and renew existing leases.
-        It is also useful in failover like configurations during a synchronization of
-        the lease databases at startup or recovery after a failure. The optional parameter
+        the server temporarily stop allocating new leases and renew existing leases.
+        It is also useful in failover-like configurations during a synchronization of
+        the lease databases at startup, or recovery after a failure. The optional parameter
         <emphasis>max-period</emphasis> specifies the time in seconds after which the
-        DHCP service should be automatically re-enabled if the
+        DHCP service should be automatically re-enabled, if the
         <emphasis>dhcp-enable</emphasis> command is not sent before this time elapses.
       </para>
 <screen>
@@ -601,11 +588,10 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
       <section xml:id="command-version-get">
         <title>version-get</title>
         <para>
-          The <emphasis>version-get</emphasis> command returns on the control
-          channel what the command line <command>-v</command> argument
-          displays with in arguments the extended version, i.e., what
-          the command line <command>-V</command> argument displays. This command
-          does not take any parameters.
+          The <emphasis>version-get</emphasis> command returns
+          extended information about the Kea version. It is the same
+          information available via the <command>-V</command> command-line
+          argument. This command does not take any parameters.
         </para>
 <screen>
 {
@@ -616,11 +602,47 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
 
     </section> <!-- end of commands supported by both servers -->
 
+    <section>
+      <title>Commands Supported by D2 Server</title>
+      <para>The D2 server supports only a subset of DHCPv4 / DHCPv6 server
+      commands:
+      <itemizedlist>
+        <listitem>
+          <simpara>build-report</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-reload</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-set</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-test</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-write</simpara>
+        </listitem>
+        <listitem>
+          <simpara>list-commands</simpara>
+        </listitem>
+        <listitem>
+          <simpara>shutdown</simpara>
+        </listitem>
+        <listitem>
+          <simpara>version-get</simpara>
+        </listitem>
+      </itemizedlist>
+      </para>
+    </section>
+
     <section xml:id="agent-commands">
       <title>Commands Supported by Control Agent</title>
       <para>The following commands listed in <xref linkend="commands-common"/>
       are also supported by the Control Agent, i.e. when the
-      <command>service</command> parameter is blank the commands are handled
+      <command>service</command> parameter is blank, the commands are handled
       by the CA and they relate to the CA process itself:
       <itemizedlist>
         <listitem>
@@ -628,6 +650,12 @@ $ curl -X POST -H "Content-Type: application/json" -d '{ "command": "config-get"
         </listitem>
         <listitem>
           <simpara>config-get</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-reload</simpara>
+        </listitem>
+        <listitem>
+          <simpara>config-set</simpara>
         </listitem>
         <listitem>
           <simpara>config-test</simpara>

@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -21,7 +21,7 @@
 #include <dhcpsrv/srv_config.h>
 #include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 
@@ -798,7 +798,6 @@ public:
     /// -# max-queue-size
     /// -# ncr-protocol
     /// -# ncr-format
-    /// -# always-include-fqdn
     /// -# override-no-update
     /// -# override-client-update
     /// -# replace-client-name

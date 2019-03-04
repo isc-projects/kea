@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -12,10 +12,11 @@
 
     <section xml:id="keactrl-overview">
       <title>Overview</title>
-      <para>keactrl is a shell script which controls the startup, shutdown
+      <para>keactrl is a shell script which controls the startup, shutdown,
       and reconfiguration of the Kea servers (<command>kea-dhcp4</command>,
-      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
-      <command>kea-ctrl-agent</command>). It also provides the means for
+      <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command>,
+      <command>kea-ctrl-agent</command>, and
+      <command>kea-netconf</command>). It also provides the means for
       checking the current status of the servers and determining the
       configuration files in use.
       </para>
@@ -25,7 +26,7 @@
       <title>Command Line Options</title>
       <para><command>keactrl</command> is run as follows:
 <screen>
-keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
+keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,...]]
 </screen>
       </para>
 
@@ -44,7 +45,7 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
       </para>
 
       <para>
-        The optional <command>-s server[,server ...]</command> switch selects
+        The optional <command>-s server[,server,...]</command> switch selects
         the servers to which the command is issued.
         (<command>--server</command> is a synonym for <command>-s</command>.)
         If absent, the command is sent to all servers enabled in the keactrl
@@ -58,8 +59,8 @@ keactrl &lt;command&gt; [-c keactrl-config-file] [-s server[,server,..]]
       <title>The keactrl Configuration File</title>
       <para>
         Depending on requirements, not all of the available servers need
-        be run.  The keactrl configuration file sets which servers are
-        enabled and which are disabled.  The default configuration
+        to be run. The keactrl configuration file sets which servers are
+        enabled and which are disabled. The default configuration
         file is <filename>[kea-install-dir]/etc/kea/keactrl.conf</filename>,
         but this can be overridden on a per-command basis using the
         <command>-c</command> switch.
@@ -80,6 +81,7 @@ kea_dhcp4_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp4.conf
 kea_dhcp6_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp6.conf
 kea_dhcp_ddns_config_file=@sysconfdir@/@PACKAGE@/kea-dhcp-ddns.conf
 kea_ctrl_agent_config_file=@sysconfdir@/@PACKAGE@/kea-ctrl-agent.conf
+kea_netconf_config_file=@sysconfdir@/@PACKAGE@/kea-netconf.conf
 
 
 # Location of Kea binaries.
@@ -88,6 +90,7 @@ dhcp4_srv=@sbindir@/kea-dhcp4
 dhcp6_srv=@sbindir@/kea-dhcp6
 dhcp_ddns_srv=@sbindir@/kea-dhcp-ddns
 ctrl_agent_srv=@sbindir@/kea-ctrl-agent
+netconf_srv=@sbindir@/kea-netconf
 
 # Start DHCPv4 server?
 dhcp4=yes
@@ -101,20 +104,33 @@ dhcp_ddns=no
 # Start Control Agent?
 ctrl_agent=yes
 
+# Start Netconf?
+netconf=no
+
 # Be verbose?
 kea_verbose=no
 </screen>
       </para>
 
+<note>
+   <para>
+      In the example above, strings of the form @something@ are replaced by the
+      appropriate values when Kea is installed.
+   </para>
+</note>
+
       <para>
         The <parameter>dhcp4</parameter>, <parameter>dhcp6</parameter>,
-        <parameter>dhcp_ddns</parameter> and <parameter>ctrl_agent</parameter>
-        parameters set to "yes" configure <command>keactrl</command> to manage
+        <parameter>dhcp_ddns</parameter>, <parameter>ctrl_agent</parameter>,
+        and <parameter>netconf</parameter>
+        parameters set to "yes" will configure <command>keactrl</command> to manage
         (start, reconfigure) all servers, i.e. <command>kea-dhcp4</command>,
-        <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command> and
-        <command>kea-ctrl-agent</command>. When any of these parameters is set
-        to "no" the <command>keactrl</command> will ignore
-        the corresponding server when starting or reconfiguring Kea.
+        <command>kea-dhcp6</command>, <command>kea-dhcp-ddns</command>,
+        <command>kea-ctrl-agent</command>, and <command>kea-netconf</command>.
+        When any of these parameters is set
+        to "no," the <command>keactrl</command> will ignore
+        the corresponding server when starting or reconfiguring Kea. Some
+        daemons (ddns and netconf) are disabled by default.
       </para>
 
       <para>
@@ -124,7 +140,8 @@ kea_verbose=no
         location needs to be altered for any reason, the paths
         specified with the <parameter>dhcp4_srv</parameter>,
         <parameter>dhcp6_srv</parameter>, <parameter>dhcp_ddns_srv</parameter>
-        and <parameter>ctrl_agent_srv</parameter> parameters should be modified.
+        <parameter>ctrl_agent_srv</parameter>, and <parameter>netconf_srv</parameter>
+        parameters should be modified.
       </para>
 
       <para>
@@ -133,16 +150,16 @@ kea_verbose=no
         is set to "yes" the logging level of the server is set to DEBUG.
         Modification of the logging severity in a configuration file, as
         described in <xref linkend="logging"/>, will have no effect as long
-        as the <parameter>kea_verbose</parameter> is set to "yes". Setting
+        as the <parameter>kea_verbose</parameter> is set to "yes." Setting
         it to "no" will cause the server to use the logging levels specified
-        in the Kea configuration file for respective loggers. If no
+        in the Kea configuration file. If no
         logging configuration is specified, the default settings will be
         used.
       </para>
 
       <note>
         <para>
-          The verbosity for the server is set  when it is started. Once
+          The verbosity for the server is set when it is started. Once
           started, the verbosity can be only changed by stopping the server and
           starting it again with the new value of the
           <parameter>kea_verbose</parameter> parameter.
@@ -169,8 +186,8 @@ kea_verbose=no
           or inactive) and the names of the configuration files in use.
         </simpara></listitem>
         <listitem><simpara>
-          <command>version</command> - prints out a version of the
-          keactrl tool itself, but also the Kea daemons.
+          <command>version</command> - prints out the version of the
+          keactrl tool itself, together with the versions of the Kea daemons.
         </simpara></listitem>
       </itemizedlist>
       </para>
@@ -183,11 +200,12 @@ INFO/keactrl: Starting kea-dhcp4 -c /usr/local/etc/kea/kea-dhcp4.conf -d
 INFO/keactrl: Starting kea-dhcp6 -c /usr/local/etc/kea/kea-dhcp6.conf -d
 INFO/keactrl: Starting kea-dhcp-ddns -c /usr/local/etc/kea/kea-dhcp-ddns.conf -d
 INFO/keactrl: Starting kea-ctrl-agent -c /usr/local/etc/kea/kea-ctrl-agent.conf -d
+INFO/keactrl: Starting kea-netconf -c /usr/local/etc/kea/kea-netconf.conf -d
 </screen>
       </para>
 
       <para>Kea's servers create PID files upon startup. These files are used
-      by keactrl to determine whether or not a given server is running.  If
+      by keactrl to determine whether a given server is running. If
       one or more servers are running when the start command is issued, the
       output will look similar to the following:
 <screen>
@@ -196,13 +214,14 @@ INFO/keactrl: kea-dhcp4 appears to be running, see: PID 10918, PID file: /usr/lo
 INFO/keactrl: kea-dhcp6 appears to be running, see: PID 10924, PID file: /usr/local/var/kea/kea.kea-dhcp6.pid.
 INFO/keactrl: kea-dhcp-ddns appears to be running, see: PID 10930, PID file: /usr/local/var/kea/kea.kea-dhcp-ddns.pid.
 INFO/keactrl: kea-ctrl-agent appears to be running, see: PID 10931, PID file: /usr/local/var/kea/kea.kea-ctrl-agent.pid.
+INFO/keactrl: kea-netconf appears to be running, see: PID 10123, PID file: /usr/local/var/kea/kea.kea-netconf.pid.
 </screen>
       During normal shutdowns these PID files are deleted. They may, however,
-      be left over as remnants following a system crash.  It is possible,
-      though highly unlikely, that upon system restart the PIDs they contain
-      actually refer to processes unrelated to Kea.  This condition will cause
+      be left over as remnants following a system crash. It is possible,
+      though highly unlikely, that upon system restart the PIDs they contain may
+      actually refer to processes unrelated to Kea. This condition will cause
       keactrl to decide that the servers are running, when in fact they are
-      not.  In such a case the PID files as listed in the keactrl output
+      not. In such a case the PID files as listed in the keactrl output
       must be manually deleted.
       </para>
 
@@ -213,8 +232,9 @@ INFO/keactrl: Stopping kea-dhcp4...
 INFO/keactrl: Stopping kea-dhcp6...
 INFO/keactrl: Stopping kea-dhcp-ddns...
 INFO/keactrl: Stopping kea-ctrl-agent...
+INFO/keactrl: Stopping kea-netconf...
 </screen>
-      Note that the <command>stop</command> will attempt to stop all servers
+      Note that the <command>stop</command> command will attempt to stop all servers
       regardless of whether they are "enabled" in the <filename>keactrl.conf</filename>.
       If any of the servers are not running, an informational message
       is displayed as in the <command>stop</command> command output below.
@@ -224,6 +244,7 @@ INFO/keactrl: kea-dhcp4 isn't running.
 INFO/keactrl: kea-dhcp6 isn't running.
 INFO/keactrl: kea-dhcp-ddns isn't running.
 INFO/keactrl: kea-ctrl-agent isn't running.
+INFO/keactrl: kea-netconf isn't running.
 </screen>
       </para>
 
@@ -244,38 +265,52 @@ INFO/keactrl: Reloading kea-ctrl-agent...
 </screen>
       If any of the servers are not running, an informational message
       is displayed as in the <command>reload</command> command output below.
+      Note that as of version 1.5.0, kea-netconf does not support the SIGHUP
+      signal. If its configuration has changed, please stop and restart it for
+      the change to take effect. This limitation will be removed in a future release.
 <screen>
 <userinput>$ keactrl stop</userinput>
 INFO/keactrl: kea-dhcp4 isn't running.
 INFO/keactrl: kea-dhcp6 isn't running.
 INFO/keactrl: kea-dhcp-ddns isn't running.
 INFO/keactrl: kea-ctrl-agent isn't running.
+INFO/keactrl: kea-netconf isn't running.
 </screen>
       </para>
+
+      <note>
+        NETCONF is an optional feature that is disabled by default and can be
+        enabled during compilation. If Kea was compiled without NETCONF support,
+        keactrl will do its best to not bother the user with information about
+        it. The netconf entries will still be present in the keactrl.conf file,
+        but netconf status will not be shown and other commands will ignore it.
+      </note>
 
       <note>
         <para>
           Currently <command>keactrl</command> does not report configuration
           failures when the server is started or reconfigured. To check if
-          the server's configuration succeeded the Kea log must be examined
+          the server's configuration succeeded, the Kea log must be examined
           for errors. By default, this is written to the syslog file.
         </para>
       </note>
 
       <para>
         Sometimes it is useful to check which servers are running. The
-        <command>status</command> reports this, typical output looking like:
+        <command>status</command> reports this, with typical output that looks like:
 <screen>
 <userinput>$ keactrl status</userinput>
 DHCPv4 server: active
 DHCPv6 server: inactive
 DHCP DDNS: active
 Control Agent: active
+Netconf agent: inactive
 Kea configuration file: /usr/local/etc/kea/kea.conf
 Kea DHCPv4 configuration file: /usr/local/etc/kea/kea-dhcp4.conf
 Kea DHCPv6 configuration file: /usr/local/etc/kea/kea-dhcp6.conf
 Kea DHCP DDNS configuration file: /usr/local/etc/kea/kea-dhcp-ddns.conf
 Kea Control Agent configuration file: /usr/local/etc/kea/kea-ctrl-agent.conf
+Kea Netconf configuration file: /usr/local/etc/kea/kea-netconf.conf
 keactrl configuration file: /usr/local/etc/kea/keactrl.conf
 </screen>
       </para>
@@ -285,8 +320,8 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
       <title>Overriding the Server Selection</title>
       <para>
         The optional <command>-s</command> switch allows
-        the selection of the servers to which <command>keactrl</command>
-        command is issued.  For example, the following
+        the selection of the servers to which the <command>keactrl</command>
+        command is issued. For example, the following
         instructs <command>keactrl</command> to stop the
         <command>kea-dhcp4</command> and <command>kea-dhcp6</command> servers
         and leave the <command>kea-dhcp-ddns</command> and
@@ -298,9 +333,9 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
 
       <para>
         Similarly, the following
-        will only start the <command>kea-dhcp4</command> and
-        <command>kea-dhcp-ddns</command> servers and not:
-        <command>kea-dhcp6</command>, <command>kea-ctrl-agent</command>.
+        will start only the <command>kea-dhcp4</command> and
+        <command>kea-dhcp-ddns</command> servers, but not
+        <command>kea-dhcp6</command> or <command>kea-ctrl-agent</command>.
 <screen>
 <userinput>$ keactrl start -s dhcp4,dhcp_ddns</userinput>
 </screen>
@@ -312,9 +347,9 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
         On <command>start</command> and <command>reload</command>,
         <command>keactrl</command> will check if the servers given as
         parameters to the <command>-s</command> switch are
-        enabled in the <command>keactrl</command> configuration file:
-        if not, the server will be ignored.  For <command>stop</command> however,
-        this check is not made: the command is applied to all listed servers,
+        enabled in the <command>keactrl</command> configuration file;
+        if not, the server will be ignored. For <command>stop</command>, however,
+        this check is not made; the command is applied to all listed servers,
         regardless of whether they have been enabled in the file.
       </para>
 
@@ -323,16 +358,19 @@ keactrl configuration file: /usr/local/etc/kea/keactrl.conf
         command line option:
         <itemizedlist>
           <listitem><simpara>
-            <command>dhcp4</command> for <command>kea-dhcp4.</command>
+            <command>dhcp4</command> for <command>kea-dhcp4</command>.
           </simpara></listitem>
           <listitem><simpara>
-            <command>dhcp6</command> for <command>kea-dhcp6.</command>
+            <command>dhcp6</command> for <command>kea-dhcp6</command>.
           </simpara></listitem>
           <listitem><simpara>
-            <command>dhcp_ddns</command> for <command>kea-dhcp-ddns.</command>
+            <command>dhcp_ddns</command> for <command>kea-dhcp-ddns</command>.
           </simpara></listitem>
           <listitem><simpara>
-            <command>ctrl_agent</command> for <command>kea-ctrl-agent.</command>
+            <command>ctrl_agent</command> for <command>kea-ctrl-agent</command>.
+          </simpara></listitem>
+          <listitem><simpara>
+            <command>netconf</command> for <command>kea-netconf</command>.
           </simpara></listitem>
           <listitem><simpara>
             <command>all</command> for all servers (default).

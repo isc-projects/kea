@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <dhcpsrv/csv_lease_file4.h>
+#include <ctime>
 
 using namespace isc::asiolink;
 using namespace isc::data;
@@ -47,7 +48,7 @@ CSVLeaseFile4::append(const Lease4& lease) {
         row.writeAt(getColumnIndex("client_id"), lease.client_id_->toText());
     }
     row.writeAt(getColumnIndex("valid_lifetime"), lease.valid_lft_);
-    row.writeAt(getColumnIndex("expire"), lease.cltt_ + lease.valid_lft_);
+    row.writeAt(getColumnIndex("expire"), static_cast<uint64_t>(lease.cltt_ + lease.valid_lft_));
     row.writeAt(getColumnIndex("subnet_id"), lease.subnet_id_);
     row.writeAt(getColumnIndex("fqdn_fwd"), lease.fqdn_fwd_);
     row.writeAt(getColumnIndex("fqdn_rev"), lease.fqdn_rev_);
@@ -194,8 +195,9 @@ CSVLeaseFile4::readValid(const CSVRow& row) {
 
 time_t
 CSVLeaseFile4::readCltt(const CSVRow& row) {
-    uint32_t cltt = row.readAndConvertAt<uint32_t>(getColumnIndex("expire"))
-        - readValid(row);
+    time_t cltt =
+        static_cast<time_t>(row.readAndConvertAt<uint64_t>(getColumnIndex("expire"))
+                            - readValid(row));
     return (cltt);
 }
 

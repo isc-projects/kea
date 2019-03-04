@@ -6,13 +6,14 @@
 
 #include <config.h>
 
-#include <iostream>
+#include <perfdhcp/perf_pkt6.h>
+#include <perfdhcp/pkt_transform.h>
+
 #include <exceptions/exceptions.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/dhcp6.h>
 
-#include "perf_pkt6.h"
-#include "pkt_transform.h"
+#include <iostream>
 
 using namespace std;
 using namespace isc;

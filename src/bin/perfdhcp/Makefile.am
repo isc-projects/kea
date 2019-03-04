@@ -3,6 +3,7 @@ SUBDIRS = . tests
 AM_CPPFLAGS = -I$(top_srcdir)/src/lib -I$(top_builddir)/src/lib
 AM_CPPFLAGS += -I$(top_srcdir)/src/bin -I$(top_builddir)/src/bin
 AM_CPPFLAGS += $(BOOST_INCLUDES)
+AM_CPPFLAGS += -Werror
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
@@ -23,8 +24,13 @@ libperfdhcp_la_SOURCES += perf_pkt4.cc perf_pkt4.h
 libperfdhcp_la_SOURCES += packet_storage.h
 libperfdhcp_la_SOURCES += pkt_transform.cc pkt_transform.h
 libperfdhcp_la_SOURCES += rate_control.cc rate_control.h
-libperfdhcp_la_SOURCES += stats_mgr.h
+libperfdhcp_la_SOURCES += stats_mgr.cc stats_mgr.h
 libperfdhcp_la_SOURCES += test_control.cc test_control.h
+libperfdhcp_la_SOURCES += receiver.cc receiver.h
+libperfdhcp_la_SOURCES += perf_socket.cc perf_socket.h
+libperfdhcp_la_SOURCES += abstract_scen.h
+libperfdhcp_la_SOURCES += avalanche_scen.cc avalanche_scen.h
+libperfdhcp_la_SOURCES += basic_scen.cc basic_scen.h
 
 sbin_PROGRAMS = perfdhcp
 perfdhcp_SOURCES = main.cc
@@ -57,7 +63,7 @@ EXTRA_DIST += $(man_MANS) perfdhcp.xml
 if GENERATE_DOCS
 
 perfdhcp.8: perfdhcp.xml
-	@XSLTPROC@ --novalid --xinclude --nonet -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/perfdhcp.xml
+	@XSLTPROC@ --novalid --xinclude @NONET@ -o $@ http://docbook.sourceforge.net/release/xsl/current/manpages/docbook.xsl $(srcdir)/perfdhcp.xml
 
 else
 

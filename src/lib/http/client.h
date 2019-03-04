@@ -82,6 +82,14 @@ public:
                                const HttpResponsePtr&,
                                const std::string&)> RequestHandler;
 
+    /// @brief Optional handler invoked when client connects to the server.
+    ///
+    /// Returned boolean value indicates whether the client should continue
+    /// connecting to the server (if true) or not (false).
+    /// @note Beware that the IO error code can be set to "in progress"
+    /// so a not null error code does not always mean the connect failed.
+    typedef std::function<bool(const boost::system::error_code&)> ConnectHandler;
+
     /// @brief Constructor.
     ///
     /// @param io_service IO service to be used by the HTTP client.
@@ -136,21 +144,30 @@ public:
     ///
     /// The default timeout for the transaction is set to 10 seconds
     /// (10 000 ms). If the timeout occurs, the callback is invoked with the
-    //// error code of @c boost::asio::error::timed_out.
+    /// error code of @c boost::asio::error::timed_out.
+    /// The timeout covers both the connect and the transaction phases
+    /// so when connecting to the server takes too long (e.g. with a
+    /// misconfigured firewall) the timeout is triggered. The connect
+    /// callback can be used to recognize this condition.
     ///
     /// @param url URL where the request should be send.
     /// @param request Pointer to the object holding a request.
     /// @param response Pointer to the object where response should be stored.
-    /// @param callback Pointer to the user callback function.
+    /// @param request_callback Pointer to the user callback function invoked
+    /// when transaction ends.
     /// @param request_timeout Timeout for the transaction in milliseconds.
+    /// @param connect_callback Optional callback invoked when the client
+    /// connects to the server.
     ///
     /// @throw HttpClientError If invalid arguments were provided.
     void asyncSendRequest(const Url& url,
                           const HttpRequestPtr& request,
                           const HttpResponsePtr& response,
-                          const RequestHandler& callback,
+                          const RequestHandler& request_callback,
                           const RequestTimeout& request_timeout =
-                          RequestTimeout(10000));
+                          RequestTimeout(10000),
+                          const ConnectHandler& connect_callback =
+                          ConnectHandler());
 
     /// @brief Closes all connections.
     void stop();

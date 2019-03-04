@@ -8,12 +8,12 @@
 
 #include <asiolink/io_address.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_lease_mgr.h>
 #include <dhcpsrv/tests/test_utils.h>
 #include <dhcpsrv/tests/generic_lease_mgr_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <exceptions/exceptions.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -25,6 +25,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace std;
@@ -564,15 +566,15 @@ TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
 class MySQLLeaseMgrDbLostCallbackTest : public LeaseMgrDbLostCallbackTest {
 public:
     virtual void destroySchema() {
-        test::destroyMySQLSchema();
+        destroyMySQLSchema();
     }
 
     virtual void createSchema() {
-        test::createMySQLSchema();
+        createMySQLSchema();
     }
 
     virtual std::string validConnectString() {
-        return (test::validMySQLConnectionString());
+        return (validMySQLConnectionString());
     }
 
     virtual std::string invalidConnectString() {

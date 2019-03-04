@@ -1,4 +1,4 @@
-// Copyright (C) 2010-2015 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2010-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -98,7 +98,15 @@ recv_fd(const int sock) {
     int fd = FD_OTHER_ERROR;
     if (cmsg != NULL && cmsg->cmsg_len == cmsg_len(sizeof(int)) &&
         cmsg->cmsg_level == SOL_SOCKET && cmsg->cmsg_type == SCM_RIGHTS) {
+// Some systems (e.g. recent NetBSD) converted all CMSG access macros
+// to static_cast when used in C++ code. As cmsg is declared const
+// this makes the CMSG_DATA macro to not compile. But fortunately
+// these systems provide a const alternative named CCMSG_DATA.
+#ifdef CCMSG_DATA
+        std::memcpy(&fd, CCMSG_DATA(cmsg), sizeof(int));
+#else
         std::memcpy(&fd, CMSG_DATA(cmsg), sizeof(int));
+#endif
     }
     free(msghdr.msg_control);
     int new_fd = -1;

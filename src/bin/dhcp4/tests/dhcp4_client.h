@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -12,7 +12,7 @@
 #include <dhcp/option.h>
 #include <dhcp/pkt4.h>
 #include <dhcp4/tests/dhcp4_test_utils.h>
-#include <util/optional_value.h>
+#include <util/optional.h>
 #include <boost/noncopyable.hpp>
 #include <boost/shared_ptr.hpp>
 #include <set>
@@ -371,7 +371,7 @@ public:
     /// If this value is "unspecified" the default values will be used
     /// by the client. If this value is specified, it will override ciaddr
     /// in the client's messages.
-    isc::util::OptionalValue<asiolink::IOAddress> ciaddr_;
+    isc::util::Optional<asiolink::IOAddress> ciaddr_;
 
     /// @brief Adds extra option (an option the client will always send)
     ///

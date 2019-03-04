@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,9 +9,9 @@
 
 #include <asiolink/io_service.h>
 #include <cc/data.h>
-#include <dhcpsrv/daemon.h>
 #include <exceptions/exceptions.h>
 #include <log/logger_support.h>
+#include <process/daemon.h>
 #include <process/d_log.h>
 #include <process/d_process.h>
 #include <process/io_service_signal.h>
@@ -101,7 +101,7 @@ typedef boost::shared_ptr<DControllerBase> DControllerBasePtr;
 /// NOTE: Derivations must supply their own static singleton instance method(s)
 /// for creating and fetching the instance. The base class declares the instance
 /// member in order for it to be available for static callback functions.
-class DControllerBase : public dhcp::Daemon {
+class DControllerBase : public Daemon {
 public:
     /// @brief Constructor
     ///
@@ -114,7 +114,7 @@ public:
     virtual ~DControllerBase();
 
     /// @brief returns Kea version on stdout and exit.
-    /// redeclaration/redefinition. @ref isc::dhcp::Daemon::getVersion()
+    /// redeclaration/redefinition. @ref isc::process::Daemon::getVersion()
     std::string getVersion(bool extended);
 
     /// @brief Acts as the primary entry point into the controller execution
@@ -296,6 +296,30 @@ public:
     isc::data::ConstElementPtr
     configTestHandler(const std::string& command,
                       isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-reload command
+    ///
+    /// This method handles the config-reload command, which reloads
+    /// the configuration file.
+    ///
+    /// @param command (ignored)
+    /// @param args (ignored)
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configReloadHandler(const std::string& command,
+                        isc::data::ConstElementPtr args);
+
+    /// @brief handler for config-set command
+    ///
+    /// This method handles the config-set command, which checks
+    /// configuration specified in args parameter.
+    ///
+    /// @param command (ignored)
+    /// @param args configuration to be checked.
+    /// @return status of the command
+    isc::data::ConstElementPtr
+    configSetHandler(const std::string& command,
+                     isc::data::ConstElementPtr args);
 
     /// @brief handler for 'shutdown' command
     ///

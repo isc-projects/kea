@@ -67,6 +67,19 @@ public:
     static data::ConstElementPtr
     createLease4GetAll();
 
+    /// @brief Creates lease4-get-page command.
+    ///
+    /// @param lease4 Pointer to the last lease returned on the previous
+    /// page of leases. This lease is used to set the value of the "from"
+    /// parameter in the lease4-get-page command. If this command is sent
+    /// to fetch the first page, the @c lease4 parameter should be set to
+    /// null.
+    /// @param limit Limit of leases on the page.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createLease4GetPage(const dhcp::Lease4Ptr& lease4,
+                        const uint32_t limit);
+
     /// @brief Creates lease6-update command.
     ///
     /// It adds "force-create" parameter to the lease information to force
@@ -94,6 +107,19 @@ public:
     /// @return Pointer to the JSON representation of the command.
     static data::ConstElementPtr
     createLease6GetAll();
+
+    /// @brief Creates lease6-get-page command.
+    ///
+    /// @param lease6 Pointer to the last lease returned on the previous
+    /// page of leases. This lease is used to set the value of the "from"
+    /// parameter in the lease6-get-page command. If this command is sent
+    /// to fetch the first page, the @c lease6 parameter should be set to
+    /// null.
+    /// @param limit Limit of leases on the page.
+    /// @return Pointer to the JSON representation of the command.
+    static data::ConstElementPtr
+    createLease6GetPage(const dhcp::Lease6Ptr& lease6,
+                        const uint32_t limit);
 
 private:
 

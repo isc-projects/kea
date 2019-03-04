@@ -137,7 +137,7 @@
 #-----
 ,{
 "description" : "D2Params.ip-address invalid value",
-"logic-error" : "invalid address (bogus) specified for parameter 'ip-address' (<string>:1:39)",
+"logic-error" : "Failed to convert 'bogus' to address: Failed to convert string to address 'bogus': Invalid argument(<string>:1:39)",
 "data" :
     {
     "ip-address" : "bogus",
@@ -315,7 +315,7 @@
 #-----
 ,{
 "description" : "D2.tsig-keys, missing key name",
-"logic-error" : "element: tsig-keys : missing parameter 'name' (<string>:1:62)<string>:1:47",
+"logic-error" : "missing parameter 'name' (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},
@@ -420,7 +420,7 @@
 #----- D2.tsig-keys, algorithm tests
 ,{
 "description" : "D2.tsig-keys, missing algorithm",
-"logic-error" : "element: tsig-keys : missing parameter 'algorithm' (<string>:1:62)<string>:1:47",
+"logic-error" : "missing parameter 'algorithm' (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},
@@ -665,7 +665,7 @@
 #----- D2.tsig-keys, secret tests
 ,{
 "description" : "D2.tsig-keys, missing secret",
-"logic-error" : "element: tsig-keys : missing parameter 'secret' (<string>:1:62)<string>:1:47",
+"logic-error" : "missing parameter 'secret' (<string>:1:62)",
 "data" :
     {
     "forward-ddns" : {},

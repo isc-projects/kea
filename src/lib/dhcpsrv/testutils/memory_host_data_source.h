@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,44 @@ public:
     getAll(const Host::IdentifierType& identifier_type,
            const uint8_t* identifier_begin,
            const size_t identifier_len) const;
+
+    /// @brief Return all hosts in a DHCPv4 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAll4(const SubnetID& subnet_id) const;
+
+    /// @brief Return all hosts in a DHCPv6 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    virtual ConstHostCollection
+    getAll6(const SubnetID& subnet_id) const;
+
+    /// @brief Return range of hosts in a DHCPv4 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage4(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
+
+    /// @brief Return range of hosts in a DHCPv6 subnet.
+    ///
+    /// @param subnet_id Subnet identifier.
+    /// @param source_index Index of the source (unused).
+    /// @param lower_host_id Host identifier used as lower bound for the
+    /// returned range.
+    /// @param page_size maximum size of the page returned.
+    virtual ConstHostCollection
+    getPage6(const SubnetID& subnet_id,
+             size_t& source_index,
+             uint64_t lower_host_id,
+             const HostPageSize& page_size) const;
 
     /// @brief Returns a collection of hosts using the specified IPv4 address.
     ///
@@ -195,6 +233,9 @@ protected:
 
     /// @brief Store
     std::vector<HostPtr> store_;
+
+    /// @brief Next host id
+    uint64_t next_host_id_;
 };
 
 /// Pointer to the Mem host data source.
@@ -205,7 +246,7 @@ typedef boost::shared_ptr<MemHostDataSource> MemHostDataSourcePtr;
 /// @param parameters
 /// @return A pointer to a base host data source instance.
 HostDataSourcePtr
-memFactory(const DatabaseConnection::ParameterMap& /*parameters*/);
+memFactory(const db::DatabaseConnection::ParameterMap& /*parameters*/);
 
 } // namespace isc::dhcp::test
 } // namespace isc::dhcp

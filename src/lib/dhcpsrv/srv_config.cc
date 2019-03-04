@@ -1,14 +1,17 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <exceptions/exceptions.h>
 #include <dhcpsrv/cfgmgr.h>
+#include <dhcpsrv/parsers/simple_parser4.h>
 #include <dhcpsrv/srv_config.h>
 #include <dhcpsrv/lease_mgr_factory.h>
 #include <dhcpsrv/cfg_hosts_util.h>
+#include <process/logging_info.h>
 #include <log/logger_manager.h>
 #include <log/logger_specification.h>
 #include <dhcp/pkt.h> // Needed for HWADDR_SOURCE_*
@@ -17,6 +20,7 @@
 
 using namespace isc::log;
 using namespace isc::data;
+using namespace isc::process;
 
 namespace isc {
 namespace dhcp {
@@ -36,7 +40,8 @@ SrvConfig::SrvConfig()
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
-      cfg_consist_(new CfgConsistency()) {
+      cfg_consist_(new CfgConsistency()),
+      server_tag_("") {
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
@@ -54,7 +59,8 @@ SrvConfig::SrvConfig(const uint32_t sequence)
       decline_timer_(0), echo_v4_client_id_(true), dhcp4o6_port_(0),
       d2_client_config_(new D2ClientConfig()),
       configured_globals_(Element::createMap()),
-      cfg_consist_(new CfgConsistency()) {
+      cfg_consist_(new CfgConsistency()),
+      server_tag_("") {
 }
 
 std::string
@@ -105,12 +111,8 @@ SrvConfig::sequenceEquals(const SrvConfig& other) {
 
 void
 SrvConfig::copy(SrvConfig& new_config) const {
-    // We will entirely replace loggers in the new configuration.
-    new_config.logging_info_.clear();
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        new_config.addLoggingInfo(*it);
-    }
+    ConfigBase::copy(new_config);
+
     // Replace interface configuration.
     new_config.cfg_iface_.reset(new CfgIface(*cfg_iface_));
     // Replace option definitions.
@@ -130,45 +132,15 @@ SrvConfig::copy(SrvConfig& new_config) const {
     }
 }
 
-void
-SrvConfig::applyLoggingCfg() const {
-
-    std::list<LoggerSpecification> specs;
-    for (LoggingInfoStorage::const_iterator it = logging_info_.begin();
-         it != logging_info_.end(); ++it) {
-        specs.push_back(it->toSpec());
-    }
-    LoggerManager manager;
-    manager.process(specs.begin(), specs.end());
-}
-
 bool
 SrvConfig::equals(const SrvConfig& other) const {
-    // If number of loggers is different, then configurations aren't equal.
-    if (logging_info_.size() != other.logging_info_.size()) {
+
+    // Checks common elements: logging & config control
+    if (!ConfigBase::equals(other)) {
         return (false);
     }
-    // Pass through all loggers and try to find the match for each of them
-    // with the loggers from the other configuration. The order doesn't
-    // matter so we can't simply compare the vectors.
-    for (LoggingInfoStorage::const_iterator this_it =
-             logging_info_.begin(); this_it != logging_info_.end();
-         ++this_it) {
-        bool match = false;
-        for (LoggingInfoStorage::const_iterator other_it =
-                 other.logging_info_.begin();
-             other_it != other.logging_info_.end(); ++other_it) {
-            if (this_it->equals(*other_it)) {
-                match = true;
-                break;
-            }
-        }
-        // No match found for the particular logger so return false.
-        if (!match) {
-            return (false);
-        }
-    }
-    // Logging information is equal between objects, so check other values.
+
+    // Common information is equal between objects, so check other values.
     if ((*cfg_iface_ != *other.cfg_iface_) ||
         (*cfg_option_def_ != *other.cfg_option_def_) ||
         (*cfg_option_ != *other.cfg_option_) ||
@@ -184,6 +156,77 @@ SrvConfig::equals(const SrvConfig& other) const {
     }
     // Pass through all configured hooks libraries.
     return (hooks_config_.equal(other.hooks_config_));
+}
+
+void
+SrvConfig::merge(ConfigBase& other) {
+    ConfigBase::merge(other);
+    try {
+        SrvConfig& other_srv_config = dynamic_cast<SrvConfig&>(other);
+        if (CfgMgr::instance().getFamily() == AF_INET) {
+            merge4(other_srv_config);
+        } else {
+            // @todo merge6();
+        }
+    } catch (const std::bad_cast&) {
+        isc_throw(InvalidOperation, "internal server error: must use derivation"
+                  " of the SrvConfig as an argument of the call to"
+                  " SrvConfig::merge()");
+    }
+}
+
+void
+SrvConfig::merge4(SrvConfig& other) {
+    /// We merge objects in order of dependency (real or theoretical).
+
+    /// Merge globals.
+    mergeGlobals4(other);
+
+    /// Merge option defs
+    cfg_option_def_->merge((*other.getCfgOptionDef()));
+
+    /// @todo merge options
+
+    // Merge shared networks.
+    cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
+
+    /// Merge subnets.
+    cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
+
+    /// @todo merge other parts of the configuration here.
+}
+
+void
+SrvConfig::mergeGlobals4(SrvConfig& other) {
+    // Iterate over the "other" globals, adding/overwriting them into
+    // this config's list of globals.
+    for (auto other_global : other.getConfiguredGlobals()->mapValue()) {
+        addConfiguredGlobal(other_global.first, other_global.second);
+    }
+
+    // A handful of values are stored as members in SrvConfig. So we'll 
+    // iterate over the merged globals, setting approprate members.
+    for (auto merged_global : getConfiguredGlobals()->mapValue()) {
+        std::string name = merged_global.first;
+        ConstElementPtr element = merged_global.second;
+        try {
+            if (name == "decline-probation-period") {
+                setDeclinePeriod(element->intValue());
+            }
+            else if (name == "echo-client-id") {
+                setEchoClientId(element->boolValue());
+            }
+            else if (name == "dhcp4o6port") {
+                setDhcp4o6Port(element->intValue());
+            }
+            else if (name == "server-tag") {
+                setServerTag(element->stringValue());
+            }
+        } catch(const std::exception& ex) {
+            isc_throw (BadValue, "Invalid value:" << element->str()
+                       << " explict global:" << name);
+        }
+    }
 }
 
 void
@@ -210,7 +253,7 @@ SrvConfig::updateStatistics() {
     }
 }
 
-void 
+void
 SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
     if (config->getType() != Element::map) {
         isc_throw(BadValue, "extractConfiguredGlobals must be given a map element");
@@ -227,15 +270,16 @@ SrvConfig::extractConfiguredGlobals(isc::data::ConstElementPtr config) {
 
 ElementPtr
 SrvConfig::toElement() const {
+    // Toplevel map
+    ElementPtr result = ConfigBase::toElement();
+
     // Get family for the configuration manager
     uint16_t family = CfgMgr::instance().getFamily();
-    // Toplevel map
-    ElementPtr result = Element::createMap();
     // DhcpX global map
     ElementPtr dhcp = Element::createMap();
 
     // Add in explicitly configured globals.
-    dhcp->setValue(configured_globals_->mapValue()); 
+    dhcp->setValue(configured_globals_->mapValue());
 
     // Set user-context
     contextToElement(dhcp);
@@ -342,7 +386,7 @@ SrvConfig::toElement() const {
         }
     }
 
-    // Host reservations 
+    // Host reservations
     CfgHostsList resv_list;
     resv_list.internalize(cfg_hosts_->toElement());
 
@@ -411,22 +455,21 @@ SrvConfig::toElement() const {
     // Set DhcpX
     result->set(family == AF_INET ? "Dhcp4" : "Dhcp6", dhcp);
 
-    // Logging global map (skip if empty)
-    if (!logging_info_.empty()) {
-        ElementPtr logging = Element::createMap();
-        // Set loggers list
-        ElementPtr loggers = Element::createList();
-        for (LoggingInfoStorage::const_iterator logger =
-                 logging_info_.cbegin();
-             logger != logging_info_.cend(); ++logger) {
-            loggers->add(logger->toElement());
-        }
-        logging->set("loggers", loggers);
-        result->set("Logging", logging);
-    }
-
     ConstElementPtr cfg_consist = cfg_consist_->toElement();
     dhcp->set("sanity-checks", cfg_consist);
+
+    // Set config-control (if it exists)
+    ConstConfigControlInfoPtr info = getConfigControlInfo();
+    if (info) {
+        ConstElementPtr info_elem = info->toElement();
+        dhcp->set("config-control", info_elem);
+    }
+
+    // Set dhcp-packet-control (if it exists)
+    data::ConstElementPtr dhcp_queue_control = getDHCPQueueControl();
+    if (dhcp_queue_control) {
+        dhcp->set("dhcp-queue-control", dhcp_queue_control);
+    }
 
     return (result);
 }

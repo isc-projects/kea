@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2014-2015,2017 Internet Systems Consortium, Inc. ("ISC")
+# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -11,6 +11,8 @@
 # as well as for running tests.
 
 VERSION=@PACKAGE_VERSION@
+@HAVE_SYSREPO_FALSE@have_netconf=0
+@HAVE_SYSREPO_TRUE@have_netconf=1
 
 ### Logging functions ###
 
@@ -80,6 +82,9 @@ get_pid_from_file() {
         ;;
     kea-ctrl-agent)
         kea_config_file=${kea_ctrl_agent_config_file}
+        ;;
+    kea-netconf)
+        kea_config_file=${kea_netconf_config_file}
         ;;
     esac
 
@@ -253,9 +258,10 @@ check_kea_conf() {
 #   and be set to yes, e.g. ${dhcp4} should be equal to yes if server name
 #   is dhcp4
 run_conditional() {
-    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent
-    local command="${2}"      # Command to execute
+    local server=${1}         # Server name: dhcp4, dhcp6, dhcp_ddns, ctrl_agent, netconf
+    local commands="${2}"     # Commands to execute
     local check_file_cfg=${3} # Check if server enabled in the configuration file
+    local is_all=0            # is all servers or a specific one
 
     # If keyword "all" is not on the list of servers we will have to check
     # if our specific server is on the list. If, not return.
@@ -263,6 +269,22 @@ run_conditional() {
     if [ ${_inlist} -eq 0 ]; then
         is_in_list ${server} "${servers}"
         if [ ${_inlist} -eq 0 ]; then
+            return
+        fi
+    else
+        is_all=1
+    fi
+    # Return for for netconf when not available.
+    if [ ${server} = "netconf" ]; then
+        if [ ${have_netconf} -eq 0 ]; then
+            return
+        fi
+        # reload is not supported for netconf.
+        if [ ${command} = "reload" ]; then
+            if [ ${is_all} -eq 1 ]; then
+                return
+            fi
+            log_warning "netconf does not support reload"
             return
         fi
     fi
@@ -274,10 +296,10 @@ run_conditional() {
     # Get the location of the current Kea configuration file. This will be used
     # to check that the file exists before it is used.
     local kea_config_location=$( eval printf "%s" "\$kea_${server}_config_file" )
-    # Run the command if we ignore the configuration setting or if the
+    # Run the commands if we ignore the configuration setting or if the
     # setting is "yes".
     if [ ${check_file_cfg} -eq 0 ] || [ "${file_config}" = "yes" ]; then
-        ${command}
+        ${commands}
     fi
 }
 
@@ -347,7 +369,7 @@ do
             # Validate that the specified server names are correct.
             for s in ${servers}
             do
-                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent"
+                is_in_list "${s}" "all dhcp4 dhcp6 dhcp_ddns ctrl_agent netconf"
                 if [ ${_inlist} -eq 0 ]; then
                     log_error "invalid server name: ${s}"
                     exit 1
@@ -395,13 +417,21 @@ if [ -z ${ctrl_agent_srv} ]; then
     exit 1
 fi
 
+# Get location of the Netconf binary.
+if [ ${have_netconf} -eq 1 ]; then
+    if [ -z ${netconf_srv} ]; then
+        log_error "netconf_srv parameter not specified"
+        exit 1
+    fi
+fi
+
 # dhcp4 and dhcp6 (=yes) indicate if we should start DHCPv4 and DHCPv6 server
 # respectively.
-dhcp4=$( printf "%s" ${dhcp4} | tr [:upper:] [:lower:] )
-dhcp6=$( printf "%s" ${dhcp6} | tr [:upper:] [:lower:] )
-dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr [:upper:] [:lower:] )
-ctrl_agent=$( printf "%s" ${ctrl_agent} | tr [:upper:] [:lower:] )
-
+dhcp4=$( printf "%s" ${dhcp4} | tr '[:upper:]' '[:lower:]' )
+dhcp6=$( printf "%s" ${dhcp6} | tr '[:upper:]' '[:lower:]' )
+dhcp_ddns=$( printf "%s" ${dhcp_ddns} | tr '[:upper:]' '[:lower:]' )
+ctrl_agent=$( printf "%s" ${ctrl_agent} | tr '[:upper:]' '[:lower:]' )
+netconf=$( printf "%s" ${netconf} | tr '[:upper:]' '[:lower:]' )
 
 case ${command} in
     # Start the servers.
@@ -419,6 +449,8 @@ case ${command} in
 ${args}" 1
         run_conditional "ctrl_agent" "start_server ${ctrl_agent_srv} -c ${kea_ctrl_agent_config_file} \
 ${args}" 1
+        run_conditional "netconf" "start_server ${netconf_srv} -c ${kea_netconf_config_file} \
+${args}" 1
 
         exit 0 ;;
 
@@ -429,6 +461,7 @@ ${args}" 1
         run_conditional "dhcp6" "stop_server ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "stop_server ${dhcp_ddns_srv}" 0
         run_conditional "ctrl_agent" "stop_server ${ctrl_agent_srv}" 0
+        run_conditional "netconf" "stop_server ${netconf_srv}" 0
 
         exit 0 ;;
 
@@ -439,6 +472,7 @@ ${args}" 1
         run_conditional "dhcp6" "reload_server ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "reload_server ${dhcp_ddns_srv}" 0
         run_conditional "ctrl_agent" "reload_server ${ctrl_agent_srv}" 0
+        run_conditional "netconf" "reload_server ${netconf_srv}" 0
 
         exit 0 ;;
 
@@ -470,16 +504,32 @@ ${args}" 1
             agent_status="active"
         fi
         printf "Control Agent: %s\n" ${agent_status}
+
+        if [ ${have_netconf} -eq 1 ]; then
+            netconf_status="inactive"
+            check_running $(basename ${netconf_srv})
+            if [ ${_running} -eq 1 ]; then
+                netconf_status="active"
+            fi
+            printf "Netconf agent: %s\n" ${netconf_status}
+        fi
+
         printf "Kea DHCPv4 configuration file: %s\n" ${kea_dhcp4_config_file}
         printf "Kea DHCPv6 configuration file: %s\n" ${kea_dhcp6_config_file}
         printf "Kea DHCP DDNS configuration file: %s\n" ${kea_dhcp_ddns_config_file}
         printf "Kea Control Agent configuration file: %s\n" ${kea_ctrl_agent_config_file}
+        if [ ${have_netconf} -eq 1 ]; then
+            printf "Kea Netconf configuration file: %s\n" ${kea_netconf_config_file}
+        fi
         printf "keactrl configuration file: %s\n" ${keactrl_conf}
 
         check_kea_conf ${kea_dhcp4_config_file}
         check_kea_conf ${kea_dhcp6_config_file}
         check_kea_conf ${kea_dhcp_ddns_config_file}
         check_kea_conf ${kea_ctrl_agent_config_file}
+        if [ ${have_netconf} -eq 1 ]; then
+            check_kea_conf ${kea_netconf_config_file}
+        fi
 
         exit 0 ;;
 
@@ -489,6 +539,7 @@ ${args}" 1
         run_conditional "dhcp6" "print_version kea-dhcp6 ${dhcp6_srv}" 0
         run_conditional "dhcp_ddns" "print_version kea-dhcp-ddns ${dhcp_ddns_srv}" 0
         run_conditional "ctrl_agent" "print_version kea-ctrl-agent ${ctrl_agent_srv}" 0
+        run_conditional "netconf" "print_version kea-netconf ${netconf_srv}" 0
 
         exit 0 ;;
 

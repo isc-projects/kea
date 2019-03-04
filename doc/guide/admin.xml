@@ -3,7 +3,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- Converted by db4-upgrade version 1.1 -->
@@ -14,44 +14,44 @@
     <title>Databases and Database Version Numbers</title>
 
     <para>
-      Kea supports storing leases and host reservations (i.e. static
-      assignments of addresses, prefixes and options) in one of
-      the several supported databases. As future versions of Kea
-      are released, the structure of those databases will change.
+      Kea supports the storage of leases and host reservations (i.e. static
+      assignments of addresses, prefixes, and options) in one of
+      the several supported backend databases. As future versions of Kea
+      are released, the structure of those backends will change.
       For example, Kea currently only stores lease information
       and host reservations. Future versions of Kea will store
-      additional data such as subnet definitions: the database
+      additional data such as subnet definitions, so the backend
       structure will need to be updated to accommodate the extra
       information.
     </para>
 
     <para>
       A given version of Kea expects a particular structure in
-      the database and checks for this by examining the version of
-      database it is using.  Separate version numbers are maintained for
-      backend databases, independent of the version of Kea itself. It
-      is possible that the backend database version will stay the same
-      through several Kea revisions: similarly, it is possible that the
-      version of backend database may go up several revisions during a
-      Kea upgrade.  Versions for each database are independent, so an
-      increment in the MySQL database version does not imply an increment
+      the backend and checks for this by examining the version of
+      database it is using. Separate version numbers are maintained for
+      backends, independent of the version of Kea itself. It
+      is possible that the backend version will stay the same
+      through several Kea revisions; similarly, it is possible that the
+      version of the backend may go up several revisions during a
+      Kea upgrade. Versions for each backend are independent, so an
+      increment in the MySQL backend version does not imply an increment
       in that of PostgreSQL.
     </para>
 
     <para>
       Backend versions are specified in
       a <replaceable>major.minor</replaceable> format. The minor
-      number is increased when there are backward compatible changes
-      introduced.  For example, the addition of a new index. It is
-      desirable, but not mandatory to apply such a change; you
-      can run on older database version if you want to. (Although, in
+      number is increased when there are backward-compatible changes
+      introduced; for example, the addition of a new index. It is
+      desirable but not mandatory to apply such a change; you
+      can run an older backend version if you want to. (Although, in
       the example given, running without the new index may be at the
       expense of a performance penalty.) On the other hand, the major
-      number is increased when an incompatible change is introduced,
-      for example an extra column is added to a table. If you try to
-      run Kea software on a database that is too old (as signified by
-      mismatched backend major version number), Kea will refuse to run:
-      administrative action will be required to upgrade the database.
+      number is increased when an incompatible change is introduced:
+      for example, an extra column is added to a table. If you try to
+      run Kea on a backend that is too old (as signified by
+      a mismatched backend major version number), Kea will refuse to run;
+      administrative action will be required to upgrade the backend.
     </para>
   </section>
 
@@ -61,15 +61,15 @@
     <para>
       To manage the databases, Kea provides the
       <command>kea-admin</command> tool. It is able to initialize
-      a new database, check its version number, perform a
-      database upgrade, and dump lease data to a text file.
+      a new backend, check its version number, perform a
+      backend upgrade, and dump lease data to a text file.
     </para>
 
     <para>
       <command>kea-admin</command> takes two mandatory
       parameters: <command>command</command> and
       <command>backend</command>. Additional, non-mandatory options
-      may be specified. Currently supported commands are:
+      may be specified. The currently supported commands are:
 
       <itemizedlist>
         <listitem>
@@ -85,7 +85,7 @@
         <listitem>
           <simpara>
             <command>lease-version</command> —
-            Reports the lease database version number. This is
+            Reports the lease backend version number. This is
             not necessarily equal to the Kea version number as
             each backend has its own versioning scheme.
           </simpara>
@@ -94,7 +94,7 @@
         <listitem>
           <simpara>
             <command>lease-upgrade</command> —
-            Conducts a lease database upgrade. This is useful when
+            Conducts a lease backend upgrade. This is useful when
             upgrading Kea.
           </simpara>
         </listitem>
@@ -102,16 +102,16 @@
         <listitem>
           <simpara>
             <command>lease-dump</command> —
-            Dumps the contents of the lease database (for MySQL, PostgreSQL or
-            CQL backends) to a CSV (comma separated values) text file. The first
-            line of the file contains the column names.  This is meant to be
+            Dumps the contents of the lease database (for MySQL, PostgreSQL, or
+            CQL backends) to a CSV (comma-separated values) text file. The first
+            line of the file contains the column names. This is meant to be
             used as a diagnostic tool, so it provides a portable, human-readable
             form of the lease data.
           </simpara>
         </listitem>
       </itemizedlist>
 
-      <command>backend</command> specifies the backend type. Currently
+      <command>backend</command> specifies the type of backend database. The currently
       supported types are:
 
       <itemizedlist>
@@ -139,26 +139,26 @@
         <listitem>
           <simpara>
             <command>cql</command> —
-            Lease information is stored in a CQL database.
+            Lease information is stored in an Apache Cassandra database.
           </simpara>
         </listitem>
 
       </itemizedlist>
 
       Additional parameters may be needed, depending on your setup
-      and specific operation: username, password and database name or
+      and specific operation: username, password, and database name or
       the directory where specific files are located. See the appropriate
       manual page for details (<command>man 8 kea-admin</command>).
     </para>
   </section>
 
   <section xml:id="supported-databases">
-    <title>Supported Databases</title>
+    <title>Supported Backends</title>
 
     <para>The following table presents the capabilities of available
     backends. Please refer to the specific sections dedicated to each backend to
     better understand their capabilities and limitations. Choosing the right
-    backend may be essential for success or failure of your deployment.</para>
+    backend may be essential for the success of your deployment.</para>
 
     <para>
       <table frame="all" xml:id="backends">
@@ -193,7 +193,7 @@
               <entry>CSV file</entry>
               <entry>SQL RMDB</entry>
               <entry>SQL RMDB</entry>
-              <entry>NoSQL database (CQL)</entry>
+              <entry>NoSQL database (Cassandra)</entry>
             </row>
 
             <row>
@@ -230,17 +230,17 @@
 
       <para>
         The memfile backend is able to store lease information, but is not able to
-        store host reservation details: these must be stored in the configuration
+        store host reservation details; these must be stored in the configuration
         file. (There are no plans to add a host reservations storage capability to
         this backend.)
       </para>
 
       <para>
         No special initialization steps are necessary
-        for the memfile backend.  During the first run, both
+        for the memfile backend. During the first run, both
         <command>kea-dhcp4</command> and <command>kea-dhcp6</command>
         will create an empty lease file if one is not
-        present. Necessary disk write permission is required.
+        present. Necessary disk-write permission is required.
       </para>
 
       <section xml:id="memfile-upgrade">
@@ -250,17 +250,17 @@
         from an earlier version of Kea to a new version of Kea.
 
         During startup the servers will check the schema version of the lease
-        files against their own.  If there is a mismatch, the servers will
+        files against their own. If there is a mismatch, the servers will
         automatically launch the LFC process to convert the files to the
-        server's schema version.  While this mechanism is primarily meant to
+        server's schema version. While this mechanism is primarily meant to
         ease the process of upgrading to newer versions of Kea, it can also
-        be used for downgrading should the need arise.  When upgrading, any
+        be used for downgrading should the need arise. When upgrading, any
         values not present in the original lease files will be assigned
-        appropriate default values.  When downgrading, any data present in
+        appropriate default values. When downgrading, any data present in
         the files but not in the server's schema will be dropped.
 
-        If you wish to convert the files manually, prior to starting the
-        servers you may do so by running the LFC process yourself.
+        If you wish to convert the files manually prior to starting the
+        servers, you may do so by running the LFC process yourself.
         See <xref linkend="kea-lfc"/> for more information.
         </para>
       </section>
@@ -271,19 +271,19 @@
       <title>MySQL</title>
 
       <para>
-        MySQL is able to store leases, host reservations and options defined on
-        a per host basis. This section can be safely ignored
-        if you chose to store the data in other backends.
+        MySQL is able to store leases, host reservations, and options defined on
+        a per-host basis. This section can be safely ignored
+        if you choose to store the data in other backends.
       </para>
 
       <section xml:id="mysql-database-create">
-        <title>First Time Creation of the MySQL Database</title>
+        <title>First-Time Creation of the MySQL Database</title>
 
         <para>
           If you are setting the MySQL database for the first time,
           you need to create the database area within MySQL and set up
           the MySQL user ID under which Kea will access the database.
-          This needs to be done manually: <command>kea-admin</command>
+          This needs to be done manually; <command>kea-admin</command>
           is not able to do this for you.
         </para>
 
@@ -324,7 +324,7 @@ mysql&gt; <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO 
 </screen>
                 (<replaceable>user-name</replaceable> and
                 <replaceable>password</replaceable> are the user ID
-                and password you are using to allow Keas access to the
+                and password you are using to allow Kea's access to the
                 MySQL instance. All apostrophes in the command lines
                 above are required.)
               </para>
@@ -335,7 +335,7 @@ mysql&gt; <userinput>GRANT ALL ON <replaceable>database-name</replaceable>.* TO 
                 At this point, you may elect to create the database
                 tables. (Alternatively, you can exit MySQL and create
                 the tables using the <command>kea-admin</command> tool,
-                as explained below.)  To do this:
+                as explained below.) To do this:
 <screen>
 mysql&gt; <userinput>CONNECT <replaceable>database-name</replaceable>;</userinput>
 mysql&gt; <userinput>SOURCE <replaceable>path-to-kea</replaceable>/share/kea/scripts/mysql/dhcpdb_create.mysql</userinput>
@@ -359,17 +359,17 @@ $
         </para>
 
         <para>
-          If you elected not to create the tables in step 4, you can do
+          If you elected not to create the tables in Step 4, you can do
           so now by running the <command>kea-admin</command> tool:
 <screen>
 $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
-          (Do not do this if you did create the tables in step 4.)
-          <command>kea-admin</command> implements rudimentary checks:
+          (Do not do this if you did create the tables in Step 4.)
+          <command>kea-admin</command> implements rudimentary checks;
           it will refuse to initialize a database that contains any
           existing tables. If you want to start from scratch, you
           must remove all data manually. (This process is a manual
-          operation on purpose to avoid possibly irretrievable mistakes
+          operation on purpose, to avoid possibly irretrievable mistakes
           by <command>kea-admin</command>.)
         </para>
       </section>
@@ -378,8 +378,8 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
         <title>Upgrading a MySQL Database from an Earlier Version of Kea</title>
 
         <para>
-          Sometimes a new Kea version may use newer database schema, so
-          there will be a need to upgrade the existing database. This can
+          Sometimes a new Kea version may use a newer database schema, so
+          the existing database will need to be upgraded. This can
           be done using the <command>kea-admin lease-upgrade</command>
           command.
         </para>
@@ -390,16 +390,16 @@ $ <userinput>kea-admin lease-init mysql -u <replaceable>database-user</replaceab
 $ <userinput>kea-admin lease-version mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
           (See <xref linkend="kea-database-version"/> for a discussion
-          about versioning.)  If the version does not match the minimum
+          about versioning.) If the version does not match the minimum
           required for the new version of Kea (as described in the
           release notes), the database needs to be upgraded.
         </para>
 
         <para>
           Before upgrading, please make sure that the database is
-          backed up.  The upgrade process does not discard any data but,
+          backed up. The upgrade process does not discard any data, but
           depending on the nature of the changes, it may be impossible
-          to subsequently downgrade to an earlier version.  To perform
+          to subsequently downgrade to an earlier version. To perform
           an upgrade, issue the following command:
 <screen>
 $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
@@ -412,15 +412,14 @@ $ <userinput>kea-admin lease-upgrade mysql -u <replaceable>database-user</replac
       <title>PostgreSQL</title>
 
       <para>
-        PostgreSQL is able to store leases, host reservations and options
-        defined on a per host basis.
-        A PostgreSQL database must be set up if you want Kea to store
-        lease and other information in PostgreSQL. This step can be
+        PostgreSQL is able to store leases, host reservations, and options
+        defined on a per-host basis.
+        This step can be
         safely ignored if you are using other database backends.
       </para>
 
       <section xml:id="pgsql-database-create">
-        <title>First Time Creation of the PostgreSQL Database</title>
+        <title>First-Time Creation of the PostgreSQL Database</title>
 
         <para>
           The first task is to create both the lease database and the
@@ -483,11 +482,11 @@ $
                 At this point you are ready to create the database tables.
                 This can be done using the <command>kea-admin</command> tool
                 as explained in the next section (recommended), or manually.
-                To create the tables manually enter the following command.
+                To create the tables manually, enter the following command.
                 Note that PostgreSQL will prompt you to enter the new user's
-                password you specified in Step 3. When the command completes
+                password you specified in Step 3. When the command completes,
                 you will be returned to the shell prompt. You should see output
-                similar to following:
+                similar to the following:
 <screen>
 $ <userinput>psql -d <replaceable>database-name</replaceable> -U <replaceable>user-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/scripts/pgsql/dhcpdb_create.pgsql</userinput>
 Password for user <replaceable>user-name</replaceable>:
@@ -520,16 +519,16 @@ psql: FATAL:  no pg_hba.conf entry for host "[local]", user "<replaceable>user-n
                 ... you will need to alter the PostgreSQL configuration.
                 Kea uses password authentication when connecting to
                 the database and must have the appropriate entries
-                added to PostgreSQL's pg_hba.conf file.  This file is
+                added to PostgreSQL's pg_hba.conf file. This file is
                 normally located in the primary data directory for your
-                PostgreSQL server. The precise path may vary but the
+                PostgreSQL server. The precise path may vary depending on your operating system and version, but the
                 default location for PostgreSQL 9.3 on Centos 6.5 is:
                 <filename>/var/lib/pgsql/9.3/data/pg_hba.conf</filename>.
               </para>
 
               <para>
                 Assuming Kea is running on the same host as PostgreSQL,
-                adding lines similar to following should be sufficient to
+                adding lines similar to the following should be sufficient to
                 provide password-authenticated access to Kea's database:
 <screen>
 local   <replaceable>database-name</replaceable>    <replaceable>user-name</replaceable>                                 password
@@ -539,12 +538,12 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
               </para>
 
               <para>
-                These edits are primarily intended as a starting point
+                These edits are primarily intended as a starting point, and are
                 not a definitive reference on PostgreSQL administration or
-                database security.  Please consult your PostgreSQL user
-                manual before making these changes as they may expose
-                other databases that you run.  It may be necessary to
-                restart PostgreSQL in order for these changes to take effect.
+                database security. Please consult your PostgreSQL user
+                manual before making these changes, as they may expose
+                other databases that you run. It may be necessary to
+                restart PostgreSQL in order for the changes to take effect.
               </para>
             </listitem>
           </orderedlist>
@@ -559,12 +558,12 @@ host    <replaceable>database-name</replaceable>    <replaceable>user-name</repl
 <screen>
 $ <userinput>kea-admin lease-init pgsql -u <replaceable>database-user</replaceable> -p <replaceable>database-password</replaceable> -n <replaceable>database-name</replaceable></userinput>
 </screen>
-          Do not do this if you already created the tables in manually.
-          <command>kea-admin</command> implements rudimentary checks:
+          Do not do this if you already created the tables manually.
+          <command>kea-admin</command> implements rudimentary checks;
           it will refuse to initialize a database that contains any
           existing tables. If you want to start from scratch, you
           must remove all data manually. (This process is a manual
-          operation on purpose to avoid possibly irretrievable mistakes
+          operation on purpose, to avoid possibly irretrievable mistakes
           by <command>kea-admin</command>.)
         </para>
       </section>
@@ -590,29 +589,27 @@ $ <userinput>kea-admin lease-upgrade pgsql -u <replaceable>database-user</replac
     </section> <!-- end of PostgreSQL sections -->
 
     <section id="cql-database">
-      <title>CQL (Cassandra)</title>
+      <title>Cassandra</title>
 
       <para>
-        Cassandra, or Cassandra Query Language (CQL), is the newest backend
-        added to Kea. Since it was added recently and has not undergone as much
-        testing as other backends, it is considered experimental. Please use
-        with caution. The Cassandra backend is able to store leases,
-        host reservations and options defined on a per host basis.
+        Cassandra (sometimes for historical reasons referred to in documentation and commands as CQL) is the newest backend
+        added to Kea; initial development was contributed by Deutsche Telekom. 
+        The Cassandra backend is able to store leases,
+        host reservations, and options defined on a per-host basis.
       </para>
 
       <para>
-        The CQL database must be properly set up if you want Kea to store
-        information in CQL. This section can be safely ignored if you chose to
+        Cassandra must be properly set up if you want Kea to store
+        information in it. This section can be safely ignored if you choose to
         store the data in other backends.
       </para>
 
     <section xml:id="cql-database-create">
-      <title>First Time Creation of the Cassandra Database</title>
+      <title>First-Time Creation of the Cassandra Database</title>
 
       <para>
-        If you are setting up the CQL database for the first time, you need to
-        create the keyspace area within CQL. This needs to be done manually:
-        <command>kea-admin</command> is not able to do this for you.
+        If you are setting up the Cassandra database for the first time, you need to create the keyspace area within it. This needs to be done manually;
+        <command>kea-admin</command> cannot do this for you.
       </para>
 
       <para>
@@ -650,8 +647,8 @@ cql&gt; <userinput>CREATE KEYSPACE keyspace-name WITH replication = {'class' : '
          <listitem>
             <para>
               At this point, you may elect to create the database tables.
-              (Alternatively, you can exit CQL and create the tables using the
-              <command>kea-admin</command> tool, as explained below)  To do this:
+              (Alternatively, you can exit Cassandra and create the tables using the
+              <command>kea-admin</command> tool, as explained below.) To do this:
 <screen>
 <userinput>cqslh -k <replaceable>keyspace-name</replaceable> -f <replaceable>path-to-kea</replaceable>/share/kea/scripts/cql/dhcpdb_create.cql</userinput>
 </screen>
@@ -663,27 +660,27 @@ cql&gt; <userinput>CREATE KEYSPACE keyspace-name WITH replication = {'class' : '
       </para>
 
       <para>
-        If you elected not to create the tables in step 4, you can do
+        If you elected not to create the tables in Step 4, you can do
         so now by running the <command>kea-admin</command> tool:
 <screen>
 $ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable></userinput>
 </screen>
-        (Do not do this if you did create the tables in step 4.)
-        <command>kea-admin</command> implements rudimentary checks:
+        (Do not do this if you did create the tables in Step 4.)
+        <command>kea-admin</command> implements rudimentary checks;
         it will refuse to initialize a database that contains any
         existing tables. If you want to start from scratch, you
         must remove all data manually. (This process is a manual
-        operation on purpose to avoid possibly irretrievable mistakes
-        by <command>kea-admin</command>)
+        operation on purpose, to avoid possibly irretrievable mistakes
+        by <command>kea-admin</command>.)
       </para>
     </section>
 
     <section xml:id="cql-upgrade">
-      <title>Upgrading a CQL Database from an Earlier Version of Kea</title>
+      <title>Upgrading a Cassandra Database from an Earlier Version of Kea</title>
 
       <para>
-        Sometimes a new Kea version may use newer database schema, so
-        there will be a need to upgrade the existing database. This can
+        Sometimes a new Kea version may use a newer database schema, so
+        the existing database will need to be upgraded. This can
         be done using the <command>kea-admin lease-upgrade</command>
         command.
       </para>
@@ -694,16 +691,16 @@ $ <userinput>kea-admin lease-init cql -n <replaceable>database-name</replaceable
 $ <userinput>kea-admin lease-version cql -n <replaceable>database-name</replaceable></userinput>
 </screen>
         (See <xref linkend="kea-database-version"/> for a discussion
-        about versioning)  If the version does not match the minimum
+        about versioning.) If the version does not match the minimum
         required for the new version of Kea (as described in the
         release notes), the database needs to be upgraded.
       </para>
 
       <para>
         Before upgrading, please make sure that the database is
-        backed up.  The upgrade process does not discard any data but,
+        backed up. The upgrade process does not discard any data, but
         depending on the nature of the changes, it may be impossible
-        to subsequently downgrade to an earlier version.  To perform
+        to subsequently downgrade to an earlier version. To perform
         an upgrade, issue the following command:
 <screen>
 $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replaceable></userinput>
@@ -720,59 +717,29 @@ $ <userinput>kea-admin lease-upgrade cql -n <replaceable>database-name</replacea
       Sections <xref linkend="read-only-database-configuration4"/> and
       <xref linkend="read-only-database-configuration6"/> describe when
       such configuration may be required and how to configure Kea to
-      operate using a read-only host database.
+      operate in this way.
       </para>
     </section>
 
     <section>
-      <title>Limitations Related to the use of SQL Databases</title>
+      <title>Limitations Related to the Use of SQL Databases</title>
 
 
       <section>
-        <title>Year 2038 issue</title>
+        <title>Year 2038 Issue</title>
         <para>
           The lease expiration time is stored in the SQL database for each lease
-          as a timestamp value. Kea developers observed that MySQL database doesn't
+          as a timestamp value. Kea developers observed that the MySQL database doesn't
           accept timestamps beyond 2147483647 seconds (maximum signed 32-bit number)
-          from the beginning of the epoch. At the same time, some versions of PostgreSQL
-          do accept greater values but the value is altered when it is read back.
-          For this reason the lease database backends put the restriction for the
+          from the beginning of the Unix epoch (00:00:00 on 1 January 1970). Some versions of PostgreSQL
+          do accept greater values, but the value is altered when it is read back.
+          For this reason, the lease database backends put a restriction on the
           maximum timestamp to be stored in the database, which is equal to the
           maximum signed 32-bit number. This effectively means that the current
-          Kea version can't store the leases which expiration time is later than
+          Kea version cannot store leases whose expiration time is later than
           2147483647 seconds since the beginning of the epoch (around year 2038).
           This will be fixed when the database support for longer timestamps
           is available.
-        </para>
-      </section>
-
-      <section>
-        <title>Server Terminates when Database Connection is Lost</title>
-        <para>
-          If Kea is configured to use an external database it opens a connection
-          to the database and requires that this connection is not interrupted.
-          When the database connection breaks, e.g. as a result of SQL server
-          restart, DHCP servers will terminate indicating a fatal error. In such
-          a case, the system administrator is required to start the database and
-          then "manually" start Kea to resume the service.
-        </para>
-
-        <para>
-          Although the engineering team is planning to implement some form of
-          reconnect mechanism in the future, this will mostly be applicable in
-          cases when the database service is restarted and the connection
-          down time is relatively short. The DHCP server can't provide its
-          service as long as the database is down, because it can't store
-          leases being assigned to the clients. The server will have to
-          reject any DHCP messages as long as the connection is down and
-          terminate if the reconnection attempt fails multiple times.
-        </para>
-
-        <para>
-          Because the database connection is critical for the operation of the
-          DHCP service, the current behavior is to terminate when that
-          connection is unavailable to indicate that server is in inconsistent
-          state and can't serve clients.
         </para>
       </section>
 

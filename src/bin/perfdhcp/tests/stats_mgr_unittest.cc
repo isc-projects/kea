@@ -6,19 +6,21 @@
 
 #include <config.h>
 
-#include <boost/shared_ptr.hpp>
+#include "command_options_helper.h"
+
+#include <perfdhcp/stats_mgr.h>
 
 #include <exceptions/exceptions.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/pkt4.h>
 #include <dhcp/pkt6.h>
-#include "../stats_mgr.h"
 
 #include <gtest/gtest.h>
 
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/scoped_ptr.hpp>
+#include <boost/shared_ptr.hpp>
 
 using namespace std;
 using namespace isc;
@@ -26,9 +28,6 @@ using namespace isc::dhcp;
 using namespace isc::perfdhcp;
 
 namespace {
-
-typedef StatsMgr<dhcp::Pkt4> StatsMgr4;
-typedef StatsMgr<dhcp::Pkt6> StatsMgr6;
 
 const uint32_t common_transid = 123;
 
@@ -118,8 +117,8 @@ public:
     /// \param num_packets packets to be passed to Statistics Manager.
     /// \param receive simulated packets are received (if true)
     /// or sent (if false)
-    void passMultiplePackets6(const boost::shared_ptr<StatsMgr6> stats_mgr,
-                              StatsMgr6::ExchangeType xchg_type,
+    void passMultiplePackets6(const boost::shared_ptr<StatsMgr> stats_mgr,
+                              ExchangeType xchg_type,
                               const uint8_t packet_type,
                               const int num_packets,
                               const bool receive = false) {
@@ -148,30 +147,23 @@ public:
     ///
     /// \param stats_mgr Statistics Manager instance.
     /// \param delay delay in seconds between DISCOVER and OFFER packets.
-    void passDOPacketsWithDelay(const boost::shared_ptr<StatsMgr4> stats_mgr,
+    void passDOPacketsWithDelay(const boost::shared_ptr<StatsMgr> stats_mgr,
                                 unsigned int delay,
                                 uint32_t transid) {
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                       transid));
         ASSERT_NO_THROW(
-            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
         );
 
-        // There is way to differentiate timestamps of two packets other than
-        // sleep for before we create another packet. Packet is using current
-        // time to update its timestamp.
-        // Sleeping for X seconds will guarantee that delay between packets
-        // will be greater than 1 second. Note that posix time value is
-        // transformed to double value and it makes it hard to determine
-        // actual value to expect.
-        std::cout << "Sleeping for " << delay << "s to test packet delays"
-                  << std::endl;
-        sleep(delay);
+        // Simulate time difference by changing time of sent packet
+        auto ts = sent_packet->getTimestamp() - boost::posix_time::seconds(delay);
+        sent_packet->setTimestamp(ts);
 
         boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
                                                       transid));
         ASSERT_NO_THROW(
-            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
         );
 
         // Calculate period between packets.
@@ -187,10 +179,11 @@ public:
     /// @param transid_index Index in the table of transaction ids which
     /// points to the transaction id to be selected for the DHCPOFFER.
     void testSendReceiveCollected(const size_t transid_index) {
-        boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+        CommandOptions opt;
+        boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
         // The second parameter indicates that transactions older than
         // 2 seconds should be removed and respective packets collected.
-        stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO, 2);
+        stats_mgr->addExchangeStats(ExchangeType::DO, 2);
 
         // Transaction ids of packets to be sent. All transaction ids
         // belong to the same bucket (match the transid & 1023 hashing
@@ -209,7 +202,7 @@ public:
                 sent_packet->modifyTimestamp(-10);
             }
             ASSERT_NO_THROW(
-                stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+                stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
             )  << "failure for transaction id " << transid[i];
         }
 
@@ -217,18 +210,18 @@ public:
         Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
                                                     transid[transid_index]));
         ASSERT_NO_THROW(
-            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
         );
 
         // There is exactly one case (transaction id) for which perfdhcp
         // will find a packet using ordered lookup. In this case, no
         // packets will be collected. Otherwise, for any unordered lookup
         // all packets from a bucket should be collected.
-        if (stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO) > 0) {
+        if (stats_mgr->getUnorderedLookups(ExchangeType::DO) > 0) {
             // All packets in the bucket having transaction id
             // index below TEST_COLLECTED_PKT_NUM / 2 should be removed.
             EXPECT_EQ(TEST_COLLECTED_PKT_NUM / 2,
-                      stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
+                      stats_mgr->getCollectedNum(ExchangeType::DO));
         }
 
         // Make sure that we can still use the StatsMgr. It is possible
@@ -242,11 +235,11 @@ public:
             Pkt4ModifiablePtr rcvd_packet(createPacket4(DHCPOFFER,
                                                         transid[i] + 1));
             ASSERT_NO_THROW(
-                stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+                stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
             ) << "failure for transaction id " << transid[i];
 
             ASSERT_NO_THROW(
-                stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+                stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
             ) << "failure for transaction id " << transid[i];
         }
 
@@ -256,86 +249,89 @@ public:
         // timeout. Therefore, we have to count both received packets and
         // orphans.
         EXPECT_EQ(TEST_COLLECTED_PKT_NUM + 1,
-                  stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO) +
-                  stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+                  stats_mgr->getRcvdPacketsNum(ExchangeType::DO) +
+                  stats_mgr->getOrphans(ExchangeType::DO));
     }
 };
 
 TEST_F(StatsMgrTest, Constructor) {
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    CommandOptions opt;
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::DO);
     EXPECT_DOUBLE_EQ(
         std::numeric_limits<double>::max(),
-        stats_mgr->getMinDelay(StatsMgr4::XCHG_DO)
+        stats_mgr->getMinDelay(ExchangeType::DO)
     );
-    EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getSentPacketsNum(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(0, stats_mgr->getCollectedNum(StatsMgr4::XCHG_DO));
+    EXPECT_DOUBLE_EQ(0, stats_mgr->getMaxDelay(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getOrphans(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getOrderedLookups(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getUnorderedLookups(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getSentPacketsNum(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getRcvdPacketsNum(ExchangeType::DO));
+    EXPECT_EQ(0, stats_mgr->getCollectedNum(ExchangeType::DO));
 
-    EXPECT_THROW(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), InvalidOperation);
-    EXPECT_THROW(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO),
+    EXPECT_THROW(stats_mgr->getAvgDelay(ExchangeType::DO), InvalidOperation);
+    EXPECT_THROW(stats_mgr->getStdDevDelay(ExchangeType::DO),
                  InvalidOperation);
-    EXPECT_THROW(stats_mgr->getAvgUnorderedLookupSetSize(StatsMgr4::XCHG_DO),
+    EXPECT_THROW(stats_mgr->getAvgUnorderedLookupSetSize(ExchangeType::DO),
                  InvalidOperation);
 }
 
 TEST_F(StatsMgrTest, Exchange) {
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+    CommandOptions opt;
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
     boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                       common_transid));
     boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
                                                       common_transid));
     // This is expected to throw because XCHG_DO was not yet
     // added to Stats Manager for tracking.
-    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
-    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(ExchangeType::DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(ExchangeType::RA));
     EXPECT_THROW(
-        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet),
+        stats_mgr->passSentPacket(ExchangeType::DO, sent_packet),
         BadValue
     );
     EXPECT_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet),
+        stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet),
         BadValue
     );
 
 
     // Adding DISCOVER-OFFER exchanges to be tracked by Stats Manager.
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
-    ASSERT_TRUE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_DO));
-    ASSERT_FALSE(stats_mgr->hasExchangeStats(StatsMgr4::XCHG_RA));
+    stats_mgr->addExchangeStats(ExchangeType::DO);
+    ASSERT_TRUE(stats_mgr->hasExchangeStats(ExchangeType::DO));
+    ASSERT_FALSE(stats_mgr->hasExchangeStats(ExchangeType::RA));
     // The following two attempts are expected to throw because
     // invalid exchange types are passed (XCHG_RA instead of XCHG_DO)
     EXPECT_THROW(
-        stats_mgr->passSentPacket(StatsMgr4::XCHG_RA, sent_packet),
+        stats_mgr->passSentPacket(ExchangeType::RA, sent_packet),
         BadValue
     );
     EXPECT_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_RA, rcvd_packet),
+        stats_mgr->passRcvdPacket(ExchangeType::RA, rcvd_packet),
         BadValue
     );
 
     // The following two attempts are expected to run fine because
     // right exchange type is specified.
     EXPECT_NO_THROW(
-        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+        stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
     );
     EXPECT_NO_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+        stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet)
     );
 }
 
 TEST_F(StatsMgrTest, MultipleExchanges) {
-    boost::shared_ptr<StatsMgr6> stats_mgr(new StatsMgr6());
-    stats_mgr->addExchangeStats(StatsMgr6::XCHG_SA);
-    stats_mgr->addExchangeStats(StatsMgr6::XCHG_RR);
+    CommandOptions opt;
+    boost::shared_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::SA);
+    stats_mgr->addExchangeStats(ExchangeType::RR);
 
     // Simulate sending number of solicit packets.
     const int solicit_packets_num = 10;
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_SOLICIT,
+    passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_SOLICIT,
                          solicit_packets_num);
 
     // Simulate sending number of request packets. It is important that
@@ -343,78 +339,62 @@ TEST_F(StatsMgrTest, MultipleExchanges) {
     // packets. We can now check if right number packets went to
     // the right exchange type group.
     const int request_packets_num = 5;
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_RR, DHCPV6_REQUEST,
+    passMultiplePackets6(stats_mgr, ExchangeType::RR, DHCPV6_REQUEST,
                          request_packets_num);
 
     // Check if all packets are successfully passed to packet lists.
     EXPECT_EQ(solicit_packets_num,
-              stats_mgr->getSentPacketsNum(StatsMgr6::XCHG_SA));
+              stats_mgr->getSentPacketsNum(ExchangeType::SA));
     EXPECT_EQ(request_packets_num,
-              stats_mgr->getSentPacketsNum(StatsMgr6::XCHG_RR));
+              stats_mgr->getSentPacketsNum(ExchangeType::RR));
 
     // Simulate reception of multiple packets for both SOLICIT-ADVERTISE
     // and REQUEST-REPLY exchanges. Assume no packet drops.
     const bool receive_packets = true;
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_ADVERTISE,
+    passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_ADVERTISE,
                          solicit_packets_num, receive_packets);
 
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_RR, DHCPV6_REPLY,
+    passMultiplePackets6(stats_mgr, ExchangeType::RR, DHCPV6_REPLY,
                          request_packets_num, receive_packets);
 
     // Verify that all received packets are counted.
     EXPECT_EQ(solicit_packets_num,
-              stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_SA));
+              stats_mgr->getRcvdPacketsNum(ExchangeType::SA));
     EXPECT_EQ(request_packets_num,
-              stats_mgr->getRcvdPacketsNum(StatsMgr6::XCHG_RR));
-}
-
-TEST_F(StatsMgrTest, ExchangeToString) {
-    // Test DHCPv4 specific exchange names.
-    EXPECT_EQ("DISCOVER-OFFER",
-              StatsMgr4::exchangeToString(StatsMgr4::XCHG_DO));
-    EXPECT_EQ("REQUEST-ACK", StatsMgr4::exchangeToString(StatsMgr4::XCHG_RA));
-    EXPECT_EQ("REQUEST-ACK (renewal)",
-              StatsMgr4::exchangeToString(StatsMgr4::XCHG_RNA));
-
-
-    // Test DHCPv6 specific exchange names.
-    EXPECT_EQ("SOLICIT-ADVERTISE",
-              StatsMgr6::exchangeToString(StatsMgr6::XCHG_SA));
-    EXPECT_EQ("REQUEST-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RR));
-    EXPECT_EQ("RENEW-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RN));
-    EXPECT_EQ("RELEASE-REPLY", StatsMgr6::exchangeToString(StatsMgr6::XCHG_RL));
-
+              stats_mgr->getRcvdPacketsNum(ExchangeType::RR));
 }
 
 TEST_F(StatsMgrTest, SendReceiveSimple) {
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+    CommandOptions opt;
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
     boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                       common_transid));
     boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER,
                                                       common_transid));
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    stats_mgr->addExchangeStats(ExchangeType::DO);
     // The following attempt is expected to pass because the right
     // exchange type is used.
     ASSERT_NO_THROW(
-        stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+        stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
     );
     // It is ok, to pass to received packets here. First one will
     // be matched with sent packet. The latter one will not be
     // matched with sent packet but orphans counter will simply
     // increase.
     ASSERT_NO_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+        stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet)
     );
     ASSERT_NO_THROW(
-        stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet)
+        stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet)
     );
-    EXPECT_EQ(1, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(1, stats_mgr->getOrphans(ExchangeType::DO));
 }
 
 TEST_F(StatsMgrTest, SendReceiveUnordered) {
+    CommandOptions opt;
     const int packets_num = 10;
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::DO);
 
     // Transaction ids of 10 packets to be sent and received.
     uint32_t transid[packets_num] =
@@ -423,7 +403,7 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER,
                                                           transid[i]));
         ASSERT_NO_THROW(
-            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
         );
     }
 
@@ -434,17 +414,17 @@ TEST_F(StatsMgrTest, SendReceiveUnordered) {
             rcvd_packet(createPacket4(DHCPDISCOVER,
                                       transid[packets_num - 1 - i]));
         ASSERT_NO_THROW(
-            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
         );
     }
     // All packets are expected to match (we did not drop any)
-    EXPECT_EQ(0, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(0, stats_mgr->getOrphans(ExchangeType::DO));
     // Most of the time we have to do unordered lookups except for the last
     // one. Packets are removed from the sent list every time we have a match
     // so eventually we come up with the single packet that caching iterator
     // is pointing to. This is counted as ordered lookup.
-    EXPECT_EQ(1, stats_mgr->getOrderedLookups(StatsMgr4::XCHG_DO));
-    EXPECT_EQ(9, stats_mgr->getUnorderedLookups(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(1, stats_mgr->getOrderedLookups(ExchangeType::DO));
+    EXPECT_EQ(9, stats_mgr->getUnorderedLookups(ExchangeType::DO));
 }
 
 TEST_F(StatsMgrTest, SendReceiveCollected) {
@@ -456,33 +436,34 @@ TEST_F(StatsMgrTest, SendReceiveCollected) {
 }
 
 TEST_F(StatsMgrTest, Orphans) {
+    CommandOptions opt;
     const int packets_num = 6;
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO);
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::DO);
 
     // We skip every second packet to simulate drops.
     for (int i = 0; i < packets_num; i += 2) {
         boost::shared_ptr<Pkt4> sent_packet(createPacket4(DHCPDISCOVER, i));
         ASSERT_NO_THROW(
-            stats_mgr->passSentPacket(StatsMgr4::XCHG_DO, sent_packet)
+            stats_mgr->passSentPacket(ExchangeType::DO, sent_packet)
         );
     }
     // We pass all received packets.
     for (int i = 0; i < packets_num; ++i) {
         boost::shared_ptr<Pkt4> rcvd_packet(createPacket4(DHCPOFFER, i));
         ASSERT_NO_THROW(
-            stats_mgr->passRcvdPacket(StatsMgr4::XCHG_DO, rcvd_packet);
+            stats_mgr->passRcvdPacket(ExchangeType::DO, rcvd_packet);
         );
     }
     // The half of received packets are expected not to have matching
     // sent packet.
-    EXPECT_EQ(packets_num / 2, stats_mgr->getOrphans(StatsMgr4::XCHG_DO));
+    EXPECT_EQ(packets_num / 2, stats_mgr->getOrphans(ExchangeType::DO));
 }
 
 TEST_F(StatsMgrTest, Delays) {
-
-    boost::shared_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
-    stats_mgr->addExchangeStats(StatsMgr4::XCHG_DO, 5);
+    CommandOptions opt;
+    boost::shared_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::DO, 5);
 
     // Send DISCOVER, wait 2s and receive OFFER. This will affect
     // counters in Stats Manager.
@@ -490,16 +471,16 @@ TEST_F(StatsMgrTest, Delays) {
 
     // Initially min delay is equal to MAX_DOUBLE. After first packets
     // are passed, it is expected to set to actual value.
-    EXPECT_LT(stats_mgr->getMinDelay(StatsMgr4::XCHG_DO),
+    EXPECT_LT(stats_mgr->getMinDelay(ExchangeType::DO),
               std::numeric_limits<double>::max());
-    EXPECT_GT(stats_mgr->getMinDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getMinDelay(ExchangeType::DO), 1);
 
     // Max delay is supposed to the same value as minimum
     // or maximum delay.
-    EXPECT_GT(stats_mgr->getMaxDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getMaxDelay(ExchangeType::DO), 1);
 
     // Delay sums are now the same as minimum or maximum delay.
-    EXPECT_GT(stats_mgr->getAvgDelay(StatsMgr4::XCHG_DO), 1);
+    EXPECT_GT(stats_mgr->getAvgDelay(ExchangeType::DO), 1);
 
     // Simulate another DISCOVER-OFFER exchange with delay between
     // sent and received packets. Delay is now shorter than earlier
@@ -507,11 +488,12 @@ TEST_F(StatsMgrTest, Delays) {
     const unsigned int delay2 = 1;
     passDOPacketsWithDelay(stats_mgr, delay2, common_transid + 1);
     // Standard deviation is expected to be non-zero.
-    EXPECT_GT(stats_mgr->getStdDevDelay(StatsMgr4::XCHG_DO), 0);
+    EXPECT_GT(stats_mgr->getStdDevDelay(ExchangeType::DO), 0);
 }
 
 TEST_F(StatsMgrTest, CustomCounters) {
-    boost::scoped_ptr<StatsMgr4> stats_mgr(new StatsMgr4());
+    CommandOptions opt;
+    boost::scoped_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
 
     // Specify counter keys and names.
     const std::string too_short_key("tooshort");
@@ -536,13 +518,13 @@ TEST_F(StatsMgrTest, CustomCounters) {
     }
 
     // Check counter's current value and name.
-    StatsMgr4::CustomCounterPtr tooshort_counter =
+    CustomCounterPtr tooshort_counter =
         stats_mgr->getCounter(too_short_key);
     EXPECT_EQ(too_short_name, tooshort_counter->getName());
     EXPECT_EQ(tooshort_num, tooshort_counter->getValue());
 
     // Check counter's current value and name.
-    StatsMgr4::CustomCounterPtr toolate_counter =
+    CustomCounterPtr toolate_counter =
         stats_mgr->getCounter(too_late_key);
     EXPECT_EQ(too_late_name, toolate_counter->getName());
     EXPECT_EQ(toolate_num, toolate_counter->getValue());
@@ -554,15 +536,16 @@ TEST_F(StatsMgrTest, PrintStats) {
               << "capabilities. It is expected that some counters "
               << "will be printed during this test. It may also "
               << "cause spurious errors." << std::endl;
-    boost::shared_ptr<StatsMgr6> stats_mgr(new StatsMgr6());
-    stats_mgr->addExchangeStats(StatsMgr6::XCHG_SA);
+    CommandOptions opt;
+    boost::shared_ptr<StatsMgr> stats_mgr(new StatsMgr(opt));
+    stats_mgr->addExchangeStats(ExchangeType::SA);
 
     // Simulate sending and receiving one packet. Otherwise printing
     // functions will complain about lack of packets.
     const int packets_num = 1;
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_SOLICIT,
+    passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_SOLICIT,
                          packets_num);
-    passMultiplePackets6(stats_mgr, StatsMgr6::XCHG_SA, DHCPV6_ADVERTISE,
+    passMultiplePackets6(stats_mgr, ExchangeType::SA, DHCPV6_ADVERTISE,
                          packets_num, true);
 
     // This function will print statistics even if packets are not
@@ -577,9 +560,9 @@ TEST_F(StatsMgrTest, PrintStats) {
 
     // Now, we create another statistics manager instance and enable
     // packets archiving mode.
-    const bool archive_packets = true;
-    boost::shared_ptr<StatsMgr6> stats_mgr2(new StatsMgr6(archive_packets));
-    stats_mgr2->addExchangeStats(StatsMgr6::XCHG_SA);
+    CommandOptionsHelper::process(opt, "perfdhcp -x t 127.0.0.1");
+    boost::shared_ptr<StatsMgr> stats_mgr2(new StatsMgr(opt));
+    stats_mgr2->addExchangeStats(ExchangeType::SA);
 
     // Timestamps should now get printed because packets have been preserved.
     EXPECT_NO_THROW(stats_mgr2->printTimestamps());

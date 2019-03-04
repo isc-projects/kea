@@ -4,7 +4,7 @@
  -
  - This Source Code Form is subject to the terms of the Mozilla Public
  - License, v. 2.0. If a copy of the MPL was not distributed with this
- - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ - file, you can obtain one at http://mozilla.org/MPL/2.0/.
 -->
 
 <!-- need this include to make the &keaversion; macro work -->
@@ -45,9 +45,9 @@
 
       <para>
         This is the reference guide for Kea version &keaversion;.
-        The most up-to-date version of this document (in PDF, HTML,
+        Links to the most up-to-date version of this document (in PDF, HTML,
         and plain text formats), along with other documents for
-        Kea, can be found at <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://kea.isc.org/docs">http://kea.isc.org/docs</uri>.
+        Kea, can be found in ISC's <uri xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://kb.isc.org/docs/kea-administrator-reference-manual">Knowledgebase</uri>.
         </para> </abstract>
 
   </info>
@@ -72,6 +72,8 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lease-expiration.xml"/>
 
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="congestion-handling.xml"/>
+
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ddns.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="lfc.xml"/>
@@ -84,41 +86,39 @@
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="ctrl-channel.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="libdhcp.xml"/>
-
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="logging.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="shell.xml"/>
 
   <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="netconf.xml"/>
 
-  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="faq.xml"/>
+  <xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="api.xml"/>
 
-  <chapter xml:id="acknowledgments">
+  <appendix xml:id="acknowledgments">
       <title>Acknowledgments</title>
 
       <para>Kea is an open source project designed, developed, and maintained by Internet Systems
       Consortium, Inc, a 501(c)3 non-profit organization. ISC is primarily funded by revenues from
-      support subscriptions for our open source and we encourage all professional users to consider
+      support subscriptions for our open source, and we encourage all professional users to consider
       this option. To learn more, see ​<ulink
       url="https://www.isc.org/support/">https://www.isc.org/support/</ulink>.</para>
 
       <para>If you would like to contribute to ISC to assist us in continuing to make quality open
       source software, please visit our donations page at ​<ulink
-      url="http://www.isc.org/donate/">http://www.isc.org/donate/</ulink>.</para>
+      url="https://www.isc.org/donate/">https://www.isc.org/donate/</ulink>.</para>
 
       <para>We thank all the organizations and individuals who have helped to make Kea
       possible. <link xmlns:xlink="http://www.w3.org/1999/xlink"
       xlink:href="http://www.comcast.com/">Comcast</link>
        and the Comcast Innovation Fund provided major support for the development
-      of Kea's DHCPv4, DHCPv6 and DDNS modules. Mozilla funded initial work on the REST API via a
+      of Kea's DHCPv4, DHCPv6, and DDNS modules. Mozilla funded initial work on the REST API via a
       MOSS award.</para>
 
       <para>Kea was initially implemented as a collection of applications
-      within the BIND 10 framework. We thank the founding sponsors of the BIND10 project:
+      within the BIND 10 framework. We thank the founding sponsors of the BIND 10 project:
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.afilias.info/">Afilias</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.iis.se/">IIS.SE</link>,
-      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>, 
+      <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.nominet.org.uk/">Nominet</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.sidn.nl/">SIDN</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://jprs.co.jp/">JPRS</link>,
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://cira.ca/">CIRA</link>; and additional sponsors
@@ -133,8 +133,7 @@
       <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.tcinet.ru/">Technical Center of Internet</link>
       .</para>
 
-    </chapter>
-
+    </appendix>
 
 <!-- TODO: Add bibliography section (mostly RFCs, probably) -->
 

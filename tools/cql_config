@@ -11,14 +11,14 @@ fi
 if ! [ -f ${DIR}/cql_config_defines.sh ] || ! [ -x ${DIR}/cql_config_defines.sh ]
 then
 	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.sh)"
-	exit 0
+	exit 1
 fi
 source ${DIR}/cql_config_defines.sh
 
 if [ $# -ne 1 ] && [ $# -ne 2 ]
 then
 	echo "run: \`$0 --help\` for more help"
-	exit 0
+	exit 1
 fi
 if [ $1 == "--help" ]
 then
@@ -34,6 +34,8 @@ then
 	echo "    get lib path"
 	echo "--modversion"
 	echo "    get version"
+        echo "--print-errors"
+        echo "    check existence"
 	echo "libraries:"
 	echo "    cassandra"
 	echo "    cassandra_static"
@@ -41,12 +43,12 @@ then
 else if [ $# -ne 2 ]
 	then
 		echo "run: \`$0 --help\` for more help"
-		exit 0
+		exit 1
 	else if [ $2 != "cassandra" ] && [ $2 != "cassandra_static" ]
 		then
 			echo "library $2 not supported"
 			echo "run: \`$0 --help\` for more help"
-			exit 0
+			exit 1
 		else
 			cql_lib=$2
 		fi
@@ -74,5 +76,10 @@ then
 	echo "${MAJOR}.${MINOR}.${PATCH}"
 	exit 0
 fi
+if [ $1 == "--print-errors" ]
+then
+	exit 0
+fi
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"
+exit 1

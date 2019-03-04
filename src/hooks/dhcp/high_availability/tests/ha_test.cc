@@ -151,6 +151,7 @@ HATest::createValidJsonConfiguration(const HAConfig::HAMode& ha_mode) const {
         "         \"this-server-name\": \"server1\","
         "         \"mode\": " << (ha_mode == HAConfig::LOAD_BALANCING ?
                                   "\"load-balancing\"" : "\"hot-standby\"") << ","
+        "         \"sync-page-limit\": 3,"
         "         \"heartbeat-delay\": 1000,"
         "         \"max-response-delay\": 1000,"
         "         \"max-ack-delay\": 10000,"

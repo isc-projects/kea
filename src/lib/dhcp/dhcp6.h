@@ -1,4 +1,4 @@
-// Copyright (C) 2006-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2006-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -18,7 +18,7 @@
 
 /* DHCPv6 Option codes: */
 enum DHCPv6OptionType {
-   D6O_CLIENTID                            = 1, /* RFC3315 */
+   D6O_CLIENTID                            = 1, /* RFC 8415 */
    D6O_SERVERID                            = 2,
    D6O_IA_NA                               = 3,
    D6O_IA_TA                               = 4,
@@ -42,14 +42,14 @@ enum DHCPv6OptionType {
    D6O_SIP_SERVERS_ADDR                    = 22, /* RFC3319 */
    D6O_NAME_SERVERS                        = 23, /* RFC3646 */
    D6O_DOMAIN_SEARCH                       = 24, /* RFC3646 */
-   D6O_IA_PD                               = 25, /* RFC3633 */
-   D6O_IAPREFIX                            = 26, /* RFC3633 */
+   D6O_IA_PD                               = 25, /* RFC8415 */
+   D6O_IAPREFIX                            = 26, /* RFC8415 */
    D6O_NIS_SERVERS                         = 27, /* RFC3898 */
    D6O_NISP_SERVERS                        = 28, /* RFC3898 */
    D6O_NIS_DOMAIN_NAME                     = 29, /* RFC3898 */
    D6O_NISP_DOMAIN_NAME                    = 30, /* RFC3898 */
    D6O_SNTP_SERVERS                        = 31, /* RFC4075 */
-   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC4242 */
+   D6O_INFORMATION_REFRESH_TIME            = 32, /* RFC8415 */
    D6O_BCMCS_SERVER_D                      = 33, /* RFC4280 */
    D6O_BCMCS_SERVER_A                      = 34, /* RFC4280 */
    // 35 is unassigned
@@ -99,8 +99,8 @@ enum DHCPv6OptionType {
    D6O_CLIENT_LINKLAYER_ADDR               = 79, /* RFC6939 */
    D6O_LINK_ADDRESS                        = 80, /* RFC6977 */
 // D6O_RADIUS                              = 81, /* RFC7037 */
-   D6O_SOL_MAX_RT                          = 82, /* RFC7083 */
-   D6O_INF_MAX_RT                          = 83, /* RFC7083 */
+   D6O_SOL_MAX_RT                          = 82, /* RFC8415 */
+   D6O_INF_MAX_RT                          = 83, /* RFC8415 */
 // D6O_ADDRSEL                             = 84, /* RFC7078 */
 // D6O_ADDRSEL_TABLE                       = 85, /* RFC7078 */
 // D6O_V6_PCP_SERVER                       = 86, /* RFC7291 */
@@ -154,20 +154,11 @@ enum DHCPv6OptionType {
 // D6O_F_STATE_EXPIRATION_TIME            = 134, /* RFC8156 */
    D6O_RELAY_SOURCE_PORT                  = 135, /* RFC8357 */
    // 136-142 unassigned
-   D6O_IPV6_ADDRESS_ANDSF                 = 143, /* RFC6153 */
-
-// The following are EXPERIMENTAL and may change when IANA assigns official
-// values.
-/* secure DHCPv6 (draft-ietf-dhc-sedhcpv6-08) */
-/* temporary values for hackathon 93 */
-   D6O_PUBLIC_KEY                         = 701,
-   D6O_CERTIFICATE                        = 702,
-   D6O_SIGNATURE                          = 703,
-   D6O_TIMESTAMP                          = 704
+   D6O_IPV6_ADDRESS_ANDSF                 = 143 /* RFC6153 */
 };
 
 /*
- * Status Codes, from RFC 3315 section 24.4, and RFC 3633, 5007, 5460.
+ * Status Codes, from RFC 8415 section 21.13, 5007, 5460.
  */
 enum DHCPv6StatusCode {
    STATUS_Success                    = 0,
@@ -207,7 +198,7 @@ enum DHCPv6StatusCode {
 };
 
 /*
- * DHCPv6 message types, defined in section 5.3 of RFC 3315
+ * DHCPv6 message types, defined in section 7.3 of RFC 8415
  */
 enum DHCPv6MessageType {
    DHCPV6_SOLICIT              = 1,
@@ -256,7 +247,7 @@ enum DHCPv6MessageType {
 extern const char *dhcpv6_type_names[];
 extern const int dhcpv6_type_name_max;
 
-// DUID type definitions (RFC3315 section 9).
+// DUID type definitions (RFC 8415 section 11).
 // see isc::dhcp::DUID::DUIDType enum in dhcp/duid.h
 
 // Define hardware types
@@ -296,7 +287,7 @@ static const uint16_t IAPREFIX_OFFSET = 25;
 static const uint16_t LQ_QUERY_OFFSET = 17;
 
 /*
- * DHCPv6 well-known multicast addresses, from section 5.1 of RFC 3315
+ * DHCPv6 well-known multicast addresses, from section 7.1 of RFC 8415
  */
 // TODO
 #define ALL_DHCP_RELAY_AGENTS_AND_SERVERS "ff02::1:2"
@@ -306,7 +297,7 @@ static const uint16_t DHCP6_CLIENT_PORT = 546;
 static const uint16_t DHCP6_SERVER_PORT = 547;
 
 /*
- * DHCPv6 Retransmission Constants (RFC3315 section 5.5, RFC 5007)
+ * DHCPv6 Retransmission Constants (RFC 8415 section 7.6, RFC 5007)
  */
 
 // TODO
@@ -353,7 +344,7 @@ static const uint16_t DHCP6_SERVER_PORT = 547;
  */
 #define DUID_TIME_EPOCH 946684800
 
-/* Information-Request Time option (RFC 4242) */
+/* Information-Request Time option (RFC 8415) */
 
 #define IRT_DEFAULT     86400
 #define IRT_MINIMUM     600

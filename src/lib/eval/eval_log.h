@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2017 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,11 +19,11 @@ namespace dhcp {
 /// Note that higher numbers equate to more verbose (and detailed) output.
 
 // The first level traces normal operations,
-const int EVAL_DBG_TRACE = isc::log::DBGLVL_TRACE_BASIC;
+extern const int EVAL_DBG_TRACE;
 
 // Additional information on the calls.  Report the values that were
 // popped from or pushed to the value stack.
-const int EVAL_DBG_STACK = isc::log::DBGLVL_TRACE_DETAIL_DATA;
+extern const int EVAL_DBG_STACK;
 
 /// @brief Eval Logger
 ///

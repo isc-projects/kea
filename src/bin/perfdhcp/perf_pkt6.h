@@ -7,12 +7,13 @@
 #ifndef PERF_PKT6_H
 #define PERF_PKT6_H
 
-#include <time.h>
-#include <boost/shared_ptr.hpp>
+#include <perfdhcp/localized_option.h>
+#include <perfdhcp/pkt_transform.h>
+
 #include <dhcp/pkt6.h>
 
-#include "localized_option.h"
-#include "pkt_transform.h"
+#include <time.h>
+#include <boost/shared_ptr.hpp>
 
 namespace isc {
 namespace perfdhcp {

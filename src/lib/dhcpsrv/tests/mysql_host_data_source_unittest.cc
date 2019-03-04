@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -10,13 +10,13 @@
 #include <dhcpsrv/tests/test_utils.h>
 #include <exceptions/exceptions.h>
 #include <dhcpsrv/host.h>
-#include <dhcpsrv/mysql_connection.h>
 #include <dhcpsrv/mysql_host_data_source.h>
 #include <dhcpsrv/testutils/generic_host_data_source_unittest.h>
-#include <dhcpsrv/testutils/mysql_schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 #include <dhcpsrv/host_mgr.h>
 #include <dhcpsrv/host_data_source_factory.h>
+#include <mysql/mysql_connection.h>
+#include <mysql/testutils/mysql_schema.h>
 
 #include <gtest/gtest.h>
 
@@ -28,6 +28,8 @@
 
 using namespace isc;
 using namespace isc::asiolink;
+using namespace isc::db;
+using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::test;
 using namespace isc::data;
@@ -307,6 +309,52 @@ TEST_F(MySqlHostDataSourceTest, maxSubnetId4) {
 // for  dhcp6_subnet id
 TEST_F(MySqlHostDataSourceTest, maxSubnetId6) {
     testMaxSubnetId6();
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+TEST_F(MySqlHostDataSourceTest, getAll4BySubnet) {
+    testGetAll4();
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+TEST_F(MySqlHostDataSourceTest, getAll6BySubnet) {
+    testGetAll6();
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+// by pages.
+TEST_F(MySqlHostDataSourceTest, getPage4) {
+    testGetPage4();
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+// by pages.
+TEST_F(MySqlHostDataSourceTest, getPage6) {
+    testGetPage6();
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+// by pages without truncation from the limit.
+TEST_F(MySqlHostDataSourceTest, getPageLimit4) {
+    testGetPageLimit4(Host::IDENT_DUID);
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+// by pages without truncation from the limit.
+TEST_F(MySqlHostDataSourceTest, getPageLimit6) {
+    testGetPageLimit6(Host::IDENT_HWADDR);
+}
+
+// Verifies that IPv4 host reservations in the same subnet can be retrieved
+// by pages even with multiple subnets.
+TEST_F(MySqlHostDataSourceTest, getPage4Subnets) {
+    testGetPage4Subnets();
+}
+
+// Verifies that IPv6 host reservations in the same subnet can be retrieved
+// by pages even with multiple subnets.
+TEST_F(MySqlHostDataSourceTest, getPage6Subnets) {
+    testGetPage6Subnets();
 }
 
 // Test verifies if a host reservation can be added and later retrieved by IPv4

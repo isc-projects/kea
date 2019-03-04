@@ -8,9 +8,10 @@
 #define PGSQL_LEASE_MGR_H
 
 #include <dhcp/hwaddr.h>
+#include <dhcpsrv/dhcpsrv_exceptions.h>
 #include <dhcpsrv/lease_mgr.h>
-#include <dhcpsrv/pgsql_connection.h>
-#include <dhcpsrv/pgsql_exchange.h>
+#include <pgsql/pgsql_connection.h>
+#include <pgsql/pgsql_exchange.h>
 
 #include <boost/scoped_ptr.hpp>
 #include <boost/utility.hpp>
@@ -52,10 +53,10 @@ public:
     ///        concerned with the database.
     ///
     /// @throw isc::dhcp::NoDatabaseName Mandatory database name not given
-    /// @throw isc::dhcp::DbOpenError Error opening the database
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOpenError Error opening the database
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    PgSqlLeaseMgr(const DatabaseConnection::ParameterMap& parameters);
+    PgSqlLeaseMgr(const db::DatabaseConnection::ParameterMap& parameters);
 
     /// @brief Destructor (closes database)
     virtual ~PgSqlLeaseMgr();
@@ -69,7 +70,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease4Ptr& lease);
 
@@ -80,7 +81,7 @@ public:
     /// @result true if the lease was added, false if not (because a lease
     ///         with the same address was already there).
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool addLease(const Lease6Ptr& lease);
 
@@ -97,7 +98,7 @@ public:
     ///
     /// @return smart pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::asiolink::IOAddress& addr) const;
 
@@ -112,7 +113,7 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const isc::dhcp::HWAddr& hwaddr) const;
 
@@ -127,7 +128,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const isc::dhcp::HWAddr& hwaddr,
                                 SubnetID subnet_id) const;
@@ -143,7 +144,7 @@ public:
     ///
     /// @return lease collection
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Collection getLease4(const ClientId& clientid) const;
 
@@ -170,7 +171,7 @@ public:
     ///
     /// @return a pointer to the lease (or NULL if a lease is not found)
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease4Ptr getLease4(const ClientId& clientid,
                                 SubnetID subnet_id) const;
@@ -228,7 +229,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Ptr getLease6(Lease::Type type,
                                 const isc::asiolink::IOAddress& addr) const;
@@ -248,7 +249,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                        uint32_t iaid) const;
@@ -264,7 +265,7 @@ public:
     ///
     /// @throw isc::BadValue record retrieved from database had an invalid
     ///        lease type field.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual Lease6Collection getLeases6(Lease::Type type, const DUID& duid,
                                         uint32_t iaid, SubnetID subnet_id) const;
@@ -351,7 +352,7 @@ public:
     ///
     /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease4(const Lease4Ptr& lease4);
 
@@ -364,7 +365,7 @@ public:
     ///
     /// @throw isc::dhcp::NoSuchLease Attempt to update a lease that did not
     ///        exist.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual void updateLease6(const Lease6Ptr& lease6);
 
@@ -375,7 +376,7 @@ public:
     ///
     /// @return true if deletion was successful, false if no such lease exists
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual bool deleteLease(const isc::asiolink::IOAddress& addr);
 
@@ -513,7 +514,7 @@ public:
     /// @return Version number as a pair of unsigned integers.  "first" is the
     ///         major version number, "second" the minor number.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     virtual std::pair<uint32_t, uint32_t> getVersion() const;
 
@@ -585,9 +586,9 @@ private:
     /// @return true if the lease was added, false if it was not added because
     ///         a lease with that address already exists in the database.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    bool addLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array);
+    bool addLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array);
 
     /// @brief Get Lease Collection Common Code
     ///
@@ -605,12 +606,12 @@ private:
     ///        be thrown.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
     template <typename Exchange, typename LeaseCollection>
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Exchange& exchange, LeaseCollection& result,
                             bool single = false) const;
 
@@ -626,11 +627,11 @@ private:
     ///        new data is appended to the end.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Lease4Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange4_, result);
     }
@@ -646,11 +647,11 @@ private:
     ///        data in the collection is erased first.
     ///
     /// @throw isc::dhcp::BadValue Data retrieved from the database was invalid.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
-    /// @throw isc::dhcp::MultipleRecords Multiple records were retrieved
+    /// @throw isc::db::MultipleRecords Multiple records were retrieved
     ///        from the database where only one was expected.
-    void getLeaseCollection(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLeaseCollection(StatementIndex stindex, db::PsqlBindArray& bind_array,
                             Lease6Collection& result) const {
         getLeaseCollection(stindex, bind_array, exchange6_, result);
     }
@@ -664,7 +665,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease4 object returned
-    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease4Ptr& result) const;
 
     /// @brief Get Lease6 Common Code
@@ -676,7 +677,7 @@ private:
     /// @param stindex Index of statement being executed
     /// @param bind_array array containing input parameters for the query
     /// @param lease Lease6 object returned
-    void getLease(StatementIndex stindex, PsqlBindArray& bind_array,
+    void getLease(StatementIndex stindex, db::PsqlBindArray& bind_array,
                   Lease6Ptr& result) const;
 
     /// @brief Get expired leases common code.
@@ -711,10 +712,10 @@ private:
     ///
     /// @throw NoSuchLease Could not update a lease because no lease matches
     ///        the address given.
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     template <typename LeasePtr>
-    void updateLeaseCommon(StatementIndex stindex, PsqlBindArray& bind_array,
+    void updateLeaseCommon(StatementIndex stindex, db::PsqlBindArray& bind_array,
                            const LeasePtr& lease);
 
     /// @brief Delete lease common code
@@ -729,10 +730,10 @@ private:
     ///
     /// @return Number of deleted leases.
     ///
-    /// @throw isc::dhcp::DbOperationError An operation on the open database has
+    /// @throw isc::db::DbOperationError An operation on the open database has
     ///        failed.
     uint64_t deleteLeaseCommon(StatementIndex stindex,
-                               PsqlBindArray& bind_array);
+                               db::PsqlBindArray& bind_array);
 
     /// @brief Delete expired-reclaimed leases.
     ///
@@ -754,7 +755,7 @@ private:
     boost::scoped_ptr<PgSqlLease6Exchange> exchange6_; ///< Exchange object
 
     /// PostgreSQL connection handle
-    PgSqlConnection conn_;
+    db::PgSqlConnection conn_;
 };
 
 }  // namespace dhcp
