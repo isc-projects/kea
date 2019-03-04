@@ -620,8 +620,11 @@ AC_ARG_WITH([gtest],
                             [specify a path to gtest header files (PATH/include) and library (PATH/lib)])],
         [gtest_path="$withval"; enable_gtest="yes"], [gtest_path="no"])
 
-AC_ARG_WITH(lcov,
-[  --with-lcov[=PROGRAM]         enable gtest and coverage target using the specified lcov], lcov="$withval", lcov="no")
+AC_ARG_WITH([lcov],
+            [AS_HELP_STRING([--with-lcov=PROGRAM],
+                            [enable gtest and coverage target using the specified lcov])],
+                            [lcov="$withval"],
+                            [lcov="no"])
 
 USE_LCOV="no"
 if test "$lcov" != "no"; then
@@ -947,6 +950,7 @@ if test "$SYSREPO_CONFIG" != "" ; then
        SYSREPO_LIBS="${SYSREPO_LIBS} ${SYSREPOCPP_LIBS}"
     fi
 
+    AC_SUBST(SYSREPO_INCLUDEDIR)
     AC_SUBST(SYSREPO_CPPFLAGS)
     AC_SUBST(SYSREPO_LIBS)
     AC_SUBST(SYSREPO_REPO)
