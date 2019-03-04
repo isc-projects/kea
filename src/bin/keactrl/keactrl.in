@@ -56,7 +56,7 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" "$( basename ${0} )"
+    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename "${0}" )
     printf "commands: start stop reload status version\n"
 }
 
@@ -104,7 +104,7 @@ get_pid_from_file() {
 
     # Grab the PID if the file exists
     if [ -e "${_pid_file}" ]; then
-        _pid=$(cat ${_pid_file})
+        _pid=$(cat "${_pid_file}")
         if [ $? -ne 0 ]; then
             log_error "Error reading PID file: ${_pid_file}"
         fi
@@ -124,7 +124,7 @@ check_running() {
     _running=0
 
     # Get the PID from the PID file (if it exists)
-    get_pid_from_file ${proc_name}
+    get_pid_from_file "${proc_name}"
     if [ ${_pid} -gt 0 ]; then
         # Use ps to check if PID is alive
         ps -p ${_pid} 1>/dev/null
@@ -140,7 +140,7 @@ send_signal() {
     sig=${1}        # Signal number
     proc_name=${2}  # Process name.
 
-    get_pid_from_file ${proc_name}
+    get_pid_from_file "${proc_name}"
     if [ ${_pid} -eq 0 ]; then
         log_info "Skip sending signal ${sig} to process ${proc_name}: \
 process is not running\n"
@@ -202,7 +202,7 @@ reload_server() {
     binary_name=$(basename "${binary_path}")
 
     # Use the binary name to check if the process is already running.
-    check_running ${binary_name}
+    check_running "${binary_name}"
     # If process isn't running, don't start another one. Just log a message.
     if [ ${_running} -eq 0 ]; then
         log_info "${binary_name} isn't running."
@@ -280,7 +280,7 @@ run_conditional() {
             return
         fi
         # reload is not supported for netconf.
-        if [ ${command} = "reload" ]; then
+        if [ "${command}" = "reload" ]; then
             if [ ${is_all} -eq 1 ]; then
                 return
             fi
