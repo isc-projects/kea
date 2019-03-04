@@ -56,7 +56,7 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" $( basename "${0}" )
+    printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" "$( basename -- "${0}" )"
     printf "commands: start stop reload status version\n"
 }
 
@@ -319,6 +319,7 @@ run_conditional() {
 # altered and only the handful of initial messages will be logged
 # to the default file.
 if [ -z "${KEA_LOGGER_DESTINATION}" ]; then
+    prefix=@prefix@
     export KEA_LOGGER_DESTINATION=@localstatedir@/@PACKAGE@/kea.log
 fi
 
@@ -342,6 +343,7 @@ if [ ${_inlist} -eq 0 ]; then
 fi
 
 # Get the location of the keactrl configuration file.
+prefix=@prefix@
 keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 
 servers="all"
