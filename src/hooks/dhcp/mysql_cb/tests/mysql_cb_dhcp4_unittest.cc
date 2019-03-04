@@ -108,6 +108,7 @@ public:
         subnet->setSname("server-hostname");
         subnet->setContext(user_context);
         subnet->setValid(555555);
+        subnet->setAuthoritative(true);
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
