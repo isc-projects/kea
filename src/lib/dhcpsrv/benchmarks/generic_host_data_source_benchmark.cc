@@ -17,9 +17,10 @@
 
 #include <config.h>
 
-#include <dhcpsrv/benchmarks/generic_host_data_source_benchmark.h>
-
 #include <asiolink/io_address.h>
+
+#include <database/testutils/schema.h>
+
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option4_addrlst.h>
@@ -27,8 +28,9 @@
 #include <dhcp/option_int.h>
 #include <dhcp/option_string.h>
 #include <dhcp/option_vendor.h>
+
+#include <dhcpsrv/benchmarks/generic_host_data_source_benchmark.h>
 #include <dhcpsrv/host_data_source_factory.h>
-#include <dhcpsrv/testutils/schema.h>
 #include <dhcpsrv/testutils/host_data_source_utils.h>
 
 using isc::asiolink::IOAddress;
@@ -40,8 +42,7 @@ namespace isc {
 namespace dhcp {
 namespace bench {
 
-GenericHostDataSourceBenchmark::GenericHostDataSourceBenchmark()
-    : hdsptr_() {
+GenericHostDataSourceBenchmark::GenericHostDataSourceBenchmark() : hdsptr_() {
     LibDHCP::clearRuntimeOptionDefs();
 }
 
@@ -51,8 +52,7 @@ GenericHostDataSourceBenchmark::~GenericHostDataSourceBenchmark() {
 }
 
 void
-GenericHostDataSourceBenchmark::setUp(::benchmark::State& state,
-                                      size_t const& host_count) {
+GenericHostDataSourceBenchmark::setUp(::benchmark::State& state, size_t const& host_count) {
     state.PauseTiming();
     SetUp(state);
     prepareHosts(host_count);
@@ -97,7 +97,8 @@ GenericHostDataSourceBenchmark::createVendorOption(const Option::Universe& unive
 }
 
 void
-GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool formatted,
+GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host,
+                                               const bool formatted,
                                                const AddedOptions& added_options) const {
     OptionDefSpaceContainer defs;
 
@@ -105,22 +106,26 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool f
         // Add DHCPv4 options.
         CfgOptionPtr opts = host->getCfgOption4();
         opts->add(createOption<OptionString>(Option::V4, DHO_BOOT_FILE_NAME, true, formatted,
-                                             "my-boot-file"), DHCP4_OPTION_SPACE);
-        opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL,
-                                            false, formatted, 64), DHCP4_OPTION_SPACE);
+                                             "my-boot-file"),
+                  DHCP4_OPTION_SPACE);
+        opts->add(createOption<OptionUint8>(Option::V4, DHO_DEFAULT_IP_TTL, false, formatted, 64),
+                  DHCP4_OPTION_SPACE);
         opts->add(createOption<OptionUint32>(Option::V4, 1, false, formatted, 312131),
                   "vendor-encapsulated-options");
         opts->add(createAddressOption<Option4AddrLst>(254, false, formatted, "192.0.2.3"),
                   DHCP4_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V4, 1, true), "isc");
-        opts->add(createAddressOption<Option4AddrLst>(2, false, formatted, "10.0.0.5",
-                                                      "10.0.0.3", "10.0.3.4"), "isc");
+        opts->add(createAddressOption<Option4AddrLst>(2, false, formatted, "10.0.0.5", "10.0.0.3",
+                                                      "10.0.3.4"),
+                  "isc");
 
         // Add definitions for DHCPv4 non-standard options.
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1", 1,
-                                         "uint32")), "vendor-encapsulated-options");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-254", 254, "ipv4-address",
-                                         true)), DHCP4_OPTION_SPACE);
+        defs.addItem(
+            OptionDefinitionPtr(new OptionDefinition("vendor-encapsulated-1", 1, "uint32")),
+            "vendor-encapsulated-options");
+        defs.addItem(
+            OptionDefinitionPtr(new OptionDefinition("option-254", 254, "ipv4-address", true)),
+            DHCP4_OPTION_SPACE);
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-1", 1, "empty")), "isc");
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("isc-2", 2, "ipv4-address", true)),
                      "isc");
@@ -129,23 +134,27 @@ GenericHostDataSourceBenchmark::addTestOptions(const HostPtr& host, const bool f
     if ((added_options == DHCP6_ONLY) || (added_options == DHCP4_AND_DHCP6)) {
         // Add DHCPv6 options.
         CfgOptionPtr opts = host->getCfgOption6();
-        opts->add(createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL, true,
-                                             formatted, "my-boot-file"), DHCP6_OPTION_SPACE);
-        opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME,
-                                             false, formatted, 3600), DHCP6_OPTION_SPACE);
+        opts->add(createOption<OptionString>(Option::V6, D6O_BOOTFILE_URL, true, formatted,
+                                             "my-boot-file"),
+                  DHCP6_OPTION_SPACE);
+        opts->add(createOption<OptionUint32>(Option::V6, D6O_INFORMATION_REFRESH_TIME, false,
+                                             formatted, 3600),
+                  DHCP6_OPTION_SPACE);
         opts->add(createVendorOption(Option::V6, false, formatted, 2495), DHCP6_OPTION_SPACE);
         opts->add(createAddressOption<Option6AddrLst>(1024, false, formatted, "2001:db8:1::1"),
                   DHCP6_OPTION_SPACE);
         opts->add(createEmptyOption(Option::V6, 1, true), "isc2");
         opts->add(createAddressOption<Option6AddrLst>(2, false, formatted, "3000::1", "3000::2",
-                                                      "3000::3"), "isc2");
+                                                      "3000::3"),
+                  "isc2");
 
         // Add definitions for DHCPv6 non-standard options.
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1024", 1024, "ipv6-address",
-                                                              true)), DHCP6_OPTION_SPACE);
+        defs.addItem(
+            OptionDefinitionPtr(new OptionDefinition("option-1024", 1024, "ipv6-address", true)),
+            DHCP6_OPTION_SPACE);
         defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-1", 1, "empty")), "isc2");
-        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2, "ipv6-address",
-                                                              true)), "isc2");
+        defs.addItem(OptionDefinitionPtr(new OptionDefinition("option-2", 2, "ipv6-address", true)),
+                     "isc2");
     }
 
     // Register created "runtime" option definitions. They will be used by a
@@ -208,8 +217,8 @@ void
 GenericHostDataSourceBenchmark::benchGet4IdentifierSubnetId() {
     for (HostPtr host : hosts_) {
         std::vector<uint8_t> hwaddr = host->getIdentifier();
-        hdsptr_->get4(host->getIPv4SubnetID(), host->getIdentifierType(),
-                      &hwaddr[0], hwaddr.size());
+        hdsptr_->get4(host->getIPv4SubnetID(), host->getIdentifierType(), &hwaddr[0],
+                      hwaddr.size());
     }
 }
 
@@ -224,8 +233,8 @@ void
 GenericHostDataSourceBenchmark::benchGet6IdentifierSubnetId() {
     for (HostPtr host : hosts_) {
         std::vector<uint8_t> hwaddr = host->getIdentifier();
-        hdsptr_->get6(host->getIPv6SubnetID(), host->getIdentifierType(),
-                      &hwaddr[0], hwaddr.size());
+        hdsptr_->get6(host->getIPv6SubnetID(), host->getIdentifierType(), &hwaddr[0],
+                      hwaddr.size());
     }
 }
 
@@ -241,8 +250,7 @@ void
 GenericHostDataSourceBenchmark::benchGet6Prefix() {
     for (HostPtr host : hosts_) {
         const IPv6ResrvRange range = host->getIPv6Reservations();
-        hdsptr_->get6(range.first->second.getPrefix(),
-                      range.first->second.getPrefixLen());
+        hdsptr_->get6(range.first->second.getPrefix(), range.first->second.getPrefixLen());
     }
 }
 
