@@ -53,10 +53,6 @@ EXTRA_DIST += parsers/dhcp_queue_control_parser.h
 # Devel guide diagrams
 EXTRA_DIST += images/pgsql_host_data_source.svg
 
-BUILT_SOURCES = alloc_engine_messages.h alloc_engine_messages.cc
-BUILT_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
-BUILT_SOURCES += hosts_messages.h hosts_messages.cc
-
 CLEANFILES = *.gcno *.gcda
 # Remove CSV files created by the CSVLeaseFile6 and CSVLeaseFile4 unit tests.
 CLEANFILES += *.csv
@@ -65,6 +61,7 @@ lib_LTLIBRARIES = libkea-dhcpsrv.la
 libkea_dhcpsrv_la_SOURCES  =
 libkea_dhcpsrv_la_SOURCES += alloc_engine.cc alloc_engine.h
 libkea_dhcpsrv_la_SOURCES += alloc_engine_log.cc alloc_engine_log.h
+libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
 libkea_dhcpsrv_la_SOURCES += assignable_network.h
 libkea_dhcpsrv_la_SOURCES += base_host_data_source.h
 libkea_dhcpsrv_la_SOURCES += cache_host_data_source.h
@@ -101,11 +98,13 @@ libkea_dhcpsrv_la_SOURCES += db_type.h
 libkea_dhcpsrv_la_SOURCES += dhcp4o6_ipc.cc dhcp4o6_ipc.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_exceptions.h
 libkea_dhcpsrv_la_SOURCES += dhcpsrv_log.cc dhcpsrv_log.h
+libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
 libkea_dhcpsrv_la_SOURCES += host.cc host.h
 libkea_dhcpsrv_la_SOURCES += host_container.h
 libkea_dhcpsrv_la_SOURCES += host_data_source_factory.cc host_data_source_factory.h
 libkea_dhcpsrv_la_SOURCES += host_mgr.cc host_mgr.h
 libkea_dhcpsrv_la_SOURCES += hosts_log.cc hosts_log.h
+libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 libkea_dhcpsrv_la_SOURCES += key_from_key.h
 libkea_dhcpsrv_la_SOURCES += lease.cc lease.h
 libkea_dhcpsrv_la_SOURCES += lease_file_loader.h
@@ -175,10 +174,6 @@ libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser4.h
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.cc
 libkea_dhcpsrv_la_SOURCES += parsers/simple_parser6.h
-
-libkea_dhcpsrv_la_SOURCES += alloc_engine_messages.h alloc_engine_messages.cc
-libkea_dhcpsrv_la_SOURCES += dhcpsrv_messages.h dhcpsrv_messages.cc
-libkea_dhcpsrv_la_SOURCES += hosts_messages.h hosts_messages.cc
 
 libkea_dhcpsrv_la_CXXFLAGS = $(AM_CXXFLAGS)
 libkea_dhcpsrv_la_CPPFLAGS = $(AM_CPPFLAGS)
@@ -269,7 +264,7 @@ else
 messages: alloc_engine_messages.h alloc_engine_messages.cc \
 	  dhcpsrv_messages.h dhcpsrv_messages.cc \
 	  hosts_messages.h hosts_messages.cc
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

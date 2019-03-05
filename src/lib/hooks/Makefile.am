@@ -77,7 +77,7 @@ hooks_messages.h hooks_messages.cc: hooks_messages.mes
 else
 
 messages hooks_messages.h hooks_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

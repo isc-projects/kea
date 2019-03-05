@@ -74,12 +74,12 @@ messages: stat_cmds_messages.h stat_cmds_messages.cc
 	@echo Message files regenerated
 
 stat_cmds_messages.h stat_cmds_messages.cc: stat_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/stat_cmds/stat_cmds_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/stat_cmds/stat_cmds_messages.mes
 
 else
 
 messages stat_cmds_messages.h stat_cmds_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

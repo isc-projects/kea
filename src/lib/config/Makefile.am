@@ -64,7 +64,7 @@ config_messages.h config_messages.cc: config_messages.mes
 else
 
 messages config_messages.h config_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

@@ -116,6 +116,6 @@ lfc_messages.h lfc_messages.cc: lfc_messages.mes
 else
 
 messages lfc_messages.h lfc_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif

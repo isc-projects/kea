@@ -64,21 +64,6 @@ if test "$sep" = "__NONE__"; then
 fi
 AC_SUBST(SEP)
 
-# If cross compiling assume the message compiler executable was
-# magically already in place...
-if test "$cross_compiling" = "yes"; then
-        AC_MSG_CHECKING("build (vs. host) compiled message compiler")
-	if test -x "${srcdir}/src/lib/log/compiler/message"; then
-		AC_MSG_RESULT(yes)
-	else
-		AC_MSG_RESULT(no)
-		AC_MSG_WARN("you must install a message compiler in:")
-		AC_MSG_WARN("    ${srcdir}/src/lib/log/compiler/message")
-		AC_MSG_WARN("compiled for build ($build).")
-	fi
-fi
-AM_CONDITIONAL([CROSS_COMPILING], [test "$cross_compiling" = "yes"])
-
 # pkg-config can be required.
 AC_PATH_PROG([PKG_CONFIG], [pkg-config])
 
@@ -1376,6 +1361,13 @@ AC_ARG_ENABLE(generate_messages, [AC_HELP_STRING([--enable-generate-messages],
 
 AM_CONDITIONAL([GENERATE_MESSAGES], [test x$enable_generate_messages != xno])
 
+# cross compiling is not compatible with enable-generate-messages.
+if test "$cross_compiling" = "yes"; then
+    if test "$enable_generate_messages" != "no"; then
+        AC_MSG_WARN([To build the message compiler is not compatible with cross compiling])
+    fi
+fi
+
 AC_ARG_ENABLE(generate_parser, [AC_HELP_STRING([--enable-generate-parser],
   [indicates that the parsers will be regenerated. This implies that the
    bison and flex are required [default=no]])],
@@ -1974,15 +1966,16 @@ fi
 cat >> config.report << END
 
 Developer:
-  Enable Debugging:       $debug_enabled
-  Google Tests:           $enable_gtest
-  Valgrind:               $found_valgrind
-  C++ Code Coverage:      $USE_LCOV
-  Logger checks:          $enable_logger_checks
-  Generate Documentation: $enable_generate_docs
-  Parser Generation:      $enable_generate_parser
-  Perfdhcp:               $enable_perfdhcp
-  Kea-shell:              $enable_shell
+  Enable Debugging:          $debug_enabled
+  Google Tests:              $enable_gtest
+  Valgrind:                  $found_valgrind
+  C++ Code Coverage:         $USE_LCOV
+  Logger checks:             $enable_logger_checks
+  Generate Documentation:    $enable_generate_docs
+  Parser Generation:         $enable_generate_parser
+  Messages Files Generation: $enable_generate_messages
+  Perfdhcp:                  $enable_perfdhcp
+  Kea-shell:                 $enable_shell
 
 END
 

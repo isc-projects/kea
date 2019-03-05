@@ -122,7 +122,7 @@ d2_messages.h d2_messages.cc: d2_messages.mes
 else
 
 messages d2_messages.h d2_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

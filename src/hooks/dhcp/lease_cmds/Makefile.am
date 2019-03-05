@@ -76,12 +76,12 @@ messages: lease_cmds_messages.h lease_cmds_messages.cc
 	@echo Message files regenerated
 
 lease_cmds_messages.h lease_cmds_messages.cc: lease_cmds_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/lease_cmds/lease_cmds_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/hooks/dhcp/lease_cmds/lease_cmds_messages.mes
 
 else
 
 messages lease_cmds_messages.h lease_cmds_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

@@ -59,7 +59,7 @@ db_messages.h db_messages.cc: db_messages.mes
 else
 
 messages db_messages.h db_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 
