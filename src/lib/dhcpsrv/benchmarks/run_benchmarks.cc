@@ -20,8 +20,7 @@
 #include <log/logger_support.h>
 
 /// @brief A simple class that initializes logging.
-class Initializer {
-public:
+struct Initializer {
     Initializer() {
         isc::log::initLogger();
     }
@@ -29,5 +28,4 @@ public:
 
 Initializer initializer;
 
-BENCHMARK_MAIN()
-
+BENCHMARK_MAIN();

@@ -20,24 +20,24 @@
 #include <dhcpsrv/benchmarks/generic_lease_mgr_benchmark.h>
 #include <dhcpsrv/benchmarks/parameters.h>
 #include <dhcpsrv/lease_mgr_factory.h>
-#include <dhcpsrv/testutils/pgsql_schema.h>
 
-using namespace isc::dhcp::bench;
-using namespace isc::dhcp::test;
+#include <pgsql/testutils/pgsql_schema.h>
+
+using namespace isc::db::test;
 using namespace isc::dhcp;
+using namespace isc::dhcp::bench;
 using namespace std;
 
 namespace {
 
 /// @brief This is a fixture class used for benchmarking PostgreSQL lease backend
-class PgSqlLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
-public:
+struct PgSqlLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
     /// @brief Setup routine.
     ///
     /// It cleans up schema and recreates tables, then instantiates LeaseMgr
     void SetUp(::benchmark::State const&) override {
-        destroyPgSQLSchema(false);
-        createPgSQLSchema(false);
+        destroyPgSQLSchema();
+        createPgSQLSchema();
         try {
             LeaseMgrFactory::destroy();
             LeaseMgrFactory::create(validPgSQLConnectionString());
@@ -46,6 +46,11 @@ public:
             throw;
         }
         lmptr_ = &(LeaseMgrFactory::instance());
+    }
+
+    void SetUp(::benchmark::State& s) override {
+        ::benchmark::State const& cs = s;
+        SetUp(cs);
     }
 
     /// @brief Cleans up after the test.
@@ -58,7 +63,12 @@ public:
                  << endl;
         }
         LeaseMgrFactory::destroy();
-        destroyPgSQLSchema(false);
+        destroyPgSQLSchema();
+    }
+
+    void TearDown(::benchmark::State& s) override {
+        ::benchmark::State const& cs = s;
+        TearDown(cs);
     }
 };
 
@@ -175,7 +185,7 @@ BENCHMARK_DEFINE_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark::
 // Defines a benchmark that measures IPv6 leases retrieval by lease type, duid, iaid
 // and subnet-id.
 BENCHMARK_DEFINE_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-                  (benchmark::State& state) {
+(benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts6(state, lease_count);
@@ -192,66 +202,79 @@ BENCHMARK_DEFINE_F(PgSqlLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State& 
     }
 }
 
-
 /// The following macros define run parameters for previously defined
 /// PostgreSQL benchmarks.
 
 /// A benchmark that measures IPv4 leases insertion.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, insertLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 leases update.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, updateLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by IP address.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease4_address)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by hardware address.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease4_hwaddr)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by hardware address and a
 /// subnet-id.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease4_hwaddr_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by client-id.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease4_clientid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by client-id and subnet-id.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease4_clientid_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures expired IPv4 leases retrieval.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getExpiredLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv6 leases insertion.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, insertLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv6 leases update.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, updateLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type and IP address.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_address)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type, duid and iaid.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type, duid, iaid and
 /// subnet-id.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 /// A benchmark that measures expired IPv6 leases retrieval.
 BENCHMARK_REGISTER_F(PgSqlLeaseMgrBenchmark, getExpiredLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
+    ->Unit(UNIT);
 
 }  // namespace
