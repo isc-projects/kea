@@ -161,7 +161,7 @@ messages: log_test_messages.h log_test_messages.cc
 	@echo Message files regenerated
 
 log_test_messages.h log_test_messages.cc: log_test_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log_test/log_test_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/log/tests/log_test_messages.mes
 
 else
 

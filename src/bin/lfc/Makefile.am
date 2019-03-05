@@ -111,7 +111,7 @@ messages: lfc_messages.h lfc_messages.cc
 	@echo Message files regenerated
 
 lfc_messages.h lfc_messages.cc: lfc_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/lfc/lfc_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/lfc/lfc_messages.mes
 
 else
 
