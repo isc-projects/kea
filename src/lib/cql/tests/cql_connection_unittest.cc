@@ -60,22 +60,5 @@ TEST(CqlConnection, statementMapHash) {
     ASSERT_EQ(map.size(), 1u);
 }
 
-/// @brief Check anything related to exchange types.
-TEST(CqlConnection, exchangeTypeCoverage) {
-    // Check that const and non-const are supported and both point to the same
-    // exchange type.
-    int i = 1;
-
-    // non-const
-    int* pi = &i;
-    boost::any bi(pi);
-
-    // const
-    int* const cpi = &i;
-    boost::any bci(cpi);
-
-    ASSERT_EQ(exchangeType(bi), exchangeType(bci));
-}
-
 }  // namespace
 
