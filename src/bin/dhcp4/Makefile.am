@@ -136,7 +136,7 @@ dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
 else
 
 messages dhcp4_messages.h dhcp4_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

@@ -46,22 +46,14 @@ EXTRA_DIST += lexer.ll parser.yy
 
 CLEANFILES = *.gcno *.gcda
 
-# If we want to get rid of all generated messages files, we need to use
-# make maintainer-clean. The proper way to introduce custom commands for
-# that operation is to define maintainer-clean-local target. However,
-# make maintainer-clean also removes Makefile, so running configure script
-# is required.  To make it easy to rebuild messages without going through
-# reconfigure, a new target messages-clean has been added.
-maintainer-clean-local:
-	rm -f eval_messages.h eval_messages.cc
-
 # To regenerate messages files, one can do:
 #
 # make messages-clean
 # make messages
 #
 # This is needed only when a .mes file is modified.
-messages-clean: maintainer-clean-local
+messages-clean:
+	rm -f eval_messages.h eval_messages.cc
 
 if GENERATE_MESSAGES
 
@@ -75,10 +67,17 @@ eval_messages.h eval_messages.cc: eval_messages.mes
 else
 
 messages eval_messages.h eval_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 
+# If we want to get rid of all generated messages files, we need to use
+# make maintainer-clean. The proper way to introduce custom commands for
+# that operation is to define maintainer-clean-local target. However,
+# make maintainer-clean also removes Makefile, so running configure script
+# is required.  To make it easy to rebuild messages without going through
+# reconfigure, a new target messages-clean has been added.
+#
 # If we want to get rid of all flex/bison generated files, we need to use
 # make maintainer-clean. The proper way to introduce custom commands for
 # that operation is to define maintainer-clean-local target. However,
@@ -86,6 +85,7 @@ endif
 # is required. To make it easy to rebuild flex/bison without going through
 # reconfigure, a new target parser-clean has been added.
 maintainer-clean-local:
+	rm -f eval_messages.h eval_messages.cc
 	rm -f location.hh lexer.cc parser.cc parser.h position.hh stack.hh
 
 # To regenerate flex/bison files, one can do:
@@ -95,7 +95,8 @@ maintainer-clean-local:
 #
 # This is needed only when the lexer.ll or parser.yy files are modified.
 # Make sure you have both flex and bison installed.
-parser-clean: maintainer-clean-local
+parser-clean:
+	rm -f location.hh lexer.cc parser.cc parser.h position.hh stack.hh
 
 if GENERATE_PARSER
 

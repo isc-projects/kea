@@ -136,7 +136,7 @@ dhcp6_messages.h dhcp6_messages.cc: dhcp6_messages.mes
 else
 
 messages dhcp6_messages.h dhcp6_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

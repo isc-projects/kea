@@ -66,7 +66,7 @@ dhcp_ddns_messages.h dhcp_ddns_messages.cc: dhcp_ddns_messages.mes
 else
 
 messages dhcp_ddns_messages.h dhcp_ddns_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

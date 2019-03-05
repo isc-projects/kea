@@ -166,6 +166,6 @@ log_test_messages.h log_test_messages.cc: log_test_messages.mes
 else
 
 messages log_test_messages.h log_test_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif

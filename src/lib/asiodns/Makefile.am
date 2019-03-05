@@ -60,7 +60,7 @@ asiodns_messages.h asiodns_messages.cc: asiodns_messages.mes
 else
 
 messages asiodns_messages.h asiodns_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

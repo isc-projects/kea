@@ -75,7 +75,7 @@ process_messages.h process_messages.cc: process_messages.mes
 else
 
 messages process_messages.h process_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

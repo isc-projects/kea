@@ -79,7 +79,7 @@ http_messages.h http_messages.cc: http_messages.mes
 else
 
 messages http_messages.h http_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

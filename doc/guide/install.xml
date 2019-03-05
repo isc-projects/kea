@@ -475,6 +475,21 @@ Debian and Ubuntu:
             </varlistentry>
 
             <varlistentry>
+              <term>--enable-generate-messages</term>
+              <listitem>
+                <simpara>Enable the regeneration of messages files from
+                their messages source files, e.g. regenerate xxx_messages.h
+                and xxx_messages.cc from xxx_messages.mes using the Kea
+                message compiler. By default Kea is built using these .h
+                and .cc files from the distribution. However, if you change
+                anything in a .mes file (such as add new message), you will
+                need to build and use the Kea message compiler. This option
+                lets you do that.
+                </simpara>
+              </listitem>
+            </varlistentry>
+
+            <varlistentry>
               <term>--with-benchmark, --with-benchmark-source</term>
               <listitem>
                 <simpara>Enable the building of the database backend

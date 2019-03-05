@@ -107,7 +107,7 @@ ca_messages.h ca_messages.cc: ca_messages.mes
 else
 
 messages ca_messages.h ca_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 

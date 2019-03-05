@@ -109,7 +109,7 @@ netconf_messages.h netconf_messages.cc: netconf_messages.mes
 else
 
 messages netconf_messages.h netconf_messages.cc:
-	@echo Messages generation disabled. Configure with --enable-generate=,essages to enable it.
+	@echo Messages generation disabled. Configure with --enable-generate-messages to enable it.
 
 endif
 
