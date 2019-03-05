@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -8286,7 +8286,8 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"subnet\": \"192.0.1.0/24\",\n"
 "                        \"valid-lifetime\": 7200\n"
 "                    }\n"
-"                ]\n"
+"                ],\n"
+"                \"valid-lifetime\": 7200\n"
 "            }\n"
 "        ],\n"
 "        \"subnet4\": [ ]\n"

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -7477,11 +7477,13 @@ const char* UNPARSED_CONFIGS[] = {
 "                \"comment\": \"A shared network\",\n"
 "                \"name\": \"foo\",\n"
 "                \"option-data\": [ ],\n"
-"                \"preferred-lifetime\": 0,\n"
+"                \"preferred-lifetime\": 3600,\n"
 "                \"rapid-commit\": false,\n"
+"                \"rebind-timer\": 1800,\n"
 "                \"relay\": {\n"
 "                    \"ip-addresses\": [ ]\n"
 "                },\n"
+"                \"renew-timer\": 900,\n"
 "                \"reservation-mode\": \"all\",\n"
 "                \"subnet6\": [\n"
 "                    {\n"
@@ -7536,7 +7538,8 @@ const char* UNPARSED_CONFIGS[] = {
 "                        \"subnet\": \"2001:db1::/48\",\n"
 "                        \"valid-lifetime\": 7200\n"
 "                    }\n"
-"                ]\n"
+"                ],\n"
+"                \"valid-lifetime\": 7200\n"
 "            }\n"
 "        ],\n"
 "        \"subnet6\": [ ]\n"
