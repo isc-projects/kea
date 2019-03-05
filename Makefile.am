@@ -157,9 +157,6 @@ EXTRA_DIST += tools/mk_cfgrpt.sh
 #### include external sources in the distributed tarball:
 EXTRA_DIST += ext/coroutine/coroutine.hpp
 
-# Add Hammer
-EXTRA_DIST += hammer.py
-
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dns++.pc
 
