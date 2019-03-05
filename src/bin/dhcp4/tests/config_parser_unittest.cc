@@ -6400,7 +6400,6 @@ TEST_F(Dhcp4ParserTest, globalReservations) {
 // This test verifies that configuration control with unsupported type fails
 TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
     string config = PARSER_CONFIGS[6];
-    extractConfig(config);
 
     // Should fail because "type=mysql" has no factories.
     configure(config, CONTROL_RESULT_ERROR,
@@ -6410,7 +6409,6 @@ TEST_F(Dhcp4ParserTest, configControlInfoNoFactory) {
 // This test verifies that configuration control info gets populated.
 TEST_F(Dhcp4ParserTest, configControlInfo) {
     string config = PARSER_CONFIGS[6];
-    extractConfig(config);
 
     // Should be able to register a backend factory for "mysql".
     ASSERT_TRUE(TestConfigBackendDHCPv4::

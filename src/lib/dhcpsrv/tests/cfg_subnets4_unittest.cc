@@ -872,7 +872,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
 
     subnet1->allowClientClass("foo");
-    // These two should not appear, as calculateTeeTimes should be false.
+
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
 
@@ -901,6 +901,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/26\",\n"
+        "    \"t1-percent\": 0.45,"
+        "    \"t2-percent\": 0.7,"
         "    \"match-client-id\": true,\n"
         "    \"next-server\": \"0.0.0.0\",\n"
         "    \"server-hostname\": \"\",\n"
