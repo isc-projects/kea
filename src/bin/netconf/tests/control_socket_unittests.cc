@@ -19,6 +19,7 @@
 #include <http/response_json.h>
 #include <http/tests/response_test.h>
 #include <testutils/threaded_test.h>
+#include <testutils/sandbox.h>
 #include <util/threads/thread.h>
 #include <util/threads/sync.h>
 #include <gtest/gtest.h>
@@ -131,15 +132,14 @@ TEST(StdoutControlSocketTest, configSet) {
 
 //////////////////////////////// UNIX ////////////////////////////////
 
-/// @brief Test unix socket file name.
-const string TEST_SOCKET = "test-socket";
-
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
 /// @brief Test fixture class for unix control sockets.
 class UnixControlSocketTest : public ThreadedTest {
 public:
+    isc::test::Sandbox sandbox;
+
     /// @brief Constructor.
     UnixControlSocketTest()
         : ThreadedTest(), io_service_() {
@@ -164,17 +164,15 @@ public:
     /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
-    static string unixSocketFilePath() {
-        ostringstream s;
+    string unixSocketFilePath() {
+        std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            s << string(env);
+            socket_path = std::string(env) + "/test-socket";
         } else {
-            s << TEST_DATA_BUILDDIR;
+            socket_path = sandbox.join("test-socket");
         }
-
-        s << "/" << TEST_SOCKET;
-        return (s.str());
+        return (socket_path);
     }
 
     /// @brief Removes unix socket descriptor.

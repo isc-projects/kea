@@ -8,6 +8,7 @@ if HAVE_GTEST
 noinst_LTLIBRARIES = libkea-testutils.la
 
 libkea_testutils_la_SOURCES  = io_utils.cc io_utils.h
+libkea_testutils_la_SOURCES += sandbox.h
 libkea_testutils_la_SOURCES += log_utils.cc log_utils.h
 libkea_testutils_la_SOURCES += test_to_element.cc test_to_element.h
 libkea_testutils_la_SOURCES += threaded_test.cc threaded_test.h
