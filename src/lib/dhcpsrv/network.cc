@@ -187,10 +187,18 @@ Network::toElement() const {
     map->set("option-data", opts->toElement());
 
     // Output calcualte-tee-times and percentages if calculation is enabled.
-    bool calc_tee_times = getCalculateTeeTimes();
-    if (calc_tee_times) {
+    auto calc_tee_times = getCalculateTeeTimes();
+    if (!calc_tee_times.unspecified()) {
         map->set("calculate-tee-times", Element::create(calc_tee_times));
+    }
+
+    auto t1_percent = getT1Percent();
+    if (!t1_percent.unspecified()) {
         map->set("t1-percent", Element::create(getT1Percent()));
+    }
+
+    auto t2_percent = getT2Percent();
+    if (!t2_percent.unspecified()) {
         map->set("t2-percent", Element::create(getT2Percent()));
     }
 
