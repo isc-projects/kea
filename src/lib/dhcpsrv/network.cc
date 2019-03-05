@@ -230,9 +230,11 @@ Network6::toElement() const {
     ElementPtr map = Network::toElement();
 
     // Set preferred-lifetime
-    map->set("preferred-lifetime",
-             Element::create(static_cast<long long>
-                             (getPreferred().get())));
+    if (!getPreferred().unspecified()) {
+        map->set("preferred-lifetime",
+                 Element::create(static_cast<long long>
+                                 (getPreferred().get())));
+    }
 
     // Set interface-id
     const OptionPtr& ifaceid = getInterfaceId();

@@ -1,4 +1,4 @@
-// Copyright (C) 2017-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2017-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -129,7 +129,6 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"interface\": \"eth1\",\n"
         "    \"name\": \"dog\",\n"
         "    \"option-data\": [ ],\n"
-        "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
         "    \"rebind-timer\": 200,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
@@ -142,7 +141,6 @@ TEST(CfgSharedNetworks6Test, unparse) {
         "    \"interface\": \"eth0\",\n"
         "    \"name\": \"frog\",\n"
         "    \"option-data\": [ ],\n"
-        "    \"preferred-lifetime\": 0,\n"
         "    \"rapid-commit\": false,\n"
         "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\", \"2001:db8:1::2\" ] },\n"
         "    \"reservation-mode\": \"all\","
