@@ -117,7 +117,7 @@ messages: d2_messages.h d2_messages.cc
 	@echo Message files regenerated
 
 d2_messages.h d2_messages.cc: d2_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/d2/d2_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/d2/d2_messages.mes
 
 else
 

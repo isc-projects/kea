@@ -131,7 +131,7 @@ messages: dhcp4_messages.h dhcp4_messages.cc
 	@echo Message files regenerated
 
 dhcp4_messages.h dhcp4_messages.cc: dhcp4_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcp4/dhcp4_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/bin/dhcp4/dhcp4_messages.mes
 
 else
 

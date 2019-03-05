@@ -251,13 +251,13 @@ messages: alloc_engine_messages.h alloc_engine_messages.cc \
 	@echo Message files regenerated
 
 alloc_engine_messages.h alloc_engine_messages.cc: alloc_engine_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/alloc_engine/dhcpsrv_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 
 dhcpsrv_messages.h dhcpsrv_messages.cc: dhcpsrv_messages.mes
 	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/dhcpsrv_messages.mes
 
 hosts_messages.h hosts_messages.cc: hosts_messages.mes
-	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/hosts/hosts_messages.mes
+	$(top_builddir)/src/lib/log/compiler/kea-msg-compiler $(top_srcdir)/src/lib/dhcpsrv/hosts_messages.mes
 
 else
 
