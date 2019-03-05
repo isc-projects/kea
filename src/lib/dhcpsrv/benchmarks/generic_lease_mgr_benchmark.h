@@ -27,9 +27,7 @@ namespace dhcp {
 namespace bench {
 
 /// @brief A base class for a fixture for specific lease manager benchmarks
-class GenericLeaseMgrBenchmark : public benchmark::Fixture {
-public:
-
+struct GenericLeaseMgrBenchmark : public benchmark::Fixture {
     /// Specifies the IP protocol family to be bested.
     enum Universe { V4, V6 };
 
