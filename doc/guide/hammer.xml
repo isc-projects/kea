@@ -19,8 +19,11 @@
     is a Python 3 script that lets users automate tasks related to building
     Kea, such as setting up virtual machines, installing Kea dependencies,
     compiling Kea with various options, running unit-tests and more. This tool
-    was created primarily for internal QA purposes at ISC, but since it was
-    proven to be quite powerful, it is now part of the Kea distribution.
+    was created primarily for internal QA purposes at ISC and it is
+    not included in the Kea distribution. However, it is available in
+    the Kea git repository. This tool was developed primarily for
+    internal purpose and ISC cannot guarantee its proper operation. If
+    you decide to use it, please do so with care.
   </para>
 
   <note>
