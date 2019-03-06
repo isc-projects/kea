@@ -229,9 +229,6 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     ASSERT_NO_THROW(network = parser.parse(config_element));
     ASSERT_TRUE(network);
 
-    /// @todo Validate next-server, server-hostname, boot-file-name once
-    /// they become a part of the shared network.
-
     // Check basic parameters.
     EXPECT_TRUE(network->getAuthoritative());
     EXPECT_EQ("srv1", network->getClientClass().get());
@@ -243,6 +240,9 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     EXPECT_TRUE(network->getCalculateTeeTimes());
     EXPECT_EQ(0.345, network->getT1Percent());
     EXPECT_EQ(0.721, network->getT2Percent());
+    EXPECT_EQ("/dev/null", network->getFilename().get());
+    EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
+    EXPECT_EQ("example.org", network->getSname().get());
 
     // Relay information.
     auto relay_info = network->getRelayInfo();

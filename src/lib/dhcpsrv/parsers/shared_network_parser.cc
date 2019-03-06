@@ -6,6 +6,7 @@
 
 #include <config.h>
 
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcpsrv/cfg_option.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
@@ -15,6 +16,7 @@
 #include <boost/pointer_cast.hpp>
 #include <string>
 
+using namespace isc::asiolink;
 using namespace isc::data;
 
 namespace isc {
@@ -70,6 +72,57 @@ SharedNetwork4Parser::parse(const data::ConstElementPtr& shared_network_data) {
         if (shared_network_data->contains("authoritative")) {
             shared_network->setAuthoritative(getBoolean(shared_network_data,
                                                         "authoritative"));
+        }
+
+        // Set next-server
+        if (shared_network_data->contains("next-server")) {
+            std::string next_server;
+            try {
+                next_server = getString(shared_network_data, "next-server");
+                if (!next_server.empty()) {
+                    shared_network->setSiaddr(IOAddress(next_server));
+                }
+            } catch (...) {
+                ConstElementPtr next = shared_network_data->get("next-server");
+                std::string pos;
+                if (next) {
+                    pos = next->getPosition().str();
+                } else {
+                    pos = shared_network_data->getPosition().str();
+                }
+                isc_throw(DhcpConfigError, "invalid parameter next-server : "
+                          << next_server << "(" << pos << ")");
+            }
+        }
+
+        // Set server-hostname.
+        if (shared_network_data->contains("server-hostname")) {
+            std::string sname = getString(shared_network_data, "server-hostname");
+            if (!sname.empty()) {
+                if (sname.length() >= Pkt4::MAX_SNAME_LEN) {
+                    ConstElementPtr error = shared_network_data->get("server-hostname");
+                    isc_throw(DhcpConfigError, "server-hostname must be at most "
+                              << Pkt4::MAX_SNAME_LEN - 1 << " bytes long, it is "
+                              << sname.length() << " ("
+                              << error->getPosition() << ")");
+                }
+                shared_network->setSname(sname);
+            }
+        }
+
+        // Set boot-file-name.
+        if (shared_network_data->contains("boot-file-name")) {
+            std::string filename = getString(shared_network_data, "boot-file-name");
+            if (!filename.empty()) {
+                if (filename.length() > Pkt4::MAX_FILE_LEN) {
+                    ConstElementPtr error = shared_network_data->get("boot-file-name");
+                    isc_throw(DhcpConfigError, "boot-file-name must be at most "
+                              << Pkt4::MAX_FILE_LEN - 1 << " bytes long, it is "
+                              << filename.length() << " ("
+                              << error->getPosition() << ")");
+                }
+                shared_network->setFilename(filename);
+            }
         }
 
         if (shared_network_data->contains("client-class")) {
