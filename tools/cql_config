@@ -1,5 +1,15 @@
 #!/bin/sh
 
+# Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# This is keactrl script responsible for starting up Kea processes.
+# This script is used to run Kea from installation directory,
+# as well as for running tests.
+
 cql_lib="cassandra"
 
 if test "$(uname -s)" = "Darwin"; then
@@ -13,6 +23,10 @@ then
 	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.sh)"
 	exit 1
 fi
+
+# Shellcheck tries to follow this link and gets confused about not being able
+# to find the file.
+# shellcheck disable=SC1090
 source "${DIR}/cql_config_defines.sh"
 
 if [ $# -ne 1 ] && [ $# -ne 2 ]
