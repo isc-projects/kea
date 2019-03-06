@@ -61,8 +61,13 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 
     // No match?
     if (index == map_.end()) {
+        if ( (db_type == "mysql") || (db_type == "pgsql") || (db_type == "cql")) {
+            isc_throw(InvalidType, "The type of host backend: '" << db_type
+                      << "' is not compiled in. Did you forget to use --with-mysql,"
+                      << " --with-pgsql or --with-cql during compilation?");
+        }
         isc_throw(InvalidType, "The type of host backend: '" <<
-                  db_type << "' is not currently supported");
+                  db_type << "' is not supported");
     }
 
     // Call the factory and push the pointer on sources.
