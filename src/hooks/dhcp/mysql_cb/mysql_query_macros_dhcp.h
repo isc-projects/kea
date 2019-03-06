@@ -228,7 +228,10 @@ namespace {
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
     "  n.t2_percent," \
-    "  n.authoritative " \
+    "  n.authoritative," \
+    "  n.boot_file_name," \
+    "  n.next_server," \
+    "  n.server_hostname " \
     "FROM dhcp4_shared_network AS n " \
     "INNER JOIN dhcp4_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
