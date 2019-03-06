@@ -340,6 +340,9 @@ TEST(SharedNetwork4Test, unparse) {
     network->setContext(ctx);
     network->requireClientClass("foo");
     network->addRelayAddress(IOAddress("192.168.2.1"));
+    network->setAuthoritative(false);
+    network->setMatchClientId(false);
+    network->setHostReservationMode(Network::HR_ALL);
 
     // Add several subnets.
     Subnet4Ptr subnet1(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
@@ -371,12 +374,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"4o6-interface\": \"\",\n"
         "        \"4o6-interface-id\": \"\",\n"
         "        \"4o6-subnet\": \"\",\n"
-        "        \"authoritative\": false,\n"
         "        \"id\": 1,\n"
-        "        \"match-client-id\": true,\n"
-        "        \"next-server\": \"0.0.0.0\",\n"
-        "        \"server-hostname\": \"\",\n"
-        "        \"boot-file-name\": \"\",\n"
         "        \"option-data\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"rebind-timer\": 20,\n"
@@ -384,7 +382,6 @@ TEST(SharedNetwork4Test, unparse) {
         "           \"ip-addresses\": [ \"10.0.0.1\", \"10.0.0.2\" ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
-        "        \"reservation-mode\": \"all\",\n"
         "        \"subnet\": \"10.0.0.0/8\",\n"
         "        \"valid-lifetime\": 30\n"
         "      },\n"
@@ -392,12 +389,7 @@ TEST(SharedNetwork4Test, unparse) {
         "        \"4o6-interface\": \"\",\n"
         "        \"4o6-interface-id\": \"\",\n"
         "        \"4o6-subnet\": \"\",\n"
-        "        \"authoritative\": false,\n"
         "        \"id\": 2,\n"
-        "        \"match-client-id\": true,\n"
-        "        \"next-server\": \"0.0.0.0\",\n"
-        "        \"server-hostname\": \"\",\n"
-        "        \"boot-file-name\": \"\",\n"
         "        \"option-data\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"rebind-timer\": 20,\n"
@@ -405,7 +397,6 @@ TEST(SharedNetwork4Test, unparse) {
         "           \"ip-addresses\": [ ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
-        "        \"reservation-mode\": \"all\",\n"
         "        \"subnet\": \"192.0.2.0/24\",\n"
         "        \"valid-lifetime\": 30\n"
         "      }\n"
@@ -799,6 +790,9 @@ TEST(SharedNetwork6Test, unparse) {
     network->addRelayAddress(IOAddress("2001:db8:1::7"));
     network->addRelayAddress(IOAddress("2001:db8:1::8"));
 
+    network->setRapidCommit(true);
+    network->setHostReservationMode(Network::HR_ALL);
+
     // Add several subnets.
     Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"), 64, 10, 20, 30,
                                    40, SubnetID(1)));
@@ -829,13 +823,11 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"pd-pools\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"preferred-lifetime\": 30,\n"
-        "        \"rapid-commit\": false,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
         "           \"ip-addresses\": [ ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
-        "        \"reservation-mode\": \"all\",\n"
         "        \"subnet\": \"2001:db8:1::/64\",\n"
         "        \"valid-lifetime\": 40\n"
         "      },\n"
@@ -845,13 +837,11 @@ TEST(SharedNetwork6Test, unparse) {
         "        \"pd-pools\": [ ],\n"
         "        \"pools\": [ ],\n"
         "        \"preferred-lifetime\": 30,\n"
-        "        \"rapid-commit\": false,\n"
         "        \"rebind-timer\": 20,\n"
         "        \"relay\": {\n"
         "           \"ip-addresses\": [ \"2001:db8:1::8\" ]\n"
         "        },\n"
         "        \"renew-timer\": 10,\n"
-        "        \"reservation-mode\": \"all\",\n"
         "        \"subnet\": \"3000::/16\",\n"
         "        \"valid-lifetime\": 40\n"
         "      }\n"
