@@ -213,7 +213,7 @@ cql_init() {
     # Shellcheck complaints about missing quotes and word splitting here. There
     # is no problem here as wc -w always returns a single number.
     # shellcheck disable=SC2046
-    if [ $(echo "$result" | grep "<empty>" | wc -w) -gt 0 ]; then
+    if [ $(echo "$result" | grep -c "<empty>") -gt 0 ]; then
         printf "Creating and initializing tables using script %s...\n" $scripts_dir/cql/dhcpdb_create.cql
         cql_execute_script $scripts_dir/cql/dhcpdb_create.cql
     else
