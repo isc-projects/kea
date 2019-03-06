@@ -56,13 +56,8 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
-    # Shellcheck is too picky about this. This will work as long as keactrl
-    # script is not renamed to something with spaces or installed into a dir
-    # with spaces.
-    #
-    #shellcheck disable=SC2086
     printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" \
-           "$(basename -- ${0})"
+           "$(basename -- "${0}")"
     printf "commands: start stop reload status version\n"
 }
 
@@ -517,32 +512,31 @@ ${args}" 1
 
     status)
         kea4_status="inactive"
-        #shellcheck disable=SC2046
-        check_running $(basename -- "${dhcp4_srv}")
+        # This case of nested double quotes looks confusing, but it is actually
+        # correct. For details, see this fine explanation:
+        # https://unix.stackexchange.com/questions/443989/whats-the-right-way-to-quote-command-arg
+        check_running "$(basename -- "${dhcp4_srv}")"
         if [ ${_running} -eq 1 ]; then
             kea4_status="active"
         fi
         printf "DHCPv4 server: %s\n" "${kea4_status}"
 
         kea6_status="inactive"
-        #shellcheck disable=SC2046
-        check_running $(basename -- "${dhcp6_srv}")
+        check_running "$(basename -- "${dhcp6_srv}")"
         if [ ${_running} -eq 1 ]; then
             kea6_status="active"
         fi
         printf "DHCPv6 server: %s\n" "${kea6_status}"
 
         d2_status="inactive"
-        #shellcheck disable=SC2046
-        check_running $(basename -- "${dhcp_ddns_srv}")
+        check_running "$(basename -- "${dhcp_ddns_srv}")"
         if [ ${_running} -eq 1 ]; then
             d2_status="active"
         fi
         printf "DHCP DDNS: %s\n" "${d2_status}"
 
         agent_status="inactive"
-        #shellcheck disable=SC2046
-        check_running $(basename -- "${ctrl_agent_srv}")
+        check_running "$(basename -- "${ctrl_agent_srv}")"
         if [ ${_running} -eq 1 ]; then
             agent_status="active"
         fi
@@ -550,8 +544,7 @@ ${args}" 1
 
         if [ "${have_netconf}" -eq 1 ]; then
             netconf_status="inactive"
-            #shellcheck disable=SC2046
-            check_running $(basename -- "${netconf_srv}")
+            check_running "$(basename -- "${netconf_srv}")"
             if [ "${_running}" -eq 1 ]; then
                 netconf_status="active"
             fi
