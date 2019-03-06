@@ -65,7 +65,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         return;
 #else
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("mysql");
-        isc_throw(InvalidType, "The Kea server has not been built with "
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
                   "support for database type: mysql");
 #endif
     }
@@ -77,7 +77,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         return;
 #else
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("postgresql");
-        isc_throw(InvalidType, "The Kea server has not been built with "
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
                   "support for database type: postgresql");
 #endif
     }
@@ -88,7 +88,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
         return;
 #else
         LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("cql");
-        isc_throw(InvalidType, "The Kea server has not been built with "
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
                   "support for database type: cql");
 #endif
     }

@@ -1,4 +1,4 @@
-// Copyright (C) 2015-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2015-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -61,10 +61,13 @@ HostDataSourceFactory::add(HostDataSourceList& sources,
 
     // No match?
     if (index == map_.end()) {
-        if ( (db_type == "mysql") || (db_type == "pgsql") || (db_type == "cql")) {
+        if ((db_type == "mysql") ||
+            (db_type == "postgresql") ||
+            (db_type == "cql")) {
+            string with = (db_type == "postgresql" ? "pgsql" : db_type);
             isc_throw(InvalidType, "The type of host backend: '" << db_type
-                      << "' is not compiled in. Did you forget to use --with-mysql,"
-                      << " --with-pgsql or --with-cql during compilation?");
+                      << "' is not compiled in. Did you forget to use --with-"
+                      << with << " during compilation?");
         }
         isc_throw(InvalidType, "The type of host backend: '" <<
                   db_type << "' is not supported");
