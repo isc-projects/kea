@@ -1,4 +1,6 @@
-# Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+#!/bin/sh
+
+# Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 #
 # This Source Code Form is subject to the terms of the Mozilla Public
 # License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -22,6 +24,8 @@ mysql_execute() {
         mysql -N -B "$@" -e "${QUERY}"
         retcode=$?
     else
+        # Shellcheck complains about variables not being set. They're set in the script that calls this script.
+        # shellcheck disable=SC2154
         mysql -N -B --host="${db_host}" --database="${db_name}" --user="${db_user}" --password="${db_password}" -e "${QUERY}"
         retcode=$?
     fi
