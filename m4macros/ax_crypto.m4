@@ -408,7 +408,7 @@ else
    if test "${use_openssl}" = "/usr" ; then
       CRYPTO_CFLAGS=""
       CRYPTO_INCLUDES=""
-      CRYPTO_LIBS="-lcrypto -lssl"
+      CRYPTO_LIBS="-lcrypto"
       DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl"
    else
       CRYPTO_CFLAGS=""
@@ -416,20 +416,20 @@ else
       DISTCHECK_CRYPTO_CONFIGURE_FLAG="--with-openssl=${use_openssl}"
       case $host in
           *-solaris*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -R${use_openssl}/lib -lcrypto -lssl"
+              CRYPTO_LIBS="-L${use_openssl}/lib -R${use_openssl}/lib -lcrypto"
               ;;
           *-hp-hpux*)
-              CRYPTO_LIBS="-L${use_openssl}/lib -Wl,+b: -lcrypto -lssl"
+              CRYPTO_LIBS="-L${use_openssl}/lib -Wl,+b: -lcrypto"
               ;;
           *-apple-darwin*)
               if test -f "${use_openssl}/lib/libcrypto.dylib" ; then
-                 CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto -lssl"
+                 CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
               else
                  CRYPTO_LIBS="${use_openssl}/lib/libcrypto.a"
               fi
               ;;
           *)
-              CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto -lssl"
+              CRYPTO_LIBS="-L${use_openssl}/lib -lcrypto"
               ;;
       esac
     fi
