@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -429,6 +429,15 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
         return isc::dhcp::Dhcp6Parser::make_DHCP6(driver.loc_);
     default:
         return isc::dhcp::Dhcp6Parser::make_STRING("Dhcp6", driver.loc_);
+    }
+}
+
+\"data-directory\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser6Context::DHCP6:
+        return  isc::dhcp::Dhcp6Parser::make_DATA_DIRECTORY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp6Parser::make_STRING("data-directory", driver.loc_);
     }
 }
 
