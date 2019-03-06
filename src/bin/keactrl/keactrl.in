@@ -109,7 +109,7 @@ get_pid_from_file() {
     pid_file_dir=@localstatedir@/@PACKAGE@
 
     # Use directory override if set (primarily for testing only)
-    if [ ! -z "$KEA_PIDFILE_DIR" ]; then
+    if [ -n "$KEA_PIDFILE_DIR" ]; then
         pid_file_dir=${KEA_PIDFILE_DIR}
     fi
 
