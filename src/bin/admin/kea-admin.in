@@ -266,7 +266,7 @@ mysql_upgrade() {
         exit 1
     fi
 
-    for script in ${scripts_dir}/mysql/upgrade*.sh
+    for script in "${scripts_dir}"/mysql/upgrade*.sh
     do
         echo "Processing $script file..."
         sh "${script}" --host="${db_host}" --user="${db_user}" --password="${db_password}" "${db_name}"
@@ -298,7 +298,7 @@ pgsql_upgrade() {
     # thru an env
     export PGPASSWORD=$db_password
 
-    for script in ${scripts_dir}/pgsql/upgrade*.sh
+    for script in "${scripts_dir}"/pgsql/upgrade*.sh
     do
         echo "Processing $script file..."
         sh "${script}" -U "${db_user}" -h "${db_host}" -d "${db_name}"
@@ -329,7 +329,7 @@ cql_upgrade() {
     find "${scripts_dir}/cql" -name 'upgrade*.sh' -type f
     retcode=$?
     if [ $retcode -eq 0 ]; then # Upgrade scripts are present.
-        for script in ${scripts_dir}/cql/upgrade*.sh
+        for script in "${scripts_dir}"/cql/upgrade*.sh
         do
             echo "Processing $script file..."
             sh "${script}" -u "${db_user}" -p "${db_password}" -k "${db_name}"
