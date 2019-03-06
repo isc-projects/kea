@@ -11,6 +11,8 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option_space.h>
 #include <util/encode/hex.h>
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -82,15 +84,85 @@ CfgOption::getVendorIdsSpaceNames() const {
 }
 
 void
-CfgOption::merge(CfgOption& other) {
+CfgOption::merge(CfgOptionDefPtr cfg_def,  CfgOption& other) {
     // First we merge our options into other.
     // This adds my opitions that are not
     // in other, to other (i.e we skip over
-    // duplicates). 
+    // duplicates).
     mergeTo(other);
+
+    // Iterate over all the options in all the spaces and
+    // validate them against the definitions.
+    for (auto space : other.getOptionSpaceNames()) {
+        for (auto opt_desc : *(other.getAll(space))) {
+            createDescriptorOption(cfg_def, space, opt_desc);
+        }
+    }
 
     // Next we copy "other" on top of ourself.
     other.copyTo(*this);
+}
+
+void
+CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& space,
+                                  OptionDescriptor& opt_desc) {
+    if (!opt_desc.option_) {
+        isc_throw(BadValue,
+                  "validateCreateOption: descriptor has no option instance");
+    }
+
+    Option::Universe universe = opt_desc.option_->getUniverse();
+    uint16_t code = opt_desc.option_->getType();
+
+    // Find the option's defintion, if it has one.
+    // First, check for a standard definition.
+    OptionDefinitionPtr def = LibDHCP::getOptionDef(space, code);
+
+    // If there is no standard definition but the option is vendor specific,
+    // we should search the definition within the vendor option space.
+    if (!def && (space != DHCP4_OPTION_SPACE) && (space != DHCP6_OPTION_SPACE)) {
+        uint32_t vendor_id = LibDHCP::optionSpaceToVendorId(space);
+        if (vendor_id > 0) {
+            def = LibDHCP::getVendorOptionDef(universe, vendor_id, code);
+        }
+    }
+
+    // Still haven't found the definition, so look for custom
+    // definition in the given set of configured definitions
+    if (!def) {
+        def = cfg_def->get(space, code);
+    }
+
+    std::string& formatted_value = opt_desc.formatted_value_;
+    if (!def) {
+        if (!formatted_value.empty()) {
+            isc_throw(InvalidOperation, "option: " << space << "." << code
+                      << " has a formatted value: '" << formatted_value
+                      << "' but no option definition");
+        }
+
+        // If there's no definition and no formatted string, we'll 
+        // settle for the generic option already in the descriptor.
+        return;
+    }
+
+    try {
+
+        // Definition found. Let's replace the generic option in
+        // the descriptor with one created based on definition's factory.
+        if (formatted_value.empty()) {
+            // No formatted value, use data stored in the generic option.
+            opt_desc.option_ = def->optionFactory(universe, code, opt_desc.option_->getData());
+        } else {
+            // Spit the value specified in comma separated values format.
+            std::vector<std::string> split_vec;
+            boost::split(split_vec, formatted_value, boost::is_any_of(","));
+            opt_desc.option_ = def->optionFactory(universe, code, split_vec);
+        }
+    } catch (const std::exception& ex) {
+            isc_throw(InvalidOperation, "could not create option: " << space << "." << code
+                      << " from data specified, reason: " << ex.what()); 
+    }
 }
 
 void

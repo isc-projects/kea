@@ -333,80 +333,133 @@ TEST_F(CfgOptionTest, copy) {
 // can be merged into an existing configuration, with any
 // duplicates in other overwriting those in the existing
 // configuration.  
-TEST_F(CfgOptionTest, merge) {
+TEST_F(CfgOptionTest, validMerge) {
     CfgOption this_cfg;
     CfgOption other_cfg;
 
-    // Create collection of options in option space dhcp6, with option codes
-    // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
-    for (uint16_t code = 100; code < 110; ++code) {
-        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(this_cfg.add(option, false, DHCP6_OPTION_SPACE));
-    }
+    // We need to create a dictionary of defintions pass into option merge.
+    CfgOptionDefPtr defs(new CfgOptionDef());
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("three", 3, "uint8"))), "fluff");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("four", 4, "uint8"))), "fluff");
 
-    // Create collection of options in vendor space 123, with option codes
-    // from the range of 100 to 109 and holding one byte of data equal to 0xFF.
-    for (uint16_t code = 100; code < 110; code += 2) {
-        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0xFF)));
-        ASSERT_NO_THROW(this_cfg.add(option, false, "vendor-123"));
-    }
+    // Create our existing config, that gets merged into.
+    OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
+    ASSERT_NO_THROW(this_cfg.add(option, false, "isc"));
 
-    // Create destination configuration (configuration that we merge the
-    // other configuration to).
+    // Add option 3 to "fluff"
+    option.reset(new Option(Option::V4, 3, OptionBuffer(1, 0x03)));
+    ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
-    // Create collection of options having even option codes in the range of
-    // 100 to 108.
-    for (uint16_t code = 100; code < 110; code += 2) {
-        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(other_cfg.add(option, false, DHCP6_OPTION_SPACE));
-    }
+    // Add option 4 to "fluff".
+    option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x04)));
+    ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
-    // Create collection of options having odd option codes in the range of
-    // 101 to 109.
-    for (uint16_t code = 101; code < 110; code += 2) {
-        OptionPtr option(new Option(Option::V6, code, OptionBuffer(1, 0x01)));
-        ASSERT_NO_THROW(other_cfg.add(option, false, "vendor-123"));
-    }
+    // Create our other config that will be merged from.
+    // Add Option 1 to "isc",  this should "overwrite" the original. 
+    option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
+    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+
+    // Add option 2  to "isc".
+    option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
+    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+
+    // Add option 4 to "isc". 
+    option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x40)));
+    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Merge source configuration to the destination configuration. The options
     // in the destination should be preserved. The options from the source
     // configuration should be added.
-    ASSERT_NO_THROW(this_cfg.merge(other_cfg));
-
-
-    // Validate the options in the dhcp6 option space in the destination.
-    for (uint16_t code = 100; code < 110; ++code) {
-        OptionDescriptor desc = this_cfg.get(DHCP6_OPTION_SPACE, code);
-        ASSERT_TRUE(desc.option_);
-        ASSERT_EQ(1, desc.option_->getData().size());
-        // The options with even option codes should hold one byte of data
-        // equal to 0x1. These are the ones that we have initially added to
-        // the destination configuration. The other options should hold the
-        // values of 0xFF which indicates that they have been merged from the
-        // source configuration.
-        if ((code % 2) == 0) {
-            EXPECT_EQ(0x01, desc.option_->getData()[0]);
-        } else {
-            EXPECT_EQ(0xFF, desc.option_->getData()[0]);
-        }
+    try {
+        this_cfg.merge(defs, other_cfg);
+    } catch(const std::exception& ex) {
+        GTEST_FAIL () << "Unexpected exception:" << ex.what();
     }
 
-    // Validate the options in the vendor space.
-    for (uint16_t code = 100; code < 110; ++code) {
-        OptionDescriptor desc = this_cfg.get(123, code);
-        ASSERT_TRUE(desc.option_);
-        ASSERT_EQ(1, desc.option_->getData().size());
-        // This time, the options with even option codes should hold a byte
-        // of data equal to 0xFF. The other options should hold the byte of
-        // data equal to 0x01.
-        if ((code % 2) == 0) {
-            EXPECT_EQ(0xFF, desc.option_->getData()[0]);
-        } else {
-            EXPECT_EQ(0x01, desc.option_->getData()[0]);
-        }
-    }
+//    ASSERT_NO_THROW(this_cfg.merge(defs, other_cfg));
+
+    // isc:1 should come from "other" config.
+    OptionDescriptor desc = this_cfg.get("isc", 1);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(1, desc.option_->getData().size());
+    EXPECT_EQ(0x10, desc.option_->getData()[0]);
+
+    // isc:2 should come from "other" config.
+    desc = this_cfg.get("isc", 2);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(1, desc.option_->getData().size());
+    EXPECT_EQ(0x20, desc.option_->getData()[0]);
+
+    // isc:4 should come from "other" config.
+    desc = this_cfg.get("isc", 4);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(1, desc.option_->getData().size());
+    EXPECT_EQ(0x40, desc.option_->getData()[0]);
+
+    // fluff:3 should come from "this" config.
+    desc = this_cfg.get("fluff", 3);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(1, desc.option_->getData().size());
+    EXPECT_EQ(0x03, desc.option_->getData()[0]);
+
+    // fluff:4 should come from "this" config.
+    desc = this_cfg.get("fluff", 4);
+    ASSERT_TRUE(desc.option_);
+    ASSERT_EQ(1, desc.option_->getData().size());
+    EXPECT_EQ(0x4, desc.option_->getData()[0]);
 }
 
+TEST_F(CfgOptionTest, invalidMerge) {
+    CfgOption this_cfg;
+    CfgOption other_cfg;
+
+    // Create an empty dictionary of defintions pass into option merge.
+    CfgOptionDefPtr defs(new CfgOptionDef());
+
+    // Create our other config that will be merged from.
+    // Add an option without a formatted value.
+    OptionPtr option(new Option(Option::V4, 1, OptionBuffer(1, 0x01)));
+    ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
+
+    // Add an option with a formatted value.
+    option.reset(new Option(Option::V4, 2));
+    OptionDescriptor desc(option, false, "one,two,three");
+    ASSERT_NO_THROW(other_cfg.add(desc, "isc"));
+
+    // When we attempt to merge, it should fail, recognizing that
+    // option two has no definition.
+    try {
+        this_cfg.merge(defs, other_cfg);
+        GTEST_FAIL() << "merge should have thrown";
+    } catch (const InvalidOperation& ex) {
+        std::string exp_msg = "option: isc.2 has a formatted value: "
+                              "'one,two,three' but no option definition";
+        EXPECT_EQ(std::string(exp_msg), std::string(ex.what()));
+    } catch (const std::exception& ex) {
+        GTEST_FAIL() << "wrong exception thrown:" << ex.what();
+    }
+
+    // Now let's add an option definition that will force data truncated
+    // error for option one.
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
+
+    // When we attempt to merge, it should fail because option one's data
+    // is not valid per its definition.
+    try {
+        this_cfg.merge(defs, other_cfg);
+        GTEST_FAIL() << "merge should have thrown";
+    } catch (const InvalidOperation& ex) {
+        std::string exp_msg = "could not create option: isc.1"
+                              " from data specified, reason:"
+                              " Option 1 truncated";
+        EXPECT_EQ(std::string(exp_msg), std::string(ex.what()));
+    } catch (const std::exception& ex) {
+        GTEST_FAIL() << "wrong exception thrown:" << ex.what();
+    }
+}
 
 // This test verifies that encapsulated options are added as sub-options
 // to the top level options on request.
