@@ -185,10 +185,9 @@ SrvConfig::merge4(SrvConfig& other) {
     // Merge option defs
     cfg_option_def_->merge((*other.getCfgOptionDef()));
 
-    // Merge options
-    // @todo should we sanity check and make sure
-    // that there are option defs for merged options?
-    cfg_option_->merge((*other.getCfgOption()));
+    // Merge options.  Note that we pass in the merged definitions
+    // so we can validate options against them.
+    cfg_option_->merge(cfg_option_def_, (*other.getCfgOption()));
 
     // Merge shared networks.
     cfg_shared_networks4_->merge(*(other.getCfgSharedNetworks4()));
