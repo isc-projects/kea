@@ -1012,7 +1012,10 @@ public:
             MySqlBinding::createInteger<uint8_t>(), // calculate_tee_times
             MySqlBinding::createInteger<float>(), // t1_percent
             MySqlBinding::createInteger<float>(), // t2_percent
-            MySqlBinding::createInteger<uint8_t>() // authoritative
+            MySqlBinding::createInteger<uint8_t>(), // authoritative
+            MySqlBinding::createString(BOOT_FILE_NAME_BUF_LENGTH), // boot_file_name
+            MySqlBinding::createInteger<uint32_t>(), // next_server
+            MySqlBinding::createString(SERVER_HOSTNAME_BUF_LENGTH) // server_hostname
         };
 
         uint64_t last_network_id = 0;
@@ -1129,6 +1132,21 @@ public:
                 // authoritative
                 if (!out_bindings[28]->amNull()) {
                     last_network->setAuthoritative(out_bindings[28]->getBool());
+                }
+
+                // boot_file_name
+                if (!out_bindings[29]->amNull()) {
+                    last_network->setFilename(out_bindings[29]->getString());
+                }
+
+                // next_server
+                if (!out_bindings[30]->amNull()) {
+                    last_network->setSiaddr(IOAddress(out_bindings[30]->getInteger<uint32_t>()));
+                }
+
+                // server_hostaname
+                if (!out_bindings[31]->amNull()) {
+                    last_network->setSname(out_bindings[31]->getString());
                 }
 
                 shared_networks.push_back(last_network);
@@ -1255,7 +1273,10 @@ public:
             MySqlBinding::condCreateBool(shared_network->getCalculateTeeTimes()),
             MySqlBinding::condCreateFloat(shared_network->getT1Percent()),
             MySqlBinding::condCreateFloat(shared_network->getT2Percent()),
-            MySqlBinding::condCreateBool(shared_network->getAuthoritative())
+            MySqlBinding::condCreateBool(shared_network->getAuthoritative()),
+            MySqlBinding::condCreateString(shared_network->getFilename()),
+            MySqlBinding::condCreateIPv4Address(shared_network->getSiaddr()),
+            MySqlBinding::condCreateString(shared_network->getSname())
         };
 
         MySqlTransaction transaction(conn_);
@@ -2108,8 +2129,11 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times,"
       "  t1_percent,"
       "  t2_percent,"
-      "  authoritative"
-      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
+      "  authoritative,"
+      "  boot_file_name,"
+      "  next_server,"
+      "  server_hostname"
+      ") VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)" },
 
     // Insert association of the shared network with a server.
     { MySqlConfigBackendDHCPv4Impl::INSERT_SHARED_NETWORK4_SERVER,
@@ -2188,7 +2212,10 @@ TaggedStatementArray tagged_statements = { {
       "  calculate_tee_times = ?,"
       "  t1_percent = ?,"
       "  t2_percent = ?,"
-      "  authoritative = ? "
+      "  authoritative = ?,"
+      "  boot_file_name = ?,"
+      "  next_server = ?,"
+      "  server_hostname = ? "
       "WHERE name = ?" },
 
     // Update existing option definition.
