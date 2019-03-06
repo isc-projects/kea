@@ -670,24 +670,6 @@ Subnet4ConfigParser::parse(ConstElementPtr subnet) {
 void
 Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
-    // The renew-timer and rebind-timer are optional. If not set, the
-    // option 58 and 59 will not be sent to a client. In this case the
-    // client should formulate default values based on the valid-lifetime.
-    Triplet<uint32_t> t1;
-    if (params->contains("renew-timer")) {
-        t1 = getInteger(params, "renew-timer");
-    }
-
-    Triplet<uint32_t> t2;
-    if (params->contains("rebind-timer")) {
-        t2 = getInteger(params, "rebind-timer");
-    }
-
-    Triplet<uint32_t> valid;
-    if (params->contains("valid-lifetime")) {
-        valid = getInteger(params, "valid-lifetime");
-    }
-
     // Subnet ID is optional. If it is not supplied the value of 0 is used,
     // which means autogenerate.
     SubnetID subnet_id = 0;
@@ -695,21 +677,28 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
         subnet_id = static_cast<SubnetID>(getInteger(params, "id"));
     }
 
+    Subnet4Ptr subnet4(new Subnet4(addr, len, Triplet<uint32_t>(),
+                                   Triplet<uint32_t>(), Triplet<uint32_t>(),
+                                   subnet_id));
+    subnet_ = subnet4;
+
+    NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet4);
+    parseCommonTimers(params, network);
+
     stringstream s;
     s << addr << "/" << static_cast<int>(len) << " with params: ";
     // t1 and t2 are optional may be not specified.
-    if (!t1.unspecified()) {
-        s << "t1=" << t1 << ", ";
+    if (!subnet4->getT1().unspecified()) {
+        s << "t1=" << subnet4->getT1().get() << ", ";
     }
-    if (!t2.unspecified()) {
-        s << "t2=" << t2 << ", ";
+    if (!subnet4->getT2().unspecified()) {
+        s << "t2=" << subnet4->getT2().get() << ", ";
     }
-    s <<"valid-lifetime=" << valid;
+    if (!subnet4->getValid().unspecified()) {
+        s << "valid-lifetime=" << subnet4->getValid().get();
+    }
 
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET4).arg(s.str());
-
-    Subnet4Ptr subnet4(new Subnet4(addr, len, t1, t2, valid, subnet_id));
-    subnet_ = subnet4;
 
     // Set the match-client-id value for the subnet.
     if (params->contains("match-client-id")) {
@@ -882,44 +871,7 @@ Subnet4ConfigParser::initSubnet(data::ConstElementPtr params,
     // Copy options to the subnet configuration.
     options_->copyTo(*subnet4->getCfgOption());
 
-    bool calculate_tee_times = subnet4->getCalculateTeeTimes();
-    if (params->contains("calculate-tee-times")) {
-        bool calculate_tee_times = getBoolean(params, "calculate-tee-times");
-        subnet4->setCalculateTeeTimes(calculate_tee_times);
-    }
-
-    Optional<double> t2_percent;
-    if (params->contains("t2-percent")) {
-        t2_percent = getDouble(params, "t2-percent");
-    }
-
-    Optional<double> t1_percent;
-    if (params->contains("t1-percent")) {
-        t1_percent = getDouble(params, "t1-percent");
-    }
-    if (calculate_tee_times) {
-        if (!t2_percent.unspecified() && ((t2_percent.get() <= 0.0) ||
-                                          (t2_percent.get() >= 1.0))) {
-            isc_throw(DhcpConfigError, "t2-percent:  " << t2_percent.get()
-                      << " is invalid, it must be greater than 0.0 and less than 1.0");
-        }
-
-        if (!t1_percent.unspecified() && ((t1_percent.get() <= 0.0) ||
-                                          (t1_percent.get() >= 1.0))) {
-            isc_throw(DhcpConfigError, "t1-percent:  " << t1_percent.get()
-                      << " is invalid it must be greater than 0.0 and less than 1.0");
-        }
-
-        if (!t1_percent.unspecified() && !t2_percent.unspecified() &&
-            (t1_percent.get() >= t2_percent.get())) {
-            isc_throw(DhcpConfigError, "t1-percent:  " << t1_percent.get()
-                      << " is invalid, it must be less than t2-percent: " << t2_percent.get());
-        }
-
-    }
-
-    subnet4->setT2Percent(t2_percent);
-    subnet4->setT1Percent(t1_percent);
+    parseTeePercents(params, network);
 }
 
 //**************************** Subnets4ListConfigParser **********************
@@ -1099,7 +1051,7 @@ PdPoolsListParser::parse(PoolStoragePtr pools, ConstElementPtr pd_pool_list) {
 //**************************** Subnet6ConfigParser ***********************
 
 Subnet6ConfigParser::Subnet6ConfigParser()
-    :SubnetConfigParser(AF_INET6) {
+    : SubnetConfigParser(AF_INET6) {
 }
 
 Subnet6Ptr
@@ -1162,27 +1114,6 @@ Subnet6ConfigParser::duplicate_option_warning(uint32_t code,
 void
 Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
                                 asiolink::IOAddress addr, uint8_t len) {
-    // Get all 'time' parameters.
-    Triplet<uint32_t> t1;
-    if (params->contains("renew-timer")) {
-        t1 = getInteger(params, "renew-timer");
-    }
-
-    Triplet<uint32_t> t2;
-    if (params->contains("rebind-timer")) {
-        t2 = getInteger(params, "rebind-timer");
-    }
-
-    Triplet<uint32_t> pref;
-    if (params->contains("preferred-lifetime")) {
-        pref = getInteger(params, "preferred-lifetime");
-    }
-
-    Triplet<uint32_t> valid;
-    if (params->contains("valid-lifetime")) {
-        valid = getInteger(params, "valid-lifetime");
-    }
-
     // Subnet ID is optional. If it is not supplied the value of 0 is used,
     // which means autogenerate. The value was inserted earlier by calling
     // SimpleParser6::setAllDefaults.
@@ -1195,20 +1126,34 @@ Subnet6ConfigParser::initSubnet(data::ConstElementPtr params,
         rapid_commit = getBoolean(params, "rapid-commit");
     }
 
+    // Parse preferred lifetime as it is not parsed by the common function.
+    Triplet<uint32_t> pref;
+    if (params->contains("preferred-lifetime")) {
+        pref = getInteger(params, "preferred-lifetime");
+    }
+
+    // Create a new subnet.
+    Subnet6* subnet6 = new Subnet6(addr, len, Triplet<uint32_t>(),
+                                   Triplet<uint32_t>(),
+                                   pref,
+                                   Triplet<uint32_t>(),
+                                   subnet_id);
+    subnet_.reset(subnet6);
+
     std::ostringstream output;
     output << addr << "/" << static_cast<int>(len)
-           << " with params t1=" << t1 << ", t2="
-           << t2 << ", preferred-lifetime=" << pref
-           << ", valid-lifetime=" << valid
+           << " with params t1=" << subnet6->getT1().get()
+           << ", t2=" << subnet6->getT2().get()
+           << ", preferred-lifetime=" << pref.get()
+           << ", valid-lifetime=" << subnet6->getValid().get()
            << ", rapid-commit is " << (rapid_commit ? "enabled" : "disabled");
 
 
     LOG_INFO(dhcpsrv_logger, DHCPSRV_CFGMGR_NEW_SUBNET6).arg(output.str());
 
-    // Create a new subnet.
-    Subnet6* subnet6 = new Subnet6(addr, len, t1, t2, pref, valid,
-                                   subnet_id);
-    subnet_.reset(subnet6);
+    // Parse timers that are common for v4 and v6.
+    NetworkPtr network = boost::dynamic_pointer_cast<Network>(subnet_);
+    parseCommonTimers(params, network);
 
     // Enable or disable Rapid Commit option support for the subnet.
     if (!rapid_commit.unspecified()) {

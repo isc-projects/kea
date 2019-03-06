@@ -12,51 +12,13 @@
 #include <dhcpsrv/cfg_subnets4.h>
 #include <dhcpsrv/cfg_subnets6.h>
 #include <dhcpsrv/shared_network.h>
+#include <dhcpsrv/parsers/base_network_parser.h>
 
 namespace isc {
 namespace dhcp {
 
-/// @brief Common parser for IPv4 and IPv6 shared networks.
-///
-/// It contains common functions for parsing the shared networks.
-/// DHCPv4 and DHCPv6 specific implementations derive from it.
-class SharedNetworkParser : public isc::data::SimpleParser {
-protected:
-
-    /// @brief Parses common DHCP timers.
-    ///
-    /// The parsed parameters are:
-    /// - renew-timer,
-    /// - rebind-timer,
-    /// - valid-lifetime
-    ///
-    /// @param shared_network_data Data element holding shared network
-    /// configuration to be parsed.
-    /// @param [out] network Pointer to a network in which parsed data is
-    /// to be stored.
-    void parseCommonTimers(const data::ConstElementPtr& shared_network_data,
-                           NetworkPtr& network);
-
-    /// @brief Parses parameters related to "percent" timers settngs.
-    ///
-    /// The parsed parameters are:
-    /// - calculate-tee-times,
-    /// - t1-percent,
-    /// - t2-percent.
-    ///
-    /// @param shared_network_data Data element holding shared network
-    /// configuration to be parsed.
-    /// @param [out] network Pointer to a network in which parsed data is
-    /// to be stored.
-    ///
-    /// @throw DhcpConfigError if configuration of these parameters is
-    /// invalid.
-    void parseTeePercents(const data::ConstElementPtr& shared_network_data,
-                          NetworkPtr& network);
-};
-
 /// @brief Implements parser for IPv4 shared networks.
-class SharedNetwork4Parser : public SharedNetworkParser {
+class SharedNetwork4Parser : public BaseNetworkParser {
 public:
 
     /// @brief Parses shared configuration information for IPv4 shared network.
@@ -71,7 +33,7 @@ public:
 };
 
 /// @brief Implements parser for IPv6 shared networks.
-class SharedNetwork6Parser : public SharedNetworkParser {
+class SharedNetwork6Parser : public BaseNetworkParser {
 public:
 
     /// @brief Parses shared configuration information for IPv6 shared network.

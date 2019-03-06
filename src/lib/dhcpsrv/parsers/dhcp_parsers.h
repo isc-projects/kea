@@ -19,6 +19,7 @@
 #include <dhcpsrv/cfg_option_def.h>
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/srv_config.h>
+#include <dhcpsrv/parsers/base_network_parser.h>
 #include <cc/simple_parser.h>
 #include <exceptions/exceptions.h>
 #include <util/optional.h>
@@ -449,8 +450,7 @@ private:
 ///        instantiated here and family specific parameters are set)
 /// 5.     Control returns to createSubnet() (step 3) and common parameters
 ///        are set.
-
-class SubnetConfigParser : public isc::data::SimpleParser {
+class SubnetConfigParser : public BaseNetworkParser {
 public:
 
     /// @brief constructor
