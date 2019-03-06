@@ -1,3 +1,9 @@
+1536.	[build]		tomek
+	Many changes in keactrl, kea-admin, cql_config and sysrepo_config
+	scripts. ISC is now using shellcheck to verify portability of
+	our scripts.
+	(Gitlab #480,!245, git 8818ba0260ba36710b88db6401069f9fe4f3a73a)
+
 1535.	[func]		godfryd
 	Added checking required Vagrant version by Hammer.
 	Removed Hammer from EXTRA_DIST.
