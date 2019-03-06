@@ -192,6 +192,7 @@ public:
         shared_network->setSiaddr(IOAddress("192.0.1.2"));
         shared_network->setSname("frog");
         shared_network->setFilename("/dev/null");
+        shared_network->setAuthoritative(true);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,
