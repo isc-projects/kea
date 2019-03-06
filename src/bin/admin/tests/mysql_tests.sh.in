@@ -507,7 +507,7 @@ EOF
     run_statement "dhcp4_option_def_server" "$qry"
 
     # table: dhcp4_shared_network
-    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent from dhcp4_shared_network"
+    qry="select id, name, client_class, interface, match_client_id, modification_ts, rebind_timer, relay, renew_timer, require_client_classes, reservation_mode, user_context, valid_lifetime, authoritative, calculate_tee_times, t1_percent, t2_percent, boot_file_name, next_server, server_hostname from dhcp4_shared_network"
     run_statement "dhcp4_shared_network" "$qry"
 
     # table: dhcp4_shared_network_server
