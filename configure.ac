@@ -1385,7 +1385,7 @@ AC_PROG_YACC
 
 if test "x$enable_generate_parser" != "xno"; then
 
-    if test "x$LEX" == "x"; then
+    if test "x$LEX" != "xflex"; then
        AC_MSG_ERROR([Flex is required for enable-generate-parser, but was not found])
     fi
 
