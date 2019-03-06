@@ -80,18 +80,6 @@ public:
     /// accessing it.
     static CfgMgr& instance();
 
-    /// @brief returns path do the data directory
-    ///
-    /// This method returns a path to writable directory that DHCP servers
-    /// can store data in.
-    /// @return data directory
-    std::string getDataDir() const;
-
-    /// @brief Sets new data directory.
-    ///
-    /// @param datadir New data directory.
-    void setDataDir(const std::string& datadir);
-
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///
     /// Passes the new configuration to the D2ClientMgr instance,
@@ -311,9 +299,6 @@ private:
     /// external configuration should be merged.
     /// @param seq Source configuration sequence number.
     void mergeIntoCfg(const SrvConfigPtr& taget_config, const uint32_t seq);
-
-    /// @brief directory where data files (e.g. server-id) are stored
-    std::string datadir_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;

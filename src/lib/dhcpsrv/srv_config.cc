@@ -25,8 +25,14 @@ using namespace isc::process;
 namespace isc {
 namespace dhcp {
 
+// DHCP_DATA_DIR must be set set with -DDHCP_DATA_DIR="..." in Makefile.am
+// Note: the definition of DHCP_DATA_DIR needs to include quotation marks
+// See AM_CPPFLAGS definition in Makefile.am
+const std::string
+SrvConfig::DEFAULT_DATA_DIR = DHCP_DATA_DIR;
+
 SrvConfig::SrvConfig()
-    : sequence_(0), cfg_iface_(new CfgIface()),
+    : sequence_(0), datadir_(DEFAULT_DATA_DIR), cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_shared_networks4_(new CfgSharedNetworks4()),
@@ -45,7 +51,8 @@ SrvConfig::SrvConfig()
 }
 
 SrvConfig::SrvConfig(const uint32_t sequence)
-    : sequence_(sequence), cfg_iface_(new CfgIface()),
+    : sequence_(sequence),
+      datadir_(DEFAULT_DATA_DIR),cfg_iface_(new CfgIface()),
       cfg_option_def_(new CfgOptionDef()), cfg_option_(new CfgOption()),
       cfg_subnets4_(new CfgSubnets4()), cfg_subnets6_(new CfgSubnets6()),
       cfg_shared_networks4_(new CfgSharedNetworks4()),
@@ -113,6 +120,8 @@ void
 SrvConfig::copy(SrvConfig& new_config) const {
     ConfigBase::copy(new_config);
 
+    // Replace data directory.
+    new_config.datadir_ = datadir_;
     // Replace interface configuration.
     new_config.cfg_iface_.reset(new CfgIface(*cfg_iface_));
     // Replace option definitions.
@@ -141,7 +150,8 @@ SrvConfig::equals(const SrvConfig& other) const {
     }
 
     // Common information is equal between objects, so check other values.
-    if ((*cfg_iface_ != *other.cfg_iface_) ||
+    if ((datadir_ != other.datadir_) ||
+        (*cfg_iface_ != *other.cfg_iface_) ||
         (*cfg_option_def_ != *other.cfg_option_def_) ||
         (*cfg_option_ != *other.cfg_option_) ||
         (*class_dictionary_ != *other.class_dictionary_) ||
@@ -204,13 +214,15 @@ SrvConfig::mergeGlobals4(SrvConfig& other) {
         addConfiguredGlobal(other_global.first, other_global.second);
     }
 
-    // A handful of values are stored as members in SrvConfig. So we'll 
+    // A handful of values are stored as members in SrvConfig. So we'll
     // iterate over the merged globals, setting approprate members.
     for (auto merged_global : getConfiguredGlobals()->mapValue()) {
         std::string name = merged_global.first;
         ConstElementPtr element = merged_global.second;
         try {
-            if (name == "decline-probation-period") {
+            if (name == "data-directory") {
+                setDataDir(element->stringValue());
+            } if (name == "decline-probation-period") {
                 setDeclinePeriod(element->intValue());
             }
             else if (name == "echo-client-id") {
@@ -283,6 +295,11 @@ SrvConfig::toElement() const {
 
     // Set user-context
     contextToElement(dhcp);
+
+    // Set data directory if DHCPv6 and not default.
+    if ((family == AF_INET6) && (getDataDir() != DEFAULT_DATA_DIR)) {
+        dhcp->set("data-directory", Element::create(getDataDir()));
+    }
 
     // Set decline-probation-period
     dhcp->set("decline-probation-period",

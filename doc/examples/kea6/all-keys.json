@@ -645,6 +645,7 @@
             // Queue type was mandatory.
             "queue-type": "kea-ring6"
         }
+	// missing data-directory
     },
 
     // Logging configuration begins here.
