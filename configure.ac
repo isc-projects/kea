@@ -1381,7 +1381,8 @@ AC_PROG_LEX
 
 # Check if bison is available. Bison is not needed for building Kea sources,
 # unless you want to regenerate grammars
-AC_PROG_YACC
+AC_PATH_PROG(YACC, bison)
+AC_SUBST(YACC)
 
 if test "x$enable_generate_parser" != "xno"; then
 
