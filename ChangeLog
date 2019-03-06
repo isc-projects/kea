@@ -1,3 +1,8 @@
+1535.	[func]		godfryd
+	Added checking required Vagrant version by Hammer.
+	Removed Hammer from EXTRA_DIST.
+	(Gitlab #518,!257, git ea0006f6eb948d7d4a034b413c5086cbe483eb75)
+
 1534.	[func]		marcin
 	MySQL config backend correctly handles the optional values for
 	subnets and shared networks. Also, updated the MySQL config

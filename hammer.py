@@ -9,6 +9,7 @@
 
 from __future__ import print_function
 import os
+import re
 import sys
 import glob
 import time
@@ -1204,27 +1205,46 @@ def ssh(provider, system, revision):
     ve.ssh()
 
 
+def _install_vagrant(ver='2.2.4', upgrade=False):
+    system, _ = get_system_revision()
+    if system in ['fedora', 'centos', 'rhel']:
+        if upgrade:
+            execute('sudo rpm -e vagrant')
+        rpm = 'vagrant_%s_x86_64.rpm' % ver
+        cmd = 'wget --no-verbose -O /tmp/%s ' % rpm
+        cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, rpm)
+        execute(cmd)
+        execute('sudo rpm -i /tmp/%s' % rpm)
+        os.unlink('/tmp/%s' % rpm)
+    elif system in ['debian', 'ubuntu']:
+        if upgrade:
+            execute('sudo dpkg --purge vagrant')
+        deb = 'vagrant_%s_x86_64.deb' % ver
+        cmd = 'wget --no-verbose -O /tmp/%s ' % deb
+        cmd += 'https://releases.hashicorp.com/vagrant/%s/%s' % (ver, deb)
+        execute(cmd)
+        execute('sudo dpkg -i /tmp/%s' % deb)
+        os.unlink('/tmp/%s' % deb)
+    else:
+        # TODO: check for packages here: https://www.vagrantup.com/downloads.html
+        raise NotImplementedError
+
+
 def ensure_hammer_deps():
     """Install Hammer dependencies onto current, host system."""
-    system, _ = get_system_revision()
-
-    exitcode = execute('vagrant version', raise_error=False)
+    exitcode, out = execute('vagrant version', raise_error=False, capture=True)
     if exitcode != 0:
-        if system in ['fedora', 'centos', 'rhel']:
-            cmd = 'wget --no-verbose -O /tmp/vagrant_2.2.2_x86_64.rpm '
-            cmd += 'https://releases.hashicorp.com/vagrant/2.2.2/vagrant_2.2.2_x86_64.rpm'
-            execute(cmd)
-            execute('sudo rpm -i /tmp/vagrant_2.2.2_x86_64.rpm')
-            os.unlink('/tmp/vagrant_2.2.2_x86_64.rpm')
-        elif system in ['debian', 'ubuntu']:
-            cmd = 'wget --no-verbose -O /tmp/vagrant_2.2.2_x86_64.deb '
-            cmd += 'https://releases.hashicorp.com/vagrant/2.2.2/vagrant_2.2.2_x86_64.deb'
-            execute(cmd)
-            execute('sudo dpkg -i /tmp/vagrant_2.2.2_x86_64.deb')
-            os.unlink('/tmp/vagrant_2.2.2_x86_64.deb')
-        else:
-            # TODO: check for packages here: https://www.vagrantup.com/downloads.html
-            raise NotImplementedError
+        _install_vagrant()
+    else:
+        m = re.search('Installed Version: ([\d\.]+)', out, re.I)
+        ver = m.group(1)
+        major, minor, patch = [int(v) for v in ver.split('.')]
+        # if ver < 2.2.3
+        if major < 2 or (major == 2 and (minor < 2 or (minor == 2 and patch < 3))):
+            m = re.search('Latest Version: ([\d\.]+)', out, re.I)
+            ver = m.group(1)
+            _install_vagrant(ver, upgrade=True)
+
 
     exitcode = execute('vagrant plugin list | grep vagrant-lxc', raise_error=False)
     if exitcode != 0:
