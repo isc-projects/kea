@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+/* Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 
    This Source Code Form is subject to the terms of the Mozilla Public
    License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -50,6 +50,7 @@ using namespace std;
   NULL_TYPE "null"
 
   DHCP6 "Dhcp6"
+  DATA_DIRECTORY "data-directory"
   CONFIG_CONTROL "config-control"
   CONFIG_DATABASES "config-databases"
   INTERFACES_CONFIG "interfaces-config"
@@ -435,7 +436,8 @@ global_params: global_param
 
 // These are the parameters that are allowed in the top-level for
 // Dhcp6.
-global_param: preferred_lifetime
+global_param: data_directory
+            | preferred_lifetime
             | valid_lifetime
             | renew_timer
             | rebind_timer
@@ -469,6 +471,14 @@ global_param: preferred_lifetime
             | unknown_map_entry
             ;
 
+data_directory: DATA_DIRECTORY {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr datadir(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("data-directory", datadir);
+    ctx.leave();
+};
+
 preferred_lifetime: PREFERRED_LIFETIME COLON INTEGER {
     ElementPtr prf(new IntElement($3, ctx.loc2pos(@3)));
     ctx.stack_.back()->set("preferred-lifetime", prf);
@@ -494,7 +504,7 @@ decline_probation_period: DECLINE_PROBATION_PERIOD COLON INTEGER {
     ctx.stack_.back()->set("decline-probation-period", dpp);
 };
 
-server_tag: SERVER_TAG  {
+server_tag: SERVER_TAG {
     ctx.enter(ctx.NO_KEYWORD);
 } COLON STRING {
     ElementPtr stag(new StringElement($4, ctx.loc2pos(@4)));
