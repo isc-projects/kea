@@ -575,7 +575,7 @@ fi
 shift
 
 # Ok, let's process parameters (if there are any)
-while [ ! -z "${1}" ]
+while [ -n "${1}" ]
 do
     option=${1}
     case ${option} in
