@@ -30,7 +30,7 @@ protected:
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
-    void parseCommonTimers(const data::ConstElementPtr& shared_network_data,
+    void parseCommonTimers(const data::ConstElementPtr& network_data,
                            NetworkPtr& network);
 
     /// @brief Parses parameters related to "percent" timers settngs.
@@ -40,14 +40,14 @@ protected:
     /// - t1-percent,
     /// - t2-percent.
     ///
-    /// @param shared_network_data Data element holding shared network
+    /// @param network_data Data element holding shared network
     /// configuration to be parsed.
     /// @param [out] network Pointer to a network in which parsed data is
     /// to be stored.
     ///
     /// @throw DhcpConfigError if configuration of these parameters is
     /// invalid.
-    void parseTeePercents(const data::ConstElementPtr& shared_network_data,
+    void parseTeePercents(const data::ConstElementPtr& network_data,
                           NetworkPtr& network);
 };
 

@@ -16,41 +16,41 @@ namespace isc {
 namespace dhcp {
 
 void
-BaseNetworkParser::parseCommonTimers(const ConstElementPtr& shared_network_data,
+BaseNetworkParser::parseCommonTimers(const ConstElementPtr& network_data,
                                      NetworkPtr& network) {
     Triplet<uint32_t> t1;
-    if (shared_network_data->contains("renew-timer")) {
-        network->setT1(getInteger(shared_network_data, "renew-timer"));
+    if (network_data->contains("renew-timer")) {
+        network->setT1(getInteger(network_data, "renew-timer"));
     }
 
     Triplet<uint32_t> t2;
-    if (shared_network_data->contains("rebind-timer")) {
-        network->setT2(getInteger(shared_network_data, "rebind-timer"));
+    if (network_data->contains("rebind-timer")) {
+        network->setT2(getInteger(network_data, "rebind-timer"));
     }
 
     Triplet<uint32_t> valid;
-    if (shared_network_data->contains("valid-lifetime")) {
-        network->setValid(getInteger(shared_network_data, "valid-lifetime"));
+    if (network_data->contains("valid-lifetime")) {
+        network->setValid(getInteger(network_data, "valid-lifetime"));
     }
 }
 
 void
-BaseNetworkParser::parseTeePercents(const ConstElementPtr& shared_network_data,
+BaseNetworkParser::parseTeePercents(const ConstElementPtr& network_data,
                                     NetworkPtr& network) {
     bool calculate_tee_times = network->getCalculateTeeTimes();
-    if (shared_network_data->contains("calculate-tee-times")) {
-        bool calculate_tee_times = getBoolean(shared_network_data, "calculate-tee-times");
+    if (network_data->contains("calculate-tee-times")) {
+        bool calculate_tee_times = getBoolean(network_data, "calculate-tee-times");
         network->setCalculateTeeTimes(calculate_tee_times);
     }
 
     Optional<double> t2_percent;
-    if (shared_network_data->contains("t2-percent")) {
-        t2_percent = getDouble(shared_network_data, "t2-percent");
+    if (network_data->contains("t2-percent")) {
+        t2_percent = getDouble(network_data, "t2-percent");
     }
 
     Optional<double> t1_percent;
-    if (shared_network_data->contains("t1-percent")) {
-        t1_percent = getDouble(shared_network_data, "t1-percent");
+    if (network_data->contains("t1-percent")) {
+        t1_percent = getDouble(network_data, "t1-percent");
     }
     if (calculate_tee_times) {
         if (!t2_percent.unspecified() && ((t2_percent.get() <= 0.0) ||
