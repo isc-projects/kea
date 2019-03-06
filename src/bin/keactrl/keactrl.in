@@ -56,8 +56,13 @@ is_in_list() {
 
 # Prints keactrl usage.
 usage() {
+    # Shellcheck is too picky about this. This will work as long as keactrl
+    # script is not renamed to something with spaces or installed into a dir
+    # with spaces.
+    #
+    #shellcheck disable=SC2086
     printf "usage is %s command [-c keactrl-config-file] [-s server[,server,..]]\n" \
-           "$( basename -- ${0} )"
+           "$(basename -- ${0})"
     printf "commands: start stop reload status version\n"
 }
 
@@ -114,7 +119,8 @@ get_pid_from_file() {
     # Grab the PID if the file exists
     if [ -e "${_pid_file}" ]; then
         _pid=$(cat "${_pid_file}")
-        if [ $? -ne 0 ]; then
+        retcode=$?
+        if [ $retcode -ne 0 ]; then
             log_error "Error reading PID file: ${_pid_file}"
         fi
     else
@@ -137,7 +143,8 @@ check_running() {
     if [ ${_pid} -gt 0 ]; then
         # Use ps to check if PID is alive
         ps -p ${_pid} 1>/dev/null
-        if [ $? -eq 0 ]; then
+        retcode=$?
+        if [ $retcode -eq 0 ]; then
             # No error, so PID IS ALIVE
             _running=1
         fi
@@ -155,7 +162,8 @@ send_signal() {
 process is not running\n"
     else
         kill "-${sig}" "${_pid}"
-        if [ $? -ne 0 ]; then
+        retcode=$?
+        if [ $retcode -ne 0 ]; then
             log_error "Failed to send signal ${sig} to process ${proc_name}, PID {$_pid}.\n"
         fi
     fi
@@ -165,7 +173,7 @@ process is not running\n"
 # already running.
 start_server() {
     binary_path=${1}   # Full path to the binary.
-    full_command=$@    # Binary and arguments.
+    full_command=$*    # Binary and arguments.
     # Extract the name of the binary from the path.
     local binary_name
     binary_name=$(basename -- "${binary_path}")
@@ -221,7 +229,8 @@ reload_server() {
     else
         log_info "Reloading ${binary_name}..."
         kill -${sig} ${_pid}
-        if [ $? -ne 0 ]; then
+        retcode=$?
+        if [ $retcode -ne 0 ]; then
             log_error "Reload failed, could not send signal ${sig} \
 to process ${proc_name}, PID ${_pid}.\n"
         fi
@@ -235,7 +244,8 @@ print_version() {
 
     if [ -e "${binary_path}" ]; then
         ver=$(${binary_path} -v)
-        if [ $? -ne 0 ]; then
+        retcode=$?
+        if [ $retcode -ne 0 ]; then
             log_error "Error checking version of binary file: ${binary_path}"
         fi
     else
@@ -406,6 +416,8 @@ if [ ! -f "${keactrl_conf}" ]; then
 fi
 
 # Include the configuration file.
+# Shellcheck complaints about not being to follow the source. Let's ingore it.
+# shellcheck disable=SC1090
 . "${keactrl_conf}"
 
 # Get location of the DHCPv4 server binary.
@@ -471,6 +483,7 @@ case ${command} in
         # shellcheck disable=SC2154
         run_conditional "dhcp4" "start_server ${dhcp4_srv} -c ${kea_dhcp4_config_file} ${args}" 1
         run_conditional "dhcp6" "start_server ${dhcp6_srv} -c ${kea_dhcp6_config_file} ${args}" 1
+        # shellcheck disable=SC2154
         run_conditional "dhcp_ddns" "start_server ${dhcp_ddns_srv} -c ${kea_dhcp_ddns_config_file} \
 ${args}" 1
         run_conditional "ctrl_agent" "start_server ${ctrl_agent_srv} -c ${kea_ctrl_agent_config_file} \
@@ -504,6 +517,7 @@ ${args}" 1
 
     status)
         kea4_status="inactive"
+        #shellcheck disable=SC2046
         check_running $(basename -- "${dhcp4_srv}")
         if [ ${_running} -eq 1 ]; then
             kea4_status="active"
@@ -511,6 +525,7 @@ ${args}" 1
         printf "DHCPv4 server: %s\n" "${kea4_status}"
 
         kea6_status="inactive"
+        #shellcheck disable=SC2046
         check_running $(basename -- "${dhcp6_srv}")
         if [ ${_running} -eq 1 ]; then
             kea6_status="active"
@@ -518,6 +533,7 @@ ${args}" 1
         printf "DHCPv6 server: %s\n" "${kea6_status}"
 
         d2_status="inactive"
+        #shellcheck disable=SC2046
         check_running $(basename -- "${dhcp_ddns_srv}")
         if [ ${_running} -eq 1 ]; then
             d2_status="active"
@@ -525,6 +541,7 @@ ${args}" 1
         printf "DHCP DDNS: %s\n" "${d2_status}"
 
         agent_status="inactive"
+        #shellcheck disable=SC2046
         check_running $(basename -- "${ctrl_agent_srv}")
         if [ ${_running} -eq 1 ]; then
             agent_status="active"
@@ -533,6 +550,7 @@ ${args}" 1
 
         if [ "${have_netconf}" -eq 1 ]; then
             netconf_status="inactive"
+            #shellcheck disable=SC2046
             check_running $(basename -- "${netconf_srv}")
             if [ "${_running}" -eq 1 ]; then
                 netconf_status="active"
