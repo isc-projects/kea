@@ -1,91 +1,104 @@
-#!/bin/bash
+#!/bin/sh
+
+# Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+# This is keactrl script responsible for starting up Kea processes.
+# This script is used to run Kea from installation directory,
+# as well as for running tests.
 
 sysrepo_lib="libsysrepo"
 
-if [ -z ${YANG_LIBRARY_PATH} ]
+if [ -z "${YANG_LIBRARY_PATH}" ]
 then
-	YANG_LIBRARY_PATH=/
+    YANG_LIBRARY_PATH=/
 fi
 
-if test `uname -s` = "Darwin"; then
-	DIR=$(stat -f %N $0 | xargs dirname)
+if [ "$(uname -s)" = "Darwin" ]; then
+    DIR=$(stat -f %N "$0" | xargs dirname)
 else
-	DIR=$(readlink -f $0 | xargs dirname)
+    DIR=$(readlink -f "$0" | xargs dirname)
 fi
 
-if ! [ -f ${DIR}/sysrepo_config_defines.sh ] || ! [ -x ${DIR}/sysrepo_config_defines.sh ]
-then
-	echo "missing path configuration file for Sysrepo (sysrepo_config_defines.sh)"
-	exit 0
+if ! [ -f "${DIR}/sysrepo_config_defines.sh" ] || ! [ -x "${DIR}/sysrepo_config_defines.sh" ]; then
+    echo "missing path configuration file for Sysrepo (sysrepo_config_defines.sh)"
+    exit 0
 fi
-source ${DIR}/sysrepo_config_defines.sh
+
+# Shellcheck tries to follow this link and gets confused about not being able
+# to find the file.
+# shellcheck disable=SC1090
+source "${DIR}/sysrepo_config_defines.sh"
 
 if [ $# -ne 1 ] && [ $# -ne 2 ]
 then
-	echo "run: \`$0 --help\` for more help"
+	echo "run: \`$0 --help\` for more help1"
 	exit 0
 fi
-if [ $1 == "--help" ]
+if [ "$1" == "--help" ]
 then
-	echo "sysrepo_config 'option' ['library']"
-	echo "options:"
-	echo "--help"
-	echo "    print this help message"
-	echo "--cflags-only-other"
-	echo "    get cpp compilation flags"
-	echo "--cflags-only-I"
-	echo "    get include path"
-	echo "--libs"
-	echo "    get lib path"
-	echo "--modversion"
-	echo "    get version"
-	echo "--variable=SR_REPOSITORY_LOC"
-	echo "    get repo path"
-	echo "libraries:"
-	echo "    libsysrepo"
-	echo "    libSysrepo-cpp"
-	exit 0
-else if [ $# -ne 2 ]
-	then
-		echo "run: \`$0 --help\` for more help"
-		exit 0
-	else if [ $2 != "libsysrepo" ] && [ $2 != "libSysrepo-cpp" ]
-		then
-			echo "library $2 not supported"
-			echo "run: \`$0 --help\` for more help"
-			exit 0
-		else
-			sysrepo_lib=$2
-		fi
-	fi
+    echo "sysrepo_config 'option' ['library']"
+    echo "options:"
+    echo "--help"
+    echo "    print this help message"
+    echo "--cflags-only-other"
+    echo "    get cpp compilation flags"
+    echo "--cflags-only-I"
+    echo "    get include path"
+    echo "--libs"
+    echo "    get lib path"
+    echo "--modversion"
+    echo "    get version"
+    echo "--variable=SR_REPOSITORY_LOC"
+    echo "    get repo path"
+    echo "libraries:"
+    echo "    libsysrepo"
+    echo "    libSysrepo-cpp"
+    exit 0
 fi
-if [ $1 == "--cflags-only-other" ]
-then
-	exit 0
+
+if [ $# -ne 2 ]; then
+    echo "Incorrect number of parameters specified"
+    echo "run: \`$0 --help\` for more help2"
+    exit 0
+elif [ "$2" != "libsysrepo" ] and [ "$2" != "libSysrepo-cpp" ]; then
+    echo "library $2 not supported"
+    echo "run: \`$0 --help\` for more help"
+    exit 0
+else
+    sysrepo_lib=$2
 fi
-if [ $1 == "--cflags-only-I" ]
-then
-	echo "-I${SYSREPO_PATH}/include/"
-	exit 0
+
+if [ "$1" = "--cflags-only-other" ]; then
+    exit 0
 fi
-if [ $1 == "--libs" ]
-then
-# Earlier versions also required -lprotobuf, but it is no longer needed.
-	echo "-L${SYSREPO_PATH}/lib/ -L${YANG_LIBRARY_PATH} -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
-	exit 0
+
+if [ "$1" = "--cflags-only-I" ]; then
+    echo "-I${SYSREPO_PATH}/include/"
+    exit 0
 fi
-if [ $1 == "--modversion" ]
-then
-	MAJOR="1"
-	MINOR="0"
-	PATCH="0"
-	echo "${MAJOR}.${MINOR}.${PATCH}"
-	exit 0
+
+if [ "$1" = "--libs" ]; then
+    # Earlier versions also required -lprotobuf, but it is no longer needed.
+    echo "-L${SYSREPO_PATH}/lib/ -L${YANG_LIBRARY_PATH} -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
+    exit 0
 fi
-if [ $1 == "--variable=SR_REPOSITORY_LOC" ]
-then
-	echo "${SYSREPO_PATH}/build/repository"
-	exit 0
+
+if [ "$1" == "--modversion" ]; then
+    MAJOR="1"
+    MINOR="0"
+    PATCH="0"
+    echo "${MAJOR}.${MINOR}.${PATCH}"
+    exit 0
 fi
+
+if [ "$1" == "--variable=SR_REPOSITORY_LOC" ]; then
+    echo "${SYSREPO_PATH}/build/repository"
+    exit 0
+fi
+
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"
