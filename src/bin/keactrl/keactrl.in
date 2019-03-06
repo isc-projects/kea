@@ -367,7 +367,7 @@ keactrl_conf=@sysconfdir@/@PACKAGE@/keactrl.conf
 servers="all"
 
 shift
-while [ ! -z "${1}" ]
+while [ -n "${1}" ]
 do
     option=${1}
     case ${option} in
