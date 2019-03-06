@@ -260,7 +260,7 @@ mysql_upgrade() {
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${scripts_dir}/mysql/upgrade*.sh -type f | wc -l)
+    num_files=$(find "${scripts_dir}/mysql" -name 'upgrade*.sh' -type f | wc -l)
     if [ "$num_files" -eq 0 ]; then
         log_error "No scripts in ${scripts_dir}/mysql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
@@ -288,7 +288,7 @@ pgsql_upgrade() {
     fi
 
     # Check if there are any files in it
-    num_files=$(find ${scripts_dir}/pgsql/upgrade*.sh -type f | wc -l)
+    num_files=$(find "${scripts_dir}/pgsql" -name 'upgrade*.sh' -type f | wc -l)
     if [ "$num_files" -eq 0 ]; then
         log_error "No scripts in ${scripts_dir}/pgsql or the directory is not readable or does not have any upgrade* scripts."
         exit 1
@@ -326,7 +326,7 @@ cql_upgrade() {
     fi
 
     # Check if there are upgrade scripts.
-    find ${scripts_dir}/cql/upgrade*.sh -type f
+    find "${scripts_dir}/cql" -name 'upgrade*.sh' -type f
     retcode=$?
     if [ $retcode -eq 0 ]; then # Upgrade scripts are present.
         for script in ${scripts_dir}/cql/upgrade*.sh
