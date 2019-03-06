@@ -214,7 +214,7 @@ Network4::setSiaddr(const Optional<IOAddress>& siaddr) {
     siaddr_ = siaddr;
 }
 
-Optional<IOAddress>
+const Optional<IOAddress>&
 Network4::getSiaddr() const {
     return (siaddr_);
 }

@@ -464,7 +464,7 @@ public:
     /// @brief Returns siaddr for this network.
     ///
     /// @return siaddr value
-    util::Optional<asiolink::IOAddress> getSiaddr() const;
+    const util::Optional<asiolink::IOAddress>& getSiaddr() const;
 
     /// @brief Sets server hostname for the network.
     ///
