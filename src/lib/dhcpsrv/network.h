@@ -415,7 +415,8 @@ public:
 
     /// @brief Constructor.
     Network4()
-        : Network(), match_client_id_(true, true), authoritative_() {
+        : Network(), match_client_id_(true, true), authoritative_(),
+          siaddr_(), sname_(), filename_() {
     }
 
     /// @brief Returns the flag indicating if the client identifiers should
@@ -453,6 +454,38 @@ public:
         authoritative_ = authoritative;
     }
 
+    /// @brief Sets siaddr for the network.
+    ///
+    /// Will be used for siaddr field (the next server) that typically is used
+    /// as TFTP server. If not specified, the default value of 0.0.0.0 is
+    /// used.
+    void setSiaddr(const util::Optional<asiolink::IOAddress>& siaddr);
+
+    /// @brief Returns siaddr for this network.
+    ///
+    /// @return siaddr value
+    util::Optional<asiolink::IOAddress> getSiaddr() const;
+
+    /// @brief Sets server hostname for the network.
+    ///
+    /// Will be used for server hostname field (may be empty if not defined)
+    void setSname(const util::Optional<std::string>& sname);
+
+    /// @brief Returns server hostname for this network.
+    ///
+    /// @return server hostname value
+    const util::Optional<std::string>& getSname() const;
+
+    /// @brief Sets boot file name for the network.
+    ///
+    /// Will be used for boot file name (may be empty if not defined)
+    void setFilename(const util::Optional<std::string>& filename);
+
+    /// @brief Returns boot file name for this subnet
+    ///
+    /// @return boot file name value
+    const util::Optional<std::string>& getFilename() const;
+
     /// @brief Unparses network object.
     ///
     /// @return A pointer to unparsed network configuration.
@@ -472,6 +505,15 @@ private:
 
     /// @brief Should requests for unknown IP addresses be rejected.
     util::Optional<bool> authoritative_;
+
+    /// @brief siaddr value for this subnet
+    util::Optional<asiolink::IOAddress> siaddr_;
+
+    /// @brief server hostname for this subnet
+    util::Optional<std::string> sname_;
+
+    /// @brief boot file name for this subnet
+    util::Optional<std::string> filename_;
 };
 
 /// @brief Specialization of the @ref Network object for DHCPv6 case.
