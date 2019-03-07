@@ -7,7 +7,7 @@ AM_CPPFLAGS += -Werror
 
 AM_CXXFLAGS = $(KEA_CXXFLAGS)
 
-AM_LDFLAGS = -lm
+AM_LDFLAGS =
 if USE_STATIC_LINK
 AM_LDFLAGS += -static
 endif
