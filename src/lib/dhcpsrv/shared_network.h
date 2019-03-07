@@ -96,6 +96,19 @@ public:
     /// shared network.
     void add(const Subnet4Ptr& subnet);
 
+    /// @brief Replaces IPv4 subnet in a shared network.
+    ///
+    /// This method replaces a subnet by another subnet with the same ID.
+    /// The prefix should be the same too.
+    ///
+    /// @param subnet Pointer to a subnet replacing the subnet with the same ID
+    /// in this shared network.
+    /// @throw isc::BadValue if subnet is null.
+    /// @throw InvalidOperation if a subnet is already associated with some
+    /// shared network.
+    /// @return true if the operation succeeded, false otherwise.
+    bool replace(const Subnet4Ptr& subnet);
+
     /// @brief Removes subnet from a shared network.
     ///
     /// @param subnet_id Identifier of a subnet to be removed.
@@ -272,6 +285,19 @@ public:
     /// @throw InvalidOperation if a subnet is already associated with some
     /// shared network.
     void add(const Subnet6Ptr& subnet);
+
+    /// @brief Replaces IPv6 subnet in a shared network.
+    ///
+    /// This method replaces a subnet by another subnet with the same ID.
+    /// The prefix should be the same too.
+    ///
+    /// @param subnet Pointer to a subnet replacing the subnet with the same ID
+    /// in this shared network.
+    /// @throw isc::BadValue if subnet is null.
+    /// @throw InvalidOperation if a subnet is already associated with some
+    /// shared network.
+    /// @return true if the operation succeeded, false otherwise.
+    bool replace(const Subnet6Ptr& subnet);
 
     /// @brief Removes subnet from a shared network.
     ///
