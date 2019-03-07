@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 #
@@ -13,15 +13,14 @@
 cql_lib="cassandra"
 
 if test "$(uname -s)" = "Darwin"; then
-	DIR=$(stat -f %N "$0" | xargs dirname)
+    DIR=$(stat -f %N "$0" | xargs dirname)
 else
-	DIR=$(readlink -f "$0" | xargs dirname)
+    DIR=$(readlink -f "$0" | xargs dirname)
 fi
 
-if ! [ -f "${DIR}/cql_config_defines.sh" ] || ! [ -x "${DIR}/cql_config_defines.sh" ]
-then
-	echo "missing path configuration file for DataStax Cassandra (cql_config_defines.sh)"
-	exit 1
+if ! [ -f "${DIR}/cql_config_defines.sh" ] || ! [ -x "${DIR}/cql_config_defines.sh" ]; then
+    echo "missing path configuration file for Cassandra (cql_config_defines.sh)"
+    exit 1
 fi
 
 # Shellcheck tries to follow this link and gets confused about not being able
@@ -29,32 +28,30 @@ fi
 # shellcheck disable=SC1090
 . "${DIR}/cql_config_defines.sh"
 
-if [ $# -ne 1 ] && [ $# -ne 2 ]
-then
-	echo "run: \`$0 --help\` for more help"
-	exit 1
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+    echo "run: \`$0 --help\` for more help"
+    exit 1
 fi
 
-if [ "$1" = "--help" ]
-then
-	echo "cql_config 'option' ['library']"
-	echo "options:"
-	echo "--help"
-	echo "    print this help message"
-	echo "--cflags-only-other"
-	echo "    get cpp compilation flags"
-	echo "--cflags-only-I"
-	echo "    get include path"
-	echo "--libs"
-	echo "    get lib path"
-	echo "--modversion"
-	echo "    get version"
-        echo "--print-errors"
-        echo "    check existence"
-	echo "libraries:"
-	echo "    cassandra"
-	echo "    cassandra_static"
-	exit 0
+if [ "$1" = "--help" ]; then
+    echo "cql_config 'option' ['library']"
+    echo "options:"
+    echo "--help"
+    echo "    print this help message"
+    echo "--cflags-only-other"
+    echo "    get cpp compilation flags"
+    echo "--cflags-only-I"
+    echo "    get include path"
+    echo "--libs"
+    echo "    get lib path"
+    echo "--modversion"
+    echo "    get version"
+    echo "--print-errors"
+    echo "    check existence"
+    echo "libraries:"
+    echo "    cassandra"
+    echo "    cassandra_static"
+    exit 0
 fi
 
 if [ $# -ne 2 ]; then
@@ -68,33 +65,29 @@ else
     cql_lib=$2
 fi
 
-if [ "$1" = "--cflags-only-other" ]
-then
-	exit 0
+if [ "$1" = "--cflags-only-other" ]; then
+    exit 0
 fi
 
-if [ "$1" = "--cflags-only-I" ]
-then
-	echo "-I${CPP_DRIVER_PATH}/include/"
-	exit 0
-fi
-if [ "$1" = "--libs" ]
-then
-	echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -lssl -luv"
-	exit 0
+if [ "$1" = "--cflags-only-I" ]; then
+    echo "-I${CPP_DRIVER_PATH}/include/"
+    exit 0
 fi
 
-if [ "$1" = "--modversion" ]
-then
-	MAJOR=$(grep VERSION_MAJOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
-	MINOR=$(grep VERSION_MINOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
-	PATCH=$(grep VERSION_PATCH "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
-	echo "${MAJOR}.${MINOR}.${PATCH}"
-	exit 0
+if [ "$1" = "--libs" ]; then
+    echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -lssl -luv"
+    exit 0
 fi
 
-if [ "$1" = "--print-errors" ]
-then
+if [ "$1" = "--modversion" ]; then
+    MAJOR=$(grep VERSION_MAJOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
+    MINOR=$(grep VERSION_MINOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
+    PATCH=$(grep VERSION_PATCH "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
+    echo "${MAJOR}.${MINOR}.${PATCH}"
+    exit 0
+fi
+
+if [ "$1" = "--print-errors" ]; then
 	exit 0
 fi
 
