@@ -44,7 +44,6 @@ extern const int DB_DBG_TRACE_DETAIL;
 /// @brief Common database library logger.
 extern isc::log::Logger database_logger;
 
-
 ///@{
 /// @brief Database messages
 ///

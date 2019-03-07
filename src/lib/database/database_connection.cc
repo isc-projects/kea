@@ -163,12 +163,11 @@ DatabaseConnection::toElement(const ParameterMap& params) {
 
         if ((keyword == "lfc-interval") ||
             (keyword == "connect-timeout") ||
-            (keyword == "request-timeout") ||
-            (keyword == "port") ||
-            (keyword == "max-reconnect-tries") ||
             (keyword == "reconnect-wait-time") ||
-            (keyword == "tcp-keepalive")) {
-
+            (keyword == "max-reconnect-tries") ||
+            (keyword == "request-timeout") ||
+            (keyword == "tcp-keepalive") ||
+            (keyword == "port")) {
             // integer parameters
             int64_t int_value;
             try {
@@ -179,9 +178,8 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                     .arg("integer").arg(keyword).arg(value);
             }
         } else if ((keyword == "persist") ||
-                   (keyword == "readonly") ||
-                   (keyword == "tcp-nodelay")) {
-
+                   (keyword == "tcp-nodelay") ||
+                   (keyword == "readonly")) {
             if (value == "true") {
                 result->set(keyword, isc::data::Element::create(true));
             } else if (value == "false") {
@@ -196,6 +194,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "contact-points") ||
+                   (keyword == "cql-consistency") ||
                    (keyword == "keyspace")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {
