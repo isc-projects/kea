@@ -1,3 +1,9 @@
+1538.	[func]		marcin
+	DHCP configuration parsers correctly handle unspecified parameters.
+	This change was required for the MySQL Config Backend to record
+	unspecified parameters as NULL in the database.
+	(Gitlab #488,!259, git d3b33058651036be34200f16d2da230267415056)
+
 1537.	[func]		godfryd
 	Improved handling unix sockets in unit tests. Now by default
 	they are created in temporary folder under /tmp folder. This
