@@ -11,8 +11,10 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <cstdlib>
 #include <cstdio>
+#include <cerrno>
 #include <unistd.h>
 #include <ftw.h>
 
@@ -46,7 +48,9 @@ public:
     ~Sandbox() {
         // Delete content of path_ recursively.
         if (nftw(path_.c_str(), Sandbox::rmFile, 10, FTW_DEPTH | FTW_MOUNT | FTW_PHYS) < 0) {
-            isc_throw(isc::Unexpected, "Some issue occured while deleting unit test sandbox.");
+            auto msg = "Some error occured while deleting unit test sandbox " + path_;
+            std::perror(msg.c_str());
+            exit(1);
         }
     }
 
