@@ -58,7 +58,7 @@ public:
     ///
     /// @param file A path to file that should be joined to base path of sandbox.
     std::string join(std::string file) {
-        return(path_ + "/" + file);
+        return (path_ + "/" + file);
     }
 };
 
