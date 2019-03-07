@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # This auxiliary script is considered temporary in nature. It will not be
 # necessary once the DataStax cpp-driver project accepts proper cql_config
