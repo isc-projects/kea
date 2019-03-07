@@ -171,6 +171,9 @@ public:
     /// @brief Rollback Transactions
     virtual void rollback();
 
+    /// @brief parse Consistency value
+    static CassConsistency parseConsistency(std::string value);
+
     /// @brief Check for errors
     ///
     /// Check for errors on the current database operation and returns text
