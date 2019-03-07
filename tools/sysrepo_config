@@ -12,8 +12,7 @@
 
 sysrepo_lib="libsysrepo"
 
-if [ -z "${YANG_LIBRARY_PATH}" ]
-then
+if [ -z "${YANG_LIBRARY_PATH}" ]; then
     YANG_LIBRARY_PATH=/
 fi
 
@@ -31,15 +30,14 @@ fi
 # Shellcheck tries to follow this link and gets confused about not being able
 # to find the file.
 # shellcheck disable=SC1090
-source "${DIR}/sysrepo_config_defines.sh"
+. "${DIR}/sysrepo_config_defines.sh"
 
-if [ $# -ne 1 ] && [ $# -ne 2 ]
-then
-	echo "run: \`$0 --help\` for more help1"
-	exit 0
+if [ $# -ne 1 ] && [ $# -ne 2 ]; then
+    echo "run: \`$0 --help\` for more help"
+    exit 0
 fi
-if [ "$1" == "--help" ]
-then
+
+if [ "$1" = "--help" ]; then
     echo "sysrepo_config 'option' ['library']"
     echo "options:"
     echo "--help"
@@ -62,7 +60,7 @@ fi
 
 if [ $# -ne 2 ]; then
     echo "Incorrect number of parameters specified"
-    echo "run: \`$0 --help\` for more help2"
+    echo "run: \`$0 --help\` for more help"
     exit 0
 elif [ "$2" != "libsysrepo" ] && [ "$2" != "libSysrepo-cpp" ]; then
     echo "library $2 not supported"
@@ -87,7 +85,7 @@ if [ "$1" = "--libs" ]; then
     exit 0
 fi
 
-if [ "$1" == "--modversion" ]; then
+if [ "$1" = "--modversion" ]; then
     MAJOR="1"
     MINOR="0"
     PATCH="0"
@@ -95,10 +93,12 @@ if [ "$1" == "--modversion" ]; then
     exit 0
 fi
 
-if [ "$1" == "--variable=SR_REPOSITORY_LOC" ]; then
+if [ "$1" = "--variable=SR_REPOSITORY_LOC" ]; then
     echo "${SYSREPO_PATH}/build/repository"
     exit 0
 fi
 
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"
+
+exit 1
