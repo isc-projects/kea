@@ -77,6 +77,7 @@ using namespace std;
   MAX_RECONNECT_TRIES "max-reconnect-tries"
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
+  CQL_CONSISTENCY "cql-consistency"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
@@ -632,6 +633,7 @@ database_map_param: database_type
                   | tcp_keepalive
                   | tcp_nodelay
                   | keyspace
+                  | cql_consistency
                   | unknown_map_entry
                   ;
 
@@ -743,6 +745,14 @@ keyspace: KEYSPACE {
 } COLON STRING {
     ElementPtr ks(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("keyspace", ks);
+    ctx.leave();
+};
+
+cql_consistency: CQL_CONSISTENCY {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("cql-consistency", c);
     ctx.leave();
 };
 

@@ -97,7 +97,7 @@ public:
         return (retries_left_ ? --retries_left_ : false);
     }
 
-    /// @brief Returns the maximum number for retries allowed
+    /// @brief Returns the maximum number of retries allowed.
     unsigned int maxRetries() {
         return (max_retries_);
     }
@@ -243,7 +243,7 @@ private:
 
 };
 
-}; // end of isc::db namespace
-}; // end of isc namespace
+}  // namespace db
+}  // namespace isc
 
 #endif // DATABASE_CONNECTION_H
