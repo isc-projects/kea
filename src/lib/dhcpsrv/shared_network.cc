@@ -69,6 +69,51 @@ public:
         subnets.push_back(subnet);
     }
 
+    /// @brief Replaces IPv4 subnet in a shared network.
+    ///
+    /// This generic method replaces a subnet by another subnet
+    /// with the same ID in a shared network.
+    /// The prefix should be the same too.
+    ///
+    /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
+    /// or @ref Subnet6Ptr.
+    
+    /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
+    /// @ref Subnet4Collection or @ref Subnet6Collection.
+    ///
+    /// @param [out] subnets Container holding subnets for this shared network.
+    /// @param subnet Pointer to a subnet replacing the subnet with the same ID
+    /// in this shared network.
+    ///
+    /// @throw isc::BadValue if subnet is null.
+    /// @throw InvalidOperation if a subnet is already associated with some
+    /// shared network.
+    ////
+    /// @return true if the operation succeeded, false otherwise.
+    template<typename SubnetPtrType, typename SubnetCollectionType>
+    static bool replace(SubnetCollectionType& subnets,
+                        const SubnetPtrType& subnet) {
+
+        // Subnet must be non-null.
+        if (!subnet) {
+            isc_throw(BadValue, "null pointer specified when adding a subnet"
+                      " to a shared network");
+        }
+
+        // Get the subnet with the same ID.
+        const SubnetID& subnet_id = subnet->getID();
+        auto& index = subnets.template get<SubnetSubnetIdIndexTag>();
+        auto subnet_it = index.find(subnet_id);
+        if (subnet_it == index.end()) {
+            // Nothing to replace: return false to get the whole operation
+            // to be rollbacked.
+            return (false);
+        }
+
+        // Replace it.
+        return (index.replace(subnet_it, subnet));
+    }
+
     /// @brief Removes a subnet from the shared network.
     ///
     /// @param [out] subnets Container holding subnets for this shared network.
@@ -258,6 +303,21 @@ SharedNetwork4::add(const Subnet4Ptr& subnet) {
     subnet->setSharedNetworkName(name_);
 }
 
+bool
+SharedNetwork4::replace(const Subnet4Ptr& subnet) {
+    const Subnet4Ptr& old = getSubnet(subnet->getID());
+    bool ret = Impl::replace(subnets_, subnet);
+    if (ret) {
+        // Associate the subnet with this network.
+        setSharedNetwork(subnet);
+        subnet->setSharedNetworkName(name_);
+        // Deassociate the previous subnet.
+        clearSharedNetwork(old);
+        old->setSharedNetworkName("");
+    }
+    return (ret);
+}
+
 void
 SharedNetwork4::del(const SubnetID& subnet_id) {
     Subnet4Ptr subnet = Impl::del<Subnet4Ptr>(subnets_, subnet_id);
@@ -321,6 +381,21 @@ SharedNetwork6::add(const Subnet6Ptr& subnet) {
     // Associate the subnet with this network.
     subnet->setSharedNetwork(shared_from_this());
     subnet->setSharedNetworkName(name_);
+}
+
+bool
+SharedNetwork6::replace(const Subnet6Ptr& subnet) {
+    const Subnet6Ptr& old = getSubnet(subnet->getID());
+    bool ret = Impl::replace(subnets_, subnet);
+    if (ret) {
+        // Associate the subnet with this network.
+        setSharedNetwork(subnet);
+        subnet->setSharedNetworkName(name_);
+        // Deassociate the previous subnet.
+        clearSharedNetwork(old);
+        old->setSharedNetworkName("");
+    }
+    return (ret);
 }
 
 void
