@@ -11,8 +11,9 @@
 
 #include <iostream>
 #include <string>
-#include <stdlib.h>
-#include <stdio.h>
+#include <cstdlib>
+#include <cstdio>
+#include <unistd.h>
 #include <ftw.h>
 
 namespace isc {
@@ -25,14 +26,12 @@ namespace test {
 /// in unit test setup phase, and then it is deleted with its content
 /// in destructor ie. in unit test tear down phase.
 class Sandbox {
+private:
     /// Path to temporary folder
     std::string path_;
 
     /// @brief Method for deleting files and folders, used in nftw traversal function.
-    static int rmFile(const char *fpath, const struct stat *sb, int typeflag, struct FTW *ftwbuf) {
-        (void)sb;
-        (void)typeflag;
-        (void)ftwbuf;
+    static int rmFile(const char *fpath, const struct stat *, int , struct FTW *) {
         return(remove(fpath));
     }
 
@@ -51,9 +50,11 @@ public:
         }
     }
 
-    // @brief Join sandbox path with indicated file subpath.
+    /// @brief Join sandbox path with indicated file subpath.
+    ///
+    /// @param file A path to file that should be joined to base path of sandbox.
     std::string join(std::string file) {
-        return path_ + "/" + file;
+        return(path_ + "/" + file);
     }
 };
 
