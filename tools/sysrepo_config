@@ -10,8 +10,6 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
-sysrepo_lib="libsysrepo"
-
 if [ -z "${YANG_LIBRARY_PATH}" ]; then
     YANG_LIBRARY_PATH=/
 fi
