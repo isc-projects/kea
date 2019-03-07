@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -58,27 +58,40 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
 
 
     // Yes, check what it is.
-#ifdef HAVE_MYSQL
     if (parameters[type] == string("mysql")) {
+#ifdef HAVE_MYSQL
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MYSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new MySqlLeaseMgr(parameters));
         return;
-    }
+#else
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("mysql");
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
+                  "support for database type: mysql");
 #endif
-#ifdef HAVE_PGSQL
+    }
+
     if (parameters[type] == string("postgresql")) {
+#ifdef HAVE_PGSQL
         LOG_INFO(dhcpsrv_logger, DHCPSRV_PGSQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new PgSqlLeaseMgr(parameters));
         return;
-    }
+#else
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("postgresql");
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
+                  "support for database type: postgresql");
 #endif
-#ifdef HAVE_CQL
+    }
     if (parameters[type] == string("cql")) {
+#ifdef HAVE_CQL
         LOG_INFO(dhcpsrv_logger, DHCPSRV_CQL_DB).arg(redacted);
         getLeaseMgrPtr().reset(new CqlLeaseMgr(parameters));
         return;
-    }
+#else
+        LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg("cql");
+        isc_throw(InvalidType, "The Kea server has not been compiled with "
+                  "support for database type: cql");
 #endif
+    }
     if (parameters[type] == string("memfile")) {
         LOG_INFO(dhcpsrv_logger, DHCPSRV_MEMFILE_DB).arg(redacted);
         getLeaseMgrPtr().reset(new Memfile_LeaseMgr(parameters));
@@ -88,7 +101,7 @@ LeaseMgrFactory::create(const std::string& dbaccess) {
     // Get here on no match
     LOG_ERROR(dhcpsrv_logger, DHCPSRV_UNKNOWN_DB).arg(parameters[type]);
     isc_throw(InvalidType, "Database access parameter 'type' does "
-              "not specify a supported database backend:" << parameters[type]);
+              "not specify a supported database backend: " << parameters[type]);
 }
 
 void
