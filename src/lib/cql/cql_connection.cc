@@ -74,6 +74,26 @@ CqlConnection::~CqlConnection() {
     }
 }
 
+CassConsistency CqlConnection::parseConsistency(std::string value) {
+    static std::map<std::string, CassConsistency> consistency_map {
+        {"consistency-any", CASS_CONSISTENCY_ANY},
+        {"consistency-one", CASS_CONSISTENCY_ONE},
+        {"consistency-two", CASS_CONSISTENCY_TWO},
+        {"consistency-three", CASS_CONSISTENCY_THREE},
+        {"consistency-quorum", CASS_CONSISTENCY_QUORUM},
+        {"consistency-all", CASS_CONSISTENCY_ALL},
+        {"consistency-local-quorum", CASS_CONSISTENCY_LOCAL_QUORUM},
+        {"consistency-each-quorum", CASS_CONSISTENCY_EACH_QUORUM},
+        {"consistency-serial", CASS_CONSISTENCY_SERIAL},
+        {"consistency-local-serial", CASS_CONSISTENCY_LOCAL_SERIAL},
+        {"consistency-local-one", CASS_CONSISTENCY_LOCAL_ONE}
+    };
+    if (consistency_map.find(value) == consistency_map.end()) {
+        return CASS_CONSISTENCY_UNKNOWN;
+    }
+    return consistency_map[value];
+}
+
 void
 CqlConnection::openDatabase() {
     CassError rc;
@@ -121,6 +141,15 @@ CqlConnection::openDatabase() {
         keyspace = skeyspace.c_str();
     } catch (...) {
         // No keyspace name. Fine, we'll use "keatest".
+    }
+
+    const char* consistency = NULL;
+    std::string sconsistency;
+    try {
+        sconsistency = getParameter("cql-consistency");
+        consistency = sconsistency.c_str();
+    } catch (...) {
+        // No user. Fine, we'll use NULL.
     }
 
     const char* reconnect_wait_time = NULL;
@@ -192,6 +221,13 @@ CqlConnection::openDatabase() {
                            << "\", " << ex.what());
         }
         cass_cluster_set_port(cluster_, port_number);
+    }
+
+    if (consistency) {
+        CassConsistency desired_consistency = CqlConnection::parseConsistency(sconsistency);
+        if (desired_consistency != CASS_CONSISTENCY_UNKNOWN) {
+            setConsistency(true, desired_consistency);
+        }
     }
 
     if (reconnect_wait_time) {

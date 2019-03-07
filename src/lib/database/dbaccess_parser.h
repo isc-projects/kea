@@ -22,7 +22,6 @@ namespace db {
 /// This class is the parser for the database configuration.  This is a
 /// map under the top-level "lease-database", "host-database" and
 /// "config-database" elements, and comprises a map of strings.
-///
 class DbAccessParser: public isc::data::SimpleParser {
 public:
     /// @brief Constructor
@@ -79,8 +78,7 @@ private:
     DatabaseConnection::ParameterMap values_; ///< Stored parameter values
 };
 
-};  // namespace db
-};  // namespace isc
-
+}  // namespace db
+}  // namespace isc
 
 #endif // DBACCESS_PARSER_H
