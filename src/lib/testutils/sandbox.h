@@ -31,6 +31,8 @@ private:
     std::string path_;
 
     /// @brief Method for deleting files and folders, used in nftw traversal function.
+    ///
+    /// @param fpath path to the file to be removed.
     static int rmFile(const char *fpath, const struct stat *, int , struct FTW *) {
         return(remove(fpath));
     }
@@ -54,7 +56,7 @@ public:
 
     /// @brief Join sandbox path with indicated file subpath.
     ///
-    /// @param file A path to file that should be joined to base path of sandbox.
+    /// @param file path to file that should be joined to base path of sandbox.
     std::string join(std::string file) {
         return (path_ + "/" + file);
     }
