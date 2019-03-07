@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 #
@@ -9,6 +9,12 @@
 # This is keactrl script responsible for starting up Kea processes.
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
+
+sysrepo_lib="libsysrepo"
+
+if [ -z "${YANG_LIBRARY_PATH}" ]; then
+    YANG_LIBRARY_PATH=/
+fi
 
 if [ "$(uname -s)" = "Darwin" ]; then
     DIR=$(stat -f %N "$0" | xargs dirname)
@@ -30,39 +36,26 @@ if [ $# -ne 1 ] && [ $# -ne 2 ]; then
     echo "run: \`$0 --help\` for more help"
     exit 0
 fi
-if [ "$1" = "--help" ]
-then
-	echo "sysrepo_config 'option' ['library']"
-	echo "options:"
-	echo "--help"
-	echo "    print this help message"
-	echo "--cflags-only-other"
-	echo "    get cpp compilation flags"
-	echo "--cflags-only-I"
-	echo "    get include path"
-	echo "--libs"
-	echo "    get lib path"
-	echo "--modversion"
-	echo "    get version"
-	echo "--variable=SR_REPOSITORY_LOC"
-	echo "    get repo path"
-	echo "libraries:"
-	echo "    libsysrepo"
-	echo "    libSysrepo-cpp"
-	exit 0
-else if [ $# -ne 2 ]
-	then
-		echo "run: \`$0 --help\` for more help"
-		exit 0
-	else if [ $2 != "libsysrepo" ] && [ $2 != "libSysrepo-cpp" ]
-		then
-			echo "library $2 not supported"
-			echo "run: \`$0 --help\` for more help"
-			exit 0
-		else
-			sysrepo_lib=$2
-		fi
-	fi
+
+if [ "$1" = "--help" ]; then
+    echo "sysrepo_config 'option' ['library']"
+    echo "options:"
+    echo "--help"
+    echo "    print this help message"
+    echo "--cflags-only-other"
+    echo "    get cpp compilation flags"
+    echo "--cflags-only-I"
+    echo "    get include path"
+    echo "--libs"
+    echo "    get lib path"
+    echo "--modversion"
+    echo "    get version"
+    echo "--variable=SR_REPOSITORY_LOC"
+    echo "    get repo path"
+    echo "libraries:"
+    echo "    libsysrepo"
+    echo "    libSysrepo-cpp"
+    exit 0
 fi
 
 if [ $# -ne 2 ]; then
@@ -91,10 +84,13 @@ if [ "$1" = "--libs" ]; then
     echo "-L${LIBYANG_PATH}/lib/ -L${SYSREPO_PATH}/lib/ -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
     exit 0
 fi
-if [ $1 == "--variable=SR_REPOSITORY_LOC" ]
-then
-	echo "${SYSREPO_PATH}/build/repository"
-	exit 0
+
+if [ "$1" = "--modversion" ]; then
+    MAJOR="1"
+    MINOR="0"
+    PATCH="0"
+    echo "${MAJOR}.${MINOR}.${PATCH}"
+    exit 0
 fi
 
 if [ "$1" = "--variable=SR_REPOSITORY_LOC" ]; then
