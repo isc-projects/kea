@@ -11,10 +11,8 @@
 
 #include <iostream>
 #include <string>
-#include <cstring>
 #include <cstdlib>
 #include <cstdio>
-#include <cerrno>
 #include <unistd.h>
 #include <ftw.h>
 
