@@ -1630,7 +1630,7 @@ temporarily override a list of interface names and listen on all interfaces.
     "data": "2, 3/4",
 }
 </screen>
-              Another possible "space" value is "s46-v4v6bind", to include
+              Another possible "space" value is "s46-v4v6bind-options", to include
               this option in the S46 IPv4/IPv6 Address Binding option.
             </para>
             <para>
