@@ -10,8 +10,6 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
-sysrepo_lib="libsysrepo"
-
 if [ -z "${YANG_LIBRARY_PATH}" ]; then
     YANG_LIBRARY_PATH=/
 fi
@@ -66,8 +64,6 @@ elif [ "$2" != "libsysrepo" ] && [ "$2" != "libSysrepo-cpp" ]; then
     echo "library $2 not supported"
     echo "run: \`$0 --help\` for more help"
     exit 0
-else
-    sysrepo_lib=$2
 fi
 
 if [ "$1" = "--cflags-only-other" ]; then
