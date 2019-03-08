@@ -120,6 +120,105 @@ TEST(SharedNetwork4Test, addSubnet4) {
     ASSERT_THROW(network2->add(subnet), InvalidOperation);
 }
 
+// This test verifies that an IPv4 subnet can be replaced in a shared network.
+// It does the same tests than for addSubnet4 (at the exception of conflicts)
+// and check the random order is kept.
+TEST(SharedNetwork4Test, replaceSubnet4) {
+    // First, create a network.
+    SharedNetwork4Ptr network(new SharedNetwork4("frog"));
+
+    // Try to replace null pointer. It should throw.
+    Subnet4Ptr subnet;
+    ASSERT_THROW(network->replace(subnet), BadValue);
+
+    // Create some valid subnets. they should now be added successfully.
+    subnet.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 10, 20, 30,
+                             SubnetID(15)));
+    ASSERT_NO_THROW(network->add(subnet));
+    subnet.reset(new Subnet4(IOAddress("192.168.0.0"), 24, 10, 20, 30,
+                             SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+    subnet.reset(new Subnet4(IOAddress("192.168.1.0"), 24, 10, 20, 30,
+                             SubnetID(10)));
+    ASSERT_NO_THROW(network->add(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+
+    // Create another subnet with another ID. Replace should return false.
+    subnet.reset(new Subnet4(IOAddress("192.168.2.0"), 24, 10, 20, 30,
+                             SubnetID(2)));
+    EXPECT_FALSE(network->replace(subnet));
+
+    // Subnets did not changed.
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    Subnet4Ptr returned_subnet = network->getAllSubnets()->at(0);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(15, returned_subnet->getID());
+    returned_subnet = network->getAllSubnets()->at(2);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(10, returned_subnet->getID());
+    // Finish by the second subnet.
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(1, returned_subnet->getID());
+
+    // Create another subnet with the same ID than the second subnet.
+    subnet.reset(new Subnet4(IOAddress("192.168.0.0"), 24, 100, 200, 300,
+                             SubnetID(1)));
+    EXPECT_TRUE(network->replace(subnet));
+
+    // Second subnet was updated.
+    EXPECT_EQ(10, returned_subnet->getT1());
+    EXPECT_EQ(20, returned_subnet->getT2());
+    EXPECT_EQ(30, returned_subnet->getValid());
+    SharedNetwork4Ptr network1;
+    returned_subnet->getSharedNetwork(network1);
+    EXPECT_FALSE(network1);
+
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ(100, returned_subnet->getT1());
+    EXPECT_EQ(200, returned_subnet->getT2());
+    EXPECT_EQ(300, returned_subnet->getValid());
+    returned_subnet->getSharedNetwork(network1);
+    EXPECT_TRUE(network1);
+    EXPECT_TRUE(network == network1);
+
+    // Other subnets did not changed.
+    returned_subnet = network->getAllSubnets()->at(0);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(15, returned_subnet->getID());
+    returned_subnet = network->getAllSubnets()->at(2);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(10, returned_subnet->getID());
+
+    // Create another network and try to replace a subnet to it. It should fail
+    // because the subnet is already associated with the first network.
+    SharedNetwork4Ptr network2(new SharedNetwork4("dog"));
+    ASSERT_THROW(network2->replace(subnet), InvalidOperation);
+
+    // Try to change the prefix. Not recommended but should work.
+    subnet.reset(new Subnet4(IOAddress("192.168.10.0"), 24, 100, 200, 300,
+                             SubnetID(1)));
+    EXPECT_TRUE(network->replace(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ("192.168.10.0/24", returned_subnet->toText());
+
+    // but not if the prefix already exists for another subnet.
+    subnet.reset(new Subnet4(IOAddress("192.168.1.0"), 24, 100, 200, 300,
+                             SubnetID(1)));
+    EXPECT_FALSE(network->replace(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ("192.168.10.0/24", returned_subnet->toText());
+}
+
 // This test verifies that it is possible to remove a specified subnet.
 TEST(SharedNetwork4Test, delSubnet4) {
     // Create two subnets and add them to the shared network.
@@ -559,6 +658,107 @@ TEST(SharedNetwork6Test, addSubnet6) {
     // because the subnet is already associated with the first network.
     SharedNetwork6Ptr network2(new SharedNetwork6("dog"));
     ASSERT_THROW(network2->add(subnet), InvalidOperation);
+}
+
+// This test verifies that an IPv6 subnet can be replaced in a shared network.
+// It does the same tests than for addSubnet6 (at the exception of conflicts)
+// and check the random order is kept.
+TEST(SharedNetwork6Test, replaceSubnet6) {
+    // First, create a network.
+    SharedNetwork6Ptr network(new SharedNetwork6("frog"));
+
+    // Try to replace null pointer. It should throw.
+    Subnet6Ptr subnet;
+    ASSERT_THROW(network->replace(subnet), BadValue);
+
+    // Create some valid subnets. they should now be added successfully.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:1::"), 48, 10, 20, 30, 40,
+                             SubnetID(15)));
+    ASSERT_NO_THROW(network->add(subnet));
+    subnet.reset(new Subnet6(IOAddress("2001:db8:2::"), 64, 10, 20, 30, 40,
+                             SubnetID(1)));
+    ASSERT_NO_THROW(network->add(subnet));
+    subnet.reset(new Subnet6(IOAddress("2001:db8:3::"), 64, 10, 20, 30, 40,
+                             SubnetID(10)));
+    ASSERT_NO_THROW(network->add(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+
+    // Create another subnet with another ID. Replace should return false.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:4::1"), 64, 10, 20, 30, 40,
+                             SubnetID(2)));
+    EXPECT_FALSE(network->replace(subnet));
+
+    // Subnets did not changed.
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    Subnet6Ptr returned_subnet = network->getAllSubnets()->at(0);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(15, returned_subnet->getID());
+    returned_subnet = network->getAllSubnets()->at(2);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(10, returned_subnet->getID());
+    // Finish by the second subnet.
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(1, returned_subnet->getID());
+
+    // Create another subnet with the same ID than the second subnet.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:2::"), 64, 100, 200, 300, 400,
+                             SubnetID(1)));
+    EXPECT_TRUE(network->replace(subnet));
+
+    // Second subnet was updated.
+    EXPECT_EQ(10, returned_subnet->getT1());
+    EXPECT_EQ(20, returned_subnet->getT2());
+    EXPECT_EQ(30, returned_subnet->getPreferred());
+    EXPECT_EQ(40, returned_subnet->getValid());
+    SharedNetwork6Ptr network1;
+    returned_subnet->getSharedNetwork(network1);
+    EXPECT_FALSE(network1);
+
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ(100, returned_subnet->getT1());
+    EXPECT_EQ(200, returned_subnet->getT2());
+    EXPECT_EQ(300, returned_subnet->getPreferred());
+    EXPECT_EQ(400, returned_subnet->getValid());
+    returned_subnet->getSharedNetwork(network1);
+    EXPECT_TRUE(network1);
+    EXPECT_TRUE(network == network1);
+
+    // Other subnets did not changed.
+    returned_subnet = network->getAllSubnets()->at(0);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(15, returned_subnet->getID());
+    returned_subnet = network->getAllSubnets()->at(2);
+    ASSERT_TRUE(returned_subnet);
+    EXPECT_EQ(10, returned_subnet->getID());
+
+    // Create another network and try to replace a subnet to it. It should fail
+    // because the subnet is already associated with the first network.
+    SharedNetwork6Ptr network2(new SharedNetwork6("dog"));
+    ASSERT_THROW(network2->replace(subnet), InvalidOperation);
+
+    // Try to change the prefix. Not recommended but should work.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:10::"), 64, 100, 200, 300,
+                             400, SubnetID(1)));
+    EXPECT_TRUE(network->replace(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ("2001:db8:10::/64", returned_subnet->toText());
+
+    // but not if the prefix already exists for another subnet.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:3::"), 64, 100, 200, 300, 400,
+                             SubnetID(1)));
+    EXPECT_FALSE(network->replace(subnet));
+    ASSERT_EQ(3, network->getAllSubnets()->size());
+    returned_subnet = network->getAllSubnets()->at(1);
+    ASSERT_TRUE(returned_subnet);
+    ASSERT_EQ(1, returned_subnet->getID());
+    EXPECT_EQ("2001:db8:10::/64", returned_subnet->toText());
 }
 
 // This test verifies that it is possible to remove a specified subnet.
