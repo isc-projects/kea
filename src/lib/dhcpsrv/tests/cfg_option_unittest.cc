@@ -8,7 +8,10 @@
 #include <dhcp/dhcp6.h>
 #include <dhcp/option.h>
 #include <dhcp/option_int.h>
+#include <dhcp/option_int_array.h>
 #include <dhcp/option_space.h>
+#include <dhcp/option_string.h>
+#include <dhcp/option4_addrlst.h>
 #include <dhcpsrv/cfg_option.h>
 #include <testutils/test_to_element.h>
 #include <boost/foreach.hpp>
@@ -327,12 +330,12 @@ TEST_F(CfgOptionTest, copy) {
     EXPECT_EQ(10, container->size());
 }
 
-// This test verifies option definitions from one configuration
-// can be used to update definitions in another configuration.
-// In other words, definitions from an "other" configuration
+// This test verifies that DHCP options from one configuration
+// can be used to update options in another configuration.
+// In other words, options from an "other" configuration
 // can be merged into an existing configuration, with any
 // duplicates in other overwriting those in the existing
-// configuration.  
+// configuration.
 TEST_F(CfgOptionTest, validMerge) {
     CfgOption this_cfg;
     CfgOption other_cfg;
@@ -358,7 +361,7 @@ TEST_F(CfgOptionTest, validMerge) {
     ASSERT_NO_THROW(this_cfg.add(option, false, "fluff"));
 
     // Create our other config that will be merged from.
-    // Add Option 1 to "isc",  this should "overwrite" the original. 
+    // Add Option 1 to "isc",  this should "overwrite" the original.
     option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x10)));
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
@@ -366,20 +369,14 @@ TEST_F(CfgOptionTest, validMerge) {
     option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x20)));
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
-    // Add option 4 to "isc". 
+    // Add option 4 to "isc".
     option.reset(new Option(Option::V4, 4, OptionBuffer(1, 0x40)));
     ASSERT_NO_THROW(other_cfg.add(option, false, "isc"));
 
     // Merge source configuration to the destination configuration. The options
     // in the destination should be preserved. The options from the source
     // configuration should be added.
-    try {
-        this_cfg.merge(defs, other_cfg);
-    } catch(const std::exception& ex) {
-        GTEST_FAIL () << "Unexpected exception:" << ex.what();
-    }
-
-//    ASSERT_NO_THROW(this_cfg.merge(defs, other_cfg));
+    ASSERT_NO_THROW(this_cfg.merge(defs, other_cfg));
 
     // isc:1 should come from "other" config.
     OptionDescriptor desc = this_cfg.get("isc", 1);
@@ -412,7 +409,10 @@ TEST_F(CfgOptionTest, validMerge) {
     EXPECT_EQ(0x4, desc.option_->getData()[0]);
 }
 
-TEST_F(CfgOptionTest, invalidMerge) {
+// This test verifies that attempting to merge options
+// which are by incompatible with "known" option definitions
+// are detected.
+TEST_F(CfgOptionTest, mergeInvalid) {
     CfgOption this_cfg;
     CfgOption other_cfg;
 
@@ -430,7 +430,7 @@ TEST_F(CfgOptionTest, invalidMerge) {
     ASSERT_NO_THROW(other_cfg.add(desc, "isc"));
 
     // When we attempt to merge, it should fail, recognizing that
-    // option two has no definition.
+    // option 2, which has a formatted value,  has no definition.
     try {
         this_cfg.merge(defs, other_cfg);
         GTEST_FAIL() << "merge should have thrown";
@@ -443,10 +443,10 @@ TEST_F(CfgOptionTest, invalidMerge) {
     }
 
     // Now let's add an option definition that will force data truncated
-    // error for option one.
+    // error for option 1.
     defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint16"))), "isc");
 
-    // When we attempt to merge, it should fail because option one's data
+    // When we attempt to merge, it should fail because option 1's data
     // is not valid per its definition.
     try {
         this_cfg.merge(defs, other_cfg);
@@ -459,6 +459,70 @@ TEST_F(CfgOptionTest, invalidMerge) {
     } catch (const std::exception& ex) {
         GTEST_FAIL() << "wrong exception thrown:" << ex.what();
     }
+}
+
+// This test verifies the all of the valid option cases
+// in createDescriptorOption():
+// 1. standard option
+// 2. vendor option
+// 3. user-defined, unformatted option
+// 4. user-defined, formatted option
+// 5. undefined, unformatted option
+TEST_F(CfgOptionTest, createDescriptorOptionValid) {
+    // First we'll create our "known" user definitions
+    CfgOptionDefPtr defs(new CfgOptionDef());
+    defs->add((OptionDefinitionPtr(new OptionDefinition("one", 1, "uint8"))), "isc");
+    defs->add((OptionDefinitionPtr(new OptionDefinition("two", 2, "uint8", true))), "isc");
+
+    // We'll try a standard option first.
+    std::string space = "dhcp4";
+    std::string value("example.org");
+    OptionPtr option(new Option(Option::V4, DHO_HOST_NAME));
+    option->setData(value.begin(), value.end());
+    OptionDescriptorPtr desc(new OptionDescriptor(option, false));
+
+    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    OptionStringPtr opstr = boost::dynamic_pointer_cast<OptionString>(desc->option_);
+    ASSERT_TRUE(opstr);
+    EXPECT_EQ("type=012, len=011: \"example.org\" (string)", opstr->toText());
+
+    // Next we'll try a vendor option with a formatted value
+    space = "vendor-4491";
+    value = "192.0.2.1, 192.0.2.2";
+    option.reset(new Option(Option::V4, 2));
+    desc.reset(new OptionDescriptor(option, false, value));
+
+    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    std::cout << "option:" << desc->option_->toText() << std::endl;
+    Option4AddrLstPtr opaddrs = boost::dynamic_pointer_cast<Option4AddrLst>(desc->option_);
+    ASSERT_TRUE(opaddrs);
+    EXPECT_EQ("type=002, len=008: 192.0.2.1 192.0.2.2", opaddrs->toText());
+
+    // Now, a user defined uint8 option
+    space = "isc";
+    option.reset(new Option(Option::V4, 1, OptionBuffer(1, 0x77)));
+    desc.reset(new OptionDescriptor(option, false));
+
+    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    OptionUint8Ptr opint = boost::dynamic_pointer_cast<OptionUint8>(desc->option_);
+    ASSERT_TRUE(opint);
+    EXPECT_EQ("type=001, len=001: 119 (uint8)", opint->toText());
+
+    // Now, a user defined array of strings
+    option.reset(new Option(Option::V4, 2));
+    desc.reset(new OptionDescriptor(option, false, "1,2,3"));
+
+    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    OptionUint8ArrayPtr oparray = boost::dynamic_pointer_cast<OptionUint8Array>(desc->option_);
+    ASSERT_TRUE(oparray);
+    EXPECT_EQ("type=002, len=003: 1(uint8) 2(uint8) 3(uint8)", oparray->toText());
+
+    // Finally, a generic, undefined option
+    option.reset(new Option(Option::V4, 2, OptionBuffer(1, 0x77)));
+    desc.reset(new OptionDescriptor(option, false));
+
+    ASSERT_NO_THROW(CfgOption::createDescriptorOption(defs, space, *desc));
+    EXPECT_EQ("type=002, len=001: 119(uint8)", desc->option_->toText());
 }
 
 // This test verifies that encapsulated options are added as sub-options
