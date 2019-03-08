@@ -100,6 +100,16 @@ contains "ip-address" rather than its replacement, "ip-addresses".
 The server will still honor the value but users are encouraged to
 move to the new list parameter.
 
+% DHCPSRV_CFGMGR_UPDATE_SUBNET4 updating subnet %1 (result %2)
+A debug message reported when the DHCP configuration manager is updating the
+specified IPv4 subnet to its database. Subnet ID and result (expected to
+be true) are displayed.
+
+% DHCPSRV_CFGMGR_UPDATE_SUBNET6 updating subnet %1 (result %2)
+A debug message reported when the DHCP configuration manager is replacing the
+specified IPv6 subnet to its database.  Subnet ID and result (expected to
+be true) are displayed.
+
 % DHCPSRV_CFGMGR_SOCKET_RAW_UNSUPPORTED use of raw sockets is unsupported on this OS, UDP sockets will be used
 This warning message is logged when the user specified that the
 DHCPv4 server should use the raw sockets to receive the DHCP

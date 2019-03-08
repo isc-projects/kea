@@ -41,6 +41,27 @@ CfgSubnets4::add(const Subnet4Ptr& subnet) {
     subnets_.push_back(subnet);
 }
 
+Subnet4Ptr
+CfgSubnets4::replace(const Subnet4Ptr& subnet) {
+    // Get the subnet with the same ID.
+    const SubnetID& subnet_id = subnet->getID();
+    auto& index = subnets_.template get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    if (subnet_it == index.end()) {
+        isc_throw(BadValue, "ID of the IPv4 subnet '" << subnet_id
+                  << "' is not in use");
+    }
+    bool ret = index.replace(subnet_it, subnet);
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_UPDATE_SUBNET4)
+        .arg(subnet_id).arg(ret);
+    if (ret) {
+        return (*subnet_it);
+    } else {
+        return (Subnet4Ptr());
+    }
+}
+
 void
 CfgSubnets4::del(const ConstSubnet4Ptr& subnet) {
     del(subnet->getID());

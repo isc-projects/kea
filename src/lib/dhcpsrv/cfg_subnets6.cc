@@ -41,6 +41,27 @@ CfgSubnets6::add(const Subnet6Ptr& subnet) {
     subnets_.push_back(subnet);
 }
 
+Subnet6Ptr
+CfgSubnets6::replace(const Subnet6Ptr& subnet) {
+    // Get the subnet with the same ID.
+    const SubnetID& subnet_id = subnet->getID();
+    auto& index = subnets_.template get<SubnetSubnetIdIndexTag>();
+    auto subnet_it = index.find(subnet_id);
+    if (subnet_it == index.end()) {
+        isc_throw(BadValue, "ID of the IPv6 subnet '" << subnet_id
+                  << "' is not in use");
+    }
+    bool ret = index.replace(subnet_it, subnet);
+
+    LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_UPDATE_SUBNET6)
+        .arg(subnet_id).arg(ret);
+    if (ret) {
+        return (*subnet_it);
+    } else {
+        return (Subnet6Ptr());
+    }
+}
+
 void
 CfgSubnets6::del(const ConstSubnet6Ptr& subnet) {
     del(subnet->getID());
