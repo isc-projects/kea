@@ -258,7 +258,7 @@ void
 HostMgrTest::testGetAll(BaseHostDataSource& data_source1,
                         BaseHostDataSource& data_source2) {
     // Initially, no reservations should be present.
-    ConstHostCollection hosts = 
+    ConstHostCollection hosts =
         HostMgr::instance().getAll(Host::IDENT_HWADDR,
                                    &hwaddrs_[1]->hwaddr_[0],
                                    hwaddrs_[1]->hwaddr_.size());
@@ -863,7 +863,7 @@ public:
     /// appropriate schema and create a basic host manager to
     /// wipe out any prior instance
     virtual void SetUp() {
-        DatabaseConnection::db_lost_callback = 0;  
+        DatabaseConnection::db_lost_callback = 0;
         destroySchema();
         createSchema();
         // Wipe out any pre-existing mgr
@@ -875,7 +875,7 @@ public:
     /// Invoked by gtest upon test exit, we destroy the schema
     /// we created.
     virtual void TearDown() {
-        DatabaseConnection::db_lost_callback = 0;  
+        DatabaseConnection::db_lost_callback = 0;
         destroySchema();
     }
 
@@ -972,7 +972,6 @@ MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
     // Ensure schema is the correct one.
-    db::test::destroyMySQLSchema();
     db::test::createMySQLSchema();
 
     // Connect to the database

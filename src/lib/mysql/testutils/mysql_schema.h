@@ -22,31 +22,58 @@ extern const char* MYSQL_VALID_TYPE;
 /// @return valid MySQL connection string.
 std::string validMySQLConnectionString();
 
-/// @brief Clear everything from the database
+/// @brief Clear the unit test database
 ///
-/// Submits the current schema drop script:
+/// Either calls @c wipeData to wipe the data from the
+/// database /or destroys the database itself by submitting the
+/// SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.sh
 ///
-/// to the unit test MySQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
+/// If wipeData() is called and fails, it will destroy
+/// the schema. If the schema destruction fails, the
+/// invoking test should fail.
+///
+/// The output stderr is suppressed unless the parameter,
 /// show_err is true.
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void destroyMySQLSchema(bool show_err = false);
+/// @param force if true, the function will simply destroy the schema.
+void destroyMySQLSchema(bool show_err = false, bool force = false);
 
-/// @brief Create the MySQL Schema
+/// @brief Create the unit test MySQL Schema
 ///
-/// Submits the current schema creation script:
+/// Ensures the unit test database is a empty and version-correct.
+/// Unless, the force parameter is true, it will first attempt
+/// to wipe the data from the database by calling @c wipeData.
+/// If this call succeeds the function returns, otherwise it will
+/// will call @c destroyMySQLSchema to forcibly remove the
+/// existing schema and then submits the SQL script:
 ///
 ///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_create.mysql
 ///
-/// to the unit test MySQL database. If the script fails, the invoking test
-/// will fail. The output of stderr is suppressed unless the parameter,
-/// show_err is true.
+/// to the unit test MySQL database.
 ///
 /// @param show_err flag which governs whether or not stderr is suppressed.
-void createMySQLSchema(bool show_err = false);
+/// @param force flag when true, the function will recreate the database
+/// schema.
+void createMySQLSchema(bool show_err = false, bool force = false);
+
+
+/// @brief Attempts to wipe data from the MySQL unit test database
+///
+/// Runs the shell script
+///
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/wipe_data.sh
+///
+/// This will fail if there is no schema, if the existing schema
+/// version is incorrect (i.e. does not match MYSQL_SCHEMA_VERSION_MAJOR
+/// and MYSQL_SCHEMA_VERSION_MINOR), or a SQL error occurs.  Otherwise,
+/// the script is should delete all transient data, leaving intact
+/// reference tables.
+///
+/// @param show_err flag which governs whether or not stderr is suppressed.
+bool wipeData(bool show_err = false);
 
 /// @brief Run a MySQL SQL script against the MySQL unit test database
 ///

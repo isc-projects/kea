@@ -30,12 +30,40 @@ validMySQLConnectionString() {
                              VALID_USER, VALID_PASSWORD));
 }
 
-void destroyMySQLSchema(bool show_err) {
-    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
+void destroyMySQLSchema(bool show_err, bool force) {
+    // If force is true or wipeData() fails, destory the schema.
+    if (force || wipeData(show_err)) {
+        runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
+    }
 }
 
-void createMySQLSchema(bool show_err) {
-    runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql", show_err);
+void createMySQLSchema(bool show_err, bool force) {
+    // If force is true or wipeData() fails, recreate the schema.
+    if (force || wipeData(show_err)) {
+        destroyMySQLSchema(show_err, true);
+        runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql", show_err);
+    }
+}
+
+bool wipeData(bool show_err) {
+    std::ostringstream cmd;
+    cmd << "sh " << DATABASE_SCRIPTS_DIR << "/";
+
+    std::ostringstream version;
+    version << MYSQL_SCHEMA_VERSION_MAJOR  << "." << MYSQL_SCHEMA_VERSION_MINOR;
+
+    cmd << "mysql/wipe_data.sh" << " " << version.str()
+        << " -N -B --user=keatest --password=keatest keatest";
+    if (!show_err) {
+        cmd << " 2>/dev/null ";
+    }
+
+    int retval = ::system(cmd.str().c_str());
+    if (retval) {
+        std::cerr << "wipeData failed:[" << cmd.str() << "]" << std::endl;
+    }
+
+    return(retval);
 }
 
 void runMySQLScript(const std::string& path, const std::string& script_name,

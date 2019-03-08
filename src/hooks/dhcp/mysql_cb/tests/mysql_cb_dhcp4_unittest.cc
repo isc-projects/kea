@@ -48,7 +48,6 @@ public:
     MySqlConfigBackendDHCPv4Test()
         : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
         // Recreate database schema.
-        destroyMySQLSchema();
         createMySQLSchema();
 
         try {
