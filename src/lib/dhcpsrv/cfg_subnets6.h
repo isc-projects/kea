@@ -42,6 +42,16 @@ public:
     /// duplicates id of an existing subnet.
     void add(const Subnet6Ptr& subnet);
 
+    /// @brief Replaces subnet in the configuration.
+    ///
+    /// This method replaces a subnet by another subnet with the same ID.
+    /// The prefix should be the same too.
+    ///
+    /// @param subnet Pointer to the subnet being updated.
+    /// @throw BadValue if the subnet to update does not exit.
+    /// @return Pointer to the replaced subnet or NULL if it failed.
+    Subnet6Ptr replace(const Subnet6Ptr& subnet);
+
     /// @brief Removes subnet from the configuration.
     ///
     /// @param subnet Pointer to the subnet to be removed.
