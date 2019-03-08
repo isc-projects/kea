@@ -86,7 +86,7 @@ CfgOption::getVendorIdsSpaceNames() const {
 void
 CfgOption::merge(CfgOptionDefPtr cfg_def,  CfgOption& other) {
     // First we merge our options into other.
-    // This adds my opitions that are not
+    // This adds my options that are not
     // in other, to other (i.e we skip over
     // duplicates).
     mergeTo(other);
@@ -147,6 +147,9 @@ CfgOption::createDescriptorOption(CfgOptionDefPtr cfg_def, const std::string& sp
     }
 
     try {
+
+        std::cout << "def:" << def->getName() << ", code:" << def->getCode()
+                  <<  ", type: " << def->getType() << std::endl;
 
         // Definition found. Let's replace the generic option in
         // the descriptor with one created based on definition's factory.

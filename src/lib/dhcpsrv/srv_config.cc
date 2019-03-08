@@ -195,7 +195,7 @@ SrvConfig::merge4(SrvConfig& other) {
     // Merge subnets.
     cfg_subnets4_->merge(getCfgSharedNetworks4(), *(other.getCfgSubnets4()));
 
-    // @todo merge other parts of the configuration here.
+    /// @todo merge other parts of the configuration here.
 }
 
 void
