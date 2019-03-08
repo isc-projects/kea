@@ -78,10 +78,12 @@
 , <command><link linkend="ref-subnet4-del">subnet4-del</link></command>
 , <command><link linkend="ref-subnet4-get">subnet4-get</link></command>
 , <command><link linkend="ref-subnet4-list">subnet4-list</link></command>
+, <command><link linkend="ref-subnet4-update">subnet4-update</link></command>
 , <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
 , <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
 , <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
 , <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
+, <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
 , <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-kea-ctrl-agent">Commands supported by kea-ctrl-agent daemon: <command><link linkend="ref-build-report">build-report</link></command>
@@ -159,6 +161,7 @@
 , <command><link linkend="ref-subnet4-del">subnet4-del</link></command>
 , <command><link linkend="ref-subnet4-get">subnet4-get</link></command>
 , <command><link linkend="ref-subnet4-list">subnet4-list</link></command>
+, <command><link linkend="ref-subnet4-update">subnet4-update</link></command>
 , <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-kea-dhcp6">Commands supported by kea-dhcp6 daemon: <command><link linkend="ref-build-report">build-report</link></command>
@@ -216,6 +219,7 @@
 , <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
 , <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
 , <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
+, <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
 , <command><link linkend="ref-version-get">version-get</link></command>
 .</para>
 <para xml:id="commands-class_cmds-lib">Commands supported by class_cmds hook library: <command><link linkend="ref-class-add">class-add</link></command>
@@ -274,10 +278,12 @@
 , <command><link linkend="ref-subnet4-del">subnet4-del</link></command>
 , <command><link linkend="ref-subnet4-get">subnet4-get</link></command>
 , <command><link linkend="ref-subnet4-list">subnet4-list</link></command>
+, <command><link linkend="ref-subnet4-update">subnet4-update</link></command>
 , <command><link linkend="ref-subnet6-add">subnet6-add</link></command>
 , <command><link linkend="ref-subnet6-del">subnet6-del</link></command>
 , <command><link linkend="ref-subnet6-get">subnet6-get</link></command>
 , <command><link linkend="ref-subnet6-list">subnet6-list</link></command>
+, <command><link linkend="ref-subnet6-update">subnet6-update</link></command>
 .</para>
 <!-- start of build-report -->
 <section xml:id="reference-build-report">
@@ -3175,6 +3181,54 @@ If no IPv4 subnets are found, an error code is returned along with the error des
 </section>
 <!-- end of subnet4-list -->
 
+<!-- start of subnet4-update -->
+<section xml:id="reference-subnet4-update">
+<title>subnet4-update reference</title>
+<para xml:id="ref-subnet4-update"><command>subnet4-update</command> - This command is used to  update a subnet in the existing server configuration.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp4">kea-dhcp4</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-subnet4-update"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "subnet4-update",
+    "arguments": {
+        "subnet4": [ {
+            "id": 123,
+            "subnet": "10.20.30.0/24",
+            ...
+        } ]
+    }
+}</screen>
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": 0,
+    "text": "IPv4 subnet updated",
+    "arguments": {
+        "subnets": [
+            {
+                "id": 123,
+                "subnet": "10.20.30.0/24"
+            }
+        ]
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+<!-- end of subnet4-update -->
+
 <!-- start of subnet6-add -->
 <section xml:id="reference-subnet6-add">
 <title>subnet6-add reference</title>
@@ -3353,6 +3407,54 @@ If no IPv6 subnets are found, an error code is returned along with the error des
 
 </section>
 <!-- end of subnet6-list -->
+
+<!-- start of subnet6-update -->
+<section xml:id="reference-subnet6-update">
+<title>subnet6-update reference</title>
+<para xml:id="ref-subnet6-update"><command>subnet6-update</command> - This command is used to update a subnet in the existing server configuration. This operation has no impact on other subnets.</para>
+
+<para>Supported by: <command><link linkend="commands-kea-dhcp6">kea-dhcp6</link></command></para>
+
+<para>Availability: 1.6.0 (<link linkend="commands-subnet_cmds-lib">subnet_cmds</link>  hook)</para>
+
+<para>Description and examples: See <xref linkend="command-subnet6-update"/></para>
+
+<para>Command syntax:
+  <screen>{
+    "command": "subnet6-update",
+    "arguments": {
+        "subnet6": [ {
+            "id": 234,
+            "subnet": "2001:db8:1::/64",
+            ...
+        } ]
+    }
+}</screen>
+</para>
+
+<para>Response syntax:
+  <screen>{
+    "result": 0,
+    "text": "IPv6 subnet updated",
+    "arguments": {
+        "subnet6": [
+            {
+                "id": 234,
+                "subnet": "2001:db8:1::/64"
+            }
+        ]
+    }
+}</screen>
+Result is an integer representation of the status. Currently supported statuses are:
+<itemizedlist>
+  <listitem><para>0 - success</para></listitem>
+  <listitem><para>1 - error</para></listitem>
+  <listitem><para>2 - unsupported</para></listitem>
+</itemizedlist>
+</para>
+
+</section>
+<!-- end of subnet6-update -->
 
 <!-- start of version-get -->
 <section xml:id="reference-version-get">

@@ -1714,7 +1714,7 @@ An example result returned when the query was malformed:<screen>
           <command>reservation-get-page</command> instead (see <xref
           linkend="command-reservation-get-page"/>).
           </para>
-          
+
           <para>
           For a reference, see <xref linkend="ref-reservation-get-all"/>.
           </para>
@@ -1970,6 +1970,10 @@ An example deletion by (subnet-id, identifier-type, identifier) looks as follows
           <listitem>
           <simpara>
             <command>subnet4-add/subnet6-add</command>: adds new subnet into server's configuration
+          </simpara>
+          </listitem>
+          <listitem>
+          <simpara> <command>subnet4-update/subnet6-update</command>: updates  subnet in server's configuration
           </simpara>
           </listitem>
           <listitem>
@@ -2336,6 +2340,105 @@ If the subnet exists the response will be similar to this:
 
       </section>
 
+      <section id="command-subnet4-update">
+        <title>subnet4-update</title>
+        <para>
+          This command is used to update a subnet in the existing
+          server configuration. This operation has no impact on other
+          subnets. The subnet identifier is used to identify the
+          subnet to replace, it must be specified and must be unique
+          among all subnets. The subnet prefix should not be updated.
+        </para>
+        <para>
+          The subnet information within this command has the same structure
+          as the subnet information in the server configuration file with the
+          exception that static host reservations must not be specified
+          within <command>subnet4-update</command>. The commands described in
+          <xref linkend="host-cmds"/> should be used to update, remove and
+          modify static reservations.
+<screen>
+{
+    "command": "subnet4-update",
+    "arguments": {
+        "subnet4": [ {
+            "id": 123,
+            "subnet": "10.20.30.0/24",
+            ...
+        } ]
+    }
+}
+</screen>
+        </para>
+
+        <para>
+          The response to this command has the following structure:
+<screen>
+{
+    "result": 0,
+    "text": "IPv4 subnet updated",
+    "arguments": {
+        "subnet4": [
+            {
+                "id": 123,
+                "subnet": "10.20.30.0/24"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+      </section>
+
+      <section id="command-subnet6-update">
+        <title>subnet6-update</title>
+        <para>
+          This command is used to update a subnet in the existing
+          server configuration. This operation has no impact on other
+          subnets. The subnet identifier is used to identify the
+          subnet to replace, it must be specified and must be unique
+          among all subnets. The subnet prefix should not be updated.
+        </para>
+        <para>
+          The subnet information within this command has the same structure
+          as the subnet information in the server configuration file with the
+          exception that static host reservations must not be specified
+          within <command>subnet6-update</command>. The commands described in
+          <xref linkend="host-cmds"/> should be used to update, remove and
+          modify static reservations.
+<screen>
+{
+    "command": "subnet6-update",
+    "arguments": {
+        "subnet6": [ {
+            "id": 234,
+            "subnet": "2001:db8:1::/64",
+            ...
+        } ]
+    }
+}
+</screen>
+        </para>
+
+        <para>
+          The response to this command has the following structure:
+<screen>
+{
+    "result": 0,
+    "text": "IPv6 subnet updated",
+    "arguments": {
+        "subnet6": [
+            {
+                "id": 234,
+                "subnet": "2001:db8:1::/64"
+            }
+        ]
+    }
+}
+</screen>
+        </para>
+
+      </section>
+
       <section id="command-subnet4-del">
         <title>subnet4-del command</title>
         <para>
@@ -2354,7 +2457,7 @@ If the subnet exists the response will be similar to this:
           loose track of leases assigned to the clients from this subnet.
           However, removal of the subnet may still cause configuration
           errors and conflicts. For example: after removal of the subnet,
-          the server administrator may add a new subnet with the ID used
+          the server administrator may update a new subnet with the ID used
           previously for the removed subnet. This means that the existing
           leases and static reservations will be in conflict with this
           new subnet. Thus, we recommend that this command is used with extreme

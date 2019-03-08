@@ -51,12 +51,13 @@ CfgSubnets4::replace(const Subnet4Ptr& subnet) {
         isc_throw(BadValue, "ID of the IPv4 subnet '" << subnet_id
                   << "' is not in use");
     }
+    Subnet4Ptr old = *subnet_it;
     bool ret = index.replace(subnet_it, subnet);
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_UPDATE_SUBNET4)
         .arg(subnet_id).arg(ret);
     if (ret) {
-        return (*subnet_it);
+        return (old);
     } else {
         return (Subnet4Ptr());
     }
