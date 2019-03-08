@@ -77,7 +77,6 @@ public:
     ///
     /// @tparam SubnetPtrType Type of a pointer to a subnet, i.e. Subnet4Ptr
     /// or @ref Subnet6Ptr.
-    
     /// @tparam SubnetCollectionType Type of a container holding subnets, i.e.
     /// @ref Subnet4Collection or @ref Subnet6Collection.
     ///
@@ -94,10 +93,13 @@ public:
     static bool replace(SubnetCollectionType& subnets,
                         const SubnetPtrType& subnet) {
 
-        // Subnet must be non-null.
-        if (!subnet) {
-            isc_throw(BadValue, "null pointer specified when adding a subnet"
-                      " to a shared network");
+        // Check if the subnet is already associated with some network.
+        NetworkPtr network;
+        subnet->getSharedNetwork(network);
+        if (network) {
+            isc_throw(InvalidOperation, "subnet " << subnet->getID()
+                      << " being replaced in a shared network"
+                      " already belongs to a shared network");
         }
 
         // Get the subnet with the same ID.
@@ -305,6 +307,11 @@ SharedNetwork4::add(const Subnet4Ptr& subnet) {
 
 bool
 SharedNetwork4::replace(const Subnet4Ptr& subnet) {
+    // Subnet must be non-null.
+    if (!subnet) {
+        isc_throw(BadValue, "null pointer specified when adding a subnet"
+                  " to a shared network");
+    }
     const Subnet4Ptr& old = getSubnet(subnet->getID());
     bool ret = Impl::replace(subnets_, subnet);
     if (ret) {
@@ -385,6 +392,11 @@ SharedNetwork6::add(const Subnet6Ptr& subnet) {
 
 bool
 SharedNetwork6::replace(const Subnet6Ptr& subnet) {
+    // Subnet must be non-null.
+    if (!subnet) {
+        isc_throw(BadValue, "null pointer specified when adding a subnet"
+                  " to a shared network");
+    }
     const Subnet6Ptr& old = getSubnet(subnet->getID());
     bool ret = Impl::replace(subnets_, subnet);
     if (ret) {
