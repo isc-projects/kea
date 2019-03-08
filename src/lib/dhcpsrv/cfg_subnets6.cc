@@ -51,12 +51,13 @@ CfgSubnets6::replace(const Subnet6Ptr& subnet) {
         isc_throw(BadValue, "ID of the IPv6 subnet '" << subnet_id
                   << "' is not in use");
     }
+    Subnet6Ptr old = *subnet_it;
     bool ret = index.replace(subnet_it, subnet);
 
     LOG_DEBUG(dhcpsrv_logger, DHCPSRV_DBG_TRACE, DHCPSRV_CFGMGR_UPDATE_SUBNET6)
         .arg(subnet_id).arg(ret);
     if (ret) {
-        return (*subnet_it);
+        return (old);
     } else {
         return (Subnet6Ptr());
     }

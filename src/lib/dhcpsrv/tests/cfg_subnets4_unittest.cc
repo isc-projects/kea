@@ -150,6 +150,68 @@ TEST(CfgSubnets4Test, deleteSubnet) {
     EXPECT_FALSE(cfg.getByPrefix("192.0.2.0/26"));
 }
 
+// This test verifies that replace a subnet works as expected.
+TEST(CfgSubnets4Test, replaceSubnet) {
+    CfgSubnets4 cfg;
+
+    // Create 3 subnets.
+    Subnet4Ptr subnet1(new Subnet4(IOAddress("192.0.1.0"),
+                                   26, 1, 2, 100, SubnetID(10)));
+    Subnet4Ptr subnet2(new Subnet4(IOAddress("192.0.2.0"),
+                                   26, 1, 2, 100, SubnetID(2)));
+    Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.3.0"),
+                                   26, 1, 2, 100, SubnetID(13)));
+
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // There should be three subnets.
+    ASSERT_EQ(3, cfg.getAll()->size());
+    // We're going to replace  the subnet #2. Let's make sure it exists before
+    // we replace it.
+    ASSERT_TRUE(cfg.getByPrefix("192.0.3.0/26"));
+
+    // Replace the subnet and make sure it was updated.
+    Subnet4Ptr subnet(new Subnet4(IOAddress("192.0.2.0"),
+                                  26, 10, 20, 1000,  SubnetID(2)));
+    Subnet4Ptr replaced = cfg.replace(subnet);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet2);
+    ASSERT_EQ(3, cfg.getAll()->size());
+    Subnet4Ptr returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet);
+
+    // Rollback.
+    replaced = cfg.replace(replaced);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet);
+    ASSERT_EQ(3, cfg.getAll()->size());
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet2);
+
+    // Prefix conflict returns null.
+    subnet.reset(new Subnet4(IOAddress("192.0.3.0"),
+                             26, 10, 20, 1000,  SubnetID(2)));
+    replaced = cfg.replace(subnet);
+    EXPECT_FALSE(replaced);
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet2);
+
+    // Changing prefix works even it is highly not recommended.
+    subnet.reset(new Subnet4(IOAddress("192.0.10.0"),
+                             26, 10, 20, 1000,  SubnetID(2)));
+    replaced = cfg.replace(subnet);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet2);
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet);
+}
+
 // This test verifies that subnets configuration is properly merged.
 TEST(CfgSubnets4Test, mergeSubnets) {
     // Create custom options dictionary for testing merge. We're keeping it

@@ -1,4 +1,4 @@
-// Copyright (C) 2014-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2014-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -146,6 +146,68 @@ TEST(CfgSubnets6Test, deleteSubnet) {
     ASSERT_NO_THROW(cfg.del(subnet1->getID()));
     ASSERT_EQ(1, cfg.getAll()->size());
     EXPECT_FALSE(cfg.getByPrefix("2001:db8:1::/48"));
+}
+
+// This test verifies that replace a subnet works as expected.
+TEST(CfgSubnets6Test, replaceSubnet) {
+    CfgSubnets6 cfg;
+
+    // Create 3 subnets.
+    Subnet6Ptr subnet1(new Subnet6(IOAddress("2001:db8:1::"),
+                                   48, 1, 2, 3, 100, SubnetID(10)));
+    Subnet6Ptr subnet2(new Subnet6(IOAddress("2001:db8:2::"),
+                                   48, 1, 2, 3, 100, SubnetID(2)));
+    Subnet6Ptr subnet3(new Subnet6(IOAddress("2001:db8:3::"),
+                                   48, 1, 2, 3, 100, SubnetID(13)));
+
+    ASSERT_NO_THROW(cfg.add(subnet1));
+    ASSERT_NO_THROW(cfg.add(subnet2));
+    ASSERT_NO_THROW(cfg.add(subnet3));
+
+    // There should be three subnets.
+    ASSERT_EQ(3, cfg.getAll()->size());
+    // We're going to replace  the subnet #2. Let's make sure it exists before
+    // we replace it.
+    ASSERT_TRUE(cfg.getByPrefix("2001:db8:2::/48"));
+
+    // Replace the subnet and make sure it was updated.
+    Subnet6Ptr subnet(new Subnet6(IOAddress("2001:db8:2::"),
+                                  48, 10, 20, 30, 1000,  SubnetID(2)));
+    Subnet6Ptr replaced = cfg.replace(subnet);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet2);
+    ASSERT_EQ(3, cfg.getAll()->size());
+    Subnet6Ptr returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet);
+
+    // Rollback.
+    replaced = cfg.replace(replaced);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet);
+    ASSERT_EQ(3, cfg.getAll()->size());
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet2);
+
+    // Prefix conflict returns null.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:3::"),
+                             48, 10, 20, 30, 1000,  SubnetID(2)));
+    replaced = cfg.replace(subnet);
+    EXPECT_FALSE(replaced);
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet2);
+
+    // Changing prefix works even it is highly not recommended.
+    subnet.reset(new Subnet6(IOAddress("2001:db8:10::"),
+                             48, 10, 20, 30, 1000,  SubnetID(2)));
+    replaced = cfg.replace(subnet);
+    ASSERT_TRUE(replaced);
+    EXPECT_TRUE(replaced == subnet2);
+    returned = cfg.getAll()->at(1);
+    ASSERT_TRUE(returned);
+    EXPECT_TRUE(returned == subnet);
 }
 
 // This test checks that the subnet can be selected using a relay agent's

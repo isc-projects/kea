@@ -116,8 +116,10 @@ EXTRA_DIST += api/statistic-reset-all.json api/statistic-reset.json
 EXTRA_DIST += api/stat-lease4-get.json api/stat-lease6-get.json
 EXTRA_DIST += api/subnet4-add.json api/subnet4-del.json
 EXTRA_DIST += api/subnet4-get.json api/subnet4-list.json
+EXTRA_DIST += api/subnet4-update.json
 EXTRA_DIST += api/subnet6-add.json api/subnet6-del.json
 EXTRA_DIST += api/subnet6-get.json api/subnet6-list.json
+EXTRA_DIST += api/subnet6-update.json
 EXTRA_DIST += api/_template.json api/version-get.json
 
 devel:
