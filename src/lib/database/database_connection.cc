@@ -194,7 +194,7 @@ DatabaseConnection::toElement(const ParameterMap& params) {
                    (keyword == "host") ||
                    (keyword == "name") ||
                    (keyword == "contact-points") ||
-                   (keyword == "cql-consistency") ||
+                   (keyword == "consistency") ||
                    (keyword == "keyspace")) {
             result->set(keyword, isc::data::Element::create(value));
         } else {

@@ -76,17 +76,17 @@ CqlConnection::~CqlConnection() {
 
 CassConsistency CqlConnection::parseConsistency(std::string value) {
     static std::map<std::string, CassConsistency> consistency_map {
-        {"consistency-any", CASS_CONSISTENCY_ANY},
-        {"consistency-one", CASS_CONSISTENCY_ONE},
-        {"consistency-two", CASS_CONSISTENCY_TWO},
-        {"consistency-three", CASS_CONSISTENCY_THREE},
-        {"consistency-quorum", CASS_CONSISTENCY_QUORUM},
-        {"consistency-all", CASS_CONSISTENCY_ALL},
-        {"consistency-local-quorum", CASS_CONSISTENCY_LOCAL_QUORUM},
-        {"consistency-each-quorum", CASS_CONSISTENCY_EACH_QUORUM},
-        {"consistency-serial", CASS_CONSISTENCY_SERIAL},
-        {"consistency-local-serial", CASS_CONSISTENCY_LOCAL_SERIAL},
-        {"consistency-local-one", CASS_CONSISTENCY_LOCAL_ONE}
+        {"any", CASS_CONSISTENCY_ANY},
+        {"one", CASS_CONSISTENCY_ONE},
+        {"two", CASS_CONSISTENCY_TWO},
+        {"three", CASS_CONSISTENCY_THREE},
+        {"quorum", CASS_CONSISTENCY_QUORUM},
+        {"all", CASS_CONSISTENCY_ALL},
+        {"local-quorum", CASS_CONSISTENCY_LOCAL_QUORUM},
+        {"each-quorum", CASS_CONSISTENCY_EACH_QUORUM},
+        {"serial", CASS_CONSISTENCY_SERIAL},
+        {"local-serial", CASS_CONSISTENCY_LOCAL_SERIAL},
+        {"local-one", CASS_CONSISTENCY_LOCAL_ONE}
     };
     if (consistency_map.find(value) == consistency_map.end()) {
         return CASS_CONSISTENCY_UNKNOWN;
@@ -146,7 +146,7 @@ CqlConnection::openDatabase() {
     const char* consistency = NULL;
     std::string sconsistency;
     try {
-        sconsistency = getParameter("cql-consistency");
+        sconsistency = getParameter("consistency");
         consistency = sconsistency.c_str();
     } catch (...) {
         // No user. Fine, we'll use NULL.
