@@ -149,7 +149,7 @@ public:
     /// - contact-points: IP addresses of the nodes to connect to (127.0.0.1)
     /// - port: The TCP port to use (9042)
     /// - user - credentials to use when connecting (no username)
-    /// - password - credentails to use when connecting (no password)
+    /// - password - credentials to use when connecting (no password)
     /// - reconnect-wait-time 2000
     /// - connect-timeout 5000
     /// - request-timeout 12000

@@ -95,8 +95,8 @@ TEST_F(DatabaseConnectionCallbackTest, dbLostCallback) {
     /// Create the connection..
     DatabaseConnection datasrc(pmap);
 
-    /// We should be able to invoke the callback and glean
-    /// the correct reconnect contorl parameters from it.
+    /// We should be able to invoke the callback and get
+    /// the correct reconnect control parameters from it.
     bool ret = false;
     ASSERT_NO_THROW(ret = datasrc.invokeDbLostCallback());
     EXPECT_TRUE(ret);
@@ -260,6 +260,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "{\n"
         "\"connect-timeout\" : 200, \n"
         "\"contact-points\": \"contact_str\", \n"
+        "\"consistency\": \"quorum\", \n"
         "\"host\": \"host_str\", \n"
         "\"keyspace\": \"keyspace_str\", \n"
         "\"lfc-interval\" : 100, \n"

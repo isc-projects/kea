@@ -484,14 +484,14 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
-\"cql-consistency\" {
+\"consistency\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
     case isc::dhcp::Parser4Context::HOSTS_DATABASE:
     case isc::dhcp::Parser4Context::CONFIG_DATABASE:
-        return isc::dhcp::Dhcp4Parser::make_CQL_CONSISTENCY(driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_CONSISTENCY(driver.loc_);
     default:
-        return isc::dhcp::Dhcp4Parser::make_STRING("cql-consistency", driver.loc_);
+        return isc::dhcp::Dhcp4Parser::make_STRING("consistency", driver.loc_);
     }
 }
 
