@@ -6,5 +6,5 @@
 
 # This variable should point to the directory where sysrepo is compiled.
 # You can download sysrepo sources from https://github.com/sysrepo/sysrepo.git
-SYSREPO_PATH="/please/specify/path/to/sysrepo/in/sysrepo_config_defines.sh"
-export SYSREPO_PATH
+export LIBYANG_PATH="/please/specify/path/to/libyang/in/sysrepo_config_defines.sh"
+export SYSREPO_PATH="/please/specify/path/to/sysrepo/in/sysrepo_config_defines.sh"
