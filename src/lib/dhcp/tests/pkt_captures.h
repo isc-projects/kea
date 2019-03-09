@@ -33,6 +33,14 @@ public:
     /// @return relayed DISCOVER
     static isc::dhcp::Pkt4Ptr captureRelayedDiscover2();
 
+    /// @brief returns captured DISCOVER that went through a relay
+    ///
+    /// See method code for a detailed explanation. This is a discover from
+    /// a buggy relay device with a bad suboption.
+    ///
+    /// @return relayed DISCOVER
+    static isc::dhcp::Pkt4Ptr captureBadRelayedDiscover();
+
     /// @brief returns captured DISCOVER that contains a valid VIVSO option
     ///
     /// See method code for a detailed explanation.

@@ -285,8 +285,9 @@ Dhcpv4Exchange::copyDefaultOptions() {
     }
 
     // If this packet is relayed, we want to copy Relay Agent Info option
+    // when it is not empty.
     OptionPtr rai = query_->getOption(DHO_DHCP_AGENT_OPTIONS);
-    if (rai) {
+    if (rai && (rai->len() > Option::OPTION4_HDR_LEN)) {
         resp_->addOption(rai);
     }
 
