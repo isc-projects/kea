@@ -689,6 +689,7 @@
             // Queue type was mandatory.
             "queue-type": "kea-ring4"
         }
+	// Missing: calculate-tee-times, t1-percent, t2-percent
     },
 
     // Logging configuration begins here.

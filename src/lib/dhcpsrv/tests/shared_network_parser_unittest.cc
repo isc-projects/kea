@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <asiolink/io_address.h>
 #include <cc/data.h>
 #include <dhcp/dhcp4.h>
 #include <dhcp/dhcp6.h>
@@ -17,6 +18,7 @@
 #include <string>
 
 using namespace isc;
+using namespace isc::asiolink;
 using namespace isc::data;
 using namespace isc::dhcp;
 
@@ -113,9 +115,24 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
-                "    \"user-context\": { \"comment\": \"example\" },"
-                "    \"name\": \"bird\","
+                "    \"authoritative\": true,"
+                "    \"boot-file-name\": \"/dev/null\","
+                "    \"client-class\": \"srv1\","
                 "    \"interface\": \"eth1\","
+                "    \"match-client-id\": true,"
+                "    \"name\": \"bird\","
+                "    \"next-server\": \"10.0.0.1\","
+                "    \"rebind-timer\": 199,"
+                "    \"relay\": { \"ip-addresses\": [ \"10.1.1.1\" ] },"
+                "    \"renew-timer\": 99,"
+                "    \"reservation-mode\": \"out-of-pool\","
+                "    \"server-hostname\": \"example.org\","
+                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"user-context\": { \"comment\": \"example\" },"
+                "    \"valid-lifetime\": 399,"
+                "    \"calculate-tee-times\": true,"
+                "    \"t1-percent\": 0.345,"
+                "    \"t2-percent\": 0.721,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"domain-name-servers\","
@@ -213,8 +230,29 @@ TEST_F(SharedNetwork4ParserTest, parse) {
     ASSERT_TRUE(network);
 
     // Check basic parameters.
+    EXPECT_TRUE(network->getAuthoritative());
+    EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ(99, network->getT1());
+    EXPECT_EQ(199, network->getT2());
+    EXPECT_EQ(399, network->getValid());
+    EXPECT_TRUE(network->getCalculateTeeTimes());
+    EXPECT_EQ(0.345, network->getT1Percent());
+    EXPECT_EQ(0.721, network->getT2Percent());
+    EXPECT_EQ("/dev/null", network->getFilename().get());
+    EXPECT_EQ("10.0.0.1", network->getSiaddr().get().toText());
+    EXPECT_EQ("example.org", network->getSname().get());
+
+    // Relay information.
+    auto relay_info = network->getRelayInfo();
+    EXPECT_EQ(1, relay_info.getAddresses().size());
+    EXPECT_TRUE(relay_info.containsAddress(IOAddress("10.1.1.1")));
+
+    // Required client classes.
+    auto required = network->getRequiredClasses();
+    ASSERT_EQ(1, required.size());
+    EXPECT_EQ("runner", *required.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();
@@ -373,9 +411,21 @@ public:
     /// @return Valid shared network configuration.
     virtual std::string getWorkingConfig() const {
             std::string config = "{"
-                "    \"name\": \"bird\","
+                "    \"client-class\": \"srv1\","
                 "    \"interface\": \"eth1\","
+                "    \"name\": \"bird\","
+                "    \"preferred-lifetime\": 211,"
+                "    \"rapid-commit\": true,"
+                "    \"rebind-timer\": 199,"
+                "    \"relay\": { \"ip-addresses\": [ \"2001:db8:1::1\" ] },"
+                "    \"renew-timer\": 99,"
+                "    \"require-client-classes\": [ \"runner\" ],"
+                "    \"reservation-mode\": \"out-of-pool\","
                 "    \"user-context\": { },"
+                "    \"valid-lifetime\": 399,"
+                "    \"calculate-tee-times\": true,"
+                "    \"t1-percent\": 0.345,"
+                "    \"t2-percent\": 0.721,"
                 "    \"option-data\": ["
                 "        {"
                 "            \"name\": \"dns-servers\","
@@ -448,8 +498,27 @@ TEST_F(SharedNetwork6ParserTest, parse) {
     ASSERT_TRUE(network);
 
     // Check basic parameters.
+    EXPECT_EQ("srv1", network->getClientClass().get());
     EXPECT_EQ("bird", network->getName());
     EXPECT_EQ("eth1", network->getIface().get());
+    EXPECT_EQ(211, network->getPreferred());
+    EXPECT_TRUE(network->getRapidCommit());
+    EXPECT_EQ(99, network->getT1());
+    EXPECT_EQ(199, network->getT2());
+    EXPECT_EQ(399, network->getValid());
+    EXPECT_TRUE(network->getCalculateTeeTimes());
+    EXPECT_EQ(0.345, network->getT1Percent());
+    EXPECT_EQ(0.721, network->getT2Percent());
+
+    // Relay information.
+    auto relay_info = network->getRelayInfo();
+    EXPECT_EQ(1, relay_info.getAddresses().size());
+    EXPECT_TRUE(relay_info.containsAddress(IOAddress("2001:db8:1::1")));
+
+    // Required client classes.
+    auto required = network->getRequiredClasses();
+    ASSERT_EQ(1, required.size());
+    EXPECT_EQ("runner", *required.cbegin());
 
     // Check user context.
     ConstElementPtr context = network->getContext();

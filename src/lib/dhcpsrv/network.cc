@@ -107,9 +107,8 @@ Network::toElement() const {
     contextToElement(map);
 
     // Set interface
-    const std::string& iface = getIface();
-    if (!iface.empty()) {
-        map->set("interface", Element::create(iface));
+    if (!getIface().unspecified()) {
+        map->set("interface", Element::create(getIface().get()));
     }
 
     ElementPtr relay_map = Element::createMap();
@@ -123,9 +122,8 @@ Network::toElement() const {
     map->set("relay", relay_map);
 
     // Set client-class
-    const ClientClass& cclass = getClientClass();
-    if (!cclass.empty()) {
-        map->set("client-class", Element::create(cclass));
+    if (!getClientClass().unspecified()) {
+        map->set("client-class", Element::create(getClientClass().get()));
     }
 
     // Set require-client-classes
@@ -161,40 +159,84 @@ Network::toElement() const {
     }
 
     // Set reservation mode
-    Network::HRMode hrmode = getHostReservationMode();
-    std::string mode;
-    switch (hrmode) {
-    case HR_DISABLED:
-        mode = "disabled";
-        break;
-    case HR_OUT_OF_POOL:
-        mode = "out-of-pool";
-        break;
-    case HR_GLOBAL:
-        mode = "global";
-        break;
-    case HR_ALL:
-        mode = "all";
-        break;
-    default:
-        isc_throw(ToElementError,
-                  "invalid host reservation mode: " << hrmode);
+    Optional<Network::HRMode> hrmode = getHostReservationMode();
+    if (!hrmode.unspecified()) {
+        std::string mode;
+        switch (hrmode.get()) {
+        case HR_DISABLED:
+            mode = "disabled";
+            break;
+        case HR_OUT_OF_POOL:
+            mode = "out-of-pool";
+            break;
+        case HR_GLOBAL:
+            mode = "global";
+            break;
+        case HR_ALL:
+            mode = "all";
+            break;
+        default:
+            isc_throw(ToElementError,
+                      "invalid host reservation mode: " << hrmode.get());
+        }
+        map->set("reservation-mode", Element::create(mode));
     }
-    map->set("reservation-mode", Element::create(mode));
 
     // Set options
     ConstCfgOptionPtr opts = getCfgOption();
     map->set("option-data", opts->toElement());
 
     // Output calcualte-tee-times and percentages if calculation is enabled.
-    bool calc_tee_times = getCalculateTeeTimes();
-    if (calc_tee_times) {
+    auto calc_tee_times = getCalculateTeeTimes();
+    if (!calc_tee_times.unspecified()) {
         map->set("calculate-tee-times", Element::create(calc_tee_times));
+    }
+
+    auto t1_percent = getT1Percent();
+    if (!t1_percent.unspecified()) {
         map->set("t1-percent", Element::create(getT1Percent()));
+    }
+
+    auto t2_percent = getT2Percent();
+    if (!t2_percent.unspecified()) {
         map->set("t2-percent", Element::create(getT2Percent()));
     }
 
     return (map);
+}
+
+void
+Network4::setSiaddr(const Optional<IOAddress>& siaddr) {
+    if (!siaddr.get().isV4()) {
+        isc_throw(BadValue, "Can't set siaddr to non-IPv4 address "
+                  << siaddr);
+    }
+    siaddr_ = siaddr;
+}
+
+const Optional<IOAddress>&
+Network4::getSiaddr() const {
+    return (siaddr_);
+}
+
+void
+Network4::setSname(const Optional<std::string>& sname) {
+    sname_ = sname;
+}
+
+const Optional<std::string>&
+Network4::getSname() const {
+    return (sname_);
+}
+
+void
+Network4::setFilename(const Optional<std::string>& filename) {
+    filename_ = filename;
+}
+
+const Optional<std::string>&
+Network4::getFilename() const {
+    return (filename_);
 }
 
 ElementPtr
@@ -202,10 +244,29 @@ Network4::toElement() const {
     ElementPtr map = Network::toElement();
 
     // Set match-client-id
-    map->set("match-client-id", Element::create(getMatchClientId()));
+    if (!getMatchClientId().unspecified()) {
+        map->set("match-client-id", Element::create(getMatchClientId().get()));
+    }
 
     // Set authoritative
-    map->set("authoritative", Element::create(getAuthoritative()));
+    if (!getAuthoritative().unspecified()) {
+        map->set("authoritative", Element::create(getAuthoritative().get()));
+    }
+
+    // Set next-server
+    if (!getSiaddr().unspecified()) {
+        map->set("next-server", Element::create(getSiaddr().get().toText()));
+    }
+
+    // Set server-hostname
+    if (!getSname().unspecified()) {
+        map->set("server-hostname", Element::create(getSname().get()));
+    }
+
+    // Set boot-file-name
+    if (!getFilename().unspecified()) {
+        map->set("boot-file-name",Element::create(getFilename().get()));
+    }
 
     return (map);
 }
@@ -230,9 +291,11 @@ Network6::toElement() const {
     ElementPtr map = Network::toElement();
 
     // Set preferred-lifetime
-    map->set("preferred-lifetime",
-             Element::create(static_cast<long long>
-                             (getPreferred().get())));
+    if (!getPreferred().unspecified()) {
+        map->set("preferred-lifetime",
+                 Element::create(static_cast<long long>
+                                 (getPreferred().get())));
+    }
 
     // Set interface-id
     const OptionPtr& ifaceid = getInterfaceId();
@@ -247,8 +310,9 @@ Network6::toElement() const {
     }
 
     // Set rapid-commit
-    bool rapid_commit = getRapidCommit();
-    map->set("rapid-commit", Element::create(rapid_commit));
+    if (!getRapidCommit().unspecified()) {
+        map->set("rapid-commit", Element::create(getRapidCommit().get()));
+    }
 
     return (map);
 }

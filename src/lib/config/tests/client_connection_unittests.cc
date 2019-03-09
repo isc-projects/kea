@@ -5,6 +5,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 #include <config.h>
+#include <testutils/sandbox.h>
 #include <asiolink/asio_wrapper.h>
 #include <asiolink/io_service.h>
 #include <asiolink/testutils/test_server_unix_socket.h>
@@ -20,15 +21,13 @@ using namespace isc::config;
 
 namespace {
 
-/// @brief Test unix socket file name.
-const std::string TEST_SOCKET = "test-socket";
-
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
 
 /// Test fixture class for @ref ClientConnection.
 class ClientConnectionTest : public ::testing::Test {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Constructor.
     ///
@@ -60,17 +59,15 @@ public:
     /// the KEA_SOCKET_TEST_DIR environmental variable to point to an alternative
     /// location, e.g. /tmp, with an absolute path length being within the
     /// allowed range.
-    static std::string unixSocketFilePath() {
-        std::ostringstream s;
+    std::string unixSocketFilePath() {
+        std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            s << std::string(env);
+            socket_path = std::string(env) + "/test-socket";
         } else {
-            s << TEST_DATA_BUILDDIR;
+            socket_path = sandbox.join("test-socket");
         }
-
-        s << "/" << TEST_SOCKET;
-        return (s.str());
+        return (socket_path);
     }
 
     /// @brief Removes unix socket descriptor.

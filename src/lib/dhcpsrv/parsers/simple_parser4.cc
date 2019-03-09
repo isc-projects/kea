@@ -30,6 +30,50 @@ namespace dhcp {
 ///
 /// @{
 
+/// @brief This table defines all global parameters in DHCPv4.
+///
+/// Boolean, integer, real and string types are for scalar parameters,
+/// list and map types for entries.
+/// Order follows global_param rule in bison grammar.
+const SimpleKeywords SimpleParser4::GLOBAL4_PARAMETERS = {
+    { "valid-lifetime",               Element::integer },
+    { "renew-timer",                  Element::integer },
+    { "rebind-timer",                 Element::integer },
+    { "decline-probation-period",     Element::integer },
+    { "subnet4",                      Element::list },
+    { "shared-networks",              Element::list },
+    { "interfaces-config",            Element::map },
+    { "lease-database",               Element::map },
+    { "hosts-database",               Element::map },
+    { "hosts-databases",              Element::list },
+    { "host-reservation-identifiers", Element::list },
+    { "client-classes",               Element::list },
+    { "option-def",                   Element::list },
+    { "option-data",                  Element::list },
+    { "hooks-libraries",              Element::list },
+    { "expired-leases-processing",    Element::map },
+    { "dhcp4o6-port",                 Element::integer },
+    { "control-socket",               Element::map },
+    { "dhcp-queue-control",           Element::map },
+    { "dhcp-ddns",                    Element::map },
+    { "echo-client-id",               Element::boolean },
+    { "match-client-id",              Element::boolean },
+    { "authoritative",                Element::boolean },
+    { "next-server",                  Element::string },
+    { "server-hostname",              Element::string },
+    { "boot-file-name",               Element::string },
+    { "user-context",                 Element::map },
+    { "comment",                      Element::string },
+    { "sanity-checks",                Element::map },
+    { "reservations",                 Element::list },
+    { "config-control",               Element::map },
+    { "server-tag",                   Element::string },
+    { "reservation-mode",             Element::string },
+    { "calculate-tee-times",          Element::boolean },
+    { "t1-percent",                   Element::real },
+    { "t2-percent",                   Element::real }
+};
+
 /// @brief This table defines default values for option definitions in DHCPv4.
 ///
 /// Dhcp4 may contain an array called option-def that enumerates new option
