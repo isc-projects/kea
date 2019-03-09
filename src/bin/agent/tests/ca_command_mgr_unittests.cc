@@ -20,6 +20,7 @@
 #include <boost/bind.hpp>
 #include <boost/pointer_cast.hpp>
 #include <gtest/gtest.h>
+#include <testutils/sandbox.h>
 #include <cstdlib>
 #include <vector>
 
@@ -29,9 +30,6 @@ using namespace isc::data;
 using namespace isc::process;
 
 namespace {
-
-/// @brief Test unix socket file name.
-const std::string TEST_SOCKET = "test-socket";
 
 /// @brief Test timeout in ms.
 const long TEST_TIMEOUT = 10000;
@@ -43,6 +41,7 @@ const long TEST_TIMEOUT = 10000;
 /// Meanwhile, this is just a placeholder for the tests.
 class CtrlAgentCommandMgrTest : public DControllerTest {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Constructor.
     ///
@@ -111,17 +110,15 @@ public:
     /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
-    static std::string unixSocketFilePath() {
-        std::ostringstream s;
+    std::string unixSocketFilePath() {
+        std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            s << std::string(env);
+            socket_path = std::string(env) + "/test-socket";
         } else {
-            s << TEST_DATA_BUILDDIR;
+            socket_path = sandbox.join("test-socket");
         }
-
-        s << "/" << TEST_SOCKET;
-        return (s.str());
+        return (socket_path);
     }
 
     /// @brief Removes unix socket descriptor.

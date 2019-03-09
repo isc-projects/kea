@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -19,6 +19,8 @@
 #include <dhcpsrv/cfg_mac_source.h>
 #include <dhcpsrv/parsers/dhcp_parsers.h>
 #include <dhcpsrv/parsers/option_data_parser.h>
+#include <dhcpsrv/parsers/shared_network_parser.h>
+#include <dhcpsrv/parsers/shared_networks_list_parser.h>
 #include <dhcpsrv/tests/test_libraries.h>
 #include <dhcpsrv/testutils/config_result_check.h>
 #include <exceptions/exceptions.h>
@@ -177,10 +179,11 @@ public:
     /// the parsed elements.
     ///
     /// @param config_set is the set of elements to parse.
+    /// @param v6 boolean flag indicating if this is a DHCPv6 configuration.
     /// @return returns an ConstElementPtr containing the numeric result
     /// code and outcome comment.
-    isc::data::ConstElementPtr parseElementSet(isc::data::ConstElementPtr
-                                               config_set) {
+    isc::data::ConstElementPtr
+    parseElementSet(isc::data::ConstElementPtr config_set, bool v6) {
         // Answer will hold the result.
         ConstElementPtr answer;
         if (!config_set) {
@@ -252,6 +255,37 @@ public:
                 D2ClientConfigParser parser;
                 D2ClientConfigPtr cfg = parser.parse(d2_client_config->second);
                 CfgMgr::instance().setD2ClientConfig(cfg);
+            }
+
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                subnets4_config = values_map.find("subnet4");
+            if (subnets4_config != values_map.end()) {
+                auto srv_config = CfgMgr::instance().getStagingCfg();
+                Subnets4ListConfigParser parser;
+                parser.parse(srv_config, subnets4_config->second);
+            }
+
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                subnets6_config = values_map.find("subnet6");
+            if (subnets6_config != values_map.end()) {
+                auto srv_config = CfgMgr::instance().getStagingCfg();
+                Subnets6ListConfigParser parser;
+                parser.parse(srv_config, subnets6_config->second);
+            }
+
+            std::map<std::string, ConstElementPtr>::const_iterator
+                                networks_config = values_map.find("shared-networks");
+            if (networks_config != values_map.end()) {
+                if (v6) {
+                    auto cfg_shared_networks = CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6();
+                    SharedNetworks6ListParser parser;
+                    parser.parse(cfg_shared_networks, networks_config->second);
+
+                } else {
+                    auto cfg_shared_networks = CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4();
+                    SharedNetworks4ListParser parser;
+                    parser.parse(cfg_shared_networks, networks_config->second);
+                }
             }
 
             // Everything was fine. Configuration is successful.
@@ -354,19 +388,25 @@ public:
     /// Given a configuration string, convert it into Elements
     /// and parse them.
     /// @param config is the configuration string to parse
+    /// @param v6 boolean value indicating if this is DHCPv6 configuration.
+    /// @param set_defaults boolean value indicating if the defaults should
+    /// be derived before parsing the configuration.
     ///
     /// @return returns 0 if the configuration parsed successfully,
     /// non-zero otherwise failure.
-    int parseConfiguration(const std::string& config, bool v6 = false) {
+    int parseConfiguration(const std::string& config, bool v6 = false,
+                           bool set_defaults = true) {
         int rcode_ = 1;
         // Turn config into elements.
         // Test json just to make sure its valid.
         ElementPtr json = Element::fromJSON(config);
         EXPECT_TRUE(json);
         if (json) {
-            setAllDefaults(json, v6);
+            if (set_defaults) {
+                setAllDefaults(json, v6);
+            }
 
-            ConstElementPtr status = parseElementSet(json);
+            ConstElementPtr status = parseElementSet(json, v6);
             ConstElementPtr comment = parseAnswer(rcode_, status);
             error_text_ = comment->stringValue();
             // If error was reported, the error string should contain
@@ -2312,6 +2352,230 @@ TEST_F(ParseConfigTest, bogusRelayInfo6) {
 
     // Mandatory ip-address is missing. What a pity.
     EXPECT_THROW(parser.parse(result, json_bogus3), DhcpConfigError);
+}
+
+// This test verifies that it is possible to parse an IPv4 subnet for which
+// only mandatory parameters are specified without setting the defaults.
+TEST_F(ParseConfigTest, defaultSubnet4) {
+    std::string config =
+        "{"
+        "    \"subnet4\": [ {"
+        "        \"subnet\": \"192.0.2.0/24\","
+        "        \"id\": 123"
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, false, false);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets4()->getSubnet(123);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->getIface().unspecified());
+    EXPECT_TRUE(subnet->getIface().empty());
+
+    EXPECT_TRUE(subnet->getClientClass().unspecified());
+    EXPECT_TRUE(subnet->getClientClass().empty());
+
+    EXPECT_TRUE(subnet->getValid().unspecified());
+    EXPECT_EQ(0, subnet->getValid().get());
+
+    EXPECT_TRUE(subnet->getT1().unspecified());
+    EXPECT_EQ(0, subnet->getT1().get());
+
+    EXPECT_TRUE(subnet->getT2().unspecified());
+    EXPECT_EQ(0, subnet->getT2().get());
+
+    EXPECT_TRUE(subnet->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode().get());
+
+    EXPECT_TRUE(subnet->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(subnet->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(subnet->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, subnet->getT1Percent().get());
+
+    EXPECT_TRUE(subnet->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, subnet->getT2Percent().get());
+
+    EXPECT_TRUE(subnet->getMatchClientId().unspecified());
+    EXPECT_TRUE(subnet->getMatchClientId().get());
+
+    EXPECT_TRUE(subnet->getAuthoritative().unspecified());
+    EXPECT_FALSE(subnet->getAuthoritative().get());
+
+    EXPECT_TRUE(subnet->getSiaddr().unspecified());
+    EXPECT_TRUE(subnet->getSiaddr().get().isV4Zero());
+
+    EXPECT_TRUE(subnet->getSname().unspecified());
+    EXPECT_TRUE(subnet->getSname().empty());
+
+    EXPECT_TRUE(subnet->getFilename().unspecified());
+    EXPECT_TRUE(subnet->getFilename().empty());
+
+    EXPECT_FALSE(subnet->get4o6().enabled());
+
+    EXPECT_TRUE(subnet->get4o6().getIface4o6().unspecified());
+    EXPECT_TRUE(subnet->get4o6().getIface4o6().empty());
+
+    EXPECT_TRUE(subnet->get4o6().getSubnet4o6().unspecified());
+    EXPECT_TRUE(subnet->get4o6().getSubnet4o6().get().first.isV6Zero());
+    EXPECT_EQ(128, subnet->get4o6().getSubnet4o6().get().second);
+}
+
+// This test verifies that it is possible to parse an IPv6 subnet for which
+// only mandatory parameters are specified without setting the defaults.
+TEST_F(ParseConfigTest, defaultSubnet6) {
+    std::string config =
+        "{"
+        "    \"subnet6\": [ {"
+        "        \"subnet\": \"2001:db8:1::/64\","
+        "        \"id\": 123"
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, true, false);
+    ASSERT_EQ(0, rcode);
+
+    auto subnet = CfgMgr::instance().getStagingCfg()->getCfgSubnets6()->getSubnet(123);
+    ASSERT_TRUE(subnet);
+
+    EXPECT_TRUE(subnet->getIface().unspecified());
+    EXPECT_TRUE(subnet->getIface().empty());
+
+    EXPECT_TRUE(subnet->getClientClass().unspecified());
+    EXPECT_TRUE(subnet->getClientClass().empty());
+
+    EXPECT_TRUE(subnet->getValid().unspecified());
+    EXPECT_EQ(0, subnet->getValid().get());
+
+    EXPECT_TRUE(subnet->getT1().unspecified());
+    EXPECT_EQ(0, subnet->getT1().get());
+
+    EXPECT_TRUE(subnet->getT2().unspecified());
+    EXPECT_EQ(0, subnet->getT2().get());
+
+    EXPECT_TRUE(subnet->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, subnet->getHostReservationMode().get());
+
+    EXPECT_TRUE(subnet->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(subnet->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(subnet->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, subnet->getT1Percent().get());
+
+    EXPECT_TRUE(subnet->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, subnet->getT2Percent().get());
+
+    EXPECT_TRUE(subnet->getPreferred().unspecified());
+    EXPECT_EQ(0, subnet->getPreferred().get());
+
+    EXPECT_TRUE(subnet->getRapidCommit().unspecified());
+    EXPECT_FALSE(subnet->getRapidCommit().get());
+}
+
+// This test verifies that it is possible to parse an IPv4 shared network
+// for which only mandatory parameter is specified without setting the
+// defaults.
+TEST_F(ParseConfigTest, defaultSharedNetwork4) {
+    std::string config =
+        "{"
+        "    \"shared-networks\": [ {"
+        "        \"name\": \"frog\""
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, false, false);
+    ASSERT_EQ(0, rcode);
+
+    auto network =
+        CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks4()->getByName("frog");
+    ASSERT_TRUE(network);
+
+    EXPECT_TRUE(network->getIface().unspecified());
+    EXPECT_TRUE(network->getIface().empty());
+
+    EXPECT_TRUE(network->getClientClass().unspecified());
+    EXPECT_TRUE(network->getClientClass().empty());
+
+    EXPECT_TRUE(network->getValid().unspecified());
+    EXPECT_EQ(0, network->getValid().get());
+
+    EXPECT_TRUE(network->getT1().unspecified());
+    EXPECT_EQ(0, network->getT1().get());
+
+    EXPECT_TRUE(network->getT2().unspecified());
+    EXPECT_EQ(0, network->getT2().get());
+
+    EXPECT_TRUE(network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+
+    EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT1Percent().get());
+
+    EXPECT_TRUE(network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getMatchClientId().unspecified());
+    EXPECT_TRUE(network->getMatchClientId().get());
+
+    EXPECT_TRUE(network->getAuthoritative().unspecified());
+    EXPECT_FALSE(network->getAuthoritative().get());
+}
+
+// This test verifies that it is possible to parse an IPv6 shared network
+// for which only mandatory parameter is specified without setting the
+// defaults.
+TEST_F(ParseConfigTest, defaultSharedNetwork6) {
+    std::string config =
+        "{"
+        "    \"shared-networks\": [ {"
+        "        \"name\": \"frog\""
+        "    } ]"
+        "}";
+
+    int rcode = parseConfiguration(config, true, false);
+    ASSERT_EQ(0, rcode);
+
+    auto network =
+        CfgMgr::instance().getStagingCfg()->getCfgSharedNetworks6()->getByName("frog");
+    ASSERT_TRUE(network);
+
+    EXPECT_TRUE(network->getIface().unspecified());
+    EXPECT_TRUE(network->getIface().empty());
+
+    EXPECT_TRUE(network->getClientClass().unspecified());
+    EXPECT_TRUE(network->getClientClass().empty());
+
+    EXPECT_TRUE(network->getValid().unspecified());
+    EXPECT_EQ(0, network->getValid().get());
+
+    EXPECT_TRUE(network->getT1().unspecified());
+    EXPECT_EQ(0, network->getT1().get());
+
+    EXPECT_TRUE(network->getT2().unspecified());
+    EXPECT_EQ(0, network->getT2().get());
+
+    EXPECT_TRUE(network->getHostReservationMode().unspecified());
+    EXPECT_EQ(Network::HR_ALL, network->getHostReservationMode().get());
+
+    EXPECT_TRUE(network->getCalculateTeeTimes().unspecified());
+    EXPECT_FALSE(network->getCalculateTeeTimes().get());
+
+    EXPECT_TRUE(network->getT1Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT1Percent().get());
+
+    EXPECT_TRUE(network->getT2Percent().unspecified());
+    EXPECT_EQ(0.0, network->getT2Percent().get());
+
+    EXPECT_TRUE(network->getPreferred().unspecified());
+    EXPECT_EQ(0, network->getPreferred().get());
+
+    EXPECT_TRUE(network->getRapidCommit().unspecified());
+    EXPECT_FALSE(network->getRapidCommit().get());
 }
 
 // There's no test for ControlSocketParser, as it is tested in the DHCPv4 code

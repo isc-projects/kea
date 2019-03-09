@@ -17,6 +17,7 @@
 #include <d2/d2_process.h>
 #include <d2/parser_context.h>
 #include <gtest/gtest.h>
+#include <testutils/sandbox.h>
 #include <boost/pointer_cast.hpp>
 #include <fstream>
 #include <iostream>
@@ -98,6 +99,7 @@ private:
 /// @brief Fixture class intended for testin control channel in D2.
 class CtrlChannelD2Test : public ::testing::Test {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Path to the UNIX socket being used to communicate with the server.
     string socket_path_;
@@ -122,7 +124,7 @@ public:
         if (env) {
             socket_path_ = string(env) + "/d2.sock";
         } else {
-            socket_path_ = string(TEST_DATA_BUILDDIR) + "/d2.sock";
+            socket_path_ = sandbox.join("d2.sock");
         }
         ::remove(socket_path_.c_str());
     }

@@ -1,3 +1,16 @@
+1538.	[func]		marcin
+	DHCP configuration parsers correctly handle unspecified parameters.
+	This change was required for the MySQL Config Backend to record
+	unspecified parameters as NULL in the database.
+	(Gitlab #488,!259, git d3b33058651036be34200f16d2da230267415056)
+
+1537.	[func]		godfryd
+	Improved handling unix sockets in unit tests. Now by default
+	they are created in temporary folder under /tmp folder. This
+	fixes the issue with creating sockets with too long path
+	in the case when source folder is deeply nested.
+	(Gitlab #357,!258, git a45e2f68d7d1848adb0cf755954a3d76c9dff338)
+
 1536.	[build]		tomek
 	Many changes in keactrl, kea-admin, cql_config and sysrepo_config
 	scripts. ISC is now using shellcheck to verify portability of

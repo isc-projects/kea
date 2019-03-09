@@ -16,8 +16,6 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/subnet_id.h>
 #include <dhcpsrv/triplet.h>
-#include <util/optional.h>
-
 #include <boost/multi_index/mem_fun.hpp>
 #include <boost/multi_index/indexed_by.hpp>
 #include <boost/multi_index/ordered_index.hpp>
@@ -532,38 +530,6 @@ public:
     virtual bool
     clientSupported(const isc::dhcp::ClientClasses& client_classes) const;
 
-    /// @brief Sets siaddr for the Subnet4
-    ///
-    /// Will be used for siaddr field (the next server) that typically is used
-    /// as TFTP server. If not specified, the default value of 0.0.0.0 is
-    /// used.
-    void setSiaddr(const util::Optional<asiolink::IOAddress>& siaddr);
-
-    /// @brief Returns siaddr for this subnet
-    ///
-    /// @return siaddr value
-    util::Optional<asiolink::IOAddress> getSiaddr() const;
-
-    /// @brief Sets server hostname for the Subnet4 
-    ///
-    /// Will be used for server hostname field (may be empty if not defined)
-    void setSname(const util::Optional<std::string>& sname);
-
-    /// @brief Returns server hostname for this subnet
-    ///
-    /// @return server hostname value
-    const util::Optional<std::string>& getSname() const;
-
-    /// @brief Sets boot file name for the Subnet4 
-    ///
-    /// Will be used for boot file name (may be empty if not defined)
-    void setFilename(const util::Optional<std::string>& filename);
-
-    /// @brief Returns boot file name for this subnet
-    ///
-    /// @return boot file name value
-    const util::Optional<std::string>& getFilename() const;
-
     /// @brief Returns DHCP4o6 configuration parameters.
     ///
     /// This structure is always available. If the 4o6 is not enabled, its
@@ -607,15 +573,6 @@ private:
     /// @param type type to be checked
     /// @throw BadValue if invalid value is used
     virtual void checkType(Lease::Type type) const;
-
-    /// @brief siaddr value for this subnet
-    util::Optional<asiolink::IOAddress> siaddr_;
-
-    /// @brief server hostname for this subnet
-    util::Optional<std::string> sname_;
-
-    /// @brief boot file name for this subnet
-    util::Optional<std::string> filename_;
 
     /// @brief All the information related to DHCP4o6
     Cfg4o6 dhcp4o6_;

@@ -8,6 +8,7 @@
 
 #include <gtest/gtest.h>
 
+#include <testutils/sandbox.h>
 #include <asiolink/io_service.h>
 #include <config/base_command_mgr.h>
 #include <config/command_mgr.h>
@@ -28,6 +29,7 @@ using namespace std;
 // Test class for Command Manager
 class CommandMgrTest : public ::testing::Test {
 public:
+    isc::test::Sandbox sandbox;
 
     /// Default constructor
     CommandMgrTest()
@@ -58,13 +60,12 @@ public:
     /// @brief Returns socket path (using either hardcoded path or env variable)
     /// @return path to the unix socket
     std::string getSocketPath() {
-
         std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
             socket_path = std::string(env) + "/test-socket";
         } else {
-            socket_path = std::string(TEST_DATA_BUILDDIR) + "/test-socket";
+            socket_path = sandbox.join("test-socket");
         }
         return (socket_path);
     }
