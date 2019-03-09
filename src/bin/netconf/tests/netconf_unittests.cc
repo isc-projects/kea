@@ -21,6 +21,7 @@
 #include <yang/testutils/translator_test.h>
 #include <testutils/log_utils.h>
 #include <testutils/threaded_test.h>
+#include <testutils/sandbox.h>
 #include <gtest/gtest.h>
 #include <sstream>
 
@@ -89,6 +90,8 @@ void clearYang(NakedNetconfAgentPtr agent) {
 /// @brief Test fixture class for netconf agent.
 class NetconfAgentTest : public ThreadedTest {
 public:
+    isc::test::Sandbox sandbox;
+
     /// @brief Constructor.
     NetconfAgentTest()
         : ThreadedTest(),
@@ -127,17 +130,15 @@ public:
     /// If the KEA_SOCKET_TEST_DIR environment variable is specified, the
     /// socket file is created in the location pointed to by this variable.
     /// Otherwise, it is created in the build directory.
-    static string unixSocketFilePath() {
-        ostringstream s;
+    string unixSocketFilePath() {
+        std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
-            s << string(env);
+            socket_path = std::string(env) + "/test-socket";
         } else {
-            s << TEST_DATA_BUILDDIR;
+            socket_path = sandbox.join("test-socket");
         }
-
-        s << "/" << TEST_SOCKET;
-        return (s.str());
+        return (socket_path);
     }
 
     /// @brief Removes unix socket descriptor.

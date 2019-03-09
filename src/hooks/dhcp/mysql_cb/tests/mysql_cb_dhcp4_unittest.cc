@@ -108,6 +108,7 @@ public:
         subnet->setSname("server-hostname");
         subnet->setContext(user_context);
         subnet->setValid(555555);
+        subnet->setAuthoritative(true);
         subnet->setCalculateTeeTimes(true);
         subnet->setT1Percent(0.345);
         subnet->setT2Percent(0.444);
@@ -188,6 +189,10 @@ public:
         shared_network->setCalculateTeeTimes(true);
         shared_network->setT1Percent(0.345);
         shared_network->setT2Percent(0.444);
+        shared_network->setSiaddr(IOAddress("192.0.1.2"));
+        shared_network->setSname("frog");
+        shared_network->setFilename("/dev/null");
+        shared_network->setAuthoritative(true);
 
         // Add several options to the shared network.
         shared_network->getCfgOption()->add(test_options_[2]->option_,

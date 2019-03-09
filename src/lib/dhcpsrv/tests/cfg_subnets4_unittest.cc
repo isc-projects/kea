@@ -872,7 +872,7 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     Subnet4Ptr subnet3(new Subnet4(IOAddress("192.0.2.128"), 26, 1, 2, 3, 125));
 
     subnet1->allowClientClass("foo");
-    // These two should not appear, as calculateTeeTimes should be false.
+
     subnet1->setT1Percent(0.45);
     subnet1->setT2Percent(0.70);
 
@@ -885,6 +885,12 @@ TEST(CfgSubnets4Test, unparseSubnet) {
     subnet3->setCalculateTeeTimes(true);
     subnet3->setT1Percent(0.50);
     subnet3->setT2Percent(0.65);
+    subnet3->setHostReservationMode(Network::HR_ALL);
+    subnet3->setAuthoritative(false);
+    subnet3->setMatchClientId(true);
+    subnet3->setSiaddr(IOAddress("192.0.2.2"));
+    subnet3->setSname("frog");
+    subnet3->setFilename("/dev/null");
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -901,10 +907,8 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"comment\": \"foo\",\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/26\",\n"
-        "    \"match-client-id\": true,\n"
-        "    \"next-server\": \"0.0.0.0\",\n"
-        "    \"server-hostname\": \"\",\n"
-        "    \"boot-file-name\": \"\",\n"
+        "    \"t1-percent\": 0.45,"
+        "    \"t2-percent\": 0.7,"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
@@ -913,18 +917,12 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
-        "    \"authoritative\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n"
         "},{\n"
         "    \"id\": 124,\n"
         "    \"subnet\": \"192.0.2.64/26\",\n"
         "    \"interface\": \"lo\",\n"
-        "    \"match-client-id\": true,\n"
-        "    \"next-server\": \"0.0.0.0\",\n"
-        "    \"server-hostname\": \"\",\n"
-        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ \"10.0.0.1\" ] },\n"
@@ -932,8 +930,6 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
-        "    \"authoritative\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"user-context\": {},\n"
         "    \"option-data\": [ ],\n"
         "    \"pools\": [ ]\n"
@@ -942,9 +938,9 @@ TEST(CfgSubnets4Test, unparseSubnet) {
         "    \"subnet\": \"192.0.2.128/26\",\n"
         "    \"interface\": \"eth1\",\n"
         "    \"match-client-id\": true,\n"
-        "    \"next-server\": \"0.0.0.0\",\n"
-        "    \"server-hostname\": \"\",\n"
-        "    \"boot-file-name\": \"\",\n"
+        "    \"next-server\": \"192.0.2.2\",\n"
+        "    \"server-hostname\": \"frog\",\n"
+        "    \"boot-file-name\": \"/dev/null\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
@@ -990,10 +986,6 @@ TEST(CfgSubnets4Test, unparsePool) {
         "{\n"
         "    \"id\": 123,\n"
         "    \"subnet\": \"192.0.2.0/24\",\n"
-        "    \"match-client-id\": true,\n"
-        "    \"next-server\": \"0.0.0.0\",\n"
-        "    \"server-hostname\": \"\",\n"
-        "    \"boot-file-name\": \"\",\n"
         "    \"renew-timer\": 1,\n"
         "    \"rebind-timer\": 2,\n"
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
@@ -1001,8 +993,6 @@ TEST(CfgSubnets4Test, unparsePool) {
         "    \"4o6-interface\": \"\",\n"
         "    \"4o6-interface-id\": \"\",\n"
         "    \"4o6-subnet\": \"\",\n"
-        "    \"authoritative\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"option-data\": [],\n"
         "    \"pools\": [\n"
         "        {\n"

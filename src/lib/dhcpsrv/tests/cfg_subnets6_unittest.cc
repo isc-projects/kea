@@ -440,6 +440,8 @@ TEST(CfgSubnets6Test, unparseSubnet) {
     subnet3->setIface("eth1");
     subnet3->requireClientClass("foo");
     subnet3->requireClientClass("bar");
+    subnet3->setHostReservationMode(Network::HR_ALL);
+    subnet3->setRapidCommit(false);
 
     data::ElementPtr ctx1 = data::Element::fromJSON("{ \"comment\": \"foo\" }");
     subnet1->setContext(ctx1);
@@ -462,8 +464,6 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
-        "    \"rapid-commit\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"client-class\": \"foo\",\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -477,8 +477,6 @@ TEST(CfgSubnets6Test, unparseSubnet) {
         "    \"relay\": { \"ip-addresses\": [ \"2001:db8:ff::2\" ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
-        "    \"rapid-commit\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"user-context\": { },\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [ ],\n"
@@ -536,8 +534,6 @@ TEST(CfgSubnets6Test, unparsePool) {
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
-        "    \"rapid-commit\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [\n"
         "        {\n"
         "            \"comment\": \"foo\",\n"
@@ -591,8 +587,6 @@ TEST(CfgSubnets6Test, unparsePdPool) {
         "    \"relay\": { \"ip-addresses\": [ ] },\n"
         "    \"preferred-lifetime\": 3,\n"
         "    \"valid-lifetime\": 4,\n"
-        "    \"rapid-commit\": false,\n"
-        "    \"reservation-mode\": \"all\",\n"
         "    \"pools\": [ ],\n"
         "    \"pd-pools\": [\n"
         "        {\n"

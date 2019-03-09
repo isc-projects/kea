@@ -19,6 +19,7 @@
 #include <stats/stats_mgr.h>
 #include <testutils/unix_control_client.h>
 #include <testutils/io_utils.h>
+#include <testutils/sandbox.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -125,6 +126,7 @@ public:
 
 class CtrlChannelDhcpv6SrvTest : public CtrlDhcpv6SrvTest {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
@@ -140,7 +142,7 @@ public:
         if (env) {
             socket_path_ = string(env) + "/kea6.sock";
         } else {
-            socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea6.sock";
+            socket_path_ = sandbox.join("/kea6.sock");
         }
         reset();
     }
