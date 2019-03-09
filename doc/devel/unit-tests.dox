@@ -40,10 +40,9 @@ The following environment variable can affect the unit tests:
 - KEA_SOCKET_TEST_DIR - if set, it specifies the directory where Unix
   sockets are created. There is an operating system limitation on how
   long a Unix socket path can be, typically slightly over 100
-  characters. If you happen to build and run unit-tests in deeply nested
-  directories, this may become a problem. KEA_SOCKET_TEST_DIR can be
-  specified to instruct unit-test to use a different directory. It must
-  not end with slash.
+  characters. By default unit-tests create sockets in temporary folder
+  under /tmp folder. KEA_SOCKET_TEST_DIR can be specified to instruct
+  unit-tests to use a different directory. It must not end with slash.
 
 @section unitTestsDatabaseConfig Databases Configuration for Unit Tests
 
@@ -265,5 +264,5 @@ local   all             postgres                                trust
  [cqlsh 5.0.1 | Cassandra 3.11.1 | CQL spec 3.4.4 | Native protocol v4]
  Use HELP for help.
  cqlsh> @endverbatim\n
- 
+
  */

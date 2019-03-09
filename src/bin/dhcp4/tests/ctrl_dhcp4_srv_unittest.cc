@@ -22,6 +22,7 @@
 #include <stats/stats_mgr.h>
 #include <testutils/io_utils.h>
 #include <testutils/unix_control_client.h>
+#include <testutils/sandbox.h>
 
 #include "marker_file.h"
 #include "test_libraries.h"
@@ -93,6 +94,7 @@ public:
 /// @brief Fixture class intended for testing control channel in the DHCPv4Srv
 class CtrlChannelDhcpv4SrvTest : public ::testing::Test {
 public:
+    isc::test::Sandbox sandbox;
 
     /// @brief Path to the UNIX socket being used to communicate with the server
     std::string socket_path_;
@@ -108,7 +110,7 @@ public:
         if (env) {
             socket_path_ = string(env) + "/kea4.sock";
         } else {
-            socket_path_ = string(TEST_DATA_BUILDDIR) + "/kea4.sock";
+            socket_path_ = sandbox.join("kea4.sock");
         }
         reset();
     }

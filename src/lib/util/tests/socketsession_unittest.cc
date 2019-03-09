@@ -28,6 +28,7 @@
 #include <boost/scoped_ptr.hpp>
 
 #include <gtest/gtest.h>
+#include <testutils/sandbox.h>
 
 #include <exceptions/exceptions.h>
 
@@ -147,17 +148,17 @@ private:
 
 class ForwardTest : public ::testing::Test {
 protected:
+    isc::test::Sandbox sandbox;
 
     /// @brief Returns socket path (using either hardcoded path or env variable)
     /// @return path to the unix socket
     std::string getSocketPath() {
-
         std::string socket_path;
         const char* env = getenv("KEA_SOCKET_TEST_DIR");
         if (env) {
             socket_path = string(env) + "/test.unix";
         } else {
-            socket_path = string(TEST_DATA_BUILDDIR) + "/test.unix";
+            socket_path = sandbox.join("test.unix");
         }
         return (socket_path);
     }

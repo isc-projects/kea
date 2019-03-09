@@ -101,7 +101,8 @@ namespace {
     "  o.modification_ts," \
     "  s.calculate_tee_times," \
     "  s.t1_percent," \
-    "  s.t2_percent " \
+    "  s.t2_percent," \
+    "  s.authoritative " \
     "FROM dhcp4_subnet AS s " \
     "INNER JOIN dhcp4_subnet_server AS a " \
     "  ON s.subnet_id = a.subnet_id " \
@@ -226,7 +227,11 @@ namespace {
     "  o.modification_ts," \
     "  n.calculate_tee_times," \
     "  n.t1_percent," \
-    "  n.t2_percent " \
+    "  n.t2_percent," \
+    "  n.authoritative," \
+    "  n.boot_file_name," \
+    "  n.next_server," \
+    "  n.server_hostname " \
     "FROM dhcp4_shared_network AS n " \
     "INNER JOIN dhcp4_shared_network_server AS a " \
     "  ON n.id = a.shared_network_id " \
