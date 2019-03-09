@@ -109,7 +109,7 @@ DbAccessParser::parse(std::string& access_string,
                 // name
                 // contact-points
                 // keyspace
-                // cql-consistency
+                // consistency
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
