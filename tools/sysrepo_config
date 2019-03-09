@@ -73,7 +73,7 @@ fi
 
 if [ "$1" = "--libs" ]; then
     # Earlier versions also required -lprotobuf, but it is no longer needed.
-    echo "-L${SYSREPO_PATH}/lib/ -L${LIBYANG_PATH}/lib/ -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
+    echo "-L${LIBYANG_PATH}/lib/ -L${SYSREPO_PATH}/lib/ -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
     exit 0
 fi
 
