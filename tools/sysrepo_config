@@ -10,10 +10,6 @@
 # This script is used to run Kea from installation directory,
 # as well as for running tests.
 
-if [ -z "${YANG_LIBRARY_PATH}" ]; then
-    YANG_LIBRARY_PATH=/
-fi
-
 if [ "$(uname -s)" = "Darwin" ]; then
     DIR=$(stat -f %N "$0" | xargs dirname)
 else
@@ -34,41 +30,6 @@ if [ $# -ne 1 ] && [ $# -ne 2 ]; then
     echo "run: \`$0 --help\` for more help"
     exit 0
 fi
-<<<<<<< HEAD
-if [ "$1" = "--help" ]
-then
-	echo "sysrepo_config 'option' ['library']"
-	echo "options:"
-	echo "--help"
-	echo "    print this help message"
-	echo "--cflags-only-other"
-	echo "    get cpp compilation flags"
-	echo "--cflags-only-I"
-	echo "    get include path"
-	echo "--libs"
-	echo "    get lib path"
-	echo "--modversion"
-	echo "    get version"
-	echo "--variable=SR_REPOSITORY_LOC"
-	echo "    get repo path"
-	echo "libraries:"
-	echo "    libsysrepo"
-	echo "    libSysrepo-cpp"
-	exit 0
-else if [ $# -ne 2 ]
-	then
-		echo "run: \`$0 --help\` for more help"
-		exit 0
-	else if [ $2 != "libsysrepo" ] && [ $2 != "libSysrepo-cpp" ]
-		then
-			echo "library $2 not supported"
-			echo "run: \`$0 --help\` for more help"
-			exit 0
-		else
-			sysrepo_lib=$2
-		fi
-	fi
-=======
 
 if [ "$1" = "--help" ]; then
     echo "sysrepo_config 'option' ['library']"
@@ -89,7 +50,6 @@ if [ "$1" = "--help" ]; then
     echo "    libsysrepo"
     echo "    libSysrepo-cpp"
     exit 0
->>>>>>> fixed script
 fi
 
 if [ $# -ne 2 ]; then
@@ -115,7 +75,7 @@ fi
 
 if [ "$1" = "--libs" ]; then
     # Earlier versions also required -lprotobuf, but it is no longer needed.
-    echo "-L${SYSREPO_PATH}/build/src -L${SYSREPO_PATH}/build/swig -L$YANG_LIBRARY_PATH -l:${sysrepo_lib}.a -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
+    echo "-L${SYSREPO_PATH}/lib/ -L${LIBYANG_PATH}/lib/ -lsysrepo -lSysrepo-cpp -lyang -pthread -lpcre -lev -lavl -lprotobuf-c"
     exit 0
 fi
 
