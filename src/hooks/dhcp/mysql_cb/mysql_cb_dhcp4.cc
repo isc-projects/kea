@@ -2270,7 +2270,7 @@ TaggedStatementArray tagged_statements = { {
     },
 
     // Delete all subnets for a shared network.
-    { MySqlConfigBackendDHCPv4Impl:: DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
+    { MySqlConfigBackendDHCPv4Impl::DELETE_ALL_SUBNETS4_SHARED_NETWORK_NAME,
       MYSQL_DELETE_SUBNET(dhcp4, AND s.shared_network_name = ?)
     },
 
