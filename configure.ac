@@ -1519,7 +1519,6 @@ AC_DEFINE([CONFIG_H_WAS_INCLUDED], [1], [config.h inclusion marker])
 
 AC_CONFIG_FILES([Makefile
                  compatcheck/Makefile
-                 dns++.pc
                  doc/Makefile
                  doc/guide/Makefile
                  doc/version.ent

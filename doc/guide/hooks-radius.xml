@@ -181,7 +181,6 @@ total 952
 -rw-r--r--   1 thomson  staff     587 Apr 25 17:38 README
 drwxr-xr-x   5 thomson  staff     170 Apr 26 19:04 compatcheck
 -rw-r--r--   1 thomson  staff   62323 Apr 25 17:38 configure.ac
--rw-r--r--   1 thomson  staff     300 Apr 25 17:38 dns++.pc.in
 drwxr-xr-x  12 thomson  staff     408 Apr 26 19:04 doc
 drwxr-xr-x   7 thomson  staff     238 Apr 25 17:38 examples
 drwxr-xr-x   5 thomson  staff     170 Apr 26 19:04 ext
