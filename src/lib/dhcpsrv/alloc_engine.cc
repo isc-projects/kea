@@ -2841,11 +2841,23 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
     LeaseMgr& lease_mgr = LeaseMgrFactory::instance();
 
     Subnet4Ptr original_subnet = ctx.subnet_;
-    Subnet4Ptr subnet = ctx.subnet_;
 
-    // Client identifier is optional. If it is specified, use it to try to find
-    // client's lease.
+    // Client identifier is optional. First check if we can try to lookup
+    // by client-id.
+    bool try_clientid_lookup = false;
     if (ctx.clientid_) {
+        for (Subnet4Ptr subnet = original_subnet; subnet;
+             subnet = subnet->getNextSubnet(original_subnet,
+                                            ctx.query_->getClasses())) {
+            if (subnet->getMatchClientId()) {
+                try_clientid_lookup = true;
+                break;
+            }
+        }
+    }
+
+    // If it is possiblem use client identifier to try to find client's lease.
+    if (try_clientid_lookup) {
         // Get all leases for this client identifier. When shared networks are
         // in use it is more efficient to make a single query rather than
         // multiple queries, one for each subnet.
@@ -2853,12 +2865,14 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
 
         // Iterate over the subnets within the shared network to see if any client's
         // lease belongs to them.
-        while (subnet) {
+        for (Subnet4Ptr subnet = original_subnet; subnet;
+             subnet = subnet->getNextSubnet(original_subnet,
+                                            ctx.query_->getClasses())) {
 
             // If client identifier has been supplied and the server wasn't
             // explicitly configured to ignore client identifiers for this subnet
             // check if there is a lease within this subnet.
-            if (ctx.clientid_ && subnet->getMatchClientId()) {
+            if (subnet->getMatchClientId()) {
                 for (auto l = leases_client_id.begin(); l != leases_client_id.end(); ++l) {
                     if ((*l)->subnet_id_ == subnet->getID()) {
                         // Lease found, so stick to this lease.
@@ -2868,10 +2882,6 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
                     }
                 }
             }
-
-            // Haven't found any lease in this subnet, so let's try another subnet
-            // within the shared network.
-            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
         }
     }
 
@@ -2879,13 +2889,12 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
     // the HW address.
     if (!client_lease && ctx.hwaddr_) {
 
-        // Rewind to the first subnet.
-        subnet = original_subnet;
-
         // Get all leases for this HW address.
         Lease4Collection leases_hw_address = lease_mgr.getLease4(*ctx.hwaddr_);
 
-        while (subnet) {
+        for (Subnet4Ptr subnet = original_subnet; subnet;
+             subnet = subnet->getNextSubnet(original_subnet,
+                                            ctx.query_->getClasses())) {
             ClientIdPtr client_id;
             if (subnet->getMatchClientId()) {
                 client_id = ctx.clientid_;
@@ -2906,10 +2915,6 @@ void findClientLease(AllocEngine::ClientContext4& ctx, Lease4Ptr& client_lease) 
                     return;
                 }
             }
-
-            // Haven't found any lease in this subnet, so let's try another subnet
-            // within the shared network.
-            subnet = subnet->getNextSubnet(original_subnet, ctx.query_->getClasses());
         }
     }
 }
