@@ -75,7 +75,7 @@ if [ "$1" = "--cflags-only-I" ]; then
 fi
 
 if [ "$1" = "--libs" ]; then
-    echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -luv"
+    echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -lssl -luv"
     exit 0
 fi
 
