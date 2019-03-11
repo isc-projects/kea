@@ -23,6 +23,7 @@ using isc::db::StatementMap;
 using isc::db::StatementTag;
 using isc::db::StatementTagHash;
 using isc::db::exchangeType;
+using isc::db::CqlConnection;
 
 class CqlConnectionTest {
 public:
@@ -60,21 +61,17 @@ TEST(CqlConnection, statementMapHash) {
     ASSERT_EQ(map.size(), 1u);
 }
 
-/// @brief Check anything related to exchange types.
-TEST(CqlConnection, exchangeTypeCoverage) {
-    // Check that const and non-const are supported and both point to the same
-    // exchange type.
-    int i = 1;
-
-    // non-const
-    int* pi = &i;
-    boost::any bi(pi);
-
-    // const
-    int* const cpi = &i;
-    boost::any bci(cpi);
-
-    ASSERT_EQ(exchangeType(bi), exchangeType(bci));
+/// @brief Check that the parseConsistency function return proper values.
+TEST(CqlConnection, parseConsistency) {
+    std::string consistency;
+    consistency = "quorum";
+    ASSERT_EQ(CqlConnection::parseConsistency(consistency), CASS_CONSISTENCY_QUORUM);
+    consistency = "serial";
+    ASSERT_EQ(CqlConnection::parseConsistency(consistency), CASS_CONSISTENCY_SERIAL);
+    consistency = "";
+    ASSERT_EQ(CqlConnection::parseConsistency(consistency), CASS_CONSISTENCY_UNKNOWN);
+    consistency = "unknown";
+    ASSERT_EQ(CqlConnection::parseConsistency(consistency), CASS_CONSISTENCY_UNKNOWN);
 }
 
 }  // namespace
