@@ -160,7 +160,9 @@ public:
     void openDatabase();
 
     /// @brief Set consistency
-    void setConsistency(bool force, CassConsistency consistency);
+    void setConsistency(bool force,
+                        CassConsistency consistency,
+                        CassConsistency serial_consistency);
 
     /// @brief Start transaction
     void startTransaction();
@@ -201,6 +203,9 @@ public:
 
     /// @brief CQL consistency
     CassConsistency consistency_;
+
+    /// @brief CQL serial consistency
+    CassConsistency serial_consistency_;
 
     // @brief Schema meta information, used for UDTs
     const CassSchemaMeta* schema_meta_;
