@@ -602,17 +602,21 @@ MySqlConfigBackendImpl::processOptionRow(const Option::Universe& universe,
         code = (*(first_binding + 1))->getInteger<uint16_t>();
     }
 
-    // Option can be stored as a blob or formatted value in the configuration.
-    std::vector<uint8_t> blob;
-    if (!(*(first_binding + 2))->amNull()) {
-        blob = (*(first_binding + 2))->getBlob();
-    }
-    OptionBuffer buf(blob.begin(), blob.end());
 
     // Get formatted value if available.
     std::string formatted_value = (*(first_binding + 3))->getStringOrDefault("");
 
-    OptionPtr option(new Option(universe, code, buf.begin(), buf.end()));
+    OptionPtr option(new Option(universe, code));
+
+    // If we don't have a formatted value, check for a blob. Add it to the
+    // option if it exists.
+    if (formatted_value.empty()) {
+        std::vector<uint8_t> blob;
+        if (!(*(first_binding + 2))->amNull()) {
+            blob = (*(first_binding + 2))->getBlob();
+        }
+        option->setData(blob.begin(), blob.end());
+    }
 
     // Check if the option is persistent.
     bool persistent = static_cast<bool>((*(first_binding + 5))->getIntegerOrDefault<uint8_t>(0));

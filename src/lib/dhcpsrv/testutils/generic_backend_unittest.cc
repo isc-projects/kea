@@ -84,6 +84,10 @@ GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
 
         // Compare the on-wire data.
         EXPECT_EQ(ref_option_buf_vec, tested_option_buf_vec);
+
+    } else {
+        // If the formatted value is non-empty the buffer should be empty.
+        EXPECT_TRUE(tested_option.option_->getData().empty());
     }
 
     // Compare other members of the @c OptionDescriptor, e.g. the
