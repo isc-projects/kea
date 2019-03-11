@@ -27,7 +27,7 @@ fi
 # Shellcheck tries to follow this link and gets confused about not being able
 # to find the file.
 # shellcheck disable=SC1090
-source "${DIR}/cql_config_defines.sh"
+. "${DIR}/cql_config_defines.sh"
 
 if [ $# -ne 1 ] && [ $# -ne 2 ]
 then
