@@ -12,9 +12,9 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 
-using namespace isc::db::test;
 using namespace isc::dhcp;
 using namespace isc::dhcp::bench;
+using namespace isc::dhcp::test;
 using namespace std;
 
 namespace {
