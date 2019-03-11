@@ -77,6 +77,7 @@ using namespace std;
   RECONNECT_WAIT_TIME "reconnect-wait-time"
   KEYSPACE "keyspace"
   CONSISTENCY "consistency"
+  SERIAL_CONSISTENCY "serial-consistency"
   REQUEST_TIMEOUT "request-timeout"
   TCP_KEEPALIVE "tcp-keepalive"
   TCP_NODELAY "tcp-nodelay"
@@ -624,6 +625,7 @@ database_map_param: database_type
                   | tcp_nodelay
                   | keyspace
                   | consistency
+                  | serial_consistency
                   | unknown_map_entry
                   ;
 
@@ -743,6 +745,14 @@ consistency: CONSISTENCY {
 } COLON STRING {
     ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
     ctx.stack_.back()->set("consistency", c);
+    ctx.leave();
+};
+
+serial_consistency: SERIAL_CONSISTENCY {
+    ctx.enter(ctx.NO_KEYWORD);
+} COLON STRING {
+    ElementPtr c(new StringElement($4, ctx.loc2pos(@4)));
+    ctx.stack_.back()->set("serial-consistency", c);
     ctx.leave();
 };
 

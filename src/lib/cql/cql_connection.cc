@@ -30,7 +30,8 @@ namespace db {
 
 CqlConnection::CqlConnection(const ParameterMap& parameters)
     : DatabaseConnection(parameters), statements_(), cluster_(NULL),
-      session_(NULL), consistency_(CASS_CONSISTENCY_QUORUM), schema_meta_(NULL),
+      session_(NULL), consistency_(CASS_CONSISTENCY_QUORUM),
+      serial_consistency_(CASS_CONSISTENCY_UNKNOWN), schema_meta_(NULL),
       keyspace_meta_(NULL), force_consistency_(true) {
 }
 
@@ -152,6 +153,15 @@ CqlConnection::openDatabase() {
         // No user. Fine, we'll use NULL.
     }
 
+    const char* serial_consistency = NULL;
+    std::string sserial_consistency;
+    try {
+        sserial_consistency = getParameter("serial-consistency");
+        serial_consistency = sserial_consistency.c_str();
+    } catch (...) {
+        // No user. Fine, we'll use NULL.
+    }
+
     const char* reconnect_wait_time = NULL;
     std::string sreconnect_wait_time;
     try {
@@ -225,8 +235,12 @@ CqlConnection::openDatabase() {
 
     if (consistency) {
         CassConsistency desired_consistency = CqlConnection::parseConsistency(sconsistency);
+        CassConsistency desired_serial_consistency = CASS_CONSISTENCY_UNKNOWN;
+        if (serial_consistency) {
+            desired_serial_consistency = CqlConnection::parseConsistency(sserial_consistency);
+        }
         if (desired_consistency != CASS_CONSISTENCY_UNKNOWN) {
-            setConsistency(true, desired_consistency);
+            setConsistency(true, desired_consistency, desired_serial_consistency);
         }
     }
 
@@ -379,9 +393,12 @@ CqlConnection::prepareStatements(StatementMap& statements) {
 }
 
 void
-CqlConnection::setConsistency(bool force, CassConsistency consistency) {
+CqlConnection::setConsistency(bool force,
+                              CassConsistency consistency,
+                              CassConsistency serial_consistency) {
     force_consistency_ = force;
     consistency_ = consistency;
+    serial_consistency_ = serial_consistency;
 }
 
 void
