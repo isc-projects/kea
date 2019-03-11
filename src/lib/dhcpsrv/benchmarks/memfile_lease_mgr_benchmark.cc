@@ -46,7 +46,7 @@ public:
             LeaseMgrFactory::destroy();
             startBackend(V4);
         } catch (...) {
-            std::cerr << "ERROR: unable to start memfile backend.\n";
+            std::cerr << "ERROR: unable to start memfile backend." << std::endl;
             throw;
         }
         lmptr_ = &(LeaseMgrFactory::instance());
@@ -65,7 +65,7 @@ public:
             LeaseMgrFactory::create(getConfigString(u));
         } catch (...) {
             std::cerr << "*** ERROR: unable to create instance of the Memfile "
-                      << "lease database backend.\n";
+                      << "lease database backend." << std::endl;
             throw;
         }
         lmptr_ = &(LeaseMgrFactory::instance());
@@ -128,7 +128,7 @@ public:
             lmptr_->rollback();
         } catch (...) {
             std::cerr << "WARNING: rollback has failed. This is surprising as "
-                      << "memfile doesn't support rollback.\n";
+                      << "memfile doesn't support rollback." << std::endl;
         }
 
         LeaseMgrFactory::destroy();
