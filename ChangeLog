@@ -1,3 +1,7 @@
+1539.	[build]		fdupont
+	Obsolete dns++.pc file for pkg-config was removed.
+	(Gitlab #498,!274, git 93cd62c99f69cc379c08cd06791db522c1fb0aca)
+
 1538.	[func]		marcin
 	DHCP configuration parsers correctly handle unspecified parameters.
 	This change was required for the MySQL Config Backend to record
