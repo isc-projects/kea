@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -328,7 +328,7 @@ TEST_F(ConfigTest, examples4) {
 
     vector<string> examples = {
         "advanced.json",
-        "all-keys.json",
+        "all-keys-stable.json",
         "backends.json",
         "cassandra.json",
         "classify.json",
@@ -366,7 +366,7 @@ TEST_F(ConfigTest, examples6) {
 
     vector<string> examples = {
         "advanced.json",
-        "all-keys.json",
+        "all-keys-stable.json",
         "backends.json",
         "cassandra.json",
         "classify.json",
