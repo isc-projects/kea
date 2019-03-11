@@ -95,6 +95,14 @@ TranslatorDatabase::getDatabaseKea(const string& xpath) {
     if (keyspace) {
         result->set("keyspace", keyspace);
     }
+    ConstElementPtr consistency = getItem(xpath + "/consistency");
+    if (consistency) {
+        result->set("consistency", consistency);
+    }
+    ConstElementPtr serial_consistency = getItem(xpath + "/serial-consistency");
+    if (serial_consistency) {
+        result->set("serial-consistency", serial_consistency);
+    }
     ConstElementPtr max_reconnect = getItem(xpath + "/max-reconnect-tries");
     if (max_reconnect) {
         result->set("max-reconnect-tries", max_reconnect);
@@ -200,6 +208,14 @@ TranslatorDatabase::setDatabaseKea(const string& xpath,
     ConstElementPtr keyspace = elem->get("keyspace");
     if (keyspace) {
         setItem(xpath + "/keyspace", keyspace, SR_STRING_T);
+    }
+    ConstElementPtr consistency = elem->get("consistency");
+    if (consistency) {
+        setItem(xpath + "/consistency", consistency, SR_STRING_T);
+    }
+    ConstElementPtr serial_consistency = elem->get("serial-consistency");
+    if (serial_consistency) {
+        setItem(xpath + "/serial-consistency", serial_consistency, SR_STRING_T);
     }
     ConstElementPtr max_reconnect = elem->get("max-reconnect-tries");
     if (max_reconnect) {

@@ -147,6 +147,8 @@ public:
     /// values specified in parentheses):
     /// - keyspace: name of the database to which to connect (keatest)
     /// - contact-points: IP addresses of the nodes to connect to (127.0.0.1)
+    /// - consistency: consistency level (quorum)
+    /// - serial-consistency: serial consistency level (serial)
     /// - port: The TCP port to use (9042)
     /// - user - credentials to use when connecting (no username)
     /// - password - credentials to use when connecting (no password)
