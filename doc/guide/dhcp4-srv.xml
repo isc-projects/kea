@@ -595,6 +595,17 @@ The default value for Cassandra is 2000 ms.
         algorithm on connections. The default is true.
       </simpara></listitem>
 
+      <listitem><simpara>
+        <command>consistency</command> - configures consistency level.
+        The default is "quorum".
+      </simpara></listitem>
+
+      <listitem><simpara>
+        <command>serial-consistency</command> - configures serial consistency
+        level which manages lightweight transaction isolation. The default is
+        "serial".
+      </simpara></listitem>
+
     </itemizedlist>
   </para>
 

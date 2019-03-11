@@ -46,16 +46,18 @@ public:
     /// Uses the following keywords in the parameters passed to it to
     /// connect to the Cassandra cluster (if omitted, defaults specified in
     /// parentheses):
-    /// - name - Name of the keyspace to to connect to ("keatest")
-    /// - contact-points - IP addresses to connect ("127.0.0.1")
-    /// - user - Username under which to connect (empty)
-    /// - password - Password for "user" on the database (empty)
-    /// - port - TCP port (9042)
-    /// - reconnect-wait-time (2000)
-    /// - connect-timeout (5000)
-    /// - request-timeout (12000)
-    /// - tcp-keepalive (no)
-    /// - tcp-nodelay (no)
+    /// - keyspace: name of the database to which to connect (keatest)
+    /// - contact-points: IP addresses of the nodes to connect to (127.0.0.1)
+    /// - consistency: consistency level (quorum)
+    /// - serial-consistency: serial consistency level (serial)
+    /// - port: The TCP port to use (9042)
+    /// - user - credentials to use when connecting (no username)
+    /// - password - credentials to use when connecting (no password)
+    /// - reconnect-wait-time 2000
+    /// - connect-timeout 5000
+    /// - request-timeout 12000
+    /// - tcp-keepalive no
+    /// - tcp-nodelay no
     ///
     /// Finally, all the CQL commands are pre-compiled.
     ///
