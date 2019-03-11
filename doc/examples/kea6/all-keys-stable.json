@@ -1,72 +1,40 @@
 // WARNING: This example configuration is not meant for production use.
-// The Kea DHCPv4 server will refuse this configuration because it contains
+// The Kea DHCPv6 server will refuse this configuration because it contains
 // mutually exclusive configuration parameters.
 //
 // The primary purpose of the example file is to provide a comprehensive
-// list of parameters supported by Kea DHCPv4 server along with the brief
+// list of parameters supported by Kea DHCPv6 server along with the brief
 // description of each parameter.
+//
+// This stable version is used for YANG as we do not want to update code
+// and models each time a keyword is added to the syntax.
 {
-    // Kea DHCPv4 server configuration begins here.
-    "Dhcp4": {
-        // Global bootfile name to be set in the 'file' field.
-        "boot-file-name": "/dev/null",
-
-        // Ordered list of client classes used by the DHCPv4 server.
+    // Kea DHCPv6 server configuration begins here.
+    "Dhcp6": {
+        // Ordered list of client classes used by the DHCPv6 server.
         "client-classes": [
             {
-                // Class specific bootfile name to be set in the 'file' field.
-                "boot-file-name": "/tmp/bootfile.efi",
-
                 // Class name.
                 "name": "phones_server1",
 
-                // Class specific next server address to use in bootstrap, which
-                // is set in 'siaddr' field.
-                "next-server": "10.2.3.4",
-
-                // Class specific DHCPv4 options list.
+                // Class specific DHCPv6 options list.
                 "option-data": [],
-
-                // Class specific DHCPv4 option definitions, i.e. custom formats
-                // specified for non-standard options.
-                "option-def": [],
-
-                // Class specific optional server hostname, which is set in
-                // 'sname' field.
-                "server-hostname": "",
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
                 "test": "member('HA_server1')"
             },
             {
-                // Default value of the class specific bootfile name. Empty name
-                // means that the bootfile name is unspecified.
-                "boot-file-name": "",
-
                 // Second class name.
                 "name": "phones_server2",
 
-                // Default value of the class specific next server address. The
-                // zero IPv4 address means that it is unspecified.
-                "next-server": "0.0.0.0",
-
-                // Class specific DHCPv4 options list.
+                // Class specific DHCPv6 options list.
                 "option-data": [],
-
-                // Class specific DHCPv4 option definitions, i.e. custom formats
-                // specified for non-standard options.
-                "option-def": [],
-
-                // Class specific optional server hostname, which is set in
-                // 'sname' field.
-                "server-hostname": "",
 
                 // Class selection expression. The DHCP packet is assigned to this
                 // class when the given expression evaluates to true.
                 "test": "member('HA_server2')"
             },
-
             {
                 // Third class name.
                 "name": "late",
@@ -83,14 +51,14 @@
             }
         ],
 
-        // Command control socket configuration parameters for Kea DHCPv4 server.
+        // Command control socket configuration parameters for Kea DHCPv6 server.
         "control-socket": {
-            // Location of the unix domain socket file the DHCPv4 server uses
+            // Location of the unix domain socket file the DHCPv6 server uses
             // to receive control commands from the Kea Control Agent or the
             // local server administrator.
-            "socket-name": "/tmp/kea-dhcp4-ctrl.sock",
+            "socket-name": "/tmp/kea-dhcp6-ctrl.sock",
 
-            // Control socket type used by the Kea DHCPv4 server. The 'unix'
+            // Control socket type used by the Kea DHCPv6 server. The 'unix'
             // socket is currently the only supported type.
             "socket-type": "unix"
         },
@@ -99,11 +67,11 @@
         // excluded from DHCP assignments. The default value is 24 hours.
         "decline-probation-period": 86400,
 
-        // Name Change Requests forwarding configuration for Kea DHCPv4 server.
+        // Name Change Requests forwarding configuration for Kea DHCPv6 server.
         // NCRs are sent to Kea D2 module to update DNS upon allocation of the
         // DHCP leases.
         "dhcp-ddns": {
-            // Boolean flag indicating if Kea DHCPv4 server must generate NCRs.
+            // Boolean flag indicating if Kea DHCPv6 server must generate NCRs.
             // By default NCRs are not generated.
             "enable-updates": false,
 
@@ -162,18 +130,18 @@
             // client sent). The default value is "never".
             "replace-client-name": "never",
 
-            // IP address that Kea DHCPv4 server should use to send
+            // IP address that Kea DHCPv6 server should use to send
             // NCRs to D2. Default value of zero indicates that Kea
             // should pick suitable address.
-            "sender-ip": "0.0.0.0",
+            "sender-ip": "::1",
 
-            // Port number that Kea DHCPv4 server should use to send
+            // Port number that Kea DHCPv6 server should use to send
             // NCRs to D2. Default value of zero indicates that Kea
             // should pick suitable port.
             "sender-port": 0,
 
             // IP address on which D2 listens for NCRs.
-            "server-ip": "127.0.0.1",
+            "server-ip": "::1",
 
             // Port number on which D2 listens for NCRs.
             "server-port": 53001
@@ -182,18 +150,9 @@
         // Specifies the first of the two consecutive ports of the UDP
         // sockets used for communication between DHCPv6 and DHCPv4
         // servers. See RFC 7341.
-        "dhcp4o6-port": 6767,
+        "dhcp4o6-port": 0,
 
-        // Boolean flag indicating whether or not the Kea DHCPv4 server
-        // should send back Client Identifier option in its responses.
-        // The default value is true which indicates that the option
-        // must be sent back if the client included it. The false
-        // value instructs the server to not send this option for
-        // backward compatibility with older DHCP specifications which
-        // stated that Client Identifier must not be sent back.
-        "echo-client-id": true,
-
-        // Collection of Kea DHCPv4 server parameters configuring how
+        // Collection of Kea DHCPv6 server parameters configuring how
         // the server should process expired DHCP leases.
         "expired-leases-processing": {
             // Specifies the number of seconds since last removal of
@@ -239,7 +198,7 @@
             }
         ],
 
-        // List of access credentials to external sources of IPv4 reservations,
+        // List of access credentials to external sources of IPv6 reservations,
         "hosts-databases": [
             {
                 // Name of the database to connect to.
@@ -263,7 +222,7 @@
         ],
 
         // List of host reservation identifier types to be used by the
-        // Kea DHCPv4 server to fetch static reservations for the
+        // Kea DHCPv6 server to fetch static reservations for the
         // DHCP clients. All identifiers are used by default, which
         // means that the server will issue multiple queries to the
         // database to find if there is a reservation for the particular
@@ -273,34 +232,17 @@
         "host-reservation-identifiers": [
             "hw-address",
             "duid",
-            "circuit-id",
-            "client-id",
             "flex-id"
         ],
 
-        // Specifies configuration of interfaces on which the Kea DHCPv4
+        // Specifies configuration of interfaces on which the Kea DHCPv6
         // server is listening to the DHCP queries.
         "interfaces-config": {
-            // Specifies whether the server should use "udp" socket or
-            // "raw" sockets to listen to the DHCP traffic. The "raw"
-            // sockets are useful when direct DHCP traffic is being
-            // received.
-            "dhcp-socket-type": "udp",
-
-            // Specifies a list of interfaces on which the Kea DHCPv4
+            // Specifies a list of interfaces on which the Kea DHCPv6
             // server should listen to the DHCP requests.
             "interfaces": [
                 "ethX"
             ],
-
-            // Enumeration which indicates what interface should be used
-            // to send DHCP response to the client. The default value is
-            // "same-as-inbound" which indicates that the response should
-            // be sent via the interface on which the client's query
-            // was received. The "use-routing" value indicates that the
-            // Kea server should use kernel's routing table to find the
-            // suitable interface.
-            "outbound-interface": "same-as-inbound",
 
             // Boolean flag indicating if the available interfaces should
             // be re-detected upon server reconfiguration. The default value
@@ -319,7 +261,7 @@
 
             // Name of the lease file. In case of database it specifies the
             // database name.
-            "name": "/tmp/kea-dhcp4.csv",
+            "name": "/tmp/kea-dhcp6.csv",
 
             // memfile specific parameter indicating whether leases should
             // be saved on persistent storage (disk) or not. The true value
@@ -334,22 +276,12 @@
             "type": "memfile"
         },
 
-        // Boolean value indicating if the Kea DHCPv4 server should use client
-        // identifier value sent by the client or ignore it. The default value
-        // is true which indicate that the server should use client identifier
-        // and that it takes precedence over client's MAC address. In deployments
-        // where MAC address should take precedence this value can be set to
-        // false, in which case the clients will be identified by MAC address.
-        // This is specifically useful when clients don't generate unique
-        // identifiers or these identifiers are not stable etc.
-        "match-client-id": false,
+        // List of parameters indicating how the client's MAC address can be
+        // inferred from the DHCP query. Supported values are listed in the
+        // Kea Administrator Reference Manual.
+        "mac-sources": [ "duid" ],
 
-        // Global value of the next server address set in 'siaddr' field.
-        // The global value may be overriden in lower level configuration
-        // scopes.
-        "next-server": "192.0.2.123",
-
-        // List of global DHCP options that Kea DHCPv4 server assigns to the
+        // List of global DHCP options that Kea DHCPv6 server assigns to the
         // clients.
         "option-data": [
             {
@@ -361,7 +293,7 @@
 
                 // Option code. It is not required if the option name is
                 // provided.
-                "code": 6,
+                "code": 23,
 
                 // Boolean value indicating whether the option data specified
                 // in the "data" field is specified as a string of hexadecimal
@@ -369,24 +301,24 @@
                 "csv-format": true,
 
                 // Option data to be stored in the option payload.
-                "data": "192.0.3.1, 192.0.3.2",
+                "data": "2001:db8:2::45, 2001:db8:2::100",
 
                 // Option name. It is not required of the option code is
                 // provided.
-                "name": "domain-name-servers",
+                "name": "dns-servers",
 
-                // Option space. The default is the "dhcp4" option space which
-                // groups top level DHCPv4 options.
-                "space": "dhcp4"
+                // Option space. The default is the "dhcp6" option space which
+                // groups top level DHCPv6 options.
+                "space": "dhcp6"
             }
         ],
 
         // List of global option definitions, i.e. option formats, that the
-        // Kea DHCPv4 server is using.
+        // Kea DHCPv6 server is using.
         "option-def": [
             {
                 // Boolean flag indicating if the option definition comprises
-                // an array of values of some type, e.g. array of IPv4 addresses.
+                // an array of values of some type, e.g. array of IPv6 addresses.
                 // The default value of false means that the option does not
                 // comprise an array of values.
                 "array": false,
@@ -417,18 +349,24 @@
             }
         ],
 
+        // Global value of the preferred lifetime.
+        "preferred-lifetime": 50,
+
         // Global value for the rebind timer, i.e. the time after which the
         // DHCP client enters rebind state if it fails to renew the lease.
         "rebind-timer": 40,
+
+        // List of relay supplied option codes. See RFC 6422.
+        "relay-supplied-options": [ "110", "120", "130" ],
 
         // Global value for the renew timer, i.e. the timer after which the
         // DHCP client renews the lease.
         "renew-timer": 30,
 
-        // Governs how the Kea DHCPv4 server should deal with the invalid
+        // Governs how the Kea DHCPv6 server should deal with the invalid
         // data received from the client.
         "sanity-checks": {
-            // Specifies how the Kea DHCPv4 server should behave when invalid
+            // Specifies how the Kea DHCPv6 server should behave when invalid
             // data is read for a lease from the lease file. The following
             // values are supported "none" (don't attempt to correct the
             // lease information), "warn" (print a warning for subnet-id
@@ -440,13 +378,26 @@
             "lease-checks": "warn"
         },
 
-        // List of shared networks used by Kea DHCPv4 server. The shared
+        // Custom DUID used by the DHCPv6 server.
+        "server-id": {
+            // Type of the DUID. Possible values are "LLT", "EN", and "LL".
+            "type": "EN",
+
+            // Enterprise id used for "EN" duid.
+            "enterprise-id": 2495,
+
+            // Identifier part of the DUID.
+            "identifier": "0123456789",
+
+            // Boolean flag indicating if the DUID should be persisted on
+            // disk.
+            "persist": false
+        },
+
+        // List of shared networks used by Kea DHCPv6 server. The shared
         // networks group subnets together.
         "shared-networks": [
             {
-                // Shared network level bootfile name.
-                "boot-file-name": "/dev/null",
-
                 // Restricts this shared network to allow only clients
                 // that belong to the particular client class. If an
                 // empty string is provided, no restriction is applied.
@@ -456,21 +407,26 @@
                 // requests received on the particular interface.
                 "interface": "ethX",
 
-                // Shared network level flag specifying whether the client
-                // identifier should be used for identifying clients.
-                "match-client-id": true,
+                // Specifies the content of the interface-id option used
+                // by relays to identify the interface on the relay to
+                // which the response is sent.
+                "interface-id": "",
 
                 // Shared network name.
                 "name": "my-secret-network",
 
-                // Shared network level specification of the next server
-                // to be sent in 'siaddr'.
-                "next-server": "192.0.2.123",
-
                 // List of shared network specific DHCP options.
                 "option-data": [],
 
-                // List of IPv4 relay addresses for which this shared
+                // Shared network specific preferred lifetime.
+                "preferred-lifetime": 2000,
+
+                // Boolen flag indicating if the server can respond to
+                // a Solicit message including a Rapid Commit option with
+                // the Reply message (See DHCPv6 rapid commit).
+                "rapid-commit": false,
+
+                // List of IPv6 relay addresses for which this shared
                 // network is selected.
                 "relay": {
                     "ip-addresses": []
@@ -490,25 +446,9 @@
                 // network is selected for client assignments.
                 "require-client-classes": [ "late" ],
 
-                // Shared network level server hostname set in 'sname' field.
-                "server-hostname": "",
-
-                // List of IPv4 subnets belonging to this shared network.
-                "subnet4": [
+                // List of IPv6 subnets belonging to this shared network.
+                "subnet6": [
                     {
-                        // Interface name matched against inbound interface name.
-                        // Used in DHCPv4o6. See RFC 7341.
-                        "4o6-interface": "",
-
-                        // Interface ID option value. See RFC 7341.
-                        "4o6-interface-id": "",
-
-                        // Prefix matched against source address. See RFC7341.
-                        "4o6-subnet": "2001:db8:1:1::/64",
-
-                        // Subnet level bootfile name, set in 'file' field.
-                        "boot-file-name": "",
-
                         // Restricts this subnet to allow only clients that belong
                         // to the particular client class. If an empty string is
                         // provided, no restriction is applied.
@@ -521,13 +461,10 @@
                         // received on the particular interface.
                         "interface": "ethX",
 
-                        // Subnet level flag specifying whether the client identifier
-                        // should be used for identifying clients.
-                        "match-client-id": true,
-
-                        // Subnet level specification of the next server to be sent
-                        // in 'siaddr'.
-                        "next-server": "0.0.0.0",
+                        // Specifies the content of the interface-id option used
+                        // by relays to identify the interface on the relay to
+                        // which the response is sent.
+                        "interface-id": "",
 
                         // Subnet level list of DHCP options.
                         "option-data": [
@@ -537,26 +474,40 @@
                                 "always-send": false,
 
                                 // Option code.
-                                "code": 3,
+                                "code": 7,
 
                                 // Boolean flag indicating if the option value specified
                                 // in "data" is a string of hexadecimal values or human
                                 // readable CSV value.
-                                "csv-format": true,
+                                "csv-format": false,
 
                                 // Option data to be included in the option payload.
-                                "data": "192.0.3.1",
+                                "data": "0xf0",
 
                                 // Option name.
-                                "name": "routers",
+                                "name": "preference",
 
-                                // Option space. The default value "dhcp4" designates the
+                                // Option space. The default value "dhcp6" designates the
                                 // top level option space.
-                                "space": "dhcp4"
+                                "space": "dhcp6"
                             }
                         ],
 
-                        // List of IP address pools belonging to the subnet.
+                        // List of pools from which delegated prefixes are assigned to the
+                        // clients.
+                        "pd-pools": [
+                            {
+                                "client-class": "phones_server1",
+                                "delegated-len": 64,
+                                "excluded-prefix": "2001:db8::",
+                                "excluded-prefix-len": 48,
+                                "option-data": [],
+                                "prefix": "2001:db8::",
+                                "prefix-len": 40,
+                                "require-client-classes": []
+                            }
+                        ],
+
                         "pools": [
                             {
                                 // Restricts this pool to be only used for the client
@@ -567,7 +518,7 @@
                                 "option-data": [],
 
                                 // Address range used for client assignments.
-                                "pool": "192.1.0.1 - 192.1.0.200",
+                                "pool": "2001:db8:0:1::/64",
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
@@ -582,7 +533,7 @@
                                 "option-data": [],
 
                                 // Address range used for client assignments.
-                                "pool": "192.3.0.1 - 192.3.0.200",
+                                "pool": "2001:db8:0:3::/64",
 
                                 // List of client classes which must be evaluated when this pool
                                 // is selected for client assignments.
@@ -590,42 +541,56 @@
                             }
                         ],
 
-                        // Subnet level value of the rebind timer.
+                        // Subnet specific preferred lifetime.
+                        "preferred-lifetime": 2000,
+
+                        // Boolen flag indicating if the server can respond to
+                        // a Solicit message including a Rapid Commit option with
+                        // the Reply message (See DHCPv6 rapid commit).
+                        "rapid-commit": false,
+
+                        // Subnet level rebind timer.
                         "rebind-timer": 40,
 
-                        // List of IPv4 relay addresses for which this subnet is
-                        // selected.
+                        // List of IPv4 relay addresses for which this subnet
+                        // is selected.
                         "relay": {
                             "ip-addresses": [
-                                "192.168.56.1"
+                                "2001:db8:0:f::1"
                             ]
                         },
 
-                        // Subnet level value of the renew timer.
+                        // Subnet level renew timer.
                         "renew-timer": 30,
 
                         // Enumeration specifying server's mode of operation when it
                         // fetches host reservations.
                         "reservation-mode": "all",
 
-                        // List of static IPv4 reservations assigned to the clients belonging
+                        // List of static IPv6 reservations assigned to the clients belonging
                         // to this subnet. For detailed example see reservations.json.
                         "reservations": [
                             {
                                 // Identifier used for client matching. Supported values are
-                                // "hw-address", "client-id", "duid", "circuit-id", "flex-id".
-                                "circuit-id": "01:11:22:33:44:55:66",
+                                // "duid", "hw-address" and "flex-id".
+                                "duid": "01:02:03:04:05:06:07:08:09:0A",
 
-                                // Reserved IP address.
-                                "ip-address": "192.0.2.204",
+                                // List of reserved IPv6 addresses.
+                                "ip-addresses": [ "2001:db8:1:cafe::1" ],
+
+                                // List of reserved IPv6 prefixes.
+                                "prefixes": [ "2001:db8:2:abcd::/64" ],
+
+                                // Reserved hostname.
+                                "hostname": "foo.example.com",
 
                                 // Reservation specific option data.
                                 "option-data": [
                                     {
                                         // Option name.
-                                        "name": "vivso-suboptions",
+                                        "name": "vendor-opts",
 
-                                        // Option data.
+                                        // Option value.
                                         "data": "4491"
                                     }
                                 ]
@@ -636,11 +601,8 @@
                         // is selected for client assignments.
                         "require-client-classes": [ "late" ],
 
-                        // Subnet level server hostname set in 'sname' field.
-                        "server-hostname": "",
-
                         // Subnet prefix.
-                        "subnet": "192.0.0.0/8",
+                        "subnet": "2001:db8::/32",
 
                         // Subnet level valid lifetime.
                         "valid-lifetime": 6000
@@ -652,11 +614,8 @@
             }
         ],
 
-        // Global server hostname set in the 'sname' field.
-        "server-hostname": "",
-
-        // List of IPv4 subnets which don't belong to any shared network.
-        "subnet4": [],
+        // List of IPv6 subnets which don't belong to any shared network.
+        "subnet6": [],
 
         // Global valid lifetime value.
         "valid-lifetime": 6000,
@@ -678,7 +637,7 @@
         },
 
         // Server tag.
-        "server-tag": "my DHCPv4 server",
+        "server-tag": "my DHCPv6 server",
 
         // DHCP queue control parameters.
         "dhcp-queue-control":
@@ -687,9 +646,8 @@
             "enable-queue": true,
 
             // Queue type was mandatory.
-            "queue-type": "kea-ring4"
+            "queue-type": "kea-ring6"
         }
-	// Missing: calculate-tee-times, t1-percent, t2-percent
     },
 
     // Logging configuration begins here.
@@ -703,7 +661,7 @@
                 "debuglevel": 99,
 
                 // Name of the logger.
-                "name": "kea-dhcp4",
+                "name": "kea-dhcp6",
 
                 // Configures how the log should be output.
                 "output_options": [

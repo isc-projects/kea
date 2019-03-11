@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -62,7 +62,7 @@ void testFile(const std::string& fname, bool v6, ElementPtr& result) {
 
 TEST_F(AdaptorConfigTest, loadExamples4) {
     vector<string> configs = { "advanced.json",
-                               "all-keys.json",
+                               "all-keys-stable.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
@@ -92,7 +92,7 @@ TEST_F(AdaptorConfigTest, loadExamples4) {
 
 TEST_F(AdaptorConfigTest, loadExamples6) {
     vector<string> configs = { "advanced.json",
-                               "all-keys.json",
+                               "all-keys-stable.json",
                                "backends.json",
                                "cassandra.json",
                                "classify.json",
