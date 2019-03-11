@@ -261,6 +261,7 @@ TEST(DatabaseConnection, toElementDbAccessStringValid) {
         "\"connect-timeout\" : 200, \n"
         "\"contact-points\": \"contact_str\", \n"
         "\"consistency\": \"quorum\", \n"
+        "\"serial-consistency\": \"serial\", \n"
         "\"host\": \"host_str\", \n"
         "\"keyspace\": \"keyspace_str\", \n"
         "\"lfc-interval\" : 100, \n"
