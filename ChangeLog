@@ -1,3 +1,8 @@
+1540.	[func]		fdupont
+	Added a new method deleteSharedNetworkSubnets4 in the config
+	backend API to delete all subnets belonging to a shared network.
+	(Gitlab #512,!256, git 76991c42d115641c7fdcd0f215137be578fb39a0)
+
 1539.	[build]		fdupont
 	Obsolete dns++.pc file for pkg-config was removed.
 	(Gitlab #498,!274, git 93cd62c99f69cc379c08cd06791db522c1fb0aca)
