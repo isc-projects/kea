@@ -1,4 +1,4 @@
-// Copyright (C) 2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2018-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -9,6 +9,8 @@
 #include <dhcp/libdhcp++.h>
 #include <dhcp/option_vendor.h>
 #include <dhcpsrv/testutils/generic_backend_unittest.h>
+#include <util/buffer.h>
+#include <typeinfo>
 
 namespace isc {
 namespace dhcp {
@@ -47,6 +49,50 @@ GenericBackendTest::createVendorOption(const Option::Universe& universe,
 
     OptionDescriptor desc(option, persist, s.str());
     return (desc);
+}
+
+void
+GenericBackendTest::testOptionsEquivalent(const OptionDescriptor& ref_option,
+                                          const OptionDescriptor& tested_option) const {
+    // Make sure that all pointers are non-null.
+    ASSERT_TRUE(ref_option.option_);
+    ASSERT_TRUE(tested_option.option_);
+
+    // Get the reference to the tested option. Make should it has
+    // generic type.
+    Option& tested_option_reference = *tested_option.option_;
+    EXPECT_TRUE(typeid(tested_option_reference) == typeid(Option));
+
+    // Only test the binary data if the formatted value is not provided.
+    if (tested_option.formatted_value_.empty()) {
+
+        // Prepare on-wire data of the option under test.
+        isc::util::OutputBuffer tested_option_buf(1);
+        tested_option.option_->pack(tested_option_buf);
+        const uint8_t* tested_option_buf_data = static_cast<const uint8_t*>
+            (tested_option_buf.getData());
+        std::vector<uint8_t> tested_option_buf_vec(tested_option_buf_data,
+                                                   tested_option_buf_data + tested_option_buf.getLength());
+
+        // Prepare on-wire data of the reference option.
+        isc::util::OutputBuffer ref_option_buf(1);
+        ref_option.option_->pack(ref_option_buf);
+        const uint8_t* ref_option_buf_data = static_cast<const uint8_t*>
+            (ref_option_buf.getData());
+        std::vector<uint8_t> ref_option_buf_vec(ref_option_buf_data,
+                                                ref_option_buf_data + ref_option_buf.getLength());
+
+        // Compare the on-wire data.
+        EXPECT_EQ(ref_option_buf_vec, tested_option_buf_vec);
+    }
+
+    // Compare other members of the @c OptionDescriptor, e.g. the
+    // tested option may contain formatted option data which can be
+    // later used to turn this option instance into a formatted
+    // option when an option definition is available.
+    EXPECT_EQ(ref_option.formatted_value_, tested_option.formatted_value_);
+    EXPECT_EQ(ref_option.persistent_, tested_option.persistent_);
+    EXPECT_EQ(ref_option.space_name_, tested_option.space_name_);
 }
 
 
