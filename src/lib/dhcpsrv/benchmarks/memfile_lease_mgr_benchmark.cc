@@ -12,15 +12,16 @@
 #include <dhcpsrv/memfile_lease_mgr.h>
 #include <dhcpsrv/testutils/lease_file_io.h>
 
-using namespace isc::dhcp::bench;
-using namespace isc::dhcp::test;
+using namespace isc::db::test;
 using namespace isc::dhcp;
+using namespace isc::dhcp::bench;
 using namespace std;
 
 namespace {
 
 /// @brief This is a fixture class used for benchmarking Memfile lease backend
-struct MemfileLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
+class MemfileLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
+public:
     /// @brief Constructor
     ///
     /// Sets the files used for writing lease files.
@@ -45,7 +46,7 @@ struct MemfileLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
             LeaseMgrFactory::destroy();
             startBackend(V4);
         } catch (...) {
-            std::cerr << "ERROR: unable to start memfile backend." << std::endl;
+            std::cerr << "ERROR: unable to start memfile backend.\n";
             throw;
         }
         lmptr_ = &(LeaseMgrFactory::instance());
@@ -63,8 +64,8 @@ struct MemfileLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
         try {
             LeaseMgrFactory::create(getConfigString(u));
         } catch (...) {
-            std::cerr << "*** ERROR: unable to create instance of the Memfile\n"
-                         " lease database backend.\n";
+            std::cerr << "*** ERROR: unable to create instance of the Memfile "
+                      << "lease database backend.\n";
             throw;
         }
         lmptr_ = &(LeaseMgrFactory::instance());
@@ -127,8 +128,7 @@ struct MemfileLeaseMgrBenchmark : public GenericLeaseMgrBenchmark {
             lmptr_->rollback();
         } catch (...) {
             std::cerr << "WARNING: rollback has failed. This is surprising as "
-                         "memfile doesn't support rollback."
-                      << std::endl;
+                      << "memfile doesn't support rollback.\n";
         }
 
         LeaseMgrFactory::destroy();
@@ -263,7 +263,7 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid)(benchmark
 // Defines a benchmark that measures IPv6 leases retrieval by lease type, duid, iaid
 // and subnet-id.
 BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-(benchmark::State& state) {
+                  (benchmark::State& state) {
     const size_t lease_count = state.range(0);
     while (state.KeepRunning()) {
         setUpWithInserts6(state, lease_count);
@@ -285,74 +285,60 @@ BENCHMARK_DEFINE_F(MemfileLeaseMgrBenchmark, getExpiredLeases6)(benchmark::State
 
 /// A benchmark that measures IPv4 leases insertion.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, insertLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 leases update.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, updateLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by IP address.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease4_address)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by hardware address.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by hardware address and a
 /// subnet-id.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease4_hwaddr_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by client-id.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease4_clientid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv4 lease retrieval by client-id and subnet-id.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease4_clientid_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures expired IPv4 leases retrieval.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getExpiredLeases4)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv6 leases insertion.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, insertLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv6 leases update.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, updateLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type and IP address.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease6_type_address)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type, duid and iaid.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures IPv6 lease retrieval by lease type, duid, iaid and
 /// subnet-id.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getLease6_type_duid_iaid_subnetid)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 /// A benchmark that measures expired IPv6 leases retrieval.
 BENCHMARK_REGISTER_F(MemfileLeaseMgrBenchmark, getExpiredLeases6)
-    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_LEASE_COUNT, MAX_LEASE_COUNT)->Unit(UNIT);
 
 }  // namespace

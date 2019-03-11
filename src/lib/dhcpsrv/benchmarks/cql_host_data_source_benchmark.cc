@@ -34,7 +34,8 @@ using namespace std;
 namespace {
 
 /// @brief This is a fixture class used for benchmarking Cassandra host backend
-struct CqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
+class CqlHostDataSourceBenchmark : public GenericHostDataSourceBenchmark {
+public:
     /// @brief Setup routine.
     ///
     /// It cleans up schema and recreates tables, then instantiates HostMgr
@@ -169,55 +170,46 @@ BENCHMARK_DEFINE_F(CqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& sta
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts insertion.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, insertHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts update.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, updateHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, getAll)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by getAll(v4-reservation) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, getAllv4Resv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(identifier-type, identifier, subnet-id) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, get4IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get4(subnet-id, v4-reservation) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, get4SubnetIdv4Resrv)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, identifier-type, identifier) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, get6IdentifierSubnetId)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(subnet-id, ip-address) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, get6SubnetIdAddr)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts retrieval by get6(ip-prefix, prefix-len) call.
 BENCHMARK_REGISTER_F(CqlHostDataSourceBenchmark, get6Prefix)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)
-    ->Unit(UNIT);
+    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 }  // namespace
