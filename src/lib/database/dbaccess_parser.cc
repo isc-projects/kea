@@ -110,6 +110,7 @@ DbAccessParser::parse(std::string& access_string,
                 // contact-points
                 // keyspace
                 // consistency
+                // serial-consistency
                 values_copy[param.first] = param.second->stringValue();
             }
         } catch (const isc::data::TypeError& ex) {
