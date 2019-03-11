@@ -5503,7 +5503,7 @@ TEST_F(Dhcp6ParserTest, testDataDir) {
         "}";
     ConstElementPtr config;
     ASSERT_NO_THROW(config = parseDHCP6(config_txt));
-    extractConfig(config_txt);
+    // Do not export it as it will keep the current TEST_DATA_BUILDDIR...
 
     ConstElementPtr status;
     EXPECT_NO_THROW(status = configureDhcp6Server(srv_, config));
