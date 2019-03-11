@@ -1,8 +1,8 @@
-// A Bison parser, made by GNU Bison 3.2.4.
+// A Bison parser, made by GNU Bison 3.3.2.
 
 // Skeleton implementation for Bison LALR(1) parsers in C++
 
-// Copyright (C) 2002-2015, 2018 Free Software Foundation, Inc.
+// Copyright (C) 2002-2015, 2018-2019 Free Software Foundation, Inc.
 
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -43,11 +43,11 @@
 
 
 // Unqualified %code blocks.
-#line 34 "d2_parser.yy" // lalr1.cc:438
+#line 34 "d2_parser.yy" // lalr1.cc:435
 
 #include <d2/parser_context.h>
 
-#line 51 "d2_parser.cc" // lalr1.cc:438
+#line 51 "d2_parser.cc" // lalr1.cc:435
 
 
 #ifndef YY_
@@ -88,7 +88,7 @@
         {                                                               \
           (Current).begin = (Current).end = YYRHSLOC (Rhs, 0).end;      \
         }                                                               \
-    while (/*CONSTCOND*/ false)
+    while (false)
 # endif
 
 
@@ -140,9 +140,9 @@
 #define YYERROR         goto yyerrorlab
 #define YYRECOVERING()  (!!yyerrstatus_)
 
-#line 14 "d2_parser.yy" // lalr1.cc:513
+#line 14 "d2_parser.yy" // lalr1.cc:510
 namespace isc { namespace d2 {
-#line 146 "d2_parser.cc" // lalr1.cc:513
+#line 146 "d2_parser.cc" // lalr1.cc:510
 
   /* Return YYSTR after stripping away unnecessary quotes and
      backslashes, so that it's suitable for yyerror.  The heuristic is
@@ -154,7 +154,7 @@ namespace isc { namespace d2 {
   {
     if (*yystr == '"')
       {
-        std::string yyr = "";
+        std::string yyr;
         char const *yyp = yystr;
 
         for (;;)
@@ -167,7 +167,10 @@ namespace isc { namespace d2 {
             case '\\':
               if (*++yyp != '\\')
                 goto do_not_strip_quotes;
-              // Fall through.
+              else
+                goto append;
+
+            append:
             default:
               yyr += *yyp;
               break;
@@ -195,6 +198,8 @@ namespace isc { namespace d2 {
   D2Parser::~D2Parser ()
   {}
 
+  D2Parser::syntax_error::~syntax_error () YY_NOEXCEPT YY_NOTHROW
+  {}
 
   /*---------------.
   | Symbol types.  |
@@ -203,16 +208,16 @@ namespace isc { namespace d2 {
 
 
   // by_state.
-  D2Parser::by_state::by_state ()
+  D2Parser::by_state::by_state () YY_NOEXCEPT
     : state (empty_state)
   {}
 
-  D2Parser::by_state::by_state (const by_state& other)
-    : state (other.state)
+  D2Parser::by_state::by_state (const by_state& that) YY_NOEXCEPT
+    : state (that.state)
   {}
 
   void
-  D2Parser::by_state::clear ()
+  D2Parser::by_state::clear () YY_NOEXCEPT
   {
     state = empty_state;
   }
@@ -224,12 +229,12 @@ namespace isc { namespace d2 {
     that.clear ();
   }
 
-  D2Parser::by_state::by_state (state_type s)
+  D2Parser::by_state::by_state (state_type s) YY_NOEXCEPT
     : state (s)
   {}
 
   D2Parser::symbol_number_type
-  D2Parser::by_state::type_get () const
+  D2Parser::by_state::type_get () const YY_NOEXCEPT
   {
     if (state == empty_state)
       return empty_symbol;
@@ -369,64 +374,58 @@ namespace isc { namespace d2 {
     std::ostream& yyoutput = yyo;
     YYUSE (yyoutput);
     symbol_number_type yytype = yysym.type_get ();
+#if defined __GNUC__ && ! defined __clang__ && ! defined __ICC && __GNUC__ * 100 + __GNUC_MINOR__ <= 408
     // Avoid a (spurious) G++ 4.8 warning about "array subscript is
     // below array bounds".
     if (yysym.empty ())
       std::abort ();
+#endif
     yyo << (yytype < yyntokens_ ? "token" : "nterm")
         << ' ' << yytname_[yytype] << " ("
         << yysym.location << ": ";
     switch (yytype)
     {
-            case 56: // "constant string"
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< std::string > (); }
-#line 386 "d2_parser.cc" // lalr1.cc:672
+      case 56: // "constant string"
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < std::string > (); }
+#line 392 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 57: // "integer"
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< int64_t > (); }
-#line 393 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < int64_t > (); }
+#line 398 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 58: // "floating point"
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< double > (); }
-#line 400 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < double > (); }
+#line 404 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 59: // "boolean"
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< bool > (); }
-#line 407 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < bool > (); }
+#line 410 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 71: // value
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 414 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 416 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 75: // map_value
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 421 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 422 "d2_parser.cc" // lalr1.cc:676
         break;
 
       case 99: // ncr_protocol_value
-
-#line 115 "d2_parser.yy" // lalr1.cc:672
-        { yyoutput << yysym.value.template as< ElementPtr > (); }
-#line 428 "d2_parser.cc" // lalr1.cc:672
+#line 115 "d2_parser.yy" // lalr1.cc:676
+        { yyoutput << yysym.value.template as < ElementPtr > (); }
+#line 428 "d2_parser.cc" // lalr1.cc:676
         break;
-
 
       default:
         break;
@@ -550,17 +549,22 @@ namespace isc { namespace d2 {
     yystack_.clear ();
     yypush_ (YY_NULLPTR, 0, YY_MOVE (yyla));
 
-    // A new symbol was pushed on the stack.
+  /*-----------------------------------------------.
+  | yynewstate -- push a new symbol on the stack.  |
+  `-----------------------------------------------*/
   yynewstate:
     YYCDEBUG << "Entering state " << yystack_[0].state << '\n';
 
     // Accept?
     if (yystack_[0].state == yyfinal_)
-      goto yyacceptlab;
+      YYACCEPT;
 
     goto yybackup;
 
-    // Backup.
+
+  /*-----------.
+  | yybackup.  |
+  `-----------*/
   yybackup:
     // Try to take a decision without lookahead.
     yyn = yypact_[yystack_[0].state];
@@ -581,6 +585,7 @@ namespace isc { namespace d2 {
 #if YY_EXCEPTIONS
         catch (const syntax_error& yyexc)
           {
+            YYCDEBUG << "Caught exception: " << yyexc.what() << '\n';
             error (yyexc);
             goto yyerrlab1;
           }
@@ -612,6 +617,7 @@ namespace isc { namespace d2 {
     yypush_ ("Shifting", yyn, YY_MOVE (yyla));
     goto yynewstate;
 
+
   /*-----------------------------------------------------------.
   | yydefault -- do the default action for the current state.  |
   `-----------------------------------------------------------*/
@@ -621,8 +627,9 @@ namespace isc { namespace d2 {
       goto yyerrlab;
     goto yyreduce;
 
+
   /*-----------------------------.
-  | yyreduce -- Do a reduction.  |
+  | yyreduce -- do a reduction.  |
   `-----------------------------*/
   yyreduce:
     yylen = yyr2_[yyn];
@@ -663,8 +670,8 @@ namespace isc { namespace d2 {
 
       // Default location.
       {
-        slice<stack_symbol_type, stack_type> slice (yystack_, yylen);
-        YYLLOC_DEFAULT (yylhs.location, slice, yylen);
+        stack_type::slice range (yystack_, yylen);
+        YYLLOC_DEFAULT (yylhs.location, range, yylen);
         yyerror_range[1].location = yylhs.location;
       }
 
@@ -677,364 +684,364 @@ namespace isc { namespace d2 {
           switch (yyn)
             {
   case 2:
-#line 124 "d2_parser.yy" // lalr1.cc:907
+#line 124 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.NO_KEYWORD; }
-#line 683 "d2_parser.cc" // lalr1.cc:907
+#line 690 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 4:
-#line 125 "d2_parser.yy" // lalr1.cc:907
+#line 125 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.CONFIG; }
-#line 689 "d2_parser.cc" // lalr1.cc:907
+#line 696 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 6:
-#line 126 "d2_parser.yy" // lalr1.cc:907
+#line 126 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.DHCPDDNS; }
-#line 695 "d2_parser.cc" // lalr1.cc:907
+#line 702 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 8:
-#line 127 "d2_parser.yy" // lalr1.cc:907
+#line 127 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.TSIG_KEY; }
-#line 701 "d2_parser.cc" // lalr1.cc:907
+#line 708 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 10:
-#line 128 "d2_parser.yy" // lalr1.cc:907
+#line 128 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.TSIG_KEYS; }
-#line 707 "d2_parser.cc" // lalr1.cc:907
+#line 714 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 12:
-#line 129 "d2_parser.yy" // lalr1.cc:907
+#line 129 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.DDNS_DOMAIN; }
-#line 713 "d2_parser.cc" // lalr1.cc:907
+#line 720 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 14:
-#line 130 "d2_parser.yy" // lalr1.cc:907
+#line 130 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.DDNS_DOMAINS; }
-#line 719 "d2_parser.cc" // lalr1.cc:907
+#line 726 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 16:
-#line 131 "d2_parser.yy" // lalr1.cc:907
+#line 131 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.DNS_SERVERS; }
-#line 725 "d2_parser.cc" // lalr1.cc:907
+#line 732 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 18:
-#line 132 "d2_parser.yy" // lalr1.cc:907
+#line 132 "d2_parser.yy" // lalr1.cc:919
     { ctx.ctx_ = ctx.DNS_SERVERS; }
-#line 731 "d2_parser.cc" // lalr1.cc:907
+#line 738 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 20:
-#line 140 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location))); }
-#line 737 "d2_parser.cc" // lalr1.cc:907
+#line 140 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location))); }
+#line 744 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 21:
-#line 141 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as< double > (), ctx.loc2pos(yystack_[0].location))); }
-#line 743 "d2_parser.cc" // lalr1.cc:907
+#line 141 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new DoubleElement(yystack_[0].value.as < double > (), ctx.loc2pos(yystack_[0].location))); }
+#line 750 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 22:
-#line 142 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location))); }
-#line 749 "d2_parser.cc" // lalr1.cc:907
+#line 142 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location))); }
+#line 756 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 23:
-#line 143 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location))); }
-#line 755 "d2_parser.cc" // lalr1.cc:907
+#line 143 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location))); }
+#line 762 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 24:
-#line 144 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
-#line 761 "d2_parser.cc" // lalr1.cc:907
+#line 144 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new NullElement(ctx.loc2pos(yystack_[0].location))); }
+#line 768 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 25:
-#line 145 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 767 "d2_parser.cc" // lalr1.cc:907
+#line 145 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 774 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 26:
-#line 146 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 773 "d2_parser.cc" // lalr1.cc:907
+#line 146 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 780 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 27:
-#line 149 "d2_parser.yy" // lalr1.cc:907
+#line 149 "d2_parser.yy" // lalr1.cc:919
     {
     // Push back the JSON value on the stack
-    ctx.stack_.push_back(yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.push_back(yystack_[0].value.as < ElementPtr > ());
 }
-#line 782 "d2_parser.cc" // lalr1.cc:907
+#line 789 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 28:
-#line 154 "d2_parser.yy" // lalr1.cc:907
+#line 154 "d2_parser.yy" // lalr1.cc:919
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 793 "d2_parser.cc" // lalr1.cc:907
+#line 800 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 29:
-#line 159 "d2_parser.yy" // lalr1.cc:907
+#line 159 "d2_parser.yy" // lalr1.cc:919
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 803 "d2_parser.cc" // lalr1.cc:907
+#line 810 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 30:
-#line 165 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
-#line 809 "d2_parser.cc" // lalr1.cc:907
+#line 165 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ctx.stack_.back(); ctx.stack_.pop_back(); }
+#line 816 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 33:
-#line 172 "d2_parser.yy" // lalr1.cc:907
+#line 172 "d2_parser.yy" // lalr1.cc:919
     {
                   // map containing a single entry
-                  ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
+                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 818 "d2_parser.cc" // lalr1.cc:907
+#line 825 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 34:
-#line 176 "d2_parser.yy" // lalr1.cc:907
+#line 176 "d2_parser.yy" // lalr1.cc:919
     {
                   // map consisting of a shorter map followed by
                   // comma and string:value
-                  ctx.stack_.back()->set(yystack_[2].value.as< std::string > (), yystack_[0].value.as< ElementPtr > ());
+                  ctx.stack_.back()->set(yystack_[2].value.as < std::string > (), yystack_[0].value.as < ElementPtr > ());
                   }
-#line 828 "d2_parser.cc" // lalr1.cc:907
+#line 835 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 35:
-#line 183 "d2_parser.yy" // lalr1.cc:907
+#line 183 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 837 "d2_parser.cc" // lalr1.cc:907
+#line 844 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 36:
-#line 186 "d2_parser.yy" // lalr1.cc:907
+#line 186 "d2_parser.yy" // lalr1.cc:919
     {
     // list parsing complete. Put any sanity checking here
 }
-#line 845 "d2_parser.cc" // lalr1.cc:907
+#line 852 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 39:
-#line 194 "d2_parser.yy" // lalr1.cc:907
+#line 194 "d2_parser.yy" // lalr1.cc:919
     {
                   // List consisting of a single element.
-                  ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
+                  ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 854 "d2_parser.cc" // lalr1.cc:907
+#line 861 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 40:
-#line 198 "d2_parser.yy" // lalr1.cc:907
+#line 198 "d2_parser.yy" // lalr1.cc:919
     {
                   // List ending with , and a value.
-                  ctx.stack_.back()->add(yystack_[0].value.as< ElementPtr > ());
+                  ctx.stack_.back()->add(yystack_[0].value.as < ElementPtr > ());
                   }
-#line 863 "d2_parser.cc" // lalr1.cc:907
+#line 870 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 41:
-#line 209 "d2_parser.yy" // lalr1.cc:907
+#line 209 "d2_parser.yy" // lalr1.cc:919
     {
     const std::string& where = ctx.contextName();
-    const std::string& keyword = yystack_[1].value.as< std::string > ();
+    const std::string& keyword = yystack_[1].value.as < std::string > ();
     error(yystack_[1].location,
           "got unexpected keyword \"" + keyword + "\" in " + where + " map.");
 }
-#line 874 "d2_parser.cc" // lalr1.cc:907
+#line 881 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 42:
-#line 219 "d2_parser.yy" // lalr1.cc:907
+#line 219 "d2_parser.yy" // lalr1.cc:919
     {
     // This code is executed when we're about to start parsing
     // the content of the map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 885 "d2_parser.cc" // lalr1.cc:907
+#line 892 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 43:
-#line 224 "d2_parser.yy" // lalr1.cc:907
+#line 224 "d2_parser.yy" // lalr1.cc:919
     {
     // map parsing completed. If we ever want to do any wrap up
     // (maybe some sanity checking), this would be the best place
     // for it.
 }
-#line 895 "d2_parser.cc" // lalr1.cc:907
+#line 902 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 52:
-#line 246 "d2_parser.yy" // lalr1.cc:907
+#line 246 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("DhcpDdns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.DHCPDDNS);
 }
-#line 906 "d2_parser.cc" // lalr1.cc:907
+#line 913 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 53:
-#line 251 "d2_parser.yy" // lalr1.cc:907
+#line 251 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 915 "d2_parser.cc" // lalr1.cc:907
+#line 922 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 54:
-#line 256 "d2_parser.yy" // lalr1.cc:907
+#line 256 "d2_parser.yy" // lalr1.cc:919
     {
     // Parse the dhcpddns map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 925 "d2_parser.cc" // lalr1.cc:907
+#line 932 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 55:
-#line 260 "d2_parser.yy" // lalr1.cc:907
+#line 260 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 933 "d2_parser.cc" // lalr1.cc:907
+#line 940 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 70:
-#line 283 "d2_parser.yy" // lalr1.cc:907
+#line 283 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 941 "d2_parser.cc" // lalr1.cc:907
+#line 948 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 71:
-#line 285 "d2_parser.yy" // lalr1.cc:907
+#line 285 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
     ctx.leave();
 }
-#line 951 "d2_parser.cc" // lalr1.cc:907
+#line 958 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 72:
-#line 291 "d2_parser.yy" // lalr1.cc:907
+#line 291 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65536 ) {
+    if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
         error(yystack_[0].location, "port must be greater than zero but less than 65536");
     }
-    ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
 }
-#line 963 "d2_parser.cc" // lalr1.cc:907
+#line 970 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 73:
-#line 299 "d2_parser.yy" // lalr1.cc:907
+#line 299 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< int64_t > () <= 0) {
+    if (yystack_[0].value.as < int64_t > () <= 0) {
         error(yystack_[0].location, "dns-server-timeout must be greater than zero");
     } else {
-        ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+        ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
         ctx.stack_.back()->set("dns-server-timeout", i);
     }
 }
-#line 976 "d2_parser.cc" // lalr1.cc:907
+#line 983 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 74:
-#line 308 "d2_parser.yy" // lalr1.cc:907
+#line 308 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NCR_PROTOCOL);
 }
-#line 984 "d2_parser.cc" // lalr1.cc:907
+#line 991 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 75:
-#line 310 "d2_parser.yy" // lalr1.cc:907
+#line 310 "d2_parser.yy" // lalr1.cc:919
     {
-    ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->set("ncr-protocol", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 993 "d2_parser.cc" // lalr1.cc:907
+#line 1000 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 76:
-#line 316 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
-#line 999 "d2_parser.cc" // lalr1.cc:907
+#line 316 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("UDP", ctx.loc2pos(yystack_[0].location))); }
+#line 1006 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 77:
-#line 317 "d2_parser.yy" // lalr1.cc:907
-    { yylhs.value.as< ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
-#line 1005 "d2_parser.cc" // lalr1.cc:907
+#line 317 "d2_parser.yy" // lalr1.cc:919
+    { yylhs.value.as < ElementPtr > () = ElementPtr(new StringElement("TCP", ctx.loc2pos(yystack_[0].location))); }
+#line 1012 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 78:
-#line 320 "d2_parser.yy" // lalr1.cc:907
+#line 320 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NCR_FORMAT);
 }
-#line 1013 "d2_parser.cc" // lalr1.cc:907
+#line 1020 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 79:
-#line 322 "d2_parser.yy" // lalr1.cc:907
+#line 322 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr json(new StringElement("JSON", ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ncr-format", json);
     ctx.leave();
 }
-#line 1023 "d2_parser.cc" // lalr1.cc:907
+#line 1030 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 80:
-#line 328 "d2_parser.yy" // lalr1.cc:907
+#line 328 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1031 "d2_parser.cc" // lalr1.cc:907
+#line 1038 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 81:
-#line 330 "d2_parser.yy" // lalr1.cc:907
+#line 330 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr parent = ctx.stack_.back();
-    ElementPtr user_context = yystack_[0].value.as< ElementPtr > ();
+    ElementPtr user_context = yystack_[0].value.as < ElementPtr > ();
     ConstElementPtr old = parent->get("user-context");
 
     // Handle already existing user context
@@ -1054,23 +1061,23 @@ namespace isc { namespace d2 {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1058 "d2_parser.cc" // lalr1.cc:907
+#line 1065 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 82:
-#line 353 "d2_parser.yy" // lalr1.cc:907
+#line 353 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1066 "d2_parser.cc" // lalr1.cc:907
+#line 1073 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 83:
-#line 355 "d2_parser.yy" // lalr1.cc:907
+#line 355 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr parent = ctx.stack_.back();
     ElementPtr user_context(new MapElement(ctx.loc2pos(yystack_[3].location)));
-    ElementPtr comment(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr comment(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     user_context->set("comment", comment);
 
     // Handle already existing user context
@@ -1091,730 +1098,730 @@ namespace isc { namespace d2 {
     parent->set("user-context", user_context);
     ctx.leave();
 }
-#line 1095 "d2_parser.cc" // lalr1.cc:907
+#line 1102 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 84:
-#line 380 "d2_parser.yy" // lalr1.cc:907
+#line 380 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("forward-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.FORWARD_DDNS);
 }
-#line 1106 "d2_parser.cc" // lalr1.cc:907
+#line 1113 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 85:
-#line 385 "d2_parser.yy" // lalr1.cc:907
+#line 385 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1115 "d2_parser.cc" // lalr1.cc:907
+#line 1122 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 86:
-#line 390 "d2_parser.yy" // lalr1.cc:907
+#line 390 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("reverse-ddns", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.REVERSE_DDNS);
 }
-#line 1126 "d2_parser.cc" // lalr1.cc:907
+#line 1133 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 87:
-#line 395 "d2_parser.yy" // lalr1.cc:907
+#line 395 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1135 "d2_parser.cc" // lalr1.cc:907
+#line 1142 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 94:
-#line 414 "d2_parser.yy" // lalr1.cc:907
+#line 414 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ddns-domains", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.DDNS_DOMAINS);
 }
-#line 1146 "d2_parser.cc" // lalr1.cc:907
+#line 1153 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 95:
-#line 419 "d2_parser.yy" // lalr1.cc:907
+#line 419 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1155 "d2_parser.cc" // lalr1.cc:907
+#line 1162 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 96:
-#line 424 "d2_parser.yy" // lalr1.cc:907
+#line 424 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1164 "d2_parser.cc" // lalr1.cc:907
+#line 1171 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 97:
-#line 427 "d2_parser.yy" // lalr1.cc:907
+#line 427 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1172 "d2_parser.cc" // lalr1.cc:907
+#line 1179 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 102:
-#line 439 "d2_parser.yy" // lalr1.cc:907
+#line 439 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1182 "d2_parser.cc" // lalr1.cc:907
+#line 1189 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 103:
-#line 443 "d2_parser.yy" // lalr1.cc:907
+#line 443 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
 }
-#line 1190 "d2_parser.cc" // lalr1.cc:907
+#line 1197 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 104:
-#line 447 "d2_parser.yy" // lalr1.cc:907
+#line 447 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1199 "d2_parser.cc" // lalr1.cc:907
+#line 1206 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 105:
-#line 450 "d2_parser.yy" // lalr1.cc:907
+#line 450 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1207 "d2_parser.cc" // lalr1.cc:907
+#line 1214 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 114:
-#line 467 "d2_parser.yy" // lalr1.cc:907
+#line 467 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1215 "d2_parser.cc" // lalr1.cc:907
+#line 1222 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 115:
-#line 469 "d2_parser.yy" // lalr1.cc:907
+#line 469 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< std::string > () == "") {
+    if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "Ddns domain name cannot be blank");
     }
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1229 "d2_parser.cc" // lalr1.cc:907
+#line 1236 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 116:
-#line 479 "d2_parser.yy" // lalr1.cc:907
+#line 479 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1237 "d2_parser.cc" // lalr1.cc:907
+#line 1244 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 117:
-#line 481 "d2_parser.yy" // lalr1.cc:907
+#line 481 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("key-name", name);
     ctx.leave();
 }
-#line 1248 "d2_parser.cc" // lalr1.cc:907
+#line 1255 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 118:
-#line 491 "d2_parser.yy" // lalr1.cc:907
+#line 491 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("dns-servers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.DNS_SERVERS);
 }
-#line 1259 "d2_parser.cc" // lalr1.cc:907
+#line 1266 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 119:
-#line 496 "d2_parser.yy" // lalr1.cc:907
+#line 496 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1268 "d2_parser.cc" // lalr1.cc:907
+#line 1275 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 120:
-#line 501 "d2_parser.yy" // lalr1.cc:907
+#line 501 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1277 "d2_parser.cc" // lalr1.cc:907
+#line 1284 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 121:
-#line 504 "d2_parser.yy" // lalr1.cc:907
+#line 504 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1285 "d2_parser.cc" // lalr1.cc:907
+#line 1292 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 124:
-#line 512 "d2_parser.yy" // lalr1.cc:907
+#line 512 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1295 "d2_parser.cc" // lalr1.cc:907
+#line 1302 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 125:
-#line 516 "d2_parser.yy" // lalr1.cc:907
+#line 516 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
 }
-#line 1303 "d2_parser.cc" // lalr1.cc:907
+#line 1310 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 126:
-#line 520 "d2_parser.yy" // lalr1.cc:907
+#line 520 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1312 "d2_parser.cc" // lalr1.cc:907
+#line 1319 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 127:
-#line 523 "d2_parser.yy" // lalr1.cc:907
+#line 523 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1320 "d2_parser.cc" // lalr1.cc:907
+#line 1327 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 136:
-#line 539 "d2_parser.yy" // lalr1.cc:907
+#line 539 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1328 "d2_parser.cc" // lalr1.cc:907
+#line 1335 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 137:
-#line 541 "d2_parser.yy" // lalr1.cc:907
+#line 541 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< std::string > () != "") {
+    if (yystack_[0].value.as < std::string > () != "") {
         error(yystack_[1].location, "hostname is not yet supported");
     }
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("hostname", name);
     ctx.leave();
 }
-#line 1342 "d2_parser.cc" // lalr1.cc:907
+#line 1349 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 138:
-#line 551 "d2_parser.yy" // lalr1.cc:907
+#line 551 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1350 "d2_parser.cc" // lalr1.cc:907
+#line 1357 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 139:
-#line 553 "d2_parser.yy" // lalr1.cc:907
+#line 553 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr s(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr s(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("ip-address", s);
     ctx.leave();
 }
-#line 1360 "d2_parser.cc" // lalr1.cc:907
+#line 1367 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 140:
-#line 559 "d2_parser.yy" // lalr1.cc:907
+#line 559 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< int64_t > () <= 0 || yystack_[0].value.as< int64_t > () >= 65536 ) {
+    if (yystack_[0].value.as < int64_t > () <= 0 || yystack_[0].value.as < int64_t > () >= 65536 ) {
         error(yystack_[0].location, "port must be greater than zero but less than 65536");
     }
-    ElementPtr i(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr i(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("port", i);
 }
-#line 1372 "d2_parser.cc" // lalr1.cc:907
+#line 1379 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 141:
-#line 573 "d2_parser.yy" // lalr1.cc:907
+#line 573 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("tsig-keys", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.TSIG_KEYS);
 }
-#line 1383 "d2_parser.cc" // lalr1.cc:907
+#line 1390 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 142:
-#line 578 "d2_parser.yy" // lalr1.cc:907
+#line 578 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1392 "d2_parser.cc" // lalr1.cc:907
+#line 1399 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 143:
-#line 583 "d2_parser.yy" // lalr1.cc:907
+#line 583 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(l);
 }
-#line 1401 "d2_parser.cc" // lalr1.cc:907
+#line 1408 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 144:
-#line 586 "d2_parser.yy" // lalr1.cc:907
+#line 586 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1409 "d2_parser.cc" // lalr1.cc:907
+#line 1416 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 149:
-#line 598 "d2_parser.yy" // lalr1.cc:907
+#line 598 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1419 "d2_parser.cc" // lalr1.cc:907
+#line 1426 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 150:
-#line 602 "d2_parser.yy" // lalr1.cc:907
+#line 602 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
 }
-#line 1427 "d2_parser.cc" // lalr1.cc:907
+#line 1434 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 151:
-#line 606 "d2_parser.yy" // lalr1.cc:907
+#line 606 "d2_parser.yy" // lalr1.cc:919
     {
     // Parse tsig key list entry map
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.push_back(m);
 }
-#line 1437 "d2_parser.cc" // lalr1.cc:907
+#line 1444 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 152:
-#line 610 "d2_parser.yy" // lalr1.cc:907
+#line 610 "d2_parser.yy" // lalr1.cc:919
     {
     // parsing completed
 }
-#line 1445 "d2_parser.cc" // lalr1.cc:907
+#line 1452 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 162:
-#line 628 "d2_parser.yy" // lalr1.cc:907
+#line 628 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1453 "d2_parser.cc" // lalr1.cc:907
+#line 1460 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 163:
-#line 630 "d2_parser.yy" // lalr1.cc:907
+#line 630 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< std::string > () == "") {
+    if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key name cannot be blank");
     }
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1467 "d2_parser.cc" // lalr1.cc:907
+#line 1474 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 164:
-#line 640 "d2_parser.yy" // lalr1.cc:907
+#line 640 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1475 "d2_parser.cc" // lalr1.cc:907
+#line 1482 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 165:
-#line 642 "d2_parser.yy" // lalr1.cc:907
+#line 642 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< std::string > () == "") {
+    if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key algorithm cannot be blank");
     }
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("algorithm", elem);
     ctx.leave();
 }
-#line 1488 "d2_parser.cc" // lalr1.cc:907
+#line 1495 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 166:
-#line 651 "d2_parser.yy" // lalr1.cc:907
+#line 651 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< int64_t > () < 0 || (yystack_[0].value.as< int64_t > () > 0  && (yystack_[0].value.as< int64_t > () % 8 != 0))) {
+    if (yystack_[0].value.as < int64_t > () < 0 || (yystack_[0].value.as < int64_t > () > 0  && (yystack_[0].value.as < int64_t > () % 8 != 0))) {
         error(yystack_[0].location, "TSIG key digest-bits must either be zero or a positive, multiple of eight");
     }
-    ElementPtr elem(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("digest-bits", elem);
 }
-#line 1500 "d2_parser.cc" // lalr1.cc:907
+#line 1507 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 167:
-#line 659 "d2_parser.yy" // lalr1.cc:907
+#line 659 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1508 "d2_parser.cc" // lalr1.cc:907
+#line 1515 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 168:
-#line 661 "d2_parser.yy" // lalr1.cc:907
+#line 661 "d2_parser.yy" // lalr1.cc:919
     {
-    if (yystack_[0].value.as< std::string > () == "") {
+    if (yystack_[0].value.as < std::string > () == "") {
         error(yystack_[1].location, "TSIG key secret cannot be blank");
     }
-    ElementPtr elem(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr elem(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("secret", elem);
     ctx.leave();
 }
-#line 1521 "d2_parser.cc" // lalr1.cc:907
+#line 1528 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 169:
-#line 675 "d2_parser.yy" // lalr1.cc:907
+#line 675 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("control-socket", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.CONTROL_SOCKET);
 }
-#line 1532 "d2_parser.cc" // lalr1.cc:907
+#line 1539 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 170:
-#line 680 "d2_parser.yy" // lalr1.cc:907
+#line 680 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1541 "d2_parser.cc" // lalr1.cc:907
+#line 1548 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 178:
-#line 696 "d2_parser.yy" // lalr1.cc:907
+#line 696 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1549 "d2_parser.cc" // lalr1.cc:907
+#line 1556 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 179:
-#line 698 "d2_parser.yy" // lalr1.cc:907
+#line 698 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr stype(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr stype(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-type", stype);
     ctx.leave();
 }
-#line 1559 "d2_parser.cc" // lalr1.cc:907
+#line 1566 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 180:
-#line 704 "d2_parser.yy" // lalr1.cc:907
+#line 704 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1567 "d2_parser.cc" // lalr1.cc:907
+#line 1574 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 181:
-#line 706 "d2_parser.yy" // lalr1.cc:907
+#line 706 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("socket-name", name);
     ctx.leave();
 }
-#line 1577 "d2_parser.cc" // lalr1.cc:907
+#line 1584 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 182:
-#line 714 "d2_parser.yy" // lalr1.cc:907
+#line 714 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1585 "d2_parser.cc" // lalr1.cc:907
+#line 1592 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 183:
-#line 716 "d2_parser.yy" // lalr1.cc:907
+#line 716 "d2_parser.yy" // lalr1.cc:919
     {
-    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->set("Dhcp6", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1594 "d2_parser.cc" // lalr1.cc:907
+#line 1601 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 184:
-#line 721 "d2_parser.yy" // lalr1.cc:907
+#line 721 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1602 "d2_parser.cc" // lalr1.cc:907
+#line 1609 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 185:
-#line 723 "d2_parser.yy" // lalr1.cc:907
+#line 723 "d2_parser.yy" // lalr1.cc:919
     {
-    ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->set("Dhcp4", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1611 "d2_parser.cc" // lalr1.cc:907
+#line 1618 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 186:
-#line 728 "d2_parser.yy" // lalr1.cc:907
+#line 728 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1619 "d2_parser.cc" // lalr1.cc:907
+#line 1626 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 187:
-#line 730 "d2_parser.yy" // lalr1.cc:907
+#line 730 "d2_parser.yy" // lalr1.cc:919
     {
-    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as< ElementPtr > ());
+    ctx.stack_.back()->set("Control-agent", yystack_[0].value.as < ElementPtr > ());
     ctx.leave();
 }
-#line 1628 "d2_parser.cc" // lalr1.cc:907
+#line 1635 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 188:
-#line 740 "d2_parser.yy" // lalr1.cc:907
+#line 740 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("Logging", m);
     ctx.stack_.push_back(m);
     ctx.enter(ctx.LOGGING);
 }
-#line 1639 "d2_parser.cc" // lalr1.cc:907
+#line 1646 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 189:
-#line 745 "d2_parser.yy" // lalr1.cc:907
+#line 745 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1648 "d2_parser.cc" // lalr1.cc:907
+#line 1655 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 193:
-#line 762 "d2_parser.yy" // lalr1.cc:907
+#line 762 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("loggers", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.LOGGERS);
 }
-#line 1659 "d2_parser.cc" // lalr1.cc:907
+#line 1666 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 194:
-#line 767 "d2_parser.yy" // lalr1.cc:907
+#line 767 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1668 "d2_parser.cc" // lalr1.cc:907
+#line 1675 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 197:
-#line 779 "d2_parser.yy" // lalr1.cc:907
+#line 779 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(l);
     ctx.stack_.push_back(l);
 }
-#line 1678 "d2_parser.cc" // lalr1.cc:907
+#line 1685 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 198:
-#line 783 "d2_parser.yy" // lalr1.cc:907
+#line 783 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
 }
-#line 1686 "d2_parser.cc" // lalr1.cc:907
+#line 1693 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 208:
-#line 800 "d2_parser.yy" // lalr1.cc:907
+#line 800 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1694 "d2_parser.cc" // lalr1.cc:907
+#line 1701 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 209:
-#line 802 "d2_parser.yy" // lalr1.cc:907
+#line 802 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr name(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr name(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("name", name);
     ctx.leave();
 }
-#line 1704 "d2_parser.cc" // lalr1.cc:907
+#line 1711 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 210:
-#line 808 "d2_parser.yy" // lalr1.cc:907
+#line 808 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr dl(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr dl(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("debuglevel", dl);
 }
-#line 1713 "d2_parser.cc" // lalr1.cc:907
+#line 1720 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 211:
-#line 812 "d2_parser.yy" // lalr1.cc:907
+#line 812 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1721 "d2_parser.cc" // lalr1.cc:907
+#line 1728 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 212:
-#line 814 "d2_parser.yy" // lalr1.cc:907
+#line 814 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("severity", sev);
     ctx.leave();
 }
-#line 1731 "d2_parser.cc" // lalr1.cc:907
+#line 1738 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 213:
-#line 820 "d2_parser.yy" // lalr1.cc:907
+#line 820 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr l(new ListElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output_options", l);
     ctx.stack_.push_back(l);
     ctx.enter(ctx.OUTPUT_OPTIONS);
 }
-#line 1742 "d2_parser.cc" // lalr1.cc:907
+#line 1749 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 214:
-#line 825 "d2_parser.yy" // lalr1.cc:907
+#line 825 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
     ctx.leave();
 }
-#line 1751 "d2_parser.cc" // lalr1.cc:907
+#line 1758 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 217:
-#line 834 "d2_parser.yy" // lalr1.cc:907
+#line 834 "d2_parser.yy" // lalr1.cc:919
     {
     ElementPtr m(new MapElement(ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->add(m);
     ctx.stack_.push_back(m);
 }
-#line 1761 "d2_parser.cc" // lalr1.cc:907
+#line 1768 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 218:
-#line 838 "d2_parser.yy" // lalr1.cc:907
+#line 838 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.stack_.pop_back();
 }
-#line 1769 "d2_parser.cc" // lalr1.cc:907
+#line 1776 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 225:
-#line 852 "d2_parser.yy" // lalr1.cc:907
+#line 852 "d2_parser.yy" // lalr1.cc:919
     {
     ctx.enter(ctx.NO_KEYWORD);
 }
-#line 1777 "d2_parser.cc" // lalr1.cc:907
+#line 1784 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 226:
-#line 854 "d2_parser.yy" // lalr1.cc:907
+#line 854 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr sev(new StringElement(yystack_[0].value.as< std::string > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr sev(new StringElement(yystack_[0].value.as < std::string > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("output", sev);
     ctx.leave();
 }
-#line 1787 "d2_parser.cc" // lalr1.cc:907
+#line 1794 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 227:
-#line 860 "d2_parser.yy" // lalr1.cc:907
+#line 860 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr flush(new BoolElement(yystack_[0].value.as< bool > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr flush(new BoolElement(yystack_[0].value.as < bool > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("flush", flush);
 }
-#line 1796 "d2_parser.cc" // lalr1.cc:907
+#line 1803 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 228:
-#line 865 "d2_parser.yy" // lalr1.cc:907
+#line 865 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr maxsize(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr maxsize(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxsize", maxsize);
 }
-#line 1805 "d2_parser.cc" // lalr1.cc:907
+#line 1812 "d2_parser.cc" // lalr1.cc:919
     break;
 
   case 229:
-#line 870 "d2_parser.yy" // lalr1.cc:907
+#line 870 "d2_parser.yy" // lalr1.cc:919
     {
-    ElementPtr maxver(new IntElement(yystack_[0].value.as< int64_t > (), ctx.loc2pos(yystack_[0].location)));
+    ElementPtr maxver(new IntElement(yystack_[0].value.as < int64_t > (), ctx.loc2pos(yystack_[0].location)));
     ctx.stack_.back()->set("maxver", maxver);
 }
-#line 1814 "d2_parser.cc" // lalr1.cc:907
+#line 1821 "d2_parser.cc" // lalr1.cc:919
     break;
 
 
-#line 1818 "d2_parser.cc" // lalr1.cc:907
+#line 1825 "d2_parser.cc" // lalr1.cc:919
             default:
               break;
             }
@@ -1822,6 +1829,7 @@ namespace isc { namespace d2 {
 #if YY_EXCEPTIONS
       catch (const syntax_error& yyexc)
         {
+          YYCDEBUG << "Caught exception: " << yyexc.what() << '\n';
           error (yyexc);
           YYERROR;
         }
@@ -1835,6 +1843,7 @@ namespace isc { namespace d2 {
       yypush_ (YY_NULLPTR, YY_MOVE (yylhs));
     }
     goto yynewstate;
+
 
   /*--------------------------------------.
   | yyerrlab -- here on detecting error.  |
@@ -1872,17 +1881,17 @@ namespace isc { namespace d2 {
   | yyerrorlab -- error raised explicitly by YYERROR.  |
   `---------------------------------------------------*/
   yyerrorlab:
-
-    /* Pacify compilers like GCC when the user code never invokes
-       YYERROR and the label yyerrorlab therefore never appears in user
-       code.  */
+    /* Pacify compilers when the user code never invokes YYERROR and
+       the label yyerrorlab therefore never appears in user code.  */
     if (false)
-      goto yyerrorlab;
+      YYERROR;
+
     /* Do not reclaim the symbols of the rule whose action triggered
        this YYERROR.  */
     yypop_ (yylen);
     yylen = 0;
     goto yyerrlab1;
+
 
   /*-------------------------------------------------------------.
   | yyerrlab1 -- common code for both syntax error and YYERROR.  |
@@ -1924,16 +1933,26 @@ namespace isc { namespace d2 {
     }
     goto yynewstate;
 
-    // Accept.
+
+  /*-------------------------------------.
+  | yyacceptlab -- YYACCEPT comes here.  |
+  `-------------------------------------*/
   yyacceptlab:
     yyresult = 0;
     goto yyreturn;
 
-    // Abort.
+
+  /*-----------------------------------.
+  | yyabortlab -- YYABORT comes here.  |
+  `-----------------------------------*/
   yyabortlab:
     yyresult = 1;
     goto yyreturn;
 
+
+  /*-----------------------------------------------------.
+  | yyreturn -- parsing is finished, return the result.  |
+  `-----------------------------------------------------*/
   yyreturn:
     if (!yyla.empty ())
       yy_destroy_ ("Cleanup: discarding lookahead", yyla);
@@ -2491,10 +2510,10 @@ namespace isc { namespace d2 {
 #endif // D2_PARSER_DEBUG
 
 
-#line 14 "d2_parser.yy" // lalr1.cc:1218
+#line 14 "d2_parser.yy" // lalr1.cc:1242
 } } // isc::d2
-#line 2497 "d2_parser.cc" // lalr1.cc:1218
-#line 875 "d2_parser.yy" // lalr1.cc:1219
+#line 2516 "d2_parser.cc" // lalr1.cc:1242
+#line 875 "d2_parser.yy" // lalr1.cc:1243
 
 
 void
