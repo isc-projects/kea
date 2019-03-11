@@ -35,7 +35,7 @@ then
 	exit 1
 fi
 
-if [ "$1" == "--help" ]
+if [ "$1" = "--help" ]
 then
 	echo "cql_config 'option' ['library']"
 	echo "options:"
@@ -68,21 +68,21 @@ else
     cql_lib=$2
 fi
 
-if [ "$1" == "--cflags-only-other" ]
+if [ "$1" = "--cflags-only-other" ]
 then
 	exit 0
 fi
-if [ "$1" == "--cflags-only-I" ]
+if [ "$1" = "--cflags-only-I" ]
 then
 	echo "-I${CPP_DRIVER_PATH}/include/"
 	exit 0
 fi
-if [ "$1" == "--libs" ]
+if [ "$1" = "--libs" ]
 then
 	echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -luv"
 	exit 0
 fi
-if [ "$1" == "--modversion" ]
+if [ "$1" = "--modversion" ]
 then
 	MAJOR=$(grep VERSION_MAJOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
 	MINOR=$(grep VERSION_MINOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
@@ -90,7 +90,7 @@ then
 	echo "${MAJOR}.${MINOR}.${PATCH}"
 	exit 0
 fi
-if [ "$1" == "--print-errors" ]
+if [ "$1" = "--print-errors" ]
 then
 	exit 0
 fi

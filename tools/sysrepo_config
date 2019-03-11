@@ -38,7 +38,7 @@ then
 	echo "run: \`$0 --help\` for more help1"
 	exit 0
 fi
-if [ "$1" == "--help" ]
+if [ "$1" = "--help" ]
 then
     echo "sysrepo_config 'option' ['library']"
     echo "options:"
@@ -86,7 +86,7 @@ if [ "$1" = "--libs" ]; then
     exit 0
 fi
 
-if [ "$1" == "--modversion" ]; then
+if [ "$1" = "--modversion" ]; then
     MAJOR="1"
     MINOR="0"
     PATCH="0"
@@ -94,7 +94,7 @@ if [ "$1" == "--modversion" ]; then
     exit 0
 fi
 
-if [ "$1" == "--variable=SR_REPOSITORY_LOC" ]; then
+if [ "$1" = "--variable=SR_REPOSITORY_LOC" ]; then
     echo "${SYSREPO_PATH}/build/repository"
 fi
 
