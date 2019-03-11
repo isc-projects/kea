@@ -618,7 +618,7 @@ ControlledDhcpv6Srv::processConfig(isc::data::ConstElementPtr config) {
     // Regenerate server identifier if needed.
     try {
         const std::string duid_file =
-            CfgMgr::instance().getStagingCfg()->getDataDir() + "/" +
+            std::string(CfgMgr::instance().getDataDir()) + "/" +
             std::string(SERVER_DUID_FILE);
         DuidPtr duid = CfgMgr::instance().getStagingCfg()->getCfgDUID()->create(duid_file);
         server_->serverid_.reset(new Option(Option::V6, D6O_SERVERID, duid->getDuid()));

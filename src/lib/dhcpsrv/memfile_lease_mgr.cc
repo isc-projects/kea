@@ -1,4 +1,4 @@
-// Copyright (C) 2012-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2012-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1347,10 +1347,7 @@ Memfile_LeaseMgr::appendSuffix(const std::string& file_name,
 std::string
 Memfile_LeaseMgr::getDefaultLeaseFilePath(Universe u) const {
     std::ostringstream s;
-    // Use the staging configuration because either it is called
-    // during (re)configuration or with a fresh configuration.
-    // In both cases the right value is at least at this place.
-    s << CfgMgr::instance().getStagingCfg()->getDataDir() << "/kea-leases";
+    s << CfgMgr::instance().getDataDir() << "/kea-leases";
     s << (u == V4 ? "4" : "6");
     s << ".csv";
     return (s.str());
