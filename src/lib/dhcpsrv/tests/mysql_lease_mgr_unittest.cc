@@ -43,7 +43,7 @@ class MySqlLeaseMgrTest : public GenericLeaseMgrTest {
 public:
     /// @brief Clears the database and opens connection to it.
     void initializeTest() {
-        // Ensure schema is the correct one.
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         // Connect to the database
@@ -69,6 +69,7 @@ public:
             // Rollback may fail if backend is in read only mode. That's ok.
         }
         LeaseMgrFactory::destroy();
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyMySQLSchema();
     }
 

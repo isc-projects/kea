@@ -31,16 +31,6 @@ validCqlConnectionString() {
                              VALID_PASSWORD));
 }
 
-bool
-softWipeEnabled() {
-    const char* const env = getenv("KEA_TEST_CASSANDRA_WIPE");
-    if (env && (std::string(env) == std::string("soft"))) {
-        return (true);
-    }
-
-    return (false);
-}
-
 void
 destroyCqlSchema(bool force_wipe, bool show_err) {
     if (force_wipe || !softWipeEnabled()) {
