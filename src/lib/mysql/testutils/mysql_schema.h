@@ -28,7 +28,7 @@ std::string validMySQLConnectionString();
 /// database /or destroys the database itself by submitting the
 /// SQL script:
 ///
-///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.sh
+///  <TEST_ADMIN_SCRIPTS_DIR>/mysql/dhcpdb_drop.mysql
 ///
 /// If wipeData() is called and fails, it will destroy
 /// the schema. If the schema destruction fails, the

@@ -147,12 +147,13 @@ public:
 
     /// @brief Constructor.
     CfgMySQLDbAccessTest() {
-        // Ensure schema is the correct one.
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
     }
 
     /// @brief Destructor.
     virtual ~CfgMySQLDbAccessTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema
         destroyMySQLSchema();
         LeaseMgrFactory::destroy();
     }

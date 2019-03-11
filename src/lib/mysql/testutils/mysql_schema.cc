@@ -32,14 +32,14 @@ validMySQLConnectionString() {
 
 void destroyMySQLSchema(bool show_err, bool force) {
     // If force is true or wipeData() fails, destory the schema.
-    if (force || wipeData(show_err)) {
+    if (force || (!softWipeEnabled()) || wipeData(show_err)) {
         runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_drop.mysql", show_err);
     }
 }
 
 void createMySQLSchema(bool show_err, bool force) {
     // If force is true or wipeData() fails, recreate the schema.
-    if (force || wipeData(show_err)) {
+    if (force || (!softWipeEnabled()) || wipeData(show_err)) {
         destroyMySQLSchema(show_err, true);
         runMySQLScript(DATABASE_SCRIPTS_DIR, "mysql/dhcpdb_create.mysql", show_err);
     }

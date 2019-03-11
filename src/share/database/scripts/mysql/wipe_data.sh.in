@@ -28,8 +28,13 @@ shift;
 
 # If the existing schema doesn't match, the fail
 VERSION=`mysql_version "$@"`
+if [ "$VERSION" = "" ]; then
+    printf "Cannot wipe data, schema version could not be detected.\n"
+    exit 1
+fi
+
 if [ "$VERSION" != "$exp_version" ]; then
-    printf "Reported version is $VERSION is wrong, expected $exp_version.\n"
+    printf "Cannot wipe data, wrong schema version. Expected $exp_version, found version $VERSION.\n"
     exit 1
 fi
 

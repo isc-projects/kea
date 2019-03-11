@@ -971,7 +971,7 @@ void
 MySQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
-    // Ensure schema is the correct one.
+    // Ensure we have the proper schema with no transient data.
     db::test::createMySQLSchema();
 
     // Connect to the database
@@ -991,6 +991,8 @@ void
 MySQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("mysql");
+
+    // If data wipe enabled, delete transient data otherwise destroy the schema
     db::test::destroyMySQLSchema();
 }
 

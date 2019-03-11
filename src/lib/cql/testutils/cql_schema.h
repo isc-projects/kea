@@ -65,30 +65,6 @@ void createCqlSchema(bool force_wipe, bool show_err = false);
 /// @throw Unexpected when the script returns an error.
 void runCqlScript(const std::string& path, const std::string& script_name,
                     bool show_err);
-
-/// @brief Returns status if the soft-wipe is enabled or not.
-///
-/// In some deployments (In case of Tomek's dev system) Cassandra tests take
-/// a very long time to execute. This was traced back to slow table/indexes
-/// creation/deletion. With full wipe and recreation of all structures, it
-/// took over 60 seconds for each test to execute. To avoid this problem, a
-/// feature called soft-wipe has been implemented. If enabled, it does not
-/// remove the structures, just the data from essential tables. To enable
-/// it set KEA_TEST_CASSANDRA_WIPE environment variable to 'soft'. Make sure
-/// that the database schema is set up properly before running in soft-wipe
-/// mode.
-///
-/// For example to use soft-wipe mode, you can:
-///
-/// $ cqlsh -u keatest -p keatest -k keatest
-///         -f src/share/database/scripts/cql/dhcpdb_create.cql
-/// $ export KEA_TEST_CASSANDRA_WIPE=soft
-/// $ cd src/lib/dhcpsrv
-/// $ make -j9
-/// $ tests/libdhcpsrv_unittests --gtest_filter=CqlLeaseMgrTest.*
-///
-/// @return true if soft-wipe is enabled, false otherwise
-bool softWipeEnabled();
 };
 };
 };

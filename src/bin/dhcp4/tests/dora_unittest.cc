@@ -2200,7 +2200,7 @@ public:
     ///
     /// Recreates MySQL schema for a test.
     DORAMySQLTest() : DORATest() {
-        db::test::destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         db::test::createMySQLSchema();
     }
 
@@ -2208,6 +2208,7 @@ public:
     ///
     /// Destroys MySQL schema.
     virtual ~DORAMySQLTest() {
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         db::test::destroyMySQLSchema();
     }
 };

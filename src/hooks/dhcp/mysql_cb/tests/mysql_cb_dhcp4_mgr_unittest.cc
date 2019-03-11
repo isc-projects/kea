@@ -29,7 +29,7 @@ public:
         // Recreate a fresh mgr.
         ConfigBackendDHCPv4Mgr::create();
 
-        // Recreate database schema.
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
     }
 
@@ -37,6 +37,8 @@ public:
     virtual ~MySqlConfigBackendDHCPv4MgrTest() {
         // Destroy the mgr.
         ConfigBackendDHCPv4Mgr::destroy();
+
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
     }
 };
