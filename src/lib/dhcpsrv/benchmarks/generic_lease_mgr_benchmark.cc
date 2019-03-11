@@ -213,7 +213,8 @@ GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid() {
 void
 GenericLeaseMgrBenchmark::benchGetLease6_type_duid_iaid_subnetid() {
     for (Lease6Ptr const& lease : leases6_) {
-        lmptr_->getLease6(lease->type_, *lease->duid_, lease->iaid_, lease->subnet_id_);
+        lmptr_->getLease6(lease->type_, *lease->duid_, lease->iaid_,
+                          lease->subnet_id_);
     }
 }
 

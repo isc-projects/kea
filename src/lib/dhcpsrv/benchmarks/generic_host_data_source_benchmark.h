@@ -28,14 +28,15 @@ namespace dhcp {
 namespace bench {
 
 /// @brief Base fixture class for benchmarking host backends.
-struct GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
+class GenericHostDataSourceBenchmark : public ::benchmark::Fixture {
+public:
     /// @brief Defines universe (IPv4 or IPv6)
     enum Universe { V4, V6 };
 
     /// @brief Defines what kind of options should be added for a host
     enum AddedOptions {
-        DHCP4_ONLY,  ///< DHCPv4-only options
-        DHCP6_ONLY,  ///< DHCPv6-only options
+        DHCP4_ONLY,      ///< DHCPv4-only options
+        DHCP6_ONLY,      ///< DHCPv6-only options
         DHCP4_AND_DHCP6  ///< Both DHCPv4 and DHCPv6 options
     };
 
