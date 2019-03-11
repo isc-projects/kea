@@ -290,7 +290,10 @@ public:
         desc.space_name_ = "isc";
         test_options_.push_back(OptionDescriptorPtr(new OptionDescriptor(desc)));
 
-        // Add definitions for DHCPv4 non-standard options.
+        // Add definitions for DHCPv4 non-standard options in case we need to
+        // compare subnets, networks and pools in JSON format. In that case,
+        // the @c toElement functions require option definitions to generate the
+        // proper output.
         defs.addItem(OptionDefinitionPtr(new OptionDefinition(
                          "vendor-encapsulated-1", 1, "uint32")),
                      "vendor-encapsulated-options");
