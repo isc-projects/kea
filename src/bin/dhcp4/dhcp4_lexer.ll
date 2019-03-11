@@ -495,6 +495,17 @@ ControlCharacterFill            [^"\\]|\\{JSONEscapeSequence}
     }
 }
 
+\"serial-consistency\" {
+    switch(driver.ctx_) {
+    case isc::dhcp::Parser4Context::LEASE_DATABASE:
+    case isc::dhcp::Parser4Context::HOSTS_DATABASE:
+    case isc::dhcp::Parser4Context::CONFIG_DATABASE:
+        return isc::dhcp::Dhcp4Parser::make_SERIAL_CONSISTENCY(driver.loc_);
+    default:
+        return isc::dhcp::Dhcp4Parser::make_STRING("serial-consistency", driver.loc_);
+    }
+}
+
 \"reconnect-wait-time\" {
     switch(driver.ctx_) {
     case isc::dhcp::Parser4Context::LEASE_DATABASE:
