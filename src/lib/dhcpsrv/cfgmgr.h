@@ -15,6 +15,7 @@
 #include <dhcpsrv/pool.h>
 #include <dhcpsrv/srv_config.h>
 #include <util/buffer.h>
+#include <util/optional.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/noncopyable.hpp>
@@ -79,6 +80,19 @@ public:
     /// CfgMgr is a singleton and this method is the only way of
     /// accessing it.
     static CfgMgr& instance();
+
+    /// @brief returns path do the data directory
+    ///
+    /// This method returns a path to writable directory that DHCP servers
+    /// can store data in.
+    /// @return data directory
+    util::Optional<std::string> getDataDir() const;
+
+    /// @brief Sets new data directory.
+    ///
+    /// @param datadir New data directory.
+    /// @param unspecified Initial state. Default is "unspecified".
+    void setDataDir(const std::string& datadir, bool unspecified = true);
 
     /// @brief Updates the DHCP-DDNS client configuration to the given value.
     ///
@@ -299,6 +313,9 @@ private:
     /// external configuration should be merged.
     /// @param seq Source configuration sequence number.
     void mergeIntoCfg(const SrvConfigPtr& taget_config, const uint32_t seq);
+
+    /// @brief directory where data files (e.g. server-id) are stored
+    util::Optional<std::string> datadir_;
 
     /// @brief Manages the DHCP-DDNS client and its configuration.
     D2ClientMgr d2_client_mgr_;

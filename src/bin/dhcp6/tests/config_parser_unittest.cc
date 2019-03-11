@@ -5497,6 +5497,8 @@ TEST_F(Dhcp6ParserTest, notDirDataDir) {
 /// Check that a valid data directory is accepted.
 TEST_F(Dhcp6ParserTest, testDataDir) {
 
+    EXPECT_TRUE(CfgMgr::instance().getDataDir().unspecified());
+    string original_datadir(CfgMgr::instance().getDataDir());
     string datadir(TEST_DATA_BUILDDIR);
     string config_txt = "{\n"
         "\"data-directory\": \"" + datadir + "\"\n"
@@ -5512,8 +5514,9 @@ TEST_F(Dhcp6ParserTest, testDataDir) {
     checkResult(status, 0);
 
     // The value of data-directory was updated.
-    EXPECT_EQ(datadir, CfgMgr::instance().getStagingCfg()->getDataDir());
-    EXPECT_NE(datadir, CfgMgr::instance().getCurrentCfg()->getDataDir());
+    EXPECT_FALSE(CfgMgr::instance().getDataDir().unspecified());
+    EXPECT_EQ(datadir, string(CfgMgr::instance().getDataDir()));
+    EXPECT_NE(original_datadir, string(CfgMgr::instance().getDataDir()));
 }
 
 /// Check that the decline-probation-period value has a default value if not

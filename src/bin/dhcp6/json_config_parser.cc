@@ -174,7 +174,8 @@ public:
 
         // Set the data directory for server id file.
         if (global->contains("data-directory")) {
-            srv_config->setDataDir(getString(global, "data-directory"));
+          CfgMgr::instance().setDataDir(getString(global, "data-directory"),
+                                        false);
         }
 
         // Set the probation period for decline handling.

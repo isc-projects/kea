@@ -119,25 +119,6 @@ public:
     /// @return true if sequence numbers are equal.
     bool sequenceEquals(const SrvConfig& other);
 
-    /// @brief Default data directory.
-    static const std::string DEFAULT_DATA_DIR;
-
-    /// @brief returns path do the data directory.
-    ///
-    /// This method returns a path to writable directory that DHCP servers
-    /// can store data in.
-    /// @return data directory.
-    std::string getDataDir() const {
-        return (datadir_);
-    }
-
-    /// @brief Sets new data directory.
-    ///
-    /// @param datadir New data directory.
-    void setDataDir(const std::string& datadir) {
-        datadir_ = datadir;
-    }
-
     /// @brief Returns non-const pointer to interface configuration.
     ///
     /// This function returns a non-const pointer to the interface
@@ -710,9 +691,6 @@ private:
 
     /// @brief Sequence number identifying the configuration.
     uint32_t sequence_;
-
-    /// @brief directory where data files (e.g. server-id) are stored.
-    std::string datadir_;
 
     /// @brief Interface configuration.
     ///

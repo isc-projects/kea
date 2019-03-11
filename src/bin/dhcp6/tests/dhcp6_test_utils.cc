@@ -1,4 +1,4 @@
-// Copyright (C) 2013-2019 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2013-2018 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -30,25 +30,23 @@ namespace test {
 const char* BaseServerTest::DUID_FILE = "kea-dhcp6-serverid";
 
 BaseServerTest::BaseServerTest()
-    : original_datadir_(CfgMgr::instance().getCurrentCfg()->getDataDir()) {
-    CfgMgr::instance().getStagingCfg()->setDataDir(TEST_DATA_BUILDDIR);
+    : original_datadir_(CfgMgr::instance().getDataDir()) {
+    CfgMgr::instance().setDataDir(TEST_DATA_BUILDDIR);
 }
 
 BaseServerTest::~BaseServerTest() {
     // Remove test DUID file.
     std::ostringstream s;
-    s << CfgMgr::instance().getStagingCfg()->getDataDir()
-      << "/" << DUID_FILE;
+    s << CfgMgr::instance().getDataDir() << "/" << DUID_FILE;
     static_cast<void>(::remove(s.str().c_str()));
 
     // Remove default lease file.
     std::ostringstream s2;
-    s2 << CfgMgr::instance().getStagingCfg()->getDataDir()
-       << "/" << "kea-leases6.csv";
+    s2 << CfgMgr::instance().getDataDir() << "/" << "kea-leases6.csv";
     static_cast<void>(::remove(s2.str().c_str()));
 
     // Revert to original data directory.
-    CfgMgr::instance().getStagingCfg()->setDataDir(original_datadir_);
+    CfgMgr::instance().setDataDir(original_datadir_);
 
     // Revert to unit test logging in case the test reconfigured logging.
     isc::log::initLogger();
