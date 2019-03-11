@@ -1432,7 +1432,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
                            opt_boot_file_name->option_->getType(),
                            opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
-    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify created option");
+        testOptionsEquivalent(*test_options_[0], *returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("CREATE audit entry for an option");
@@ -1452,7 +1456,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteOption4) {
                                                      opt_boot_file_name->option_->getType(),
                                                      opt_boot_file_name->space_name_);
     ASSERT_TRUE(returned_opt_boot_file_name);
-    EXPECT_TRUE(returned_opt_boot_file_name->equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option");
+        testOptionsEquivalent(*opt_boot_file_name, *returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an option");
@@ -1507,17 +1515,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getAllOptions4) {
 
     // Verify that all options we put into the database were
     // returned.
-    auto option0 = index.find(test_options_[0]->option_->getType());
-    ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify test_options_[0]");
+        auto option0 = index.find(test_options_[0]->option_->getType());
+        ASSERT_FALSE(option0 == index.end());
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 
-    auto option1 = index.find(test_options_[1]->option_->getType());
-    ASSERT_FALSE(option1 == index.end());
-    EXPECT_TRUE(option1->equals(*test_options_[1]));
+    {
+        SCOPED_TRACE("verify test_options_[1]");
+        auto option1 = index.find(test_options_[1]->option_->getType());
+        ASSERT_FALSE(option1 == index.end());
+        testOptionsEquivalent(*test_options_[1], *option1);
+    }
 
-    auto option5 = index.find(test_options_[5]->option_->getType());
-    ASSERT_FALSE(option5 == index.end());
-    EXPECT_TRUE(option5->equals(*test_options_[5]));
+    {
+        SCOPED_TRACE("verify test_options_[5]");
+        auto option5 = index.find(test_options_[5]->option_->getType());
+        ASSERT_FALSE(option5 == index.end());
+        testOptionsEquivalent(*test_options_[5], *option5);
+    }
 }
 
 // This test verifies that modified global options can be retrieved.
@@ -1554,7 +1571,10 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getModifiedOptions4) {
     const OptionContainerTypeIndex& index = returned_options.get<1>();
     auto option0 = index.find(test_options_[0]->option_->getType());
     ASSERT_FALSE(option0 == index.end());
-    EXPECT_TRUE(option0->equals(*test_options_[0]));
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*test_options_[0], *option0);
+    }
 }
 
 // This test verifies that subnet level option can be added, updated and
@@ -1587,7 +1607,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an added subnet option");
@@ -1610,7 +1634,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSubnetOption4) {
     returned_opt_boot_file_name =
         returned_subnet->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for an updated subnet option");
@@ -1681,7 +1709,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_pool->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned pool option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet after adding an option "
@@ -1711,7 +1743,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeletePoolOption4) {
     returned_opt_boot_file_name =
         returned_pool1->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for a subnet when updating pool "
@@ -1790,7 +1826,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     OptionDescriptor returned_opt_boot_file_name =
         returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify returned option");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the added shared network option");
@@ -1814,7 +1854,11 @@ TEST_F(MySqlConfigBackendDHCPv4Test, createUpdateDeleteSharedNetworkOption4) {
     returned_opt_boot_file_name =
         returned_network->getCfgOption()->get(DHCP4_OPTION_SPACE, DHO_BOOT_FILE_NAME);
     ASSERT_TRUE(returned_opt_boot_file_name.option_);
-    EXPECT_TRUE(returned_opt_boot_file_name.equals(*opt_boot_file_name));
+
+    {
+        SCOPED_TRACE("verify updated option with modified persistence");
+        testOptionsEquivalent(*opt_boot_file_name, returned_opt_boot_file_name);
+    }
 
     {
         SCOPED_TRACE("UPDATE audit entry for the updated shared network option");

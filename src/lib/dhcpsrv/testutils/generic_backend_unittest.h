@@ -189,6 +189,59 @@ public:
                                         const bool persist,
                                         const bool formatted,
                                         const uint32_t vendor_id) const;
+
+    /// @brief Verify the option returned by the backend against a
+    /// reference option.
+    ///
+    /// DHCP option value can be specified in two ways. First, it can be
+    /// specified as a string of hexadecimal digits which is converted to
+    /// a binary option value. Second, it can be specified as a string of
+    /// comma separated values in a user readable form. The comma separated
+    /// values are parsed according to the definition of the given option
+    /// and then stored in the respective fields of the option. The second
+    /// approach always requires an option definition to be known to the
+    /// parser. It may either be a standard option definition or a runtime
+    /// option definition created by a user. While standard option
+    /// definitions are available in the Kea header files, the custom
+    /// option definitions may not be available to the Config Backend
+    /// fetching an option from the database for the following reasons:
+    ///
+    /// - the server to which the Config Backend is attached is not the
+    ///   one for which the configuration is being returned.
+    /// - the server is starting up and hasn't yet configured its runtime
+    ///   option definitions.
+    /// - the Config Backend implementation is not attached to the DHCP
+    ///   server but to the Control Agent.
+    ///
+    /// Note that the last case it currently not supported but may be
+    /// supported in the future.
+    ///
+    /// Since the option definitions aren't always available to the Config
+    /// Backend fetching the options from the database, the backend doesn't
+    /// interpret formatted options (those that use comma separated values
+    /// notation). It simply creates an @c OptionDescriptor with the generic
+    /// option instance (containing an option code and no option value) and
+    /// the other @c OptionDescriptor parameters set appropriately. The
+    /// @c CfgOption class contains methds that can be used on demand to
+    /// replace these instances with the appropriate types (derived from
+    /// @c Option) which represent formatted option data, if necessary.
+    ///
+    /// This test verifies that the @c OptionDescriptor returned by the
+    /// Config Backend is correct in that:
+    /// - the @c option_ member is non-null,
+    /// - the option instance is of a @c Option type rather than any of the
+    ///   derived types (is a raw option),
+    /// - the wire data of the returned option is equal to the wire data of
+    ///   the reference option (the reference option can be of a type derived
+    ///   from @c Option),
+    /// - the @c formatted_value_, @c persistent_ and @c space_name_ members
+    ///   of the returned option are equal to the respective members of the
+    ///   reference option.
+    ///
+    /// @param ref_option Reference option to compare tested option to.
+    /// @param tested_option Option returned by the backend to be tested.
+    void testOptionsEquivalent(const OptionDescriptor& ref_option,
+                               const OptionDescriptor& tested_option) const;
 };
 
 } // end of namespace isc::dhcp::test
