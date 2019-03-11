@@ -30,6 +30,8 @@ namespace yang {
 ///     "connect-timeout": <connect timeout>,
 ///     "contact-points": <contact points>,
 ///     "keyspace": <keyspace>,
+///     "consistency": <consistency>,
+///     "serial-consistency": <serial-consistency>,
 ///     "max-reconnect-tries": <maximum reconnect tries>,
 ///     "reconnect-wait-time": <reconnect wait time>,
 ///     "request-timeout": <request timeout>,
@@ -56,6 +58,8 @@ namespace yang {
 ///    +--rw connect-timeout?      uint32
 ///    +--rw contact-points?       string
 ///    +--rw keyspace?             string
+///    +--rw consistency?          string
+///    +--rw serial-consistency?   string
 ///    +--rw max-reconnect-tries?  uint32
 ///    +--rw reconnect-wait-time?  uint32
 ///    +--rw request-timeout?      uint32
