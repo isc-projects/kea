@@ -1,0 +1,54 @@
+# Copyright (C) 2019 Internet Systems Consortium, Inc. ("ISC")
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+#!/bin/sh
+
+# This script is primarily used for CQL unit tests, which need to
+# ensure an empty, but schema correct database for each test.  It
+# deletes ALL transient data from an existing Kea CQL schema,
+# including leases, reservations, etc... Use at your own peril.
+# Reference tables will be left in-tact.
+
+# Include utilities. Use installed version if available and
+# use build version if it isn't.
+if [ -e @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh ]; then
+    . @datarootdir@/@PACKAGE_NAME@/scripts/admin-utils.sh
+else
+    . @abs_top_builddir@/src/bin/admin/admin-utils.sh
+fi
+
+# First argument is must be the expected schema version <major>.<minor>
+exp_version="$1"
+shift;
+
+# Remaining arguments are used as cql command line arguments
+
+# If the existing schema doesn't match, the fail
+VERSION=`cql_version "$@"`
+if [ "$VERSION" = "" ]; then
+    printf "Cannot wipe data, schema version could not be detected.\n"
+    exit 1
+fi
+
+if [ "$VERSION" != "$exp_version" ]; then
+    printf "Cannot wipe data, wrong schema version. Expected $exp_version, found version $VERSION.\n"
+    exit 1
+fi
+
+# Delete transient data from tables.  
+cqlsh "$@" <<EOF
+TRUNCATE TABLE lease4;
+TRUNCATE TABLE lease6;
+TRUNCATE TABLE lease6_types;
+TRUNCATE TABLE lease_hwaddr_source;
+TRUNCATE TABLE lease_state;
+TRUNCATE TABLE host_reservations;
+TRUNCATE TABLE logs;
+EOF
+
+RESULT=$?
+
+exit $RESULT

@@ -47,8 +47,7 @@ public:
     /// @brief Constructor.
     MySqlConfigBackendDHCPv4Test()
         : test_subnets_(), test_networks_(), timestamps_(), audit_entries_() {
-        // Recreate database schema.
-        destroyMySQLSchema();
+        // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
 
         try {
@@ -77,6 +76,7 @@ public:
     /// @brief Destructor.
     virtual ~MySqlConfigBackendDHCPv4Test() {
         cbptr_.reset();
+        // If data wipe enabled, delete transient data otherwise destroy the schema.
         destroyMySQLSchema();
     }
 

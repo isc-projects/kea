@@ -1,4 +1,4 @@
-// Copyright (C) 2016-2018 Internet Systems Consortium, Inc. ("ISC")
+// Copyright (C) 2016-2019 Internet Systems Consortium, Inc. ("ISC")
 //
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -45,6 +45,13 @@ std::string connectionString(const char* type, const char* name = NULL,
                              const char* host = NULL, const char* user = NULL,
                              const char* password = NULL, const char* timeout = NULL,
                              const char* readonly_db = NULL);
+
+/// @brief Determines if  wiping only the data between tests is enabled
+///
+/// @return true if the environment variable, KEA_TEST_DB_WIPE_DATA_ONLY is
+/// defined as "true" or if it is not present. 
+bool softWipeEnabled();
+
 };
 };
 };
