@@ -72,6 +72,7 @@ if [ "$1" = "--cflags-only-other" ]
 then
 	exit 0
 fi
+
 if [ "$1" = "--cflags-only-I" ]
 then
 	echo "-I${CPP_DRIVER_PATH}/include/"
@@ -79,9 +80,10 @@ then
 fi
 if [ "$1" = "--libs" ]
 then
-	echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -luv"
+	echo "-L${CPP_DRIVER_PATH}/build/ -l${cql_lib} -lssl -luv"
 	exit 0
 fi
+
 if [ "$1" = "--modversion" ]
 then
 	MAJOR=$(grep VERSION_MAJOR "${CPP_DRIVER_PATH}/include/cassandra.h" | cut -d " " -f 3)
@@ -90,10 +92,13 @@ then
 	echo "${MAJOR}.${MINOR}.${PATCH}"
 	exit 0
 fi
+
 if [ "$1" = "--print-errors" ]
 then
 	exit 0
 fi
+
 echo "wrong parameter"
 echo "run: \`$0 --help\` for more help"
+
 exit 1

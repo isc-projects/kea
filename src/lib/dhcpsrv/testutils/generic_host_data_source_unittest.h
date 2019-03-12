@@ -55,14 +55,26 @@ public:
     /// @brief Used to sort a host collection by IPv4 subnet id.
     /// @param host1 first host to be compared
     /// @param host2 second host to be compared
+    /// @result return true if host1's subnet id is smaller than host2's
+    /// subnet id
     static bool compareHostsForSort4(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
 
     /// @brief Used to sort a host collection by IPv6 subnet id.
     /// @param host1 first host to be compared
     /// @param host2 second host to be compared
+    /// @result return true if host1's subnet id is smaller than host2's
+    /// subnet id
     static bool compareHostsForSort6(const ConstHostPtr& host1,
                                      const ConstHostPtr& host2);
+
+    /// @brief Used to sort a host collection by host identifier.
+    /// @param host1 first host to be compared
+    /// @param host2 second host to be compared
+    /// @result return true if host1's identifier is smaller than host2's
+    /// identifier
+    static bool compareHostsIdentifier(const ConstHostPtr& host1,
+                                       const ConstHostPtr& host2);
 
     /// @brief Returns number of entries in the v4 options table.
     ///

@@ -93,7 +93,7 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 leases share
+    /// Parameter is ignored for PostgreSQL backend as the v4 and v6 hosts share
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
@@ -150,7 +150,7 @@ public:
 ///
 /// This test checks if the PgSqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// PgSqlLeaseMgr test fixure set.  This test checks that the database can be
+/// PgSqlHostMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(PgSqlHostDataSource, OpenDatabase) {
@@ -177,6 +177,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
     try {
         string connection_string = validPgSQLConnectionString() + string(" ") +
                                    string(VALID_TIMEOUT);
+        HostMgr::create();
         EXPECT_NO_THROW(HostMgr::addBackend(connection_string));
         HostMgr::delBackend("postgresql");
     } catch (const isc::Exception& ex) {
@@ -186,7 +187,7 @@ TEST(PgSqlHostDataSource, OpenDatabase) {
                << "*** before the PostgreSQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the host manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
@@ -238,7 +239,7 @@ bool db_lost_callback(ReconnectCtlPtr /* db_conn_retry */) {
 }
 
 /// @brief Make sure open failures do NOT invoke db lost callback
-/// The db lost callback should only be invoked after succesfully
+/// The db lost callback should only be invoked after successfully
 /// opening the DB and then subsequently losing it. Failing to
 /// open should be handled directly by the application layer.
 /// There is simply no good way to break the connection in a

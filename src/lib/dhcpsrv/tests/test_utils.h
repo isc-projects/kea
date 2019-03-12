@@ -39,7 +39,7 @@ detailCompareLease(const Lease4Ptr& first, const Lease4Ptr& second);
 /// This function is used to attempt lost connectivity
 /// with backends, notably MySQL and Postgresql.
 ///
-/// The theory being, that in a confined test environment the last 
+/// The theory being, that in a confined test environment the last
 /// such descriptor is the SQL client socket descriptor.  This allows
 /// us to the close that descriptor and simulate a loss of server
 /// connectivity.

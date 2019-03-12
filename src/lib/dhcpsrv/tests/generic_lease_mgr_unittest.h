@@ -67,7 +67,8 @@ public:
     ///
     /// @param address Address to use for the initialization
     ///
-    /// @return Lease6Ptr.  This will not point to anything if the initialization
+    /// @return Lease6Ptr.  This will not point to anything if the
+    /// initialization
     ///         failed (e.g. unknown address).
     Lease6Ptr initializeLease6(std::string address);
 
@@ -446,13 +447,13 @@ public:
                          const std::vector<std::string>& expected_addresses);
 
     /// @brief String forms of IPv4 addresses
-    std::vector<std::string>  straddress4_;
+    std::vector<std::string> straddress4_;
 
     /// @brief IOAddress forms of IPv4 addresses
     std::vector<isc::asiolink::IOAddress> ioaddress4_;
 
     /// @brief String forms of IPv6 addresses
-    std::vector<std::string>  straddress6_;
+    std::vector<std::string> straddress6_;
 
     /// @brief Types of IPv6 Leases
     std::vector<Lease::Type> leasetype6_;
@@ -502,7 +503,7 @@ public:
 
     /// @brief Verifies open failures do NOT invoke db lost callback
     ///
-    /// The db lost callback should only be invoked after succesfully
+    /// The db lost callback should only be invoked after successfully
     /// opening the DB and then subsequently losing it. Failing to
     /// open should be handled directly by the application layer.
     void testNoCallbackOnOpenFailure();
@@ -529,8 +530,8 @@ public:
 
 };
 
-}; // namespace test
-}; // namespace dhcp
-}; // namespace isc
+}  // namespace test
+}  // namespace dhcp
+}  // namespace isc
 
 #endif

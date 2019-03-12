@@ -514,12 +514,12 @@ TEST_F(MySqlLeaseMgrTest, nullDuid) {
     testNullDuid();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6Mac) {
     testLease6MAC();
 }
 
-/// @brief Tests whether memfile can store and retrieve hardware addresses
+/// @brief Tests whether MySQL can store and retrieve hardware addresses
 TEST_F(MySqlLeaseMgrTest, testLease6HWTypeAndSource) {
     testLease6HWTypeAndSource();
 }
@@ -550,12 +550,12 @@ TEST_F(MySqlLeaseMgrTest, recountLeaseStats6) {
     testRecountLeaseStats6();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases4) {
     testWipeLeases4();
 }
 
-// @brief Tests that leases from specific subnet can be removed.
+/// @brief Tests that leases from specific subnet can be removed.
 TEST_F(MySqlLeaseMgrTest, DISABLED_wipeLeases6) {
     testWipeLeases6();
 }

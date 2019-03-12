@@ -94,7 +94,7 @@ public:
     /// Closes the database and re-open it.  Anything committed should be
     /// visible.
     ///
-    /// Parameter is ignored for MySQL backend as the v4 and v6 leases share
+    /// Parameter is ignored for MySQL backend as the v4 and v6 hosts share
     /// the same database.
     void reopen(Universe) {
         HostMgr::create();
@@ -153,7 +153,7 @@ public:
 ///
 /// This test checks if the MySqlHostDataSource can be instantiated.  This happens
 /// only if the database can be opened.  Note that this is not part of the
-/// MySqlLeaseMgr test fixure set.  This test checks that the database can be
+/// MySqlHostMgr test fixure set.  This test checks that the database can be
 /// opened: the fixtures assume that and check basic operations.
 
 TEST(MySqlHostDataSource, OpenDatabase) {
@@ -189,7 +189,7 @@ TEST(MySqlHostDataSource, OpenDatabase) {
                << "*** before the MySQL tests will run correctly.\n";
     }
 
-    // Check that attempting to get an instance of the host manager when
+    // Check that attempting to get an instance of the host data source when
     // none is set throws an exception.
     EXPECT_FALSE(HostMgr::instance().getHostDataSource());
 
@@ -646,7 +646,8 @@ TEST_F(MySqlHostDataSourceTest, testAddRollback) {
     ASSERT_EQ(0, status) << mysql_error(conn.mysql_);
 
     // Create a host with a reservation.
-    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1", Host::IDENT_HWADDR, false);
+    HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8:1::1",
+                                        Host::IDENT_HWADDR, false);
     // Let's assign some DHCPv4 subnet to the host, because we will use the
     // DHCPv4 subnet to try to retrieve the host after failed insertion.
     host->setIPv4SubnetID(SubnetID(4));

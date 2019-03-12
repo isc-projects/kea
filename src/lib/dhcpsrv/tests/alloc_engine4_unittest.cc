@@ -2679,7 +2679,6 @@ TEST_F(AllocEngine4Test, globalReservationReservedAddressRequest) {
     EXPECT_FALSE(ctx.old_lease_);
 }
 
-
 // This test checks the behavior of the allocation engine in the following
 // scenario:
 // - Client has no lease in the database.

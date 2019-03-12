@@ -69,6 +69,24 @@ GenericHostDataSourceTest::compareHostsForSort6(const ConstHostPtr& host1,
     return false;
 }
 
+bool
+GenericHostDataSourceTest::compareHostsIdentifier(const ConstHostPtr& host1,
+                                                  const ConstHostPtr& host2) {
+    auto host1_i = host1->getIdentifier();
+    auto host2_i = host2->getIdentifier();
+    auto count1 = host1_i.size();
+    auto count2 = host2_i.size();
+    if (count1 > count2) {
+        count1 = count2;
+    }
+    for (uint8_t i = 0; i < count1; ++i) {
+        if (host1_i[i] != host2_i[i]) {
+            return (host1_i[i] < host2_i[i]);
+        }
+    }
+    return false;
+}
+
 DuidPtr
 GenericHostDataSourceTest::HWAddrToDuid(const HWAddrPtr& hwaddr) {
     if (!hwaddr) {
@@ -326,7 +344,8 @@ GenericHostDataSourceTest::testMaxSubnetId4() {
     EXPECT_FALSE(host_by_id);
 }
 
-void GenericHostDataSourceTest::testMaxSubnetId6() {
+void
+GenericHostDataSourceTest::testMaxSubnetId6() {
     std::vector<uint8_t> ident;
 
     ident = HostDataSourceUtils::generateIdentifier();
@@ -653,27 +672,34 @@ GenericHostDataSourceTest::testGetPageLimit6(const Host::IdentifierType& id) {
     uint64_t host_id(0);
     HostPageSize page_size(4);
     ConstHostCollection page;
+    ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(4, page.size());
     host_id = page[3]->getHostId();
     ASSERT_NE(0, host_id);
 
-    // Verify we got what we expected.
-    for (size_t i = 0; i < 4; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[i], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(1, page.size());
     host_id = page[0]->getHostId();
 
-    // Verify we got what we expected.
-    HostDataSourceUtils::compareHosts(hosts[4], page[0]);
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(0, page.size());
+
+    // hosts are sorted by generated host_id (which is an auto increment for
+    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
+    // sorted by host identifier
+    std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 5; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i], all_pages[i]);
+    }
 }
 
 void
@@ -710,29 +736,36 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     uint64_t host_id(0);
     HostPageSize page_size(3);
     ConstHostCollection page;
+    ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
     ASSERT_EQ(3, page.size());
     host_id = page[2]->getHostId();
     ASSERT_NE(0, host_id);
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 3; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[i * 2], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
     ASSERT_EQ(2, page.size());
     host_id = page[1]->getHostId();
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 2; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[(i + 3) * 2], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
     ASSERT_EQ(0, page.size());
+
+    // hosts are sorted by generated host_id (which is an auto increment for
+    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
+    // sorted by host identifier
+    std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 5; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2], all_pages[i]);
+    }
+
+    all_pages.clear();
 
     // Second subnet.
     ++subnet4;
@@ -745,24 +778,28 @@ GenericHostDataSourceTest::testGetPage4Subnets() {
     host_id = page[2]->getHostId();
     ASSERT_NE(0, host_id);
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 3; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[1 + (i * 2)], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
     ASSERT_EQ(2, page.size());
     host_id = page[1]->getHostId();
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 2; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[1 + ((i + 3) * 2)], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage4(subnet4, idx, host_id, page_size));
     ASSERT_EQ(0, page.size());
+
+    // hosts are sorted by generated host_id (which is an auto increment for
+    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
+    // sorted by host identifier
+    std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 5; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2 + 1], all_pages[i]);
+    }
 }
 
 void
@@ -799,29 +836,36 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     uint64_t host_id(0);
     HostPageSize page_size(3);
     ConstHostCollection page;
+    ConstHostCollection all_pages;
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(3, page.size());
     host_id = page[2]->getHostId();
     ASSERT_NE(0, host_id);
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 3; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[i * 2], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(2, page.size());
     host_id = page[1]->getHostId();
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 2; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[(i + 3) * 2], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(0, page.size());
+
+    // hosts are sorted by generated host_id (which is an auto increment for
+    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
+    // sorted by host identifier
+    std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 5; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2], all_pages[i]);
+    }
+
+    all_pages.clear();
 
     // Second subnet.
     ++subnet6;
@@ -834,24 +878,28 @@ GenericHostDataSourceTest::testGetPage6Subnets() {
     host_id = page[2]->getHostId();
     ASSERT_NE(0, host_id);
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 3; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[1 + (i * 2)], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Get second and last pages.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(2, page.size());
     host_id = page[1]->getHostId();
 
-    // Verify retrieved hosts.
-    for (size_t i = 0; i < 2; ++i) {
-        HostDataSourceUtils::compareHosts(hosts[1 + ((i + 3) * 2)], page[i]);
-    }
+    std::copy(page.begin(), page.end(), std::back_inserter(all_pages));
 
     // Verify we have everything.
     ASSERT_NO_THROW(page = hdsptr_->getPage6(subnet6, idx, host_id, page_size));
     ASSERT_EQ(0, page.size());
+
+    // hosts are sorted by generated host_id (which is an auto increment for
+    // MySql and PostgreSql and a hash for Cassandra) so the hosts must be
+    // sorted by host identifier
+    std::sort(all_pages.begin(), all_pages.end(), compareHostsIdentifier);
+
+    // Verify we got what we expected.
+    for (size_t i = 0; i < 5; ++i) {
+        HostDataSourceUtils::compareHosts(hosts[i * 2 + 1], all_pages[i]);
+    }
 }
 
 void
@@ -1271,7 +1319,8 @@ GenericHostDataSourceTest::testSubnetId6(int subnets, Host::IdentifierType id) {
     int i = 0;
     if (hdsptr_->getType() == "cql") {
         // There is no ORDER BY in Cassandra. Order here. Remove this if entries
-        // are implemented as ordered in the Cassandra host data source.
+        // are eventually implemented as ordered in the Cassandra host data
+        // source.
         std::sort(all_by_id.begin(), all_by_id.end(), compareHostsForSort6);
     }
     for (ConstHostCollection::const_iterator it = all_by_id.begin();
@@ -1510,8 +1559,9 @@ GenericHostDataSourceTest::testMultipleReservationsDifferentOrder() {
                                               host2->getIPv6Reservations());
 }
 
-void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
-                                                         ConstElementPtr user_context) {
+void
+GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
+                                                    ConstElementPtr user_context) {
     HostPtr host = HostDataSourceUtils::initializeHost4("192.0.2.5", Host::IDENT_HWADDR);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP4_ONLY, user_context));
@@ -1543,8 +1593,9 @@ void GenericHostDataSourceTest::testOptionsReservations4(const bool formatted,
     ASSERT_NO_FATAL_FAILURE(HostDataSourceUtils::compareHosts(host, host_by_addr));
 }
 
-void GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
-                                                         ConstElementPtr user_context) {
+void
+GenericHostDataSourceTest::testOptionsReservations6(const bool formatted,
+                                                    ConstElementPtr user_context) {
     HostPtr host = HostDataSourceUtils::initializeHost6("2001:db8::1", Host::IDENT_DUID, false);
     // Add a bunch of DHCPv4 and DHCPv6 options for the host.
     ASSERT_NO_THROW(addTestOptions(host, formatted, DHCP6_ONLY, user_context));
@@ -1849,7 +1900,8 @@ GenericHostDataSourceTest::stressTest(unsigned int nOfHosts /* = 0xfffdU */) {
               << std::endl;
 }
 
-void GenericHostDataSourceTest::testDeleteByAddr4() {
+void
+GenericHostDataSourceTest::testDeleteByAddr4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1882,7 +1934,8 @@ void GenericHostDataSourceTest::testDeleteByAddr4() {
     EXPECT_FALSE(result);
 }
 
-void GenericHostDataSourceTest::testDeleteById4() {
+void
+GenericHostDataSourceTest::testDeleteById4() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1927,7 +1980,8 @@ void GenericHostDataSourceTest::testDeleteById4() {
 
 // Test checks when a IPv4 host with options is deleted that the options are
 // deleted as well.
-void GenericHostDataSourceTest::testDeleteById4Options() {
+void
+GenericHostDataSourceTest::testDeleteById4Options() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -1980,7 +2034,8 @@ void GenericHostDataSourceTest::testDeleteById4Options() {
     EXPECT_FALSE(result);
 }
 
-void GenericHostDataSourceTest::testDeleteById6() {
+void
+GenericHostDataSourceTest::testDeleteById6() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 
@@ -2024,7 +2079,8 @@ void GenericHostDataSourceTest::testDeleteById6() {
     EXPECT_FALSE(result);
 }
 
-void GenericHostDataSourceTest::testDeleteById6Options() {
+void
+GenericHostDataSourceTest::testDeleteById6Options() {
     // Make sure we have a pointer to the host data source.
     ASSERT_TRUE(hdsptr_);
 

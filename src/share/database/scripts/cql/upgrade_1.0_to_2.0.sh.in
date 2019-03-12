@@ -23,35 +23,35 @@ cqlsh "$@" <<EOF
 -- Table \`host_reservations\`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS host_reservations (
-    id bigint,
-    host_identifier blob,
-    host_identifier_type int,
-    host_ipv4_subnet_id int,
-    host_ipv6_subnet_id int,
-    host_ipv4_address int,
-    host_ipv4_next_server int,
-    host_ipv4_server_hostname text,
-    host_ipv4_boot_file_name text,
-    hostname text,
-    user_context text,
-    host_ipv4_client_classes text,
-    host_ipv6_client_classes text,
+    id BIGINT,
+    host_identifier BLOB,
+    host_identifier_type INT,
+    host_ipv4_subnet_id INT,
+    host_ipv6_subnet_id INT,
+    host_ipv4_address INT,
+    host_ipv4_next_server INT,
+    host_ipv4_server_hostname VARCHAR,
+    host_ipv4_boot_file_name VARCHAR,
+    hostname VARCHAR,
+    user_context VARCHAR,
+    host_ipv4_client_classes VARCHAR,
+    host_ipv6_client_classes VARCHAR,
     -- reservation
-    reserved_ipv6_prefix_address text,
-    reserved_ipv6_prefix_length int,
-    reserved_ipv6_prefix_address_type int,
-    iaid int,
+    reserved_ipv6_prefix_address VARCHAR,
+    reserved_ipv6_prefix_length INT,
+    reserved_ipv6_prefix_address_type INT,
+    iaid INT,
     -- option
-    option_universe int,
-    option_code int,
-    option_value blob,
-    option_formatted_value text,
-    option_space text,
-    option_is_persistent boolean,
-    option_client_class text,
-    option_subnet_id int,
-    option_user_context text,
-    option_scope_id int,
+    option_universe INT,
+    option_code INT,
+    option_value BLOB,
+    option_formatted_value VARCHAR,
+    option_space VARCHAR,
+    option_is_persistent BOOLEAN,
+    option_client_class VARCHAR,
+    option_subnet_id INT,
+    option_user_context VARCHAR,
+    option_scope_id INT,
     PRIMARY KEY ((id))
 );
 
@@ -68,8 +68,8 @@ CREATE INDEX IF NOT EXISTS host_reservationsindex7 ON host_reservations (reserve
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS host_identifier_type (
-    type int,
-    name varchar,
+    type INT,
+    name VARCHAR,
     PRIMARY KEY ((type))
 );
 
@@ -85,9 +85,9 @@ INSERT INTO host_identifier_type (type, name) VALUES (4, 'flex-id');
 -- -----------------------------------------------------
 
 CREATE TABLE IF NOT EXISTS dhcp_option_scope (
-  scope_id int,
-  scope_name varchar,
-  PRIMARY KEY ((scope_id))
+    scope_id INT,
+    scope_name VARCHAR,
+    PRIMARY KEY ((scope_id))
 );
 
 INSERT INTO dhcp_option_scope (scope_id, scope_name) VALUES (0, 'global');

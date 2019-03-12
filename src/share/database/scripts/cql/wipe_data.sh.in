@@ -45,7 +45,7 @@ TRUNCATE TABLE lease6;
 TRUNCATE TABLE lease6_types;
 TRUNCATE TABLE lease_hwaddr_source;
 TRUNCATE TABLE lease_state;
-TRUNCATE TABLE host_reservations;
+TRUNCATE TABLE hosts;
 TRUNCATE TABLE logs;
 EOF
 
