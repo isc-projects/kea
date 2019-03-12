@@ -48,7 +48,7 @@ std::string connectionString(const char* type, const char* name = NULL,
 
 /// @brief Determines if  wiping only the data between tests is enabled
 ///
-/// @return true if the environment variable, KEA_TEST_DB_WIPE_ONLY is
+/// @return true if the environment variable, KEA_TEST_DB_WIPE_DATA_ONLY is
 /// defined as "true" or if it is not present. 
 bool softWipeEnabled();
 
