@@ -385,6 +385,10 @@ uint64_t
 TestConfigBackendDHCPv4::deleteSharedNetwork4(const db::ServerSelector& /* server_selector */,
                                               const std::string& name) {
     auto& index = shared_networks_.get<SharedNetworkNameIndexTag>();
+    auto network_it = index.find(name);
+    if (network_it != index.end()) {
+        (*network_it)->delAll();
+    }
     return (index.erase(name));
 }
 
