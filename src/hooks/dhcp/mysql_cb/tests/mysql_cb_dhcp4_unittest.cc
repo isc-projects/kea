@@ -6,6 +6,7 @@
 
 #include <config.h>
 #include <mysql_cb_dhcp4.h>
+#include <database/db_exceptions.h>
 #include <database/testutils/schema.h>
 #include <dhcp/dhcp6.h>
 #include <dhcp/libdhcp++.h>
@@ -658,7 +659,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
     subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
     EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2),
-                 DbOperationError);
+                 DuplicateEntry);
 }
 
 // Test that the information about unspecified optional parameters gets
