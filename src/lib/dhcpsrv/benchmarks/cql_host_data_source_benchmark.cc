@@ -43,7 +43,7 @@ public:
         // Ensure we have the proper schema with no transient data.
         createCqlSchema();
         try {
-            HostMgr::delBackend("cql");
+            HostMgr::create();
             HostMgr::addBackend(validCqlConnectionString());
         } catch (...) {
             cerr << "ERROR: unable to open database" << endl;
