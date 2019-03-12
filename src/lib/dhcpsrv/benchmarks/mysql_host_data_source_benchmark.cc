@@ -43,7 +43,7 @@ public:
         // Ensure we have the proper schema with no transient data.
         createMySQLSchema();
         try {
-            HostMgr::delBackend("mysql");
+            HostMgr::create();
             HostMgr::addBackend(validMySQLConnectionString());
         } catch (...) {
             cerr << "ERROR: unable to open database" << endl;

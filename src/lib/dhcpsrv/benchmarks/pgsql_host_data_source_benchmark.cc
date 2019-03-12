@@ -43,7 +43,7 @@ public:
         // Ensure we have the proper schema with no transient data.
         createPgSQLSchema();
         try {
-            HostMgr::delBackend("postgresql");
+            HostMgr::create();
             HostMgr::addBackend(validPgSQLConnectionString());
         } catch (...) {
             cerr << "ERROR: unable to open database" << endl;
