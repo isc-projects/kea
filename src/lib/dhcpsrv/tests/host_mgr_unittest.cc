@@ -1217,9 +1217,8 @@ void
 CQLHostMgrTest::SetUp() {
     HostMgrTest::SetUp();
 
-    // Ensure schema is the correct one.
-    db::test::destroyCqlSchema(false, true);
-    db::test::createCqlSchema(false, true);
+    // Ensure we have the proper schema with no transient data.
+    db::test::createCqlSchema();
 
     // Connect to the database
     try {
@@ -1238,7 +1237,9 @@ void
 CQLHostMgrTest::TearDown() {
     HostMgr::instance().getHostDataSource()->rollback();
     HostMgr::delBackend("cql");
-    db::test::destroyCqlSchema(false, true);
+
+    // If data wipe enabled, delete transient data otherwise destroy the schema
+    db::test::destroyCqlSchema();
 }
 
 // This test verifies that reservations for a particular client can

@@ -37,7 +37,7 @@ public:
     /// It cleans up schema and recreates tables, then instantiates LeaseMgr
     void SetUp(::benchmark::State const&) override {
         // Ensure we have the proper schema with no transient data.
-        createMySQLSchema(false);
+        createMySQLSchema();
         try {
             LeaseMgrFactory::destroy();
             LeaseMgrFactory::create(validMySQLConnectionString());
@@ -59,7 +59,7 @@ public:
         }
         LeaseMgrFactory::destroy();
         // If data wipe enabled, delete transient data otherwise destroy the schema.
-        destroyMySQLSchema(false);
+        destroyMySQLSchema();
     }
 };
 

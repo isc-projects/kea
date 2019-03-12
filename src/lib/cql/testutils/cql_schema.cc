@@ -32,7 +32,7 @@ validCqlConnectionString() {
 }
 
 void
-destroyCqlSchema(bool force, bool show_err) {
+destroyCqlSchema(bool show_err, bool force) {
     // If force is true or wipeCqlData() fails, destory the schema.
     if (force || (!softWipeEnabled()) || wipeCqlData(show_err)) {
         runCqlScript(DATABASE_SCRIPTS_DIR, "cql/dhcpdb_drop.cql", show_err);
@@ -40,7 +40,7 @@ destroyCqlSchema(bool force, bool show_err) {
 }
 
 void
-createCqlSchema(bool force, bool show_err) {
+createCqlSchema(bool show_err, bool force) {
     // If force is true or wipeCqlData() fails, recreate the schema.
     if (force || (!softWipeEnabled()) || wipeCqlData(show_err)) {
         destroyCqlSchema(show_err, true);
