@@ -622,7 +622,7 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
 
     // Fetching the subnet for an explicitly specified server tag should
-    // succeeed too.
+    // succeed too.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ONE("server1"),
                                          SubnetID(1024));
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
@@ -639,19 +639,26 @@ TEST_F(MySqlConfigBackendDHCPv4Test, getSubnet4) {
 
     // Fetch this subnet by prefix and verify it matches.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-					 test_subnets_[2]->toText());
+                                         test_subnets_[2]->toText());
     ASSERT_TRUE(returned_subnet);
     EXPECT_EQ(test_subnets_[2]->toElement()->str(), returned_subnet->toElement()->str());
 
-    // Update the the subnet in the database (both use the same prefix).
+    // Update the subnet in the database (both use the same prefix).
     subnet2.reset(new Subnet4(IOAddress("192.0.3.0"), 24, 30, 40, 60, 8192));
     cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2);
 
     // Fetch again and verify.
     returned_subnet = cbptr_->getSubnet4(ServerSelector::ALL(),
-					 test_subnets_[2]->toText());
+                                         test_subnets_[2]->toText());
     ASSERT_TRUE(returned_subnet);
     EXPECT_EQ(subnet2->toElement()->str(), returned_subnet->toElement()->str());
+
+    // Update the subnet when it conflicts same id and same prefix both
+    // with different subnets. This should throw.
+    // Subnets are 10.0.0.0/8 id 1024 and 192.0.3.0/24 id 8192
+    subnet2.reset(new Subnet4(IOAddress("10.0.0.0"), 8, 30, 40, 60, 8192));
+    EXPECT_THROW(cbptr_->createUpdateSubnet4(ServerSelector::ALL(),  subnet2),
+                 DbOperationError);
 }
 
 // Test that the information about unspecified optional parameters gets

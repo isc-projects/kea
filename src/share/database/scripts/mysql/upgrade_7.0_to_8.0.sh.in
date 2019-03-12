@@ -591,7 +591,7 @@ ALTER TABLE dhcp6_shared_network_server
     ON DELETE CASCADE ON UPDATE NO ACTION;
 
 -- Update dhcp4_subnet_server and dhcp6_subnet_server to allow update
--- on the prefix too.
+-- on the prefix too by setting the CASCADE action.
 
 ALTER TABLE dhcp4_subnet_server
     DROP FOREIGN KEY fk_dhcp4_subnet_server_subnet_id;

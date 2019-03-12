@@ -569,7 +569,7 @@ private:
     /// created using static factory functions.
     ///
     /// @param buffer_type MySQL buffer type as defined in MySQL C API.
-    /// @param length Buffer length. 
+    /// @param length Buffer length.
     MySqlBinding(enum_field_types buffer_type, const size_t length);
 
     /// @brief Assigns new value to a buffer.
