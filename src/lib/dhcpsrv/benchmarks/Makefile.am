@@ -93,10 +93,10 @@ run_benchmarks_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
 endif
 
 run_benchmarks_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
-run_benchmarks_LDADD +=	$(top_builddir)/src/lib/cc/libkea-cc.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/cc/libkea-cc.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
-run_benchmarks_LDADD +=	$(top_builddir)/src/lib/log/libkea-log.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/log/libkea-log.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
