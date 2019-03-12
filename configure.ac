@@ -1969,6 +1969,7 @@ cat >> config.report << END
 Developer:
   Enable Debugging:          $debug_enabled
   Google Tests:              $enable_gtest
+  Google Benchmark:          $enable_benchmark
   Valgrind:                  $found_valgrind
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks

@@ -70,10 +70,15 @@ if HAVE_CQL
 run_benchmarks_LDFLAGS += $(CQL_LIBS)
 endif
 
-run_benchmarks_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
-run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+run_benchmarks_LDADD  = $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
-run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/process/libkea-process.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/eval/libkea-eval.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp_ddns/libkea-dhcp_ddns.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/stats/libkea-stats.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/config/libkea-cfgclient.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/hooks/libkea-hooks.la
 
 if HAVE_MYSQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
@@ -87,11 +92,32 @@ if HAVE_CQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
 endif
 
-run_benchmarks_LDADD += $(BENCHMARK_LDADD)
+run_benchmarks_LDADD += $(top_builddir)/src/lib/database/libkea-database.la
+run_benchmarks_LDADD +=	$(top_builddir)/src/lib/cc/libkea-cc.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/cryptolink/libkea-cryptolink.la
+run_benchmarks_LDADD +=	$(top_builddir)/src/lib/log/libkea-log.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/util/threads/libkea-threads.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/util/libkea-util.la
+run_benchmarks_LDADD += $(top_builddir)/src/lib/exceptions/libkea-exceptions.la
+
+if HAVE_MYSQL
+run_benchmarks_LDADD += $(MYSQL_LIBS)
+endif
+
+if HAVE_PGSQL
+run_benchmarks_LDADD += $(PGSQL_LIBS)
+endif
+
+if HAVE_CQL
+run_benchmarks_LDADD += $(CQL_LIBS)
+endif
+
 run_benchmarks_LDADD += $(LOG4CPLUS_LIBS)
 run_benchmarks_LDADD += $(CRYPTO_LIBS)
 run_benchmarks_LDADD += $(BOOST_LIBS)
 run_benchmarks_LDADD += $(GTEST_LDADD)
+run_benchmarks_LDADD += $(BENCHMARK_LDADD)
 
 endif
 
