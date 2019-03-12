@@ -1972,8 +1972,8 @@ Developer:
   C++ Code Coverage:         $USE_LCOV
   Logger checks:             $enable_logger_checks
   Generate Documentation:    $enable_generate_docs
-  Parser Generation:         $enable_generate_parser
-  Messages Files Generation: $enable_generate_messages
+  Generate Parser:           $enable_generate_parser
+  Generate Messages Files:   $enable_generate_messages
   Perfdhcp:                  $enable_perfdhcp
   Kea-shell:                 $enable_shell
 
