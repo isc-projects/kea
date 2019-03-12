@@ -88,16 +88,6 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, insertHosts)(benchmark::State& 
 }
 
 /// Defines steps necessary for conducting a benchmark that measures
-/// hosts update.
-BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, updateHosts)(benchmark::State& state) {
-    const size_t host_count = state.range(0);
-    while (state.KeepRunning()) {
-        setUpWithInserts(state, host_count);
-        updateHosts();
-    }
-}
-
-/// Defines steps necessary for conducting a benchmark that measures
 /// hosts retrieval by getAll4(hw-addr, duid) call.
 BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, getAll)(benchmark::State& state) {
     const size_t host_count = state.range(0);
@@ -170,11 +160,6 @@ BENCHMARK_DEFINE_F(MySqlHostDataSourceBenchmark, get6Prefix)(benchmark::State& s
 /// Defines parameters necessary for running a benchmark that measures
 /// hosts insertion.
 BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, insertHosts)
-    ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
-
-/// Defines parameters necessary for running a benchmark that measures
-/// hosts update.
-BENCHMARK_REGISTER_F(MySqlHostDataSourceBenchmark, updateHosts)
     ->Range(MIN_HOST_COUNT, MAX_HOST_COUNT)->Unit(UNIT);
 
 /// Defines parameters necessary for running a benchmark that measures

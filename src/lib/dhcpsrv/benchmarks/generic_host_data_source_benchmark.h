@@ -182,9 +182,6 @@ public:
     /// @brief Inserts all hosts stored in hosts_ into the benchmarked host backend
     void insertHosts();
 
-    /// @brief Updates all hosts stored in hosts_ in the benchmarked host backend
-    void updateHosts();
-
     /// @brief Essential steps required to benchmark the
     ///        getAll(identifier-type, identifier) call.
     void benchGetAll();
