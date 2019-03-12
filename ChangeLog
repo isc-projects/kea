@@ -1,3 +1,8 @@
+1541.	[bug]		fdupont
+	Empty Relay Agent Information option is no longer sent in server
+	responses.
+	(Gitlab #519,#510,!271, git f3563396d2227e48e96a5d65587406d8d1868db5)
+
 1540.	[func]		fdupont
 	Added a new method deleteSharedNetworkSubnets4 in the config
 	backend API to delete all subnets belonging to a shared network.
