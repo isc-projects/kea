@@ -39,7 +39,7 @@ public:
     /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
         // Ensure we have the proper schema with no transient data.
-        createMySQLSchema(false);
+        createMySQLSchema();
         try {
             HostDataSourceFactory::destroy();
             HostDataSourceFactory::create(validMySQLConnectionString());
@@ -61,7 +61,7 @@ public:
         }
         HostDataSourceFactory::destroy();
         // If data wipe enabled, delete transient data otherwise destroy the schema.
-        destroyMySQLSchema(false);
+        destroyMySQLSchema();
     }
 };
 

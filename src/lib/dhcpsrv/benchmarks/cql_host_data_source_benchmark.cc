@@ -38,8 +38,8 @@ public:
     ///
     /// It cleans up schema and recreates tables, then instantiates HostMgr
     void SetUp(::benchmark::State const&) override {
-        destroyCqlSchema(false, true);
-        createCqlSchema(false, true);
+        // Ensure we have the proper schema with no transient data.
+        createCqlSchema();
         try {
             HostDataSourceFactory::destroy();
             HostDataSourceFactory::create(validCqlConnectionString());
@@ -60,7 +60,8 @@ public:
                  << endl;
         }
         HostDataSourceFactory::destroy();
-        destroyCqlSchema(false, true);
+        // If data wipe enabled, delete transient data otherwise destroy the schema
+        destroyCqlSchema();
     }
 };
 

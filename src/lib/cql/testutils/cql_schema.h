@@ -39,10 +39,10 @@ std::string validCqlConnectionString();
 /// -# Defining the environment variable:
 ///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
 ///
-/// @param force if true, the function will skip deleting the data and
 /// @param show_err flag which governs whether or not stderr is suppressed.
+/// @param force if true, the function will skip deleting the data and
 /// destroy the schema.
-void destroyCqlSchema(bool force, bool show_err = false);
+void destroyCqlSchema(bool show_err = false, bool force = false);
 
 /// @brief Create the unit test Cql Schema
 ///
@@ -64,10 +64,10 @@ void destroyCqlSchema(bool force, bool show_err = false);
 /// -# Defining the environment variable:
 ///    KEA_TEST_DB_WIPE_DATA_ONLY="false"
 ///
+/// @param show_err flag which governs whether or not stderr is suppressed.
 /// @param force flag when true, the function will recreate the database
 /// schema.
-/// @param show_err flag which governs whether or not stderr is suppressed.
-void createCqlSchema(bool force, bool show_err = false);
+void createCqlSchema(bool show_err = false, bool force = false);
 
 /// @brief Run a CQL script against the CQL unit test database
 ///
