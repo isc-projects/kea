@@ -189,13 +189,6 @@ GenericHostDataSourceBenchmark::insertHosts() {
 }
 
 void
-GenericHostDataSourceBenchmark::updateHosts() {
-    for (HostPtr host : hosts_) {
-        hdsptr_->add(host);
-    }
-}
-
-void
 GenericHostDataSourceBenchmark::benchGetAll() {
     for (HostPtr host : hosts_) {
         std::vector<uint8_t> hwaddr = host->getIdentifier();
