@@ -1985,47 +1985,19 @@ CqlHostDataSourceImpl::getAll6(const SubnetID& subnet_id) const {
 // paging at the API level.
 
 ConstHostCollection
-CqlHostDataSourceImpl::getPage4(const SubnetID& subnet_id,
-                                uint64_t lower_host_id,
-                                const HostPageSize& page_size) const {
-    ConstHostCollection hosts = getAll4(subnet_id);
-    std::sort(hosts.begin(), hosts.end(), [](ConstHostPtr a, ConstHostPtr b) {
-        return a->getHostId() > b->getHostId();
-    });
-    ConstHostCollection result;
-    size_t count = 0;
-    for (auto host : hosts) {
-        if (host->getHostId() > lower_host_id) {
-            result.push_back(host);
-            count++;
-            if (count == page_size.page_size_) {
-                break;
-            }
-        }
-    }
-    return (result);
+CqlHostDataSourceImpl::getPage4(const SubnetID& /*subnet_id*/,
+                                uint64_t /*lower_host_id*/,
+                                const HostPageSize& /*page_size*/) const {
+    isc_throw(NotImplemented,
+              "reservation-get-page is not supported by Cassandra");
 }
 
 ConstHostCollection
-CqlHostDataSourceImpl::getPage6(const SubnetID& subnet_id,
-                                uint64_t lower_host_id,
-                                const HostPageSize& page_size) const {
-    ConstHostCollection hosts = getAll6(subnet_id);
-    std::sort(hosts.begin(), hosts.end(), [](ConstHostPtr a, ConstHostPtr b) {
-        return a->getHostId() > b->getHostId();
-    });
-    ConstHostCollection result;
-    size_t count = 0;
-    for (auto host : hosts) {
-        if (host->getHostId() > lower_host_id) {
-            result.push_back(host);
-            count++;
-            if (count == page_size.page_size_) {
-                break;
-            }
-        }
-    }
-    return (result);
+CqlHostDataSourceImpl::getPage6(const SubnetID& /*subnet_id*/,
+                                uint64_t /*lower_host_id*/,
+                                const HostPageSize& /*page_size*/) const {
+    isc_throw(NotImplemented,
+              "reservation-get-page is not supported by Cassandra");
 }
 
 ConstHostCollection
