@@ -1251,6 +1251,11 @@ if test "x$enable_benchmark" = "xyes" ; then
         fi
 
     fi
+
+    if test $enable_gtest = no; then
+        AC_MSG_ERROR([--with-benchmark and --with-benchmark-source requires --with-gtest or --with-gtest-source])
+    fi
+
 fi
 AM_CONDITIONAL(HAVE_BENCHMARK, test $enable_benchmark != "no")
 AM_CONDITIONAL(HAVE_BENCHMARK_SOURCE, test "X$have_benchmark_source" = "Xyes")
