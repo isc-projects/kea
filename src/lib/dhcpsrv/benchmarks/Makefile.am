@@ -74,11 +74,6 @@ run_benchmarks_LDADD  = $(top_builddir)/src/lib/asiolink/libkea-asiolink.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcp/libkea-dhcp++.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/libkea-dhcpsrv.la
 run_benchmarks_LDADD += $(top_builddir)/src/lib/dhcpsrv/testutils/libdhcpsrvtest.la
-run_benchmarks_LDADD += $(BENCHMARK_LDADD)
-run_benchmarks_LDADD += $(LOG4CPLUS_LIBS)
-run_benchmarks_LDADD += $(CRYPTO_LIBS)
-run_benchmarks_LDADD += $(BOOST_LIBS)
-run_benchmarks_LDADD += $(GTEST_LDADD)
 
 if HAVE_MYSQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/mysql/testutils/libmysqltest.la
@@ -91,6 +86,12 @@ endif
 if HAVE_CQL
 run_benchmarks_LDADD += $(top_builddir)/src/lib/cql/testutils/libcqltest.la
 endif
+
+run_benchmarks_LDADD += $(BENCHMARK_LDADD)
+run_benchmarks_LDADD += $(LOG4CPLUS_LIBS)
+run_benchmarks_LDADD += $(CRYPTO_LIBS)
+run_benchmarks_LDADD += $(BOOST_LIBS)
+run_benchmarks_LDADD += $(GTEST_LDADD)
 
 endif
 
