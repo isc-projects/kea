@@ -1253,7 +1253,7 @@ if test "x$enable_benchmark" = "xyes" ; then
     fi
 
     if test $enable_gtest = no; then
-        AC_MSG_ERROR([--with-benchmark and --with-benchmark-source requires --with-gtest or --with-gtest-source])
+        AC_MSG_ERROR([--with-benchmark and --with-benchmark-source require --with-gtest or --with-gtest-source])
     fi
 
 fi
